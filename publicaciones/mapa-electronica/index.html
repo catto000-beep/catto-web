@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de Temas · Tecnicatura en Electrónica</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3140;
+    --txt:#e6edf3; --muted:#9aa7b4; --soft:#7d8a99;
+    --accent:#58a6ff; --accent2:#1f6feb;
+    --ok:#3fb950; --warn:#d29922; --hot:#f85149;
+    --r:14px; --shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, #1b2740 0%, var(--bg) 55%);
+    color:var(--txt); font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+    line-height:1.45; -webkit-font-smoothing:antialiased; padding-bottom:60px;
+  }
+  a{color:var(--accent)}
+  header.top{
+    padding:26px 30px 18px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(31,111,235,.10),transparent);
+    position:sticky; top:0; z-index:50; backdrop-filter:blur(8px);
+    background-color:rgba(13,17,23,.82);
+  }
+  .top h1{margin:0;font-size:22px;letter-spacing:.2px}
+  .top .sub{color:var(--muted);font-size:13px;margin-top:3px}
+  .stats{display:flex;gap:22px;flex-wrap:wrap;margin-top:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:96px}
+  .stat b{display:block;font-size:20px;color:var(--accent)}
+  .stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:16px 30px 4px}
+  .tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px}
+  .tab{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--muted);border:1px solid transparent;white-space:nowrap}
+  .tab:hover{color:var(--txt)}
+  .tab.active{background:var(--accent2);color:#fff;border-color:var(--accent)}
+  .search{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 14px}
+  .search input{flex:1;background:transparent;border:0;outline:0;color:var(--txt);font-size:14px}
+  .search svg{flex:none}
+
+  .wrap{padding:14px 30px}
+  .hint{color:var(--soft);font-size:12.5px;margin:2px 0 16px}
+
+  /* ===== Mapa mental ===== */
+  .years{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:1100px){.years{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.years{grid-template-columns:1fr}}
+  .ycol{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:12px}
+  .yhead{display:flex;align-items:baseline;justify-content:space-between;padding:4px 6px 8px;border-bottom:1px dashed var(--line)}
+  .yhead .yn{font-size:16px;font-weight:700}
+  .yhead .yh{font-size:11px;color:var(--muted)}
+  .subj{border-radius:11px;border:1px solid var(--line);overflow:hidden;background:var(--panel2)}
+  .subj > .sh{padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:9px}
+  .subj .dot{width:10px;height:10px;border-radius:3px;flex:none}
+  .subj .sname{font-size:13.5px;font-weight:600;flex:1}
+  .subj .sh small{color:var(--muted);font-size:11px}
+  .subj .chev{transition:transform .2s;color:var(--muted)}
+  .subj.open .chev{transform:rotate(90deg)}
+  .ejes{display:none;padding:2px 10px 12px}
+  .subj.open .ejes{display:block}
+  .eje{padding:8px 0;border-top:1px solid var(--line)}
+  .eje .et{font-size:12.5px;font-weight:600;margin-bottom:3px}
+  .eje .ed{font-size:11.5px;color:var(--muted)}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .tag{font-size:10px;padding:2px 7px;border-radius:20px;cursor:pointer;border:1px solid transparent;white-space:nowrap}
+
+  /* ===== Matriz ===== */
+  .matrix-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+  table.mx{border-collapse:collapse;width:100%;font-size:11.5px;min-width:1050px}
+  table.mx th,table.mx td{border:1px solid var(--line);padding:0}
+  table.mx thead th{position:sticky;top:0;background:var(--panel2);z-index:3;font-weight:600;color:var(--muted);font-size:10.5px}
+  table.mx thead th.yrgrp{background:#10202f;color:var(--accent);font-size:11px;letter-spacing:.4px}
+  .mx .rowh{position:sticky;left:0;background:var(--panel2);z-index:2;text-align:left;padding:7px 10px;font-weight:600;font-size:11.5px;min-width:210px;cursor:pointer}
+  .mx .rowh:hover{color:var(--accent)}
+  .mx .colh{writing-mode:vertical-rl;transform:rotate(180deg);padding:10px 4px;height:130px;white-space:nowrap;cursor:pointer;font-size:11px}
+  .mx .colh:hover{color:var(--accent)}
+  .cell{height:34px;text-align:center;cursor:default;transition:transform .08s}
+  .cell.on{cursor:pointer}
+  .cell .lvl{display:inline-block;width:20px;height:20px;line-height:20px;border-radius:6px;font-size:10px;font-weight:700;color:#06121f}
+  .lv1{background:#244a63}.lv1 .x{color:#9fd0ee}
+  .lv2{background:#2f6f9e}.lv2 .x{color:#eaf6ff}
+  .lv3{background:#58a6ff}
+  .lv4{background:#7ee787}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:12px 2px;font-size:11.5px;color:var(--muted);align-items:center}
+  .legend .k{display:inline-flex;align-items:center;gap:6px}
+  .legend .sw{width:16px;height:16px;border-radius:5px;display:inline-block}
+  .repeat-flag{color:var(--warn);font-weight:600}
+
+  /* ===== Explorador de temas ===== */
+  .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px}
+  .tcard{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 13px;cursor:pointer;transition:transform .12s,border-color .12s}
+  .tcard:hover{transform:translateY(-2px);border-color:var(--accent)}
+  .tcard.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .tcard .tn{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .tcard .tmeta{font-size:11px;color:var(--muted);margin-top:5px}
+  .tcard .bar{height:5px;border-radius:4px;background:var(--line);margin-top:8px;overflow:hidden}
+  .tcard .bar i{display:block;height:100%}
+  .timeline{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+  .tl-empty{color:var(--soft);text-align:center;padding:30px;font-size:13px}
+  .tl-head{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+  .tl-desc{color:var(--muted);font-size:12.5px;margin-bottom:16px}
+  .tl-track{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:900px){.tl-track{grid-template-columns:1fr}}
+  .tl-year{border-top:2px solid var(--line);padding-top:10px}
+  .tl-year.has{border-top-color:var(--accent)}
+  .tl-year .yl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px}
+  .tl-item{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-bottom:9px}
+  .tl-item .ti-s{font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .tl-item .ti-e{font-size:11.5px;color:var(--accent);margin-top:3px}
+  .tl-item .ti-d{font-size:11px;color:var(--muted);margin-top:3px}
+  .pill{font-size:9.5px;padding:1px 7px;border-radius:20px;font-weight:700}
+  .pill.l1{background:#244a63;color:#9fd0ee}
+  .pill.l2{background:#2f6f9e;color:#eaf6ff}
+  .pill.l3{background:#58a6ff;color:#06121f}
+  .pill.l4{background:#7ee787;color:#06121f}
+  .insight{background:linear-gradient(135deg,rgba(31,111,235,.12),rgba(63,185,80,.07));border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-top:16px;font-size:12.5px;color:var(--muted)}
+  .insight b{color:var(--txt)}
+  .footer{padding:24px 30px;color:var(--soft);font-size:11.5px;border-top:1px solid var(--line);margin-top:30px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .hidden{display:none!important}
+  ::-webkit-scrollbar{height:11px;width:11px}
+  ::-webkit-scrollbar-thumb{background:#30363d;border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  /* Barra de retorno a catto.ar (agregada al publicar el dashboard en el sitio) */
+  .backbar{position:fixed;right:16px;bottom:16px;z-index:200}
+  .backbar a{display:inline-flex;align-items:center;gap:7px;background:rgba(22,27,34,.92);
+    border:1px solid var(--line);border-radius:24px;padding:9px 16px;color:var(--txt);
+    font-size:13px;text-decoration:none;box-shadow:0 8px 30px rgba(0,0,0,.45);backdrop-filter:blur(8px)}
+  .backbar a:hover{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="backbar"><a href="../../index.html" title="Volver a catto.ar">← catto.ar</a></div>
+<header class="top">
+  <h1>🔌 Mapa de Temas · Tecnicatura Secundaria en Electrónica</h1>
+  <div class="sub">Segundo Ciclo · 4° a 7° año · Campo de Formación Técnica Específica — Propuesta Curricular DGETyFP, Córdoba (Res. CFE 15/07). Visualización de qué se dicta, dónde se repite y dónde se profundiza.</div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="toolbar">
+  <div class="tabs">
+    <div class="tab active" data-view="mapa">🧠 Mapa mental</div>
+    <div class="tab" data-view="matriz">🔲 Matriz de temas</div>
+    <div class="tab" data-view="temas">🔎 Explorar tema</div>
+  </div>
+  <label class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa7b4" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+    <input id="q" placeholder="Buscar tema, componente o materia: amplificador operacional, microcontrolador, transistor, PLC…">
+  </label>
+</div>
+
+<div class="wrap">
+  <!-- MAPA -->
+  <section id="view-mapa">
+    <div class="hint">Cada columna es un año. Hacé clic en una materia para ver sus ejes temáticos. Los <b>chips de color</b> son temas transversales: hacé clic en uno para ver en qué otras materias aparece (salta al explorador).</div>
+    <div class="years" id="years"></div>
+  </section>
+
+  <!-- MATRIZ -->
+  <section id="view-matriz" class="hidden">
+    <div class="hint">Filas = temas transversales · Columnas = materias por año. El número/color indica la <b>profundidad</b> con que cada materia aborda el tema. Leé una fila de izquierda a derecha para ver la <span class="repeat-flag">repetición y progresión</span> de un tema a lo largo de la carrera.</div>
+    <div class="legend">
+      <span class="k"><span class="sw lv1"></span> 1 · Introducción</span>
+      <span class="k"><span class="sw lv2"></span> 2 · Desarrollo</span>
+      <span class="k"><span class="sw lv3"></span> 3 · Profundización</span>
+      <span class="k"><span class="sw lv4"></span> 4 · Aplicación / Integración</span>
+      <span class="k" style="margin-left:auto">Clic en celda, fila o columna para detalle</span>
+    </div>
+    <div class="matrix-scroll"><table class="mx" id="mx"></table></div>
+  </section>
+
+  <!-- TEMAS -->
+  <section id="view-temas" class="hidden">
+    <div class="hint">Elegí un tema transversal para ver su <b>recorrido año por año</b>: dónde se introduce, dónde se refuerza y dónde se profundiza o aplica.</div>
+    <div class="theme-grid" id="themeGrid"></div>
+    <div class="timeline" id="timeline"><div class="tl-empty">Seleccioná un tema arriba para ver su progresión a lo largo de la tecnicatura.</div></div>
+  </section>
+</div>
+
+<div class="footer">
+  Fuente: «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria – Electrónica: Técnico en Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP (2011), Sección 9 (págs. 123-149). Datos transcritos de los <i>Contenidos Básicos / Ejes Temáticos</i> de cada espacio curricular del Campo de Formación Técnica Específica. Dashboard generado para análisis de cobertura y progresión temática.
+</div>
+
+<script>
+/* ============ DATOS ============ */
+const AREAS = {
+  digital:   {nombre:"Electrónica Digital", color:"#58a6ff"},
+  analogica: {nombre:"Electrónica Analógica", color:"#e3a008"},
+  electro:   {nombre:"Electrotecnia", color:"#2dd4bf"},
+  info:      {nombre:"Informática Electrónica", color:"#a371f7"},
+  industrial:{nombre:"Electrónica Industrial", color:"#f85149"},
+  telecom:   {nombre:"Telecomunicaciones", color:"#3fb950"},
+  instal:    {nombre:"Instalaciones", color:"#d2691e"},
+  proyecto:  {nombre:"Proyecto / Práctica", color:"#8b949e"}
+};
+
+// Temas transversales (ejes que cruzan materias)
+const TEMAS = {
+  semic:   {n:"Semiconductores y diodos", c:"#e3a008"},
+  trans:   {n:"Transistores", c:"#f0883e"},
+  amp:     {n:"Amplificadores (incl. Operacionales)", c:"#db6d28"},
+  logica:  {n:"Lógica digital", c:"#58a6ff"},
+  micro:   {n:"Microprocesadores y microcontroladores", c:"#1f6feb"},
+  prog:    {n:"Programación", c:"#a371f7"},
+  conv:    {n:"Conversión A/D – D/A", c:"#79c0ff"},
+  medic:   {n:"Mediciones e instrumentación", c:"#56d4dd"},
+  circ:    {n:"Circuitos y fundamentos eléctricos", c:"#2dd4bf"},
+  ca:      {n:"Corriente alterna y trifásica", c:"#26a69a"},
+  maq:     {n:"Transformadores y máquinas/motores", c:"#00897b"},
+  pot:     {n:"Electrónica de potencia", c:"#f85149"},
+  sens:    {n:"Sensores, actuadores y transductores", c:"#ff7b72"},
+  control: {n:"Control y automatización (PLC/PID)", c:"#da3633"},
+  instal:  {n:"Instalaciones eléctricas", c:"#d2691e"},
+  modul:   {n:"Modulación y comunicaciones", c:"#3fb950"},
+  antena:  {n:"Antenas y propagación", c:"#56d364"},
+  optica:  {n:"Fibra óptica y satélite", c:"#2ea043"},
+  cad:     {n:"CAD, esquemáticos y PCB", c:"#bc8cff"},
+  filt:    {n:"Filtros y osciladores", c:"#ffa657"},
+  hys:     {n:"Higiene y seguridad", c:"#d29922"}
+};
+
+// Materias del Campo de Formación Técnica Específica
+// lvl: profundidad del eje (1 intro · 2 desarrollo · 3 profundización · 4 aplicación/integración)
+const MATERIAS = [
+/* ---------- 4° AÑO ---------- */
+{id:"ed1", n:"Electrónica Digital I", area:"digital", anio:4, h:96, ejes:[
+  {t:"Lógica combinacional", d:"Compuertas lógicas, tablas de verdad, circuitos equivalentes, tecnologías TTL y CMOS, sumadores, decodificadores y codificadores.", tm:[["logica",1]]},
+  {t:"Lógica secuencial", d:"Flip-flops RS, D, JK y T. Contadores asíncronos y síncronos. Prácticas de laboratorio.", tm:[["logica",1]]},
+  {t:"Aplicaciones con compuertas lógicas", d:"Diseño de circuitos y plaquetas con compuertas lógicas.", tm:[["logica",2],["cad",1]]}
+]},
+{id:"ea1", n:"Electrónica Analógica I", area:"analogica", anio:4, h:120, ejes:[
+  {t:"Teoría de los materiales semiconductores", d:"Semiconductores n y p. Diodo: polarización directa/inversa, curva característica. Rectificadores media/onda completa, puente. Filtro capacitivo. Diodo y regulador Zener.", tm:[["semic",1],["pot",1]]},
+  {t:"Transistores bipolares", d:"Funcionamiento, curvas características, ganancia CC, recta de carga. Transistor como llave y como amplificador. Polarización. Fuentes reguladas con transistores.", tm:[["trans",1],["pot",1]]},
+  {t:"Amplificadores de señal débil", d:"Emisor común. Capacitores de acoplamiento y derivación. Ganancia en CA. Colector común. Conexión Darlington.", tm:[["amp",1],["trans",2]]},
+  {t:"Amplificadores de potencia", d:"Clase A y Clase B, simetría complementaria, fuente única y partida. Rendimiento. Amplificadores de potencia con circuitos integrados.", tm:[["amp",2]]},
+  {t:"Magnitudes eléctricas fundamentales", d:"Voltaje, intensidad, resistencia. Unidades, múltiplos. Medición en CC con instrumentos analógicos y digitales.", tm:[["circ",1],["medic",1]]},
+  {t:"Instrumentos de medición analógicos", d:"Bobina móvil, hierro móvil, electrodinámicos. Voltímetro y óhmetro.", tm:[["medic",1]]},
+  {t:"El osciloscopio", d:"Tubo de rayos catódicos, base de tiempos, sincronización, visualización de ondas y mediciones en circuitos amplificadores.", tm:[["medic",2]]},
+  {t:"Mediciones en CA", d:"Valor eficaz, amplitud, período, frecuencia. Generador de funciones, frecuencímetros.", tm:[["medic",2],["ca",1]]}
+]},
+{id:"et1", n:"Electrotecnia I", area:"electro", anio:4, h:120, ejes:[
+  {t:"Electrostática", d:"Cargas, campo y potencial eléctrico, capacitancia, dieléctricos.", tm:[["circ",1]]},
+  {t:"La corriente eléctrica", d:"Ley de Coulomb, resistencia, Ley de Ohm, Leyes de Kirchhoff, potencia, Ley de Joule.", tm:[["circ",1]]},
+  {t:"Magnetismo y electromagnetismo", d:"Campo magnético, flujo, reluctancia, circuitos magnéticos. Campo de una corriente, solenoide.", tm:[["circ",2]]},
+  {t:"Electrodinámica e inducción", d:"Fuerza electromagnética, histéresis. Ley de Faraday y Lenz. Inducción mutua, autoinducción. Principio del transformador.", tm:[["circ",2],["maq",1]]},
+  {t:"Corrientes alternas", d:"Ondas sinusoidales, valores máximo/medio/eficaz, frecuencia, potencia, factor de potencia, resonancia, desfasaje.", tm:[["ca",1]]}
+]},
+{id:"ie1", n:"Informática Electrónica I", area:"info", anio:4, h:72, ejes:[
+  {t:"Elementos básicos del lenguaje C", d:"Estructura de un programa, variables, constantes, tipos de datos, operadores, arreglos, cadenas, control de flujo, funciones, preprocesador, biblioteca estándar.", tm:[["prog",1]]},
+  {t:"Entornos de desarrollo C y C++", d:"Device drivers, punteros y aritmética de punteros, estructuras, programación de sistemas embebidos, bootloaders, tiempo real en microprocesadores, concurrencia.", tm:[["prog",2],["micro",1]]},
+  {t:"El lenguaje C++", d:"Clases, objetos, métodos, herencia y polimorfismo. Constructores/destructores, sobrecarga, excepciones, interfaces y device drivers.", tm:[["prog",2]]}
+]},
+/* ---------- 5° AÑO ---------- */
+{id:"ed2", n:"Electrónica Digital II", area:"digital", anio:5, h:96, ejes:[
+  {t:"Contadores programables", d:"Expansiones con circuitos integrados programables.", tm:[["logica",2]]},
+  {t:"Conversores A/D y D/A", d:"Conversores DA con redes en abanico y escalera. Conversor AD tipo flash. Interfaces RS232, RS485, RS422.", tm:[["conv",1],["modul",1]]},
+  {t:"Instrumentos de medida digitales", d:"Arquitectura de un aparato de medición, multímetros, frecuencímetros.", tm:[["medic",2]]},
+  {t:"Arquitectura de microprocesador y microcontrolador", d:"Introducción a la arquitectura de microprocesadores y microcontroladores.", tm:[["micro",1]]}
+]},
+{id:"ea2", n:"Electrónica Analógica II", area:"analogica", anio:5, h:144, ejes:[
+  {t:"Semiconductores especiales", d:"Transistor de efecto de campo (FET) y sus tipos, componentes de disparo controlado (tiristores y triacs) y fotoeléctricos.", tm:[["semic",2],["trans",3],["pot",1]]},
+  {t:"Circuitos integrados lineales", d:"El circuito integrado 555.", tm:[["filt",1],["amp",2]]},
+  {t:"Amplificadores Operacionales", d:"Conceptos y características. Amplificadores de señal, comparadores, sumadores, generadores de forma de onda, amplificadores de instrumentación, rectificadores. Aplicaciones y prácticas de laboratorio.", tm:[["amp",3]]},
+  {t:"Mediciones de circuitos estándares", d:"Mediciones de impedancia en baja y alta frecuencia, puente de impedancia, mediciones de frecuencia.", tm:[["medic",3]]},
+  {t:"Osciladores", d:"Osciladores y resonancia.", tm:[["filt",2]]},
+  {t:"Filtros", d:"Pasa-altos, pasa-bajos, pasa-banda y elimina-banda.", tm:[["filt",2]]}
+]},
+{id:"et2", n:"Electrotecnia II", area:"electro", anio:5, h:144, ejes:[
+  {t:"La corriente alterna", d:"FEM de CA, vector rotante, diagramas vectoriales, reactancia, impedancia, circuitos RL, RC, RLC, resonancia.", tm:[["ca",2]]},
+  {t:"Potencia en corriente alterna", d:"Potencia activa, reactiva y aparente. Factor de potencia y su compensación.", tm:[["ca",2]]},
+  {t:"Circuitos trifásicos", d:"Tensiones trifásicas, alternador, conexiones estrella y triángulo, potencia trifásica.", tm:[["ca",3]]},
+  {t:"Instalaciones eléctricas", d:"Símbolos, selección de conductores, protecciones: fusibles, termomagnéticas, guardamotores, disyuntores diferenciales, contactores, relé térmico.", tm:[["instal",2]]},
+  {t:"Transformadores", d:"De corriente, tensión e impedancia. Cálculo, rendimiento, pérdidas, relación de vueltas.", tm:[["maq",2]]},
+  {t:"Motores de CA monofásicos y trifásicos", d:"Conexión, protección y maniobra. Inversión de marcha, arranque estrella-triángulo. Circuitos de potencia y de control.", tm:[["maq",2],["control",1]]}
+]},
+{id:"ie2", n:"Informática Electrónica II", area:"info", anio:5, h:120, ejes:[
+  {t:"Dibujo técnico y diseño asistido (CAD)", d:"Dibujo técnico en ingeniería, normas para elaboración e interpretación de dibujos.", tm:[["cad",1]]},
+  {t:"Simbología de componentes electrónicos", d:"Simbología de componentes analógicos y digitales.", tm:[["cad",1]]},
+  {t:"Diagramas de circuitos esquemáticos", d:"Normas y estándares, software para esquemáticos, metodología de diseño, librerías.", tm:[["cad",2]]},
+  {t:"Tarjetas de circuitos impresos (PCB)", d:"Metodología de diseño de PCB, software, transferencia de mascarillas, técnicas de montaje, soldadura y extracción de componentes.", tm:[["cad",3]]},
+  {t:"Simulación de circuitos y mediciones virtuales", d:"Simulación por computadora, mediciones virtuales, márgenes de error.", tm:[["cad",2],["medic",2]]}
+]},
+/* ---------- 6° AÑO ---------- */
+{id:"ed3", n:"Electrónica Digital III", area:"digital", anio:6, h:144, ejes:[
+  {t:"Familia de microcontroladores", d:"Arquitectura, diagrama de conexiones, repertorio de instrucciones. Registros de control, memoria flash y EEPROM, puertas de E/S y recursos especiales.", tm:[["micro",2]]},
+  {t:"Módulo de comunicación", d:"Serie síncrona. USART: transmisor/receptor síncrono/asíncrono serie.", tm:[["micro",2],["modul",2]]},
+  {t:"Periféricos", d:"Puertos de E/S, temporizadores, módulos de comparación y captura, conversores A/D, modo PWM (anchura de pulsos).", tm:[["micro",3],["conv",2]]},
+  {t:"Control con dispositivos", d:"Control de temperatura. Control de iluminación.", tm:[["micro",3],["control",2]]},
+  {t:"Sistemas programables y memorias", d:"RAM, ROM, EPROM, UVPROM, Flash ROM. Arquitecturas de dispositivos programables.", tm:[["micro",2]]},
+  {t:"Operación y mantenimiento de PC", d:"Redes, interfaces, enrutadores, software y documentación técnica.", tm:[["medic",2]]},
+  {t:"Aparatos de medición digital", d:"Arquitectura y funciones.", tm:[["medic",3]]}
+]},
+{id:"ei1", n:"Electrónica Industrial I", area:"industrial", anio:6, h:144, ejes:[
+  {t:"Componentes de potencia", d:"Triac, Diac, SCR, UJT, IGBT, MCT, GTO. Principios y resolución de circuitos.", tm:[["pot",2],["semic",2]]},
+  {t:"Conexión estrella-triángulo", d:"Circuitos trifásicos de CA, sistemas en estrella y triángulo.", tm:[["ca",3]]},
+  {t:"Potencia y factor de potencia", d:"Potencia en circuitos monofásicos y trifásicos. Métodos de cálculo y corrección del factor de potencia.", tm:[["ca",3],["pot",2]]},
+  {t:"Sistemas automáticos de control", d:"Control de potencia monofásica y trifásica.", tm:[["control",2],["pot",2]]},
+  {t:"Fuentes de energía", d:"Convencionales, conmutadas, convertidores e inversores. Rectificadores controlados monofásicos/trifásicos, circuitos de disparo.", tm:[["pot",3]]},
+  {t:"Diagnóstico y detección de fallas", d:"Métodos y técnicas para el diagnóstico y detección de fallas.", tm:[["medic",2]]},
+  {t:"Variadores de velocidad", d:"Controladores de frecuencia variable, inversor PWM, flujo vectorial, Volts/Hz.", tm:[["pot",3],["control",2]]},
+  {t:"Sensores, actuadores y transductores", d:"Transductores de presencia (inductivos, capacitivos, acústicos, ópticos), posición, velocidad, aceleración, temperatura. Actuadores neumáticos, hidráulicos y eléctricos.", tm:[["sens",2]]},
+  {t:"Motores paso a paso", d:"Rotor de imán permanente, bipolares y unipolares. Características, fallas típicas, diagnóstico.", tm:[["maq",3],["sens",2]]},
+  {t:"Higiene y seguridad laboral", d:"Manejo seguro de equipos de potencia. Normas y procedimientos.", tm:[["hys",1]]}
+]},
+{id:"tc1", n:"Telecomunicaciones I", area:"telecom", anio:6, h:144, ejes:[
+  {t:"Comunicaciones analógicas", d:"Espectro electromagnético, propagación de ondas electromagnéticas.", tm:[["modul",2],["antena",1]]},
+  {t:"Generación y procesamiento de señales", d:"Señales más comunes en comunicaciones, análisis de Fourier.", tm:[["modul",2]]},
+  {t:"Sistemas de modulación", d:"Análisis comparativo de los sistemas de modulación.", tm:[["modul",2]]},
+  {t:"Antenas y sistemas radiantes", d:"Tipos, características, montaje e instalación.", tm:[["antena",2]]},
+  {t:"Enlaces a microondas", d:"Cálculo aproximado de enlaces.", tm:[["antena",2],["modul",2]]},
+  {t:"Telefonía y telefonía celular", d:"Funcionamiento, evolución, tecnología digital, GSM, PCS.", tm:[["modul",2]]},
+  {t:"Comunicación por satélite", d:"Bandas, segmento espacial y terreno, antenas, LNA, amplificadores de potencia, balance de enlace.", tm:[["optica",2],["antena",2]]},
+  {t:"Láser y fibras ópticas", d:"Transmisores, receptores, fibra, amplificadores, multiplexación por longitud de onda, dispersión.", tm:[["optica",2]]},
+  {t:"Montaje, instalación y mediciones", d:"Protección de equipos, manejo seguro. Mediciones de impedancia, ultraaltas frecuencias y microondas, sobre receptores y transmisores.", tm:[["medic",3],["hys",1]]}
+]},
+{id:"ii", n:"Instalaciones Industriales", area:"instal", anio:6, h:168, ejes:[
+  {t:"Instalaciones eléctricas", d:"Corrientes débiles, muy baja y baja tensión. Tableros, cableado, aparatos de maniobra y protección, puesta a tierra, proyecto eléctrico de vivienda.", tm:[["instal",3]]},
+  {t:"Tecnología de materiales eléctricos", d:"Conductores, gabinetes, termografías, aislantes, ferromagnéticos, rendimientos.", tm:[["instal",2]]},
+  {t:"Manejo de herramientas", d:"Manuales, equipos y máquinas herramientas.", tm:[["instal",1]]},
+  {t:"Protección", d:"Contactos directos e indirectos, protección de líneas contra sobrecarga, cortocircuito y sobretensiones.", tm:[["instal",3]]},
+  {t:"Instalaciones de alumbrado", d:"Luminarias, circuitos generales y especiales, fuerza motriz, cálculos y esquemas.", tm:[["instal",2]]},
+  {t:"Mantenimiento de componentes eléctricos", d:"Interruptores, temporizadores, relé térmico, guardamotores, fusibles, termomagnéticas en fábricas e industrias.", tm:[["instal",2],["hys",1]]},
+  {t:"Proyecto de una instalación", d:"Proyecto integral de una instalación.", tm:[["instal",4]]}
+]},
+/* ---------- 7° AÑO ---------- */
+{id:"ed4", n:"Electrónica Digital IV", area:"digital", anio:7, h:120, ejes:[
+  {t:"Familia de microcontroladores", d:"Arquitectura, conexiones, repertorio de instrucciones, registros de control, memoria flash/EEPROM, E/S y recursos especiales (otros microcontroladores).", tm:[["micro",3]]},
+  {t:"Módulo de comunicación", d:"Serie síncrona. USART síncrono/asíncrono serie.", tm:[["micro",3],["modul",2]]},
+  {t:"Las interrupciones", d:"Manejo de interrupciones del microcontrolador.", tm:[["micro",3]]},
+  {t:"Aplicaciones con controles", d:"Control de temperatura e iluminación, pesaje y dosificación, control de ascensores, sistemas automáticos de verificación y prueba.", tm:[["micro",4],["control",3]]},
+  {t:"Display inteligentes", d:"Aplicaciones con displays inteligentes.", tm:[["micro",3]]},
+  {t:"Aplicaciones con microcontroladores", d:"Proyectos integradores con microcontroladores.", tm:[["micro",4],["control",3]]}
+]},
+{id:"ei2", n:"Electrónica Industrial II", area:"industrial", anio:7, h:120, ejes:[
+  {t:"Automatismo", d:"Principio de sistema automático, opciones tecnológicas, control de procesos. Autómatas programables (PLC): definición, historia, aplicaciones, ventajas.", tm:[["control",3]]},
+  {t:"Estructura de los autómatas programables", d:"Estructura externa/interna, memorias, CPU, entradas/salidas, interfaces, periféricos.", tm:[["control",3]]},
+  {t:"Unidades de mando y señalización", d:"Sensores y transductores, acondicionadores de señales, actuadores. Instalación, programación, conexionado de E/S.", tm:[["sens",3],["control",3]]},
+  {t:"Instrucciones y programación de PLC", d:"Lenguajes: nemónicos/booleanos, diagrama de contactos, plano de funciones, Grafcet, organigrama.", tm:[["control",4],["prog",3]]},
+  {t:"Aplicaciones básicas de programación", d:"E/S, marcas, temporizadores, contadores, registro de desplazamiento, circuitos lógicos, generadores de impulsos.", tm:[["control",4]]},
+  {t:"Neumática e hidráulica", d:"Compresores, actuadores neumáticos, señales neumáticas, lógica neumática, cilindros hidráulicos, válvulas direccionales.", tm:[["control",3],["sens",2]]},
+  {t:"Comunicaciones industriales", d:"Red Ethernet, bus de campo, red ASI.", tm:[["control",3],["modul",2]]},
+  {t:"Controladores PID", d:"Ajuste de controladores PID, programación analógica de PID, instrumentos de uso específico.", tm:[["control",4]]}
+]},
+{id:"tc2", n:"Telecomunicaciones II", area:"telecom", anio:7, h:120, ejes:[
+  {t:"Conceptos matemáticos de base", d:"Teorema del muestreo.", tm:[["modul",3]]},
+  {t:"Modulación digital de impulsos codificados", d:"Modulaciones digitales ASK, PSK, FSK, QAM. Cuantificación.", tm:[["modul",3]]},
+  {t:"Comunicaciones de datos", d:"Radioenlace digital, protocolos de comunicación de datos, red digital de servicios integrados (RDSI).", tm:[["modul",3]]},
+  {t:"Televisión analógica y digital", d:"Tubos de cámara y receptores, LCD, plasma, circuito cerrado, TV codificada.", tm:[["modul",3]]},
+  {t:"Antenas", d:"Concepto, características, tipos y cálculo de distintos tipos de antenas.", tm:[["antena",3]]},
+  {t:"Montaje y mantenimiento de equipos", d:"Mantenimiento de componentes y equipos, normas de resguardo, seguridad e higiene.", tm:[["hys",2]]}
+]},
+{id:"pi", n:"Proyecto Integrador", area:"proyecto", anio:7, h:144, ejes:[
+  {t:"Proyecto integrador de la especialidad", d:"Síntesis de los espacios curriculares específicos. Diseño asistido por computadora (CAD, SolidWorks o similar). Integra Matemática, Física, Marco Jurídico, Higiene y Seguridad y Economía y Producción.", tm:[["cad",4],["control",2],["micro",2]]}
+]},
+{id:"fat", n:"Formación en Ambiente de Trabajo", area:"proyecto", anio:7, h:240, ejes:[
+  {t:"Práctica profesionalizante", d:"Prácticas en situaciones reales de trabajo: montaje, instalación, operación y mantenimiento. Consolida e integra las capacidades del perfil profesional.", tm:[["instal",4],["control",4],["hys",2]]}
+]}
+];
+
+/* ============ DERIVADOS ============ */
+const LVLN = {1:"Introducción",2:"Desarrollo",3:"Profundización",4:"Aplicación / Integración"};
+const ANIOS = [4,5,6,7];
+function matById(id){return MATERIAS.find(m=>m.id===id);}
+// índice tema -> [{mat, eje, lvl}]
+const TEMA_IDX = {};
+Object.keys(TEMAS).forEach(k=>TEMA_IDX[k]=[]);
+MATERIAS.forEach(m=>m.ejes.forEach(e=>e.tm.forEach(([tk,lv])=>{
+  TEMA_IDX[tk].push({mat:m, eje:e, lvl:lv});
+})));
+
+/* ============ STATS ============ */
+const totalH = MATERIAS.reduce((a,m)=>a+m.h,0);
+const nTemas = Object.keys(TEMAS).length;
+const temasRepetidos = Object.values(TEMA_IDX).filter(a=>new Set(a.map(x=>x.mat.id)).size>1).length;
+document.getElementById('stats').innerHTML = `
+  <div class="stat"><b>4</b><span>Años (4°-7°)</span></div>
+  <div class="stat"><b>${MATERIAS.length}</b><span>Espacios curriculares</span></div>
+  <div class="stat"><b>${nTemas}</b><span>Temas transversales</span></div>
+  <div class="stat"><b>${temasRepetidos}</b><span>Temas en ≥2 materias</span></div>
+  <div class="stat"><b>${totalH}</b><span>Horas reloj</span></div>`;
+
+/* ============ MAPA MENTAL ============ */
+function tagHTML(tk,lv){
+  const t=TEMAS[tk];
+  return `<span class="tag" data-tema="${tk}" style="background:${t.c}22;color:${t.c};border-color:${t.c}55" title="${t.n} · ${LVLN[lv]}">${t.n}</span>`;
+}
+function renderMapa(){
+  const cont=document.getElementById('years'); cont.innerHTML='';
+  ANIOS.forEach(an=>{
+    const mats=MATERIAS.filter(m=>m.anio===an);
+    const hs=mats.reduce((a,m)=>a+m.h,0);
+    const col=document.createElement('div'); col.className='ycol';
+    col.innerHTML=`<div class="yhead"><span class="yn">${an}° Año</span><span class="yh">${mats.length} materias · ${hs} h</span></div>`;
+    mats.forEach(m=>{
+      const a=AREAS[m.area];
+      const sub=document.createElement('div'); sub.className='subj'; sub.dataset.mat=m.id;
+      let ejesH='';
+      m.ejes.forEach(e=>{
+        ejesH+=`<div class="eje"><div class="et">${e.t}</div><div class="ed">${e.d}</div><div class="tags">${e.tm.map(([tk,lv])=>tagHTML(tk,lv)).join('')}</div></div>`;
+      });
+      sub.innerHTML=`<div class="sh"><span class="dot" style="background:${a.color}"></span><span class="sname">${m.n}</span><small>${m.h} h</small><span class="chev">▶</span></div><div class="ejes">${ejesH}</div>`;
+      sub.querySelector('.sh').addEventListener('click',()=>sub.classList.toggle('open'));
+      col.appendChild(sub);
+    });
+    cont.appendChild(col);
+  });
+  // chips -> explorador
+  cont.querySelectorAll('.tag').forEach(t=>t.addEventListener('click',ev=>{
+    ev.stopPropagation(); switchView('temas'); selectTema(t.dataset.tema);
+  }));
+}
+
+/* ============ MATRIZ ============ */
+function renderMatriz(){
+  const tbl=document.getElementById('mx');
+  let thead='<thead><tr><th class="rowh" style="background:var(--panel2)">Tema \\ Materia</th>';
+  ANIOS.forEach(an=>{
+    const c=MATERIAS.filter(m=>m.anio===an).length;
+    thead+=`<th class="yrgrp" colspan="${c}">${an}° Año</th>`;
+  });
+  thead+='</tr><tr><th class="rowh" style="background:var(--panel2)"></th>';
+  MATERIAS.forEach(m=>{
+    thead+=`<th class="colh" data-mat="${m.id}" title="${m.n}"><span class="dot" style="background:${AREAS[m.area].color};margin-bottom:6px"></span> ${m.n}</th>`;
+  });
+  thead+='</tr></thead>';
+  let tbody='<tbody>';
+  Object.keys(TEMAS).forEach(tk=>{
+    const t=TEMAS[tk];
+    const cells=TEMA_IDX[tk];
+    const nMat=new Set(cells.map(c=>c.mat.id)).size;
+    const flag = nMat>1 ? ` <span class="repeat-flag">×${nMat}</span>` : '';
+    tbody+=`<tr><td class="rowh" data-tema="${tk}"><span class="dot" style="background:${t.c};margin-right:6px"></span>${t.n}${flag}</td>`;
+    MATERIAS.forEach(m=>{
+      const hits=cells.filter(c=>c.mat.id===m.id);
+      if(hits.length){
+        const lv=Math.max(...hits.map(h=>h.lvl));
+        tbody+=`<td class="cell on" data-tema="${tk}" data-mat="${m.id}" title="${m.n}: ${hits.map(h=>h.eje.t).join(' · ')}"><span class="lvl lv${lv}"><span class="x">${lv}</span></span></td>`;
+      } else {
+        tbody+='<td class="cell"></td>';
+      }
+    });
+    tbody+='</tr>';
+  });
+  tbody+='</tbody>';
+  tbl.innerHTML=thead+tbody;
+  tbl.querySelectorAll('.rowh[data-tema]').forEach(el=>el.addEventListener('click',()=>{switchView('temas');selectTema(el.dataset.tema);}));
+  tbl.querySelectorAll('.cell.on').forEach(el=>el.addEventListener('click',()=>{switchView('temas');selectTema(el.dataset.tema);}));
+  tbl.querySelectorAll('.colh[data-mat]').forEach(el=>el.addEventListener('click',()=>{switchView('mapa');setTimeout(()=>{const s=document.querySelector(`.subj[data-mat="${el.dataset.mat}"]`);if(s){s.classList.add('open');s.scrollIntoView({behavior:'smooth',block:'center'});}},60);}));
+}
+
+/* ============ EXPLORADOR DE TEMAS ============ */
+let temaSel=null;
+function renderThemeGrid(){
+  const g=document.getElementById('themeGrid'); g.innerHTML='';
+  Object.keys(TEMAS).forEach(tk=>{
+    const t=TEMAS[tk]; const cells=TEMA_IDX[tk];
+    const mats=new Set(cells.map(c=>c.mat.id));
+    const anios=new Set(cells.map(c=>c.mat.anio));
+    const maxlv=cells.length?Math.max(...cells.map(c=>c.lvl)):0;
+    const card=document.createElement('div'); card.className='tcard'; card.dataset.tema=tk;
+    card.innerHTML=`<div class="tn"><span class="dot" style="background:${t.c}"></span>${t.n}</div>
+      <div class="tmeta">${mats.size} materia(s) · ${anios.size} año(s) · hasta nivel ${maxlv}</div>
+      <div class="bar"><i style="width:${maxlv*25}%;background:${t.c}"></i></div>`;
+    card.addEventListener('click',()=>selectTema(tk));
+    g.appendChild(card);
+  });
+}
+function selectTema(tk){
+  temaSel=tk;
+  document.querySelectorAll('.tcard').forEach(c=>c.classList.toggle('sel',c.dataset.tema===tk));
+  const card=document.querySelector(`.tcard[data-tema="${tk}"]`);
+  if(card) card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const t=TEMAS[tk]; const cells=TEMA_IDX[tk];
+  const tl=document.getElementById('timeline');
+  const mats=new Set(cells.map(c=>c.mat.id));
+  let track='';
+  ANIOS.forEach(an=>{
+    const items=cells.filter(c=>c.mat.anio===an);
+    const has=items.length>0;
+    track+=`<div class="tl-year ${has?'has':''}"><div class="yl">${an}° Año</div>`;
+    if(has){
+      // agrupar por materia
+      const byMat={};
+      items.forEach(it=>{(byMat[it.mat.id]=byMat[it.mat.id]||{mat:it.mat,ejes:[]}).ejes.push(it);});
+      Object.values(byMat).forEach(g=>{
+        const lv=Math.max(...g.ejes.map(x=>x.lvl));
+        track+=`<div class="tl-item"><div class="ti-s"><span class="dot" style="background:${AREAS[g.mat.area].color}"></span>${g.mat.n} <span class="pill l${lv}">${lv} ${LVLN[lv]}</span></div>`;
+        g.ejes.forEach(x=>{ track+=`<div class="ti-e">${x.eje.t}</div><div class="ti-d">${x.eje.d}</div>`; });
+        track+=`</div>`;
+      });
+    } else {
+      track+=`<div class="ti-d" style="color:var(--soft)">—</div>`;
+    }
+    track+='</div>';
+  });
+  // insight de progresión
+  const lvls=cells.map(c=>c.lvl);
+  const minl=Math.min(...lvls), maxl=Math.max(...lvls);
+  const aniosArr=[...new Set(cells.map(c=>c.mat.anio))].sort();
+  let insight='';
+  if(mats.size>1){
+    insight=`<div class="insight"><b>Repetición y profundización:</b> «${t.n}» aparece en <b>${mats.size} materias</b> a lo largo de ${aniosArr.length} año(s) (${aniosArr.map(a=>a+'°').join(', ')}), evolucionando del nivel <b>${minl} (${LVLN[minl]})</b> al nivel <b>${maxl} (${LVLN[maxl]})</b>. ${maxl>minl?'El tema se <b>refuerza y profundiza</b> progresivamente.':'Se aborda con profundidad similar en cada instancia.'}</div>`;
+  } else {
+    insight=`<div class="insight"><b>Tema focalizado:</b> «${t.n}» se dicta en una sola materia (${matById(cells[0].mat.id).n}, ${cells[0].mat.anio}° año), nivel ${maxl} (${LVLN[maxl]}).</div>`;
+  }
+  tl.innerHTML=`<div class="tl-head"><span class="dot" style="background:${t.c}"></span>${t.n}</div>
+    <div class="tl-desc">Recorrido del tema a lo largo de la tecnicatura — dónde se introduce, refuerza y profundiza.</div>
+    <div class="tl-track">${track}</div>${insight}`;
+}
+
+/* ============ VISTAS / BUSQUEDA ============ */
+function switchView(v){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  ['mapa','matriz','temas'].forEach(x=>document.getElementById('view-'+x).classList.toggle('hidden',x!==v));
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
+
+const q=document.getElementById('q');
+q.addEventListener('input',()=>{
+  const v=q.value.trim().toLowerCase();
+  // Mapa: filtra ejes/materias; abre coincidencias
+  document.querySelectorAll('#years .subj').forEach(sub=>{
+    const m=matById(sub.dataset.mat);
+    let any=!v;
+    sub.querySelectorAll('.eje').forEach(ej=>{
+      const txt=ej.textContent.toLowerCase();
+      const hit=!v||txt.includes(v);
+      ej.style.opacity=hit?'1':'0.18';
+      if(hit&&v) any=true;
+    });
+    const nameHit=m.n.toLowerCase().includes(v);
+    if(nameHit&&v) any=true;
+    sub.classList.toggle('hidden', v && !any);
+    if(v&&any) sub.classList.add('open');
+  });
+  // resalta temas en grid
+  document.querySelectorAll('.tcard').forEach(c=>{
+    const hit=!v||TEMAS[c.dataset.tema].n.toLowerCase().includes(v);
+    c.style.opacity=hit?'1':'0.25';
+  });
+});
+
+/* ============ INIT ============ */
+renderMapa(); renderMatriz(); renderThemeGrid();
+selectTema('micro'); // arranca mostrando microcontroladores (ejemplo de progresión 5°→7°)
+switchView('mapa');
+</script>
+</body>
+</html>
