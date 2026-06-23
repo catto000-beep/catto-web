@@ -57,6 +57,7 @@
       <div class="inline" style="margin-bottom:20px">
         <button class="btn sm" style="width:auto" onclick="formCurso()">＋ Nuevo curso</button>
         <button class="btn ghost sm" style="width:auto" onclick="formMateria()">＋ Nueva materia</button>
+        <button class="btn ghost sm" style="width:auto" onclick="abrirAdmin()">⚙️ Administrar</button>
       </div>
       <div id="clasesBox"><div class="empty">Cargando…</div></div>
     </section>
@@ -154,10 +155,7 @@ function renderClases(){
             </div>`).join('')
           : '<div style="color:var(--soft);font-size:12px;padding:4px 2px">Sin actividades en esta materia</div>';
         return `<div style="margin:12px 0 4px">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-              <span style="font-size:12.5px;font-weight:700;color:var(--accent)">${esc(m.nombre)}</span>
-              <button class="btn ghost sm" style="padding:3px 9px;font-size:11px;border-color:var(--hot);color:var(--hot)" onclick="event.stopPropagation(); confirmarBorrarMateria(${m.id})">🗑 Eliminar materia</button>
-            </div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--accent);margin-bottom:6px">${esc(m.nombre)}</div>
             <div class="act-list">${items}</div>
           </div>`;
       }).join('');
@@ -179,11 +177,52 @@ function toggleCurso(card){
   b.style.display = abierto ? 'none' : 'block';
   if(ch) ch.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
 }
+/* ---------- Panel de administración de cursos y materias ---------- */
+function abrirAdmin(){
+  const cuerpo = CURSOS.length ? CURSOS.map(c=>{
+    const mats = MATERIAS.filter(m=>m.curso_id===c.id);
+    const estud = ESTUD.filter(e=>e.curso_id===c.id).length;
+    const matRows = mats.length ? mats.map(m=>{
+      const nA = ACTS.filter(a=>a.materia_id===m.id).length;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0 7px 16px;border-top:1px solid var(--line)">
+          <span style="flex:1;font-size:13px">${esc(m.nombre)} <span style="color:var(--soft);font-size:11px">· ${nA} act.</span></span>
+          <button class="btn ghost sm" style="padding:3px 9px;font-size:11px" onclick="renombrarMateria(${m.id})">✏️ Renombrar</button>
+          <button class="btn ghost sm" style="padding:3px 9px;font-size:11px;border-color:var(--hot);color:var(--hot)" onclick="confirmarBorrarMateria(${m.id})">🗑</button>
+        </div>`;
+    }).join('') : '<div style="padding:7px 0 7px 16px;color:var(--soft);font-size:12px;border-top:1px solid var(--line)">Sin materias</div>';
+    return `<div style="margin-bottom:14px;border:1px solid var(--line);border-radius:10px;padding:12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="flex:1;font-weight:700">${esc(c.nombre)} <span style="color:var(--soft);font-size:11px;font-weight:400">· ${estud} estud.</span></span>
+          <button class="btn ghost sm" style="padding:3px 9px;font-size:11px" onclick="renombrarCurso(${c.id})">✏️ Renombrar</button>
+          <button class="btn ghost sm" style="padding:3px 9px;font-size:11px;border-color:var(--hot);color:var(--hot)" onclick="confirmarBorrarCurso(${c.id})">🗑</button>
+        </div>${matRows}
+      </div>`;
+  }).join('') : '<div class="empty">Todavía no hay cursos.</div>';
+  showModal(`<div class="mh"><h3>Administrar cursos y materias</h3><button class="x" onclick="closeM()">✕</button></div>
+    <div class="mb">${cuerpo}</div>
+    <div class="mf"><button class="btn sm" style="width:auto" onclick="closeM()">Listo</button></div>`);
+}
+async function renombrarCurso(id){
+  const c=CURSOS.find(x=>x.id===id); if(!c) return;
+  const nv=prompt('Nuevo nombre del curso:', c.nombre);
+  if(nv===null) return; const nombre=nv.trim(); if(!nombre) return;
+  const {error}=await sb.from('curso').update({nombre}).eq('id',id);
+  if(error) return alert('Error: '+error.message);
+  await cargarTodo(); abrirAdmin();
+}
+async function renombrarMateria(id){
+  const m=MATERIAS.find(x=>x.id===id); if(!m) return;
+  const nv=prompt('Nuevo nombre de la materia:', m.nombre);
+  if(nv===null) return; const nombre=nv.trim(); if(!nombre) return;
+  const {error}=await sb.from('materia').update({nombre}).eq('id',id);
+  if(error) return alert('Error: '+error.message);
+  await cargarTodo(); abrirAdmin();
+}
 function confirmarBorrarMateria(id){
   const m = MATERIAS.find(x=>x.id===id); if(!m) return;
   const nActs = ACTS.filter(a=>a.materia_id===id).length;
   showModal(`
-   <div class="mh"><div><h3>Eliminar materia</h3><div class="mc">${esc(m.nombre)}${m.curso?.nombre?' · '+esc(m.curso.nombre):''}</div></div><button class="x" onclick="closeM()">✕</button></div>
+   <div class="mh"><div><h3>Eliminar materia</h3><div class="mc">${esc(m.nombre)}${m.curso?.nombre?' · '+esc(m.curso.nombre):''}</div></div><button class="x" onclick="abrirAdmin()">✕</button></div>
    <div class="mb">
      <div class="note" style="background:linear-gradient(135deg,rgba(248,81,73,.16),rgba(248,81,73,.05));border-color:var(--hot)">
        <b>Esta acción es irreversible.</b> Vas a borrar la materia <b>${esc(m.nombre)}</b>${nActs?` junto con sus <b>${nActs} actividad(es)</b> y todas las entregas asociadas`:' (no tiene actividades)'}.
@@ -194,7 +233,7 @@ function confirmarBorrarMateria(id){
      </label>
    </div>
    <div class="mf">
-     <button class="btn ghost sm" style="width:auto" onclick="closeM()">Cancelar</button>
+     <button class="btn ghost sm" style="width:auto" onclick="abrirAdmin()">Cancelar</button>
      <button class="btn sm" id="del_btn" disabled style="width:auto;background:var(--hot);border-color:var(--hot)" onclick="borrarMateria(${id})">Eliminar definitivamente</button>
    </div>`);
 }
@@ -202,7 +241,38 @@ async function borrarMateria(id){
   const btn=document.getElementById('del_btn'); btn.disabled=true; btn.textContent='Eliminando…';
   const { error } = await sb.from('materia').delete().eq('id', id);
   if(error){ alert('Error: '+error.message); btn.disabled=false; btn.textContent='Eliminar definitivamente'; return; }
-  closeM(); await cargarTodo(); nav('clases');
+  await cargarTodo(); abrirAdmin();
+}
+function confirmarBorrarCurso(id){
+  const c = CURSOS.find(x=>x.id===id); if(!c) return;
+  const estud = ESTUD.filter(e=>e.curso_id===id).length;
+  const mats = MATERIAS.filter(m=>m.curso_id===id).length;
+  if(estud>0){
+    showModal(`<div class="mh"><h3>No se puede eliminar</h3><button class="x" onclick="abrirAdmin()">✕</button></div>
+      <div class="mb"><div class="note">El curso <b>${esc(c.nombre)}</b> tiene <b>${estud} estudiante(s)</b>. Para eliminarlo, primero eliminá o reasigná a esos estudiantes.</div></div>
+      <div class="mf"><button class="btn sm" style="width:auto" onclick="abrirAdmin()">Volver</button></div>`);
+    return;
+  }
+  showModal(`<div class="mh"><div><h3>Eliminar curso</h3><div class="mc">${esc(c.nombre)}</div></div><button class="x" onclick="abrirAdmin()">✕</button></div>
+   <div class="mb">
+     <div class="note" style="background:linear-gradient(135deg,rgba(248,81,73,.16),rgba(248,81,73,.05));border-color:var(--hot)">
+       <b>Esta acción es irreversible.</b> Vas a borrar el curso <b>${esc(c.nombre)}</b>${mats?` y sus <b>${mats} materia(s)</b> con sus actividades y entregas`:' (no tiene materias)'}.
+     </div>
+     <label style="display:inline-flex;align-items:center;gap:8px;color:var(--txt);font-size:13.5px">
+       <input type="checkbox" id="del_ok" style="width:auto" onchange="document.getElementById('del_btn').disabled=!this.checked">
+       Entiendo lo que va a pasar y quiero eliminarlo.
+     </label>
+   </div>
+   <div class="mf">
+     <button class="btn ghost sm" style="width:auto" onclick="abrirAdmin()">Cancelar</button>
+     <button class="btn sm" id="del_btn" disabled style="width:auto;background:var(--hot);border-color:var(--hot)" onclick="borrarCurso(${id})">Eliminar definitivamente</button>
+   </div>`);
+}
+async function borrarCurso(id){
+  const btn=document.getElementById('del_btn'); btn.disabled=true; btn.textContent='Eliminando…';
+  const { error } = await sb.from('curso').delete().eq('id', id);
+  if(error){ alert('Error: '+error.message); btn.disabled=false; btn.textContent='Eliminar definitivamente'; return; }
+  await cargarTodo(); abrirAdmin();
 }
 function renderEstud(){
   const body=document.getElementById('stuRows');
