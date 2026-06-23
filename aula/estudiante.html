@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula Catto · Estudiante</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/aula.css">
+</head>
+<body>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="logo">🎓</span> Aula Catto</div>
+    <a class="nav active">📋 Mis actividades</a>
+    <a class="nav" onclick="document.querySelector('.profile').scrollIntoView({behavior:'smooth'})">👤 Mi perfil</a>
+    <div class="spacer"></div>
+    <div class="me">
+      <div class="ph" id="meIni">·</div>
+      <div><b id="meName">…</b><span id="meCurso">Estudiante</span></div>
+    </div>
+    <a class="nav" onclick="logout()">↩ Salir</a>
+  </aside>
+
+  <main class="main">
+    <h1 id="hola">Hola 👋</h1>
+    <div class="crumb" id="subcrumb">…</div>
+
+    <!-- Perfil -->
+    <div class="profile">
+      <div class="pic" id="pic">·</div>
+      <div class="pinfo">
+        <h2 id="pNombre">…</h2>
+        <p id="pUser">…</p>
+        <div class="inline" style="margin-top:10px">
+          <button class="btn sm" style="width:auto" onclick="document.getElementById('fotoInput').click()">📷 Cambiar foto</button>
+          <input id="fotoInput" type="file" accept="image/*" style="display:none" onchange="subirFoto(this.files[0])">
+          <span id="fotoMsg" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="stats-row">
+      <div class="scard warn"><b id="s-pend">0</b><span>Pendientes</span></div>
+      <div class="scard"><b id="s-ent">0</b><span>Entregadas</span></div>
+      <div class="scard ok"><b id="s-cal">0</b><span>Calificadas</span></div>
+    </div>
+
+    <p class="section-title">Mis actividades</p>
+    <div class="act-list" id="actList"><div class="empty">Cargando…</div></div>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+let PERFIL, CURSO=null, ACTS=[], ENTREGAS={};
+
+(async function init(){
+  const auth = await requireAuth('estudiante');
+  if(!auth) return;
+  PERFIL = auth.perfil;
+  if(PERFIL.curso_id){
+    const { data } = await sb.from('curso').select('nombre').eq('id', PERFIL.curso_id).single();
+    CURSO = data?.nombre || null;
+  }
+  pintarPerfil();
+  await cargar();
+})();
+
+function pintarPerfil(){
+  const nom = `${PERFIL.nombre||''} ${PERFIL.apellido||''}`.trim() || 'Estudiante';
+  document.getElementById('hola').textContent = `Hola, ${PERFIL.nombre||''} 👋`;
+  document.getElementById('subcrumb').textContent = CURSO ? `Curso: ${CURSO}` : 'Sin curso asignado';
+  document.getElementById('meName').textContent = nom;
+  document.getElementById('meCurso').textContent = CURSO || 'Estudiante';
+  document.getElementById('meIni').textContent = iniciales(PERFIL.nombre, PERFIL.apellido);
+  document.getElementById('pNombre').textContent = nom;
+  document.getElementById('pUser').innerHTML = `Usuario: <b>${esc(PERFIL.usuario||'')}</b>${CURSO?` · Curso: ${esc(CURSO)}`:''}`;
+  pintarFoto();
+}
+async function pintarFoto(){
+  const pic = document.getElementById('pic');
+  if(PERFIL.foto_path){
+    const url = await signedUrl('fotos-perfil', PERFIL.foto_path, 600);
+    if(url){ pic.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; return; }
+  }
+  pic.textContent = iniciales(PERFIL.nombre, PERFIL.apellido);
+}
+async function subirFoto(file){
+  if(!file) return;
+  const msg = document.getElementById('fotoMsg');
+  if(!file.type.startsWith('image/')) { msg.textContent='Tiene que ser una imagen.'; return; }
+  if(file.size > 3*1024*1024){ msg.textContent='Máximo 3 MB.'; return; }
+  msg.style.color='var(--muted)'; msg.textContent='Subiendo…';
+  try{
+    const path = `${PERFIL.id}/${Date.now()}_${safeName(file.name)}`;
+    await subirArchivo('fotos-perfil', path, file);
+    const { error } = await sb.from('perfil').update({ foto_path: path }).eq('id', PERFIL.id);
+    if(error) throw error;
+    PERFIL.foto_path = path;
+    msg.style.color='var(--ok)'; msg.textContent='✓ Foto actualizada';
+    pintarFoto();
+  }catch(e){ msg.style.color='var(--hot)'; msg.textContent='Error: '+e.message; }
+}
+
+async function cargar(){
+  // RLS ya limita las actividades a las materias del curso del estudiante
+  const [{ data:acts }, { data:ents }] = await Promise.all([
+    sb.from('actividad').select('*, materia(nombre)').order('fecha_limite',{ascending:true,nullsFirst:false}),
+    sb.from('entrega').select('*').eq('estudiante_id', PERFIL.id)
+  ]);
+  ACTS = acts||[];
+  ENTREGAS = {}; (ents||[]).forEach(e=> ENTREGAS[e.actividad_id]=e);
+  render();
+}
+
+function estadoDe(a){
+  const e = ENTREGAS[a.id];
+  if(!e) return 'pendiente';
+  return e.estado === 'calificado' ? 'calificada' : 'entregada';
+}
+const BADGE = {pendiente:{c:'b-pend',t:'Pendiente'}, entregada:{c:'b-ent',t:'Entregada'}, calificada:{c:'b-cal',t:'Calificada'}};
+
+function render(){
+  const box = document.getElementById('actList');
+  let p=0,en=0,c=0;
+  if(!ACTS.length){
+    box.innerHTML = '<div class="empty">Todavía no hay actividades en tus materias. Cuando el profesor publique una, va a aparecer acá.</div>';
+  } else {
+    box.innerHTML = ACTS.map(a=>{
+      const st = estadoDe(a); const b = BADGE[st];
+      if(st==='pendiente')p++; else if(st==='entregada')en++; else c++;
+      const e = ENTREGAS[a.id];
+      const soon = a.fecha_limite && st==='pendiente';
+      return `<div class="act" onclick="openAct(${a.id})">
+        <div class="ai"><h3>${esc(a.titulo)}</h3><div class="am">${esc(a.materia?.nombre||'')}</div></div>
+        <div class="due ${soon?'soon':''}">${fechaTxt(a.fecha_limite)}</div>
+        ${st==='calificada' && e?.nota_num!=null ? `<span class="nota">${e.nota_num}</span>` : ''}
+        <span class="badge2 ${b.c}">${b.t}</span>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('s-pend').textContent=p;
+  document.getElementById('s-ent').textContent=en;
+  document.getElementById('s-cal').textContent=c;
+}
+
+async function openAct(id){
+  const a = ACTS.find(x=>x.id===id); if(!a) return;
+  const e = ENTREGAS[a.id];
+  const st = estadoDe(a);
+  const cerrada = vencida(a.fecha_limite);
+
+  // Material de la consigna
+  let mat = '';
+  const yid = ytId(a.video_url);
+  const adj = Array.isArray(a.adjuntos) ? a.adjuntos : [];
+  if(adj.length || a.video_url){
+    mat = `<div class="inline" style="margin-top:4px">
+      ${adj.map(ad=>`<a onclick='verArchivo("consignas","${esc(ad.path)}")'>📎 ${esc(ad.nombre||'Adjunto')}</a>`).join('')}
+      ${a.video_url && !yid?`<a href="${esc(a.video_url)}" target="_blank" rel="noopener">▶ Video de referencia</a>`:''}
+    </div>`;
+  }
+  const video = yid ? `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;border:1px solid var(--line)">
+      <iframe src="https://www.youtube.com/embed/${yid}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : '';
+
+  // Devolución
+  let grade = '';
+  if(st==='calificada'){
+    grade = `<div class="grade-box"><label>Devolución del profesor</label>
+      <div class="inline">${e.nota_num!=null?`<span class="gn">${e.nota_num}</span>`:''}${e.nota_concepto?`<span class="badge2 b-cal">${esc(e.nota_concepto)}</span>`:''}</div>
+      ${e.comentario_profesor?`<p style="margin:10px 0 0;font-size:13.5px;color:var(--txt)">${esc(e.comentario_profesor)}</p>`:''}</div>`;
+  }
+
+  // Entrega
+  let entrega = '';
+  if(e){
+    entrega = `<div><label>Tu entrega</label><div class="consigna">
+      ${e.archivo_path?`<a onclick='verArchivo("entregas","${esc(e.archivo_path)}")'>📄 Ver mi archivo</a>`:'(sin archivo)'}
+      ${e.entregado_en?` · <span style="color:var(--soft);font-size:12px">${new Date(e.entregado_en).toLocaleString('es-AR')}</span>`:''}
+      ${e.comentario_estudiante?`<div style="margin-top:8px;color:var(--muted)">“${esc(e.comentario_estudiante)}”</div>`:''}
+    </div></div>`;
+  }
+
+  // Formulario de subida (si se puede entregar/reentregar)
+  const puedeEntregar = st!=='calificada' && !cerrada;
+  let form = '';
+  if(puedeEntregar){
+    form = `<div>
+      <label>${e?'Reentregar (reemplaza tu entrega)':'Subir tu trabajo'}</label>
+      <div class="drop" onclick="document.getElementById('subInput').click()">
+        <span class="di">📎</span> <span id="subName">Hacé clic para elegir tu archivo</span><br>
+        <span style="font-size:11.5px;color:var(--soft)">PDF · JPG · PNG · DOC — hasta 10 MB</span>
+      </div>
+      <input id="subInput" type="file" style="display:none" onchange="document.getElementById('subName').textContent=this.files[0]?this.files[0].name:'Hacé clic para elegir tu archivo'">
+      <label style="margin-top:14px">Comentario (opcional)</label>
+      <textarea id="subCom" rows="2" placeholder="Algo que quieras aclararle al profe…">${e?esc(e.comentario_estudiante||''):''}</textarea>
+      <div id="subMsg" style="font-size:12.5px;margin-top:8px;color:var(--muted)"></div>
+    </div>`;
+  } else if(cerrada && st!=='calificada'){
+    form = `<div class="note">La fecha límite venció. Ya no se puede entregar.</div>`;
+  }
+
+  document.getElementById('modal').innerHTML = `
+    <div class="mh"><div><h3>${esc(a.titulo)}</h3><div class="mc">${esc(a.materia?.nombre||'')} · ${fechaTxt(a.fecha_limite)}</div></div>
+      <button class="x" onclick="closeM()">✕</button></div>
+    <div class="mb">
+      <div><label>Consigna</label><div class="consigna">${esc(a.consigna||'(sin consigna)')}</div>${mat}</div>
+      ${video}
+      ${grade}
+      ${entrega}
+      ${form}
+    </div>
+    <div class="mf">
+      <button class="btn ghost sm" style="width:auto" onclick="closeM()">Cerrar</button>
+      ${puedeEntregar?`<button class="btn sm" id="subBtn" style="width:auto" onclick="entregar(${a.id})">${e?'Reentregar':'Entregar'}</button>`:''}
+    </div>`;
+  document.getElementById('modalBg').classList.add('open');
+}
+
+async function entregar(actId){
+  const file = document.getElementById('subInput').files[0];
+  const com  = document.getElementById('subCom').value.trim() || null;
+  const msg  = document.getElementById('subMsg');
+  if(!file){ msg.style.color='var(--warn)'; msg.textContent='Elegí un archivo primero.'; return; }
+  if(file.size > 10*1024*1024){ msg.style.color='var(--hot)'; msg.textContent='El archivo supera los 10 MB.'; return; }
+  const btn = document.getElementById('subBtn'); btn.disabled=true; btn.textContent='Subiendo…';
+  try{
+    const path = `${PERFIL.id}/${actId}_${Date.now()}_${safeName(file.name)}`;
+    await subirArchivo('entregas', path, file);
+    const { error } = await sb.from('entrega').upsert({
+      actividad_id: actId, estudiante_id: PERFIL.id,
+      archivo_path: path, comentario_estudiante: com,
+      entregado_en: new Date().toISOString(), estado: 'entregado'
+    }, { onConflict: 'actividad_id,estudiante_id' });
+    if(error) throw error;
+    closeM(); await cargar();
+  }catch(err){
+    msg.style.color='var(--hot)'; msg.textContent='Error: '+err.message;
+    btn.disabled=false; btn.textContent='Entregar';
+  }
+}
+
+async function verArchivo(bucket, path){
+  const url = await signedUrl(bucket, path, 120);
+  if(!url) return alert('No se pudo abrir el archivo.');
+  window.open(url, '_blank');
+}
+function closeM(){ document.getElementById('modalBg').classList.remove('open'); }
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg')closeM();});
+</script>
+</body>
+</html>

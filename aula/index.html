@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula Catto · Acceso</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/aula.css">
+</head>
+<body>
+
+<div class="gate">
+  <div class="gate-card">
+    <div class="gate-logo"><span class="logo">🎓</span> Aula <span style="color:var(--accent)">Catto</span></div>
+    <div class="gate-sub">Ingresá con el usuario y la contraseña que te entregó el profesor.</div>
+
+    <form id="loginForm">
+      <div class="field">
+        <label>Usuario</label>
+        <input id="usuario" type="text" placeholder="apellido.nombre" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn" type="submit">Ingresar</button>
+      <div id="msg" style="font-size:12.5px;margin-top:12px;min-height:16px;text-align:center;color:var(--muted)"></div>
+    </form>
+
+  </div>
+</div>
+
+<div style="position:fixed;bottom:14px;width:100%;text-align:center">
+  <a href="../index.html" style="color:var(--soft);font-size:12px">← Volver a catto.ar</a>
+</div>
+
+<!-- Supabase (login real) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/config.js"></script>
+<script>
+  const sb = supabase.createClient(window.AULA_CONFIG.SUPABASE_URL, window.AULA_CONFIG.SUPABASE_KEY);
+  const msg = document.getElementById('msg');
+
+  // Si ya hay sesión activa, ofrecer continuar
+  sb.auth.getSession().then(async ({ data:{ session } })=>{
+    if(!session) return;
+    const { data:p } = await sb.from('perfil').select('rol').eq('id', session.user.id).single();
+    if(p){ msg.style.color='var(--muted)';
+      msg.innerHTML = `Ya tenés sesión iniciada. <a href="${p.rol==='profesor'?'profesor.html':'estudiante.html'}">Continuar →</a>`; }
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const id = document.getElementById('usuario').value.trim();
+    const pass = document.getElementById('pass').value;
+    if(!id || !pass){ return; }
+    msg.style.color='var(--muted)'; msg.textContent='Verificando…';
+
+    // Si no escribió un email, completamos con el dominio sintético
+    const email = id.includes('@') ? id : `${id}@${window.AULA_CONFIG.EMAIL_DOMAIN}`;
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if(error){ msg.style.color='var(--hot)'; msg.textContent='No pudimos ingresar: '+error.message; return; }
+
+    const { data:perfil, error:pe } = await sb.from('perfil').select('rol,nombre').eq('id', data.user.id).single();
+    if(pe || !perfil){
+      msg.style.color='var(--warn)';
+      msg.textContent='Ingresaste, pero no encontré tu perfil. ¿Corriste el SQL "crear-profesor"?';
+      return;
+    }
+    msg.style.color='var(--ok)';
+    msg.textContent=`✅ Hola ${perfil.nombre||''} (rol: ${perfil.rol}). Entrando…`;
+    setTimeout(()=>{ location.href = perfil.rol==='profesor' ? 'profesor.html' : 'estudiante.html'; }, 1100);
+  });
+</script>
+</body>
+</html>

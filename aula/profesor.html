@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aula Catto · Profesor</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/aula.css">
+</head>
+<body>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="logo">🎓</span> Aula Catto</div>
+    <a class="nav active" data-v="tablero" onclick="nav('tablero')">📊 Tablero</a>
+    <a class="nav" data-v="actividades" onclick="nav('actividades')">📋 Actividades</a>
+    <a class="nav" data-v="clases" onclick="nav('clases')">🏫 Cursos y materias</a>
+    <a class="nav" data-v="estudiantes" onclick="nav('estudiantes')">👥 Estudiantes</a>
+    <div class="spacer"></div>
+    <div class="me">
+      <div class="ph" id="meIni">·</div>
+      <div><b id="meName">…</b><span>Profesor</span></div>
+    </div>
+    <a class="nav" onclick="logout()">↩ Salir</a>
+  </aside>
+
+  <main class="main">
+    <!-- ===== TABLERO ===== -->
+    <section data-view="tablero">
+      <h1>Tablero general</h1>
+      <div class="crumb">Resumen de tus cursos · ciclo 2026</div>
+      <div class="stats-row">
+        <div class="scard"><b id="t-cursos">·</b><span>Cursos</span></div>
+        <div class="scard"><b id="t-materias">·</b><span>Materias</span></div>
+        <div class="scard"><b id="t-estud">·</b><span>Estudiantes</span></div>
+        <div class="scard"><b id="t-acts">·</b><span>Actividades</span></div>
+      </div>
+      <p class="section-title">Actividades recientes</p>
+      <div class="act-list" id="recientes"><div class="empty">Cargando…</div></div>
+    </section>
+
+    <!-- ===== ACTIVIDADES ===== -->
+    <section data-view="actividades" class="hidden">
+      <h1>Actividades</h1>
+      <div class="crumb">Creá y seguí las actividades de tus materias</div>
+      <div class="inline" style="margin-bottom:20px">
+        <button class="btn sm" style="width:auto" onclick="formActividad()">＋ Nueva actividad</button>
+      </div>
+      <div class="act-list" id="actList"><div class="empty">Cargando…</div></div>
+    </section>
+
+    <!-- ===== CLASES ===== -->
+    <section data-view="clases" class="hidden">
+      <h1>Cursos y materias</h1>
+      <div class="crumb">Tu estructura de clases. Primero el curso, después sus materias.</div>
+      <div class="inline" style="margin-bottom:20px">
+        <button class="btn sm" style="width:auto" onclick="formCurso()">＋ Nuevo curso</button>
+        <button class="btn ghost sm" style="width:auto" onclick="formMateria()">＋ Nueva materia</button>
+      </div>
+      <div id="clasesBox"><div class="empty">Cargando…</div></div>
+    </section>
+
+    <!-- ===== ESTUDIANTES ===== -->
+    <section data-view="estudiantes" class="hidden">
+      <h1>Estudiantes</h1>
+      <div class="crumb">Cuentas por curso</div>
+      <div class="inline" style="margin-bottom:18px">
+        <button class="btn sm" style="width:auto" onclick="formImportar()">📥 Importar lista del curso</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="t">
+          <thead><tr><th>Estudiante</th><th>Usuario</th><th>Curso</th><th>Estado</th></tr></thead>
+          <tbody id="stuRows"><tr><td colspan="4" style="color:var(--soft)">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal" style="max-width:680px"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';</script>
+<script src="assets/config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+let PERFIL, CURSOS=[], MATERIAS=[], ACTS=[], ESTUD=[];
+
+(async function init(){
+  const auth = await requireAuth('profesor');
+  if(!auth) return;
+  PERFIL = auth.perfil;
+  document.getElementById('meName').textContent = (PERFIL.nombre||'Profesor')+' '+(PERFIL.apellido||'');
+  document.getElementById('meIni').textContent = iniciales(PERFIL.nombre, PERFIL.apellido);
+  await cargarTodo();
+})();
+
+async function cargarTodo(){
+  const [c,m,a,e] = await Promise.all([
+    sb.from('curso').select('*').order('nombre'),
+    sb.from('materia').select('id,nombre,curso_id, curso(nombre)').order('nombre'),
+    sb.from('actividad').select('id,titulo,consigna,fecha_limite,adjuntos,video_url,materia_id, materia(nombre,curso_id,curso(nombre))').order('creada_en',{ascending:false}),
+    sb.from('perfil').select('id,nombre,apellido,usuario,curso_id,activo').eq('rol','estudiante').order('apellido'),
+  ]);
+  CURSOS=c.data||[]; MATERIAS=m.data||[]; ACTS=a.data||[]; ESTUD=e.data||[];
+  renderTablero(); renderActs(); renderClases(); renderEstud();
+}
+
+/* ---------- Render ---------- */
+function nav(v){
+  document.querySelectorAll('.side .nav[data-v]').forEach(n=>n.classList.toggle('active',n.dataset.v===v));
+  document.querySelectorAll('section[data-view]').forEach(s=>s.classList.toggle('hidden',s.dataset.view!==v));
+}
+function actCardHTML(a){
+  const curso = a.materia?.curso?.nombre || '';
+  return `<div class="act" onclick='openEntregas(${a.id})'>
+    <div class="ai"><h3>${esc(a.titulo)}</h3><div class="am">${esc(a.materia?.nombre||'—')}${curso?' · '+esc(curso):''}</div></div>
+    <div class="due">${fechaTxt(a.fecha_limite)}</div>
+  </div>`;
+}
+function renderTablero(){
+  document.getElementById('t-cursos').textContent = CURSOS.length;
+  document.getElementById('t-materias').textContent = MATERIAS.length;
+  document.getElementById('t-estud').textContent = ESTUD.length;
+  document.getElementById('t-acts').textContent = ACTS.length;
+  const box=document.getElementById('recientes');
+  box.innerHTML = ACTS.length ? ACTS.slice(0,5).map(actCardHTML).join('')
+    : '<div class="empty">Todavía no creaste actividades. Andá a “Actividades → Nueva actividad”.</div>';
+}
+function renderActs(){
+  const box=document.getElementById('actList');
+  box.innerHTML = ACTS.length ? ACTS.map(actCardHTML).join('')
+    : '<div class="empty">Sin actividades aún. Creá la primera con “＋ Nueva actividad”.</div>';
+}
+function renderClases(){
+  const box=document.getElementById('clasesBox');
+  if(!CURSOS.length){ box.innerHTML='<div class="empty">Todavía no hay cursos. Creá el primero con “＋ Nuevo curso”.</div>'; return; }
+  box.innerHTML = CURSOS.map(c=>{
+    const mats = MATERIAS.filter(m=>m.curso_id===c.id);
+    const estud = ESTUD.filter(e=>e.curso_id===c.id).length;
+    const actsCurso = ACTS.filter(a=>a.materia?.curso_id===c.id);
+    let body;
+    if(!mats.length){
+      body = '<div style="color:var(--soft);font-size:12.5px;padding:6px 2px">Sin materias todavía. Creá una con “＋ Nueva materia”.</div>';
+    } else {
+      body = mats.map(m=>{
+        const am = actsCurso.filter(a=>a.materia_id===m.id);
+        const items = am.length ? am.map(a=>`
+            <div class="act" style="padding:10px 12px" onclick="event.stopPropagation(); openEntregas(${a.id})">
+              <div class="ai"><h3 style="font-size:14px">${esc(a.titulo)}</h3><div class="am">${fechaTxt(a.fecha_limite)}</div></div>
+              <span class="badge2 b-ent">Abrir →</span>
+            </div>`).join('')
+          : '<div style="color:var(--soft);font-size:12px;padding:4px 2px">Sin actividades en esta materia</div>';
+        return `<div style="margin:12px 0 4px">
+            <div style="font-size:12.5px;font-weight:700;color:var(--accent);margin-bottom:6px">${esc(m.nombre)}</div>
+            <div class="act-list">${items}</div>
+          </div>`;
+      }).join('');
+    }
+    return `<div class="card" style="margin-bottom:14px;cursor:pointer" onclick="toggleCurso(this)">
+      <h3 style="margin:0;display:flex;align-items:center;gap:8px">
+        <span class="chev" style="color:var(--muted);transition:transform .15s">▶</span>
+        ${esc(c.nombre)}
+        <span style="color:var(--soft);font-size:12px;font-weight:400;margin-left:auto">${mats.length} materia(s) · ${actsCurso.length} actividad(es) · ${estud} estudiante(s)</span>
+      </h3>
+      <div class="curso-body" style="display:none;margin-top:6px">${body}</div>
+    </div>`;
+  }).join('');
+}
+function toggleCurso(card){
+  const b = card.querySelector('.curso-body');
+  const ch = card.querySelector('.chev');
+  const abierto = b.style.display !== 'none';
+  b.style.display = abierto ? 'none' : 'block';
+  if(ch) ch.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+function renderEstud(){
+  const body=document.getElementById('stuRows');
+  if(!ESTUD.length){ body.innerHTML='<tr><td colspan="4" style="color:var(--soft)">Todavía no hay estudiantes cargados.</td></tr>'; return; }
+  body.innerHTML = ESTUD.map(s=>{
+    const curso = CURSOS.find(c=>c.id===s.curso_id)?.nombre || '—';
+    return `<tr><td><div class="stu"><div class="ph">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
+      <td style="color:var(--muted)">${esc(s.usuario||'')}</td><td>${esc(curso)}</td>
+      <td><span class="badge2 ${s.activo?'b-cal':'b-falta'}">${s.activo?'Activo':'Inactivo'}</span></td></tr>`;
+  }).join('');
+}
+
+/* ---------- Modales / formularios ---------- */
+function showModal(html){ document.getElementById('modal').innerHTML=html; document.getElementById('modalBg').classList.add('open'); }
+function closeM(){ document.getElementById('modalBg').classList.remove('open'); }
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg')closeM();});
+
+function formCurso(){
+  showModal(`<div class="mh"><h3>Nuevo curso</h3><button class="x" onclick="closeM()">✕</button></div>
+   <div class="mb">
+     <div><label>Nombre del curso</label><input id="f_cnom" placeholder="6° A"></div>
+     <div><label>Año (opcional)</label><input id="f_canio" type="number" placeholder="2026"></div>
+   </div>
+   <div class="mf"><button class="btn ghost sm" style="width:auto" onclick="closeM()">Cancelar</button>
+     <button class="btn sm" style="width:auto" onclick="saveCurso()">Crear curso</button></div>`);
+}
+async function saveCurso(){
+  const nombre=document.getElementById('f_cnom').value.trim();
+  const anio=parseInt(document.getElementById('f_canio').value)||null;
+  if(!nombre) return alert('Poné un nombre.');
+  const {error}=await sb.from('curso').insert({nombre, anio});
+  if(error) return alert('Error: '+error.message);
+  closeM(); await cargarTodo(); nav('clases');
+}
+function formMateria(){
+  if(!CURSOS.length) return alert('Primero creá un curso.');
+  showModal(`<div class="mh"><h3>Nueva materia</h3><button class="x" onclick="closeM()">✕</button></div>
+   <div class="mb">
+     <div><label>Curso</label><select id="f_mcurso">${CURSOS.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}</select></div>
+     <div><label>Nombre de la materia</label><input id="f_mnom" placeholder="Electrónica Digital III"></div>
+   </div>
+   <div class="mf"><button class="btn ghost sm" style="width:auto" onclick="closeM()">Cancelar</button>
+     <button class="btn sm" style="width:auto" onclick="saveMateria()">Crear materia</button></div>`);
+}
+async function saveMateria(){
+  const curso_id=parseInt(document.getElementById('f_mcurso').value);
+  const nombre=document.getElementById('f_mnom').value.trim();
+  if(!nombre) return alert('Poné un nombre.');
+  const {error}=await sb.from('materia').insert({curso_id, nombre});
+  if(error) return alert('Error: '+error.message);
+  closeM(); await cargarTodo(); nav('clases');
+}
+function formActividad(act){
+  if(!MATERIAS.length) return alert('Primero creá un curso y una materia (pestaña “Cursos y materias”).');
+  const ed = act || null;
+  const matOpts = MATERIAS.map(m=>`<option value="${m.id}" ${ed&&m.id===ed.materia_id?'selected':''}>${esc(m.nombre)} · ${esc(m.curso?.nombre||'')}</option>`).join('');
+  const adjActuales = (ed && Array.isArray(ed.adjuntos) && ed.adjuntos.length) ? `
+     <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+       <span style="font-size:11.5px;color:var(--soft)">Adjuntos actuales:</span>
+       ${ed.adjuntos.map((ad,i)=>`<label style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px">
+          <input type="checkbox" class="f_aquita" data-i="${i}" style="width:auto"> 📎 ${esc(ad.nombre||'archivo')} <span style="color:var(--soft)">(quitar)</span></label>`).join('')}
+     </div>` : '';
+  showModal(`<div class="mh"><h3>${ed?'Editar actividad':'Nueva actividad'}</h3><button class="x" onclick="closeM()">✕</button></div>
+   <div class="mb">
+     <div><label>Materia</label><select id="f_amat">${matOpts}</select></div>
+     <div><label>Título</label><input id="f_atit" value="${ed?esc(ed.titulo):''}" placeholder="Informe: rectificador de onda completa"></div>
+     <div><label>Consigna</label><textarea id="f_acon" rows="4" placeholder="Qué tienen que hacer y entregar…">${ed?esc(ed.consigna||''):''}</textarea></div>
+     <div><label>${ed?'Agregar adjuntos (opcional)':'Archivos adjuntos (opcional)'}</label><input id="f_aarch" type="file" multiple>${adjActuales}<div style="font-size:11px;color:var(--soft);margin-top:4px">Podés elegir varios · PDF, imagen o documento · hasta 10 MB c/u</div></div>
+     <div><label>Video de YouTube (opcional)</label><input id="f_avid" value="${ed?esc(ed.video_url||''):''}" placeholder="https://www.youtube.com/watch?v=…"></div>
+     <div><label>Fecha límite (opcional)</label><input id="f_alim" type="date" value="${ed&&ed.fecha_limite?ed.fecha_limite:''}"></div>
+   </div>
+   <div class="mf">
+     ${ed?`<button class="btn ghost sm" style="width:auto;border-color:var(--hot);color:var(--hot);margin-right:auto" onclick="eliminarActividad(${ed.id})">🗑 Eliminar</button>`:''}
+     <button class="btn ghost sm" style="width:auto" onclick="closeM()">Cancelar</button>
+     <button class="btn sm" id="f_abtn" style="width:auto" onclick="saveActividad(${ed?ed.id:'null'})">${ed?'Guardar cambios':'Crear actividad'}</button>
+   </div>`);
+}
+async function saveActividad(id){
+  const materia_id=parseInt(document.getElementById('f_amat').value);
+  const titulo=document.getElementById('f_atit').value.trim();
+  const consigna=document.getElementById('f_acon').value.trim();
+  const fecha_limite=document.getElementById('f_alim').value||null;
+  const video_url=document.getElementById('f_avid').value.trim()||null;
+  const files=document.getElementById('f_aarch').files;
+  if(!titulo) return alert('Poné un título.');
+  if(video_url && !ytId(video_url) && !/^https?:\/\//.test(video_url)) return alert('El video tiene que ser un link válido de YouTube.');
+  const btn=document.getElementById('f_abtn'); btn.disabled=true; btn.textContent='Guardando…';
+  try{
+    // Adjuntos: parto de los actuales (menos los marcados para quitar) y sumo los nuevos
+    let adjuntos = [];
+    if(id){
+      const ed = ACTS.find(x=>x.id===id);
+      const actuales = Array.isArray(ed?.adjuntos) ? ed.adjuntos : [];
+      const quitar = new Set([...document.querySelectorAll('.f_aquita:checked')].map(c=>parseInt(c.dataset.i)));
+      adjuntos = actuales.filter((_,i)=>!quitar.has(i));
+    }
+    for(let i=0;i<files.length;i++){
+      const f=files[i];
+      if(f.size > 10*1024*1024) throw new Error(`"${f.name}" supera los 10 MB.`);
+      const path = await subirArchivo('consignas', `${Date.now()}_${i}_${safeName(f.name)}`, f);
+      adjuntos.push({ path, nombre: f.name });
+    }
+    const datos={materia_id, titulo, consigna, fecha_limite, video_url, adjuntos};
+    let error;
+    if(id){ ({error} = await sb.from('actividad').update(datos).eq('id', id)); }
+    else  { ({error} = await sb.from('actividad').insert(datos)); }
+    if(error) throw error;
+    closeM(); await cargarTodo(); nav('actividades');
+  }catch(e){ alert('Error: '+e.message); btn.disabled=false; btn.textContent=id?'Guardar cambios':'Crear actividad'; }
+}
+async function eliminarActividad(id){
+  if(!confirm('¿Eliminar esta actividad?\n\nSe borrarán también todas las entregas asociadas. Esta acción no se puede deshacer.')) return;
+  const { error } = await sb.from('actividad').delete().eq('id', id);
+  if(error) return alert('Error: '+error.message);
+  closeM(); await cargarTodo(); nav('actividades');
+}
+
+/* ---------- Entregas de una actividad ---------- */
+async function openEntregas(id){
+  const a=ACTS.find(x=>x.id===id); if(!a) return;
+  const cursoId=a.materia?.curso_id;
+  showModal(`<div class="mh"><div><h3>${esc(a.titulo)}</h3><div class="mc">${esc(a.materia?.nombre||'')} · ${fechaTxt(a.fecha_limite)}</div></div><button class="x" onclick="closeM()">✕</button></div><div class="mb"><div class="empty">Cargando entregas…</div></div>`);
+  const [{data:students},{data:entregas}] = await Promise.all([
+    sb.from('perfil').select('id,nombre,apellido').eq('rol','estudiante').eq('curso_id',cursoId),
+    sb.from('entrega').select('*').eq('actividad_id', id)
+  ]);
+  const byId={}; (entregas||[]).forEach(e=>byId[e.estudiante_id]=e);
+  const roster = (students||[]);
+  const entregaron = (entregas||[]).length;
+  let rows;
+  if(!roster.length){
+    rows = `<tr><td colspan="4" style="color:var(--soft)">No hay estudiantes en este curso todavía.</td></tr>`;
+  } else {
+    rows = roster.map(s=>{
+      const e=byId[s.id];
+      const estado = !e ? 'falta' : e.estado;
+      const cls = {falta:'b-falta',entregado:'b-ent',calificado:'b-cal'}[estado];
+      const txt = {falta:'No entregó',entregado:'Entregada',calificado:'Calificada'}[estado];
+      const nota = e?.nota_num!=null ? `<b class="nota">${e.nota_num}</b> <span style="color:var(--muted);font-size:12px">${esc(e.nota_concepto||'')}</span>` :
+                   (e ? `<button class="btn sm" style="width:auto" onclick='gradeForm(${e.id})'>Calificar</button>` : '<span style="color:var(--soft)">—</span>');
+      const arch = e?.archivo_path ? `<a onclick='verArchivo("entregas","${esc(e.archivo_path)}")'>📄 ver</a>` : '<span style="color:var(--soft)">—</span>';
+      return `<tr><td><div class="stu"><div class="ph">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
+        <td>${arch}</td><td><span class="badge2 ${cls}">${txt}</span></td><td>${nota}</td></tr>`;
+    }).join('');
+  }
+  document.getElementById('modal').innerHTML=`
+    <div class="mh"><div><h3>${esc(a.titulo)}</h3><div class="mc">${esc(a.materia?.nombre||'')} · ${entregaron}/${roster.length} entregaron</div></div><button class="x" onclick="closeM()">✕</button></div>
+    <div class="mb" style="padding-top:6px">
+      ${a.consigna?`<div class="consigna">${esc(a.consigna)}</div>`:''}
+      ${((a.adjuntos&&a.adjuntos.length)||a.video_url)?`<div class="inline">
+        ${(a.adjuntos||[]).map(ad=>`<a onclick='verArchivo("consignas","${esc(ad.path)}")'>📎 ${esc(ad.nombre||'Adjunto')}</a>`).join('')}
+        ${a.video_url?`<a href="${esc(a.video_url)}" target="_blank" rel="noopener">▶ Video de referencia</a>`:''}
+      </div>`:''}
+      <div class="tbl-wrap"><table class="t"><thead><tr><th>Estudiante</th><th>Entrega</th><th>Estado</th><th>Nota</th></tr></thead><tbody>${rows}</tbody></table></div>
+    </div>
+    <div class="mf">
+      <button class="btn ghost sm" style="width:auto" onclick="closeM()">Cerrar</button>
+      <button class="btn sm" style="width:auto" onclick='formActividad(window._roster.a)'>✏️ Editar actividad</button>
+    </div>`;
+  window._roster={a,roster,byId};
+}
+function gradeForm(entregaId){
+  showModal(`<div class="mh"><h3>Calificar entrega</h3><button class="x" onclick="closeM()">✕</button></div>
+   <div class="mb">
+     <div><label>Nota numérica (1–10)</label><input id="g_num" type="number" min="1" max="10" step="0.5"></div>
+     <div><label>Concepto (opcional)</label><input id="g_con" placeholder="Muy bueno"></div>
+     <div><label>Comentario (opcional)</label><textarea id="g_com" rows="3" placeholder="Devolución para el estudiante…"></textarea></div>
+   </div>
+   <div class="mf"><button class="btn ghost sm" style="width:auto" onclick="closeM()">Cancelar</button>
+     <button class="btn sm" style="width:auto" onclick="saveGrade(${entregaId})">Guardar nota</button></div>`);
+}
+async function saveGrade(entregaId){
+  const nota_num=parseFloat(document.getElementById('g_num').value)||null;
+  const nota_concepto=document.getElementById('g_con').value.trim()||null;
+  const comentario_profesor=document.getElementById('g_com').value.trim()||null;
+  const {error}=await sb.from('entrega').update({nota_num,nota_concepto,comentario_profesor,estado:'calificado'}).eq('id',entregaId);
+  if(error) return alert('Error: '+error.message);
+  closeM();
+}
+async function verArchivo(bucket, path){
+  const {data,error}=await sb.storage.from(bucket).createSignedUrl(path, 60);
+  if(error) return alert('No se pudo abrir: '+error.message);
+  window.open(data.signedUrl,'_blank');
+}
+
+/* ---------- Lectura del PDF del CIDI (en el navegador) ----------
+   Detecta las columnas "Apellido" y "Nombre" por la posición de sus
+   encabezados y extrae solo esos dos campos de cada fila. */
+async function leerPDF(file){
+  if(!window.pdfjsLib) throw new Error('No cargó el lector de PDF. Revisá la conexión y recargá.');
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  // En la libreta del CIDI cada estudiante es un único texto "APELLIDO, NOMBRE".
+  const NAME = /^[A-Za-zÁÉÍÓÚÑáéíóúñÜüçÇ'’.\- ]+,\s+[A-Za-zÁÉÍÓÚÑáéíóúñÜüçÇ'’.\- ]+$/;
+  const items = [];
+  for(let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const tc = await page.getTextContent();
+    tc.items.forEach(it=>{
+      const s=(it.str||'').trim();
+      if(s.length>=3 && s.includes(',') && NAME.test(s)) items.push({ s, p, x:it.transform[4], y:it.transform[5] });
+    });
+  }
+  items.sort((a,b)=> a.p-b.p || b.y-a.y || a.x-b.x);
+  const out=[]; const seen=new Set();
+  for(const it of items){
+    const i = it.s.indexOf(',');
+    const apellido = it.s.slice(0,i).trim();
+    const nombre = it.s.slice(i+1).trim();
+    if(!apellido || !nombre) continue;
+    const key = (apellido+'|'+nombre).toLowerCase();
+    if(seen.has(key)) continue; seen.add(key);
+    out.push({ apellido, nombre });
+  }
+  return out;
+}
+async function cargarPDF(file){
+  if(!file) return;
+  const msg = document.getElementById('i_pdfmsg');
+  msg.style.color='var(--muted)'; msg.textContent='Leyendo PDF…';
+  try{
+    const lista = await leerPDF(file);
+    if(!lista.length){
+      msg.style.color='var(--warn)';
+      msg.textContent='No pude detectar Apellido/Nombre automáticamente. Pasame un PDF de muestra para calibrar las columnas.';
+      return;
+    }
+    document.getElementById('i_orden').value = '1';
+    document.getElementById('i_lista').value = lista.map(x=>`${x.apellido}\t${x.nombre}`).join('\n');
+    msg.style.color='var(--ok)'; msg.textContent=`✓ ${lista.length} estudiante(s) leídos del PDF. Revisá la previsualización abajo.`;
+    previsualizar();
+  }catch(e){ msg.style.color='var(--hot)'; msg.textContent='Error leyendo PDF: '+e.message; }
+}
+
+/* ---------- Importación masiva de estudiantes ---------- */
+function jslug(s){ return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+function parseLista(texto, apellidoPrimero){
+  return texto.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    let parts = (l.includes('\t') ? l.split('\t') : l.split(',')).map(p=>p.trim()).filter(Boolean);
+    let apellido='', nombre='';
+    if(parts.length>=2){ [apellido,nombre] = apellidoPrimero ? [parts[0],parts[1]] : [parts[1],parts[0]]; }
+    else if(parts.length===1){ const w=parts[0].split(/\s+/); if(apellidoPrimero){apellido=w[0];nombre=w.slice(1).join(' ');} else {nombre=w[0];apellido=w.slice(1).join(' ');} }
+    return {apellido, nombre};
+  }).filter(x=>x.apellido||x.nombre);
+}
+function genUsuarios(lista){
+  const usados = new Set(ESTUD.map(e=>e.usuario).filter(Boolean));
+  return lista.map(x=>{
+    const base = jslug(x.apellido)+'.'+jslug((x.nombre||'').split(/\s+/)[0]);
+    let u=base, n=1; while(usados.has(u)) u=base+(++n); usados.add(u);
+    return {...x, usuario:u};
+  });
+}
+function formImportar(){
+  if(!CURSOS.length) return alert('Primero creá un curso.');
+  showModal(`<div class="mh"><h3>Importar estudiantes</h3><button class="x" onclick="closeM()">✕</button></div>
+   <div class="mb">
+     <div><label>Curso destino</label><select id="i_curso">${CURSOS.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}</select></div>
+     <div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px">
+       <label>📄 Opción rápida: subir el PDF del CIDI</label>
+       <input id="i_pdf" type="file" accept="application/pdf" onchange="cargarPDF(this.files[0])">
+       <div id="i_pdfmsg" style="font-size:11.5px;color:var(--soft);margin-top:6px">Lee el PDF en tu navegador (privado) y completa la lista automáticamente con Apellido y Nombre.</div>
+     </div>
+     <div><label>O pegá la lista — una persona por línea</label>
+       <textarea id="i_lista" rows="8" placeholder="Pegá desde Excel o escribí:&#10;García, Juan&#10;Pérez, Sofía"></textarea>
+       <div style="font-size:11.5px;color:var(--soft);margin-top:4px">Acepta “Apellido, Nombre” o columnas pegadas desde Excel (tabulación).</div></div>
+     <div><label>Orden de columnas</label>
+       <select id="i_orden"><option value="1">Apellido primero (CIDI)</option><option value="0">Nombre primero</option></select></div>
+     <div id="i_prev"></div>
+   </div>
+   <div class="mf">
+     <button class="btn ghost sm" style="width:auto" onclick="closeM()">Cancelar</button>
+     <button class="btn ghost sm" style="width:auto" onclick="previsualizar()">Previsualizar</button>
+     <button class="btn sm" id="i_btn" style="width:auto" onclick="ejecutarImport()">Crear cuentas</button>
+   </div>`);
+}
+function previsualizar(){
+  const apellidoPrimero = document.getElementById('i_orden').value==='1';
+  const lista = parseLista(document.getElementById('i_lista').value, apellidoPrimero);
+  const box = document.getElementById('i_prev');
+  if(!lista.length){ box.innerHTML='<div class="empty">No detecté ninguna fila.</div>'; window._imp=null; return null; }
+  const conU = genUsuarios(lista); window._imp = conU;
+  box.innerHTML = `<div class="note" style="margin-top:4px">Detecté <b>${conU.length}</b> estudiante(s). Ejemplos de usuario: ${conU.slice(0,4).map(x=>`<code>${esc(x.usuario)}</code>`).join(', ')}${conU.length>4?'…':''}</div>`;
+  return conU;
+}
+async function ejecutarImport(){
+  const apellidoPrimero = document.getElementById('i_orden').value==='1';
+  const lista = window._imp || genUsuarios(parseLista(document.getElementById('i_lista').value, apellidoPrimero));
+  if(!lista || !lista.length) return alert('Pegá al menos una persona en la lista.');
+  const curso_id = parseInt(document.getElementById('i_curso').value);
+  const cursoNombre = CURSOS.find(c=>c.id===curso_id)?.nombre || '';
+  if(!confirm(`Se van a crear ${lista.length} cuenta(s) en "${cursoNombre}". ¿Continuar?`)) return;
+  const btn=document.getElementById('i_btn'); btn.disabled=true; btn.textContent='Creando…';
+  try{
+    const estudiantes = lista.map(x=>({ nombre:x.nombre, apellido:x.apellido }));
+    const { data, error } = await sb.functions.invoke('importar-estudiantes', {
+      body:{ curso_id, estudiantes, dominio: window.AULA_CONFIG.EMAIL_DOMAIN }
+    });
+    if(error) throw error;
+    if(data && data.error) throw new Error(data.error);
+    await cargarTodo();
+    mostrarResultado(data, cursoNombre);
+  }catch(e){ alert('Error: '+e.message); btn.disabled=false; btn.textContent='Crear cuentas'; }
+}
+function mostrarResultado(data, cursoNombre){
+  const creados=data.creados||[], omitidos=data.omitidos||[];
+  window._cred={creados, cursoNombre};
+  const filas = creados.map(c=>`<tr><td>${esc(c.apellido)}, ${esc(c.nombre)}</td><td><code>${esc(c.usuario)}</code></td><td><code>${esc(c.password)}</code></td></tr>`).join('');
+  showModal(`<div class="mh"><div><h3>Importación lista ✅</h3><div class="mc">${creados.length} creada(s)${omitidos.length?` · ${omitidos.length} omitida(s)`:''} en ${esc(cursoNombre)}</div></div><button class="x" onclick="closeM()">✕</button></div>
+   <div class="mb">
+     <div class="note">⚠️ Guardá estas credenciales: <b>la contraseña no se puede volver a ver</b>. Descargá la planilla y repartila a cada estudiante.</div>
+     ${creados.length?`<div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="t"><thead><tr><th>Estudiante</th><th>Usuario</th><th>Contraseña</th></tr></thead><tbody>${filas}</tbody></table></div>`:''}
+     ${omitidos.length?`<div style="font-size:12.5px;color:var(--warn)"><b>Omitidos:</b> ${omitidos.map(o=>esc(`${o.apellido||''} ${o.nombre||''} (${o.motivo||''})`)).join('; ')}</div>`:''}
+   </div>
+   <div class="mf"><button class="btn ghost sm" style="width:auto" onclick="closeM()">Cerrar</button>
+     ${creados.length?`<button class="btn sm" style="width:auto" onclick="descargarCred()">⬇ Descargar credenciales (CSV)</button>`:''}</div>`);
+}
+function descargarCred(){
+  const {creados, cursoNombre} = window._cred;
+  const filas = [['Apellido','Nombre','Usuario','Contraseña','Curso']]
+    .concat(creados.map(c=>[c.apellido, c.nombre, c.usuario, c.password, cursoNombre]));
+  const csv = filas.map(r=>r.map(x=>`"${String(x==null?'':x).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`credenciales_${jslug(cursoNombre)||'curso'}.csv`; a.click();
+}
+</script>
+</body>
+</html>
