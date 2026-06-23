@@ -70,12 +70,7 @@
       <div class="inline" style="margin-bottom:18px">
         <button class="btn sm" style="width:auto" onclick="formImportar()">📥 Importar lista del curso</button>
       </div>
-      <div class="tbl-wrap">
-        <table class="t">
-          <thead><tr><th>Estudiante</th><th>Usuario</th><th>Curso</th><th>Estado</th></tr></thead>
-          <tbody id="stuRows"><tr><td colspan="4" style="color:var(--soft)">Cargando…</td></tr></tbody>
-        </table>
-      </div>
+      <div id="estudBox"><div class="empty">Cargando…</div></div>
     </section>
   </main>
 </div>
@@ -275,15 +270,34 @@ async function borrarCurso(id){
   if(error){ alert('Error: '+error.message); btn.disabled=false; btn.textContent='Eliminar definitivamente'; return; }
   await cargarTodo(); abrirAdmin();
 }
+function cursoEstudCard(nombre, alumnos){
+  const filas = alumnos.length ? alumnos.map(s=>`<tr>
+        <td><div class="stu"><div class="ph">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
+        <td style="color:var(--muted)">${esc(s.usuario||'')}</td>
+        <td><span class="badge2 ${s.activo?'b-cal':'b-falta'}">${s.activo?'Activo':'Inactivo'}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="3" style="color:var(--soft)">Sin estudiantes en este curso</td></tr>';
+  return `<div class="card" style="margin-bottom:14px;cursor:pointer" onclick="toggleCurso(this)">
+      <h3 style="margin:0;display:flex;align-items:center;gap:8px">
+        <span class="chev" style="color:var(--muted);transition:transform .15s">▶</span>
+        ${esc(nombre)}
+        <span style="color:var(--soft);font-size:12px;font-weight:400;margin-left:auto">${alumnos.length} estudiante(s)</span>
+      </h3>
+      <div class="curso-body" style="display:none;margin-top:6px">
+        <div class="tbl-wrap"><table class="t">
+          <thead><tr><th>Estudiante</th><th>Usuario</th><th>Estado</th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table></div>
+      </div>
+    </div>`;
+}
 function renderEstud(){
-  const body=document.getElementById('stuRows');
-  if(!ESTUD.length){ body.innerHTML='<tr><td colspan="4" style="color:var(--soft)">Todavía no hay estudiantes cargados.</td></tr>'; return; }
-  body.innerHTML = ESTUD.map(s=>{
-    const curso = CURSOS.find(c=>c.id===s.curso_id)?.nombre || '—';
-    return `<tr><td><div class="stu"><div class="ph">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
-      <td style="color:var(--muted)">${esc(s.usuario||'')}</td><td>${esc(curso)}</td>
-      <td><span class="badge2 ${s.activo?'b-cal':'b-falta'}">${s.activo?'Activo':'Inactivo'}</span></td></tr>`;
-  }).join('');
+  const box=document.getElementById('estudBox');
+  if(!ESTUD.length){ box.innerHTML='<div class="empty">Todavía no hay estudiantes cargados. Usá “📥 Importar lista del curso”.</div>'; return; }
+  let html = CURSOS.map(c=>cursoEstudCard(c.nombre, ESTUD.filter(e=>e.curso_id===c.id))).join('');
+  const sinCurso = ESTUD.filter(e=>!CURSOS.find(c=>c.id===e.curso_id));
+  if(sinCurso.length) html += cursoEstudCard('Sin curso asignado', sinCurso);
+  box.innerHTML = html;
 }
 
 /* ---------- Modales / formularios ---------- */
