@@ -35,43 +35,54 @@
   <a href="../index.html" style="color:var(--soft);font-size:12px">← Volver a catto.ar</a>
 </div>
 
-<!-- Supabase (login real) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase (copia local, sin depender de CDN externo) -->
+<script src="assets/vendor/supabase.js"></script>
 <script src="assets/config.js"></script>
 <script>
-  const sb = supabase.createClient(window.AULA_CONFIG.SUPABASE_URL, window.AULA_CONFIG.SUPABASE_KEY);
-  const msg = document.getElementById('msg');
+(function(){
+  const msg  = document.getElementById('msg');
+  const form = document.getElementById('loginForm');
+  const show = (t,c)=>{ msg.style.color='var('+(c||'--muted')+')'; msg.textContent=t; };
 
-  // Si ya hay sesión activa, ofrecer continuar
-  sb.auth.getSession().then(async ({ data:{ session } })=>{
-    if(!session) return;
-    const { data:p } = await sb.from('perfil').select('rol').eq('id', session.user.id).single();
-    if(p){ msg.style.color='var(--muted)';
-      msg.innerHTML = `Ya tenés sesión iniciada. <a href="${p.rol==='profesor'?'profesor.html':'estudiante.html'}">Continuar →</a>`; }
-  });
+  // Atamos el submit PRIMERO, así nunca recarga la página aunque algo falle
+  form.addEventListener('submit', onSubmit);
 
-  document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  let sb = null;
+  try{
+    if(typeof supabase === 'undefined') throw new Error('no cargó la librería de Supabase');
+    if(!window.AULA_CONFIG) throw new Error('no cargó la configuración');
+    sb = supabase.createClient(window.AULA_CONFIG.SUPABASE_URL, window.AULA_CONFIG.SUPABASE_KEY);
+  }catch(err){
+    show('No se pudo iniciar la app ('+err.message+'). Recargá con Ctrl+F5; si sigue, desactivá bloqueadores/escudos del navegador.', '--hot');
+  }
+
+  if(sb){
+    sb.auth.getSession().then(async ({ data:{ session } })=>{
+      if(!session) return;
+      const { data:p } = await sb.from('perfil').select('rol').eq('id', session.user.id).single();
+      if(p){ msg.style.color='var(--muted)';
+        msg.innerHTML = `Ya tenés sesión iniciada. <a href="${p.rol==='profesor'?'profesor.html':'estudiante.html'}">Continuar →</a>`; }
+    }).catch(()=>{});
+  }
+
+  async function onSubmit(e){
     e.preventDefault();
+    if(!sb){ show('La app no inició bien. Recargá la página (Ctrl+F5).', '--hot'); return; }
     const id = document.getElementById('usuario').value.trim();
     const pass = document.getElementById('pass').value;
-    if(!id || !pass){ return; }
-    msg.style.color='var(--muted)'; msg.textContent='Verificando…';
-
-    // Si no escribió un email, completamos con el dominio sintético
-    const email = id.includes('@') ? id : `${id}@${window.AULA_CONFIG.EMAIL_DOMAIN}`;
-    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-    if(error){ msg.style.color='var(--hot)'; msg.textContent='No pudimos ingresar: '+error.message; return; }
-
-    const { data:perfil, error:pe } = await sb.from('perfil').select('rol,nombre').eq('id', data.user.id).single();
-    if(pe || !perfil){
-      msg.style.color='var(--warn)';
-      msg.textContent='Ingresaste, pero no encontré tu perfil. ¿Corriste el SQL "crear-profesor"?';
-      return;
-    }
-    msg.style.color='var(--ok)';
-    msg.textContent=`✅ Hola ${perfil.nombre||''} (rol: ${perfil.rol}). Entrando…`;
-    setTimeout(()=>{ location.href = perfil.rol==='profesor' ? 'profesor.html' : 'estudiante.html'; }, 1100);
-  });
+    if(!id || !pass){ show('Completá usuario y contraseña.', '--warn'); return; }
+    show('Verificando…');
+    try{
+      const email = id.includes('@') ? id : `${id}@${window.AULA_CONFIG.EMAIL_DOMAIN}`;
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if(error){ show('No pudimos ingresar: '+error.message, '--hot'); return; }
+      const { data:perfil, error:pe } = await sb.from('perfil').select('rol,nombre').eq('id', data.user.id).single();
+      if(pe || !perfil){ show('Ingresaste, pero no encontré tu perfil en la base.', '--warn'); return; }
+      show(`✅ Hola ${perfil.nombre||''} (rol: ${perfil.rol}). Entrando…`, '--ok');
+      setTimeout(()=>{ location.href = perfil.rol==='profesor' ? 'profesor.html' : 'estudiante.html'; }, 1000);
+    }catch(err){ show('Error de conexión: '+err.message, '--hot'); }
+  }
+})();
 </script>
 </body>
 </html>
