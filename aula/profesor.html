@@ -272,7 +272,7 @@ async function borrarCurso(id){
 }
 function cursoEstudCard(nombre, alumnos){
   const filas = alumnos.length ? alumnos.map(s=>`<tr style="cursor:pointer" onclick="verEstudiante('${s.id}')">
-        <td><div class="stu"><div class="ph">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
+        <td><div class="stu"><div class="ph" id="ph-${s.id}">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
         <td style="color:var(--muted)">${esc(s.usuario||'')}</td>
         <td><span class="badge2 ${s.activo?'b-cal':'b-falta'}">${s.activo?'Activo':'Inactivo'}</span></td>
       </tr>`).join('')
@@ -298,6 +298,18 @@ function renderEstud(){
   const sinCurso = ESTUD.filter(e=>!CURSOS.find(c=>c.id===e.curso_id));
   if(sinCurso.length) html += cursoEstudCard('Sin curso asignado', sinCurso);
   box.innerHTML = html;
+  pintarFotosLista();
+}
+async function pintarFotosLista(){
+  const conFoto = ESTUD.filter(e=>e.foto_path);
+  if(!conFoto.length) return;
+  const { data, error } = await sb.storage.from('fotos-perfil').createSignedUrls(conFoto.map(e=>e.foto_path), 600);
+  if(error || !data) return;
+  data.forEach((item, i)=>{
+    if(!item || item.error || !item.signedUrl) return;
+    const el = document.getElementById('ph-'+conFoto[i].id);
+    if(el) el.innerHTML = `<img src="${item.signedUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  });
 }
 /* ---------- Perfil de un estudiante + acciones ---------- */
 async function verEstudiante(id){
