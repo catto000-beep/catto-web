@@ -482,6 +482,7 @@ async function openEntregas(id){
     sb.from('perfil').select('id,nombre,apellido').eq('rol','estudiante').eq('curso_id',cursoId),
     sb.from('entrega').select('*').eq('actividad_id', id)
   ]);
+  window._ent = entregas||[];
   const byId={}; (entregas||[]).forEach(e=>byId[e.estudiante_id]=e);
   const roster = (students||[]);
   const entregaron = (entregas||[]).length;
@@ -494,7 +495,7 @@ async function openEntregas(id){
       const estado = !e ? 'falta' : e.estado;
       const cls = {falta:'b-falta',entregado:'b-ent',calificado:'b-cal'}[estado];
       const txt = {falta:'No entregó',entregado:'Entregada',calificado:'Calificada'}[estado];
-      const nota = e?.nota_num!=null ? `<b class="nota">${e.nota_num}</b> <span style="color:var(--muted);font-size:12px">${esc(e.nota_concepto||'')}</span>` :
+      const nota = e?.nota_num!=null ? `<b class="nota">${e.nota_num}</b> <span style="color:var(--muted);font-size:12px">${esc(e.nota_concepto||'')}</span> <a onclick='gradeForm(${e.id})' title="Editar nota" style="cursor:pointer;margin-left:4px">✏️</a>` :
                    (e ? `<button class="btn sm" style="width:auto" onclick='gradeForm(${e.id})'>Calificar</button>` : '<span style="color:var(--soft)">—</span>');
       const arch = e?.archivo_path ? `<a onclick='verArchivo("entregas","${esc(e.archivo_path)}")'>📄 ver</a>` : '<span style="color:var(--soft)">—</span>';
       return `<tr><td><div class="stu"><div class="ph">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
@@ -517,14 +518,20 @@ async function openEntregas(id){
     </div>`;
   window._roster={a,roster,byId};
 }
+function volverEntregas(){
+  const a = window._roster && window._roster.a;
+  if(a) openEntregas(a.id); else closeM();
+}
 function gradeForm(entregaId){
-  showModal(`<div class="mh"><h3>Calificar entrega</h3><button class="x" onclick="closeM()">✕</button></div>
+  const e = (window._ent||[]).find(x=>x.id===entregaId) || {};
+  const editando = e.nota_num!=null;
+  showModal(`<div class="mh"><h3>${editando?'Editar nota':'Calificar entrega'}</h3><button class="x" onclick="volverEntregas()">✕</button></div>
    <div class="mb">
-     <div><label>Nota numérica (1–10)</label><input id="g_num" type="number" min="1" max="10" step="0.5"></div>
-     <div><label>Concepto (opcional)</label><input id="g_con" placeholder="Muy bueno"></div>
-     <div><label>Comentario (opcional)</label><textarea id="g_com" rows="3" placeholder="Devolución para el estudiante…"></textarea></div>
+     <div><label>Nota numérica (1–10)</label><input id="g_num" type="number" min="1" max="10" step="0.5" value="${e.nota_num!=null?e.nota_num:''}"></div>
+     <div><label>Concepto (opcional)</label><input id="g_con" placeholder="Muy bueno" value="${esc(e.nota_concepto||'')}"></div>
+     <div><label>Comentario (opcional)</label><textarea id="g_com" rows="3" placeholder="Devolución para el estudiante…">${esc(e.comentario_profesor||'')}</textarea></div>
    </div>
-   <div class="mf"><button class="btn ghost sm" style="width:auto" onclick="closeM()">Cancelar</button>
+   <div class="mf"><button class="btn ghost sm" style="width:auto" onclick="volverEntregas()">Cancelar</button>
      <button class="btn sm" style="width:auto" onclick="saveGrade(${entregaId})">Guardar nota</button></div>`);
 }
 async function saveGrade(entregaId){
@@ -533,7 +540,7 @@ async function saveGrade(entregaId){
   const comentario_profesor=document.getElementById('g_com').value.trim()||null;
   const {error}=await sb.from('entrega').update({nota_num,nota_concepto,comentario_profesor,estado:'calificado'}).eq('id',entregaId);
   if(error) return alert('Error: '+error.message);
-  closeM();
+  volverEntregas();
 }
 async function verArchivo(bucket, path){
   const {data,error}=await sb.storage.from(bucket).createSignedUrl(path, 60);
