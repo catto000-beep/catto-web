@@ -89,8 +89,8 @@ let PERFIL, CURSOS=[], MATERIAS=[], ACTS=[], ESTUD=[];
   const auth = await requireAuth('profesor');
   if(!auth) return;
   PERFIL = auth.perfil;
-  document.getElementById('meName').textContent = (PERFIL.nombre||'Profesor')+' '+(PERFIL.apellido||'');
-  document.getElementById('meIni').textContent = iniciales(PERFIL.nombre, PERFIL.apellido);
+  document.getElementById('meName').textContent = 'Catto';
+  document.getElementById('meIni').textContent = 'C';
   await cargarTodo();
 })();
 
@@ -271,7 +271,7 @@ async function borrarCurso(id){
   await cargarTodo(); abrirAdmin();
 }
 function cursoEstudCard(nombre, alumnos){
-  const filas = alumnos.length ? alumnos.map(s=>`<tr>
+  const filas = alumnos.length ? alumnos.map(s=>`<tr style="cursor:pointer" onclick="verEstudiante('${s.id}')">
         <td><div class="stu"><div class="ph">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
         <td style="color:var(--muted)">${esc(s.usuario||'')}</td>
         <td><span class="badge2 ${s.activo?'b-cal':'b-falta'}">${s.activo?'Activo':'Inactivo'}</span></td>
@@ -298,6 +298,62 @@ function renderEstud(){
   const sinCurso = ESTUD.filter(e=>!CURSOS.find(c=>c.id===e.curso_id));
   if(sinCurso.length) html += cursoEstudCard('Sin curso asignado', sinCurso);
   box.innerHTML = html;
+}
+/* ---------- Perfil de un estudiante + acciones ---------- */
+async function verEstudiante(id){
+  const s = ESTUD.find(e=>e.id===id); if(!s) return;
+  showModal(`<div class="mh"><h3>Perfil del estudiante</h3><button class="x" onclick="closeM()">✕</button></div><div class="mb"><div class="empty">Cargando…</div></div>`);
+  // Foto
+  let fotoHTML = `<div class="pic" style="width:120px;height:120px;font-size:40px">${iniciales(s.nombre,s.apellido)}</div>`;
+  if(s.foto_path){
+    const url = await signedUrl('fotos-perfil', s.foto_path, 300);
+    if(url) fotoHTML = `<img src="${url}" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:2px solid var(--line)">`;
+  }
+  const cursoOpts = CURSOS.map(c=>`<option value="${c.id}" ${c.id===s.curso_id?'selected':''}>${esc(c.nombre)}</option>`).join('');
+  document.getElementById('modal').innerHTML = `
+    <div class="mh"><div><h3>${esc(s.apellido||'')}, ${esc(s.nombre||'')}</h3><div class="mc">Usuario: ${esc(s.usuario||'')}</div></div><button class="x" onclick="closeM()">✕</button></div>
+    <div class="mb">
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        ${fotoHTML}
+        <div style="flex:1;min-width:180px">
+          <label>Curso</label>
+          <select id="ve_curso">${cursoOpts}</select>
+          <div style="margin-top:10px"><span class="badge2 ${s.activo?'b-cal':'b-falta'}">${s.activo?'Cuenta activa':'Cuenta desactivada'}</span></div>
+        </div>
+      </div>
+      <div class="inline">
+        <button class="btn ghost sm" style="width:auto" onclick="guardarCursoEstud('${s.id}')">💾 Guardar curso</button>
+        <button class="btn ghost sm" style="width:auto" onclick="toggleActivo('${s.id}')">${s.activo?'🚫 Desactivar':'✅ Activar'} cuenta</button>
+        <button class="btn ghost sm" style="width:auto" onclick="resetPass('${s.id}')">🔑 Resetear contraseña</button>
+      </div>
+      <div id="ve_msg" style="font-size:13px;min-height:18px;color:var(--muted)"></div>
+    </div>
+    <div class="mf"><button class="btn sm" style="width:auto" onclick="closeM()">Cerrar</button></div>`;
+}
+async function guardarCursoEstud(id){
+  const curso_id = parseInt(document.getElementById('ve_curso').value);
+  const msg = document.getElementById('ve_msg'); msg.style.color='var(--muted)'; msg.textContent='Guardando…';
+  const { error } = await sb.from('perfil').update({ curso_id }).eq('id', id);
+  if(error){ msg.style.color='var(--hot)'; msg.textContent='Error: '+error.message; return; }
+  await cargarTodo(); verEstudiante(id);
+}
+async function toggleActivo(id){
+  const s = ESTUD.find(e=>e.id===id); if(!s) return;
+  const { error } = await sb.from('perfil').update({ activo: !s.activo }).eq('id', id);
+  if(error){ alert('Error: '+error.message); return; }
+  await cargarTodo(); verEstudiante(id);
+}
+async function resetPass(id){
+  const s = ESTUD.find(e=>e.id===id); if(!s) return;
+  if(!confirm(`¿Generar una nueva contraseña para ${s.apellido}, ${s.nombre}?\nLa contraseña anterior dejará de funcionar.`)) return;
+  const msg = document.getElementById('ve_msg'); msg.style.color='var(--muted)'; msg.textContent='Generando…';
+  try{
+    const { data, error } = await sb.functions.invoke('resetear-password', { body:{ estudiante_id:id } });
+    if(error) throw error;
+    if(data && data.error) throw new Error(data.error);
+    msg.style.color='var(--ok)';
+    msg.innerHTML = `Nueva contraseña: <code style="font-size:16px;background:var(--panel2);padding:2px 8px;border-radius:6px">${esc(data.password)}</code><br><span style="color:var(--soft);font-size:11.5px">Anotala y entregásela — no se vuelve a mostrar.</span>`;
+  }catch(e){ msg.style.color='var(--hot)'; msg.textContent='Error: '+e.message+' (¿desplegaste la función "resetear-password"?)'; }
 }
 
 /* ---------- Modales / formularios ---------- */

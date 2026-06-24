@@ -10,6 +10,10 @@ async function requireAuth(rolEsperado){
   if(!session){ location.href = 'index.html'; return null; }
   const { data:perfil, error } = await sb.from('perfil').select('*').eq('id', session.user.id).single();
   if(error || !perfil){ await sb.auth.signOut(); location.href = 'index.html'; return null; }
+  if(perfil.rol === 'estudiante' && perfil.activo === false){
+    await sb.auth.signOut(); alert('Tu cuenta está desactivada. Consultá con el profesor.');
+    location.href = 'index.html'; return null;
+  }
   if(rolEsperado && perfil.rol !== rolEsperado){
     location.href = perfil.rol === 'profesor' ? 'profesor.html' : 'estudiante.html';
     return null;

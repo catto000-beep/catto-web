@@ -77,8 +77,9 @@
       const email = id.includes('@') ? id : `${id}@${window.AULA_CONFIG.EMAIL_DOMAIN}`;
       const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
       if(error){ show('No pudimos ingresar: '+error.message, '--hot'); return; }
-      const { data:perfil, error:pe } = await sb.from('perfil').select('rol,nombre').eq('id', data.user.id).single();
+      const { data:perfil, error:pe } = await sb.from('perfil').select('rol,nombre,activo').eq('id', data.user.id).single();
       if(pe || !perfil){ show('Ingresaste, pero no encontré tu perfil en la base.', '--warn'); return; }
+      if(perfil.rol==='estudiante' && perfil.activo===false){ await sb.auth.signOut(); show('Tu cuenta está desactivada. Consultá con el profesor.', '--warn'); return; }
       show(`✅ Hola ${perfil.nombre||''} (rol: ${perfil.rol}). Entrando…`, '--ok');
       setTimeout(()=>{ location.href = perfil.rol==='profesor' ? 'profesor.html' : 'estudiante.html'; }, 1000);
     }catch(err){ show('Error de conexión: '+err.message, '--hot'); }
