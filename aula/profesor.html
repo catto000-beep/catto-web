@@ -48,7 +48,7 @@
       <div class="inline" style="margin-bottom:20px">
         <button class="btn sm" style="width:auto" onclick="formActividad()">＋ Nueva actividad</button>
       </div>
-      <div class="act-list" id="actList"><div class="empty">Cargando…</div></div>
+      <div id="actList"><div class="empty">Cargando…</div></div>
     </section>
 
     <!-- ===== CLASES ===== -->
@@ -129,8 +129,25 @@ function renderTablero(){
 }
 function renderActs(){
   const box=document.getElementById('actList');
-  box.innerHTML = ACTS.length ? ACTS.map(actCardHTML).join('')
-    : '<div class="empty">Sin actividades aún. Creá la primera con “＋ Nueva actividad”.</div>';
+  if(!ACTS.length){ box.innerHTML='<div class="empty">Sin actividades aún. Creá la primera con “＋ Nueva actividad”.</div>'; return; }
+  let html='';
+  [...CURSOS].sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(c=>{
+    const actsCurso = ACTS.filter(a=>a.materia?.curso_id===c.id);
+    if(!actsCurso.length) return;
+    html += `<div style="font-size:13.5px;font-weight:700;margin:20px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px">🏫 ${esc(c.nombre)}</div>`;
+    MATERIAS.filter(m=>m.curso_id===c.id).sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(m=>{
+      const am = actsCurso.filter(a=>a.materia_id===m.id);
+      if(!am.length) return;
+      html += `<div style="font-size:12px;font-weight:600;color:var(--accent);margin:12px 0 6px">${esc(m.nombre)}</div>`;
+      html += `<div class="act-list">${am.map(actCardHTML).join('')}</div>`;
+    });
+  });
+  const huerfanas = ACTS.filter(a=>!CURSOS.find(c=>c.id===a.materia?.curso_id));
+  if(huerfanas.length){
+    html += `<div style="font-size:13.5px;font-weight:700;margin:20px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px">Otras</div>`;
+    html += `<div class="act-list">${huerfanas.map(actCardHTML).join('')}</div>`;
+  }
+  box.innerHTML = html;
 }
 function renderClases(){
   const box=document.getElementById('clasesBox');
