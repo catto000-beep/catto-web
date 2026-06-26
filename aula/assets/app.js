@@ -49,6 +49,13 @@ function ytId(url){
 }
 /* Nombre de archivo seguro */
 function safeName(n){ return (n||'archivo').replace(/[^\w.\-]+/g,'_').slice(-60); }
+/* Nombre a mostrar de un archivo {path,nombre}. Si no hay nombre real (entrega vieja),
+   lo deriva de la ruta quitando los prefijos "idActividad_timestamp_(indice_)". */
+function nombreArchivo(a){
+  if(a && a.nombre && !/^archivo$/i.test(a.nombre)) return a.nombre;
+  const base = ((a && a.path) || '').split('/').pop() || '';
+  return base.replace(/^\d+_\d+_(\d+_)?/, '') || base || 'Archivo';
+}
 /* URL temporal firmada para un archivo privado */
 async function signedUrl(bucket, path, secs=120){
   if(!path) return null;
