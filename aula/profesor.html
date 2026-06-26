@@ -84,6 +84,7 @@
 <script src="assets/app.js"></script>
 <script>
 let PERFIL, CURSOS=[], MATERIAS=[], ACTS=[], ESTUD=[];
+let _entScroll = 0; // recuerda el scroll de la tabla de entregas al corregir
 
 (async function init(){
   const auth = await requireAuth('profesor');
@@ -522,11 +523,13 @@ async function openEntregas(id){
     </div>`;
   window._roster={a,roster,byId};
 }
-function volverEntregas(){
+async function volverEntregas(){
   const a = window._roster && window._roster.a;
-  if(a) openEntregas(a.id); else closeM();
+  if(a){ await openEntregas(a.id); const mb=document.getElementById('modalBg'); if(mb) mb.scrollTop = _entScroll; }
+  else closeM();
 }
 function gradeForm(entregaId){
+  const mb=document.getElementById('modalBg'); if(mb) _entScroll = mb.scrollTop;
   const e = (window._ent||[]).find(x=>x.id===entregaId) || {};
   const editando = e.nota_num!=null;
   showModal(`<div class="mh"><h3>${editando?'Editar nota':'Calificar entrega'}</h3><button class="x" onclick="volverEntregas()">✕</button></div>
@@ -552,6 +555,7 @@ async function verArchivo(bucket, path){
   window.open(data.signedUrl,'_blank');
 }
 function verEntregaArchivos(entregaId){
+  const mb=document.getElementById('modalBg'); if(mb) _entScroll = mb.scrollTop;
   const e = (window._ent||[]).find(x=>x.id===entregaId); if(!e) return;
   const list = (e.archivos&&e.archivos.length)?e.archivos:(e.archivo_path?[{path:e.archivo_path,nombre:'archivo'}]:[]);
   showModal(`<div class="mh"><div><h3>Archivos de la entrega</h3><div class="mc">${list.length} archivo(s)</div></div><button class="x" onclick="volverEntregas()">✕</button></div>
