@@ -497,7 +497,11 @@ async function openEntregas(id){
       const txt = {falta:'No entregó',entregado:'Entregada',calificado:'Calificada'}[estado];
       const nota = e?.nota_num!=null ? `<b class="nota">${e.nota_num}</b> <span style="color:var(--muted);font-size:12px">${esc(e.nota_concepto||'')}</span> <a onclick='gradeForm(${e.id})' title="Editar nota" style="cursor:pointer;margin-left:4px">✏️</a>` :
                    (e ? `<button class="btn sm" style="width:auto" onclick='gradeForm(${e.id})'>Calificar</button>` : '<span style="color:var(--soft)">—</span>');
-      const arch = e?.archivo_path ? `<a onclick='verArchivo("entregas","${esc(e.archivo_path)}")'>📄 ver</a>` : '<span style="color:var(--soft)">—</span>';
+      const arch = (()=>{
+        if(!e) return '<span style="color:var(--soft)">—</span>';
+        const list = (e.archivos&&e.archivos.length)?e.archivos:(e.archivo_path?[{path:e.archivo_path}]:[]);
+        return list.length ? `<a onclick='verEntregaArchivos(${e.id})' style="cursor:pointer">📄 ver (${list.length})</a>` : '<span style="color:var(--soft)">—</span>';
+      })();
       return `<tr><td><div class="stu"><div class="ph">${iniciales(s.nombre,s.apellido)}</div> ${esc(s.apellido||'')}, ${esc(s.nombre||'')}</div></td>
         <td>${arch}</td><td><span class="badge2 ${cls}">${txt}</span></td><td>${nota}</td></tr>`;
     }).join('');
@@ -546,6 +550,15 @@ async function verArchivo(bucket, path){
   const {data,error}=await sb.storage.from(bucket).createSignedUrl(path, 60);
   if(error) return alert('No se pudo abrir: '+error.message);
   window.open(data.signedUrl,'_blank');
+}
+function verEntregaArchivos(entregaId){
+  const e = (window._ent||[]).find(x=>x.id===entregaId); if(!e) return;
+  const list = (e.archivos&&e.archivos.length)?e.archivos:(e.archivo_path?[{path:e.archivo_path,nombre:'archivo'}]:[]);
+  showModal(`<div class="mh"><div><h3>Archivos de la entrega</h3><div class="mc">${list.length} archivo(s)</div></div><button class="x" onclick="volverEntregas()">✕</button></div>
+    <div class="mb">
+      ${list.map((a,i)=>`<a onclick='verArchivo("entregas","${esc(a.path)}")' style="display:block;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer">📄 ${esc(a.nombre||('Archivo '+(i+1)))}</a>`).join('')}
+    </div>
+    <div class="mf"><button class="btn sm" style="width:auto" onclick="volverEntregas()">Volver</button></div>`);
 }
 
 /* ---------- Lectura del PDF del CIDI (en el navegador) ----------

@@ -182,9 +182,10 @@ async function openAct(id){
   // Entrega
   let entrega = '';
   if(e){
-    entrega = `<div><label>Tu entrega</label><div class="consigna">
-      ${e.archivo_path?`<a onclick='verArchivo("entregas","${esc(e.archivo_path)}")'>📄 Ver mi archivo</a>`:'(sin archivo)'}
-      ${e.entregado_en?` · <span style="color:var(--soft);font-size:12px">${new Date(e.entregado_en).toLocaleString('es-AR')}</span>`:''}
+    const mis = (e.archivos&&e.archivos.length)?e.archivos:(e.archivo_path?[{path:e.archivo_path,nombre:'archivo'}]:[]);
+    entrega = `<div><label>Tu entrega${mis.length>1?` (${mis.length} archivos)`:''}</label><div class="consigna">
+      ${mis.length?mis.map((a,i)=>`<a onclick='verArchivo("entregas","${esc(a.path)}")' style="display:block">📄 ${esc(a.nombre||('Archivo '+(i+1)))}</a>`).join(''):'(sin archivo)'}
+      ${e.entregado_en?`<div style="color:var(--soft);font-size:12px;margin-top:4px">Entregado: ${new Date(e.entregado_en).toLocaleString('es-AR')}</div>`:''}
       ${e.comentario_estudiante?`<div style="margin-top:8px;color:var(--muted)">“${esc(e.comentario_estudiante)}”</div>`:''}
     </div></div>`;
   }
@@ -196,10 +197,10 @@ async function openAct(id){
     form = `<div>
       <label>${e?'Reentregar (reemplaza tu entrega)':'Subir tu trabajo'}</label>
       <div class="drop" onclick="document.getElementById('subInput').click()">
-        <span class="di">📎</span> <span id="subName">Hacé clic para elegir tu archivo</span><br>
-        <span style="font-size:11.5px;color:var(--soft)">PDF · JPG · PNG · DOC — hasta 10 MB</span>
+        <span class="di">📎</span> <span id="subName">Hacé clic para elegir tus archivos</span><br>
+        <span style="font-size:11.5px;color:var(--soft)">Podés elegir varios · PDF · JPG · PNG · DOC — hasta 10 MB c/u</span>
       </div>
-      <input id="subInput" type="file" style="display:none" onchange="document.getElementById('subName').textContent=this.files[0]?this.files[0].name:'Hacé clic para elegir tu archivo'">
+      <input id="subInput" type="file" multiple style="display:none" onchange="document.getElementById('subName').textContent=this.files.length?(this.files.length+' archivo(s) seleccionado(s)'):'Hacé clic para elegir tus archivos'">
       <label style="margin-top:14px">Comentario (opcional)</label>
       <textarea id="subCom" rows="2" placeholder="Algo que quieras aclararle al profe…">${e?esc(e.comentario_estudiante||''):''}</textarea>
       <div id="subMsg" style="font-size:12.5px;margin-top:8px;color:var(--muted)"></div>
@@ -226,18 +227,23 @@ async function openAct(id){
 }
 
 async function entregar(actId){
-  const file = document.getElementById('subInput').files[0];
+  const files = document.getElementById('subInput').files;
   const com  = document.getElementById('subCom').value.trim() || null;
   const msg  = document.getElementById('subMsg');
-  if(!file){ msg.style.color='var(--warn)'; msg.textContent='Elegí un archivo primero.'; return; }
-  if(file.size > 10*1024*1024){ msg.style.color='var(--hot)'; msg.textContent='El archivo supera los 10 MB.'; return; }
+  if(!files.length){ msg.style.color='var(--warn)'; msg.textContent='Elegí al menos un archivo.'; return; }
   const btn = document.getElementById('subBtn'); btn.disabled=true; btn.textContent='Subiendo…';
   try{
-    const path = `${PERFIL.id}/${actId}_${Date.now()}_${safeName(file.name)}`;
-    await subirArchivo('entregas', path, file);
+    const archivos = [];
+    for(let i=0;i<files.length;i++){
+      const f = files[i];
+      if(f.size > 10*1024*1024) throw new Error(`"${f.name}" supera los 10 MB.`);
+      const path = `${PERFIL.id}/${actId}_${Date.now()}_${i}_${safeName(f.name)}`;
+      await subirArchivo('entregas', path, f);
+      archivos.push({ path, nombre: f.name });
+    }
     const { error } = await sb.from('entrega').upsert({
       actividad_id: actId, estudiante_id: PERFIL.id,
-      archivo_path: path, comentario_estudiante: com,
+      archivos, archivo_path: archivos[0].path, comentario_estudiante: com,
       entregado_en: new Date().toISOString(), estado: 'entregado'
     }, { onConflict: 'actividad_id,estudiante_id' });
     if(error) throw error;
