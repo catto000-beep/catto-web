@@ -169,7 +169,10 @@ function renderClases(){
             </div>`).join('')
           : '<div style="color:var(--soft);font-size:12px;padding:4px 2px">Sin actividades en esta materia</div>';
         return `<div style="margin:12px 0 4px">
-            <div style="font-size:12.5px;font-weight:700;color:var(--accent);margin-bottom:6px">${esc(m.nombre)}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:12.5px;font-weight:700;color:var(--accent)">${esc(m.nombre)}</span>
+              <button class="btn ghost sm" style="padding:3px 9px;font-size:11px" onclick="event.stopPropagation(); verNotasMateria(${m.id})">📊 Notas</button>
+            </div>
             <div class="act-list">${items}</div>
           </div>`;
       }).join('');
@@ -190,6 +193,56 @@ function toggleCurso(card){
   const abierto = b.style.display !== 'none';
   b.style.display = abierto ? 'none' : 'block';
   if(ch) ch.style.transform = abierto ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+/* ---------- Planilla de notas de una materia (formato CIDI) ---------- */
+async function verNotasMateria(materiaId){
+  const m = MATERIAS.find(x=>x.id===materiaId); if(!m) return;
+  const cursoNombre = m.curso?.nombre || (CURSOS.find(c=>c.id===m.curso_id)?.nombre) || '';
+  const acts = ACTS.filter(a=>a.materia_id===materiaId);
+  const alumnos = ESTUD.filter(e=>e.curso_id===m.curso_id).sort((a,b)=>(a.apellido||'').localeCompare(b.apellido||''));
+  showModal(`<div class="mh"><div><h3>Notas · ${esc(m.nombre)}</h3><div class="mc">${esc(cursoNombre)}</div></div><button class="x" onclick="closeM()">✕</button></div><div class="mb"><div class="empty">Cargando…</div></div>`);
+  let notaMap = {};
+  const actIds = acts.map(a=>a.id);
+  if(actIds.length){
+    const { data:ents } = await sb.from('entrega').select('estudiante_id,actividad_id,nota_num').in('actividad_id', actIds);
+    (ents||[]).forEach(e=>{ (notaMap[e.estudiante_id]=notaMap[e.estudiante_id]||{})[e.actividad_id]=e.nota_num; });
+  }
+  const th='border:1px solid var(--line);padding:6px 9px;font-size:11.5px;color:var(--muted);font-weight:600;white-space:nowrap';
+  const td='border:1px solid var(--line);padding:6px 9px;font-size:12.5px';
+  let body;
+  if(!alumnos.length){ body='<div class="empty">No hay estudiantes en este curso.</div>'; }
+  else if(!acts.length){ body='<div class="empty">Esta materia no tiene actividades todavía.</div>'; }
+  else {
+    const ths = acts.map(a=>`<th title="${esc(a.titulo)}" style="${th};text-align:center;cursor:help">${esc(abrevTitulo(a.titulo))}</th>`).join('');
+    const rows = alumnos.map(s=>{
+      const notas = notaMap[s.id]||{};
+      const vals = acts.map(a=>notas[a.id]).filter(n=>n!=null);
+      const prom = vals.length ? Math.round(vals.reduce((x,y)=>x+Number(y),0)/vals.length*100)/100 : null;
+      const tds = acts.map(a=>{ const n=notas[a.id]; return `<td style="${td};text-align:center">${n!=null?`<b style="color:var(--ok)">${+n}</b>`:'<span style="color:var(--soft)">—</span>'}</td>`; }).join('');
+      return `<tr><td style="${td}">${esc(s.apellido||'')}</td><td style="${td}">${esc(s.nombre||'')}</td>${tds}<td style="${td};text-align:center">${prom!=null?`<b>${prom}</b>`:'—'}</td></tr>`;
+    }).join('');
+    body = `<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%">
+        <thead><tr><th style="${th}">Apellido</th><th style="${th}">Nombre</th>${ths}<th style="${th};text-align:center">Prom.</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+  }
+  window._notasExport = { m, cursoNombre, acts, alumnos, notaMap };
+  document.getElementById('modal').innerHTML = `
+    <div class="mh"><div><h3>Notas · ${esc(m.nombre)}</h3><div class="mc">${esc(cursoNombre)} · pasá el mouse por un trabajo para ver su título</div></div><button class="x" onclick="closeM()">✕</button></div>
+    <div class="mb">${body}</div>
+    <div class="mf"><button class="btn ghost sm" style="width:auto" onclick="closeM()">Cerrar</button>${(alumnos.length&&acts.length)?`<button class="btn sm" style="width:auto" onclick="descargarNotasCSV()">⬇ Descargar CSV</button>`:''}</div>`;
+}
+function descargarNotasCSV(){
+  const {m, cursoNombre, acts, alumnos, notaMap} = window._notasExport;
+  const header = ['Apellido','Nombre',...acts.map(a=>a.titulo),'Promedio'];
+  const filas = [header].concat(alumnos.map(s=>{
+    const notas = notaMap[s.id]||{};
+    const vals = acts.map(a=>notas[a.id]).filter(n=>n!=null);
+    const prom = vals.length ? Math.round(vals.reduce((x,y)=>x+Number(y),0)/vals.length*100)/100 : '';
+    return [s.apellido||'', s.nombre||'', ...acts.map(a=>{const n=notas[a.id]; return n!=null?(+n):'';}), prom];
+  }));
+  const csv = filas.map(r=>r.map(x=>`"${String(x==null?'':x).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`notas_${jslug(cursoNombre)||'curso'}_${jslug(m.nombre)||'materia'}.csv`; a.click();
 }
 /* ---------- Panel de administración de cursos y materias ---------- */
 function abrirAdmin(){
