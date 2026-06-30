@@ -160,16 +160,19 @@ async function openAct(id){
 
   // Material de la consigna
   let mat = '';
-  const yid = ytId(a.video_url);
   const adj = Array.isArray(a.adjuntos) ? a.adjuntos : [];
-  if(adj.length || a.video_url){
+  if(adj.length){
     mat = `<div class="inline" style="margin-top:4px">
       ${adj.map(ad=>`<a onclick='verArchivo("consignas","${esc(ad.path)}")'>📎 ${esc(ad.nombre||'Adjunto')}</a>`).join('')}
-      ${a.video_url && !yid?`<a href="${esc(a.video_url)}" target="_blank" rel="noopener">▶ Video de referencia</a>`:''}
     </div>`;
   }
-  const video = yid ? `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;border:1px solid var(--line)">
-      <iframe src="https://www.youtube.com/embed/${yid}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>` : '';
+  const vids = (Array.isArray(a.videos)&&a.videos.length)?a.videos:(a.video_url?[a.video_url]:[]);
+  const video = vids.map(v=>{
+    const yi = ytId(v);
+    return yi
+      ? `<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;border:1px solid var(--line);margin-top:8px"><iframe src="https://www.youtube.com/embed/${yi}" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`
+      : `<a href="${esc(v)}" target="_blank" rel="noopener" style="display:block;margin-top:8px">▶ Ver video</a>`;
+  }).join('');
 
   // Devolución
   let grade = '';

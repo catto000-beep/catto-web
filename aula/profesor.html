@@ -99,7 +99,7 @@ async function cargarTodo(){
   const [c,m,a,e] = await Promise.all([
     sb.from('curso').select('*').order('nombre'),
     sb.from('materia').select('id,nombre,curso_id, curso(nombre)').order('nombre'),
-    sb.from('actividad').select('id,titulo,consigna,fecha_limite,adjuntos,video_url,materia_id, materia(nombre,curso_id,curso(nombre))').order('creada_en',{ascending:false}),
+    sb.from('actividad').select('id,titulo,consigna,fecha_limite,adjuntos,video_url,videos,materia_id, materia(nombre,curso_id,curso(nombre))').order('creada_en',{ascending:false}),
     sb.from('perfil').select('id,nombre,apellido,usuario,curso_id,activo,foto_path').eq('rol','estudiante').order('apellido'),
   ]);
   CURSOS=c.data||[]; MATERIAS=m.data||[]; ACTS=a.data||[]; ESTUD=e.data||[];
@@ -442,7 +442,7 @@ function formActividad(act){
      <div><label>Título</label><input id="f_atit" value="${ed?esc(ed.titulo):''}" placeholder="Informe: rectificador de onda completa"></div>
      <div><label>Consigna</label><textarea id="f_acon" rows="4" placeholder="Qué tienen que hacer y entregar…">${ed?esc(ed.consigna||''):''}</textarea></div>
      <div><label>${ed?'Agregar adjuntos (opcional)':'Archivos adjuntos (opcional)'}</label><input id="f_aarch" type="file" multiple>${adjActuales}<div style="font-size:11px;color:var(--soft);margin-top:4px">Podés elegir varios · PDF, imagen o documento · hasta 10 MB c/u</div></div>
-     <div><label>Video de YouTube (opcional)</label><input id="f_avid" value="${ed?esc(ed.video_url||''):''}" placeholder="https://www.youtube.com/watch?v=…"></div>
+     <div><label>Videos de YouTube (opcional, uno por línea)</label><textarea id="f_avid" rows="2" placeholder="https://www.youtube.com/watch?v=…&#10;https://youtu.be/…">${ed?esc(((ed.videos&&ed.videos.length)?ed.videos:(ed.video_url?[ed.video_url]:[])).join('\n')):''}</textarea></div>
      <div><label>Fecha límite (opcional)</label><input id="f_alim" type="date" value="${ed&&ed.fecha_limite?ed.fecha_limite:''}"></div>
    </div>
    <div class="mf">
@@ -456,10 +456,10 @@ async function saveActividad(id){
   const titulo=document.getElementById('f_atit').value.trim();
   const consigna=document.getElementById('f_acon').value.trim();
   const fecha_limite=document.getElementById('f_alim').value||null;
-  const video_url=document.getElementById('f_avid').value.trim()||null;
+  const videos=document.getElementById('f_avid').value.split('\n').map(s=>s.trim()).filter(Boolean);
   const files=document.getElementById('f_aarch').files;
   if(!titulo) return alert('Poné un título.');
-  if(video_url && !ytId(video_url) && !/^https?:\/\//.test(video_url)) return alert('El video tiene que ser un link válido de YouTube.');
+  for(const v of videos){ if(!ytId(v) && !/^https?:\/\//.test(v)) return alert('Hay un video que no es un link válido: '+v); }
   const btn=document.getElementById('f_abtn'); btn.disabled=true; btn.textContent='Guardando…';
   try{
     // Adjuntos: parto de los actuales (menos los marcados para quitar) y sumo los nuevos
@@ -476,7 +476,7 @@ async function saveActividad(id){
       const path = await subirArchivo('consignas', `${Date.now()}_${i}_${safeName(f.name)}`, f);
       adjuntos.push({ path, nombre: f.name });
     }
-    const datos={materia_id, titulo, consigna, fecha_limite, video_url, adjuntos};
+    const datos={materia_id, titulo, consigna, fecha_limite, videos, video_url: videos[0]||null, adjuntos};
     let error;
     if(id){ ({error} = await sb.from('actividad').update(datos).eq('id', id)); }
     else  { ({error} = await sb.from('actividad').insert(datos)); }
@@ -528,10 +528,7 @@ async function openEntregas(id){
     <div class="mh"><div><h3>${esc(a.titulo)}</h3><div class="mc">${esc(a.materia?.nombre||'')} · ${entregaron}/${roster.length} entregaron</div></div><button class="x" onclick="closeM()">✕</button></div>
     <div class="mb" style="padding-top:6px">
       ${a.consigna?`<div class="consigna">${esc(a.consigna)}</div>`:''}
-      ${((a.adjuntos&&a.adjuntos.length)||a.video_url)?`<div class="inline">
-        ${(a.adjuntos||[]).map(ad=>`<a onclick='verArchivo("consignas","${esc(ad.path)}")'>📎 ${esc(ad.nombre||'Adjunto')}</a>`).join('')}
-        ${a.video_url?`<a href="${esc(a.video_url)}" target="_blank" rel="noopener">▶ Video de referencia</a>`:''}
-      </div>`:''}
+      ${(()=>{ const vids=(a.videos&&a.videos.length)?a.videos:(a.video_url?[a.video_url]:[]); const adjs=a.adjuntos||[]; if(!adjs.length && !vids.length) return ''; return `<div class="inline">${adjs.map(ad=>`<a onclick='verArchivo("consignas","${esc(ad.path)}")'>📎 ${esc(ad.nombre||'Adjunto')}</a>`).join('')}${vids.map((v,i)=>`<a href="${esc(v)}" target="_blank" rel="noopener">▶ Video${vids.length>1?' '+(i+1):''}</a>`).join('')}</div>`; })()}
       <div class="tbl-wrap"><table class="t"><thead><tr><th>Estudiante</th><th>Entrega</th><th>Estado</th><th>Nota</th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>
     <div class="mf">
