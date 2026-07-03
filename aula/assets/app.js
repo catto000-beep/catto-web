@@ -62,9 +62,22 @@ async function signedUrl(bucket, path, secs=120){
   const { data } = await sb.storage.from(bucket).createSignedUrl(path, secs);
   return data ? data.signedUrl : null;
 }
-/* Sube (o reemplaza) un archivo y devuelve el path */
+/* Sube (o reemplaza) un archivo y devuelve el path.
+   Antes de subir renueva la sesión (las clases largas la vencen) y, si
+   igual falla por permisos, da un mensaje claro en vez del error críptico. */
 async function subirArchivo(bucket, path, file){
+  const { data:{ session } } = await sb.auth.getSession();   // refresca el token si venció
+  if(!session){
+    alert('Tu sesión expiró. Volvé a ingresar y probá de nuevo (tu trabajo no se pierde).');
+    location.href = 'index.html';
+    throw new Error('Sesión expirada');
+  }
   const { error } = await sb.storage.from(bucket).upload(path, file, { upsert:true });
-  if(error) throw error;
+  if(error){
+    if(/row-level security/i.test(error.message||'')){
+      throw new Error('No se pudo subir: tu sesión expiró o no tenés permiso. Salí con "Salir", volvé a ingresar y reintentá.');
+    }
+    throw error;
+  }
   return path;
 }
