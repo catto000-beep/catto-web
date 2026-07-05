@@ -37,7 +37,9 @@
         <div class="scard"><b id="t-estud">·</b><span>Estudiantes</span></div>
         <div class="scard"><b id="t-acts">·</b><span>Actividades</span></div>
       </div>
-      <p class="section-title">Actividades recientes</p>
+      <p class="section-title">Últimas entregas</p>
+      <div class="act-list" id="ultimas"><div class="empty">Cargando…</div></div>
+      <p class="section-title" style="margin-top:24px">Actividades recientes</p>
       <div class="act-list" id="recientes"><div class="empty">Cargando…</div></div>
     </section>
 
@@ -83,7 +85,7 @@
 <script src="assets/config.js"></script>
 <script src="assets/app.js"></script>
 <script>
-let PERFIL, CURSOS=[], MATERIAS=[], ACTS=[], ESTUD=[];
+let PERFIL, CURSOS=[], MATERIAS=[], ACTS=[], ESTUD=[], ULTIMAS=[];
 let _entScroll = 0; // recuerda el scroll de la tabla de entregas al corregir
 
 (async function init(){
@@ -96,13 +98,14 @@ let _entScroll = 0; // recuerda el scroll de la tabla de entregas al corregir
 })();
 
 async function cargarTodo(){
-  const [c,m,a,e] = await Promise.all([
+  const [c,m,a,e,u] = await Promise.all([
     sb.from('curso').select('*').order('nombre'),
     sb.from('materia').select('id,nombre,curso_id, curso(nombre)').order('nombre'),
     sb.from('actividad').select('id,titulo,consigna,fecha_limite,adjuntos,video_url,videos,materia_id, materia(nombre,curso_id,curso(nombre))').order('creada_en',{ascending:false}),
     sb.from('perfil').select('id,nombre,apellido,usuario,curso_id,activo,foto_path').eq('rol','estudiante').order('apellido'),
+    sb.from('entrega').select('id,actividad_id,entregado_en,nota_num,archivos,archivo_path, estudiante:estudiante_id(nombre,apellido), actividad:actividad_id(titulo, materia(nombre))').order('entregado_en',{ascending:false}).limit(12),
   ]);
-  CURSOS=c.data||[]; MATERIAS=m.data||[]; ACTS=a.data||[]; ESTUD=e.data||[];
+  CURSOS=c.data||[]; MATERIAS=m.data||[]; ACTS=a.data||[]; ESTUD=e.data||[]; ULTIMAS=u.data||[];
   renderTablero(); renderActs(); renderClases(); renderEstud();
 }
 
@@ -126,6 +129,27 @@ function renderTablero(){
   const box=document.getElementById('recientes');
   box.innerHTML = ACTS.length ? ACTS.slice(0,5).map(actCardHTML).join('')
     : '<div class="empty">Todavía no creaste actividades. Andá a “Actividades → Nueva actividad”.</div>';
+  const ub=document.getElementById('ultimas');
+  ub.innerHTML = ULTIMAS.length ? ULTIMAS.map(e=>{
+    const est=e.estudiante||{}, act=e.actividad||{}, mat=act.materia||{};
+    const n=(e.archivos&&e.archivos.length)?e.archivos.length:(e.archivo_path?1:0);
+    const badge = e.nota_num!=null ? `<span class="nota">${+e.nota_num}</span>` : `<span class="badge2 b-ent">Sin corregir</span>`;
+    return `<div class="act" onclick="openEntregas(${e.actividad_id})">
+      <div class="ai"><h3 style="font-size:14.5px">${esc(est.apellido||'')}, ${esc(est.nombre||'')}</h3>
+        <div class="am">${esc(act.titulo||'—')}${mat.nombre?' · '+esc(mat.nombre):''}${n?` · ${n} archivo(s)`:''}</div></div>
+      <div class="due">${haceTiempo(e.entregado_en)}</div>
+      ${badge}
+    </div>`;
+  }).join('') : '<div class="empty">Todavía no hay entregas.</div>';
+}
+function haceTiempo(iso){
+  if(!iso) return '';
+  const d=new Date(iso), min=Math.floor((Date.now()-d)/60000);
+  if(min<1) return 'recién';
+  if(min<60) return `hace ${min} min`;
+  const h=Math.floor(min/60); if(h<24) return `hace ${h} h`;
+  const dias=Math.floor(h/24); if(dias<7) return `hace ${dias} d`;
+  return d.toLocaleDateString('es-AR',{day:'2-digit',month:'short'});
 }
 function renderActs(){
   const box=document.getElementById('actList');
