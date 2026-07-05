@@ -103,7 +103,7 @@ async function cargarTodo(){
     sb.from('materia').select('id,nombre,curso_id, curso(nombre)').order('nombre'),
     sb.from('actividad').select('id,titulo,consigna,fecha_limite,adjuntos,video_url,videos,materia_id, materia(nombre,curso_id,curso(nombre))').order('creada_en',{ascending:false}),
     sb.from('perfil').select('id,nombre,apellido,usuario,curso_id,activo,foto_path').eq('rol','estudiante').order('apellido'),
-    sb.from('entrega').select('id,actividad_id,entregado_en,nota_num,archivos,archivo_path, estudiante:estudiante_id(nombre,apellido), actividad:actividad_id(titulo, materia(nombre))').order('entregado_en',{ascending:false}).limit(12),
+    sb.from('entrega').select('id,actividad_id,entregado_en,nota_num,archivos,archivo_path, estudiante:estudiante_id(nombre,apellido,foto_path, curso(nombre)), actividad:actividad_id(titulo, materia(nombre))').order('entregado_en',{ascending:false}).limit(12),
   ]);
   CURSOS=c.data||[]; MATERIAS=m.data||[]; ACTS=a.data||[]; ESTUD=e.data||[]; ULTIMAS=u.data||[];
   renderTablero(); renderActs(); renderClases(); renderEstud();
@@ -132,15 +132,29 @@ function renderTablero(){
   const ub=document.getElementById('ultimas');
   ub.innerHTML = ULTIMAS.length ? ULTIMAS.map(e=>{
     const est=e.estudiante||{}, act=e.actividad||{}, mat=act.materia||{};
+    const curso = est.curso?.nombre || '';
     const n=(e.archivos&&e.archivos.length)?e.archivos.length:(e.archivo_path?1:0);
     const badge = e.nota_num!=null ? `<span class="nota">${+e.nota_num}</span>` : `<span class="badge2 b-ent">Sin corregir</span>`;
     return `<div class="act" onclick="openEntregas(${e.actividad_id})">
-      <div class="ai"><h3 style="font-size:14.5px">${esc(est.apellido||'')}, ${esc(est.nombre||'')}</h3>
+      <div id="uph-${e.id}" style="width:36px;height:36px;border-radius:50%;flex:none;background:var(--panel2);display:grid;place-items:center;color:var(--soft);font-size:13px;border:1px solid var(--line);overflow:hidden">${iniciales(est.nombre,est.apellido)}</div>
+      <div class="ai"><h3 style="font-size:14.5px">${esc(est.apellido||'')}, ${esc(est.nombre||'')}${curso?` <span style="color:var(--soft);font-weight:400;font-size:12px">· ${esc(curso)}</span>`:''}</h3>
         <div class="am">${esc(act.titulo||'—')}${mat.nombre?' · '+esc(mat.nombre):''}${n?` · ${n} archivo(s)`:''}</div></div>
       <div class="due">${haceTiempo(e.entregado_en)}</div>
       ${badge}
     </div>`;
   }).join('') : '<div class="empty">Todavía no hay entregas.</div>';
+  pintarFotosUltimas();
+}
+async function pintarFotosUltimas(){
+  const conFoto = ULTIMAS.filter(e=>e.estudiante&&e.estudiante.foto_path);
+  if(!conFoto.length) return;
+  const { data } = await sb.storage.from('fotos-perfil').createSignedUrls(conFoto.map(e=>e.estudiante.foto_path), 600);
+  if(!data) return;
+  data.forEach((item,i)=>{
+    if(!item||item.error||!item.signedUrl) return;
+    const el=document.getElementById('uph-'+conFoto[i].id);
+    if(el) el.innerHTML=`<img src="${item.signedUrl}" style="width:100%;height:100%;object-fit:cover">`;
+  });
 }
 function haceTiempo(iso){
   if(!iso) return '';
