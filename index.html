@@ -223,36 +223,48 @@
 <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
 <script>
 /* Contador de visitas — usa Abacus (abacus.jasoncameron.dev), un contador de hits
-   gratuito con CORS abierto. Guarda el último valor en localStorage por si el
-   servicio no responde en algún momento. */
+   gratuito con CORS abierto. El valor se trae al cargar (incrementa el hit), pero
+   la animación de conteo recién arranca cuando la tarjeta entra en pantalla, así el
+   usuario sí la ve. Guarda el último valor en localStorage como respaldo. */
 (function(){
   var el = document.getElementById('visitCount');
   if(!el) return;
   var fmt = function(n){ return Number(n).toLocaleString('es-AR'); };
-  var current = 0;
-  function animar(destino){
-    var t0 = null, dur = 1100, desde = current;
+  var target = null, inView = false, started = false;
+
+  function contar(){
+    if(started || !inView || target === null) return;
+    started = true;
+    var t0 = null, dur = 1100;
     function paso(ts){
       if(!t0) t0 = ts;
       var p = Math.min((ts - t0)/dur, 1), e = 1 - Math.pow(1 - p, 3);
-      el.textContent = fmt(Math.round(desde + (destino - desde) * e));
+      el.textContent = fmt(Math.round(target * e));
       if(p < 1) requestAnimationFrame(paso);
     }
     requestAnimationFrame(paso);
-    setTimeout(function(){ el.textContent = fmt(destino); }, dur + 400); // fallback si rAF está pausado
-    current = destino;
+    setTimeout(function(){ el.textContent = fmt(target); }, dur + 400); // fallback si rAF está pausado
   }
+
   var cache = parseInt(localStorage.getItem('cattoVisitas') || '') || null;
-  if(cache){ current = cache; el.textContent = fmt(cache); }
+  el.textContent = cache ? fmt(cache) : '…';
+
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(ents){
+      ents.forEach(function(x){ if(x.isIntersecting){ io.disconnect(); inView = true; contar(); } });
+    }, { threshold:.4 });
+    io.observe(el);
+  } else { inView = true; contar(); }
+
   fetch('https://abacus.jasoncameron.dev/hit/catto-ar/visitas')
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d && typeof d.value === 'number'){
         try{ localStorage.setItem('cattoVisitas', d.value); }catch(e){}
-        animar(d.value);
+        target = d.value; contar();
       }
     })
-    .catch(function(){ if(!cache) el.textContent = '—'; });
+    .catch(function(){ if(cache === null) el.textContent = '—'; });
 })();
 </script>
 <script src="assets/js/starfield.js?v=1"></script>
