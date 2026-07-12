@@ -19,7 +19,7 @@
 <meta name="twitter:title" content="Catto · Web Bazar — herramientas interactivas de electrónica">
 <meta name="twitter:description" content="Calculadora de resistores, conversor de unidades SI, lógica digital con mapas de Karnaugh, simulador del 555 y más.">
 <meta name="twitter:image" content="https://catto.ar/assets/img/chancho-volador.png">
-<link rel="stylesheet" href="assets/css/base.css?v=8">
+<link rel="stylesheet" href="assets/css/base.css?v=9">
 </head>
 <body>
 
@@ -195,6 +195,15 @@
         <p>Mi banda. Discografía, shows y novedades.</p>
         <span class="go">cuatromenguantes.com.ar →</span>
       </a>
+
+      <!-- Contador de visitas -->
+      <div class="card" id="visitCard">
+        <span class="accent-bar"></span>
+        <span class="ic">👁️</span>
+        <h3>Visitas</h3>
+        <p class="visit-num"><span id="visitCount">…</span></p>
+        <span class="go" style="color:var(--soft);font-weight:400">Gracias por pasar ⭐</span>
+      </div>
     </div>
   </div>
 </section>
@@ -212,6 +221,40 @@
 </footer>
 
 <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script>
+/* Contador de visitas — usa Abacus (abacus.jasoncameron.dev), un contador de hits
+   gratuito con CORS abierto. Guarda el último valor en localStorage por si el
+   servicio no responde en algún momento. */
+(function(){
+  var el = document.getElementById('visitCount');
+  if(!el) return;
+  var fmt = function(n){ return Number(n).toLocaleString('es-AR'); };
+  var current = 0;
+  function animar(destino){
+    var t0 = null, dur = 1100, desde = current;
+    function paso(ts){
+      if(!t0) t0 = ts;
+      var p = Math.min((ts - t0)/dur, 1), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(Math.round(desde + (destino - desde) * e));
+      if(p < 1) requestAnimationFrame(paso);
+    }
+    requestAnimationFrame(paso);
+    setTimeout(function(){ el.textContent = fmt(destino); }, dur + 400); // fallback si rAF está pausado
+    current = destino;
+  }
+  var cache = parseInt(localStorage.getItem('cattoVisitas') || '') || null;
+  if(cache){ current = cache; el.textContent = fmt(cache); }
+  fetch('https://abacus.jasoncameron.dev/hit/catto-ar/visitas')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && typeof d.value === 'number'){
+        try{ localStorage.setItem('cattoVisitas', d.value); }catch(e){}
+        animar(d.value);
+      }
+    })
+    .catch(function(){ if(!cache) el.textContent = '—'; });
+})();
+</script>
 <script src="assets/js/starfield.js?v=1"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
