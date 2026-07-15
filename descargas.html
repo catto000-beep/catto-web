@@ -49,18 +49,20 @@
     <div class="dl-list">
 
       <!-- Curriculum Vitae -->
-      <a class="dl" href="descargas/cv-diego-cattaneo.pdf" download>
+      <a class="dl" href="descargas/cv-diego-cattaneo.pdf" download data-count="dl-cv">
         <span class="di">📄</span>
         <span class="dinfo"><b>Curriculum Vitae — Catto</b><span>PDF · 2 páginas</span></span>
         <span class="dsize">~75 KB</span>
+        <span class="dcount" title="Veces descargado" style="color:var(--soft);font-size:12px;white-space:nowrap;flex:none">↓&nbsp;<span class="dcount-n">…</span></span>
         <span class="darrow">↓</span>
       </a>
 
       <!-- Aprenda a Hablar (sin hacer preguntas) -->
-      <a class="dl" href="descargas/aprenda-a-hablar-sin-hacer-preguntas.pdf" download>
+      <a class="dl" href="descargas/aprenda-a-hablar-sin-hacer-preguntas.pdf" download data-count="dl-libro">
         <span class="di">📖</span>
         <span class="dinfo"><b>Aprenda a Hablar (sin hacer preguntas)</b><span>PDF · escrito a cuatro manos por Catto y Claude Code 🤖</span></span>
         <span class="dsize">~190 KB</span>
+        <span class="dcount" title="Veces descargado" style="color:var(--soft);font-size:12px;white-space:nowrap;flex:none">↓&nbsp;<span class="dcount-n">…</span></span>
         <span class="darrow">↓</span>
       </a>
 
@@ -118,6 +120,31 @@
 </footer>
 
 <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script>
+/* Contador de descargas por ítem — Abacus (mismo servicio que la home).
+   Al cargar lee el valor sin incrementar (/get); al hacer clic en descargar incrementa (/hit). */
+(function(){
+  var NS='catto-ar', BASE='https://abacus.jasoncameron.dev';
+  var fmt=function(n){ try{ return Number(n).toLocaleString('es-AR'); }catch(e){ return String(n); } };
+  var items=document.querySelectorAll('.dl[data-count]');
+  Array.prototype.forEach.call(items, function(a){
+    var key=a.getAttribute('data-count');
+    var el=a.querySelector('.dcount-n'); if(!el) return;
+    fetch(BASE+'/get/'+NS+'/'+key)
+      .then(function(r){ return r.ok ? r.json() : {value:0}; })
+      .then(function(d){ el.textContent=fmt(d && typeof d.value==='number' ? d.value : 0); })
+      .catch(function(){ el.textContent='0'; });
+    a.addEventListener('click', function(){
+      var cur=parseInt((el.textContent||'0').replace(/\D/g,''),10)||0;
+      el.textContent=fmt(cur+1);
+      fetch(BASE+'/hit/'+NS+'/'+key, {keepalive:true})
+        .then(function(r){ return r.json(); })
+        .then(function(d){ if(d && typeof d.value==='number') el.textContent=fmt(d.value); })
+        .catch(function(){});
+    });
+  });
+})();
+</script>
 <script src="assets/js/starfield.js?v=1"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
