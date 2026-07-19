@@ -624,7 +624,7 @@ async function openEntregas(id){
   const cursoId=a.materia?.curso_id;
   showModal(`<div class="mh"><div><h3>${esc(a.titulo)}</h3><div class="mc">${esc(a.materia?.nombre||'')} · ${fechaTxt(a.fecha_limite)}</div></div><button class="x" onclick="closeM()">✕</button></div><div class="mb"><div class="empty">Cargando entregas…</div></div>`);
   const [{data:students},{data:entregas}] = await Promise.all([
-    sb.from('perfil').select('id,nombre,apellido').eq('rol','estudiante').eq('curso_id',cursoId),
+    sb.from('perfil').select('id,nombre,apellido,foto_path').eq('rol','estudiante').eq('curso_id',cursoId),
     sb.from('entrega').select('*').eq('actividad_id', id)
   ]);
   window._ent = entregas||[];
@@ -669,11 +669,31 @@ async function volverEntregas(){
   if(a){ await openEntregas(a.id); const mb=document.getElementById('modalBg'); if(mb) mb.scrollTop = _entScroll; }
   else closeM();
 }
+/* ---------- Estudiante de una entrega (sale del roster ya cargado) ---------- */
+function estudDeEntrega(e){
+  const r = (window._roster && window._roster.roster) || [];
+  return r.find(x => x.id === (e && e.estudiante_id)) || null;
+}
+function nombreEstud(s){
+  if(!s) return '';
+  return `${s.apellido||''}${(s.apellido&&s.nombre)?', ':''}${s.nombre||''}`;
+}
+function avatarEstud(s, domId){
+  return `<div id="${domId}" style="width:34px;height:34px;border-radius:50%;flex:none;background:var(--panel2);display:grid;place-items:center;color:var(--soft);font-size:13px;border:1px solid var(--line);overflow:hidden">${s?iniciales(s.nombre,s.apellido):''}</div>`;
+}
+/* La foto se pinta después: el modal abre al instante con las iniciales. */
+async function pintarFotoEstud(domId, s){
+  if(!s || !s.foto_path) return;
+  const url = await signedUrl('fotos-perfil', s.foto_path, 300);
+  const el = document.getElementById(domId);
+  if(url && el) el.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
+}
 function gradeForm(entregaId){
   const mb=document.getElementById('modalBg'); if(mb) _entScroll = mb.scrollTop;
   const e = (window._ent||[]).find(x=>x.id===entregaId) || {};
+  const s = estudDeEntrega(e);
   const editando = e.nota_num!=null;
-  showModal(`<div class="mh"><h3>${editando?'Editar nota':'Calificar entrega'}</h3><button class="x" onclick="volverEntregas()">✕</button></div>
+  showModal(`<div class="mh"><div style="display:flex;align-items:center;gap:10px;min-width:0">${avatarEstud(s,'gf_ph')}<h3 style="min-width:0">${editando?'Editar nota':'Calificar entrega'}${s?` · <span style="color:var(--accent)">${esc(nombreEstud(s))}</span>`:''}</h3></div><button class="x" onclick="volverEntregas()">✕</button></div>
    <div class="mb">
      <div><label>Nota numérica (1–10)</label><input id="g_num" type="number" min="1" max="10" step="0.5" value="${e.nota_num!=null?e.nota_num:''}"></div>
      <div><label>Concepto (opcional)</label><input id="g_con" placeholder="Muy bueno" value="${esc(e.nota_concepto||'')}"></div>
@@ -681,6 +701,7 @@ function gradeForm(entregaId){
    </div>
    <div class="mf"><button class="btn ghost sm" style="width:auto" onclick="volverEntregas()">Cancelar</button>
      <button class="btn sm" style="width:auto" onclick="saveGrade(${entregaId})">Guardar nota</button></div>`);
+  pintarFotoEstud('gf_ph', s);
 }
 async function saveGrade(entregaId){
   const nota_num=parseFloat(document.getElementById('g_num').value)||null;
@@ -698,12 +719,14 @@ async function verArchivo(bucket, path){
 function verEntregaArchivos(entregaId){
   const mb=document.getElementById('modalBg'); if(mb) _entScroll = mb.scrollTop;
   const e = (window._ent||[]).find(x=>x.id===entregaId); if(!e) return;
+  const s = estudDeEntrega(e);
   const list = (e.archivos&&e.archivos.length)?e.archivos:(e.archivo_path?[{path:e.archivo_path,nombre:'archivo'}]:[]);
-  showModal(`<div class="mh"><div><h3>Archivos de la entrega</h3><div class="mc">${list.length} archivo(s)</div></div><button class="x" onclick="volverEntregas()">✕</button></div>
+  showModal(`<div class="mh"><div style="display:flex;align-items:center;gap:10px;min-width:0">${avatarEstud(s,'va_ph')}<div style="min-width:0"><h3>Archivos de la entrega${s?` · <span style="color:var(--accent)">${esc(nombreEstud(s))}</span>`:''}</h3><div class="mc">${list.length} archivo(s)</div></div></div><button class="x" onclick="volverEntregas()">✕</button></div>
     <div class="mb">
       ${list.map((a)=>`<a onclick='verArchivo("entregas","${esc(a.path)}")' style="display:block;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer">📄 ${esc(nombreArchivo(a))}</a>`).join('')}
     </div>
     <div class="mf"><button class="btn sm" style="width:auto" onclick="volverEntregas()">Volver</button></div>`);
+  pintarFotoEstud('va_ph', s);
 }
 
 /* ---------- Lectura del PDF del CIDI (en el navegador) ----------
