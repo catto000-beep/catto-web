@@ -1108,6 +1108,10 @@ function freeInit(soft){
 }
 function freePaint(){
   var w = freeC.clientWidth, h = freeC.clientHeight, wrap = $('freeBoard');
+  /* Si la vista esta oculta (.view sin .on) el lienzo mide 0: rowH queda
+     negativo, el paso de la pauta inclinada tambien, y el for de abajo no
+     termina nunca. Pasa si se apaga la vista con el dedo apoyado. */
+  if(w <= 0 || h <= 24) return;
   var cs = getComputedStyle(wrap);
   fctx2.fillStyle = cs.getPropertyValue('--sheet').trim() || '#fdfaf1';
   fctx2.fillRect(0,0,w,h);
@@ -1119,7 +1123,7 @@ function freePaint(){
     var t = Math.tan(-SLANT*Math.PI/180);
     fctx2.lineWidth = 1;
     fctx2.strokeStyle = cs.getPropertyValue('--slant').trim() || '#eee';
-    for(var x=-40; x<w+40; x+=62*unit){
+    for(var x=-40, paso=Math.max(62*unit, 1); x<w+40; x+=paso){
       fctx2.beginPath(); fctx2.moveTo(x, ys[3]); fctx2.lineTo(x + t*(ys[3]-ys[0]), ys[0]); fctx2.stroke();
     }
     [[ys[0],'--l1',1.4,[9,7]],[ys[1],'--lm',1.4,[9,7]],[ys[2],'--lb',2.2,[]],[ys[3],'--l1',1.4,[9,7]]]
