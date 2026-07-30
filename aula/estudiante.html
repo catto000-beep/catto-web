@@ -8,6 +8,18 @@
 <meta name="robots" content="noindex">
 <link rel="stylesheet" href="../assets/css/base.css?v=11">
 <link rel="stylesheet" href="../assets/css/aula.css?v=7">
+<style>
+/* La fila de actividad ahora lleva el botón de entregar / re-entregar.
+   En pantalla angosta (los estudiantes entran del celular) la fila se parte:
+   el título ocupa el primer renglón y fecha, nota, estado y botón el segundo.
+   Si no, el botón aplasta el título hasta dejarlo ilegible. */
+.act .act-btn{flex:none}
+@media(max-width:640px){
+  .act{flex-wrap:wrap;gap:10px 12px}
+  .act .ai{flex:1 0 100%}
+  .act .act-btn{margin-left:auto}
+}
+</style>
 </head>
 <body>
 
@@ -175,11 +187,18 @@ function render(){
       if(st==='pendiente')p++; else if(st==='entregada')en++; else c++;
       const e = ENTREGAS[a.id];
       const soon = a.fecha_limite && st==='pendiente';
+      const cerr = vencida(a.fecha_limite);
+      /* Botón directo a la subida: si ya entregó, "Re-entregar" (puede corregir
+         mientras la actividad siga abierta); si venció, sólo ver sus archivos. */
+      const accion = e
+        ? `<button class="btn ghost sm act-btn" onclick="abrirSubida(event,${a.id})">${cerr?'Ver mi entrega':'↻ Re-entregar'}</button>`
+        : (cerr ? '' : `<button class="btn sm act-btn" onclick="abrirSubida(event,${a.id})">Entregar</button>`);
       return `<div class="act" onclick="openAct(${a.id})">
         <div class="ai"><h3>${esc(a.titulo)}</h3><div class="am">${esc(a.materia?.nombre||'')}</div></div>
         <div class="due ${soon?'soon':''}">${fechaTxt(a.fecha_limite)}</div>
-        ${st==='calificada' && e?.nota_num!=null ? `<span class="nota">${e.nota_num}</span>` : ''}
+        ${e?.nota_num!=null ? `<span class="nota">${e.nota_num}</span>` : ''}
         <span class="badge2 ${b.c}">${b.t}</span>
+        ${accion}
       </div>`;
     }).join('');
   }
@@ -188,7 +207,10 @@ function render(){
   document.getElementById('s-cal').textContent=c;
 }
 
-async function openAct(id){
+/* Abre la actividad directo en la zona de subida (botón de la lista) */
+function abrirSubida(ev, id){ if(ev) ev.stopPropagation(); openAct(id, true); }
+
+async function openAct(id, foco){
   const a = ACTS.find(x=>x.id===id); if(!a) return;
   const e = ENTREGAS[a.id];
   const st = estadoDe(a);
@@ -210,42 +232,55 @@ async function openAct(id){
       : `<a href="${esc(v)}" target="_blank" rel="noopener" style="display:block;margin-top:8px">▶ Ver video</a>`;
   }).join('');
 
-  // Devolución
+  // Devolución (se muestra aunque haya re-entregado después de la corrección)
   let grade = '';
-  if(st==='calificada'){
+  if(e && (e.nota_num!=null || e.nota_concepto || e.comentario_profesor)){
     grade = `<div class="grade-box"><label>Devolución del profesor</label>
       <div class="inline">${e.nota_num!=null?`<span class="gn">${e.nota_num}</span>`:''}${e.nota_concepto?`<span class="badge2 b-cal">${esc(e.nota_concepto)}</span>`:''}</div>
-      ${e.comentario_profesor?`<p style="margin:10px 0 0;font-size:13.5px;color:var(--txt)">${esc(e.comentario_profesor)}</p>`:''}</div>`;
+      ${e.comentario_profesor?`<p style="margin:10px 0 0;font-size:13.5px;color:var(--txt)">${esc(e.comentario_profesor)}</p>`:''}
+      ${e.estado!=='calificado'?`<div style="font-size:11.5px;color:var(--soft);margin-top:8px">Corresponde a tu entrega anterior: el profesor va a revisar la nueva.</div>`:''}</div>`;
   }
 
-  // Entrega
+  // Se puede corregir la entrega mientras la actividad no haya vencido,
+  // incluso si ya fue calificada (el profesor la vuelve a corregir).
+  const puedeEntregar = !cerrada;
+
+  // Tu entrega: los archivos ya subidos, con opción de verlos y de quitarlos
   let entrega = '';
+  const mis = archivosDe(e);
   if(e){
-    const mis = (e.archivos&&e.archivos.length)?e.archivos:(e.archivo_path?[{path:e.archivo_path,nombre:'archivo'}]:[]);
-    entrega = `<div><label>Tu entrega${mis.length>1?` (${mis.length} archivos)`:''}</label><div class="consigna">
-      ${mis.length?mis.map((a)=>`<a onclick='verArchivo("entregas","${esc(a.path)}")' style="display:block">📄 ${esc(nombreArchivo(a))}</a>`).join(''):'(sin archivo)'}
-      ${e.entregado_en?`<div style="color:var(--soft);font-size:12px;margin-top:4px">Entregado: ${new Date(e.entregado_en).toLocaleString('es-AR')}</div>`:''}
+    entrega = `<div><label>Tus archivos entregados${mis.length?` (${mis.length})`:''}</label><div class="consigna">
+      ${mis.length ? mis.map((f,i)=>`
+        <div class="inline" style="justify-content:space-between;flex-wrap:nowrap;${i?'margin-top:8px;padding-top:8px;border-top:1px solid var(--line)':''}">
+          <a onclick='verArchivo("entregas","${esc(f.path)}")' style="cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📄 ${esc(nombreArchivo(f))}</a>
+          ${puedeEntregar?`<button class="btn ghost sm" style="flex:none;padding:4px 9px;font-size:12px" title="Quitar este archivo de tu entrega" onclick="quitarArchivo(${a.id},${i})">✕ Quitar</button>`:''}
+        </div>`).join('') : '<span style="color:var(--soft)">(sin archivos)</span>'}
+      ${e.entregado_en?`<div style="color:var(--soft);font-size:12px;margin-top:${mis.length?10:4}px">Última entrega: ${new Date(e.entregado_en).toLocaleString('es-AR')}</div>`:''}
       ${e.comentario_estudiante?`<div style="margin-top:8px;color:var(--muted)">“${esc(e.comentario_estudiante)}”</div>`:''}
     </div></div>`;
   }
 
-  // Formulario de subida (si se puede entregar/reentregar)
-  const puedeEntregar = st!=='calificada' && !cerrada;
+  // Formulario de subida (entregar / re-entregar / agregar archivos)
   let form = '';
   if(puedeEntregar){
-    form = `<div>
-      <label>${e?'Reentregar (reemplaza tu entrega)':'Subir tu trabajo'}</label>
+    form = `<div id="zonaSubida">
+      <label>${e?'Re-entregar o agregar archivos':'Subir tu trabajo'}</label>
+      ${st==='calificada'?`<div class="note" style="margin-bottom:10px">Esta actividad ya está calificada. Si volvés a entregar, el profesor la va a tener que corregir de nuevo.</div>`:''}
       <div class="drop" onclick="document.getElementById('subInput').click()">
         <span class="di">📎</span> <span id="subName">Hacé clic para elegir tus archivos</span><br>
         <span style="font-size:11.5px;color:var(--soft)">Podés elegir varios · PDF · JPG · PNG · DOC — hasta 10 MB c/u</span>
       </div>
       <input id="subInput" type="file" multiple style="display:none" onchange="document.getElementById('subName').textContent=this.files.length?(this.files.length+' archivo(s) seleccionado(s)'):'Hacé clic para elegir tus archivos'">
+      ${mis.length?`<div class="inline" style="margin-top:10px">
+        <input type="checkbox" id="subReemplazar" style="width:auto;margin:0;flex:none">
+        <label for="subReemplazar" style="margin:0;cursor:pointer">Reemplazar lo que ya subí (si no lo marcás, los nuevos se <b>agregan</b> ${mis.length===1?'al que ya subí':'a los '+mis.length+' de arriba'})</label>
+      </div>`:''}
       <label style="margin-top:14px">Comentario (opcional)</label>
       <textarea id="subCom" rows="2" placeholder="Algo que quieras aclararle al profe…">${e?esc(e.comentario_estudiante||''):''}</textarea>
       <div id="subMsg" style="font-size:12.5px;margin-top:8px;color:var(--muted)"></div>
     </div>`;
-  } else if(cerrada && st!=='calificada'){
-    form = `<div class="note">La fecha límite venció. Ya no se puede entregar.</div>`;
+  } else {
+    form = `<div class="note">La fecha límite venció${mis.length?': tus archivos quedaron entregados, pero ya no se pueden cambiar':'. Ya no se puede entregar'}. Si necesitás corregir, pedile al profesor que extienda la fecha.</div>`;
   }
 
   document.getElementById('modal').innerHTML = `
@@ -260,37 +295,88 @@ async function openAct(id){
     </div>
     <div class="mf">
       <button class="btn ghost sm" style="width:auto" onclick="closeM()">Cerrar</button>
-      ${puedeEntregar?`<button class="btn sm" id="subBtn" style="width:auto" onclick="entregar(${a.id})">${e?'Reentregar':'Entregar'}</button>`:''}
+      ${puedeEntregar?`<button class="btn sm" id="subBtn" style="width:auto" onclick="entregar(${a.id})">${e?'↻ Re-entregar':'Entregar'}</button>`:''}
     </div>`;
   document.getElementById('modalBg').classList.add('open');
+  if(foco){ const z = document.getElementById('zonaSubida') || document.getElementById('modal'); z.scrollIntoView({behavior:'smooth', block:'center'}); }
+}
+
+/* Archivos de una entrega, normalizados a [{path,nombre}] (soporta las viejas
+   de un solo archivo, que guardaban sólo archivo_path). */
+function archivosDe(e){
+  if(!e) return [];
+  if(Array.isArray(e.archivos) && e.archivos.length) return e.archivos.slice();
+  return e.archivo_path ? [{ path:e.archivo_path, nombre:'archivo' }] : [];
+}
+/* Borra del Storage archivos que ya no forman parte de la entrega, para no
+   dejar basura en el bucket. Si el proyecto todavía no tiene la política de
+   DELETE (aula/db/reentrega.sql), falla en silencio: no rompe nada. */
+async function borrarDeStorage(paths){
+  if(!paths || !paths.length) return;
+  try{ await sb.storage.from('entregas').remove(paths); }catch(_){}
 }
 
 async function entregar(actId){
+  const e = ENTREGAS[actId];
+  const previos = archivosDe(e);
+  const reemplazar = !!(document.getElementById('subReemplazar') && document.getElementById('subReemplazar').checked);
   const files = document.getElementById('subInput').files;
   const com  = document.getElementById('subCom').value.trim() || null;
   const msg  = document.getElementById('subMsg');
-  if(!files.length){ msg.style.color='var(--warn)'; msg.textContent='Elegí al menos un archivo.'; return; }
-  const btn = document.getElementById('subBtn'); btn.disabled=true; btn.textContent='Subiendo…';
+  if(!files.length && !previos.length){
+    msg.style.color='var(--warn)'; msg.textContent='Elegí al menos un archivo.'; return;
+  }
+  if(!files.length && reemplazar){
+    msg.style.color='var(--warn)'; msg.textContent='Elegí los archivos nuevos con los que querés reemplazar tu entrega.'; return;
+  }
+  const btn = document.getElementById('subBtn'); const rotulo = btn.textContent;
+  btn.disabled=true; btn.textContent = files.length ? 'Subiendo…' : 'Guardando…';
   try{
-    const archivos = [];
+    const nuevos = [];
     for(let i=0;i<files.length;i++){
       const f = files[i];
       if(f.size > 10*1024*1024) throw new Error(`"${f.name}" supera los 10 MB.`);
       const path = `${PERFIL.id}/${actId}_${Date.now()}_${i}_${safeName(f.name)}`;
       await subirArchivo('entregas', path, f);
-      archivos.push({ path, nombre: f.name });
+      nuevos.push({ path, nombre: f.name });
     }
-    const { error } = await sb.from('entrega').upsert({
+    const archivos = reemplazar ? nuevos : previos.concat(nuevos);
+    const fila = {
       actividad_id: actId, estudiante_id: PERFIL.id,
-      archivos, archivo_path: archivos[0].path, comentario_estudiante: com,
-      entregado_en: new Date().toISOString(), estado: 'entregado'
-    }, { onConflict: 'actividad_id,estudiante_id' });
+      archivos, archivo_path: archivos.length?archivos[0].path:null,
+      comentario_estudiante: com
+    };
+    // Si cambiaron los archivos vuelve a quedar "entregada" (el profesor la
+    // corrige de nuevo). Si sólo se editó el comentario, no se toca el estado.
+    if(files.length){ fila.entregado_en = new Date().toISOString(); fila.estado = 'entregado'; }
+    const { error } = await sb.from('entrega').upsert(fila, { onConflict: 'actividad_id,estudiante_id' });
     if(error) throw error;
+    if(reemplazar) borrarDeStorage(previos.map(f=>f.path));
     closeM(); await cargar();
   }catch(err){
     msg.style.color='var(--hot)'; msg.textContent='Error: '+err.message;
-    btn.disabled=false; btn.textContent='Entregar';
+    btn.disabled=false; btn.textContent=rotulo;
   }
+}
+
+/* Quita un archivo de la entrega (los demás quedan como están) */
+async function quitarArchivo(actId, i){
+  const e = ENTREGAS[actId]; if(!e) return;
+  const lista = archivosDe(e);
+  const f = lista[i]; if(!f) return;
+  const nom = nombreArchivo(f);
+  const aviso = lista.length===1
+    ? `¿Quitar "${nom}"? Vas a quedar sin ningún archivo entregado.`
+    : `¿Quitar "${nom}" de tu entrega?`;
+  if(!confirm(aviso)) return;
+  lista.splice(i,1);
+  const { error } = await sb.from('entrega')
+    .update({ archivos: lista, archivo_path: lista.length?lista[0].path:null })
+    .eq('id', e.id);
+  if(error) return alert('No se pudo quitar el archivo: '+error.message);
+  borrarDeStorage([f.path]);
+  await cargar();
+  openAct(actId, true);
 }
 
 async function verArchivo(bucket, path){
