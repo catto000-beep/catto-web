@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escritura cursiva · catto.ar</title>
+<meta name="description" content="Taller interactivo para pasar de la imprenta a la cursiva: trazos base, abecedario con el orden de los trazos animado, uniones, palabras, renglón libre y plantillas para imprimir.">
+<link rel="canonical" href="https://catto.ar/publicaciones/escritura-cursiva">
+<meta name="theme-color" content="#0d1117">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Catto">
+<meta property="og:title" content="Escritura cursiva · catto.ar">
+<meta property="og:description" content="Trazos base, abecedario animado, uniones y palabras para practicar cursiva con el dedo, el mouse o el lápiz óptico. Con plantillas para imprimir.">
+<meta property="og:url" content="https://catto.ar/publicaciones/escritura-cursiva">
+<meta property="og:image" content="https://catto.ar/assets/img/chancho-volador.png">
+<meta property="og:locale" content="es_AR">
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3140;
+  --txt:#e6edf3; --muted:#9aa7b4; --soft:#7d8a99;
+  --accent:#58a6ff; --accent2:#1f6feb;
+  --ok:#3fb950; --warn:#d29922; --hot:#f85149; --violet:#a371f7;
+  --r:14px; --shadow:0 8px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:radial-gradient(1200px 600px at 80% -10%, #1b2740 0%, var(--bg) 55%);
+  background-attachment:fixed;
+  color:var(--txt); font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+  line-height:1.5; -webkit-font-smoothing:antialiased; padding-bottom:40px;
+}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+
+/* ---------- Encabezado ---------- */
+header.top{padding:22px 0 16px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(31,111,235,.10),transparent)}
+header.top .wrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+header.top h1{margin:0;font-size:24px;letter-spacing:.2px}
+header.top .sub{color:var(--muted);font-size:13.5px;margin:4px 0 0;max-width:640px}
+.hd-prog{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);
+  background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px}
+.pill b{color:var(--accent)}
+button.tgl{background:var(--panel);border:1px solid var(--line);color:var(--muted);
+  border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;font-family:inherit}
+button.tgl:hover{color:var(--txt);border-color:var(--accent)}
+
+/* ---------- Pestañas ---------- */
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:14px 0 4px}
+nav.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--muted);
+  border-radius:10px;padding:8px 14px;font-size:13.5px;cursor:pointer;font-family:inherit}
+nav.tabs button:hover{color:var(--txt)}
+nav.tabs button.on{background:var(--accent2);border-color:var(--accent);color:#fff}
+
+/* ---------- Selector de ítems ---------- */
+.picker{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 6px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:11px;
+  padding:6px 8px 4px;cursor:pointer;min-width:56px;display:flex;flex-direction:column;
+  align-items:center;gap:2px;transition:border-color .12s,transform .12s}
+.chip:hover{border-color:var(--accent);transform:translateY(-2px)}
+.chip.on{border-color:var(--accent);background:#16233a}
+.chip svg{display:block;height:38px;width:auto;max-width:150px;background:transparent}
+.sheet.mini{background:transparent}
+.sheet.mini .ln,.sheet.mini .sl{display:none}
+.sheet.mini .g-guide{stroke:#8fa6bd;stroke-width:12}
+.chip.on .sheet.mini .g-guide{stroke:#cfe2ff}
+.chip .st{font-size:9.5px;color:var(--warn);letter-spacing:1px;line-height:1}
+.chip .lb{font-size:10.5px;color:var(--soft);line-height:1.1;white-space:nowrap}
+.chip.wide{min-width:0}
+
+/* ---------- Escenario ---------- */
+.stage{display:grid;grid-template-columns:1fr 292px;gap:16px;align-items:start;margin-top:6px}
+.stage>*{min-width:0}
+@media(max-width:900px){.stage{grid-template-columns:1fr}}
+.board-scroll{overflow-x:auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r);padding:12px}
+.board{position:relative;display:inline-block;border-radius:10px;overflow:hidden;user-select:none;-webkit-user-select:none;
+  box-shadow:0 4px 18px rgba(0,0,0,.28)}
+.board svg.sheet{display:block;height:clamp(190px,36vh,330px);width:auto;max-width:none;background:var(--sheet)}
+.board canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.board canvas.fx{pointer-events:none}
+
+/* temas de hoja */
+.cuaderno{--sheet:#fdfaf1;--l1:#d3dde8;--lm:#a9c5e8;--lb:#6f9fd0;--slant:#eadfd0;
+  --guide:#c3ccd6;--guide2:#dfe5eb;--ink:#12325e;--bad:#c8384c;--num:#1f6feb;--numtx:#fff}
+.pizarron{--sheet:#132a20;--l1:rgba(255,255,255,.13);--lm:rgba(255,255,255,.22);--lb:rgba(255,255,255,.42);
+  --slant:rgba(255,255,255,.07);--guide:rgba(255,255,255,.30);--guide2:rgba(255,255,255,.14);
+  --ink:#fdfdf5;--bad:#ff9b8a;--num:#7ee787;--numtx:#0d1117}
+.sheet .ln{stroke:var(--l1);stroke-width:1.6;stroke-dasharray:9 7}
+.sheet .ln.mid{stroke:var(--lm);stroke-dasharray:9 7}
+.sheet .ln.base{stroke:var(--lb);stroke-width:2.4;stroke-dasharray:none}
+.sheet .sl{stroke:var(--slant);stroke-width:1.4}
+.sheet .g-guide{fill:none;stroke:var(--guide);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.sheet .g-guide.dim{stroke:var(--guide2)}
+.sheet .g-guide.dots{stroke-dasharray:2 20;stroke-width:10}
+.sheet .g-guide.off{stroke:transparent}
+.sheet .g-cur{stroke:var(--num);opacity:.55}
+.sheet .g-demo{fill:none;stroke:var(--ink);stroke-width:9;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.sheet .num circle{fill:var(--num)}
+.sheet .num text{fill:var(--numtx);font:700 26px "Segoe UI",sans-serif;text-anchor:middle}
+.sheet .pen{font-size:40px}
+
+/* ---------- Panel lateral ---------- */
+.side{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.card h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:var(--soft)}
+.card p{margin:0;font-size:13.5px;color:var(--muted)}
+.stars{font-size:26px;letter-spacing:3px;color:var(--warn);line-height:1.1}
+.stars .off{color:#39404d}
+.fb{font-size:14px;color:var(--txt);margin-top:4px;min-height:20px}
+.fb.bad{color:var(--warn)}
+.fb.good{color:var(--ok)}
+.stroke-of{font-size:12px;color:var(--soft)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.b{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:9px 13px;font-size:13.5px;cursor:pointer;font-family:inherit}
+button.b:hover{border-color:var(--accent);color:var(--accent)}
+button.b.pri{background:var(--accent2);border-color:var(--accent);color:#fff}
+button.b.pri:hover{color:#fff;filter:brightness(1.08)}
+button.b:disabled{opacity:.45;cursor:default}
+.seg{display:flex;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex-wrap:wrap}
+.seg button{background:var(--panel2);border:0;border-right:1px solid var(--line);color:var(--muted);
+  padding:7px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent2);color:#fff}
+label.fld{display:block;font-size:12px;color:var(--soft);margin:10px 0 4px}
+input.tx,select.tx{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+  border-radius:9px;padding:9px 11px;font-size:13.5px;font-family:inherit}
+.hint{font-size:12px;color:var(--soft);margin-top:8px}
+
+/* ---------- Renglón libre e impresión ---------- */
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.free-wrap{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+#freeBoard{position:relative;border-radius:10px;overflow:hidden}
+#freeBoard canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.grid2{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+#sheetOut{background:#fff;border-radius:10px;padding:18px 16px;color:#111}
+#sheetOut h5{margin:0 0 10px;font:600 14px "Segoe UI",sans-serif;color:#333}
+#sheetOut .row{border-bottom:0;margin-bottom:10px;page-break-inside:avoid;break-inside:avoid}
+#sheetOut svg{display:block;width:100%;height:auto}
+#sheetOut .prow line{stroke:#c8d3de;stroke-width:1.4}
+#sheetOut .prow line.base{stroke:#8aa8c6;stroke-width:2}
+#sheetOut .prow line.slant{stroke:#efe6da;stroke-width:1.2}
+#sheetOut .prow path.model{fill:none;stroke:#1a1a1a;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+#sheetOut .prow path.ghost{fill:none;stroke:#aab4bf;stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+#sheetOut .prow path.dash{fill:none;stroke:#a8b2bd;stroke-width:9;stroke-linecap:round;
+  stroke-linejoin:round;stroke-dasharray:2 20}
+.view{display:none}
+.view.on{display:block}
+footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color:var(--soft);font-size:12.5px}
+
+/* ---------- Teléfono: el selector se desliza y el tablero queda a mano ---------- */
+@media(max-width:700px){
+  header.top h1{font-size:20px}
+  .picker{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity}
+  .chip{flex:none;min-width:48px;scroll-snap-align:center}
+  .chip svg{height:32px}
+  .board-scroll{padding:8px}
+  .board svg.sheet{height:clamp(150px,26vh,240px)}
+  nav.tabs button{padding:7px 11px;font-size:12.5px}
+}
+
+@media print{
+  body{background:#fff!important}
+  body *{visibility:hidden!important}
+  #printArea, #printArea *{visibility:visible!important}
+  #printArea{position:absolute;left:0;top:0;width:100%}
+  #sheetOut{padding:0;border-radius:0}
+  #sheetOut h5{color:#000}
+  @page{margin:14mm}
+}
+</style>
+</head>
+<body>
+<div id="cattoBack" style="position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;background:rgba(13,17,23,.92);border-bottom:1px solid #2a3140;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font:600 14px 'Segoe UI',system-ui,sans-serif"><a href="/" style="display:inline-flex;align-items:center;gap:8px;color:#e6edf3;text-decoration:none"><span style="width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#1f6feb,#a371f7);font-size:15px">🐷</span>Catto</a><a href="/" style="margin-left:auto;color:#9aa7b4;font-weight:400;font-size:13px;text-decoration:none">← Volver al inicio</a></div>
+
+<header class="top">
+  <div class="wrap">
+    <div>
+      <h1>✍️ Escritura cursiva</h1>
+      <p class="sub">De la imprenta a la cursiva. Mirá cómo se escribe cada letra, calcala con el dedo,
+         el mouse o el lápiz óptico, y practicá uniones y palabras. Al final hay plantillas para imprimir.</p>
+    </div>
+    <div class="hd-prog">
+      <span class="pill">⭐ <b id="pgStars">0</b> estrellas</span>
+      <span class="pill">✅ <b id="pgDone">0</b> dominadas</span>
+      <button class="tgl" id="btnSound" title="Sonido">🔊</button>
+      <button class="tgl" id="btnReset" title="Borrar mi progreso">↺</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs" id="tabs"></nav>
+
+  <!-- ============ PRÁCTICA ============ -->
+  <section class="view on" id="v-practica">
+    <div class="picker" id="picker"></div>
+    <div class="stage">
+      <div>
+        <div class="board-scroll">
+          <div class="board cuaderno" id="board">
+            <svg class="sheet" id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
+            <canvas id="ink"></canvas>
+            <canvas id="fx" class="fx"></canvas>
+          </div>
+        </div>
+        <div class="btns" style="margin-top:10px">
+          <button class="b pri" id="btnDemo">▶ Ver cómo se escribe</button>
+          <button class="b" id="btnUndo">↺ Borrar mi trazo</button>
+          <button class="b" id="btnSkip">Trazo siguiente ›</button>
+          <button class="b" id="btnPrev">‹ Anterior</button>
+          <button class="b" id="btnNext">Siguiente ›</button>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="card">
+          <h4 id="itName">Letra</h4>
+          <div class="stars" id="stars">☆☆☆</div>
+          <div class="fb" id="fb">Tocá <b>Ver cómo se escribe</b> y después calcá encima.</div>
+          <div class="stroke-of" id="strokeOf"></div>
+        </div>
+        <div class="card">
+          <h4>Consejo</h4>
+          <p id="tip">—</p>
+        </div>
+        <div class="card">
+          <h4>Guía</h4>
+          <div class="seg" id="segGuide">
+            <button data-g="full" class="on">Completa</button>
+            <button data-g="dots">Punteada</button>
+            <button data-g="off">Sin guía</button>
+          </div>
+          <label class="fld">Hoja</label>
+          <div class="seg" id="segHoja">
+            <button data-h="cuaderno" class="on">Cuaderno</button>
+            <button data-h="pizarron">Pizarrón</button>
+          </div>
+          <p class="hint">Practicá primero con la guía completa, después punteada y por último sin guía.
+             Ahí ya te sale sola.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ DESAFÍO ============ -->
+  <section class="view" id="v-desafio">
+    <div class="card" style="margin:14px 0">
+      <h4>Desafío</h4>
+      <p id="chalTxt">Seis ítems al azar, sin guía punteada de más: juntá la mayor cantidad de estrellas.</p>
+      <div class="btns" style="margin-top:10px">
+        <button class="b pri" id="btnChal">Empezar desafío</button>
+        <span class="pill" id="chalScore" style="display:none">⭐ <b>0</b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RENGLÓN LIBRE ============ -->
+  <section class="view" id="v-libre">
+    <div class="tools">
+      <div class="seg" id="segFreeSize">
+        <button data-s="2" class="on">Renglón grande</button>
+        <button data-s="3">Mediano</button>
+        <button data-s="4">Chico</button>
+      </div>
+      <div class="seg" id="segFreeHoja">
+        <button data-h="cuaderno" class="on">Cuaderno</button>
+        <button data-h="pizarron">Pizarrón</button>
+      </div>
+      <button class="b" id="btnFreeUndo">↺ Deshacer</button>
+      <button class="b" id="btnFreeClear">🧽 Borrar todo</button>
+      <button class="b" id="btnFreeSave">⬇ Guardar imagen</button>
+    </div>
+    <div class="free-wrap">
+      <div id="freeBoard" class="cuaderno"><canvas id="freeC"></canvas></div>
+      <p class="hint">Hoja rayada libre, con la pauta y las líneas de inclinación. Ideal para escribir
+         tu nombre, copiar una frase o practicar lo que salió flojo.</p>
+    </div>
+  </section>
+
+  <!-- ============ IMPRIMIR ============ -->
+  <section class="view" id="v-imprimir">
+    <div class="grid2" style="margin-top:14px">
+      <div class="card">
+        <h4>Plantilla para imprimir</h4>
+        <label class="fld">Qué practicar</label>
+        <select class="tx" id="prContent">
+          <option value="minus">Abecedario en minúsculas</option>
+          <option value="mayus">Abecedario en mayúsculas</option>
+          <option value="trazos">Trazos base</option>
+          <option value="uniones">Uniones</option>
+          <option value="palabras">Palabras</option>
+          <option value="libre">Texto propio</option>
+        </select>
+        <label class="fld">Texto propio (si elegiste esa opción)</label>
+        <input class="tx" id="prText" value="mi nombre" maxlength="40">
+        <label class="fld">Tamaño del renglón</label>
+        <div class="seg" id="segPrSize">
+          <button data-s="1" >Chico</button>
+          <button data-s="2" class="on">Medio</button>
+          <button data-s="3">Grande</button>
+        </div>
+        <label class="fld">Ayudas</label>
+        <div class="seg" id="segPrAid">
+          <button data-a="model" class="on">Modelo + punteado</button>
+          <button data-a="dash">Solo punteado</button>
+          <button data-a="empty">Renglones vacíos</button>
+        </div>
+        <label class="fld">Renglones por ítem</label>
+        <div class="seg" id="segPrRows">
+          <button data-r="1">1</button>
+          <button data-r="2" class="on">2</button>
+          <button data-r="3">3</button>
+        </div>
+        <div class="btns" style="margin-top:14px">
+          <button class="b pri" id="btnPrint">🖨️ Imprimir</button>
+        </div>
+        <p class="hint">Sale en blanco y negro, listo para fotocopiar. El modelo va oscuro y las
+           repeticiones punteadas para calcar arriba.</p>
+      </div>
+      <div id="printArea"><div id="sheetOut"></div></div>
+    </div>
+  </section>
+
+  <footer class="pie">
+    Publicación de <a href="/">catto.ar</a> · Los trazos siguen la pauta de cuatro líneas
+    (palo alto, línea media, renglón y palo bajo) con inclinación constante.
+  </footer>
+</div>
+
+<script>
+/* ============================================================================
+   ESCRITURA CURSIVA — catto.ar
+   Todo en un archivo: los glifos son paths de SVG dibujados a mano sobre una
+   pauta de diseño, y el calcado se puntúa muestreando esos mismos paths.
+
+   Sistema de coordenadas de diseño (300 unidades de alto):
+       y =  18  línea de arriba (palo alto / altura de mayúsculas)
+       y = 100  línea media (altura de la x)
+       y = 200  renglón (línea de base)
+       y = 288  línea de abajo (palo bajo)
+
+   Regla de oro de los glifos: cada letra ARRANCA en (0,200) y TERMINA en (w,200)
+   con tangente horizontal. Así, al pegar una letra tras otra, los trazos de
+   salida y de entrada se enganchan solos y la palabra sale de una sola tirada.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- glifos --- */
+var GL = {
+
+/* ------------------------------- minúsculas ------------------------------- */
+a:{w:78,s:["M0,200 C8,200 18,152 40,100 C26,98 12,124 12,152 C12,182 28,202 44,198 C58,194 68,172 68,146 C68,122 56,104 40,100 C56,102 70,118 70,148 C70,176 70,190 72,200 C74,200 76,200 78,200"],
+   t:"Subí hasta la línea media, girá hacia la izquierda cerrando el óvalo y bajá por el costado derecho."},
+b:{w:100,s:["M0,200 C8,196 18,110 34,22 C40,80 44,150 46,192 C60,204 78,190 78,152 C78,124 62,106 46,116 C60,104 78,110 84,132 C90,158 92,188 96,198 C97,200 98,200 100,200"],
+   t:"Palo alto con bucle: subí, bajá al renglón y armá la panza hacia la derecha."},
+c:{w:78,s:["M0,200 C8,200 20,152 44,102 C30,96 14,120 14,150 C14,178 26,198 42,199 C50,200 60,200 66,200 C70,200 74,200 78,200"],
+   t:"Subí hasta la línea media y girá hacia la izquierda sin cerrar: la c queda abierta."},
+d:{w:80,s:["M0,200 C8,200 18,150 40,100 C26,98 12,124 12,152 C12,182 28,202 44,198 C58,194 66,172 66,146 C66,122 56,104 40,100 C50,88 58,58 62,24 C66,72 68,150 70,192 C72,198 76,200 80,200"],
+   t:"Primero el óvalo, después el palo alto. No arranques por el palo."},
+e:{w:82,s:["M0,200 C10,200 22,178 40,160 C56,146 54,104 34,104 C16,104 8,130 10,158 C12,184 30,206 50,196 C60,192 66,186 70,180 C74,188 77,200 82,200"],
+   t:"El bucle de la e va hacia arriba y hacia atrás: chiquito y redondo."},
+f:{w:64,s:["M0,200 C6,192 14,126 26,58 C32,28 48,26 42,56 C37,86 28,142 22,198 C20,230 18,250 16,264 C10,292 -8,286 -4,262 C0,238 24,212 46,200 C52,198 58,200 64,200"],
+   t:"Un bucle arriba y otro abajo, los dos cruzan sobre el mismo palo."},
+g:{w:92,s:["M0,200 C8,200 18,150 40,100 C26,98 12,124 12,152 C12,182 28,202 44,198 C58,194 66,172 66,146 C66,122 56,104 40,100 C54,102 68,118 68,148 C68,196 64,240 60,266 C56,292 38,290 40,266 C42,246 58,226 78,208 C82,204 86,200 92,200"],
+   t:"Óvalo cerrado y bucle bajo que vuelve hacia la derecha."},
+h:{w:96,s:["M0,200 C8,196 18,110 34,22 C40,80 44,150 46,192 C48,150 52,106 66,102 C80,98 86,150 88,190 C90,196 93,200 96,200"],
+   t:"Palo alto con bucle y un arco: el arco toca la línea media."},
+i:{w:52,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 50,200","M32,70 L40,56"],
+   t:"Una guirnalda y el punto arriba, alineado con el trazo."},
+j:{w:56,s:["M0,200 C8,200 16,148 34,100 C34,150 32,230 28,262 C24,290 6,288 8,264 C10,242 28,220 46,206 C50,204 53,201 56,200","M32,70 L40,56"],
+   t:"Guirnalda, bucle bajo y el punto arriba."},
+k:{w:102,s:["M0,200 C8,196 18,110 34,22 C40,80 44,150 46,192 C54,156 64,124 80,104 C92,96 96,116 84,124 C74,132 60,140 54,150 C66,156 78,176 88,192 C91,197 96,200 102,200"],
+   t:"Palo alto, un rulito a la altura media y la patita hacia el renglón."},
+l:{w:60,s:["M0,200 C6,192 14,120 28,44 C33,20 50,22 44,52 C38,84 28,146 26,188 C27,196 34,200 44,200 C50,200 55,200 60,200"],
+   t:"El bucle llega a la línea de arriba y cruza a la altura media."},
+m:{w:140,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 54,102 68,102 C82,102 88,200 94,200 C100,200 100,102 114,102 C128,102 134,200 140,200"],
+   t:"Tres montañitas del mismo alto y del mismo ancho."},
+n:{w:94,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 54,102 68,102 C82,102 88,200 94,200"],
+   t:"Dos montañitas: el arco arranca desde la línea media."},
+o:{w:100,s:["M0,200 C8,200 18,150 42,100 C28,98 12,124 12,152 C12,182 28,202 44,198 C60,194 68,172 68,146 C68,124 58,106 44,100 C60,92 78,104 84,132 C90,158 92,188 96,198 C97,200 98,200 100,200"],
+   t:"Óvalo cerrado y salí desde arriba para engancharte con la que sigue."},
+p:{w:88,s:["M0,200 C8,200 16,148 34,100 C34,160 32,232 28,274 C32,226 38,170 44,118 C56,104 72,112 72,142 C72,170 58,184 46,178 C58,186 66,194 76,198 C80,200 84,200 88,200"],
+   t:"Bajá al palo bajo, volvé por el mismo trazo y recién ahí armá la panza."},
+q:{w:98,s:["M0,200 C8,200 18,150 40,100 C26,98 12,124 12,152 C12,182 28,202 44,198 C58,194 66,172 66,146 C66,122 56,104 40,100 C54,102 68,118 68,148 C68,196 66,240 64,264 C68,286 86,286 90,262 C92,240 93,216 94,202 C95,200 96,200 98,200"],
+   t:"Óvalo cerrado y palo bajo con la colita hacia la derecha."},
+r:{w:84,s:["M0,200 C8,200 20,148 34,98 C42,88 56,88 58,100 C59,110 54,118 52,128 C56,152 62,178 68,192 C72,198 78,200 84,200"],
+   t:"Subí un poquito más alto que la línea media, hacé el hombrito y bajá."},
+s:{w:76,s:["M0,200 C10,200 24,148 44,100 C40,106 20,114 14,138 C10,158 14,178 22,192 C30,201 46,200 58,199 C66,199 70,200 76,200"],
+   t:"Subí, bajá cerrando con un piquito y salí por el renglón."},
+t:{w:62,s:["M0,200 C8,196 16,140 28,46 C32,100 36,160 44,190 C48,198 54,200 62,200","M4,102 C18,96 38,94 52,96"],
+   t:"Palo mediano (más bajo que la l) y la raya cruzada a la altura media."},
+u:{w:96,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 62,152 82,100 C84,142 90,200 96,200"],
+   t:"Dos guirnaldas iguales, sin puntas: abajo siempre redondeado."},
+v:{w:100,s:["M0,200 C8,200 16,148 34,100 C38,140 42,176 48,196 C54,170 60,130 74,102 C84,104 92,140 94,178 C96,190 98,200 100,200"],
+   t:"Subí, bajá en punta y volvé a subir hasta la línea media."},
+w:{w:140,s:["M0,200 C8,200 16,148 34,100 C38,140 42,176 48,196 C54,170 60,130 74,102 C78,140 82,176 88,196 C94,170 100,132 114,102 C124,104 132,140 134,178 C136,190 138,200 140,200"],
+   t:"Como dos v seguidas: puntas abajo y aire arriba."},
+x:{w:82,s:["M0,200 C8,200 18,150 38,100 C48,124 54,164 60,184 C64,193 70,200 82,200","M68,102 C56,132 42,166 30,192"],
+   t:"Primero la curva, después la cruz: de arriba hacia abajo."},
+y:{w:94,s:["M0,200 C8,200 16,148 34,100 C36,140 38,178 42,196 C48,178 56,140 70,100 C70,150 66,230 62,264 C58,290 40,288 42,264 C44,242 60,220 78,208 C82,204 88,200 94,200"],
+   t:"Guirnalda y bucle bajo: igual que la j pero sin punto."},
+z:{w:100,s:["M0,200 C8,200 16,148 30,100 C42,88 60,92 62,108 C60,130 46,166 36,192 C30,222 24,252 14,258 C2,264 2,246 16,242 C34,236 62,228 82,208 C88,203 94,200 100,200"],
+   t:"Hombrito arriba y bucle abajo del renglón."},
+
+/* ------------------------------- mayúsculas ------------------------------- */
+A:{w:104,s:["M60,44 C40,48 18,92 16,142 C14,182 32,206 54,198 C76,190 84,132 80,86 C77,50 68,40 60,44 C72,52 84,92 86,142 C88,178 90,192 94,200 C97,200 100,200 104,200"]},
+B:{w:98,s:["M46,30 C32,74 28,140 28,198","M46,30 C72,28 90,44 84,72 C79,95 56,106 34,104 C58,102 86,112 86,148 C86,180 54,200 26,196"]},
+C:{w:104,s:["M94,54 C82,32 56,22 38,40 C18,60 12,112 18,150 C24,186 48,206 72,194 C82,189 90,178 94,166"]},
+D:{w:100,s:["M34,28 C32,80 30,150 30,196 C62,202 90,174 92,116 C94,60 66,22 34,28"]},
+E:{w:102,s:["M88,44 C76,26 48,26 36,44 C24,62 36,86 58,92 C36,94 24,112 26,138 C28,168 44,190 62,194 C78,198 88,190 94,178"]},
+F:{w:100,s:["M36,30 C34,90 32,150 32,196","M36,30 C58,24 80,26 94,32","M32,110 C48,104 64,104 78,108"]},
+G:{w:100,s:["M92,52 C80,32 54,24 38,42 C20,62 14,112 20,150 C26,186 52,206 74,192 C86,184 90,164 84,150 C78,138 64,140 58,150"]},
+H:{w:106,s:["M28,26 C26,90 24,150 24,196","M92,26 C90,90 88,150 88,196","M24,112 C44,104 66,104 88,110"]},
+I:{w:92,s:["M40,58 C46,30 74,24 80,46 C85,64 66,86 50,78 C58,118 62,168 64,192 C66,199 74,200 80,194"]},
+J:{w:92,s:["M42,60 C48,32 76,26 82,48 C87,66 68,88 52,80 C56,120 52,220 46,258 C40,290 16,292 12,266 C11,254 18,246 26,250"]},
+K:{w:100,s:["M28,28 C26,90 24,150 24,196","M92,30 C74,58 50,90 34,108 C52,120 74,160 90,196"]},
+L:{w:106,s:["M40,64 C48,34 76,26 82,48 C87,66 66,88 50,80 C54,120 52,170 56,188 C60,200 82,198 96,186"]},
+M:{w:146,s:["M14,196 C16,140 22,72 34,34 C42,14 54,22 54,54 C54,96 52,152 52,196 C54,152 60,74 72,38 C80,18 92,26 92,58 C92,102 90,158 90,196 C92,152 98,78 110,42 C118,22 130,30 130,60 C130,104 126,160 126,192 C128,198 134,200 140,198"]},
+N:{w:112,s:["M18,196 C20,140 26,72 38,34 C46,14 58,22 58,54 C58,96 56,152 58,196 C60,150 66,76 80,40 C88,18 100,26 100,58 C100,102 96,158 96,192 C98,198 104,200 110,198"]},
+"Ñ":{w:112,s:["M18,196 C20,140 26,72 38,34 C46,14 58,22 58,54 C58,96 56,152 58,196 C60,150 66,76 80,40 C88,18 100,26 100,58 C100,102 96,158 96,192 C98,198 104,200 110,198","M48,4 C58,-8 68,12 80,0"]},
+O:{w:104,s:["M70,36 C46,32 22,66 18,116 C14,164 34,200 60,196 C86,192 100,150 96,104 C92,60 74,38 62,44 C70,50 84,56 92,50"]},
+P:{w:96,s:["M40,30 C36,90 32,150 30,196","M40,30 C68,26 88,42 84,72 C80,100 54,110 34,104"]},
+Q:{w:110,s:["M70,36 C46,32 22,66 18,116 C14,164 34,200 60,196 C86,192 100,150 96,104 C92,60 74,34 70,36","M74,148 C82,168 90,190 104,200"]},
+R:{w:98,s:["M40,30 C36,90 32,150 30,196","M40,30 C68,26 86,42 82,70 C78,96 54,106 34,102 C54,116 74,158 90,196"]},
+S:{w:100,s:["M88,52 C80,32 54,24 40,42 C28,58 36,84 60,96 C84,108 92,134 82,160 C72,186 44,196 26,180"]},
+T:{w:110,s:["M30,36 C56,28 84,28 104,34","M66,32 C62,90 58,150 58,190 C58,198 66,200 74,194"]},
+U:{w:108,s:["M24,32 C22,90 20,150 26,178 C34,200 62,204 74,182 C84,162 84,80 88,34 C88,90 86,150 88,192 C90,198 96,200 102,196"]},
+V:{w:104,s:["M22,32 C28,96 42,164 56,196 C70,158 84,88 92,34 C96,44 102,48 108,42"]},
+W:{w:138,s:["M20,32 C26,96 40,164 54,196 C64,150 72,86 78,34 C82,90 90,164 102,196 C112,150 120,86 126,34"]},
+X:{w:108,s:["M24,32 C40,90 62,158 82,196","M96,34 C78,90 50,156 28,194"]},
+Y:{w:110,s:["M22,32 C24,96 36,150 52,180 C60,196 74,196 82,178 C90,158 92,80 94,34 C92,90 86,180 78,232 C72,278 52,296 34,284 C26,278 26,266 34,262"]},
+Z:{w:112,s:["M28,40 C50,28 78,28 98,36 C76,80 54,140 36,192 C58,198 82,198 102,190"]},
+
+/* --------------------------- trazos preparatorios ------------------------- */
+"@palos":{w:180,s:["M0,200 L0,100","M46,200 L46,100","M92,200 L92,100","M138,200 L138,100"],
+   t:"Todos con la misma inclinación y la misma separación. Sin apretar el lápiz."},
+"@guirnaldas":{w:192,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 62,152 82,100 C84,142 90,200 96,200 C102,200 110,152 130,100 C132,142 138,200 144,200 C150,200 158,152 178,100 C180,142 186,200 192,200"],
+   t:"Sin puntas abajo: la curva apoya en el renglón y vuelve a subir."},
+"@arcos":{w:186,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 54,102 68,102 C82,102 88,200 94,200 C100,200 100,102 114,102 C128,102 134,200 140,200 C146,200 146,102 160,102 C174,102 180,200 186,200"],
+   t:"Los arcos tocan la línea media y bajan al renglón, todos del mismo alto."},
+"@ondas":{w:190,s:["M0,180 C20,120 40,120 60,180 C80,240 100,240 120,180 C140,120 160,120 180,180"],
+   t:"Movimiento continuo, sin levantar la mano. Es puro pulso."}
+};
+
+/* Letras con tilde o acento: se arman con la letra base + un trazo arriba. */
+function conAcento(base, dx, tipo){
+  var g = GL[base]; if(!g) return null;
+  var cx = g.w/2 + (dx||0);
+  var extra = (tipo === 'tilde')
+    ? "M"+(cx-14)+",64 C"+(cx-5)+",50 "+(cx+5)+",76 "+(cx+15)+",60"
+    : "M"+(cx-9)+",70 L"+(cx+9)+",50";
+  return {w:g.w, s:g.s.concat([extra]), t:g.t};
+}
+GL["á"]=conAcento('a'); GL["é"]=conAcento('e'); GL["í"]=conAcento('i',0);
+GL["ó"]=conAcento('o',-14); GL["ú"]=conAcento('u');
+GL["ñ"]=conAcento('n','', 'tilde');
+GL["ñ"].t = "La n con la tilde: una onda apoyada arriba, sin tocar la letra.";
+/* la í y la j ya traen punto: en las acentuadas el punto se reemplaza */
+GL["í"] = {w:GL.i.w, s:[GL.i.s[0], "M28,70 L46,50"], t:GL.i.t};
+
+var TIP_MAY = "Las mayúsculas arrancan arriba y no siempre se enganchan con la letra que sigue. Seguí el orden de los números.";
+
+/* ---------------------------------------------------------- secciones --- */
+var MINUS = "abcdefghijklmnñopqrstuvwxyz".split("");
+var MAYUS = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
+var UNIONES = ["ma","me","mi","lo","la","os","ar","el","un","br","ll","ce","qu","ta","ño","vi","ay","za"];
+var PALABRAS = ["sol","luna","casa","mamá","papá","dedo","amigo","escuela","cursiva","gracias","Argentina","Me gusta escribir"];
+
+var SECS = {
+  trazos:{n:"Trazos base", items:[
+    {k:"@palos",   lb:"Palitos"},
+    {k:"@guirnaldas", lb:"Guirnaldas"},
+    {k:"@arcos",   lb:"Arcos"},
+    {k:"@ondas",   lb:"Ondas"},
+    {k:"llll",     lb:"Bucles altos", tip:"El bucle llega arriba y cruza siempre a la misma altura."},
+    {k:"jjj",      lb:"Bucles bajos", tip:"El bucle baja parejo y vuelve a cruzar sobre el renglón."},
+    {k:"oooo",     lb:"Óvalos", tip:"Girá hacia la izquierda. El óvalo va inclinado, no parado."},
+    {k:"ssss",     lb:"Eses", tip:"Sube, baja y cierra: la s no tiene que quedar ancha."}
+  ]},
+  minus:{n:"Minúsculas", items:MINUS.map(function(c){return {k:c};})},
+  mayus:{n:"Mayúsculas", items:MAYUS.map(function(c){return {k:c, tip:TIP_MAY};})},
+  uniones:{n:"Uniones", items:UNIONES.map(function(c){return {k:c,
+    tip:"Las letras se enganchan sin levantar la mano: el trazo de salida de una es la entrada de la que sigue."};})},
+  palabras:{n:"Palabras", items:PALABRAS.map(function(c){return {k:c,
+    tip:"Escribí toda la palabra de una sola tirada y recién al final poné los puntos y las tildes."};})}
+};
+
+var TABS = [
+  ["trazos","① Trazos"],["minus","② Minúsculas"],["mayus","③ Mayúsculas"],
+  ["uniones","④ Uniones"],["palabras","⑤ Palabras"],
+  ["desafio","🏆 Desafío"],["libre","📝 Renglón libre"],["imprimir","🖨️ Imprimir"]
+];
+
+/* --------------------------------------------------------------- estado --- */
+var SLANT = -11;                       // inclinación de la cursiva, en grados
+var S = {
+  tab:"trazos", sec:"trazos", idx:0,   // ítem actual
+  strokeIx:0,                          // trazo del ítem que toca calcar
+  guide:"full", hoja:"cuaderno", sound:true,
+  paths:[], samples:[], done:[],       // geometría del ítem actual
+  drawing:false, pts:[], userStrokes:[],
+  scores:{}, chal:null
+};
+
+/* --------------------------------------------------------- utilidades --- */
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
+function load(){
+  try{ S.scores = JSON.parse(localStorage.getItem('cattoCursivaV1')||'{}') || {}; }catch(e){ S.scores={}; }
+  try{ S.sound = localStorage.getItem('cattoCursivaSnd') !== '0'; }catch(e){}
+}
+function save(){
+  try{ localStorage.setItem('cattoCursivaV1', JSON.stringify(S.scores)); }catch(e){}
+}
+function itemsOf(sec){ return SECS[sec].items; }
+function curItem(){ return itemsOf(S.sec)[S.idx]; }
+
+/* Un ítem puede ser un glifo suelto ("@palos", "a") o un texto a componer ("mamá"). */
+function seqOf(item){ return (item.k.charAt(0)==='@') ? [item.k] : item.k.split(''); }
+
+function tipOf(item){
+  if(item.tip) return item.tip;
+  var g = GL[item.k];
+  if(g && g.t) return g.t;
+  var first = GL[item.k.charAt(0)];
+  if(first && first.t) return first.t;
+  return "Seguí el orden de los trazos: cada número marca dónde arranca la mano.";
+}
+function labelOf(item){
+  if(item.lb) return item.lb;
+  if(item.k.charAt(0)==='@') return item.k.slice(1);
+  return item.k;
+}
+
+/* -------------------------------------------------------------- layout --- */
+/* Arma la lista de trazos de un ítem, ya ubicados en la pauta. */
+function layout(item){
+  var seq = seqOf(item), x = 0, out = [], w = 0;
+  for(var i=0;i<seq.length;i++){
+    var ch = seq[i];
+    if(ch === ' '){ x += 54; continue; }
+    var g = GL[ch] || GL[ch.toLowerCase()];
+    if(!g){ x += 54; continue; }
+    for(var j=0;j<g.s.length;j++) out.push({d:g.s[j], x:x});
+    x += g.w;
+  }
+  w = x;
+  return {w:w, strokes:out};
+}
+
+/* Marca el SVG de una hoja con pauta + los trazos del ítem. */
+function sheetMarkup(item, opts){
+  opts = opts || {};
+  var L = layout(item);
+  /* la hoja nunca es más angosta que MINW: los ítems cortos quedan centrados
+     y la letra conserva su tamaño en pantalla */
+  var MINW = opts.minw === undefined ? 520 : opts.minw;
+  var padL = Math.max(34, (MINW - L.w)/2), padR = padL + 20;
+  var W = L.w + padL + padR;
+  var vb = (-padL)+" -26 "+W+" 348";
+  var m = '';
+
+  /* líneas de inclinación (cada 62 unidades, con el mismo ángulo de la letra) */
+  if(opts.slantLines !== false){
+    var t = Math.tan(-SLANT*Math.PI/180);
+    for(var sx=-padL; sx < L.w+padR; sx += 62){
+      m += '<line class="sl" x1="'+(sx)+'" y1="292" x2="'+(sx+t*(292-14))+'" y2="14"/>';
+    }
+  }
+  /* pauta */
+  m += '<line class="ln" x1="'+(-padL)+'" y1="18" x2="'+(L.w+padR)+'" y2="18"/>'
+     + '<line class="ln mid" x1="'+(-padL)+'" y1="100" x2="'+(L.w+padR)+'" y2="100"/>'
+     + '<line class="ln base" x1="'+(-padL)+'" y1="200" x2="'+(L.w+padR)+'" y2="200"/>'
+     + '<line class="ln" x1="'+(-padL)+'" y1="288" x2="'+(L.w+padR)+'" y2="288"/>';
+
+  /* trazos, dentro del grupo inclinado */
+  m += '<g data-l="slant" transform="translate(0,200) skewX('+SLANT+') translate(0,-200)">';
+  for(var i=0;i<L.strokes.length;i++){
+    var s = L.strokes[i];
+    m += '<g transform="translate('+s.x+',0)">'
+       +   '<path class="g-guide" data-i="'+i+'" d="'+s.d+'"/>'
+       + '</g>';
+  }
+  /* capa de demostración (se rellena al animar) */
+  m += '<g data-l="demo"></g>';
+  m += '</g>';
+  /* números de arranque (fuera del grupo inclinado: se posicionan a mano) */
+  m += '<g data-l="nums"></g>';
+  m += '<g data-l="pen"></g>';
+
+  return {vb:vb, markup:m, count:L.strokes.length};
+}
+
+/* ------------------------------------------------------- tablero (SVG) --- */
+var svg = $('svg'), board = $('board'), ink = $('ink'), fx = $('fx');
+var ctx = ink.getContext('2d'), fctx = fx.getContext('2d');
+/* capas del tablero: se buscan dentro del SVG grande, nunca en las miniaturas */
+function layer(n){ return svg.querySelector('g[data-l="'+n+'"]'); }
+
+function renderItem(){
+  var item = curItem();
+  var sh = sheetMarkup(item);
+  svg.setAttribute('viewBox', sh.vb);
+  svg.innerHTML = sh.markup;
+  board.className = 'board ' + S.hoja;
+
+  demoTok++;                                   // corta cualquier animación anterior
+  S.paths = [].slice.call(svg.querySelectorAll('path.g-guide'));
+  S.strokeIx = 0; S.userStrokes = []; S.pts = [];
+  S.done = S.paths.map(function(){ return false; });
+
+  applyGuide();
+  placeNumbers();
+  resizeCanvas();
+  paintUser();
+  updateSide();
+}
+
+function applyGuide(){
+  S.paths.forEach(function(p,i){
+    p.setAttribute('class','g-guide'
+      + (S.guide==='dots' ? ' dots' : (S.guide==='off' ? ' off' : ''))
+      + (i === S.strokeIx ? ' g-cur' : (S.done[i] ? '' : ' dim')));
+  });
+}
+
+/* Matriz que lleva del sistema de un trazo al del SVG raíz (traslado + inclinación).
+   Ojo: getCTM() devolvería coordenadas del viewport, no del viewBox. */
+function toRoot(p){
+  var a = svg.getScreenCTM(), b = p.getScreenCTM();
+  if(!a || !b) return null;
+  return a.inverse().multiply(b);
+}
+/* Punto y tangente inicial de cada trazo, en coordenadas del SVG raíz. */
+function startInfo(i){
+  var p = S.paths[i], m = toRoot(p);
+  if(!m) return null;
+  var a = p.getPointAtLength(0), b = p.getPointAtLength(Math.min(14, p.getTotalLength()));
+  function tr(q){ return {x:m.a*q.x + m.c*q.y + m.e, y:m.b*q.x + m.d*q.y + m.f}; }
+  return {a:tr(a), b:tr(b)};
+}
+
+function placeNumbers(){
+  var g = layer('nums'); if(!g) return;
+  var m = '';
+  for(var i=0;i<S.paths.length;i++){
+    var si = startInfo(i);
+    if(!si) continue;
+    var dx = si.b.x - si.a.x, dy = si.b.y - si.a.y, L = Math.hypot(dx,dy)||1;
+    /* el número se corre en contra del sentido del trazo, para no taparlo */
+    var cx = si.a.x - dx/L*26, cy = si.a.y - dy/L*26;
+    var op = (i === S.strokeIx) ? 1 : .32;
+    m += '<g class="num" opacity="'+op+'">'
+       +   '<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="17"/>'
+       +   '<text x="'+cx.toFixed(1)+'" y="'+(cy+9).toFixed(1)+'">'+(i+1)+'</text>'
+       +   '<path d="M'+si.a.x.toFixed(1)+','+si.a.y.toFixed(1)+' l'+(dx/L*20).toFixed(1)+','+(dy/L*20).toFixed(1)+'" '
+       +     'stroke="var(--num)" stroke-width="5" stroke-linecap="round" fill="none" marker-end=""/>'
+       + '</g>';
+  }
+  g.innerHTML = m;
+}
+
+/* ------------------------------------------------------- canvas / tinta --- */
+function resizeCanvas(){
+  var r = svg.getBoundingClientRect();
+  if(!r.width) return;
+  var dpr = Math.min(window.devicePixelRatio||1, 2);
+  [ink,fx].forEach(function(c){
+    c.style.width = r.width+'px'; c.style.height = r.height+'px';
+    c.width = Math.round(r.width*dpr); c.height = Math.round(r.height*dpr);
+    c.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+  });
+  sampleAll();
+  paintUser();
+}
+
+/* Muestrea cada trazo del modelo y lo pasa a píxeles del canvas. */
+function sampleAll(){
+  var r = ink.getBoundingClientRect();
+  S.samples = S.paths.map(function(p){
+    var m = p.getScreenCTM(); if(!m) return [];
+    var L = p.getTotalLength();
+    var n = clamp(Math.round(L/5), 14, 260);
+    var out = [];
+    for(var i=0;i<=n;i++){
+      var q = p.getPointAtLength(L*i/n);
+      out.push({ x: m.a*q.x + m.c*q.y + m.e - r.left,
+                 y: m.b*q.x + m.d*q.y + m.f - r.top });
+    }
+    return out;
+  });
+}
+
+function cssVar(n){ return getComputedStyle(board).getPropertyValue(n).trim(); }
+function penW(){ return clamp(ink.getBoundingClientRect().height/300*7, 3, 11); }
+function tol(){ return clamp(ink.getBoundingClientRect().height/300*26, 12, 34); }
+
+function paintUser(){
+  var r = ink.getBoundingClientRect();
+  ctx.clearRect(0,0,r.width,r.height);
+  S.userStrokes.forEach(function(st){ drawStroke(st, false); });
+  if(S.pts.length) drawStroke(S.pts, true);
+}
+
+function drawStroke(pts, live){
+  if(pts.length < 2) {
+    if(pts.length===1){ ctx.fillStyle = pts[0].bad ? cssVar('--bad') : cssVar('--ink');
+      ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, penW()/2, 0, 7); ctx.fill(); }
+    return;
+  }
+  ctx.lineWidth = penW(); ctx.lineCap='round'; ctx.lineJoin='round';
+  for(var i=1;i<pts.length;i++){
+    ctx.strokeStyle = pts[i].bad ? cssVar('--bad') : cssVar('--ink');
+    ctx.beginPath();
+    ctx.moveTo(pts[i-1].x, pts[i-1].y);
+    ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.stroke();
+  }
+}
+
+/* Distancia del punto al trazo objetivo + índice de la muestra más cercana. */
+function nearest(p, sm){
+  var best = 1e12, bi = 0;
+  for(var i=0;i<sm.length;i++){
+    var dx = sm[i].x-p.x, dy = sm[i].y-p.y, d = dx*dx+dy*dy;
+    if(d < best){ best = d; bi = i; }
+  }
+  return {d:Math.sqrt(best), i:bi};
+}
+
+/* -------------------------------------------------------------- puntero --- */
+function localPt(ev){
+  var r = ink.getBoundingClientRect();
+  return {x:ev.clientX - r.left, y:ev.clientY - r.top};
+}
+ink.addEventListener('pointerdown', function(ev){
+  if(S.strokeIx >= S.paths.length) return;
+  ink.setPointerCapture(ev.pointerId);
+  S.drawing = true; S.pts = [];
+  addPt(localPt(ev));
+  ev.preventDefault();
+});
+ink.addEventListener('pointermove', function(ev){
+  if(!S.drawing) return;
+  var p = localPt(ev), last = S.pts[S.pts.length-1];
+  if(last && Math.hypot(p.x-last.x, p.y-last.y) < 2) return;
+  addPt(p);
+  paintUser();
+});
+['pointerup','pointercancel','pointerleave'].forEach(function(t){
+  ink.addEventListener(t, function(ev){ if(S.drawing){ S.drawing=false; endStroke(); } });
+});
+function addPt(p){
+  var lim = tol()*1.35, best = 1e12;
+  for(var i=S.strokeIx;i<S.paths.length;i++){
+    var sm = S.samples[i] || [];
+    if(sm.length){ var d = nearest(p, sm).d; if(d < best) best = d; }
+  }
+  p.bad = best > lim;
+  S.pts.push(p);
+}
+
+/* ------------------------------------------------------------ puntuación --- */
+/* Puntúa un conjunto de puntos del alumno contra el trazo i del modelo.
+   cobertura = cuánto del modelo recorrió · precisión = cuánto se mantuvo encima. */
+function scoreOne(i, pts){
+  var sm = S.samples[i] || [];
+  if(!sm.length || pts.length < 4) return null;
+  var lim = tol()*1.35, n = sm.length;
+  var seen = new Uint8Array(n), inside = 0, maxi = 0, back = 0;
+  for(var k=0;k<pts.length;k++){
+    var nr = nearest(pts[k], sm);
+    if(nr.i > maxi) maxi = nr.i;
+    else if(nr.i < maxi - n*0.18) back++;
+    if(nr.d <= lim){
+      inside++;
+      for(var q=Math.max(0,nr.i-1); q<=Math.min(n-1,nr.i+1); q++) seen[q] = 1;
+    }
+  }
+  var cov = 0; for(var z=0;z<n;z++) if(seen[z]) cov++;
+  cov /= n;
+  var prec = inside / pts.length;
+  var wrongWay = back > pts.length*0.22;
+  var d0 = nearest(pts[0], sm).d;
+  var score = (cov*0.65 + prec*0.35) * (wrongWay ? 0.7 : 1);
+  var msg = '', cls = 'good';
+  if(d0 > tol()*2.6){ msg = 'Empezá justo en el punto ' + (i+1) + ' 👆'; cls = 'bad'; }
+  else if(wrongWay){ msg = 'Ojo con el sentido: seguí la flecha, sin volver atrás.'; cls = 'bad'; }
+  else if(cov < 0.55){ msg = 'Te faltó recorrer el trazo hasta el final.'; cls = 'bad'; }
+  else if(prec < 0.6){ msg = 'Vas por afuera de la guía. Más despacio y más pegado.'; cls = 'bad'; }
+  var pass = (score >= 0.6 && cov >= 0.55 && d0 <= tol()*2.6);
+  if(pass && !msg) msg = score >= 0.9 ? '¡Excelente! ✨' : (score >= 0.75 ? '¡Muy bien!' : 'Bien, se puede afinar.');
+  return {score:score, pass:pass, msg:msg, cls:cls};
+}
+
+function endStroke(){
+  if(S.pts.length < 3 || S.strokeIx >= S.paths.length){ S.pts = []; paintUser(); return; }
+
+  /* Reparte los puntos entre los trazos que faltan: así una palabra escrita
+     de una sola tirada completa varias letras de una vez. */
+  var pend = [], groups = {};
+  for(var i=S.strokeIx;i<S.paths.length;i++){ pend.push(i); groups[i] = []; }
+  for(var k=0;k<S.pts.length;k++){
+    var p = S.pts[k], best = 1e12, bi = -1;
+    for(var j=0;j<pend.length;j++){
+      var sm = S.samples[pend[j]] || [];
+      if(!sm.length) continue;
+      var d = nearest(p, sm).d;
+      if(d < best){ best = d; bi = pend[j]; }
+    }
+    if(bi >= 0) groups[bi].push(p);
+  }
+
+  var suma = 0, hechos = 0, msg = '', cls = 'good';
+  for(var j2=0;j2<pend.length;j2++){
+    var res = scoreOne(pend[j2], groups[pend[j2]]);
+    if(!res) break;                       // ese trazo casi no se tocó: se corta acá
+    msg = res.msg; cls = res.cls;
+    if(!res.pass) break;
+    S.done[pend[j2]] = true;
+    S.strokeIx = pend[j2] + 1;
+    suma += res.score; hechos++;
+  }
+
+  if(hechos){ S.userStrokes.push(S.pts.slice()); }
+  S.pts = [];
+  paintUser(); applyGuide(); placeNumbers();
+  $('fb').className = 'fb ' + cls;
+  $('fb').innerHTML = msg;
+  if(hechos){
+    S.lastScore = suma / hechos;
+    if(S.strokeIx >= S.paths.length) finishItem(S.lastScore);
+  }
+  updateSide(true);
+}
+
+function finishItem(score){
+  var stars = score >= 0.9 ? 3 : (score >= 0.75 ? 2 : 1);
+  var key = S.sec + ':' + curItem().k;
+  if((S.scores[key]||0) < stars){ S.scores[key] = stars; save(); }
+  beep(stars);
+  if(stars === 3) confetti();
+  if(S.chal){
+    S.chal.got += stars; S.chal.i++;
+    $('chalScore').style.display=''; $('chalScore').querySelector('b').textContent = S.chal.got;
+    setTimeout(nextChal, 900);
+  }
+  updateProgress();
+}
+
+/* --------------------------------------------------------------- extras --- */
+var AC = null;
+function beep(stars){
+  if(!S.sound) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    var notes = [523.25, 659.25, 783.99].slice(0, Math.max(1,stars));
+    notes.forEach(function(f,i){
+      var o = AC.createOscillator(), g = AC.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001, AC.currentTime + i*0.11);
+      g.gain.exponentialRampToValueAtTime(0.16, AC.currentTime + i*0.11 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + i*0.11 + 0.24);
+      o.connect(g); g.connect(AC.destination);
+      o.start(AC.currentTime + i*0.11); o.stop(AC.currentTime + i*0.11 + 0.26);
+    });
+  }catch(e){}
+}
+function confetti(){
+  var r = fx.getBoundingClientRect(), parts = [];
+  var cols = ['#58a6ff','#3fb950','#d29922','#a371f7','#f85149'];
+  for(var i=0;i<90;i++) parts.push({
+    x:r.width/2 + (Math.random()-.5)*r.width*.6, y:r.height*.5,
+    vx:(Math.random()-.5)*7, vy:-Math.random()*9-3,
+    s:3+Math.random()*4, c:cols[i%cols.length], a:1
+  });
+  var t0 = performance.now();
+  (function step(t){
+    var dt = Math.min((t-t0)/16.7, 3); t0 = t;
+    fctx.clearRect(0,0,r.width,r.height);
+    var alive = false;
+    parts.forEach(function(p){
+      p.vy += 0.28*dt; p.x += p.vx*dt; p.y += p.vy*dt; p.a -= 0.012*dt;
+      if(p.a > 0 && p.y < r.height+20){
+        alive = true;
+        fctx.globalAlpha = Math.max(0,p.a); fctx.fillStyle = p.c;
+        fctx.fillRect(p.x, p.y, p.s, p.s*1.6);
+      }
+    });
+    fctx.globalAlpha = 1;
+    if(alive) requestAnimationFrame(step); else fctx.clearRect(0,0,r.width,r.height);
+  })(t0);
+}
+
+/* -------------------------------------------------------- demostración --- */
+var demoRun = null, demoTok = 0;
+function demo(){
+  if(demoRun){ cancelAnimationFrame(demoRun.raf); demoRun = null; }
+  var tok = ++demoTok;
+  var dg = layer('demo'), pg = layer('pen');
+  if(!dg) return;
+  dg.innerHTML = ''; pg.innerHTML = '';
+  var i = 0;
+  function one(){
+    if(tok !== demoTok) return;
+    if(i >= S.paths.length){ setTimeout(function(){ dg.innerHTML=''; pg.innerHTML=''; }, 700); return; }
+    var src = S.paths[i], L = src.getTotalLength();
+    var host = src.parentNode.getAttribute('transform');
+    var g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform', host);
+    var p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('class','g-demo'); p.setAttribute('d', src.getAttribute('d'));
+    p.style.strokeDasharray = L; p.style.strokeDashoffset = L;
+    g.appendChild(p); dg.appendChild(g);
+
+    var pen = document.createElementNS('http://www.w3.org/2000/svg','text');
+    pen.setAttribute('class','pen'); pen.textContent = '✏️';
+    pg.appendChild(pen);
+
+    var dur = Math.max(420, L/0.42), t0 = null;
+    var ctm = toRoot(src) || svg.createSVGMatrix();
+    function step(ts){
+      if(tok !== demoTok) return;
+      if(!t0) t0 = ts;
+      var k = Math.min((ts-t0)/dur, 1);
+      var e = k<.5 ? 2*k*k : 1-Math.pow(-2*k+2,2)/2;
+      p.style.strokeDashoffset = L*(1-e);
+      var q = src.getPointAtLength(L*e);
+      var qx = ctm.a*q.x + ctm.c*q.y + ctm.e, qy = ctm.b*q.x + ctm.d*q.y + ctm.f;
+      pen.setAttribute('x', qx-6); pen.setAttribute('y', qy+6);
+      if(k < 1) demoRun = {raf:requestAnimationFrame(step)};
+      else { i++; setTimeout(one, 320); }
+    }
+    demoRun = {raf:requestAnimationFrame(step)};
+  }
+  one();
+}
+
+/* ------------------------------------------------------------- interfaz --- */
+function miniSvg(item, h){
+  var sh = sheetMarkup(item, {slantLines:false, minw:0});
+  return '<svg class="sheet mini" viewBox="'+sh.vb+'" style="height:'+(h||38)+'px" '
+       + 'xmlns="http://www.w3.org/2000/svg">' + sh.markup + '</svg>';
+}
+function starTxt(n){
+  return '★★★'.slice(0,n) + '☆☆☆'.slice(0, 3-n);
+}
+function renderTabs(){
+  $('tabs').innerHTML = TABS.map(function(t){
+    return '<button data-t="'+t[0]+'"'+(t[0]===S.tab?' class="on"':'')+'>'+t[1]+'</button>';
+  }).join('');
+}
+function renderPicker(){
+  var items = itemsOf(S.sec);
+  $('picker').innerHTML = items.map(function(it,i){
+    var st = S.scores[S.sec+':'+it.k] || 0;
+    var wide = it.k.length > 4 ? ' wide' : '';
+    return '<div class="chip'+(i===S.idx?' on':'')+wide+'" data-i="'+i+'" title="'+labelOf(it)+'">'
+         +   '<div class="mini cuaderno">'+miniSvg(it)+'</div>'
+         +   '<span class="st">'+(st?starTxt(st):'&nbsp;')+'</span>'
+         +   '<span class="lb">'+labelOf(it)+'</span>'
+         + '</div>';
+  }).join('');
+}
+function updateSide(keepMsg){
+  var it = curItem();
+  $('itName').textContent = SECS[S.sec].n + ' · ' + labelOf(it);
+  $('tip').textContent = tipOf(it);
+  var st = S.scores[S.sec+':'+it.k] || 0;
+  $('stars').innerHTML = '<span>'+ '★'.repeat(st) +'</span>'
+    + '<span class="off">'+ '☆'.repeat(3-st) +'</span>';
+  $('strokeOf').textContent = S.strokeIx >= S.paths.length
+    ? '¡Listo! ' + S.paths.length + (S.paths.length===1?' trazo':' trazos') + ' completos.'
+    : 'Trazo ' + (S.strokeIx+1) + ' de ' + S.paths.length;
+  if(!keepMsg){
+    $('fb').className = 'fb';
+    $('fb').innerHTML = 'Mirá la animación y después calcá encima, desde el punto ①.';
+  }
+  $('btnSkip').disabled = (S.strokeIx >= S.paths.length);
+}
+function updateProgress(){
+  var tot = 0, done = 0;
+  Object.keys(S.scores).forEach(function(k){ tot += S.scores[k]; if(S.scores[k]>0) done++; });
+  $('pgStars').textContent = tot;
+  $('pgDone').textContent = done;
+  renderPicker();
+}
+function goto(sec, idx){
+  S.sec = sec; S.idx = clamp(idx, 0, itemsOf(sec).length-1);
+  renderPicker(); renderItem();
+}
+function showTab(t){
+  S.tab = t;
+  renderTabs();
+  var pract = (t!=='desafio' && t!=='libre' && t!=='imprimir');
+  $('v-practica').className = 'view' + (pract?' on':'');
+  $('v-desafio').className  = 'view' + (t==='desafio'?' on':'');
+  $('v-libre').className    = 'view' + (t==='libre'?' on':'');
+  $('v-imprimir').className = 'view' + (t==='imprimir'?' on':'');
+  if(pract){ S.chal = null; goto(t, 0); }
+  if(t==='libre') setTimeout(freeInit, 30);
+  if(t==='imprimir') renderSheet();
+}
+
+/* eventos de interfaz */
+$('tabs').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-t]'); if(b) showTab(b.dataset.t);
+});
+$('picker').addEventListener('click', function(e){
+  var c = e.target.closest('.chip[data-i]'); if(!c) return;
+  S.chal = null; S.idx = +c.dataset.i; renderPicker(); renderItem();
+});
+$('btnDemo').addEventListener('click', demo);
+$('btnUndo').addEventListener('click', function(){
+  if(S.strokeIx > 0){ S.strokeIx--; S.done[S.strokeIx]=false; S.userStrokes.pop(); }
+  S.pts = []; paintUser(); applyGuide(); placeNumbers(); updateSide();
+});
+$('btnSkip').addEventListener('click', function(){
+  if(S.strokeIx < S.paths.length){ S.done[S.strokeIx]=true; S.strokeIx++; }
+  S.pts=[]; applyGuide(); placeNumbers(); updateSide();
+});
+$('btnPrev').addEventListener('click', function(){ S.chal=null; goto(S.sec, S.idx-1); });
+$('btnNext').addEventListener('click', function(){ S.chal=null; goto(S.sec, S.idx+1); });
+$('segGuide').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-g]'); if(!b) return;
+  S.guide = b.dataset.g;
+  [].forEach.call(this.children, function(c){ c.classList.toggle('on', c===b); });
+  applyGuide();
+});
+$('segHoja').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-h]'); if(!b) return;
+  S.hoja = b.dataset.h;
+  [].forEach.call(this.children, function(c){ c.classList.toggle('on', c===b); });
+  board.className = 'board ' + S.hoja;
+  paintUser();
+});
+$('btnSound').addEventListener('click', function(){
+  S.sound = !S.sound; this.textContent = S.sound ? '🔊' : '🔇';
+  try{ localStorage.setItem('cattoCursivaSnd', S.sound?'1':'0'); }catch(e){}
+});
+$('btnReset').addEventListener('click', function(){
+  if(!confirm('¿Borrar todas las estrellas y empezar de nuevo?')) return;
+  S.scores = {}; save(); updateProgress(); updateSide();
+});
+document.addEventListener('keydown', function(e){
+  if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if(e.key === 'ArrowRight'){ goto(S.sec, S.idx+1); }
+  else if(e.key === 'ArrowLeft'){ goto(S.sec, S.idx-1); }
+  else if(e.key === ' '){ e.preventDefault(); demo(); }
+  else if(/^[a-zñA-ZÑ]$/.test(e.key) && (S.sec==='minus' || S.sec==='mayus')){
+    var arr = itemsOf(S.sec), k = S.sec==='minus' ? e.key.toLowerCase() : e.key.toUpperCase();
+    for(var i=0;i<arr.length;i++) if(arr[i].k === k){ goto(S.sec, i); break; }
+  }
+});
+window.addEventListener('resize', function(){ resizeCanvas(); placeNumbers(); freeInit(true); });
+
+/* --------------------------------------------------------------- desafío --- */
+function startChal(){
+  var pool = [];
+  ['minus','uniones','palabras'].forEach(function(sec){
+    itemsOf(sec).forEach(function(it,i){ pool.push({sec:sec, i:i}); });
+  });
+  for(var i=pool.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+  S.chal = {list:pool.slice(0,6), i:0, got:0};
+  $('chalScore').style.display=''; $('chalScore').querySelector('b').textContent = 0;
+  nextChal();
+}
+function nextChal(){
+  if(!S.chal) return;
+  if(S.chal.i >= S.chal.list.length){
+    var got = S.chal.got, max = S.chal.list.length*3;
+    S.chal = null;
+    S.tab = 'desafio'; showTab('desafio');
+    $('chalTxt').innerHTML = 'Terminaste con <b>'+got+' de '+max+'</b> estrellas. '
+      + (got>=max*0.8 ? '¡Tenés la cursiva casi lista! 🏆' : 'Volvé a los trazos flojos y probá de nuevo.');
+    return;
+  }
+  var c = S.chal.list[S.chal.i];
+  /* muestra el tablero de práctica sin salir del desafío */
+  $('v-practica').className = 'view on';
+  $('v-desafio').className = 'view';
+  $('v-libre').className = 'view';
+  $('v-imprimir').className = 'view';
+  S.sec = c.sec; S.idx = c.i;
+  renderPicker(); renderItem();
+  $('fb').innerHTML = 'Desafío · ítem ' + (S.chal.i+1) + ' de ' + S.chal.list.length;
+}
+$('btnChal').addEventListener('click', startChal);
+
+/* ---------------------------------------------------------- renglón libre --- */
+var freeC = $('freeC'), fctx2 = freeC.getContext('2d');
+var freeStrokes = [], freeCur = null, freeRows = 2, freeHoja = 'cuaderno';
+function freeInit(soft){
+  if($('v-libre').className.indexOf('on') < 0) return;
+  var wrap = $('freeBoard'), w = wrap.clientWidth || 800;
+  var rowH = [0,0,150,110,86][freeRows+0] || 120;
+  var h = rowH*freeRows + 24;
+  var dpr = Math.min(window.devicePixelRatio||1, 2);
+  freeC.style.width = w+'px'; freeC.style.height = h+'px';
+  freeC.width = Math.round(w*dpr); freeC.height = Math.round(h*dpr);
+  fctx2.setTransform(dpr,0,0,dpr,0,0);
+  wrap.className = freeHoja;
+  freePaint();
+}
+function freePaint(){
+  var w = freeC.clientWidth, h = freeC.clientHeight, wrap = $('freeBoard');
+  var cs = getComputedStyle(wrap);
+  fctx2.fillStyle = cs.getPropertyValue('--sheet').trim() || '#fdfaf1';
+  fctx2.fillRect(0,0,w,h);
+  var rowH = (h-24)/freeRows;
+  /* pauta de cada renglón */
+  for(var r=0;r<freeRows;r++){
+    var top = 12 + r*rowH, unit = rowH/300;
+    var ys = [18,100,200,288].map(function(y){ return top + y*unit; });
+    var t = Math.tan(-SLANT*Math.PI/180);
+    fctx2.lineWidth = 1;
+    fctx2.strokeStyle = cs.getPropertyValue('--slant').trim() || '#eee';
+    for(var x=-40; x<w+40; x+=62*unit){
+      fctx2.beginPath(); fctx2.moveTo(x, ys[3]); fctx2.lineTo(x + t*(ys[3]-ys[0]), ys[0]); fctx2.stroke();
+    }
+    [[ys[0],'--l1',1.4,[9,7]],[ys[1],'--lm',1.4,[9,7]],[ys[2],'--lb',2.2,[]],[ys[3],'--l1',1.4,[9,7]]]
+    .forEach(function(L){
+      fctx2.strokeStyle = cs.getPropertyValue(L[1]).trim() || '#ccc';
+      fctx2.lineWidth = L[2]; fctx2.setLineDash(L[3]);
+      fctx2.beginPath(); fctx2.moveTo(0, L[0]); fctx2.lineTo(w, L[0]); fctx2.stroke();
+    });
+    fctx2.setLineDash([]);
+  }
+  /* tinta */
+  fctx2.strokeStyle = cs.getPropertyValue('--ink').trim() || '#123';
+  fctx2.lineCap='round'; fctx2.lineJoin='round';
+  freeStrokes.concat(freeCur?[freeCur]:[]).forEach(function(st){
+    if(st.length<2) return;
+    fctx2.lineWidth = st.w || 4;
+    fctx2.beginPath(); fctx2.moveTo(st[0].x, st[0].y);
+    for(var i=1;i<st.length;i++) fctx2.lineTo(st[i].x, st[i].y);
+    fctx2.stroke();
+  });
+}
+freeC.addEventListener('pointerdown', function(ev){
+  freeC.setPointerCapture(ev.pointerId);
+  var r = freeC.getBoundingClientRect();
+  freeCur = [{x:ev.clientX-r.left, y:ev.clientY-r.top}];
+  freeCur.w = clamp(freeC.clientHeight/freeRows/300*8, 2.5, 10);
+  ev.preventDefault();
+});
+freeC.addEventListener('pointermove', function(ev){
+  if(!freeCur) return;
+  var r = freeC.getBoundingClientRect();
+  freeCur.push({x:ev.clientX-r.left, y:ev.clientY-r.top});
+  freePaint();
+});
+['pointerup','pointercancel','pointerleave'].forEach(function(t){
+  freeC.addEventListener(t, function(){ if(freeCur){ freeStrokes.push(freeCur); freeCur=null; freePaint(); } });
+});
+$('btnFreeUndo').addEventListener('click', function(){ freeStrokes.pop(); freePaint(); });
+$('btnFreeClear').addEventListener('click', function(){ freeStrokes=[]; freePaint(); });
+$('btnFreeSave').addEventListener('click', function(){
+  var a = document.createElement('a');
+  a.download = 'cursiva-catto.png'; a.href = freeC.toDataURL('image/png'); a.click();
+});
+$('segFreeSize').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-s]'); if(!b) return;
+  [].forEach.call(this.children, function(c){ c.classList.toggle('on', c===b); });
+  freeRows = +b.dataset.s; freeStrokes=[]; freeInit();
+});
+$('segFreeHoja').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-h]'); if(!b) return;
+  [].forEach.call(this.children, function(c){ c.classList.toggle('on', c===b); });
+  freeHoja = b.dataset.h; freeInit();
+});
+
+/* ------------------------------------------------------------- imprimir --- */
+var PR = {content:'minus', size:2, aid:'model', rows:2};
+function prItems(){
+  if(PR.content==='libre'){
+    var t = ($('prText').value||'').trim() || 'mi nombre';
+    return [{k:t}];
+  }
+  if(PR.content==='trazos') return SECS.trazos.items;
+  return itemsOf(PR.content);
+}
+function renderSheet(){
+  /* El alto del renglón lo define la proporción del viewBox: cuanto más angosto
+     el ancho lógico, más grande sale la letra al ocupar el 100% de la hoja. */
+  var items = prItems(), tot = [2600,2000,1500][PR.size-1];
+  var out = '<h5>catto.ar · escritura cursiva — '
+    + ({minus:'minúsculas',mayus:'mayúsculas',trazos:'trazos base',uniones:'uniones',palabras:'palabras',libre:'práctica'}[PR.content])
+    + ' &nbsp;·&nbsp; Nombre: ______________________</h5>';
+  items.forEach(function(it){
+    for(var r=0;r<PR.rows;r++){
+      out += printRow(it, tot, r===0);
+    }
+  });
+  $('sheetOut').innerHTML = out;
+}
+/* Un renglón impreso: pauta + (modelo) + repeticiones punteadas. */
+function printRow(item, total, first){
+  var L = layout(item), pad = 30;
+  var per = L.w + 44;                     // ancho de cada repetición
+  var reps = Math.max(1, Math.floor((total - pad*2) / per));
+  var m = '<div class="row"><svg class="prow" viewBox="0 0 '+total+' 320" xmlns="http://www.w3.org/2000/svg">';
+  var t = Math.tan(-SLANT*Math.PI/180);
+  for(var x=0;x<total;x+=62) m += '<line class="slant" x1="'+x+'" y1="292" x2="'+(x+t*278)+'" y2="14"/>';
+  m += '<line x1="0" y1="18" x2="'+total+'" y2="18" stroke-dasharray="9 7"/>'
+     + '<line x1="0" y1="100" x2="'+total+'" y2="100" stroke-dasharray="9 7"/>'
+     + '<line class="base" x1="0" y1="200" x2="'+total+'" y2="200"/>'
+     + '<line x1="0" y1="288" x2="'+total+'" y2="288" stroke-dasharray="9 7"/>';
+  m += '<g transform="translate(0,200) skewX('+SLANT+') translate(0,-200)">';
+  for(var r=0; r<reps; r++){
+    var cls = (PR.aid==='empty') ? null
+            : (PR.aid==='dash')  ? 'dash'
+            : (r===0 && first)   ? 'model' : (r===0 ? 'ghost' : 'dash');
+    if(!cls) break;
+    var ox = pad + r*per;
+    L.strokes.forEach(function(s){
+      m += '<path class="'+cls+'" transform="translate('+(ox+s.x)+',0)" d="'+s.d+'"/>';
+    });
+  }
+  m += '</g></svg></div>';
+  return m;
+}
+$('prContent').addEventListener('change', function(){ PR.content=this.value; renderSheet(); });
+$('prText').addEventListener('input', function(){ if(PR.content==='libre') renderSheet(); });
+['segPrSize','segPrAid','segPrRows'].forEach(function(id){
+  $(id).addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    [].forEach.call(this.children, function(c){ c.classList.toggle('on', c===b); });
+    if(b.dataset.s) PR.size = +b.dataset.s;
+    if(b.dataset.a) PR.aid = b.dataset.a;
+    if(b.dataset.r) PR.rows = +b.dataset.r;
+    renderSheet();
+  });
+});
+$('btnPrint').addEventListener('click', function(){ window.print(); });
+
+/* ----------------------------------------------------------------- init --- */
+load();
+$('btnSound').textContent = S.sound ? '🔊' : '🔇';
+renderTabs();
+goto('trazos', 0);
+updateProgress();
+if(window.ResizeObserver) new ResizeObserver(function(){ resizeCanvas(); placeNumbers(); }).observe($('board').parentNode);
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
