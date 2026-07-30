@@ -1,10 +1,22 @@
 /* Campo de estrellas + nebulosa Vía Láctea.
    Genera estrellas dentro de cada .starfield[data-mw]. Config por data-*:
    data-ax/ay/bx/by = extremos (en %) de la banda; data-field = estrellas dispersas;
-   data-band = estrellas sobre la banda; data-core = umbral t [0-1] del "núcleo" (extremo B). */
+   data-band = estrellas sobre la banda; data-core = umbral t [0-1] del "núcleo" (extremo B).
+   Las estrellas titilan: cada una respira entre el 10% y el 100% de su opacidad, con el mismo
+   ciclo de 5,65 s y fase al azar que el fondo de las tarjetas BJT y MC1496. */
 (function(){
+  var TW_PERIOD=5.65;   // 2·pi·0,9 s, el período de la sinusoide del canvas
+  function twinkleCSS(){
+    if(document.getElementById('sf-twinkle-css')) return;
+    var st=document.createElement('style'); st.id='sf-twinkle-css';
+    st.textContent=
+      '.starfield.sf-tw i{animation:sf-tw '+TW_PERIOD+'s ease-in-out infinite}'+
+      '@keyframes sf-tw{0%,100%{opacity:calc(var(--o)*.1)}50%{opacity:var(--o)}}';
+    document.head.appendChild(st);
+  }
   function num(el,a,d){ var v=parseFloat(el.getAttribute(a)); return isNaN(v)?d:v; }
   function build(sf){
+    twinkleCSS();
     var A={x:num(sf,'data-ax',42), y:num(sf,'data-ay',2)};
     var B={x:num(sf,'data-bx',60), y:num(sf,'data-by',100)};
     var nField=num(sf,'data-field',300), nBand=num(sf,'data-band',340);
@@ -19,7 +31,8 @@
     function star(x,y,size,op,color,glow){
       if(x<-2||x>102||y<-2||y>102) return;
       var sh = glow ? ';box-shadow:0 0 '+(size*1.8).toFixed(1)+'px '+color : '';
-      html += '<i style="left:'+x.toFixed(2)+'%;top:'+y.toFixed(2)+'%;width:'+size.toFixed(2)+'px;height:'+size.toFixed(2)+'px;opacity:'+op.toFixed(2)+';background:'+color+sh+'"></i>';
+      var an = ';--o:'+op.toFixed(2)+';animation-delay:'+(-Math.random()*TW_PERIOD).toFixed(2)+'s';
+      html += '<i style="left:'+x.toFixed(2)+'%;top:'+y.toFixed(2)+'%;width:'+size.toFixed(2)+'px;height:'+size.toFixed(2)+'px;opacity:'+op.toFixed(2)+';background:'+color+sh+an+'"></i>';
     }
     // 1) Campo general disperso
     for(var i=0;i<nField;i++){
@@ -45,6 +58,7 @@
       star(bx,by,bsize,bop,bcolor,bsize>2.2);
     }
     sf.insertAdjacentHTML('beforeend', html);
+    sf.classList.add('sf-tw');   // habilita el parpadeo solo sobre las estrellas generadas acá
   }
   var list=document.querySelectorAll('.starfield[data-mw]');
   for(var k=0;k<list.length;k++) build(list[k]);
