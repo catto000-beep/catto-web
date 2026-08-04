@@ -3,8 +3,7 @@
    Pensado para los estudiantes: eligen el reloj, juegan por turnos
    y el tablero se encarga de las reglas (jugadas legales, enroque,
    captura al paso, coronación, jaque mate, ahogado y tablas).
-   Mismo dibujo y mismas piezas Cburnett que la tarjeta de la
-   última partida (ver chess.js y chess-pieces.js).
+   Las piezas son las Cburnett de chess-pieces.js.
    ============================================================ */
 (function () {
   "use strict";
@@ -26,7 +25,7 @@
     { id: "30+0",  txt: "Clásica · 30 min",           base: 1800, inc: 0 },
     { id: "0",     txt: "Sin reloj",                  base: 0,    inc: 0 }
   ];
-  var RELOJ_INICIAL = "5+0";
+  var RELOJ_INICIAL = "0";   /* arranca sin reloj: se juega tranquilo salvo que elijan tiempo */
 
   /* ==========================================================
      MOTOR — tablero 8x8, fila 0 = fila 8. Mayúscula = blanca.
@@ -472,6 +471,7 @@
     el.pause.textContent = corriendo ? "⏸" : "▶";
     el.pause.title = corriendo ? "Pausar el reloj" : "Poner en marcha el reloj";
     el.pause.disabled = !reloj.base || !!fin;
+    el.pause.hidden = !reloj.base;   // sin reloj no hay nada que pausar
     el.undo.disabled = !hist.length;
   }
 
