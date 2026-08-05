@@ -385,8 +385,30 @@
   /* Deja a la vista el final de la línea cuando la cuenta no entra. */
   function alFinal(nodo) { nodo.scrollLeft = nodo.scrollWidth; }
 
+  /* Escribe en el visor cambiando la E del exponente por ×10 con el
+     exponente arriba: 66E−3 se ve 66×10⁻³. Sólo cambia el dibujo — la
+     expresión que guarda la calculadora y lee el analizador sigue con la E,
+     y por eso la tecla EXP no se entera de nada.
+     Se arma con nodos, no con innerHTML, y se pide un dígito antes de la E
+     para no tocar la "E" del prefijo exa ni la de "Error de sintaxis". */
+  function escribir(nodo, txt) {
+    nodo.textContent = "";
+    var re = /([0-9.])E(−?)([0-9]*)/g, i = 0, m;
+    while ((m = re.exec(txt)) !== null) {
+      if (m.index > i) nodo.appendChild(document.createTextNode(txt.slice(i, m.index)));
+      nodo.appendChild(document.createTextNode(m[1] + "×10"));
+      if (m[2] || m[3]) {
+        var sup = document.createElement("sup");
+        sup.textContent = m[2] + m[3];
+        nodo.appendChild(sup);
+      }
+      i = m.index + m[0].length;
+    }
+    if (i < txt.length) nodo.appendChild(document.createTextNode(txt.slice(i)));
+  }
+
   function pintar() {
-    el.expr.textContent = expr || "";
+    escribir(el.expr, expr || "");
     alFinal(el.expr);
     el.fInv.classList.toggle("on", inv);
     el.fHyp.classList.toggle("on", hyp);
@@ -396,7 +418,7 @@
 
     if (error) {
       el.resBig.textContent = error;
-      el.resSci.textContent = "";
+      escribir(el.resSci, "");
       el.res.classList.add("err");
       alFinal(el.res);
       return;
@@ -413,9 +435,9 @@
          valor bueno en vez de vaciarse */
     }
     ultimo = txt; ultimoVal = val;
-    el.resBig.textContent = txt;
+    escribir(el.resBig, txt);
     /* con ENG, al lado del prefijo va la misma cifra en potencia de mil */
-    el.resSci.textContent = eng ? fmtEngExp(val) : "";
+    escribir(el.resSci, eng ? fmtEngExp(val) : "");
     alFinal(el.res);
   }
 
