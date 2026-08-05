@@ -333,22 +333,27 @@
     el.btnAng.firstChild.nodeValue = grados ? "DEG" : "RAD";
   }
 
+  /* Deja a la vista el final de la línea cuando la cuenta no entra. */
+  function alFinal(nodo) { nodo.scrollLeft = nodo.scrollWidth; }
+
   function pintar() {
     el.expr.textContent = expr || "";
+    alFinal(el.expr);
     el.fInv.classList.toggle("on", inv);
     el.fHyp.classList.toggle("on", hyp);
     el.fMem.classList.toggle("on", mem !== 0);
     el.fAng.textContent = grados ? "DEG" : "RAD";
 
-    if (error) { el.res.textContent = error; el.res.classList.add("err"); return; }
+    if (error) { el.res.textContent = error; el.res.classList.add("err"); alFinal(el.res); return; }
     el.res.classList.remove("err");
-    if (recien) { el.res.textContent = fmt(ans); return; }
-    if (!expr) { el.res.textContent = "0"; return; }
+    if (recien) { el.res.textContent = fmt(ans); alFinal(el.res); return; }
+    if (!expr) { el.res.textContent = "0"; alFinal(el.res); return; }
     try {
       el.res.textContent = fmt(evaluar(cerrar(expr), grados, ans));
     } catch (e) {
-      el.res.textContent = recien ? fmt(ans) : "";   /* mientras se escribe, sin ruido */
+      el.res.textContent = "";                       /* mientras se escribe, sin ruido */
     }
+    alFinal(el.res);
   }
 
   function insertar(txt) {
