@@ -313,7 +313,8 @@
      INTERFAZ
      ========================================================== */
   var el = {}, expr = "", ans = 0, mem = 0, grados = true,
-      inv = false, hyp = false, recien = false, error = "";
+      inv = false, hyp = false, recien = false, error = "",
+      ultimo = "0";   /* último valor que mostró el visor grande */
 
   function teclaDe(def) {
     if (inv && hyp && def.invhyp) return def.invhyp;
@@ -346,13 +347,17 @@
 
     if (error) { el.res.textContent = error; el.res.classList.add("err"); alFinal(el.res); return; }
     el.res.classList.remove("err");
-    if (recien) { el.res.textContent = fmt(ans); alFinal(el.res); return; }
-    if (!expr) { el.res.textContent = "0"; alFinal(el.res); return; }
-    try {
-      el.res.textContent = fmt(evaluar(cerrar(expr), grados, ans));
-    } catch (e) {
-      el.res.textContent = "";                       /* mientras se escribe, sin ruido */
+
+    var txt;
+    if (recien) txt = fmt(ans);
+    else if (!expr) txt = "0";
+    else {
+      try { txt = fmt(evaluar(cerrar(expr), grados, ans)); }
+      catch (e) { txt = ultimo; }   /* expresión a medio armar (6.02E, 2+, sin( ):
+                                       se queda el último valor bueno en vez de vaciarse */
     }
+    ultimo = txt;
+    el.res.textContent = txt;
     alFinal(el.res);
   }
 
