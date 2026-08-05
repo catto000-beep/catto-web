@@ -20,12 +20,13 @@
      ========================================================== */
   var TECLAS = [
     [{t:"INV",act:"inv",k:"mod"}, {t:"HYP",act:"hyp",k:"mod"}, {t:"DEG",act:"ang",k:"mod"},
-     {t:"MC",act:"mc",k:"fn"},    {t:"MR",act:"mr",k:"fn"},    {t:"M+",act:"m+",k:"fn"}],
+     {t:"ENG",act:"eng",k:"mod"}, {t:"MC",act:"mc",k:"fn"},     {t:"MR",act:"mr",k:"fn"}],
 
     [{t:"sin",ins:"sin(",k:"fn",inv:{t:"sin⁻¹",ins:"asin("},hyp:{t:"sinh",ins:"sinh("},invhyp:{t:"sinh⁻¹",ins:"asinh("}},
      {t:"cos",ins:"cos(",k:"fn",inv:{t:"cos⁻¹",ins:"acos("},hyp:{t:"cosh",ins:"cosh("},invhyp:{t:"cosh⁻¹",ins:"acosh("}},
      {t:"tan",ins:"tan(",k:"fn",inv:{t:"tan⁻¹",ins:"atan("},hyp:{t:"tanh",ins:"tanh("},invhyp:{t:"tanh⁻¹",ins:"atanh("}},
-     {t:"π",ins:"π",k:"fn"}, {t:"e",ins:"e",k:"fn"}, {t:"M−",act:"m-",k:"fn"}],
+     {t:"π",ins:"π",k:"fn"}, {t:"e",ins:"e",k:"fn"},
+     {t:"M+",act:"m+",k:"fn",inv:{t:"M−",act:"m-"}}],
 
     [{t:"x²",ins:"²",k:"fn",inv:{t:"x³",ins:"³"}},
      {t:"xʸ",ins:"^",k:"fn"},
@@ -296,10 +297,40 @@
     return s;
   }
 
+  /* Un número escrito como lo escribiría el teclado, para poder
+     insertarlo en la expresión (el visor usa otro formato). */
+  function literal(v) {
+    var s = String(v);
+    if (s.indexOf("e") >= 0) {
+      var q = v.toExponential().split("e");
+      s = q[0] + "E" + q[1].replace("+", "");
+    }
+    return s.replace(/-/g, "−");
+  }
+
+  /* Prefijos del SI, de yocto a yotta. Con ENG encendido el resultado
+     se muestra con el múltiplo que le corresponde: 4700 → 4.7 k. */
+  var SI = ["y","z","a","f","p","n","µ","m","", "k","M","G","T","P","E","Z","Y"];
+
+  function fmtEng(x) {
+    var neg = x < 0;
+    x = Math.abs(x);
+    var e3 = Math.floor(Math.log10(x) / 3) * 3;
+    var m = x / Math.pow(10, e3);
+    m = parseFloat(m.toPrecision(12));
+    if (m >= 1000) { m = m / 1000; e3 += 3; }      /* lo corre el redondeo */
+    if (m < 1) { m = m * 1000; e3 -= 3; }          /* y los errores del log10 */
+    var i = e3 / 3 + 8;
+    if (i < 0 || i > 16 || e3 % 3 !== 0) return null;   /* fuera de tabla: científica */
+    var pre = SI[i];
+    return (neg ? "−" : "") + String(parseFloat(m.toPrecision(12))) + (pre ? " " + pre : "");
+  }
+
   /* Formato del resultado: 12 cifras significativas y notación
      científica cuando el número se va de escala. */
   function fmt(x) {
     if (x === 0) return "0";
+    if (eng) { var ing = fmtEng(x); if (ing !== null) return ing; }
     var a = Math.abs(x);
     if (a >= 1e12 || a < 1e-9) {
       var s = x.toExponential(9).replace(/\.?0+e/, "e").split("e");
@@ -313,7 +344,7 @@
      INTERFAZ
      ========================================================== */
   var el = {}, expr = "", ans = 0, mem = 0, grados = true,
-      inv = false, hyp = false, recien = false, error = "",
+      inv = false, hyp = false, eng = false, recien = false, error = "",
       ultimo = "0";   /* último valor que mostró el visor grande */
 
   function teclaDe(def) {
@@ -331,6 +362,7 @@
     }
     el.btnInv.classList.toggle("on", inv);
     el.btnHyp.classList.toggle("on", hyp);
+    el.btnEng.classList.toggle("on", eng);
     el.btnAng.firstChild.nodeValue = grados ? "DEG" : "RAD";
   }
 
@@ -343,6 +375,7 @@
     el.fInv.classList.toggle("on", inv);
     el.fHyp.classList.toggle("on", hyp);
     el.fMem.classList.toggle("on", mem !== 0);
+    el.fEng.classList.toggle("on", eng);
     el.fAng.textContent = grados ? "DEG" : "RAD";
 
     if (error) { el.res.textContent = error; el.res.classList.add("err"); alFinal(el.res); return; }
@@ -381,8 +414,9 @@
       case "inv": inv = !inv; pintarTeclas(); pintar(); return;
       case "hyp": hyp = !hyp; pintarTeclas(); pintar(); return;
       case "ang": grados = !grados; pintarTeclas(); pintar(); return;
+      case "eng": eng = !eng; pintarTeclas(); pintar(); return;
       case "mc": mem = 0; pintar(); return;
-      case "mr": insertar(fmt(mem).replace("−", "-").replace("-", "−") === "0" ? "0" : String(mem).replace("-", "−")); return;
+      case "mr": insertar(literal(mem)); return;
       case "m+": case "m-":
         try {
           var v = expr ? evaluar(cerrar(expr), grados, ans) : ans;
@@ -446,6 +480,7 @@
     el.fHyp = root.querySelector("#cfHyp");
     el.fAng = root.querySelector("#cfAng");
     el.fMem = root.querySelector("#cfMem");
+    el.fEng = root.querySelector("#cfEng");
     var teclado = root.querySelector("#cKeys");
 
     /* armado del teclado */
@@ -467,15 +502,14 @@
     el.btnInv = teclado.querySelector('[data-i="0"]');
     el.btnHyp = teclado.querySelector('[data-i="1"]');
     el.btnAng = teclado.querySelector('[data-i="2"]');
+    el.btnEng = teclado.querySelector('[data-i="3"]');
 
     teclado.addEventListener("click", function (ev) {
       var b = ev.target.closest("button"); if (!b) return;
-      var d = teclaDe(b._def);
-      if (d.act) accion(d.act);
-      else {
-        insertar(d.ins);
-        if (inv || hyp) { inv = false; hyp = false; pintarTeclas(); }  /* modificador de un solo uso */
-      }
+      var d = teclaDe(b._def), esMod = (b._def.act === "inv" || b._def.act === "hyp");
+      if (d.act) accion(d.act); else insertar(d.ins);
+      /* INV y HYP valen para la tecla siguiente y nada más */
+      if (!esMod && (inv || hyp)) { inv = false; hyp = false; pintarTeclas(); pintar(); }
       root.focus({ preventScroll: true });
     });
 
