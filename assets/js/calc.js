@@ -312,7 +312,9 @@
      se muestra con el múltiplo que le corresponde: 4700 → 4.7 k. */
   var SI = ["y","z","a","f","p","n","µ","m","", "k","M","G","T","P","E","Z","Y"];
 
-  function fmtEng(x) {
+  /* Parte el número en mantisa y potencia de mil: 0.066 → 66 y 10⁻³. */
+  function engPartes(x) {
+    if (x === 0 || !isFinite(x)) return null;
     var neg = x < 0;
     x = Math.abs(x);
     var e3 = Math.floor(Math.log10(x) / 3) * 3;
@@ -321,9 +323,23 @@
     if (m >= 1000) { m = m / 1000; e3 += 3; }      /* lo corre el redondeo */
     if (m < 1) { m = m * 1000; e3 -= 3; }          /* y los errores del log10 */
     var i = e3 / 3 + 8;
-    if (i < 0 || i > 16 || e3 % 3 !== 0) return null;   /* fuera de tabla: científica */
-    var pre = SI[i];
-    return (neg ? "−" : "") + String(parseFloat(m.toPrecision(12))) + (pre ? " " + pre : "");
+    if (i < 0 || i > 16) return null;              /* fuera de tabla: científica */
+    return { m: (neg ? "−" : "") + String(parseFloat(m.toPrecision(12))),
+             pre: SI[i], e3: e3 };
+  }
+
+  /* 0.066 → "66 m" */
+  function fmtEng(x) {
+    var q = engPartes(x);
+    return q ? q.m + (q.pre ? " " + q.pre : "") : null;
+  }
+
+  /* 0.066 → "66E−3". Vacío si el exponente es cero: ahí las dos formas
+     son la misma y repetirla sería ruido. */
+  function fmtEngExp(x) {
+    var q = engPartes(x);
+    if (!q || q.e3 === 0) return "";
+    return q.m + "E" + (q.e3 < 0 ? "−" : "") + Math.abs(q.e3);
   }
 
   /* Formato del resultado: 12 cifras significativas y notación
@@ -345,7 +361,7 @@
      ========================================================== */
   var el = {}, expr = "", ans = 0, mem = 0, grados = true,
       inv = false, hyp = false, eng = false, recien = false, error = "",
-      ultimo = "0";   /* último valor que mostró el visor grande */
+      ultimo = "0", ultimoVal = 0;   /* lo último que mostró el visor grande */
 
   function teclaDe(def) {
     if (inv && hyp && def.invhyp) return def.invhyp;
@@ -378,19 +394,28 @@
     el.fEng.classList.toggle("on", eng);
     el.fAng.textContent = grados ? "DEG" : "RAD";
 
-    if (error) { el.res.textContent = error; el.res.classList.add("err"); alFinal(el.res); return; }
+    if (error) {
+      el.resBig.textContent = error;
+      el.resSci.textContent = "";
+      el.res.classList.add("err");
+      alFinal(el.res);
+      return;
+    }
     el.res.classList.remove("err");
 
-    var txt;
-    if (recien) txt = fmt(ans);
-    else if (!expr) txt = "0";
+    var txt, val;
+    if (recien) { val = ans; txt = fmt(ans); }
+    else if (!expr) { val = 0; txt = "0"; }
     else {
-      try { txt = fmt(evaluar(cerrar(expr), grados, ans)); }
-      catch (e) { txt = ultimo; }   /* expresión a medio armar (6.02E, 2+, sin( ):
-                                       se queda el último valor bueno en vez de vaciarse */
+      try { val = evaluar(cerrar(expr), grados, ans); txt = fmt(val); }
+      catch (e) { val = ultimoVal; txt = ultimo; }
+      /* expresión a medio armar (6.02E, 2+, sin( ): se queda el último
+         valor bueno en vez de vaciarse */
     }
-    ultimo = txt;
-    el.res.textContent = txt;
+    ultimo = txt; ultimoVal = val;
+    el.resBig.textContent = txt;
+    /* con ENG, al lado del prefijo va la misma cifra en potencia de mil */
+    el.resSci.textContent = eng ? fmtEngExp(val) : "";
     alFinal(el.res);
   }
 
@@ -476,6 +501,8 @@
 
     el.expr = root.querySelector("#cExpr");
     el.res = root.querySelector("#cRes");
+    el.resBig = root.querySelector("#cResBig");
+    el.resSci = root.querySelector("#cResSci");
     el.fInv = root.querySelector("#cfInv");
     el.fHyp = root.querySelector("#cfHyp");
     el.fAng = root.querySelector("#cfAng");
