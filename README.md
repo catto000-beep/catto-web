@@ -105,6 +105,44 @@ Vercel detecta el push y **redespliega solo**. No hay que hacer nada más.
 El **administrador de estudiantes** que querés armar más adelante entra acá como una
 publicación más (ya está reservada su tarjeta "Próximamente" en la home).
 
+> ⚠️ **Después de agregar o cambiar una publicación, hay que rehacer el índice del
+> buscador** (ver abajo). Si no, lo nuevo no aparece cuando alguien lo busca.
+
+---
+
+## 🔍 El buscador de la barra de arriba
+
+El buscador de la home no consulta un servidor: trabaja contra un índice de texto que
+está guardado en el repo.
+
+| Archivo | Qué es |
+|---|---|
+| `assets/js/buscador.js` | La lógica: escuchar el input, buscar, dibujar la lista. |
+| `assets/js/buscador-datos.js` | El índice (**generado**, no se edita a mano). |
+| `docs/generar-indice.js` | El programa que arma el índice. |
+
+El índice pesa ~77 kB y **no se baja hasta que alguien toca el buscador**, así que la
+home sigue abriendo liviana.
+
+### Rehacer el índice
+
+```bash
+npm i -D playwright        # una sola vez
+node docs/generar-indice.js
+```
+
+El programa abre cada página del sitio en un navegador sin ventana, va tocando las
+pestañas de cada publicación y guarda el texto que aparece. Cada entrada del índice es
+un lugar del sitio: `{t: título, d: de dónde es, u: enlace, x: el texto}`.
+
+Después hay que **commitear el `buscador-datos.js` regenerado** junto con el cambio.
+
+### Si aparece algo que no debería
+
+Los botones de acción (“Borrar todo”, “▶ Ver cómo se escribe”…) no son secciones y se
+filtran con la lista `ACCIONES` que está arriba de todo en `docs/generar-indice.js`.
+Si se cuela uno nuevo, se agrega ahí y se vuelve a correr el generador.
+
 ---
 
 ## 🎨 Estilo
