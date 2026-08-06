@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estudio vectorial de la CA · catto.ar</title>
+<meta name="description" content="Corriente alterna con vectores giratorios para Electrotecnia: de dónde salen el seno y el coseno, valores pico y eficaz, cómo se portan R, L y C, impedancia, resonancia, el gráfico de V vs I y las potencias.">
+<link rel="canonical" href="https://catto.ar/publicaciones/ca-vectorial">
+<meta name="theme-color" content="#0d1117">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Catto">
+<meta property="og:title" content="Estudio vectorial de la CA · catto.ar">
+<meta property="og:description" content="El vector giratorio que genera la senoidal, R L y C ante la alterna, impedancia, resonancia, V vs I y potencias. Interactivo, para Electrotecnia de 4º año.">
+<meta property="og:url" content="https://catto.ar/publicaciones/ca-vectorial">
+<meta property="og:image" content="https://catto.ar/assets/img/chancho-volador.png">
+<meta property="og:locale" content="es_AR">
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3140;
+  --txt:#e6edf3; --muted:#9aa7b4; --soft:#7d8a99;
+  --accent:#58a6ff; --accent2:#1f6feb;
+  --ok:#3fb950; --warn:#d29922; --hot:#f85149; --violet:#a371f7; --naranja:#e8883a;
+  --v:#58a6ff; --i:#e8a33a; --r:#3fb950; --l:#a371f7; --c:#e8883a;
+  --r14:14px; --shadow:0 8px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:radial-gradient(1200px 600px at 80% -10%, #1b2740 0%, var(--bg) 55%);
+  background-attachment:fixed;
+  color:var(--txt);font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;
+}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+
+header.top{padding:22px 0 16px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(31,111,235,.10),transparent)}
+header.top h1{margin:0;font-size:24px;letter-spacing:.2px}
+header.top .sub{color:var(--muted);font-size:13.5px;margin:5px 0 0;max-width:760px}
+header.top .quien{color:var(--soft);font-size:12.5px;margin:8px 0 0}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:14px 0 4px}
+nav.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--muted);
+  border-radius:10px;padding:8px 13px;font-size:13.5px;cursor:pointer;font-family:inherit}
+nav.tabs button:hover{color:var(--txt)}
+nav.tabs button.on{background:var(--accent2);border-color:var(--accent);color:#fff}
+
+.view{display:none}
+.view.on{display:block}
+.grid{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start;margin-top:6px}
+.grid.ancho{grid-template-columns:1fr 340px}
+.grid > *{min-width:0}   /* si no, la columna crece con su contenido y desborda */
+@media(max-width:900px){.grid,.grid.ancho{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:14px}
+.panel h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:var(--soft)}
+.panel p{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+.panel p:last-child{margin-bottom:0}
+.lienzo{display:block;width:100%;height:var(--h,300px);
+  border-radius:10px;background:#0b0f16;border:1px solid var(--line)}
+@media(max-width:600px){.lienzo{height:calc(var(--h,300px) * .82)}}
+.side{display:flex;flex-direction:column;gap:12px}
+
+/* controles */
+.ctrl{margin-bottom:12px}
+.ctrl:last-child{margin-bottom:0}
+.ctrl label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  font-size:12px;color:var(--soft);margin-bottom:5px}
+.ctrl label b{color:var(--txt);font-size:13.5px;font-variant-numeric:tabular-nums;font-weight:700}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.b{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:8px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+button.b:hover{border-color:var(--accent);color:var(--accent)}
+button.b.pri{background:var(--accent2);border-color:var(--accent);color:#fff}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex-wrap:wrap}
+.seg button{background:var(--panel2);border:0;border-right:1px solid var(--line);color:var(--muted);
+  padding:8px 12px;font-size:13px;cursor:pointer;font-family:inherit;flex:1}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent2);color:#fff}
+.chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:6px}
+.chk input{accent-color:var(--accent);cursor:pointer}
+
+/* números y fórmulas */
+.datos{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:13.5px;align-items:baseline}
+.datos span{color:var(--muted)}
+.datos b{color:var(--txt);font-variant-numeric:tabular-nums;text-align:right}
+.datos b.v{color:var(--v)} .datos b.i{color:var(--i)}
+.datos b.r{color:var(--r)} .datos b.l{color:var(--l)} .datos b.c{color:var(--c)}
+.datos hr{grid-column:1/-1;border:0;border-top:1px solid var(--line);margin:4px 0}
+.eq{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  font-family:"Cascadia Code",Consolas,monospace;font-size:14px;color:var(--txt);
+  text-align:center;margin:9px 0;overflow-x:auto;white-space:nowrap}
+.eq small{display:block;font-family:"Segoe UI",system-ui,sans-serif;font-size:11.5px;
+  color:var(--soft);margin-top:5px;white-space:normal}
+.nota{background:linear-gradient(135deg,rgba(31,111,235,.12),rgba(63,185,80,.07));
+  border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:13px;color:var(--muted)}
+.nota b{color:var(--txt)}
+.nota.ojo{background:linear-gradient(135deg,rgba(210,153,34,.14),rgba(248,81,73,.06))}
+.pill{display:inline-block;font-size:11.5px;padding:2px 10px;border-radius:999px;
+  background:var(--panel2);border:1px solid var(--line);color:var(--muted)}
+.pill.ok{background:rgba(63,185,80,.16);border-color:rgba(63,185,80,.4);color:var(--ok)}
+.pill.ind{background:rgba(163,113,247,.16);border-color:rgba(163,113,247,.4);color:var(--l)}
+.pill.cap{background:rgba(232,136,58,.16);border-color:rgba(232,136,58,.4);color:var(--c)}
+.leyenda{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:9px}
+.leyenda i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+table.tabla{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+table.tabla th,table.tabla td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.tabla th{color:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+table.tabla td b{color:var(--txt);font-variant-numeric:tabular-nums}
+table.tabla tr:last-child td{border-bottom:0}
+
+/* ejercicios */
+.ej{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:14px;margin-bottom:12px}
+.ej .enun{font-size:14px;color:var(--txt);margin-bottom:10px}
+.ej .fila{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ej input.tx{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:8px 11px;font-size:14px;font-family:inherit;width:130px}
+.ej .fb{font-size:13px;margin-top:8px;min-height:19px}
+.ej .fb.ok{color:var(--ok)} .ej .fb.mal{color:var(--warn)}
+.ej .unidad{color:var(--soft);font-size:13px}
+
+footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color:var(--soft);font-size:12.5px}
+</style>
+</head>
+<body>
+<div id="cattoBack" style="position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;background:rgba(13,17,23,.92);border-bottom:1px solid #2a3140;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font:600 14px 'Segoe UI',system-ui,sans-serif"><a href="/" style="display:inline-flex;align-items:center;gap:8px;color:#e6edf3;text-decoration:none"><span style="width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#1f6feb,#a371f7);font-size:15px">🐷</span>Catto</a><a href="/" style="margin-left:auto;color:#9aa7b4;font-weight:400;font-size:13px;text-decoration:none">← Volver al inicio</a></div>
+
+<header class="top">
+  <div class="wrap">
+    <h1>⚡ Estudio vectorial de la corriente alterna</h1>
+    <p class="sub">De dónde sale la senoidal, cómo se portan el resistor, la bobina y el capacitor
+       cuando les llega alterna, y por qué en CA hay que sumar con vectores y no con números sueltos.</p>
+    <p class="quien">Electrotecnia · 4º año de escuela técnica · Todo se mueve: probá los controles.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs" id="tabs"></nav>
+
+  <!-- ============ 1 · EL VECTOR GIRATORIO ============ -->
+  <section class="view on" id="v-fasor">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3>Del vector giratorio a la senoidal</h3>
+          <p>Un vector de largo V<sub>p</sub> gira a velocidad constante. Su <b>sombra sobre el eje
+             vertical</b> dibuja el seno; su sombra sobre el <b>eje horizontal</b>, el coseno. La
+             senoidal no es un capricho: es lo que se ve girar.</p>
+          <canvas class="lienzo" id="cvFasor" style="--h:330px"></canvas>
+          <div class="leyenda">
+            <span><i style="background:var(--v)"></i>seno · proyección vertical</span>
+            <span><i style="background:var(--i)"></i>coseno · proyección horizontal</span>
+            <span><i style="background:var(--soft)"></i>vector giratorio (fasor)</span>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <div class="eq">v(t) = V<sub>p</sub> · sen(ω·t + φ)
+            <small>ω es la velocidad angular en rad/s, t el tiempo en segundos y φ la fase inicial:
+              dónde estaba el vector cuando arrancó el cronómetro.</small></div>
+          <div class="eq">ω = 2·π·f &nbsp;&nbsp;·&nbsp;&nbsp; T = 1 / f &nbsp;&nbsp;·&nbsp;&nbsp; una vuelta = 360° = 2π rad
+            <small>Una vuelta completa del vector es un ciclo de la onda. A 50 Hz da 50 vueltas por segundo.</small></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Controles</h3>
+          <div class="ctrl">
+            <label><span>Valor de pico V<sub>p</sub></span> <b><span id="fVp">311</span> V</b></label>
+            <input type="range" id="rVp" min="20" max="400" step="1" value="311">
+          </div>
+          <div class="ctrl">
+            <label><span>Frecuencia f</span> <b><span id="fF">50</span> Hz</b></label>
+            <input type="range" id="rF" min="1" max="100" step="1" value="50">
+          </div>
+          <div class="ctrl">
+            <label><span>Fase inicial φ</span> <b><span id="fFi">0</span>°</b></label>
+            <input type="range" id="rFi" min="-180" max="180" step="5" value="0">
+          </div>
+          <div class="ctrl">
+            <label><span>Velocidad de la animación</span> <b><span id="fVel">1</span>×</b></label>
+            <input type="range" id="rVel" min="0.1" max="2" step="0.1" value="1">
+          </div>
+          <label class="chk"><input type="checkbox" id="kSen" checked> Dibujar el seno</label>
+          <label class="chk"><input type="checkbox" id="kCos"> Dibujar el coseno</label>
+          <div class="btns" style="margin-top:6px">
+            <button class="b pri" id="bPausa">⏸ Pausar</button>
+            <button class="b" id="bCero">↺ Volver a cero</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>En este instante</h3>
+          <div class="datos">
+            <span>Ángulo θ = ωt + φ</span><b id="dAng">0°</b>
+            <span>v(t)</span><b class="v" id="dV">0 V</b>
+            <span>Proyección coseno</span><b class="i" id="dCos">311 V</b>
+            <hr>
+            <span>ω</span><b id="dW">314 rad/s</b>
+            <span>Período T</span><b id="dT">20 ms</b>
+            <span>V eficaz</span><b id="dVef">220 V</b>
+          </div>
+        </div>
+        <div class="nota">
+          <b>Ojo con esto:</b> el coseno es el mismo seno adelantado 90°. Por eso una sola figura
+          —el vector girando— explica las dos funciones, y por eso los desfasajes se miden en grados.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 2 · VALORES ============ -->
+  <section class="view" id="v-valores">
+    <div class="grid">
+      <div class="panel">
+        <h3>Los valores de una senoidal</h3>
+        <p>Una alterna cambia todo el tiempo, así que un solo número no la describe. Se usan cuatro,
+           y hay que saber cuál pide cada situación.</p>
+        <canvas class="lienzo" id="cvValores" style="--h:300px"></canvas>
+        <div class="leyenda">
+          <span><i style="background:var(--v)"></i>v(t)</span>
+          <span><i style="background:var(--ok)"></i>eficaz (RMS)</span>
+          <span><i style="background:var(--warn)"></i>medio de medio ciclo</span>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Probá</h3>
+          <div class="ctrl">
+            <label><span>Valor de pico V<sub>p</sub></span> <b><span id="wVp">311</span> V</b></label>
+            <input type="range" id="rWVp" min="10" max="400" step="1" value="311">
+          </div>
+          <table class="tabla">
+            <tr><th>Valor</th><th>Fórmula</th><th>Vale</th></tr>
+            <tr><td>Pico</td><td>V<sub>p</sub></td><td><b id="wP">311 V</b></td></tr>
+            <tr><td>Pico a pico</td><td>2·V<sub>p</sub></td><td><b id="wPP">622 V</b></td></tr>
+            <tr><td>Eficaz (RMS)</td><td>V<sub>p</sub>/√2</td><td><b id="wEf">220 V</b></td></tr>
+            <tr><td>Medio</td><td>2·V<sub>p</sub>/π</td><td><b id="wMed">198 V</b></td></tr>
+          </table>
+        </div>
+        <div class="nota">
+          <b>El dato que más se usa:</b> cuando decimos que la red es de 220 V estamos hablando del
+          <b>valor eficaz</b>. El pico real es 220·√2 ≈ <b>311 V</b>, y de pico a pico son 622 V.
+          Por eso un capacitor para la red nunca se elige de 250 V.
+        </div>
+        <div class="nota ojo">
+          <b>¿Por qué eficaz?</b> Es el valor de continua que calentaría igual a un resistor. Es el
+          que mide el tester y con el que se calcula la potencia. El valor medio de un ciclo completo
+          es cero, porque el semiciclo positivo y el negativo se cancelan: por eso se toma medio ciclo.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 3 · R, L y C ============ -->
+  <section class="view" id="v-rlc">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3>Cómo se porta cada componente</h3>
+          <div class="seg" id="segElem" style="margin-bottom:12px">
+            <button data-e="R" class="on">Resistor R</button>
+            <button data-e="L">Bobina L</button>
+            <button data-e="C">Capacitor C</button>
+          </div>
+          <p id="txtElem">En el resistor la corriente sigue a la tensión sin atrasarse ni adelantarse:
+             están <b>en fase</b>.</p>
+          <canvas class="lienzo" id="cvRLC" style="--h:340px"></canvas>
+          <div class="leyenda">
+            <span><i style="background:var(--v)"></i>tensión v(t)</span>
+            <span><i style="background:var(--i)"></i>corriente i(t)</span>
+            <span>A la izquierda, los mismos dos vectores girando juntos.</span>
+          </div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Controles</h3>
+          <div class="ctrl">
+            <label><span>Frecuencia f</span> <b><span id="eF">50</span> Hz</b></label>
+            <input type="range" id="rEF" min="10" max="1000" step="10" value="50">
+          </div>
+          <div class="ctrl" id="ctrlR">
+            <label><span>Resistencia R</span> <b><span id="eR">100</span> Ω</b></label>
+            <input type="range" id="rER" min="10" max="1000" step="10" value="100">
+          </div>
+          <div class="ctrl" id="ctrlL" style="display:none">
+            <label><span>Inductancia L</span> <b><span id="eL">200</span> mH</b></label>
+            <input type="range" id="rEL" min="10" max="1000" step="10" value="200">
+          </div>
+          <div class="ctrl" id="ctrlC" style="display:none">
+            <label><span>Capacidad C</span> <b><span id="eC">10</span> µF</b></label>
+            <input type="range" id="rEC" min="1" max="200" step="1" value="10">
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Lo que pasa</h3>
+          <div class="eq" id="eqElem">X = R</div>
+          <div class="datos">
+            <span>Oposición al paso</span><b id="eOpo">100 Ω</b>
+            <span>Desfasaje</span><b id="eDes">0°</b>
+            <span>Con V = 220 V, I vale</span><b class="i" id="eI">2,2 A</b>
+          </div>
+        </div>
+        <div class="nota" id="notaElem">
+          <b>El resistor no discrimina:</b> se opone igual a 1 Hz que a 1 MHz. Por eso su oposición se
+          llama resistencia y no reactancia, y no depende de la frecuencia.
+        </div>
+        <div class="nota ojo">
+          <b>Para acordarse:</b> «ELI the ICE man». En la bobina (<b>L</b>) la tensión <b>E</b> va
+          antes que la corriente <b>I</b>; en el capacitor (<b>C</b>) la corriente <b>I</b> va antes
+          que la tensión <b>E</b>.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 4 · IMPEDANCIA ============ -->
+  <section class="view" id="v-z">
+    <div class="grid ancho">
+      <div>
+        <div class="panel">
+          <h3>Impedancia de un RLC serie</h3>
+          <p>En alterna las oposiciones <b>no se suman de frente</b>: R va sobre el eje real y las
+             reactancias sobre el imaginario, porque están a 90°. La suma es vectorial y se arma un
+             triángulo.</p>
+          <canvas class="lienzo" id="cvZ" style="--h:300px"></canvas>
+          <div class="leyenda">
+            <span><i style="background:var(--r)"></i>R</span>
+            <span><i style="background:var(--l)"></i>X<sub>L</sub></span>
+            <span><i style="background:var(--c)"></i>X<sub>C</sub></span>
+            <span><i style="background:var(--v)"></i>Z</span>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <h3>Cómo cambia Z con la frecuencia</h3>
+          <p>La bobina se cierra al subir la frecuencia y el capacitor se abre. Donde se igualan hay
+             <b>resonancia</b>: la impedancia cae a R y la corriente es máxima.</p>
+          <canvas class="lienzo" id="cvBarrido" style="--h:230px"></canvas>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Circuito</h3>
+          <div class="ctrl">
+            <label><span>Tensión de la fuente (eficaz)</span> <b><span id="zV">220</span> V</b></label>
+            <input type="range" id="rZV" min="12" max="380" step="1" value="220">
+          </div>
+          <div class="ctrl">
+            <label><span>Frecuencia f</span> <b><span id="zF">50</span> Hz</b></label>
+            <input type="range" id="rZF" min="10" max="500" step="1" value="50">
+          </div>
+          <div class="ctrl">
+            <label><span>R</span> <b><span id="zR">100</span> Ω</b></label>
+            <input type="range" id="rZR" min="1" max="500" step="1" value="100">
+          </div>
+          <div class="ctrl">
+            <label><span>L</span> <b><span id="zL">300</span> mH</b></label>
+            <input type="range" id="rZL" min="0" max="1000" step="10" value="300">
+          </div>
+          <div class="ctrl">
+            <label><span>C</span> <b><span id="zC">30</span> µF</b></label>
+            <input type="range" id="rZC" min="1" max="300" step="1" value="30">
+          </div>
+          <div class="btns"><button class="b" id="bResonar">Llevar a resonancia</button></div>
+        </div>
+        <div class="panel">
+          <h3>Resultados</h3>
+          <div class="datos">
+            <span>X<sub>L</sub> = 2πfL</span><b class="l" id="zXL">94,2 Ω</b>
+            <span>X<sub>C</sub> = 1/(2πfC)</span><b class="c" id="zXC">106,1 Ω</b>
+            <span>X = X<sub>L</sub> − X<sub>C</sub></span><b id="zX">−11,9 Ω</b>
+            <hr>
+            <span>Z = √(R² + X²)</span><b class="v" id="zZ">100,7 Ω</b>
+            <span>φ = arc tg (X/R)</span><b id="zFi">−6,8°</b>
+            <span>I = V / Z</span><b class="i" id="zI">2,18 A</b>
+            <hr>
+            <span>V<sub>R</sub> = I·R</span><b class="r" id="zVR">218 V</b>
+            <span>V<sub>L</sub> = I·X<sub>L</sub></span><b class="l" id="zVL">206 V</b>
+            <span>V<sub>C</sub> = I·X<sub>C</sub></span><b class="c" id="zVC">232 V</b>
+            <span>√(V<sub>R</sub>² + (V<sub>L</sub>−V<sub>C</sub>)²)</span><b class="v" id="zComp">220 V</b>
+            <hr>
+            <span>Resonancia f₀</span><b id="zF0">53,1 Hz</b>
+            <span>El circuito es</span><b id="zTipo">capacitivo</b>
+          </div>
+        </div>
+        <div class="nota ojo">
+          <b>Lo que sorprende:</b> V<sub>L</sub> y V<sub>C</sub> pueden dar cada una <b>más grande que
+          la fuente</b> y no hay error. Como están a 180° una de otra, se restan entre sí, y la suma
+          vectorial de las tres sí da la tensión de la fuente.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 5 · V vs I ============ -->
+  <section class="view" id="v-vi">
+    <div class="grid">
+      <div class="panel">
+        <h3>El gráfico de V contra I</h3>
+        <p>En vez de mirar las dos ondas contra el tiempo, se pone la tensión en un eje y la corriente
+           en el otro. Lo que dibuja el punto delata al componente: una <b>recta</b> si es resistivo,
+           una <b>elipse</b> si hay reactancia, un <b>círculo</b> si es reactancia pura.</p>
+        <div class="seg" id="segVI" style="margin-bottom:12px">
+          <button data-t="R" class="on">Resistivo</button>
+          <button data-t="L">Inductivo puro</button>
+          <button data-t="C">Capacitivo puro</button>
+          <button data-t="RL">R + L</button>
+          <button data-t="RC">R + C</button>
+        </div>
+        <canvas class="lienzo" id="cvVI" style="--h:360px"></canvas>
+        <div class="leyenda">
+          <span><i style="background:var(--v)"></i>tensión</span>
+          <span><i style="background:var(--i)"></i>corriente</span>
+          <span><i style="background:var(--warn)"></i>punto de trabajo</span>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Desfasaje</h3>
+          <div class="ctrl">
+            <label><span>φ entre v e i</span> <b><span id="viFi">0</span>°</b></label>
+            <input type="range" id="rVIFi" min="-90" max="90" step="1" value="0">
+          </div>
+          <p style="font-size:12.5px">Los botones de arriba mueven este control solos. Movelo a mano
+             para ver cómo la recta se va abriendo hasta volverse un círculo.</p>
+        </div>
+        <div class="panel">
+          <h3>Cómo se lee</h3>
+          <div class="datos">
+            <span>Figura</span><b id="viFig">recta</b>
+            <span>φ</span><b id="viDes">0°</b>
+            <span>cos φ</span><b id="viCos">1,00</b>
+            <span>Área encerrada</span><b id="viArea">cero</b>
+          </div>
+        </div>
+        <div class="nota">
+          <b>La pendiente:</b> acá los dos ejes están normalizados, por eso la recta del caso
+          resistivo sale siempre a 45°. En un osciloscopio de verdad la pendiente vale R: cuanto más
+          parada la recta, más grande el resistor.
+        </div>
+        <div class="nota">
+          <b>Qué significa el área:</b> si la figura es una recta, toda la energía que entra se
+          consume. Cuanto más se abre la elipse, más energía va y vuelve entre la fuente y el
+          componente sin consumirse: eso es la <b>potencia reactiva</b>.
+        </div>
+        <div class="nota ojo">
+          <b>En el osciloscopio:</b> esta figura sale poniéndolo en modo XY, con la tensión en un canal
+          y en el otro la caída sobre un resistor chico que hace de sensor de corriente.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 6 · POTENCIA ============ -->
+  <section class="view" id="v-pot">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3>Potencia instantánea p(t) = v · i</h3>
+          <p>Multiplicá punto a punto las dos ondas. Cuando el producto es <b style="color:var(--ok)">positivo</b>
+             la fuente entrega energía; cuando es <b style="color:var(--hot)">negativo</b>, el componente
+             se la devuelve. Lo que queda de saldo es la potencia activa.</p>
+          <canvas class="lienzo" id="cvPot" style="--h:300px"></canvas>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <h3>El triángulo de potencias</h3>
+          <canvas class="lienzo" id="cvTriP" style="--h:240px"></canvas>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Controles</h3>
+          <div class="ctrl">
+            <label><span>Tensión V (eficaz)</span> <b><span id="pV">220</span> V</b></label>
+            <input type="range" id="rPV" min="12" max="380" step="1" value="220">
+          </div>
+          <div class="ctrl">
+            <label><span>Corriente I (eficaz)</span> <b><span id="pI">10</span> A</b></label>
+            <input type="range" id="rPI" min="1" max="50" step="1" value="10">
+          </div>
+          <div class="ctrl">
+            <label><span>Desfasaje φ</span> <b><span id="pFi">30</span>°</b></label>
+            <input type="range" id="rPFi" min="-90" max="90" step="1" value="30">
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Las tres potencias</h3>
+          <div class="datos">
+            <span>Aparente S = V·I</span><b id="pS">2200 VA</b>
+            <span>Activa P = V·I·cos φ</span><b class="r" id="pP">1905 W</b>
+            <span>Reactiva Q = V·I·sen φ</span><b class="l" id="pQ">1100 VAr</b>
+            <hr>
+            <span>Factor de potencia cos φ</span><b id="pCos">0,87</b>
+          </div>
+          <div class="eq" style="margin-bottom:0">S² = P² + Q²</div>
+        </div>
+        <div class="nota">
+          <b>Por qué le importa a la empresa de luz:</b> la instalación tiene que soportar S (los VA),
+          pero al usuario se le cobra P (los W). Con cos φ bajo circula corriente de más que no hace
+          trabajo pero calienta los cables. Por eso se corrige con capacitores en paralelo.
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 7 · EJERCICIOS ============ -->
+  <section class="view" id="v-ej">
+    <div class="panel" style="margin-bottom:12px">
+      <h3>Para practicar</h3>
+      <p>Cinco ejercicios con números al azar. Respondé con dos decimales; se da por buena una
+         diferencia de hasta el 2 %, así que podés redondear como en la carpeta.</p>
+      <div class="btns"><button class="b pri" id="bNuevos">Generar otros cinco</button></div>
+    </div>
+    <div id="ejercicios"></div>
+  </section>
+
+  <footer class="pie">
+    Publicación de <a href="/">catto.ar</a> · Electrotecnia, 4º año · Todos los gráficos se calculan
+    en vivo con las fórmulas que están a la vista. Red argentina: 220 V eficaces, 50 Hz.
+  </footer>
+</div>
+
+<script>
+/* ============================================================================
+   ESTUDIO VECTORIAL DE LA CA — catto.ar
+   Un solo archivo, sin dependencias. Los dibujos van en canvas y se rehacen
+   en cada cuadro; las cuentas salen de las mismas fórmulas que se muestran.
+
+   Convenio de fases usado en todo el archivo: φ es el ángulo de la TENSIÓN
+   respecto de la CORRIENTE. Entonces φ > 0 es inductivo (la tensión adelanta)
+   y φ < 0 es capacitivo. Es el mismo criterio del triángulo de impedancias.
+   ========================================================================== */
+(function(){
+"use strict";
+
+var TAU = Math.PI*2, RAD = Math.PI/180;
+var COL = { v:"#58a6ff", i:"#e8a33a", r:"#3fb950", l:"#a371f7", c:"#e8883a",
+            eje:"#7d8a99", grilla:"#222a36", txt:"#e6edf3", soft:"#9aa7b4",
+            ok:"#3fb950", hot:"#f85149", warn:"#d29922" };
+
+/* ---------------------------------------------------------------- utiles --- */
+function $(id){ return document.getElementById(id); }
+function num(x, d){
+  if(!isFinite(x)) return "∞";
+  var s = Math.abs(x) >= 1000 ? x.toFixed(0) : x.toFixed(d === undefined ? 1 : d);
+  return s.replace(".", ",");
+}
+/* números grandes con prefijo, como se escriben en electrotecnia */
+function ohm(x){
+  if(!isFinite(x)) return "∞ Ω";
+  if(Math.abs(x) >= 1000) return num(x/1000, 2) + " kΩ";
+  return num(x, 1) + " Ω";
+}
+
+/* Lienzo: ajusta el canvas a su caja y a la densidad de la pantalla */
+function Lienzo(id){
+  var cv = $(id);
+  var o = { cv:cv, c:cv.getContext("2d"), w:0, h:0 };
+  o.ajustar = function(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return false;
+    var d = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width*d) || cv.height !== Math.round(r.height*d)){
+      cv.width = Math.round(r.width*d); cv.height = Math.round(r.height*d);
+    }
+    o.c.setTransform(d,0,0,d,0,0);
+    o.w = r.width; o.h = r.height;
+    return true;
+  };
+  o.limpiar = function(){ o.c.clearRect(0,0,o.w,o.h); };
+  return o;
+}
+
+function texto(c, s, x, y, col, tam, alin){
+  c.fillStyle = col || COL.soft;
+  c.font = (tam || 11) + "px 'Segoe UI',system-ui,sans-serif";
+  c.textAlign = alin || "left";
+  c.textBaseline = "middle";
+  c.fillText(s, x, y);
+}
+/* rótulo con fondo, para los que caen encima de una curva */
+function textoFondo(c, s, x, y, col, tam){
+  c.font = (tam || 11) + "px 'Segoe UI',system-ui,sans-serif";
+  var an = c.measureText(s).width;
+  c.fillStyle = "rgba(11,15,22,.85)";
+  c.fillRect(x - 4, y - (tam||11)/2 - 3, an + 8, (tam||11) + 6);
+  texto(c, s, x, y, col, tam);
+}
+function linea(c, x1, y1, x2, y2, col, gr, guion){
+  c.strokeStyle = col; c.lineWidth = gr || 1;
+  c.setLineDash(guion || []);
+  c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+  c.setLineDash([]);
+}
+/* flecha para los vectores */
+function flecha(c, x1, y1, x2, y2, col, gr){
+  var a = Math.atan2(y2-y1, x2-x1), L = Math.hypot(x2-x1, y2-y1);
+  if(L < 1) return;
+  var p = Math.min(11, L*0.28);
+  c.strokeStyle = col; c.fillStyle = col; c.lineWidth = gr || 2.5;
+  c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+  c.beginPath();
+  c.moveTo(x2, y2);
+  c.lineTo(x2 - p*Math.cos(a - 0.4), y2 - p*Math.sin(a - 0.4));
+  c.lineTo(x2 - p*Math.cos(a + 0.4), y2 - p*Math.sin(a + 0.4));
+  c.closePath(); c.fill();
+}
+/* ejes con grilla para las ondas contra el tiempo */
+function ejesTiempo(c, x0, y0, an, al, ciclos){
+  c.strokeStyle = COL.grilla; c.lineWidth = 1;
+  for(var k = 0; k <= ciclos*4; k++){
+    var x = x0 + an*k/(ciclos*4);
+    c.beginPath(); c.moveTo(x, y0-al); c.lineTo(x, y0+al); c.stroke();
+  }
+  for(var j = -1; j <= 1; j += 0.5){
+    var y = y0 - al*j;
+    c.beginPath(); c.moveTo(x0, y); c.lineTo(x0+an, y); c.stroke();
+  }
+  linea(c, x0, y0, x0+an, y0, COL.eje, 1.4);
+  linea(c, x0, y0-al, x0, y0+al, COL.eje, 1.4);
+}
+
+/* ==========================================================================
+   1 · EL VECTOR GIRATORIO
+   ========================================================================== */
+var F = { Vp:311, f:50, fi:0, vel:1, sen:true, cos:false, corriendo:true, t:0 };
+var lFasor = Lienzo("cvFasor");
+
+function pintarFasor(){
+  if(!lFasor.ajustar()) return;
+  var c = lFasor.c, W = lFasor.w, H = lFasor.h;
+  lFasor.limpiar();
+
+  var rad = Math.min(H*0.40, 108);
+  var cx = 20 + rad, cy = H/2;
+  var x0 = cx + rad + 42, an = W - x0 - 16, al = rad;
+  var ciclos = 2;
+
+  /* circunferencia y ejes del vector */
+  c.strokeStyle = COL.grilla; c.lineWidth = 1;
+  c.beginPath(); c.arc(cx, cy, rad, 0, TAU); c.stroke();
+  linea(c, cx-rad-8, cy, cx+rad+8, cy, COL.eje, 1.2);
+  linea(c, cx, cy-rad-8, cx, cy+rad+8, COL.eje, 1.2);
+
+  ejesTiempo(c, x0, cy, an, al, ciclos);
+  texto(c, "0", x0-8, cy+13, COL.soft, 10, "center");
+  texto(c, "T", x0+an/2, cy+al+13, COL.soft, 10, "center");
+  texto(c, "2T", x0+an, cy+al+13, COL.soft, 10, "center");
+  texto(c, "+Vp", x0+4, cy-al+9, COL.soft, 10);
+  texto(c, "−Vp", x0+4, cy+al-9, COL.soft, 10);
+
+  var th = F.t + F.fi*RAD;                       /* ángulo actual del vector */
+
+  /* las ondas: el eje x son 2 períodos y el instante actual está a la izquierda */
+  function onda(fase, col, gr){
+    c.strokeStyle = col; c.lineWidth = gr; c.beginPath();
+    for(var p = 0; p <= an; p++){
+      var a = th + (p/an)*ciclos*TAU;
+      var y = cy - Math.sin(a + fase)*al;
+      if(p === 0) c.moveTo(x0+p, y); else c.lineTo(x0+p, y);
+    }
+    c.stroke();
+  }
+  if(F.sen) onda(0, COL.v, 2.2);
+  if(F.cos) onda(Math.PI/2, COL.i, 2);
+
+  /* el vector y sus dos sombras */
+  var vx = cx + Math.cos(th)*rad, vy = cy - Math.sin(th)*rad;
+  linea(c, vx, vy, vx, cy, COL.i, 1, [4,4]);       /* baja al eje x: coseno */
+  linea(c, vx, vy, cx, vy, COL.v, 1, [4,4]);       /* va al eje y: seno */
+  if(F.sen){
+    flecha(c, cx, cy, cx, vy, COL.v, 3);
+    linea(c, cx, vy, x0, vy, COL.v, 1, [3,5]);
+    c.fillStyle = COL.v; c.beginPath(); c.arc(x0, vy, 4, 0, TAU); c.fill();
+  }
+  if(F.cos){
+    flecha(c, cx, cy, vx, cy, COL.i, 3);
+    var yc = cy - Math.cos(th)*al;
+    linea(c, x0, yc, x0+8, yc, COL.i, 1, [3,5]);
+    c.fillStyle = COL.i; c.beginPath(); c.arc(x0, yc, 4, 0, TAU); c.fill();
+  }
+  flecha(c, cx, cy, vx, vy, COL.txt, 2.6);
+  c.fillStyle = COL.txt; c.beginPath(); c.arc(cx, cy, 3, 0, TAU); c.fill();
+
+  /* arco del ángulo */
+  c.strokeStyle = COL.warn; c.lineWidth = 1.6;
+  c.beginPath(); c.arc(cx, cy, 26, 0, -((th % TAU) + TAU) % TAU, true); c.stroke();
+  texto(c, "θ", cx + 32*Math.cos(th/2), cy - 32*Math.sin(th/2), COL.warn, 12, "center");
+  texto(c, "Vp = " + F.Vp + " V", cx, cy + rad + 20, COL.soft, 11, "center");
+
+  /* números del panel */
+  var gr = ((th/RAD) % 360 + 360) % 360;
+  $("dAng").textContent = num(gr, 0) + "°";
+  $("dV").textContent = num(F.Vp*Math.sin(th), 0) + " V";
+  $("dCos").textContent = num(F.Vp*Math.cos(th), 0) + " V";
+  $("dW").textContent = num(TAU*F.f, 0) + " rad/s";
+  $("dT").textContent = num(1000/F.f, 1) + " ms";
+  $("dVef").textContent = num(F.Vp/Math.SQRT2, 0) + " V";
+}
+
+/* ==========================================================================
+   2 · VALORES DE LA SENOIDAL
+   ========================================================================== */
+var V2 = { Vp:311 };
+var lVal = Lienzo("cvValores");
+
+function pintarValores(){
+  if(!lVal.ajustar()) return;
+  var c = lVal.c, W = lVal.w, H = lVal.h;
+  lVal.limpiar();
+
+  var x0 = 46, an = W - x0 - 14, cy = H/2, al = H*0.36;
+  ejesTiempo(c, x0, cy, an, al, 2);
+
+  var ef = V2.Vp/Math.SQRT2, med = 2*V2.Vp/Math.PI;
+  function nivel(val, col, etq, arriba){
+    var y = cy - (val/V2.Vp)*al;
+    linea(c, x0, y, x0+an, y, col, 1.2, [6,5]);
+    texto(c, etq, x0+an-4, y + (arriba ? -9 : 9), col, 11, "right");
+  }
+  /* onda */
+  c.strokeStyle = COL.v; c.lineWidth = 2.4; c.beginPath();
+  for(var p = 0; p <= an; p++){
+    var y = cy - Math.sin((p/an)*2*TAU)*al;
+    if(p === 0) c.moveTo(x0+p, y); else c.lineTo(x0+p, y);
+  }
+  c.stroke();
+
+  nivel(V2.Vp, COL.v, "pico " + num(V2.Vp,0) + " V", true);
+  nivel(ef, COL.ok, "eficaz " + num(ef,0) + " V", true);
+  nivel(med, COL.warn, "medio " + num(med,0) + " V", false);
+  nivel(-V2.Vp, COL.v, "−pico", false);
+
+  /* flecha de pico a pico */
+  var xp = x0 + an*0.13;
+  flecha(c, xp, cy-al, xp, cy+al, COL.soft, 1.4);
+  flecha(c, xp, cy+al, xp, cy-al, COL.soft, 1.4);
+  texto(c, "pico a pico " + num(2*V2.Vp,0) + " V", xp+8, cy - al*0.55, COL.soft, 11);
+
+  $("wP").textContent = num(V2.Vp,0) + " V";
+  $("wPP").textContent = num(2*V2.Vp,0) + " V";
+  $("wEf").textContent = num(ef,0) + " V";
+  $("wMed").textContent = num(med,0) + " V";
+}
+
+/* ==========================================================================
+   3 · R, L y C ANTE LA ALTERNA
+   ========================================================================== */
+var E = { elem:"R", f:50, R:100, L:0.2, C:10e-6, t:0 };
+var lRLC = Lienzo("cvRLC");
+
+function datosElem(){
+  var w = TAU*E.f, X, des, eq, txt, nota;
+  if(E.elem === "R"){
+    X = E.R; des = 0;
+    eq = "R = " + ohm(E.R) + "  ·  no depende de f";
+    txt = "En el resistor la corriente sigue a la tensión sin atrasarse ni adelantarse: están " +
+          "<b>en fase</b>. Los dos vectores giran juntos, pegados.";
+    nota = "<b>El resistor no discrimina:</b> se opone igual a 1 Hz que a 1 MHz. Por eso su " +
+           "oposición se llama resistencia y no reactancia, y no depende de la frecuencia.";
+  } else if(E.elem === "L"){
+    X = w*E.L; des = 90;
+    eq = "X<sub>L</sub> = 2·π·f·L = " + ohm(X);
+    txt = "En la bobina la corriente <b>atrasa 90°</b>. La bobina se opone a los cambios de " +
+          "corriente, así que la corriente llega tarde: primero aparece la tensión.";
+    nota = "<b>Cuanto más rápido, peor pasa:</b> X<sub>L</sub> crece con la frecuencia. En continua " +
+           "(f = 0) la bobina es un cable, y a frecuencia alta se porta casi como un circuito abierto.";
+  } else {
+    X = 1/(w*E.C); des = -90;
+    eq = "X<sub>C</sub> = 1 / (2·π·f·C) = " + ohm(X);
+    txt = "En el capacitor la corriente <b>adelanta 90°</b>. Para que aparezca tensión entre las " +
+          "placas primero hay que llevarles carga, y llevar carga es corriente.";
+    nota = "<b>Al revés que la bobina:</b> X<sub>C</sub> baja con la frecuencia. En continua el " +
+           "capacitor es un circuito abierto, y a frecuencia alta deja pasar casi sin oponerse.";
+  }
+  return { X:X, des:des, eq:eq, txt:txt, nota:nota };
+}
+
+function pintarRLC(){
+  if(!lRLC.ajustar()) return;
+  var c = lRLC.c, W = lRLC.w, H = lRLC.h;
+  lRLC.limpiar();
+
+  var d = datosElem();
+  var rad = Math.min(H*0.36, 92);
+  var cx = 18 + rad, cy = H/2;
+  var x0 = cx + rad + 40, an = W - x0 - 14, al = H*0.36;
+
+  c.strokeStyle = COL.grilla; c.lineWidth = 1;
+  c.beginPath(); c.arc(cx, cy, rad, 0, TAU); c.stroke();
+  linea(c, cx-rad-6, cy, cx+rad+6, cy, COL.eje, 1.2);
+  linea(c, cx, cy-rad-6, cx, cy+rad+6, COL.eje, 1.2);
+  ejesTiempo(c, x0, cy, an, al, 2);
+
+  var th = E.t;
+  var fiI = -d.des*RAD;        /* la corriente respecto de la tensión */
+
+  function onda(fase, col, gr){
+    c.strokeStyle = col; c.lineWidth = gr; c.beginPath();
+    for(var p = 0; p <= an; p++){
+      var a = th + (p/an)*2*TAU;
+      var y = cy - Math.sin(a + fase)*al*0.92;
+      if(p === 0) c.moveTo(x0+p, y); else c.lineTo(x0+p, y);
+    }
+    c.stroke();
+  }
+  onda(0, COL.v, 2.3);
+  onda(fiI, COL.i, 2.3);
+
+  /* vectores girando */
+  var vx = cx + Math.cos(th)*rad, vy = cy - Math.sin(th)*rad;
+  var ix = cx + Math.cos(th+fiI)*rad*0.72, iy = cy - Math.sin(th+fiI)*rad*0.72;
+  flecha(c, cx, cy, vx, vy, COL.v, 2.6);
+  flecha(c, cx, cy, ix, iy, COL.i, 2.6);
+  texto(c, "V", vx + 12*Math.cos(th), vy - 12*Math.sin(th), COL.v, 12, "center");
+  texto(c, "I", ix + 14*Math.cos(th+fiI), iy - 14*Math.sin(th+fiI), COL.i, 12, "center");
+  texto(c, d.des === 0 ? "V e I en fase" : (d.des > 0 ? "I atrasa 90°" : "I adelanta 90°"),
+        cx, cy + rad + 26, COL.soft, 11.5, "center");
+  texto(c, "v", x0 + 10, cy - al*0.92 - 10, COL.v, 12);
+  texto(c, "i", x0 + 26, cy - al*0.92 - 10, COL.i, 12);
+  texto(c, "t", x0 + an - 6, cy + 14, COL.soft, 11, "right");
+
+  /* puntos sobre las ondas */
+  c.fillStyle = COL.v; c.beginPath(); c.arc(x0, cy - Math.sin(th)*al*0.92, 4, 0, TAU); c.fill();
+  c.fillStyle = COL.i; c.beginPath(); c.arc(x0, cy - Math.sin(th+fiI)*al*0.92, 4, 0, TAU); c.fill();
+}
+
+function refrescarRLC(){
+  var d = datosElem();
+  $("txtElem").innerHTML = d.txt;
+  $("eqElem").innerHTML = d.eq;
+  $("notaElem").innerHTML = d.nota;
+  $("eOpo").textContent = ohm(d.X);
+  $("eDes").textContent = d.des === 0 ? "0° (en fase)" :
+                          (d.des > 0 ? "I atrasa 90°" : "I adelanta 90°");
+  $("eI").textContent = num(220/d.X, 2) + " A";
+  $("ctrlR").style.display = E.elem === "R" ? "" : "none";
+  $("ctrlL").style.display = E.elem === "L" ? "" : "none";
+  $("ctrlC").style.display = E.elem === "C" ? "" : "none";
+}
+
+/* ==========================================================================
+   4 · IMPEDANCIA
+   ========================================================================== */
+var Z = { V:220, f:50, R:100, L:0.3, C:30e-6 };
+var lZ = Lienzo("cvZ"), lBar = Lienzo("cvBarrido");
+
+function calcZ(f){
+  var w = TAU*(f === undefined ? Z.f : f);
+  var XL = w*Z.L;
+  var XC = Z.C > 0 ? 1/(w*Z.C) : Infinity;
+  var X = XL - XC;
+  var mod = Math.sqrt(Z.R*Z.R + X*X);
+  return { XL:XL, XC:XC, X:X, Z:mod, fi:Math.atan2(X, Z.R), I:Z.V/mod };
+}
+
+/* Ubica el origen de un diagrama de vectores sabiendo cuánto sube y cuánto
+   baja, para que entre entero y quede centrado en el alto disponible. */
+function centrar(H, sube, baja){
+  var arriba = 40, abajo = 26;
+  var libre = H - arriba - abajo;
+  var alto = sube + baja;
+  return arriba + sube + Math.max(0, (libre - alto)/2);
+}
+
+function pintarZ(){
+  if(!lZ.ajustar()) return;
+  var c = lZ.c, W = lZ.w, H = lZ.h;
+  lZ.limpiar();
+  var q = calcZ();
+  var mitad = W*0.5;
+
+  /* ---------- triángulo de impedancias (mitad izquierda) ---------- */
+  var maxV = Math.max(Z.R, Math.abs(q.X), q.Z, 1);
+  var esc = Math.min((mitad - 110)/maxV, (H - 96)/maxV);
+  var ox = 56, oy = centrar(H, Math.max(0, q.X)*esc, Math.max(0, -q.X)*esc);
+  var px = ox + Z.R*esc, py = oy - q.X*esc;
+  /* con X negativa la hipotenusa baja, así que los rótulos cambian de lado */
+  var abajo = q.X < 0;
+
+  texto(c, "Triángulo de impedancias", mitad/2, 15, COL.soft, 11.5, "center");
+  linea(c, ox-16, oy, px + 40, oy, COL.grilla, 1);
+  linea(c, ox, oy - (H/2-26), ox, oy + (H/2-26), COL.grilla, 1);
+
+  flecha(c, ox, oy, px, oy, COL.r, 3);
+  texto(c, "R = " + ohm(Z.R), ox + Z.R*esc/2, oy + (abajo ? -13 : 17), COL.r, 11.5, "center");
+  if(Math.abs(q.X) > 0.5){
+    flecha(c, px, oy, px, py, q.X > 0 ? COL.l : COL.c, 3);
+    texto(c, "X = " + ohm(Math.abs(q.X)), px + 9, (oy+py)/2, q.X > 0 ? COL.l : COL.c, 11.5);
+  }
+  flecha(c, ox, oy, px, py, COL.v, 3);
+  texto(c, "Z = " + ohm(q.Z), (ox+px)/2, (oy+py)/2 + (abajo ? 17 : -15), COL.v, 12.5, "center");
+
+  var ang = -q.fi;                       /* en canvas los ángulos van al revés */
+  c.strokeStyle = COL.warn; c.lineWidth = 1.6;
+  c.beginPath(); c.arc(ox, oy, 32, 0, ang, ang < 0); c.stroke();
+  texto(c, "φ = " + num(q.fi/RAD,1) + "°", ox + 40, oy + (abajo ? 16 : -16), COL.warn, 11.5);
+
+  /* ---------- diagrama de tensiones (mitad derecha) ---------- */
+  var VR = q.I*Z.R, VL = q.I*q.XL, VC = q.I*(isFinite(q.XC) ? q.XC : 0);
+  var dif = VL - VC;
+  var mx = Math.max(VR, Math.abs(dif), Z.V, 1);
+  var esc2 = Math.min((W - mitad - 110)/mx, (H - 96)/Math.max(VL, VC, 1));
+  var bx = mitad + 56;
+  /* la cadena sube VL y después baja VC: hay que contemplar las dos puntas */
+  var by = centrar(H, VL*esc2, Math.max(0, VC - VL)*esc2);
+  var abajo2 = dif < 0;
+
+  texto(c, "Diagrama de tensiones", mitad + (W-mitad)/2, 15, COL.soft, 11.5, "center");
+  linea(c, bx-16, by, bx + VR*esc2 + 40, by, COL.grilla, 1);
+
+  flecha(c, bx, by, bx + VR*esc2, by, COL.r, 2.8);
+  texto(c, "VR " + num(VR,0) + " V", bx + VR*esc2/2, by + (abajo2 ? -13 : 17), COL.r, 11.5, "center");
+  var tx = bx + VR*esc2;
+  /* VL y VC van una sobre la otra (están a 180°): la de abajo se dibuja más
+     gruesa para que asome por los costados y se vean las dos */
+  if(VL > 1){
+    flecha(c, tx, by, tx, by - VL*esc2, COL.l, 6);
+    texto(c, "VL " + num(VL,0) + " V", tx + 11, by - VL*esc2*0.3, COL.l, 11.5);
+  }
+  if(VC > 1){
+    flecha(c, tx, by - VL*esc2, tx, by - VL*esc2 + VC*esc2, COL.c, 2.6);
+    texto(c, "VC " + num(VC,0) + " V", tx + 11, by - VL*esc2 + VC*esc2*0.72, COL.c, 11.5);
+  }
+  flecha(c, bx, by, tx, by - dif*esc2, COL.v, 3);
+  texto(c, "V fuente " + num(Z.V,0) + " V", (bx+tx)/2, by - dif*esc2/2 + (abajo2 ? 17 : -15),
+        COL.v, 12.5, "center");
+
+  /* ---------- números del panel ---------- */
+  $("zXL").textContent = ohm(q.XL);
+  $("zXC").textContent = isFinite(q.XC) ? ohm(q.XC) : "∞ Ω";
+  $("zX").textContent = ohm(q.X);
+  $("zZ").textContent = ohm(q.Z);
+  $("zFi").textContent = num(q.fi/RAD, 1) + "°";
+  $("zI").textContent = num(q.I, 2) + " A";
+  $("zVR").textContent = num(VR, 0) + " V";
+  $("zVL").textContent = num(VL, 0) + " V";
+  $("zVC").textContent = num(VC, 0) + " V";
+  $("zComp").textContent = num(Math.sqrt(VR*VR + dif*dif), 0) + " V";
+  var f0 = (Z.L > 0 && Z.C > 0) ? 1/(TAU*Math.sqrt(Z.L*Z.C)) : NaN;
+  $("zF0").textContent = isFinite(f0) ? num(f0, 1) + " Hz" : "—";
+  var tipo = Math.abs(q.X) < Z.R*0.02 ? ["resonante (Z = R)", "ok"] :
+             (q.X > 0 ? ["inductivo", "ind"] : ["capacitivo", "cap"]);
+  $("zTipo").innerHTML = '<span class="pill ' + tipo[1] + '">' + tipo[0] + "</span>";
+}
+
+function pintarBarrido(){
+  if(!lBar.ajustar()) return;
+  var c = lBar.c, W = lBar.w, H = lBar.h;
+  lBar.limpiar();
+  var x0 = 48, an = W - x0 - 16, y0 = H - 30, al = H - 52;
+
+  var f0 = (Z.L > 0 && Z.C > 0) ? 1/(TAU*Math.sqrt(Z.L*Z.C)) : 50;
+  var fMax = Math.max(Z.f*1.6, f0*2.4, 60);
+  var zMax = 0, vals = [];
+  for(var p = 0; p <= an; p++){
+    var f = 0.5 + (p/an)*fMax;
+    var q = calcZ(f);
+    vals.push(q.Z);
+    if(isFinite(q.Z) && q.Z > zMax) zMax = q.Z;
+  }
+  zMax = Math.min(zMax, Z.R*14);
+
+  c.strokeStyle = COL.grilla; c.lineWidth = 1;
+  for(var k = 0; k <= 4; k++){
+    var y = y0 - al*k/4;
+    c.beginPath(); c.moveTo(x0, y); c.lineTo(x0+an, y); c.stroke();
+  }
+  linea(c, x0, y0, x0+an, y0, COL.eje, 1.3);
+  linea(c, x0, y0, x0, y0-al, COL.eje, 1.3);
+  texto(c, "|Z|", x0-8, y0-al, COL.soft, 11, "right");
+  texto(c, "0", x0-8, y0, COL.soft, 11, "right");
+  texto(c, ohm(zMax), x0+4, y0-al+8, COL.soft, 10);
+  texto(c, "f (Hz)", x0+an, y0+16, COL.soft, 11, "right");
+  for(var m = 1; m <= 4; m++){
+    var xm = x0 + an*m/4;
+    texto(c, num(0.5 + fMax*m/4, 0), xm, y0+16, COL.soft, 10, "center");
+    linea(c, xm, y0, xm, y0+4, COL.eje, 1);
+  }
+
+  c.strokeStyle = COL.v; c.lineWidth = 2.2; c.beginPath();
+  for(var p2 = 0; p2 <= an; p2++){
+    var y2 = y0 - Math.min(vals[p2]/zMax, 1)*al;
+    if(p2 === 0) c.moveTo(x0+p2, y2); else c.lineTo(x0+p2, y2);
+  }
+  c.stroke();
+
+  /* resonancia y frecuencia de trabajo */
+  if(isFinite(f0) && f0 < fMax){
+    var xr = x0 + (f0-0.5)/fMax*an;
+    linea(c, xr, y0, xr, y0-al, COL.ok, 1.4, [5,4]);
+    texto(c, "f₀ = " + num(f0,1) + " Hz", xr + 6, y0-al+10, COL.ok, 11);
+  }
+  var xf = x0 + (Z.f-0.5)/fMax*an;
+  if(xf >= x0 && xf <= x0+an){
+    linea(c, xf, y0, xf, y0-al, COL.warn, 1.4, [3,3]);
+    texto(c, "f = " + num(Z.f,0) + " Hz", xf + 6, y0-al+26, COL.warn, 11);
+    var q3 = calcZ();
+    c.fillStyle = COL.warn;
+    c.beginPath(); c.arc(xf, y0 - Math.min(q3.Z/zMax,1)*al, 4.5, 0, TAU); c.fill();
+  }
+}
+
+/* ==========================================================================
+   5 · V CONTRA I
+   ========================================================================== */
+var VI = { fi:0, t:0, tipo:"R" };
+var lVI = Lienzo("cvVI");
+
+function pintarVI(){
+  if(!lVI.ajustar()) return;
+  var c = lVI.c, W = lVI.w, H = lVI.h;
+  lVI.limpiar();
+
+  var lado = Math.min(H - 40, W*0.46);
+  var cx = 20 + lado/2, cy = H/2, R = lado/2 - 14;
+  var fi = VI.fi*RAD;
+
+  /* ejes del plano V-I */
+  linea(c, cx-R-14, cy, cx+R+14, cy, COL.eje, 1.3);
+  linea(c, cx, cy-R-14, cx, cy+R+14, COL.eje, 1.3);
+  texto(c, "i", cx+R+8, cy-10, COL.i, 12);
+  texto(c, "v", cx+8, cy-R-8, COL.v, 12);
+  c.strokeStyle = COL.grilla; c.lineWidth = 1;
+  for(var g = -1; g <= 1; g += 0.5){
+    if(g === 0) continue;
+    c.beginPath(); c.moveTo(cx-R, cy-R*g); c.lineTo(cx+R, cy-R*g); c.stroke();
+    c.beginPath(); c.moveTo(cx+R*g, cy-R); c.lineTo(cx+R*g, cy+R); c.stroke();
+  }
+
+  /* la figura: v = sen(a), i = sen(a − φ) */
+  c.strokeStyle = COL.warn; c.lineWidth = 2.2; c.beginPath();
+  for(var k = 0; k <= 240; k++){
+    var a = k/240*TAU;
+    var x = cx + Math.sin(a - fi)*R, y = cy - Math.sin(a)*R;
+    if(k === 0) c.moveTo(x,y); else c.lineTo(x,y);
+  }
+  c.closePath(); c.stroke();
+
+  /* punto de trabajo */
+  var av = VI.t;
+  var pxv = cx + Math.sin(av - fi)*R, pyv = cy - Math.sin(av)*R;
+  c.fillStyle = COL.warn; c.beginPath(); c.arc(pxv, pyv, 5.5, 0, TAU); c.fill();
+  linea(c, pxv, pyv, pxv, cy, COL.i, 1, [3,4]);
+  linea(c, pxv, pyv, cx, pyv, COL.v, 1, [3,4]);
+
+  /* las dos ondas, a la derecha */
+  var x0 = cx + R + 46, an = W - x0 - 14, al = Math.min(R, H*0.34);
+  if(an > 60){
+    ejesTiempo(c, x0, cy, an, al, 2);
+    function onda(fase, col){
+      c.strokeStyle = col; c.lineWidth = 2.2; c.beginPath();
+      for(var p = 0; p <= an; p++){
+        var ang = av + (p/an)*2*TAU;
+        var y = cy - Math.sin(ang + fase)*al;
+        if(p === 0) c.moveTo(x0+p, y); else c.lineTo(x0+p, y);
+      }
+      c.stroke();
+    }
+    onda(0, COL.v);
+    onda(-fi, COL.i);
+    texto(c, "v", x0 + 10, cy - al - 8, COL.v, 12);
+    texto(c, "i", x0 + 26, cy - al - 8, COL.i, 12);
+    texto(c, "t", x0 + an - 6, cy + 14, COL.soft, 11, "right");
+    c.fillStyle = COL.v; c.beginPath(); c.arc(x0, cy - Math.sin(av)*al, 4, 0, TAU); c.fill();
+    c.fillStyle = COL.i; c.beginPath(); c.arc(x0, cy - Math.sin(av-fi)*al, 4, 0, TAU); c.fill();
+  }
+
+  /* lectura */
+  var af = Math.abs(VI.fi);
+  var fig = af < 1 ? "recta" : (af > 89 ? "círculo" : "elipse");
+  $("viFig").textContent = fig;
+  $("viDes").textContent = num(VI.fi, 0) + "°" +
+    (Math.abs(VI.fi) < 1 ? "" : (VI.fi > 0 ? " (inductivo)" : " (capacitivo)"));
+  $("viCos").textContent = num(Math.cos(fi), 2);
+  $("viArea").textContent = af < 1 ? "cero" : (num(Math.abs(Math.sin(fi))*100, 0) + " % del máximo");
+}
+
+/* ==========================================================================
+   6 · POTENCIA
+   ========================================================================== */
+var P = { V:220, I:10, fi:30, t:0 };
+var lPot = Lienzo("cvPot"), lTri = Lienzo("cvTriP");
+
+function pintarPot(){
+  if(!lPot.ajustar()) return;
+  var c = lPot.c, W = lPot.w, H = lPot.h;
+  lPot.limpiar();
+
+  var x0 = 46, an = W - x0 - 14, cy = H*0.62, al = H*0.26;
+  var fi = P.fi*RAD;
+  ejesTiempo(c, x0, cy, an, al*1.5, 2);
+
+  /* p(t) = v·i, pintada según el signo */
+  var Vp = P.V*Math.SQRT2, Ip = P.I*Math.SQRT2, pMax = Vp*Ip;
+  c.lineWidth = 1;
+  for(var p = 0; p < an; p++){
+    var a = (p/an)*2*TAU;
+    var pot = Math.sin(a)*Math.sin(a - fi);
+    var y = cy - pot*al*1.4;
+    c.strokeStyle = pot >= 0 ? "rgba(63,185,80,.30)" : "rgba(248,81,73,.30)";
+    c.beginPath(); c.moveTo(x0+p, cy); c.lineTo(x0+p, y); c.stroke();
+  }
+  function onda(fase, col, amp, gr){
+    c.strokeStyle = col; c.lineWidth = gr; c.beginPath();
+    for(var q = 0; q <= an; q++){
+      var a2 = (q/an)*2*TAU;
+      var y2 = cy - Math.sin(a2 + fase)*amp;
+      if(q === 0) c.moveTo(x0+q, y2); else c.lineTo(x0+q, y2);
+    }
+    c.stroke();
+  }
+  onda(0, COL.v, al*0.75, 1.8);
+  onda(-fi, COL.i, al*0.75, 1.8);
+  c.strokeStyle = COL.txt; c.lineWidth = 2.2; c.beginPath();
+  for(var k = 0; k <= an; k++){
+    var a3 = (k/an)*2*TAU;
+    var y3 = cy - Math.sin(a3)*Math.sin(a3 - fi)*al*1.4;
+    if(k === 0) c.moveTo(x0+k, y3); else c.lineTo(x0+k, y3);
+  }
+  c.stroke();
+
+  /* nivel de la potencia media */
+  var media = Math.cos(fi)/2;
+  linea(c, x0, cy - media*al*1.4, x0+an, cy - media*al*1.4, COL.ok, 1.5, [6,4]);
+  textoFondo(c, "P media = " + num(P.V*P.I*Math.cos(fi), 0) + " W", x0+8, cy - media*al*1.4 - 12,
+        COL.ok, 11.5);
+  /* referencias arriba a la izquierda */
+  var ly = 15;
+  function ref(x, col, etq){
+    c.fillStyle = col; c.fillRect(x, ly-4, 13, 3);
+    texto(c, etq, x + 18, ly, COL.soft, 11);
+    return x + 22 + c.measureText(etq).width;
+  }
+  var lx = x0 + 4;
+  lx = ref(lx, COL.txt, "p(t) = v·i");
+  lx = ref(lx, COL.v, "v");
+  lx = ref(lx, COL.i, "i");
+  c.fillStyle = "rgba(63,185,80,.45)"; c.fillRect(lx, ly-5, 13, 10);
+  texto(c, "entrega", lx + 18, ly, COL.ok, 11);
+  lx += 22 + c.measureText("entrega").width + 12;
+  c.fillStyle = "rgba(248,81,73,.45)"; c.fillRect(lx, ly-5, 13, 10);
+  texto(c, "devuelve", lx + 18, ly, COL.hot, 11);
+  texto(c, "t", x0 + an - 6, cy + 16, COL.soft, 11, "right");
+}
+
+function pintarTriP(){
+  if(!lTri.ajustar()) return;
+  var c = lTri.c, W = lTri.w, H = lTri.h;
+  lTri.limpiar();
+  var fi = P.fi*RAD;
+  var S = P.V*P.I, Pa = S*Math.cos(fi), Q = S*Math.sin(fi);
+
+  var esc = Math.min((W-120)/Math.max(S,1), (H-70)/Math.max(Math.abs(Q), S*0.5, 1));
+  var ox = 60, oy = H/2 + Math.min(Math.abs(Q)*esc/2, H/2-26);
+
+  flecha(c, ox, oy, ox + Pa*esc, oy, COL.r, 3);
+  texto(c, "P = " + num(Pa,0) + " W", ox + Pa*esc/2, oy + 15, COL.r, 11.5, "center");
+  if(Math.abs(Q) > 1){
+    flecha(c, ox + Pa*esc, oy, ox + Pa*esc, oy - Q*esc, Q > 0 ? COL.l : COL.c, 3);
+    texto(c, "Q = " + num(Q,0) + " VAr", ox + Pa*esc + 8, oy - Q*esc/2, Q > 0 ? COL.l : COL.c, 11.5);
+  }
+  flecha(c, ox, oy, ox + Pa*esc, oy - Q*esc, COL.v, 3);
+  texto(c, "S = " + num(S,0) + " VA", ox + Pa*esc*0.4, oy - Q*esc*0.5 - 12, COL.v, 12);
+  c.strokeStyle = COL.warn; c.lineWidth = 1.5;
+  c.beginPath(); c.arc(ox, oy, 28, 0, -Math.atan2(Q, Pa), Q > 0); c.stroke();
+  texto(c, "φ = " + num(P.fi,0) + "°", ox + 36, oy - Math.sign(Q)*14, COL.warn, 11.5);
+
+  $("pS").textContent = num(S,0) + " VA";
+  $("pP").textContent = num(Pa,0) + " W";
+  $("pQ").textContent = num(Q,0) + " VAr";
+  $("pCos").textContent = num(Math.cos(fi),2);
+}
+
+/* ==========================================================================
+   7 · EJERCICIOS
+   ========================================================================== */
+function alAzar(min, max, paso){
+  var n = Math.floor(Math.random()*((max-min)/paso + 1))*paso + min;
+  return Math.round(n*1000)/1000;
+}
+var TIPOS = [
+  function(){
+    var f = alAzar(50, 400, 50), L = alAzar(50, 500, 50);
+    return { txt:"Una bobina de <b>" + L + " mH</b> trabaja a <b>" + f + " Hz</b>. " +
+                 "¿Cuánto vale su reactancia X<sub>L</sub>?",
+             u:"Ω", r:TAU*f*L/1000,
+             pista:"X<sub>L</sub> = 2·π·f·L, con L en henry: " + L + " mH = " + (L/1000) + " H." };
+  },
+  function(){
+    var f = alAzar(50, 400, 50), C = alAzar(2, 60, 2);
+    return { txt:"Un capacitor de <b>" + C + " µF</b> trabaja a <b>" + f + " Hz</b>. " +
+                 "¿Cuánto vale su reactancia X<sub>C</sub>?",
+             u:"Ω", r:1/(TAU*f*C*1e-6),
+             pista:"X<sub>C</sub> = 1/(2·π·f·C), con C en farad: " + C + " µF = " + C + "·10⁻⁶ F." };
+  },
+  function(){
+    var R = alAzar(20, 300, 10), X = alAzar(20, 300, 10);
+    return { txt:"Un circuito serie tiene <b>R = " + R + " Ω</b> y una reactancia neta de " +
+                 "<b>X = " + X + " Ω</b> (inductiva). ¿Cuánto vale la impedancia Z?",
+             u:"Ω", r:Math.sqrt(R*R + X*X),
+             pista:"Z = √(R² + X²). No se suman de frente porque están a 90°." };
+  },
+  function(){
+    var R = alAzar(20, 300, 10), X = alAzar(20, 300, 10);
+    return { txt:"Con <b>R = " + R + " Ω</b> y <b>X = " + X + " Ω</b> (inductiva), " +
+                 "¿cuál es el ángulo φ entre la tensión y la corriente?",
+             u:"°", r:Math.atan2(X, R)/RAD,
+             pista:"φ = arc tg (X/R). Da positivo porque la carga es inductiva." };
+  },
+  function(){
+    var V = alAzar(110, 380, 10), Zv = alAzar(20, 200, 10);
+    return { txt:"A una impedancia de <b>" + Zv + " Ω</b> se le aplican <b>" + V + " V</b> eficaces. " +
+                 "¿Qué corriente circula?",
+             u:"A", r:V/Zv,
+             pista:"La ley de Ohm vale igual en alterna, pero con Z en lugar de R: I = V/Z." };
+  },
+  function(){
+    var V = alAzar(110, 380, 10), I = alAzar(2, 30, 1), fi = alAzar(10, 60, 5);
+    return { txt:"Una carga toma <b>" + I + " A</b> con <b>" + V + " V</b> y un desfasaje de " +
+                 "<b>" + fi + "°</b>. ¿Cuánto vale la potencia activa P?",
+             u:"W", r:V*I*Math.cos(fi*RAD),
+             pista:"P = V·I·cos φ. Ojo: los VA no son los W salvo que φ sea cero." };
+  },
+  function(){
+    var Vp = alAzar(20, 340, 10);
+    return { txt:"Una senoidal tiene un valor de pico de <b>" + Vp + " V</b>. " +
+                 "¿Cuál es su valor eficaz?",
+             u:"V", r:Vp/Math.SQRT2,
+             pista:"V eficaz = V pico / √2 ≈ 0,707 · V pico." };
+  },
+  function(){
+    var L = alAzar(50, 500, 50), C = alAzar(2, 60, 2);
+    return { txt:"Un RLC serie tiene <b>L = " + L + " mH</b> y <b>C = " + C + " µF</b>. " +
+                 "¿A qué frecuencia entra en resonancia?",
+             u:"Hz", r:1/(TAU*Math.sqrt((L/1000)*(C*1e-6))),
+             pista:"En resonancia X<sub>L</sub> = X<sub>C</sub>, y de ahí sale f₀ = 1/(2π√(L·C))." };
+  }
+];
+
+function nuevosEjercicios(){
+  var orden = TIPOS.slice();
+  for(var i = orden.length-1; i > 0; i--){
+    var j = Math.floor(Math.random()*(i+1)), t = orden[i]; orden[i] = orden[j]; orden[j] = t;
+  }
+  var cont = $("ejercicios");
+  cont.innerHTML = "";
+  orden.slice(0,5).forEach(function(gen, n){
+    var e = gen();
+    var div = document.createElement("div");
+    div.className = "ej";
+    div.innerHTML =
+      '<div class="enun"><b style="color:var(--accent)">' + (n+1) + '.</b> ' + e.txt + "</div>" +
+      '<div class="fila"><input class="tx" type="text" inputmode="decimal" placeholder="tu respuesta">' +
+      '<span class="unidad">' + e.u + "</span>" +
+      '<button class="b pri">Comprobar</button>' +
+      '<button class="b">Ver pista</button></div>' +
+      '<div class="fb"></div>';
+    var inp = div.querySelector("input"), fb = div.querySelector(".fb");
+    var bts = div.querySelectorAll("button");
+    function comprobar(){
+      var v = parseFloat(inp.value.replace(",", "."));
+      if(isNaN(v)){ fb.className = "fb mal"; fb.textContent = "Escribí un número."; return; }
+      var err = Math.abs(v - e.r)/Math.max(Math.abs(e.r), 1e-9);
+      if(err <= 0.02){
+        fb.className = "fb ok";
+        fb.textContent = "✓ ¡Bien! El valor exacto es " + num(e.r, 2) + " " + e.u + ".";
+      } else {
+        fb.className = "fb mal";
+        fb.textContent = (err < 0.2 ? "Cerca, pero no. " : "No es. ") +
+          "Revisá las unidades y probá de nuevo.";
+      }
+    }
+    bts[0].onclick = comprobar;
+    inp.addEventListener("keydown", function(ev){ if(ev.key === "Enter") comprobar(); });
+    bts[1].onclick = function(){ fb.className = "fb"; fb.innerHTML = "💡 " + e.pista; };
+    cont.appendChild(div);
+  });
+}
+
+/* ==========================================================================
+   PESTAÑAS Y ANIMACIÓN
+   ========================================================================== */
+var TABS = [["fasor","① Vector giratorio"],["valores","② Valores"],["rlc","③ R, L y C"],
+            ["z","④ Impedancia"],["vi","⑤ V vs I"],["pot","⑥ Potencia"],["ej","✏️ Ejercicios"]];
+var tab = "fasor";
+
+function verTab(t){
+  tab = t;
+  $("tabs").innerHTML = TABS.map(function(x){
+    return '<button data-t="' + x[0] + '"' + (x[0] === t ? ' class="on"' : "") + ">" + x[1] + "</button>";
+  }).join("");
+  TABS.forEach(function(x){ $("v-" + x[0]).className = "view" + (x[0] === t ? " on" : ""); });
+  dibujar(true);
+}
+$("tabs").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-t]");
+  if(b) verTab(b.dataset.t);
+});
+
+function dibujar(forzar){
+  if(tab === "fasor") pintarFasor();
+  else if(tab === "valores"){ if(forzar) pintarValores(); }
+  else if(tab === "rlc") pintarRLC();
+  else if(tab === "z"){ if(forzar){ pintarZ(); pintarBarrido(); } }
+  else if(tab === "vi") pintarVI();
+  else if(tab === "pot"){ if(forzar){ pintarPot(); pintarTriP(); } }
+}
+
+var ultimo = 0;
+function cuadro(ts){
+  var dt = ultimo ? Math.min((ts - ultimo)/1000, 0.05) : 0;
+  ultimo = ts;
+  if(F.corriendo){
+    /* la animación no gira a la frecuencia real (a 50 Hz no se vería nada):
+       una vuelta cada 4 segundos, multiplicada por el control de velocidad */
+    var paso = dt*(TAU/4)*F.vel;
+    F.t += paso; E.t += paso; VI.t += paso;
+    if(F.t > TAU) F.t -= TAU;
+    if(E.t > TAU) E.t -= TAU;
+    if(VI.t > TAU) VI.t -= TAU;
+  }
+  dibujar(false);
+  requestAnimationFrame(cuadro);
+}
+
+/* ---------------------------------------------------------------- eventos --- */
+function liga(idRango, idTxt, alCambiar, fmt){
+  var r = $(idRango);
+  r.addEventListener("input", function(){
+    var v = parseFloat(r.value);
+    if(idTxt) $(idTxt).textContent = fmt ? fmt(v) : v;
+    alCambiar(v);
+  });
+}
+/* 1 */
+liga("rVp", "fVp", function(v){ F.Vp = v; });
+liga("rF", "fF", function(v){ F.f = v; });
+liga("rFi", "fFi", function(v){ F.fi = v; });
+liga("rVel", "fVel", function(v){ F.vel = v; }, function(v){ return v.toFixed(1); });
+$("kSen").onchange = function(){ F.sen = this.checked; };
+$("kCos").onchange = function(){ F.cos = this.checked; };
+$("bPausa").onclick = function(){
+  F.corriendo = !F.corriendo;
+  this.textContent = F.corriendo ? "⏸ Pausar" : "▶ Seguir";
+};
+$("bCero").onclick = function(){ F.t = 0; E.t = 0; VI.t = 0; };
+/* 2 */
+liga("rWVp", "wVp", function(v){ V2.Vp = v; pintarValores(); });
+/* 3 */
+$("segElem").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-e]"); if(!b) return;
+  [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+  E.elem = b.dataset.e;
+  refrescarRLC();
+});
+liga("rEF", "eF", function(v){ E.f = v; refrescarRLC(); });
+liga("rER", "eR", function(v){ E.R = v; refrescarRLC(); });
+liga("rEL", "eL", function(v){ E.L = v/1000; refrescarRLC(); });
+liga("rEC", "eC", function(v){ E.C = v*1e-6; refrescarRLC(); });
+/* 4 */
+function refrescarZ(){ pintarZ(); pintarBarrido(); }
+liga("rZV", "zV", function(v){ Z.V = v; refrescarZ(); });
+liga("rZF", "zF", function(v){ Z.f = v; refrescarZ(); });
+liga("rZR", "zR", function(v){ Z.R = v; refrescarZ(); });
+liga("rZL", "zL", function(v){ Z.L = v/1000; refrescarZ(); });
+liga("rZC", "zC", function(v){ Z.C = v*1e-6; refrescarZ(); });
+$("bResonar").onclick = function(){
+  if(!(Z.L > 0 && Z.C > 0)) return;
+  var f0 = 1/(TAU*Math.sqrt(Z.L*Z.C));
+  f0 = Math.max(10, Math.min(500, Math.round(f0)));
+  Z.f = f0; $("rZF").value = f0; $("zF").textContent = f0;
+  refrescarZ();
+};
+/* 5 */
+var VIFI = { R:0, L:90, C:-90, RL:45, RC:-45 };
+$("segVI").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-t]"); if(!b) return;
+  [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+  VI.tipo = b.dataset.t;
+  VI.fi = VIFI[VI.tipo];
+  $("rVIFi").value = VI.fi; $("viFi").textContent = VI.fi;
+});
+liga("rVIFi", "viFi", function(v){ VI.fi = v; });
+/* 6 */
+liga("rPV", "pV", function(v){ P.V = v; pintarPot(); pintarTriP(); });
+liga("rPI", "pI", function(v){ P.I = v; pintarPot(); pintarTriP(); });
+liga("rPFi", "pFi", function(v){ P.fi = v; pintarPot(); pintarTriP(); });
+/* 7 */
+$("bNuevos").onclick = nuevosEjercicios;
+
+window.addEventListener("resize", function(){ dibujar(true); });
+
+/* ----------------------------------------------------------------- arranque */
+refrescarRLC();
+nuevosEjercicios();
+verTab("fasor");
+requestAnimationFrame(cuadro);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
