@@ -82,17 +82,31 @@ button.b.pri{background:var(--accent2);border-color:var(--accent);color:#fff}
 .chk input{accent-color:var(--accent);cursor:pointer}
 
 /* números y fórmulas */
-.datos{display:grid;grid-template-columns:1fr auto;gap:5px 10px;font-size:13.5px;align-items:baseline}
+/* el renglón va más suelto que antes porque las fórmulas en MathML —fracciones,
+   raíces— son más altas que una línea de texto y si no se pisan entre sí */
+.datos{display:grid;grid-template-columns:1fr auto;gap:10px 10px;font-size:13.5px;align-items:center}
 .datos span{color:var(--muted)}
 .datos b{color:var(--txt);font-variant-numeric:tabular-nums;text-align:right}
 .datos b.v{color:var(--v)} .datos b.i{color:var(--i)}
 .datos b.r{color:var(--r)} .datos b.l{color:var(--l)} .datos b.c{color:var(--c)}
 .datos hr{grid-column:1/-1;border:0;border-top:1px solid var(--line);margin:4px 0}
-.eq{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
-  font-family:"Cascadia Code",Consolas,monospace;font-size:14px;color:var(--txt);
-  text-align:center;margin:9px 0;overflow-x:auto;white-space:nowrap}
+/* Las ecuaciones van en MathML, igual que en la tarjeta de operacionales: el
+   navegador las arma con su fuente matemática y quedan con aire de LaTeX —las
+   letras en bastardilla, los subíndices en su lugar, las fracciones y las
+   raíces de verdad—. No hace falta bajar ninguna biblioteca. */
+.eq{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  font-size:14px;color:var(--txt);text-align:center;margin:9px 0;overflow-x:auto}
+.eq math{font-size:1.25em}
 .eq small{display:block;font-family:"Segoe UI",system-ui,sans-serif;font-size:11.5px;
-  color:var(--soft);margin-top:5px;white-space:normal}
+  color:var(--soft);margin-top:7px;white-space:normal}
+/* varias fórmulas cortas en el mismo renglón, que en el teléfono bajan solas */
+.eq-fila{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 18px}
+.eq-sep{color:var(--soft)}
+/* las fórmulas chiquitas de las filas de datos y de las tablas */
+.datos span math{font-size:1.15em}
+.tabla math{font-size:1.1em}
+.tabla td{vertical-align:middle}
+math{color:inherit}
 .nota{background:linear-gradient(135deg,rgba(31,111,235,.12),rgba(63,185,80,.07));
   border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:13px;color:var(--muted)}
 .nota b{color:var(--txt)}
@@ -145,7 +159,7 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
       <div>
         <div class="panel">
           <h3>Del vector giratorio a la senoidal</h3>
-          <p>Un vector de largo V<sub>p</sub> gira a velocidad constante. Su <b>sombra sobre el eje
+          <p>Un vector de largo <math><msub><mi>V</mi><mi>p</mi></msub></math> gira a velocidad constante. Su <b>sombra sobre el eje
              vertical</b> dibuja el seno; su sombra sobre el <b>eje horizontal</b>, el coseno. La
              senoidal no es un capricho: es lo que se ve girar.</p>
           <canvas class="lienzo" id="cvFasor" style="--h:330px"></canvas>
@@ -156,10 +170,25 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
           </div>
         </div>
         <div class="panel" style="margin-top:12px">
-          <div class="eq">v(t) = V<sub>p</sub> · sen(ω·t + φ)
+          <div class="eq">
+            <math display="block">
+              <mi>v</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo>
+              <msub><mi>V</mi><mi>p</mi></msub>
+              <mi>sen</mi><mo stretchy="false">(</mo>
+              <mi>ω</mi><mi>t</mi><mo>+</mo><mi>φ</mi>
+              <mo stretchy="false">)</mo>
+            </math>
             <small>ω es la velocidad angular en rad/s, t el tiempo en segundos y φ la fase inicial:
               dónde estaba el vector cuando arrancó el cronómetro.</small></div>
-          <div class="eq">ω = 2·π·f &nbsp;&nbsp;·&nbsp;&nbsp; T = 1 / f &nbsp;&nbsp;·&nbsp;&nbsp; una vuelta = 360° = 2π rad
+          <div class="eq">
+            <span class="eq-fila">
+              <math><mi>ω</mi><mo>=</mo><mn>2</mn><mi>π</mi><mi>f</mi></math>
+              <span class="eq-sep">·</span>
+              <math><mi>T</mi><mo>=</mo><mfrac><mn>1</mn><mi>f</mi></mfrac></math>
+              <span class="eq-sep">·</span>
+              <math><mtext>una vuelta</mtext><mo>=</mo><mn>360</mn><mo>°</mo><mo>=</mo>
+                <mn>2</mn><mi>π</mi><mspace width="0.2em"></mspace><mtext>rad</mtext></math>
+            </span>
             <small>Una vuelta completa del vector es un ciclo de la onda. A 50 Hz da 50 vueltas por segundo.</small></div>
         </div>
       </div>
@@ -167,7 +196,7 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
         <div class="panel">
           <h3>Controles</h3>
           <div class="ctrl">
-            <label><span>Valor de pico V<sub>p</sub></span> <b><span id="fVp">311</span> V</b></label>
+            <label><span>Valor de pico <math><msub><mi>V</mi><mi>p</mi></msub></math></span> <b><span id="fVp">311</span> V</b></label>
             <input type="range" id="rVp" min="20" max="400" step="1" value="311">
           </div>
           <div class="ctrl">
@@ -192,7 +221,7 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
         <div class="panel">
           <h3>En este instante</h3>
           <div class="datos">
-            <span>Ángulo θ = ωt + φ</span><b id="dAng">0°</b>
+            <span>Ángulo <math><mi>θ</mi><mo>=</mo><mi>ω</mi><mi>t</mi><mo>+</mo><mi>φ</mi></math></span><b id="dAng">0°</b>
             <span>v(t)</span><b class="v" id="dV">0 V</b>
             <span>Proyección coseno</span><b class="i" id="dCos">311 V</b>
             <hr>
@@ -227,15 +256,23 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
         <div class="panel">
           <h3>Probá</h3>
           <div class="ctrl">
-            <label><span>Valor de pico V<sub>p</sub></span> <b><span id="wVp">311</span> V</b></label>
+            <label><span>Valor de pico <math><msub><mi>V</mi><mi>p</mi></msub></math></span> <b><span id="wVp">311</span> V</b></label>
             <input type="range" id="rWVp" min="10" max="400" step="1" value="311">
           </div>
           <table class="tabla">
             <tr><th>Valor</th><th>Fórmula</th><th>Vale</th></tr>
-            <tr><td>Pico</td><td>V<sub>p</sub></td><td><b id="wP">311 V</b></td></tr>
-            <tr><td>Pico a pico</td><td>2·V<sub>p</sub></td><td><b id="wPP">622 V</b></td></tr>
-            <tr><td>Eficaz (RMS)</td><td>V<sub>p</sub>/√2</td><td><b id="wEf">220 V</b></td></tr>
-            <tr><td>Medio</td><td>2·V<sub>p</sub>/π</td><td><b id="wMed">198 V</b></td></tr>
+            <tr><td>Pico</td>
+                <td><math displaystyle="true"><msub><mi>V</mi><mi>p</mi></msub></math></td>
+                <td><b id="wP">311 V</b></td></tr>
+            <tr><td>Pico a pico</td>
+                <td><math displaystyle="true"><mn>2</mn><msub><mi>V</mi><mi>p</mi></msub></math></td>
+                <td><b id="wPP">622 V</b></td></tr>
+            <tr><td>Eficaz (RMS)</td>
+                <td><math displaystyle="true"><mfrac><msub><mi>V</mi><mi>p</mi></msub><msqrt><mn>2</mn></msqrt></mfrac></math></td>
+                <td><b id="wEf">220 V</b></td></tr>
+            <tr><td>Medio</td>
+                <td><math displaystyle="true"><mfrac><mrow><mn>2</mn><msub><mi>V</mi><mi>p</mi></msub></mrow><mi>π</mi></mfrac></math></td>
+                <td><b id="wMed">198 V</b></td></tr>
           </table>
         </div>
         <div class="nota">
@@ -295,7 +332,7 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
         </div>
         <div class="panel">
           <h3>Lo que pasa</h3>
-          <div class="eq" id="eqElem">X = R</div>
+          <div class="eq" id="eqElem"><math display="block"><mi>X</mi><mo>=</mo><mi>R</mi></math></div>
           <div class="datos">
             <span>Oposición al paso</span><b id="eOpo">100 Ω</b>
             <span>Desfasaje</span><b id="eDes">0°</b>
@@ -327,8 +364,8 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
           <canvas class="lienzo" id="cvZ" style="--h:300px"></canvas>
           <div class="leyenda">
             <span><i style="background:var(--r)"></i>R</span>
-            <span><i style="background:var(--l)"></i>X<sub>L</sub></span>
-            <span><i style="background:var(--c)"></i>X<sub>C</sub></span>
+            <span><i style="background:var(--l)"></i><math><msub><mi>X</mi><mi>L</mi></msub></math></span>
+            <span><i style="background:var(--c)"></i><math><msub><mi>X</mi><mi>C</mi></msub></math></span>
             <span><i style="background:var(--v)"></i>Z</span>
           </div>
         </div>
@@ -367,25 +404,33 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
         <div class="panel">
           <h3>Resultados</h3>
           <div class="datos">
-            <span>X<sub>L</sub> = 2πfL</span><b class="l" id="zXL">94,2 Ω</b>
-            <span>X<sub>C</sub> = 1/(2πfC)</span><b class="c" id="zXC">106,1 Ω</b>
-            <span>X = X<sub>L</sub> − X<sub>C</sub></span><b id="zX">−11,9 Ω</b>
+            <span><math><msub><mi>X</mi><mi>L</mi></msub><mo>=</mo>
+              <mn>2</mn><mi>π</mi><mi>f</mi><mi>L</mi></math></span><b class="l" id="zXL">94,2 Ω</b>
+            <span><math><msub><mi>X</mi><mi>C</mi></msub><mo>=</mo>
+              <mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><mi>f</mi><mi>C</mi></mrow></mfrac></math></span><b class="c" id="zXC">106,1 Ω</b>
+            <span><math><mi>X</mi><mo>=</mo><msub><mi>X</mi><mi>L</mi></msub><mo>−</mo>
+              <msub><mi>X</mi><mi>C</mi></msub></math></span><b id="zX">−11,9 Ω</b>
             <hr>
-            <span>Z = √(R² + X²)</span><b class="v" id="zZ">100,7 Ω</b>
-            <span>φ = arc tg (X/R)</span><b id="zFi">−6,8°</b>
-            <span>I = V / Z</span><b class="i" id="zI">2,18 A</b>
+            <span><math><mi>Z</mi><mo>=</mo><msqrt><msup><mi>R</mi><mn>2</mn></msup><mo>+</mo>
+              <msup><mi>X</mi><mn>2</mn></msup></msqrt></math></span><b class="v" id="zZ">100,7 Ω</b>
+            <span><math><mi>φ</mi><mo>=</mo><mi>arctg</mi><mspace width='0.17em'></mspace><mfrac><mi>X</mi><mi>R</mi></mfrac></math></span><b id="zFi">−6,8°</b>
+            <span><math><mi>I</mi><mo>=</mo><mfrac><mi>V</mi><mi>Z</mi></mfrac></math></span><b class="i" id="zI">2,18 A</b>
             <hr>
-            <span>V<sub>R</sub> = I·R</span><b class="r" id="zVR">218 V</b>
-            <span>V<sub>L</sub> = I·X<sub>L</sub></span><b class="l" id="zVL">206 V</b>
-            <span>V<sub>C</sub> = I·X<sub>C</sub></span><b class="c" id="zVC">232 V</b>
-            <span>√(V<sub>R</sub>² + (V<sub>L</sub>−V<sub>C</sub>)²)</span><b class="v" id="zComp">220 V</b>
+            <span><math><msub><mi>V</mi><mi>R</mi></msub><mo>=</mo><mi>I</mi><mi>R</mi></math></span><b class="r" id="zVR">218 V</b>
+            <span><math><msub><mi>V</mi><mi>L</mi></msub><mo>=</mo><mi>I</mi>
+              <msub><mi>X</mi><mi>L</mi></msub></math></span><b class="l" id="zVL">206 V</b>
+            <span><math><msub><mi>V</mi><mi>C</mi></msub><mo>=</mo><mi>I</mi>
+              <msub><mi>X</mi><mi>C</mi></msub></math></span><b class="c" id="zVC">232 V</b>
+            <span><math><msqrt><msubsup><mi>V</mi><mi>R</mi><mn>2</mn></msubsup><mo>+</mo>
+              <msup><mrow><mo stretchy="false">(</mo><msub><mi>V</mi><mi>L</mi></msub><mo>−</mo>
+              <msub><mi>V</mi><mi>C</mi></msub><mo stretchy="false">)</mo></mrow><mn>2</mn></msup></msqrt></math></span><b class="v" id="zComp">220 V</b>
             <hr>
-            <span>Resonancia f₀</span><b id="zF0">53,1 Hz</b>
+            <span>Resonancia <math><msub><mi>f</mi><mn>0</mn></msub></math></span><b id="zF0">53,1 Hz</b>
             <span>El circuito es</span><b id="zTipo">capacitivo</b>
           </div>
         </div>
         <div class="nota ojo">
-          <b>Lo que sorprende:</b> V<sub>L</sub> y V<sub>C</sub> pueden dar cada una <b>más grande que
+          <b>Lo que sorprende:</b> <math><msub><mi>V</mi><mi>L</mi></msub></math> y <math><msub><mi>V</mi><mi>C</mi></msub></math> pueden dar cada una <b>más grande que
           la fuente</b> y no hay error. Como están a 180° una de otra, se restan entre sí, y la suma
           vectorial de las tres sí da la tensión de la fuente.
         </div>
@@ -429,8 +474,8 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
           <h3>Cómo se lee</h3>
           <div class="datos">
             <span>Figura</span><b id="viFig">recta</b>
-            <span>φ</span><b id="viDes">0°</b>
-            <span>cos φ</span><b id="viCos">1,00</b>
+            <span><math><mi>φ</mi></math></span><b id="viDes">0°</b>
+            <span><math><mi>cos</mi><mspace width='0.17em'></mspace><mi>φ</mi></math></span><b id="viCos">1,00</b>
             <span>Área encerrada</span><b id="viArea">cero</b>
           </div>
         </div>
@@ -457,7 +502,7 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
     <div class="grid">
       <div>
         <div class="panel">
-          <h3>Potencia instantánea p(t) = v · i</h3>
+          <h3>Potencia instantánea <math><mi>p</mi><mo stretchy='false'>(</mo><mi>t</mi><mo stretchy='false'>)</mo><mo>=</mo><mi>v</mi><mi>i</mi></math></h3>
           <p>Multiplicá punto a punto las dos ondas. Cuando el producto es <b style="color:var(--ok)">positivo</b>
              la fuente entrega energía; cuando es <b style="color:var(--hot)">negativo</b>, el componente
              se la devuelve. Lo que queda de saldo es la potencia activa.</p>
@@ -487,13 +532,18 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
         <div class="panel">
           <h3>Las tres potencias</h3>
           <div class="datos">
-            <span>Aparente S = V·I</span><b id="pS">2200 VA</b>
-            <span>Activa P = V·I·cos φ</span><b class="r" id="pP">1905 W</b>
-            <span>Reactiva Q = V·I·sen φ</span><b class="l" id="pQ">1100 VAr</b>
+            <span>Aparente <math><mi>S</mi><mo>=</mo><mi>V</mi><mi>I</mi></math></span><b id="pS">2200 VA</b>
+            <span>Activa <math><mi>P</mi><mo>=</mo><mi>V</mi><mi>I</mi>
+              <mi>cos</mi><mspace width='0.17em'></mspace><mi>φ</mi></math></span><b class="r" id="pP">1905 W</b>
+            <span>Reactiva <math><mi>Q</mi><mo>=</mo><mi>V</mi><mi>I</mi><mspace width='0.17em'></mspace>
+              <mi>sen</mi><mspace width='0.17em'></mspace><mi>φ</mi></math></span><b class="l" id="pQ">1100 VAr</b>
             <hr>
-            <span>Factor de potencia cos φ</span><b id="pCos">0,87</b>
+            <span>Factor de potencia <math><mi>cos</mi><mspace width='0.17em'></mspace><mi>φ</mi></math></span><b id="pCos">0,87</b>
           </div>
-          <div class="eq" style="margin-bottom:0">S² = P² + Q²</div>
+          <div class="eq" style="margin-bottom:0">
+            <math display="block"><msup><mi>S</mi><mn>2</mn></msup><mo>=</mo>
+              <msup><mi>P</mi><mn>2</mn></msup><mo>+</mo>
+              <msup><mi>Q</mi><mn>2</mn></msup></math></div>
         </div>
         <div class="nota">
           <b>Por qué le importa a la empresa de luz:</b> la instalación tiene que soportar S (los VA),
@@ -547,6 +597,13 @@ function num(x, d){
   return s.replace(".", ",");
 }
 /* números grandes con prefijo, como se escriben en electrotecnia */
+/* el mismo valor en ohmios, pero escrito en MathML: el número como número y la
+   unidad derecha, no en bastardilla como si fuera una variable */
+function mlOhm(x){
+  var s = ohm(x), p = s.split(" ");
+  return "<mn>" + p[0] + "</mn><mspace width='0.22em'></mspace><mtext>" + p[1] + "</mtext>";
+}
+
 function ohm(x){
   if(!isFinite(x)) return "∞ Ω";
   if(Math.abs(x) >= 1000) return num(x/1000, 2) + " kΩ";
@@ -754,24 +811,28 @@ function datosElem(){
   var w = TAU*E.f, X, des, eq, txt, nota;
   if(E.elem === "R"){
     X = E.R; des = 0;
-    eq = "R = " + ohm(E.R) + "  ·  no depende de f";
+    eq = "<math display='block'><mi>R</mi><mo>=</mo>" + mlOhm(E.R) +
+         "<mspace width='1.4em'></mspace><mtext>no depende de&#160;</mtext><mi>f</mi></math>";
     txt = "En el resistor la corriente sigue a la tensión sin atrasarse ni adelantarse: están " +
           "<b>en fase</b>. Los dos vectores giran juntos, pegados.";
     nota = "<b>El resistor no discrimina:</b> se opone igual a 1 Hz que a 1 MHz. Por eso su " +
            "oposición se llama resistencia y no reactancia, y no depende de la frecuencia.";
   } else if(E.elem === "L"){
     X = w*E.L; des = 90;
-    eq = "X<sub>L</sub> = 2·π·f·L = " + ohm(X);
+    eq = "<math display='block'><msub><mi>X</mi><mi>L</mi></msub><mo>=</mo>" +
+         "<mn>2</mn><mi>π</mi><mi>f</mi><mi>L</mi><mo>=</mo>" + mlOhm(X) + "</math>";
     txt = "En la bobina la corriente <b>atrasa 90°</b>. La bobina se opone a los cambios de " +
           "corriente, así que la corriente llega tarde: primero aparece la tensión.";
-    nota = "<b>Cuanto más rápido, peor pasa:</b> X<sub>L</sub> crece con la frecuencia. En continua " +
+    nota = "<b>Cuanto más rápido, peor pasa:</b> <math><msub><mi>X</mi><mi>L</mi></msub></math> crece con la frecuencia. En continua " +
            "(f = 0) la bobina es un cable, y a frecuencia alta se porta casi como un circuito abierto.";
   } else {
     X = 1/(w*E.C); des = -90;
-    eq = "X<sub>C</sub> = 1 / (2·π·f·C) = " + ohm(X);
+    eq = "<math display='block'><msub><mi>X</mi><mi>C</mi></msub><mo>=</mo>" +
+         "<mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><mi>f</mi><mi>C</mi></mrow></mfrac>" +
+         "<mo>=</mo>" + mlOhm(X) + "</math>";
     txt = "En el capacitor la corriente <b>adelanta 90°</b>. Para que aparezca tensión entre las " +
           "placas primero hay que llevarles carga, y llevar carga es corriente.";
-    nota = "<b>Al revés que la bobina:</b> X<sub>C</sub> baja con la frecuencia. En continua el " +
+    nota = "<b>Al revés que la bobina:</b> <math><msub><mi>X</mi><mi>C</mi></msub></math> baja con la frecuencia. En continua el " +
            "capacitor es un circuito abierto, y a frecuencia alta deja pasar casi sin oponerse.";
   }
   return { X:X, des:des, eq:eq, txt:txt, nota:nota };
@@ -1184,23 +1245,23 @@ var TIPOS = [
   function(){
     var f = alAzar(50, 400, 50), L = alAzar(50, 500, 50);
     return { txt:"Una bobina de <b>" + L + " mH</b> trabaja a <b>" + f + " Hz</b>. " +
-                 "¿Cuánto vale su reactancia X<sub>L</sub>?",
+                 "¿Cuánto vale su reactancia <math><msub><mi>X</mi><mi>L</mi></msub></math>?",
              u:"Ω", r:TAU*f*L/1000,
-             pista:"X<sub>L</sub> = 2·π·f·L, con L en henry: " + L + " mH = " + (L/1000) + " H." };
+             pista:"<math><msub><mi>X</mi><mi>L</mi></msub><mo>=</mo><mn>2</mn><mi>π</mi><mi>f</mi><mi>L</mi></math>, con L en henry: " + L + " mH = " + (L/1000) + " H." };
   },
   function(){
     var f = alAzar(50, 400, 50), C = alAzar(2, 60, 2);
     return { txt:"Un capacitor de <b>" + C + " µF</b> trabaja a <b>" + f + " Hz</b>. " +
-                 "¿Cuánto vale su reactancia X<sub>C</sub>?",
+                 "¿Cuánto vale su reactancia <math><msub><mi>X</mi><mi>C</mi></msub></math>?",
              u:"Ω", r:1/(TAU*f*C*1e-6),
-             pista:"X<sub>C</sub> = 1/(2·π·f·C), con C en farad: " + C + " µF = " + C + "·10⁻⁶ F." };
+             pista:"<math><msub><mi>X</mi><mi>C</mi></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><mi>f</mi><mi>C</mi></mrow></mfrac></math>, con C en farad: " + C + " µF = " + C + "·10⁻⁶ F." };
   },
   function(){
     var R = alAzar(20, 300, 10), X = alAzar(20, 300, 10);
     return { txt:"Un circuito serie tiene <b>R = " + R + " Ω</b> y una reactancia neta de " +
                  "<b>X = " + X + " Ω</b> (inductiva). ¿Cuánto vale la impedancia Z?",
              u:"Ω", r:Math.sqrt(R*R + X*X),
-             pista:"Z = √(R² + X²). No se suman de frente porque están a 90°." };
+             pista:"<math><mi>Z</mi><mo>=</mo><msqrt><msup><mi>R</mi><mn>2</mn></msup><mo>+</mo><msup><mi>X</mi><mn>2</mn></msup></msqrt></math>. No se suman de frente porque están a 90°." };
   },
   function(){
     var R = alAzar(20, 300, 10), X = alAzar(20, 300, 10);
@@ -1221,21 +1282,21 @@ var TIPOS = [
     return { txt:"Una carga toma <b>" + I + " A</b> con <b>" + V + " V</b> y un desfasaje de " +
                  "<b>" + fi + "°</b>. ¿Cuánto vale la potencia activa P?",
              u:"W", r:V*I*Math.cos(fi*RAD),
-             pista:"P = V·I·cos φ. Ojo: los VA no son los W salvo que φ sea cero." };
+             pista:"<math><mi>P</mi><mo>=</mo><mi>V</mi><mi>I</mi><mspace width='0.17em'></mspace><mi>cos</mi><mspace width='0.17em'></mspace><mi>φ</mi></math>. Ojo: los VA no son los W salvo que φ sea cero." };
   },
   function(){
     var Vp = alAzar(20, 340, 10);
     return { txt:"Una senoidal tiene un valor de pico de <b>" + Vp + " V</b>. " +
                  "¿Cuál es su valor eficaz?",
              u:"V", r:Vp/Math.SQRT2,
-             pista:"V eficaz = V pico / √2 ≈ 0,707 · V pico." };
+             pista:"<math><msub><mi>V</mi><mtext>ef</mtext></msub><mo>=</mo><mfrac><msub><mi>V</mi><mi>p</mi></msub><msqrt><mn>2</mn></msqrt></mfrac><mo>≈</mo><mn>0,707</mn><msub><mi>V</mi><mi>p</mi></msub></math>." };
   },
   function(){
     var L = alAzar(50, 500, 50), C = alAzar(2, 60, 2);
     return { txt:"Un RLC serie tiene <b>L = " + L + " mH</b> y <b>C = " + C + " µF</b>. " +
                  "¿A qué frecuencia entra en resonancia?",
              u:"Hz", r:1/(TAU*Math.sqrt((L/1000)*(C*1e-6))),
-             pista:"En resonancia X<sub>L</sub> = X<sub>C</sub>, y de ahí sale f₀ = 1/(2π√(L·C))." };
+             pista:"En resonancia <math><msub><mi>X</mi><mi>L</mi></msub><mo>=</mo><msub><mi>X</mi><mi>C</mi></msub></math>, y de ahí sale <math><msub><mi>f</mi><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><msqrt><mi>L</mi><mi>C</mi></msqrt></mrow></mfrac></math>." };
   }
 ];
 
