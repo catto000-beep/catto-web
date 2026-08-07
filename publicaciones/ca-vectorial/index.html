@@ -1214,19 +1214,38 @@ function pintarTriP(){
   var S = P.V*P.I, Pa = S*Math.cos(fi), Q = S*Math.sin(fi);
 
   var esc = Math.min((W-120)/Math.max(S,1), (H-70)/Math.max(Math.abs(Q), S*0.5, 1));
-  var ox = 60, oy = H/2 + Math.min(Math.abs(Q)*esc/2, H/2-26);
+  /* El triángulo crece hacia arriba cuando Q es positiva (inductivo) y hacia
+     abajo cuando es negativa (capacitivo), así que el origen se corre para el
+     lado contrario y queda centrado en las dos. Antes se corría siempre hacia
+     abajo y con φ negativo el triángulo se iba fuera del lienzo. */
+  var corre = Math.min(Math.abs(Q)*esc/2, H/2-26);
+  var ox = 60, oy = H/2 + (Q < 0 ? -corre : corre);
+
+  /* Todos los rótulos se van para el lado de afuera del triángulo, que cambia
+     con el signo de Q: con Q positiva el triángulo crece hacia arriba y con Q
+     negativa hacia abajo. Si no, con φ negativo el de P se encimaba con el
+     de φ y el de S caía justo encima de la hipotenusa. */
+  var arriba = Q < 0 ? -1 : 1;
 
   flecha(c, ox, oy, ox + Pa*esc, oy, COL.r, 3);
-  texto(c, "P = " + num(Pa,0) + " W", ox + Pa*esc/2, oy + 15, COL.r, 11.5, "center");
+  texto(c, "P = " + num(Pa,0) + " W", ox + Pa*esc/2, oy + arriba*15, COL.r, 11.5, "center");
   if(Math.abs(Q) > 1){
     flecha(c, ox + Pa*esc, oy, ox + Pa*esc, oy - Q*esc, Q > 0 ? COL.l : COL.c, 3);
-    texto(c, "Q = " + num(Q,0) + " VAr", ox + Pa*esc + 8, oy - Q*esc/2, Q > 0 ? COL.l : COL.c, 11.5);
+    /* el rótulo va a la derecha de la flecha, salvo que ahí ya no entre: en
+       pantalla angosta la flecha queda cerca del borde y se pasaba de largo */
+    var rot = "Q = " + num(Q,0) + " VAr";
+    c.font = "11.5px 'Segoe UI',system-ui,sans-serif";
+    var cabe = ox + Pa*esc + 8 + c.measureText(rot).width < W - 4;
+    texto(c, rot, ox + Pa*esc + (cabe ? 8 : -8), oy - Q*esc/2,
+          Q > 0 ? COL.l : COL.c, 11.5, cabe ? "left" : "right");
   }
   flecha(c, ox, oy, ox + Pa*esc, oy - Q*esc, COL.v, 3);
-  texto(c, "S = " + num(S,0) + " VA", ox + Pa*esc*0.4, oy - Q*esc*0.5 - 12, COL.v, 12);
+  /* el rótulo de S cae sobre la hipotenusa, así que va con fondo para que la
+     línea no le pase por encima de las letras */
+  textoFondo(c, "S = " + num(S,0) + " VA", ox + Pa*esc*0.4, oy - Q*esc*0.5 + arriba*(-12), COL.v, 12);
   c.strokeStyle = COL.warn; c.lineWidth = 1.5;
   c.beginPath(); c.arc(ox, oy, 28, 0, -Math.atan2(Q, Pa), Q > 0); c.stroke();
-  texto(c, "φ = " + num(P.fi,0) + "°", ox + 36, oy - Math.sign(Q)*14, COL.warn, 11.5);
+  texto(c, "φ = " + num(P.fi,0) + "°", ox + 36, oy - arriba*14, COL.warn, 11.5);
 
   $("pS").textContent = num(S,0) + " VA";
   $("pP").textContent = num(Pa,0) + " W";
