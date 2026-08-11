@@ -418,12 +418,19 @@
         o += '<circle cx="' + cx + '" cy="' + cy + '" r="7" fill="#1f6feb" opacity=".65"/>';
     });
 
+    /* Coordenadas: los números de las filas arriba a la izquierda y las letras
+       de las columnas abajo a la derecha, como en cualquier tablero.
+
+       Cada rótulo va del color contrario al de su casilla, si no no se lee.
+       La casilla de la columna c en la fila de abajo sale (7+c)%2 —da lo mismo
+       de qué lado se mire el tablero, porque dar vuelta la fila y la columna no
+       le cambia la paridad—, así que la letra va justo al revés. */
     for (r = 0; r < 8; r++)
       o += '<text class="cc" x="3" y="' + (vr(r) * S + 12) + '" fill="' +
            ((vr(r) + 0) % 2 === 0 ? DARK : LIGHT) + '">' + (8 - r) + "</text>";
     for (f = 0; f < 8; f++)
       o += '<text class="cc" x="' + (vf(f) * S + S - 7) + '" y="356" fill="' +
-           ((vf(f) + 7) % 2 === 0 ? LIGHT : DARK) + '">' + files[f] + "</text>";
+           ((vf(f) + 7) % 2 === 0 ? DARK : LIGHT) + '">' + files[f] + "</text>";
 
     // capa transparente para los clics (va última, así recibe todo)
     for (r = 0; r < 8; r++) for (f = 0; f < 8; f++)
