@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amplificadores de señal débil · Electrónica Analógica I · Catto</title>
+<meta name="description" content="Amplificador en emisor común, capacitores de acoplamiento y derivación, ganancia en corriente alterna, resistencia dinámica de emisor, colector común y conexión Darlington. Eje temático de Electrónica Analógica I, 4° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/amplificadores-senal-debil">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=1">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Analógica I</a>
+    <span class="anio">4° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Analógica I</span> · 120 h · Eje 3 de 8</div>
+    <h1>Amplificadores de señal débil</h1>
+    <p class="lead">Un micrófono entrega 2 mV. Un parlante necesita varios volt. En el medio hay una cadena
+    de amplificadores, y el primer eslabón es este: la etapa de <b>pequeña señal</b>, donde la señal es
+    tan chica que el transistor se comporta de forma lineal.</p>
+    <div class="chips">
+      <span class="chip hi">Amplificadores</span>
+      <span class="chip hi">Transistores</span>
+      <span class="chip">Emisor común</span>
+      <span class="chip">Colector común</span>
+      <span class="chip">Darlington</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>Continua y alterna al mismo tiempo</h2>
+      <p>Un amplificador de señal débil hace dos cosas a la vez, y el secreto para entenderlo es
+      <b>separarlas</b>:</p>
+      <ul>
+        <li><b>En continua</b>, el circuito polariza el transistor y lo deja en un punto Q estable, en el
+        medio de la zona activa. Eso es lo que se calculó en
+        <a href="/publicaciones/mapa-electronica/temas/transistores-bipolares">Transistores bipolares</a>.</li>
+        <li><b>En alterna</b>, la señal de entrada hace <i>oscilar</i> al transistor alrededor de ese punto
+        Q. La salida es una versión ampliada de esa oscilación.</li>
+      </ul>
+
+      <figure>
+        <svg viewBox="0 0 660 250" role="img" aria-label="Señal de alterna superpuesta al punto de reposo de continua" class="svg-t">
+          <line x1="70" y1="215" x2="620" y2="215" stroke="#2a3140" stroke-width="1.5"/>
+          <line x1="70" y1="25"  x2="70"  y2="215" stroke="#2a3140" stroke-width="1.5"/>
+          <text x="70" y="18" fill="#7d8a99" font-size="11" text-anchor="middle">V</text>
+          <text x="626" y="219" fill="#7d8a99" font-size="11" text-anchor="end">t</text>
+          <!-- nivel de reposo -->
+          <line x1="70" y1="120" x2="620" y2="120" stroke="#f85149" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <text x="80" y="112" fill="#f85149" font-size="11.5">punto Q · V<tspan baseline-shift="sub" font-size="9">CE</tspan> de reposo (continua)</text>
+          <!-- senoidal montada -->
+          <path d="M120,120 C140,60 160,60 180,120 C200,180 220,180 240,120 C260,60 280,60 300,120 C320,180 340,180 360,120 C380,60 400,60 420,120 C440,180 460,180 480,120 C500,60 520,60 540,120"
+                fill="none" stroke="#3fb950" stroke-width="2.5"/>
+          <text x="546" y="76" fill="#3fb950" font-size="11.5">señal de alterna montada sobre la continua</text>
+          <!-- amplitud -->
+          <line x1="150" y1="60" x2="150" y2="120" stroke="#a371f7" stroke-width="1.5"/>
+          <line x1="144" y1="60" x2="156" y2="60" stroke="#a371f7" stroke-width="1.5"/>
+          <text x="118" y="86" fill="#a371f7" font-size="11" text-anchor="end">amplitud</text>
+          <text x="345" y="243" fill="#7d8a99" font-size="11" text-anchor="middle">el transistor nunca sale de la zona activa: por eso la salida no se recorta</text>
+        </svg>
+        <figcaption><b>Figura 1.</b> La señal alterna no reemplaza a la continua: se <b>monta</b> sobre
+        ella. El punto Q es el «nivel del mar» alrededor del cual oscila todo.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Teorema de superposición</div>
+        <p>Como el circuito es lineal alrededor del punto Q, se puede analizar por separado: primero el
+        circuito de <b>continua</b> (con los capacitores como circuitos abiertos) y después el de
+        <b>alterna</b> (con los capacitores como cortocircuitos y las fuentes de continua a masa). Después
+        se suman los dos resultados. Sin esta separación el análisis es intratable.</p>
+      </div>
+    </section>
+
+    <section id="capacitores">
+      <h2><span class="n">02</span>Los capacitores del amplificador</h2>
+      <p>Un capacitor bloquea la continua y deja pasar la alterna, con una reactancia que baja al subir la
+      frecuencia:</p>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>X</mi><mi>C</mi></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><mi>f</mi><mi>C</mi></mrow></mfrac></mrow></math>
+        <span class="cap">Regla práctica: un capacitor «es un cortocircuito» para la señal si su reactancia
+        a la frecuencia más baja de trabajo es al menos <b>10 veces menor</b> que la resistencia que
+        acompaña.</span>
+      </div>
+
+      <div class="g3">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">C1 · acoplamiento de entrada</div>
+          <p style="font-size:13.5px">Deja entrar la señal pero impide que la fuente de señal altere la
+          polarización de la base. Típico: <b>10 µF</b>.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">C2 · acoplamiento de salida</div>
+          <p style="font-size:13.5px">Entrega la señal a la carga sin pasarle la continua del colector.
+          Típico: <b>10 µF</b>.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">C<sub>E</sub> · derivación</div>
+          <p style="font-size:13.5px">En paralelo con R<sub>E</sub>. Deja R<sub>E</sub> para la continua
+          (estabilidad) pero la anula para la alterna (ganancia). Típico: <b>100 µF</b>.</p>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">El capacitor de derivación es el más interesante</div>
+        <p>R<sub>E</sub> estabiliza el punto Q pero, si se la deja actuar también sobre la señal, la
+        realimentación negativa reduce muchísimo la ganancia. C<sub>E</sub> resuelve la contradicción:
+        <b>en continua R<sub>E</sub> existe, en alterna desaparece</b>. Un mismo componente cumpliendo dos
+        funciones distintas según la frecuencia — es una de las ideas más elegantes de la electrónica
+        analógica.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Polaridad</div>
+        <p>Los capacitores de acoplamiento suelen ser <b>electrolíticos</b>, que son polarizados. El
+        terminal positivo va del lado donde la continua es más alta. En C1, el positivo mira hacia la base;
+        en C2, hacia el colector; en C<sub>E</sub>, hacia el emisor. Al revés se hinchan y explotan.</p>
+      </div>
+    </section>
+
+    <section id="re">
+      <h2><span class="n">03</span>La resistencia dinámica de emisor</h2>
+      <p>Para la señal, la juntura base-emisor no es un componente pasivo: se comporta como una resistencia
+      que depende de la corriente de reposo. Se la llama <b>r<sub>e</sub></b> (r chica de emisor) y es la
+      constante que gobierna toda la ganancia.</p>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>r</mi><mi>e</mi></msub><mo>=</mo><mfrac><mrow><mn>26</mn><mtext> mV</mtext></mrow><msub><mi>I</mi><mi>E</mi></msub></mfrac></mrow></math>
+        <span class="cap">Con I<sub>E</sub> en miliamperes, r<sub>e</sub> sale en ohm. Los 26 mV vienen de
+        la tensión térmica kT/q a 25 °C.</span>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">I<sub>E</sub></th><th class="c">r<sub>e</sub></th><th>Consecuencia</th></tr></thead>
+          <tbody>
+            <tr><td class="c">0,5 mA</td><td class="c">52 Ω</td><td>Poca ganancia, poco consumo, más ruido.</td></tr>
+            <tr><td class="c">1 mA</td><td class="c">26 Ω</td><td>Valor de compromiso habitual.</td></tr>
+            <tr><td class="c">2,6 mA</td><td class="c">10 Ω</td><td>Buena ganancia.</td></tr>
+            <tr><td class="c">10 mA</td><td class="c">2,6 Ω</td><td>Mucha ganancia, pero el transistor calienta y la impedancia de entrada baja.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Se ve enseguida que el punto Q <b>no es una elección libre</b>: fija la ganancia posible. Y como
+      los 26 mV son en realidad kT/q, r<sub>e</sub> <b>cambia con la temperatura</b>, y con ella la
+      ganancia. Esa dependencia es una de las razones por las que los amplificadores modernos usan
+      realimentación.</p>
+    </section>
+
+    <section id="emisor-comun">
+      <h2><span class="n">04</span>Amplificador en emisor común</h2>
+      <p>Es la configuración de referencia: entrada por la base, salida por el colector, emisor común a las
+      dos mallas.</p>
+
+      <figure>
+        <svg viewBox="0 0 620 340" role="img" aria-label="Amplificador en emisor común con capacitores de acoplamiento y derivación" class="svg-t">
+          <style>.we{stroke:#9aa7b4;stroke-width:2;fill:none}.le{fill:#9aa7b4;font-size:11px}</style>
+          <line class="we" x1="110" y1="30" x2="440" y2="30"/>
+          <text class="le" x="104" y="34" text-anchor="end">+V<tspan baseline-shift="sub" font-size="9">CC</tspan></text>
+          <!-- R1 -->
+          <line class="we" x1="180" y1="30" x2="180" y2="62"/>
+          <rect x="167" y="62" width="26" height="48" fill="#1c2230" stroke="#9aa7b4" stroke-width="2"/>
+          <line class="we" x1="180" y1="110" x2="180" y2="150"/>
+          <text class="le" x="200" y="90">R1</text>
+          <!-- R2 -->
+          <line class="we" x1="180" y1="150" x2="180" y2="186"/>
+          <rect x="167" y="186" width="26" height="48" fill="#1c2230" stroke="#9aa7b4" stroke-width="2"/>
+          <line class="we" x1="180" y1="234" x2="180" y2="295"/>
+          <text class="le" x="200" y="214">R2</text>
+          <circle cx="180" cy="150" r="3.5" fill="#9aa7b4"/>
+          <!-- entrada C1 -->
+          <line class="we" x1="40" y1="150" x2="86" y2="150"/>
+          <line x1="86" y1="136" x2="86" y2="164" stroke="#9aa7b4" stroke-width="3"/>
+          <line x1="98" y1="136" x2="98" y2="164" stroke="#9aa7b4" stroke-width="3"/>
+          <line class="we" x1="98" y1="150" x2="180" y2="150"/>
+          <text class="le" x="92" y="128" text-anchor="middle">C1</text>
+          <text x="36" y="154" fill="#58a6ff" font-size="11.5" text-anchor="end">v<tspan baseline-shift="sub" font-size="9">in</tspan></text>
+          <!-- Rc -->
+          <line class="we" x1="330" y1="30" x2="330" y2="62"/>
+          <rect x="317" y="62" width="26" height="48" fill="#1c2230" stroke="#9aa7b4" stroke-width="2"/>
+          <line class="we" x1="330" y1="110" x2="330" y2="140"/>
+          <text class="le" x="350" y="90">R<tspan baseline-shift="sub" font-size="9">C</tspan></text>
+          <!-- transistor -->
+          <line x1="290" y1="140" x2="290" y2="200" stroke="#58a6ff" stroke-width="3"/>
+          <line class="we" x1="290" y1="147" x2="330" y2="125" stroke="#58a6ff"/>
+          <line class="we" x1="290" y1="193" x2="330" y2="215" stroke="#58a6ff"/>
+          <polygon points="330,215 316,201 322,213" fill="#58a6ff"/>
+          <line class="we" x1="330" y1="125" x2="330" y2="140"/>
+          <line class="we" x1="180" y1="170" x2="290" y2="170"/>
+          <circle cx="180" cy="170" r="3.5" fill="#9aa7b4"/>
+          <!-- Re + Ce -->
+          <line class="we" x1="330" y1="215" x2="330" y2="240"/>
+          <rect x="317" y="240" width="26" height="48" fill="#1c2230" stroke="#9aa7b4" stroke-width="2"/>
+          <line class="we" x1="330" y1="288" x2="330" y2="295"/>
+          <text class="le" x="298" y="268" text-anchor="end">R<tspan baseline-shift="sub" font-size="9">E</tspan></text>
+          <line class="we" x1="330" y1="228" x2="400" y2="228"/>
+          <line class="we" x1="400" y1="228" x2="400" y2="248"/>
+          <line x1="386" y1="248" x2="414" y2="248" stroke="#9aa7b4" stroke-width="3"/>
+          <line x1="386" y1="260" x2="414" y2="260" stroke="#9aa7b4" stroke-width="3"/>
+          <line class="we" x1="400" y1="260" x2="400" y2="295"/>
+          <text class="le" x="422" y="258">C<tspan baseline-shift="sub" font-size="9">E</tspan></text>
+          <circle cx="330" cy="228" r="3.5" fill="#9aa7b4"/>
+          <!-- salida C2 -->
+          <circle cx="330" cy="140" r="3.5" fill="#9aa7b4"/>
+          <line class="we" x1="330" y1="140" x2="470" y2="140"/>
+          <line x1="470" y1="126" x2="470" y2="154" stroke="#9aa7b4" stroke-width="3"/>
+          <line x1="482" y1="126" x2="482" y2="154" stroke="#9aa7b4" stroke-width="3"/>
+          <line class="we" x1="482" y1="140" x2="560" y2="140" stroke="#3fb950"/>
+          <text class="le" x="476" y="118" text-anchor="middle">C2</text>
+          <text x="566" y="144" fill="#3fb950" font-size="11.5">v<tspan baseline-shift="sub" font-size="9">out</tspan></text>
+          <!-- masa -->
+          <line class="we" x1="40" y1="295" x2="400" y2="295"/>
+          <line class="we" x1="40" y1="150" x2="40" y2="295"/>
+          <line x1="240" y1="295" x2="240" y2="302" stroke="#9aa7b4" stroke-width="2"/>
+          <line x1="222" y1="302" x2="258" y2="302" stroke="#9aa7b4" stroke-width="2"/>
+          <line x1="228" y1="310" x2="252" y2="310" stroke="#9aa7b4" stroke-width="2"/>
+          <line x1="235" y1="318" x2="245" y2="318" stroke="#9aa7b4" stroke-width="2"/>
+          <text x="500" y="196" fill="#d29922" font-size="11.5">salida invertida</text>
+          <text x="500" y="212" fill="#d29922" font-size="11.5">180° respecto</text>
+          <text x="500" y="228" fill="#d29922" font-size="11.5">de la entrada</text>
+        </svg>
+        <figcaption><b>Figura 2.</b> Emisor común completo. R1 y R2 polarizan, R<sub>C</sub> convierte
+        corriente en tensión, R<sub>E</sub> estabiliza y C<sub>E</sub> la anula para la señal.</figcaption>
+      </figure>
+
+      <h3>Ganancia de tensión</h3>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>A</mi><mi>v</mi></msub><mo>=</mo><mo>−</mo><mfrac><msub><mi>r</mi><mi>c</mi></msub><msub><mi>r</mi><mi>e</mi></msub></mfrac><mo>,</mo><mspace width="16px"/><msub><mi>r</mi><mi>c</mi></msub><mo>=</mo><msub><mi>R</mi><mi>C</mi></msub><mo>∥</mo><msub><mi>R</mi><mi>L</mi></msub></mrow></math>
+        <span class="cap">El signo menos indica la <b>inversión de fase</b>: cuando la entrada sube, la
+        salida baja. r<sub>c</sub> es la resistencia de colector <i>vista en alterna</i>, es decir
+        R<sub>C</sub> en paralelo con la carga.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo resuelto · Emisor común completo</div>
+        <p>V<sub>CC</sub> = 12 V, R1 = 47 kΩ, R2 = 10 kΩ, R<sub>C</sub> = 2,2 kΩ, R<sub>E</sub> = 470 Ω con
+        C<sub>E</sub>, carga R<sub>L</sub> = 10 kΩ.</p>
+        <p><b>Continua</b> (calculada en el tema anterior): V<sub>B</sub> = 2,11 V, V<sub>E</sub> = 1,41 V,
+        I<sub>E</sub> = 3,0 mA, V<sub>CE</sub> = 4,0 V. Punto Q correcto, en zona activa.</p>
+        <p><b>Alterna:</b></p>
+        <ul>
+          <li>r<sub>e</sub> = 26 mV / 3,0 mA = <b>8,7 Ω</b></li>
+          <li>r<sub>c</sub> = 2,2 k ∥ 10 k = (2,2×10)/(2,2+10) = <b>1,80 kΩ</b></li>
+          <li>A<sub>v</sub> = −1800 / 8,7 = <b>−207</b></li>
+        </ul>
+        <p>Una entrada de 5 mV de pico da 1,03 V de pico a la salida, invertida. <b>Verificación de
+        linealidad:</b> la excursión de salida (1,03 V) debe entrar cómoda entre el punto Q (4,0 V) y los
+        extremos: hacia abajo hay 4,0 − 0,2 = 3,8 V de margen, y hacia arriba 12 − 4,0 = 8 V. Entra sin
+        recortarse.</p>
+      </div>
+
+      <h3>Impedancias</h3>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>Z</mi><mrow><mi>i</mi><mi>n</mi></mrow></msub><mo>=</mo><mi>R</mi><mn>1</mn><mo>∥</mo><mi>R</mi><mn>2</mn><mo>∥</mo><mo>(</mo><mi>β</mi><mo>·</mo><msub><mi>r</mi><mi>e</mi></msub><mo>)</mo></mrow></math>
+        <math display="block"><mrow><msub><mi>Z</mi><mrow><mi>o</mi><mi>u</mi><mi>t</mi></mrow></msub><mo>≈</mo><msub><mi>R</mi><mi>C</mi></msub></mrow></math>
+        <span class="cap">En el ejemplo, con β = 200: β·r<sub>e</sub> = 1,74 kΩ, y
+        Z<sub>in</sub> = 47 k ∥ 10 k ∥ 1,74 k ≈ <b>1,4 kΩ</b>. Baja, y es la principal debilidad del emisor
+        común.</span>
+      </div>
+
+      <h3>Qué pasa si se quita C<sub>E</sub></h3>
+      <p>Sin capacitor de derivación, R<sub>E</sub> también actúa sobre la señal y la ganancia cae a:</p>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>A</mi><mi>v</mi></msub><mo>=</mo><mo>−</mo><mfrac><msub><mi>r</mi><mi>c</mi></msub><mrow><msub><mi>r</mi><mi>e</mi></msub><mo>+</mo><msub><mi>R</mi><mi>E</mi></msub></mrow></mfrac></mrow></math>
+        <span class="cap">En el ejemplo: −1800 / (8,7 + 470) = <b>−3,8</b>. La ganancia cayó 54 veces.</span>
+      </div>
+      <p>Parece un desastre, pero tiene una contrapartida enorme: como r<sub>e</sub> (8,7 Ω) es
+      despreciable frente a R<sub>E</sub> (470 Ω), la ganancia pasa a valer prácticamente
+      <b>−R<sub>C</sub>/R<sub>E</sub></b>, es decir <b>depende sólo de resistencias</b>. Ya no depende de
+      r<sub>e</sub>, ni de la temperatura, ni de β. Se cambia ganancia por estabilidad y por menor
+      distorsión. En la práctica se usa una solución intermedia: partir R<sub>E</sub> en dos y puentear
+      sólo una parte.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Configuración</th><th class="c">Ganancia</th><th class="c">Estabilidad</th><th class="c">Distorsión</th></tr></thead>
+          <tbody>
+            <tr><td>R<sub>E</sub> totalmente puenteada</td><td class="c">Muy alta (200)</td><td class="c">Mala</td><td class="c">Alta</td></tr>
+            <tr><td>R<sub>E</sub> parcialmente puenteada</td><td class="c">Media (20-40)</td><td class="c">Buena</td><td class="c">Baja</td></tr>
+            <tr><td>Sin C<sub>E</sub></td><td class="c">Baja (4)</td><td class="c">Excelente</td><td class="c">Muy baja</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="colector-comun">
+      <h2><span class="n">05</span>Colector común (seguidor de emisor)</h2>
+      <p>La señal entra por la base y sale por el <b>emisor</b>. El colector va directo a V<sub>CC</sub>,
+      que para la alterna es masa — de ahí el nombre.</p>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>A</mi><mi>v</mi></msub><mo>=</mo><mfrac><msub><mi>r</mi><mi>E</mi></msub><mrow><msub><mi>r</mi><mi>E</mi></msub><mo>+</mo><msub><mi>r</mi><mi>e</mi></msub></mrow></mfrac><mo>≈</mo><mn>1</mn></mrow></math>
+        <math display="block"><mrow><msub><mi>Z</mi><mrow><mi>i</mi><mi>n</mi></mrow></msub><mo>=</mo><mi>R</mi><mn>1</mn><mo>∥</mo><mi>R</mi><mn>2</mn><mo>∥</mo><mi>β</mi><mo>(</mo><msub><mi>r</mi><mi>e</mi></msub><mo>+</mo><msub><mi>r</mi><mi>E</mi></msub><mo>)</mo></mrow></math>
+        <math display="block"><mrow><msub><mi>Z</mi><mrow><mi>o</mi><mi>u</mi><mi>t</mi></mrow></msub><mo>≈</mo><msub><mi>r</mi><mi>e</mi></msub><mo>+</mo><mfrac><msub><mi>R</mi><mi>S</mi></msub><mi>β</mi></mfrac></mrow></math>
+        <span class="cap">r<sub>E</sub> es la resistencia total de emisor vista en alterna
+        (R<sub>E</sub> ∥ R<sub>L</sub>), y R<sub>S</sub> la resistencia de la fuente de señal.</span>
+      </div>
+
+      <p>La ganancia de tensión es <b>menos que 1</b> (típicamente 0,98). Suena inútil, pero no lo es: lo
+      que este circuito hace es <b>adaptar impedancias</b>.</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Lo que aporta</div>
+          <ul style="margin:0;padding-left:18px">
+            <li><b>Z<sub>in</sub> muy alta</b> (decenas o cientos de kΩ): no carga a la etapa anterior.</li>
+            <li><b>Z<sub>out</sub> muy baja</b> (unos pocos ohm): puede manejar cargas exigentes.</li>
+            <li><b>Ganancia de corriente</b> alta (β).</li>
+            <li><b>No invierte</b> la fase.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Dónde se usa</div>
+          <ul style="margin:0;padding-left:18px">
+            <li>Como <b>etapa de salida</b> antes de un parlante o un cable largo.</li>
+            <li>Como <b>buffer</b> entre una fuente de alta impedancia (un micrófono piezoeléctrico, una sonda) y un amplificador de baja Z<sub>in</sub>.</li>
+            <li>En la <a href="/publicaciones/mapa-electronica/temas/transistores-bipolares">fuente regulada con Zener</a>, que es exactamente este circuito.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Por qué importa adaptar impedancias</div>
+        <p>Si un micrófono de 50 kΩ de impedancia interna se conecta a un emisor común de 1,4 kΩ de
+        Z<sub>in</sub>, el divisor formado entre ambos <b>se come el 97 % de la señal</b> antes de que
+        llegue al transistor. Poniendo un seguidor de emisor adelante (Z<sub>in</sub> = 200 kΩ) llega el
+        80 %. La ganancia total del conjunto sube muchísimo aunque el seguidor «no amplifique».</p>
+      </div>
+    </section>
+
+    <section id="base-comun">
+      <h2><span class="n">06</span>Base común</h2>
+      <p>La tercera configuración: entrada por el emisor, salida por el colector, base a masa para la
+      señal. Se ve poco en 4° año pero conviene tenerla en el cuadro comparativo.</p>
+      <ul>
+        <li><b>Z<sub>in</sub> muy baja</b> (r<sub>e</sub>, es decir unos pocos ohm).</li>
+        <li><b>Ganancia de tensión alta</b>, igual que el emisor común, y <b>sin inversión</b>.</li>
+        <li><b>Ganancia de corriente ≈ 1</b> (es α).</li>
+        <li>Excelente respuesta en <b>alta frecuencia</b>, porque no sufre el efecto Miller.</li>
+      </ul>
+      <p>Por esa última propiedad se la usa en amplificadores de radiofrecuencia y en la entrada de
+      instrumentos de banda ancha — tema de Telecomunicaciones, en 6° año.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Configuración</th><th class="c">A<sub>v</sub></th><th class="c">A<sub>i</sub></th><th class="c">Z<sub>in</sub></th><th class="c">Z<sub>out</sub></th><th class="c">Fase</th><th>Uso principal</th></tr></thead>
+          <tbody>
+            <tr><td><b>Emisor común</b></td><td class="c">Alta</td><td class="c">Alta (β)</td><td class="c">Media</td><td class="c">Alta</td><td class="c">180°</td><td>Amplificación de tensión</td></tr>
+            <tr><td><b>Colector común</b></td><td class="c">≈ 1</td><td class="c">Alta (β)</td><td class="c">Muy alta</td><td class="c">Muy baja</td><td class="c">0°</td><td>Adaptación de impedancia, salida</td></tr>
+            <tr><td><b>Base común</b></td><td class="c">Alta</td><td class="c">≈ 1 (α)</td><td class="c">Muy baja</td><td class="c">Alta</td><td class="c">0°</td><td>Alta frecuencia, RF</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="darlington">
+      <h2><span class="n">07</span>Conexión Darlington</h2>
+      <p>Dos transistores conectados de modo que el emisor del primero alimenta la base del segundo. El
+      conjunto se comporta como un único transistor con una ganancia igual al <b>producto</b> de las dos.</p>
+
+      <figure>
+        <svg viewBox="0 0 560 250" role="img" aria-label="Conexión Darlington de dos transistores" class="svg-t">
+          <style>.wD{stroke:#9aa7b4;stroke-width:2;fill:none}.lD{fill:#9aa7b4;font-size:11.5px}</style>
+          <!-- caja equivalente -->
+          <rect x="110" y="35" width="230" height="180" rx="12" fill="none" stroke="#2a3140" stroke-width="1.5" stroke-dasharray="6 5"/>
+          <text x="225" y="28" fill="#7d8a99" font-size="11" text-anchor="middle">se comporta como un solo transistor</text>
+          <!-- T1 -->
+          <line x1="180" y1="60" x2="180" y2="110" stroke="#58a6ff" stroke-width="3"/>
+          <line class="wD" x1="180" y1="66" x2="215" y2="46" stroke="#58a6ff"/>
+          <line class="wD" x1="180" y1="104" x2="215" y2="124" stroke="#58a6ff"/>
+          <polygon points="215,124 202,111 208,122" fill="#58a6ff"/>
+          <line class="wD" x1="130" y1="85" x2="180" y2="85"/>
+          <text class="lD" x="124" y="89" text-anchor="end">B</text>
+          <text class="lD" x="150" y="72">Q1</text>
+          <!-- T2 -->
+          <line x1="240" y1="130" x2="240" y2="180" stroke="#58a6ff" stroke-width="3"/>
+          <line class="wD" x1="240" y1="136" x2="275" y2="116" stroke="#58a6ff"/>
+          <line class="wD" x1="240" y1="174" x2="275" y2="194" stroke="#58a6ff"/>
+          <polygon points="275,194 262,181 268,192" fill="#58a6ff"/>
+          <line class="wD" x1="215" y1="124" x2="240" y2="124"/>
+          <line class="wD" x1="240" y1="124" x2="240" y2="130"/>
+          <text class="lD" x="210" y="168">Q2</text>
+          <!-- colectores unidos -->
+          <line class="wD" x1="215" y1="46" x2="320" y2="46"/>
+          <line class="wD" x1="275" y1="116" x2="320" y2="116"/>
+          <line class="wD" x1="320" y1="46" x2="320" y2="116"/>
+          <line class="wD" x1="320" y1="46" x2="380" y2="46"/>
+          <circle cx="320" cy="46" r="3.5" fill="#9aa7b4"/>
+          <text class="lD" x="388" y="50">C</text>
+          <!-- emisor -->
+          <line class="wD" x1="275" y1="194" x2="380" y2="194"/>
+          <text class="lD" x="388" y="198">E</text>
+          <!-- formulas -->
+          <text x="410" y="100" fill="#e6edf3" font-size="13" font-weight="700">β<tspan baseline-shift="sub" font-size="10">T</tspan> = β1 · β2</text>
+          <text x="410" y="126" fill="#9aa7b4" font-size="11.5">V<tspan baseline-shift="sub" font-size="9">BE</tspan> total = 1,4 V</text>
+          <text x="410" y="146" fill="#9aa7b4" font-size="11.5">(dos junturas en serie)</text>
+          <text x="410" y="170" fill="#d29922" font-size="11.5">V<tspan baseline-shift="sub" font-size="9">CE(sat)</tspan> ≈ 0,9 V</text>
+          <text x="410" y="196" fill="#d29922" font-size="11.5">disipa más al conmutar</text>
+          <text x="225" y="238" fill="#7d8a99" font-size="11" text-anchor="middle">con β1 = β2 = 100, la ganancia total es 10.000</text>
+        </svg>
+        <figcaption><b>Figura 3.</b> Conexión Darlington. Viene ya integrada en encapsulados como el
+        <b>TIP120</b> (NPN) y el <b>TIP125</b> (PNP), con las resistencias de fuga incluidas.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>β</mi><mi>T</mi></msub><mo>=</mo><msub><mi>β</mi><mn>1</mn></msub><mo>·</mo><msub><mi>β</mi><mn>2</mn></msub></mrow></math>
+        <span class="cap">Con β1 = β2 = 100, β<sub>T</sub> = 10.000: 10 µA de base controlan 100 mA de
+        colector.</span>
+      </div>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Ventajas</div>
+          <ul style="margin:0;padding-left:18px">
+            <li>Ganancia enorme: se maneja una carga grande con una corriente de base mínima.</li>
+            <li>Impedancia de entrada altísima (β<sub>T</sub>·r<sub>e</sub>).</li>
+            <li>Permite excitar relés y motores directamente desde un microcontrolador.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Desventajas</div>
+          <ul style="margin:0;padding-left:18px">
+            <li>Caída de <b>1,4 V</b> entre base y emisor (dos junturas).</li>
+            <li>V<sub>CE(sat)</sub> de 0,9 a 1,2 V: disipa bastante más que un transistor simple.</li>
+            <li>Más lento al apagar (la carga almacenada tarda en evacuarse).</li>
+            <li>La corriente de fuga del primero es amplificada por el segundo: peor deriva térmica.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="etapas">
+      <h2><span class="n">08</span>Acoplamiento entre etapas</h2>
+      <p>Una sola etapa rara vez alcanza. Se encadenan varias, y la <b>ganancia total es el producto</b> de
+      las ganancias individuales (o la <b>suma en decibeles</b>).</p>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>A</mi><mi>T</mi></msub><mo>=</mo><msub><mi>A</mi><mn>1</mn></msub><mo>·</mo><msub><mi>A</mi><mn>2</mn></msub><mo>·</mo><msub><mi>A</mi><mn>3</mn></msub><mo>…</mo></mrow></math>
+        <math display="block"><mrow><msub><mi>A</mi><mrow><mi>d</mi><mi>B</mi></mrow></msub><mo>=</mo><mn>20</mn><mo>·</mo><mi>log</mi><mo>(</mo><msub><mi>A</mi><mi>v</mi></msub><mo>)</mo></mrow></math>
+        <span class="cap">Una ganancia de 200 son 46 dB. Dos etapas iguales dan 92 dB, es decir 40.000
+        veces.</span>
+      </div>
+      <p>Hay un detalle que los cálculos escolares suelen ignorar: <b>la Z<sub>in</sub> de la segunda etapa
+      carga a la primera</b>. Es decir, para calcular la ganancia de la etapa 1 hay que usar
+      r<sub>c</sub> = R<sub>C1</sub> ∥ Z<sub>in2</sub>, no R<sub>C1</sub> sola. Si se olvida, el cálculo da
+      una ganancia mucho mayor que la medida.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Acoplamiento</th><th>Cómo</th><th>Ventaja</th><th>Desventaja</th></tr></thead>
+          <tbody>
+            <tr><td><b>Capacitivo (RC)</b></td><td>Capacitor entre etapas</td><td>Simple, barato, aísla las polarizaciones</td><td>No pasa continua ni frecuencias muy bajas</td></tr>
+            <tr><td><b>Directo</b></td><td>Colector de una a la base de la otra</td><td>Responde desde 0 Hz</td><td>Las derivas de continua se amplifican en cascada</td></tr>
+            <tr><td><b>Por transformador</b></td><td>Bobinado entre etapas</td><td>Adapta impedancias, aísla galvánicamente</td><td>Caro, pesado, ancho de banda limitado</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>En el laboratorio</h2>
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Emisor común, medición de ganancia</div>
+        <p>Armar el circuito del ejemplo (12 V, 47 k / 10 k / 2,2 k / 470 Ω, C1 = C2 = 10 µF,
+        C<sub>E</sub> = 100 µF). Pasos:</p>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li><b>Sin señal</b>, medir V<sub>B</sub>, V<sub>E</sub> y V<sub>C</sub>. Comparar con lo
+          calculado. Si no coinciden, el problema es de continua y no tiene sentido seguir.</li>
+          <li>Inyectar 10 mV pico a pico a 1 kHz con el generador de funciones.</li>
+          <li>Con el osciloscopio en dos canales, ver entrada y salida a la vez: debe verse la
+          <b>inversión de fase</b>.</li>
+          <li>Medir las dos amplitudes y calcular A<sub>v</sub> = v<sub>out</sub>/v<sub>in</sub>.</li>
+          <li>Subir la entrada hasta que la salida se <b>recorte</b>. Anotar en qué amplitud ocurre y de
+          qué lado recorta primero: eso indica hacia dónde está descentrado el punto Q.</li>
+        </ol>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 2 · El papel de C<sub>E</sub></div>
+        <p>Sobre el mismo circuito, <b>desconectar C<sub>E</sub></b> y volver a medir la ganancia. Debe
+        caer de unas 200 veces a unas 4. Verificar además que la señal de salida se ve <b>más limpia</b>
+        (menos distorsión) sin el capacitor. Es la demostración práctica del compromiso entre ganancia y
+        linealidad.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Seguidor de emisor como adaptador</div>
+        <p>Conectar el generador de funciones a través de una resistencia de 100 kΩ en serie (simula una
+        fuente de alta impedancia) directamente al emisor común: la señal casi desaparece. Intercalar un
+        seguidor de emisor entre ambos y volver a medir: la señal se recupera. La práctica demuestra que
+        un circuito con ganancia menor a 1 puede aumentar la ganancia total del sistema.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Respuesta en frecuencia</div>
+        <p>Con amplitud de entrada constante, barrer la frecuencia de 10 Hz a 1 MHz y anotar la amplitud de
+        salida. Graficar en escala logarítmica. Aparecen las dos frecuencias de corte: la <b>inferior</b>
+        la fijan los capacitores de acoplamiento y derivación, y la <b>superior</b> las capacidades
+        parásitas del transistor. El ancho de banda es la distancia entre ambas.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>No hay señal a la salida, pero la continua está bien</td><td>Capacitor de acoplamiento abierto, invertido o de valor demasiado chico para esa frecuencia.</td></tr>
+            <tr><td>La salida se recorta sólo arriba (o sólo abajo)</td><td>Punto Q descentrado. Recorta primero del lado que tiene menos margen.</td></tr>
+            <tr><td>La ganancia medida es mucho menor que la calculada</td><td>Se olvidó incluir la carga (o la Z<sub>in</sub> de la etapa siguiente) en el cálculo de r<sub>c</sub>. O C<sub>E</sub> está mal conectado.</td></tr>
+            <tr><td>La ganancia es muchísimo menor (unas 4 veces)</td><td>C<sub>E</sub> abierto, o falta. R<sub>E</sub> está actuando sobre la señal.</td></tr>
+            <tr><td>El amplificador oscila o «chifla»</td><td>Realimentación por la fuente de alimentación. Falta desacople (100 nF + 100 µF junto a la etapa) o los cables de entrada y salida están juntos.</td></tr>
+            <tr><td>Zumbido de 50 Hz</td><td>Masa mal hecha (bucles de masa) o entrada sin blindar. La entrada de alta impedancia capta la red.</td></tr>
+            <tr><td>Distorsión audible aunque la salida no parezca recortada</td><td>Señal de entrada demasiado grande: se está saliendo del rango de pequeña señal (v<sub>in</sub> debe ser mucho menor que r<sub>e</sub>·I<sub>E</sub>).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">11</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Por qué se puede analizar por separado la continua y la alterna?</summary>
+        <div class="a"><p>Por el <b>teorema de superposición</b>: alrededor del punto Q el circuito se
+        comporta de forma lineal, así que la respuesta total es la suma de la respuesta a la continua (con
+        capacitores abiertos) y la respuesta a la alterna (con capacitores en corto y fuentes de continua a
+        masa).</p></div></details>
+
+      <details class="q"><summary>Un amplificador tiene I<sub>E</sub> = 2 mA. ¿Cuánto vale r<sub>e</sub>?</summary>
+        <div class="a"><p>r<sub>e</sub> = 26 mV / 2 mA = <b>13 Ω</b>.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve exactamente el capacitor C<sub>E</sub>?</summary>
+        <div class="a"><p>Para que R<sub>E</sub> exista en <b>continua</b> (estabilizando el punto Q) pero
+        desaparezca en <b>alterna</b> (recuperando toda la ganancia). Sin él la ganancia cae al orden de
+        R<sub>C</sub>/R<sub>E</sub>.</p></div></details>
+
+      <details class="q"><summary>¿Por qué el emisor común invierte la fase?</summary>
+        <div class="a"><p>Porque V<sub>C</sub> = V<sub>CC</sub> − I<sub>C</sub>·R<sub>C</sub>. Si la señal
+        de entrada hace subir I<sub>C</sub>, la caída en R<sub>C</sub> aumenta y la tensión de colector
+        <b>baja</b>. Entrada arriba, salida abajo: 180° de desfasaje.</p></div></details>
+
+      <details class="q"><summary>Un seguidor de emisor tiene ganancia 0,98. ¿Para qué sirve entonces?</summary>
+        <div class="a"><p>Para <b>adaptar impedancias</b>: presenta una entrada de alta impedancia (no carga
+        a la fuente de señal) y una salida de baja impedancia (puede manejar cargas exigentes). Su ganancia
+        de <b>corriente</b> es β, así que sí amplifica potencia.</p></div></details>
+
+      <details class="q"><summary>Con R<sub>C</sub> = 4,7 kΩ, R<sub>L</sub> = 4,7 kΩ e I<sub>E</sub> = 1 mA, ¿cuál es la ganancia?</summary>
+        <div class="a"><p>r<sub>e</sub> = 26 Ω. r<sub>c</sub> = 4,7 k ∥ 4,7 k = 2,35 kΩ.
+        A<sub>v</sub> = −2350 / 26 = <b>−90</b>. Notar que la carga bajó la ganancia a la mitad respecto de
+        no tenerla.</p></div></details>
+
+      <details class="q"><summary>¿Cuál es el precio de la enorme ganancia del Darlington?</summary>
+        <div class="a"><p>Una caída base-emisor de <b>1,4 V</b> (dos junturas), una V<sub>CE(sat)</sub> de
+        casi 1 V que hace que disipe más calor al conmutar, menor velocidad de apagado y peor
+        comportamiento térmico, porque las fugas del primer transistor son amplificadas por el
+        segundo.</p></div></details>
+
+      <details class="q"><summary>Tres etapas de ganancia 20 cada una. ¿Ganancia total en veces y en dB?</summary>
+        <div class="a"><p>20 × 20 × 20 = <b>8000 veces</b>. En decibeles: 20·log(20) = 26 dB por etapa,
+        <b>78 dB</b> en total. Verificación: 20·log(8000) = 78 dB.</p></div></details>
+
+      <details class="q"><summary>¿Qué limita la frecuencia inferior de trabajo de un amplificador con acoplamiento RC?</summary>
+        <div class="a"><p>Los <b>capacitores</b>: al bajar la frecuencia sube X<sub>C</sub> y dejan de
+        comportarse como cortocircuitos. El que más suele limitar es C<sub>E</sub>, porque trabaja contra
+        una resistencia muy chica (r<sub>e</sub>) y necesita un valor grande.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/transistores-bipolares">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Transistores bipolares</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/amplificadores-potencia">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Amplificadores de potencia</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Amplificadores de señal débil»</b> de <b>Electrónica Analógica I</b> (4° año),
+  según la «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

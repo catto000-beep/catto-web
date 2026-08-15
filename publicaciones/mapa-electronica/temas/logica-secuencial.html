@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lógica secuencial · Electrónica Digital I · Catto</title>
+<meta name="description" content="Flip-flops RS, D, JK y T. Contadores asíncronos y síncronos. Registros de desplazamiento y prácticas de laboratorio. Desarrollo del eje temático de Electrónica Digital I, 4° año de la Tecnicatura en Electrónica.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/logica-secuencial">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=1">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital I</a>
+    <span class="anio">4° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital I</span> · 96 h · Eje 2 de 3</div>
+    <h1>Lógica secuencial</h1>
+    <p class="lead">Cuando un circuito digital <b>recuerda</b>. Los flip-flops guardan un bit, los
+    contadores llevan la cuenta y los registros mueven datos. Sin esta parte no existirían las memorias,
+    los relojes digitales ni los microcontroladores.</p>
+    <div class="chips">
+      <span class="chip hi">Lógica digital</span>
+      <span class="chip">Flip-flops</span>
+      <span class="chip">Contadores</span>
+      <span class="chip">Registros</span>
+      <span class="chip">Reloj</span>
+    </div>
+    <hr class="rule">
+
+    <section id="memoria">
+      <h2><span class="n">01</span>Por qué hace falta memoria</h2>
+      <p>Un circuito <a href="/publicaciones/mapa-electronica/temas/logica-combinacional">combinacional</a>
+      responde siempre igual a la misma entrada. Eso alcanza para decidir, pero no para <b>contar</b>, ni
+      para <b>secuenciar</b>, ni para <b>recordar</b> que un botón se apretó hace un rato.</p>
+      <p>Pensemos en el pulsador del timbre de un aula: mientras se lo mantiene apretado suena, y al
+      soltarlo deja de sonar. Eso es combinacional. Ahora pensemos en la llave de la luz: se la toca una
+      vez y queda encendida. Eso es secuencial: el circuito <b>guardó un estado</b>.</p>
+
+      <div class="box key">
+        <div class="bt">La definición</div>
+        <p>Un circuito es <b>secuencial</b> cuando su salida depende de las entradas actuales <i>y</i> del
+        estado interno, que es consecuencia de la historia previa. Se consigue con una sola cosa:
+        <b>realimentación</b>, es decir, llevar una salida de vuelta a una entrada.</p>
+      </div>
+
+      <h3>El latch RS: el primer circuito con memoria</h3>
+      <p>Dos NOR cruzadas alcanzan. La salida de cada una entra en la otra, y ese lazo es capaz de
+      sostenerse solo.</p>
+
+      <figure>
+        <svg viewBox="0 0 620 250" role="img" aria-label="Latch RS con dos compuertas NOR cruzadas" class="svg-t">
+          <style>
+            .b3{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
+            .w3{stroke:#9aa7b4;stroke-width:2;fill:none}
+            .wq{stroke:#3fb950;stroke-width:2;fill:none}
+            .l3{fill:#9aa7b4;font-size:12px}
+          </style>
+          <!-- NOR superior -->
+          <g transform="translate(210,40)">
+            <path class="b3" d="M0,0 C13,3 27,9 38,20 C27,31 13,37 0,40 C9,28 9,12 0,0 Z"/>
+            <circle class="b3" cx="43" cy="20" r="5"/>
+            <text x="11" y="25" fill="#7d8a99" font-size="11">≥1</text>
+          </g>
+          <!-- NOR inferior -->
+          <g transform="translate(210,160)">
+            <path class="b3" d="M0,0 C13,3 27,9 38,20 C27,31 13,37 0,40 C9,28 9,12 0,0 Z"/>
+            <circle class="b3" cx="43" cy="20" r="5"/>
+            <text x="11" y="25" fill="#7d8a99" font-size="11">≥1</text>
+          </g>
+          <!-- entradas -->
+          <line class="w3" x1="60" y1="48" x2="210" y2="48"/>
+          <text class="l3" x="54" y="52" text-anchor="end">R</text>
+          <line class="w3" x1="60" y1="192" x2="210" y2="192"/>
+          <text class="l3" x="54" y="196" text-anchor="end">S</text>
+          <!-- salidas -->
+          <line class="wq" x1="258" y1="60" x2="480" y2="60"/>
+          <text x="490" y="65" fill="#3fb950" font-size="13" font-weight="700">Q</text>
+          <line class="wq" x1="258" y1="180" x2="480" y2="180"/>
+          <text x="490" y="185" fill="#3fb950" font-size="13" font-weight="700">Q̅</text>
+          <!-- cruces -->
+          <polyline class="w3" points="330,60 330,120 160,120 160,172 210,172" stroke="#d29922" stroke-dasharray="5 4"/>
+          <polygon points="210,172 202,168 202,176" fill="#d29922"/>
+          <polyline class="w3" points="360,180 360,132 175,132 175,68 210,68" stroke="#d29922" stroke-dasharray="5 4"/>
+          <polygon points="210,68 202,64 202,72" fill="#d29922"/>
+          <circle cx="330" cy="60" r="3" fill="#3fb950"/>
+          <circle cx="360" cy="180" r="3" fill="#3fb950"/>
+          <text x="310" y="238" fill="#7d8a99" font-size="11.5" text-anchor="middle">las líneas punteadas son la realimentación cruzada</text>
+        </svg>
+        <figcaption><b>Figura 1.</b> Latch RS con NOR. R = <i>Reset</i> (poner a 0), S = <i>Set</i> (poner a 1).
+        Q y Q̅ son siempre opuestas, salvo en el estado prohibido.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">S</th><th class="c">R</th><th class="c">Q siguiente</th><th>Qué pasa</th></tr></thead>
+          <tbody>
+            <tr><td class="c">0</td><td class="c">0</td><td class="c">Q anterior</td><td><b>Memoria.</b> El latch mantiene lo que tenía.</td></tr>
+            <tr><td class="c">0</td><td class="c">1</td><td class="c v0">0</td><td><b>Reset.</b> Se borra: Q pasa a 0.</td></tr>
+            <tr><td class="c">1</td><td class="c">0</td><td class="c v1">1</td><td><b>Set.</b> Se graba: Q pasa a 1.</td></tr>
+            <tr><td class="c">1</td><td class="c">1</td><td class="c" style="color:var(--hot)">—</td><td><b>Prohibido.</b> Q y Q̅ valen las dos 0: se rompe la coherencia y al soltar queda un estado impredecible.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">El estado prohibido</div>
+        <p>S = R = 1 no destruye el circuito, pero sí la lógica: Q deja de ser el complemento de Q̅ y, al
+        volver las dos entradas a 0, el latch cae en 0 o en 1 según cuál compuerta reaccione primero. Es
+        una <b>condición de carrera</b>. Todos los flip-flops que se ven después están diseñados
+        justamente para que esa situación no exista.</p>
+      </div>
+    </section>
+
+    <section id="reloj">
+      <h2><span class="n">02</span>El reloj y el disparo por flanco</h2>
+      <p>El latch RS reacciona en el momento en que cambia una entrada. En un sistema con muchos bloques
+      eso es un desastre: cada uno cambia cuando quiere y aparecen resultados intermedios falsos. La
+      solución es que todos actúen <b>al mismo tiempo</b>, marcados por una señal común: el <b>reloj</b>
+      (clock, CLK).</p>
+
+      <figure>
+        <svg viewBox="0 0 660 190" role="img" aria-label="Señal de reloj con flancos de subida y bajada" class="svg-t">
+          <line x1="40" y1="150" x2="640" y2="150" stroke="#2a3140" stroke-width="1"/>
+          <line x1="40" y1="60" x2="640" y2="60" stroke="#2a3140" stroke-width="1" stroke-dasharray="3 4"/>
+          <text x="34" y="64" fill="#7d8a99" font-size="11" text-anchor="end">1</text>
+          <text x="34" y="154" fill="#7d8a99" font-size="11" text-anchor="end">0</text>
+          <polyline points="60,150 60,60 160,60 160,150 260,150 260,60 360,60 360,150 460,150 460,60 560,60 560,150 620,150"
+                    fill="none" stroke="#58a6ff" stroke-width="2.5"/>
+          <!-- flancos -->
+          <polygon points="60,44 54,56 66,56" fill="#3fb950"/>
+          <polygon points="260,44 254,56 266,56" fill="#3fb950"/>
+          <polygon points="460,44 454,56 466,56" fill="#3fb950"/>
+          <text x="60" y="36" fill="#3fb950" font-size="10.5" text-anchor="middle">↑ subida</text>
+          <text x="260" y="36" fill="#3fb950" font-size="10.5" text-anchor="middle">↑ subida</text>
+          <text x="460" y="36" fill="#3fb950" font-size="10.5" text-anchor="middle">↑ subida</text>
+          <polygon points="160,166 154,154 166,154" fill="#d29922"/>
+          <polygon points="360,166 354,154 366,154" fill="#d29922"/>
+          <text x="160" y="182" fill="#d29922" font-size="10.5" text-anchor="middle">↓ bajada</text>
+          <text x="360" y="182" fill="#d29922" font-size="10.5" text-anchor="middle">↓ bajada</text>
+          <!-- periodo -->
+          <line x1="60" y1="100" x2="260" y2="100" stroke="#a371f7" stroke-width="1.5"/>
+          <line x1="60" y1="94" x2="60" y2="106" stroke="#a371f7" stroke-width="1.5"/>
+          <line x1="260" y1="94" x2="260" y2="106" stroke="#a371f7" stroke-width="1.5"/>
+          <text x="160" y="92" fill="#a371f7" font-size="11" text-anchor="middle">T (período)</text>
+        </svg>
+        <figcaption><b>Figura 2.</b> Señal de reloj. La frecuencia es <b>f = 1/T</b>: si T = 1 ms,
+        f = 1 kHz. Los flip-flops modernos actúan en un <b>flanco</b>, no durante todo el nivel alto.</figcaption>
+      </figure>
+
+      <ul>
+        <li><b>Disparo por nivel</b> — el flip-flop es transparente todo el tiempo que el reloj esté en
+        alto. Se lo llama <i>latch</i>. Problema: si la entrada cambia durante ese lapso, la salida
+        también.</li>
+        <li><b>Disparo por flanco</b> — el flip-flop mira la entrada sólo en el instante del flanco (de
+        subida ↑ o de bajada ↓). Todo lo que pase entre flancos se ignora. Es lo que se usa en la
+        práctica.</li>
+      </ul>
+      <p>En los símbolos, el disparo por flanco se marca con un <b>triangulito</b> en la entrada de reloj.
+      Si además tiene un circulito antes del triángulo, el disparo es por flanco de <b>bajada</b>.</p>
+    </section>
+
+    <section id="flipflops">
+      <h2><span class="n">03</span>Los cuatro flip-flops</h2>
+
+      <h3>Flip-flop D (Data / Delay)</h3>
+      <p>Es el más usado y el más simple de entender: <b>en el flanco de reloj, Q toma el valor de D</b>.
+      Entre flancos, no pasa nada. Un flip-flop D es literalmente «una celda que guarda un bit».</p>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>Q</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi>D</mi></mrow></math>
+        <span class="cap">Ecuación característica del flip-flop D. Integrado típico: 74LS74 (dos FF-D) o CD4013.</span>
+      </div>
+
+      <h3>Flip-flop JK</h3>
+      <p>Resuelve el problema del RS: la combinación J = K = 1, en vez de estar prohibida, hace que la
+      salida <b>cambie de estado</b> (conmuta o <i>toggle</i>). Es el flip-flop más versátil.</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">J</th><th class="c">K</th><th class="c">Q siguiente</th><th>Función</th></tr></thead>
+          <tbody>
+            <tr><td class="c">0</td><td class="c">0</td><td class="c">Q<sub>n</sub></td><td>Mantiene</td></tr>
+            <tr><td class="c">0</td><td class="c">1</td><td class="c v0">0</td><td>Reset</td></tr>
+            <tr><td class="c">1</td><td class="c">0</td><td class="c v1">1</td><td>Set</td></tr>
+            <tr><td class="c">1</td><td class="c">1</td><td class="c" style="color:var(--accent)">Q̅<sub>n</sub></td><td><b>Conmuta</b> en cada flanco</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>Q</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mrow><mi>J</mi><mo>·</mo><mover><msub><mi>Q</mi><mi>n</mi></msub><mo>‾</mo></mover></mrow><mo>+</mo><mrow><mover><mi>K</mi><mo>‾</mo></mover><mo>·</mo><msub><mi>Q</mi><mi>n</mi></msub></mrow></mrow></math>
+        <span class="cap">Ecuación característica del JK. Integrado típico: 74LS76 o CD4027.</span>
+      </div>
+
+      <h3>Flip-flop T (Toggle)</h3>
+      <p>Es un JK con las dos entradas unidas. Si T = 1 conmuta en cada flanco; si T = 0 mantiene. Sirve
+      para <b>dividir la frecuencia por dos</b>, que es la base de todos los contadores.</p>
+
+      <h3>Flip-flop RS sincrónico</h3>
+      <p>Es el latch RS con una compuerta que sólo lo habilita en el flanco de reloj. Conserva el estado
+      prohibido S = R = 1, así que en la práctica se lo reemplazó por el JK y el D.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Tipo</th><th>Entradas</th><th>Qué hace en el flanco</th><th>Uso típico</th><th class="c">Integrado</th></tr></thead>
+          <tbody>
+            <tr><td><b>D</b></td><td>D</td><td>Q = D</td><td>Registros, memoria, sincronizar señales</td><td class="c">74LS74 / CD4013</td></tr>
+            <tr><td><b>JK</b></td><td>J, K</td><td>Set / Reset / mantener / conmutar</td><td>Contadores, máquinas de estado</td><td class="c">74LS76 / CD4027</td></tr>
+            <tr><td><b>T</b></td><td>T</td><td>Conmuta si T = 1</td><td>Divisor de frecuencia</td><td class="c">JK con J=K</td></tr>
+            <tr><td><b>RS</b></td><td>S, R</td><td>Set / Reset (1,1 prohibido)</td><td>Antirrebote, enclavamientos</td><td class="c">Con 74LS00</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Entradas asincrónicas: PRESET y CLEAR</h3>
+      <p>Casi todos los flip-flops comerciales traen dos entradas más, generalmente <b>activas en bajo</b>
+      (se dibujan con circulito y se escriben con barra): <b>PR</b> (preset, fuerza Q = 1) y <b>CLR</b>
+      (clear, fuerza Q = 0). Son <b>asincrónicas</b>: actúan de inmediato, sin esperar al reloj.</p>
+      <div class="box ojo">
+        <div class="bt">Trampa de laboratorio</div>
+        <p>Si un flip-flop «no hace nada», lo primero que hay que revisar es si PR y CLR están al aire.
+        Como son activas en bajo, deben conectarse a <b>+V<sub>CC</sub></b> para quedar inactivas. Al aire,
+        el circuito se queda trabado en un estado.</p>
+      </div>
+    </section>
+
+    <section id="contadores">
+      <h2><span class="n">04</span>Contadores</h2>
+      <p>Un contador es una cadena de flip-flops que avanza un paso en cada pulso de reloj. Con
+      <math><mi>n</mi></math> flip-flops se cuenta hasta <math><msup><mn>2</mn><mi>n</mi></msup></math>
+      estados: 4 flip-flops → 16 estados (0 a 15).</p>
+
+      <h3>Contador asincrónico (ripple)</h3>
+      <p>El reloj entra sólo al primer flip-flop; la salida de cada uno es el reloj del siguiente. Como
+      cada flip-flop T divide por dos, la cadena entrega 2, 4, 8, 16… y el conjunto cuenta en binario.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 210" role="img" aria-label="Contador asincrónico de cuatro bits con flip-flops T" class="svg-t">
+          <style>
+            .ff{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
+            .wc{stroke:#9aa7b4;stroke-width:2;fill:none}
+            .lc{fill:#9aa7b4;font-size:11px}
+          </style>
+          <g id="ffrow">
+            <!-- FF0 -->
+            <rect class="ff" x="90"  y="50" width="90" height="90" rx="6"/>
+            <rect class="ff" x="250" y="50" width="90" height="90" rx="6"/>
+            <rect class="ff" x="410" y="50" width="90" height="90" rx="6"/>
+            <rect class="ff" x="570" y="50" width="90" height="90" rx="6"/>
+          </g>
+          <g fill="#e6edf3" font-size="12" text-anchor="middle" font-weight="600">
+            <text x="135" y="78">FF0</text><text x="295" y="78">FF1</text>
+            <text x="455" y="78">FF2</text><text x="615" y="78">FF3</text>
+          </g>
+          <g fill="#7d8a99" font-size="10.5">
+            <text x="96" y="76">T=1</text><text x="256" y="76">T=1</text>
+            <text x="416" y="76">T=1</text><text x="576" y="76">T=1</text>
+          </g>
+          <!-- triangulos de reloj -->
+          <g fill="none" stroke="#58a6ff" stroke-width="1.6">
+            <polyline points="90,112 100,119 90,126"/><polyline points="250,112 260,119 250,126"/>
+            <polyline points="410,112 420,119 410,126"/><polyline points="570,112 580,119 570,126"/>
+          </g>
+          <!-- Q labels -->
+          <g fill="#3fb950" font-size="12" font-weight="700" text-anchor="end">
+            <text x="176" y="123">Q0</text><text x="336" y="123">Q1</text>
+            <text x="496" y="123">Q2</text><text x="656" y="123">Q3</text>
+          </g>
+          <!-- cableado -->
+          <line class="wc" x1="30" y1="119" x2="90" y2="119"/>
+          <text class="lc" x="26" y="123" text-anchor="end">CLK</text>
+          <line class="wc" x1="180" y1="119" x2="250" y2="119" stroke="#3fb950"/>
+          <line class="wc" x1="340" y1="119" x2="410" y2="119" stroke="#3fb950"/>
+          <line class="wc" x1="500" y1="119" x2="570" y2="119" stroke="#3fb950"/>
+          <!-- pesos -->
+          <g fill="#7d8a99" font-size="10.5" text-anchor="middle">
+            <text x="135" y="162">peso 1</text><text x="295" y="162">peso 2</text>
+            <text x="455" y="162">peso 4</text><text x="615" y="162">peso 8</text>
+            <text x="135" y="178">f/2</text><text x="295" y="178">f/4</text>
+            <text x="455" y="178">f/8</text><text x="615" y="178">f/16</text>
+          </g>
+          <text x="360" y="28" fill="#d29922" font-size="11.5" text-anchor="middle">cada flip-flop dispara al siguiente: los retardos se SUMAN</text>
+        </svg>
+        <figcaption><b>Figura 3.</b> Contador asincrónico de 4 bits (módulo 16). Simple de armar, pero el
+        retardo se acumula: con 4 etapas de 20 ns, la cuenta tarda 80 ns en estabilizarse.</figcaption>
+      </figure>
+
+      <p>Ese retardo acumulado produce <b>estados espurios</b>: al pasar de 0111 a 1000, durante unos
+      nanosegundos el contador muestra 0110, 0100, 0000 y recién después 1000. Si otro circuito está
+      mirando esa salida, puede leer un valor que nunca existió realmente. Es la razón por la que el
+      contador asincrónico no se usa a frecuencias altas ni para decodificar estados.</p>
+
+      <h3>Contador sincrónico</h3>
+      <p>Todos los flip-flops reciben <b>el mismo reloj a la vez</b>. Lo que se calcula con compuertas es
+      cuándo cada uno debe conmutar: el bit de peso 2 conmuta cuando el de peso 1 vale 1; el de peso 4
+      conmuta cuando los dos anteriores valen 1, y así.</p>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>T</mi><mn>0</mn></msub><mo>=</mo><mn>1</mn></mrow></math>
+        <math display="block"><mrow><msub><mi>T</mi><mn>1</mn></msub><mo>=</mo><msub><mi>Q</mi><mn>0</mn></msub></mrow></math>
+        <math display="block"><mrow><msub><mi>T</mi><mn>2</mn></msub><mo>=</mo><msub><mi>Q</mi><mn>0</mn></msub><mo>·</mo><msub><mi>Q</mi><mn>1</mn></msub></mrow></math>
+        <math display="block"><mrow><msub><mi>T</mi><mn>3</mn></msub><mo>=</mo><msub><mi>Q</mi><mn>0</mn></msub><mo>·</mo><msub><mi>Q</mi><mn>1</mn></msub><mo>·</mo><msub><mi>Q</mi><mn>2</mn></msub></mrow></math>
+        <span class="cap">Ecuaciones de habilitación de un contador sincrónico ascendente de 4 bits.</span>
+      </div>
+      <p>Todas las salidas cambian simultáneamente, no hay estados espurios y la velocidad máxima la fija
+      un solo retardo, no la suma. Es lo que hay dentro del <b>74LS163</b> o del <b>CD4520</b>.</p>
+
+      <h3>Contadores de módulo distinto de 2<sup>n</sup></h3>
+      <p>Para contar de 0 a 9 (contador décadal, módulo 10) se usa un contador de 4 bits y se detecta el
+      estado 1010 (=10) con una compuerta AND que ataca el CLEAR asincrónico, forzando el regreso a 0000.
+      Es el truco estándar y también el origen de un problema: durante unos nanosegundos el contador
+      «pasa» por el 10 antes de borrarse, lo que produce un destello espurio en el display.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Contador</th><th>Módulo</th><th>Tipo</th><th>Observación</th></tr></thead>
+          <tbody>
+            <tr><td>74LS90</td><td class="c">10</td><td>Asincrónico</td><td>Décadal clásico, muy usado en frecuencímetros.</td></tr>
+            <tr><td>74LS93</td><td class="c">16</td><td>Asincrónico</td><td>Binario de 4 bits.</td></tr>
+            <tr><td>74LS163</td><td class="c">16</td><td>Sincrónico</td><td>Con carga paralela y clear sincrónico.</td></tr>
+            <tr><td>74LS192</td><td class="c">10</td><td>Sincrónico</td><td>Cuenta arriba y abajo (up/down).</td></tr>
+            <tr><td>CD4017</td><td class="c">10</td><td>Johnson</td><td>10 salidas decodificadas: una activa por vez. Ideal para secuencias de luces.</td></tr>
+            <tr><td>CD4040</td><td class="c">4096</td><td>Asincrónico</td><td>12 etapas. Divisor de frecuencia.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="registros">
+      <h2><span class="n">05</span>Registros de desplazamiento</h2>
+      <p>Un registro es una fila de flip-flops D con el mismo reloj. Si se conecta la salida de cada uno a
+      la entrada del siguiente, en cada flanco el contenido <b>se corre un lugar</b>. Eso es un
+      <b>registro de desplazamiento</b> (shift register).</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Serie → paralelo</div>
+          <p>Entra un bit por vez y, después de <math><mi>n</mi></math> pulsos, los <math><mi>n</mi></math>
+          bits quedan disponibles a la vez. Es cómo se recibe un dato por un solo cable. Integrado:
+          <b>74LS164</b> o <b>CD4015</b>.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Paralelo → serie</div>
+          <p>Se cargan <math><mi>n</mi></math> bits de golpe y salen de a uno por un solo cable. Es cómo se
+          transmite. Integrado: <b>74LS165</b>.</p>
+        </div>
+      </div>
+
+      <p>Estos dos bloques son la base de toda comunicación serie: el <b>USART</b> de un microcontrolador,
+      el bus <b>SPI</b> de un sensor, un cable USB. Se cambian muchos cables por uno solo a costa de
+      tiempo.</p>
+
+      <div class="box key">
+        <div class="bt">Aplicación inmediata: la matriz de LEDs</div>
+        <p>El integrado <b>74HC595</b> es un registro de desplazamiento serie-paralelo con salidas
+        registradas. Con tres cables de un microcontrolador se manejan 8 salidas, y encadenando varios,
+        32 o 64. Es la solución estándar para carteles de LEDs y es tema directo de 6° y 7° año.</p>
+      </div>
+    </section>
+
+    <section id="antirrebote">
+      <h2><span class="n">06</span>Un problema real: el rebote de los pulsadores</h2>
+      <p>Cuando se aprieta un pulsador mecánico, los contactos no cierran limpio: rebotan durante 5 a
+      20 ms generando decenas de pulsos. Un circuito combinacional no se entera, pero un contador cuenta
+      todos esos rebotes y en vez de sumar 1 suma 12.</p>
+
+      <figure>
+        <svg viewBox="0 0 660 170" role="img" aria-label="Señal de un pulsador con rebote y la misma señal filtrada" class="svg-t">
+          <text x="40" y="26" fill="#f85149" font-size="12" font-weight="700">Sin antirrebote</text>
+          <line x1="40" y1="70" x2="640" y2="70" stroke="#2a3140" stroke-width="1" stroke-dasharray="3 4"/>
+          <polyline points="60,70 180,70 180,40 190,40 190,70 198,70 198,40 206,40 206,70 212,70 212,40 300,40 300,70 640,70"
+                    fill="none" stroke="#f85149" stroke-width="2"/>
+          <text x="230" y="34" fill="#f85149" font-size="10.5">rebotes: el contador suma varias veces</text>
+
+          <text x="40" y="112" fill="#3fb950" font-size="12" font-weight="700">Con antirrebote</text>
+          <line x1="40" y1="150" x2="640" y2="150" stroke="#2a3140" stroke-width="1" stroke-dasharray="3 4"/>
+          <polyline points="60,150 190,150 190,120 300,120 300,150 640,150"
+                    fill="none" stroke="#3fb950" stroke-width="2"/>
+          <text x="330" y="116" fill="#3fb950" font-size="10.5">un solo flanco limpio</text>
+        </svg>
+        <figcaption><b>Figura 4.</b> El rebote de contactos y su corrección. Es el defecto más común en los
+        proyectos de la materia.</figcaption>
+      </figure>
+
+      <p>Tres soluciones, de menos a más prolija:</p>
+      <ol>
+        <li><b>Filtro RC + Schmitt trigger</b> — una R de 10 kΩ y un C de 100 nF ante un 74LS14 (inversor
+        con histéresis). Barato y muy efectivo.</li>
+        <li><b>Latch RS con NAND</b> y un pulsador de dos posiciones: apenas el contacto toca el primer
+        terminal, el latch cambia de estado y ya no le importa lo que pase después.</li>
+        <li><b>Por software</b>, en un microcontrolador: se lee, se espera 20 ms y se vuelve a leer. Se ve
+        en 6° año.</li>
+      </ol>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Latch RS con NAND</div>
+        <p>Con un 74LS00, cruzar dos NAND. Las entradas (activas en bajo, S̅ y R̅) se llevan a masa con
+        pulsadores y a V<sub>CC</sub> con resistencias de 1 kΩ. Dos LEDs en Q y Q̅. Verificar que las salidas
+        siempre están opuestas y que la memoria se mantiene al soltar los pulsadores.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Divisor de frecuencia</div>
+        <p>Con un 74LS76 (dos JK) conectados con J = K = 1 en cascada, y un 555 en astable a 1 Hz como
+        reloj. Un LED en cada salida. Se ve directamente: el primer LED titila a 0,5 Hz, el segundo a
+        0,25 Hz. Medir con el osciloscopio y verificar la relación de frecuencias.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Contador décadal con display</div>
+        <p>555 en astable → 74LS90 (contador de 0 a 9) → 74LS47 → display de 7 segmentos de ánodo común
+        con siete resistencias de 330 Ω. Es el proyecto integrador clásico de la unidad, porque usa lo
+        combinacional (el decodificador) y lo secuencial (el contador) juntos. Sumar un pulsador con
+        antirrebote para contar a mano.</p>
+      </div>
+
+      <a class="pub" href="/publicaciones/simulador-555">
+        <span class="ic">⏱️</span>
+        <span>
+          <span class="pn">Simulador del LM555</span>
+          <span class="pd">Modos astable y monoestable con esquemático animado, cálculo de frecuencia en
+          vivo y diseño inverso con valores E12. Sirve para generar el reloj de estas prácticas.</span>
+        </span>
+        <span class="go">›</span>
+      </a>
+      <a class="pub" href="/publicaciones/logica-digital">
+        <span class="ic">🔢</span>
+        <span>
+          <span class="pn">Curso interactivo de Lógica Digital</span>
+          <span class="pd">Su cuarta pestaña desarrolla la lógica secuencial: flip-flop D animado y
+          registro de desplazamiento serie a paralelo paso a paso.</span>
+        </span>
+        <span class="go">›</span>
+      </a>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>El flip-flop no responde al reloj</td><td>PRESET o CLEAR al aire o en bajo. Deben ir a V<sub>CC</sub> para quedar inactivas.</td></tr>
+            <tr><td>El contador salta números</td><td>Rebote del pulsador usado como reloj. Falta antirrebote.</td></tr>
+            <tr><td>El contador cuenta al revés</td><td>Se tomó Q̅ en lugar de Q para encadenar, o el flip-flop dispara por el flanco contrario al esperado.</td></tr>
+            <tr><td>El display muestra un destello raro al reciclar</td><td>Estado espurio del contador asincrónico con CLEAR por AND. Se corrige con un contador sincrónico o con un latch de salida.</td></tr>
+            <tr><td>Todo funciona pero errático a alta frecuencia</td><td>Retardo acumulado del contador ripple, o falta de capacitores de desacople.</td></tr>
+            <tr><td>La cuenta arranca en un número al azar</td><td>Los flip-flops encienden en estado indefinido. Hay que hacer un CLEAR al energizar (RC a la entrada de reset).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuál es la diferencia esencial entre un circuito combinacional y uno secuencial?</summary>
+        <div class="a"><p>El secuencial tiene <b>memoria</b>: su salida depende de las entradas actuales y
+        del estado interno. Físicamente, eso se logra con <b>realimentación</b> de una salida hacia una
+        entrada.</p></div></details>
+
+      <details class="q"><summary>¿Por qué se dice que S = R = 1 es un estado prohibido en el latch RS?</summary>
+        <div class="a"><p>Porque Q y Q̅ dejan de ser complementarias (ambas valen 0 con NOR) y, sobre todo,
+        porque al volver las entradas a 0 el latch queda en 0 o en 1 según cuál compuerta responda primero:
+        el resultado es <b>impredecible</b>.</p></div></details>
+
+      <details class="q"><summary>Un flip-flop T con T = 1 recibe una señal de 8 kHz. ¿Qué frecuencia sale por Q?</summary>
+        <div class="a"><p><b>4 kHz.</b> Conmuta en cada flanco activo, así que le hacen falta dos pulsos de
+        entrada para completar un ciclo de salida: divide por dos.</p></div></details>
+
+      <details class="q"><summary>¿Cuántos flip-flops hacen falta para contar hasta 100?</summary>
+        <div class="a"><p>Hay que cubrir 101 estados (0 a 100). Con 6 flip-flops se llega a 64, insuficiente;
+        con <b>7</b> se llega a 128, alcanza. La regla es el menor n tal que 2<sup>n</sup> ≥ cantidad de
+        estados.</p></div></details>
+
+      <details class="q"><summary>Ventaja concreta del contador sincrónico sobre el asincrónico.</summary>
+        <div class="a"><p>Todas las salidas cambian a la vez, así que <b>no hay estados espurios</b> y la
+        frecuencia máxima no cae al agregar etapas (el retardo no se acumula). A cambio, necesita más
+        compuertas.</p></div></details>
+
+      <details class="q"><summary>¿Cómo se convierte un flip-flop JK en uno T? ¿Y en uno D?</summary>
+        <div class="a"><p>En <b>T</b>: uniendo J con K (esa unión es la entrada T). En <b>D</b>: conectando
+        J = D y K = D̅, es decir, poniendo un inversor entre las dos entradas.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve un registro de desplazamiento serie a paralelo?</summary>
+        <div class="a"><p>Para recibir un dato que llega bit por bit por un solo cable y presentarlo
+        completo, en paralelo, cuando terminó de entrar. Es lo que hace la parte receptora de cualquier
+        comunicación serie (USART, SPI).</p></div></details>
+
+      <details class="q"><summary>Un contador de 4 bits tiene que reciclar en 12. ¿Qué estado hay que detectar y qué se hace con él?</summary>
+        <div class="a"><p>Se detecta el estado <b>1100</b> (=12) con una AND sobre Q3 y Q2, y esa salida
+        ataca el CLEAR asincrónico para volver a 0000. Así el contador recorre 0 a 11, que son 12 estados.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/logica-combinacional">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Lógica combinacional</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/aplicaciones-compuertas">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Aplicaciones con compuertas lógicas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Lógica secuencial»</b> de <b>Electrónica Digital I</b> (4° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
