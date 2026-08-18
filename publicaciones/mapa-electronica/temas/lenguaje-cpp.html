@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El lenguaje C++ · Informática Electrónica I · Catto</title>
+<meta name="description" content="Clases y objetos, encapsulamiento, constructores y destructores, sobrecarga de funciones y operadores, herencia, polimorfismo con funciones virtuales, interfaces aplicadas a device drivers, excepciones y uso de C++ en microcontroladores. Eje temático de Informática Electrónica I, 4° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/lenguaje-cpp">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=2">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Informática Electrónica I</a>
+    <span class="anio">4° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática Electrónica I</span> · 72 h · Eje 3 de 3</div>
+    <h1>El lenguaje C++</h1>
+    <p class="lead">C++ agrega a C la posibilidad de <b>modelar objetos</b>: un LED, un sensor, un motor
+    dejan de ser un conjunto de variables sueltas y pasan a ser entidades con sus datos y sus operaciones
+    juntos. Es el lenguaje de Arduino y de buena parte de la industria embebida moderna.</p>
+    <div class="chips">
+      <span class="chip hi">Programación</span>
+      <span class="chip">Clases y objetos</span>
+      <span class="chip">Herencia</span>
+      <span class="chip">Polimorfismo</span>
+      <span class="chip">Drivers</span>
+    </div>
+    <hr class="rule">
+
+    <section id="de-c-a-cpp">
+      <h2><span class="n">01</span>Qué agrega C++ sobre C</h2>
+      <p>C++ es, casi por completo, un <b>superconjunto</b> de C: un programa en C compila en C++. Lo que
+      suma es una forma distinta de organizar programas grandes.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Agregado</th><th>Para qué sirve</th><th class="c">¿Cuesta recursos?</th></tr></thead>
+          <tbody>
+            <tr><td><b>Clases y objetos</b></td><td>Agrupar datos y las funciones que los manipulan.</td><td class="c">No</td></tr>
+            <tr><td><b>Constructores / destructores</b></td><td>Garantizar que un objeto nazca inicializado y libere lo que tomó.</td><td class="c">No</td></tr>
+            <tr><td><b>Sobrecarga</b></td><td>Varias funciones con el mismo nombre y distintos parámetros.</td><td class="c">No</td></tr>
+            <tr><td><b>Referencias (<code>&amp;</code>)</b></td><td>Paso por referencia más legible que con punteros.</td><td class="c">No</td></tr>
+            <tr><td><b>Herencia</b></td><td>Reutilizar y especializar código existente.</td><td class="c">No</td></tr>
+            <tr><td><b>Funciones virtuales</b></td><td>Polimorfismo: elegir la implementación en tiempo de ejecución.</td><td class="c">Poco</td></tr>
+            <tr><td><b>Plantillas (<i>templates</i>)</b></td><td>Código genérico para cualquier tipo.</td><td class="c">Poco</td></tr>
+            <tr><td><b>Excepciones</b></td><td>Manejo de errores separado del flujo normal.</td><td class="c"><b>Sí</b></td></tr>
+            <tr><td><b>Biblioteca estándar (STL)</b></td><td>Contenedores y algoritmos ya hechos.</td><td class="c"><b>Sí</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">«No pagás por lo que no usás»</div>
+        <p>Es el principio de diseño de C++, y explica por qué se lo usa en embebidos. Las clases, la
+        herencia simple y los constructores generan <b>exactamente el mismo código máquina</b> que la versión
+        equivalente en C: son organización, no capas de ejecución. Lo que sí cuesta son las excepciones, la
+        información de tipos en tiempo de ejecución y la STL con asignación dinámica — y esas tres se
+        deshabilitan en la mayoría de los proyectos de microcontrolador.</p>
+      </div>
+    </section>
+
+    <section id="clases">
+      <h2><span class="n">02</span>Clases y objetos</h2>
+      <p>Una <b>clase</b> es un molde: describe qué datos tiene una cosa y qué se puede hacer con ella. Un
+      <b>objeto</b> es un ejemplar concreto creado a partir de ese molde.</p>
+
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">Led</span> {
+  <span class="c-kw">private</span>:                       <span class="c-com">// nadie de afuera puede tocar esto</span>
+    <span class="c-ty">uint8_t</span> pin;
+    <span class="c-ty">bool</span>    encendido;
+
+  <span class="c-kw">public</span>:                        <span class="c-com">// la interfaz visible</span>
+    <span class="c-fn">Led</span>(<span class="c-ty">uint8_t</span> p);                 <span class="c-com">// constructor</span>
+    <span class="c-ty">void</span> <span class="c-fn">on</span>();
+    <span class="c-ty">void</span> <span class="c-fn">off</span>();
+    <span class="c-ty">void</span> <span class="c-fn">toggle</span>();
+    <span class="c-ty">bool</span> <span class="c-fn">estado</span>() <span class="c-kw">const</span>;          <span class="c-com">// const: no modifica el objeto</span>
+};
+
+<span class="c-com">// --- implementación ---</span>
+<span class="c-ty">Led</span>::<span class="c-fn">Led</span>(<span class="c-ty">uint8_t</span> p) : pin(p), encendido(<span class="c-kw">false</span>) {
+    <span class="c-fn">pinMode</span>(pin, OUTPUT);
+    <span class="c-fn">digitalWrite</span>(pin, LOW);
+}
+<span class="c-ty">void</span> <span class="c-ty">Led</span>::<span class="c-fn">on</span>()     { <span class="c-fn">digitalWrite</span>(pin, HIGH); encendido = <span class="c-kw">true</span>; }
+<span class="c-ty">void</span> <span class="c-ty">Led</span>::<span class="c-fn">off</span>()    { <span class="c-fn">digitalWrite</span>(pin, LOW);  encendido = <span class="c-kw">false</span>; }
+<span class="c-ty">void</span> <span class="c-ty">Led</span>::<span class="c-fn">toggle</span>() { encendido ? <span class="c-fn">off</span>() : <span class="c-fn">on</span>(); }
+<span class="c-ty">bool</span> <span class="c-ty">Led</span>::<span class="c-fn">estado</span>() <span class="c-kw">const</span> { <span class="c-kw">return</span> encendido; }
+
+<span class="c-com">// --- uso ---</span>
+<span class="c-ty">Led</span> rojo(<span class="c-num">13</span>);       <span class="c-com">// se crean dos objetos independientes</span>
+<span class="c-ty">Led</span> verde(<span class="c-num">12</span>);      <span class="c-com">// cada uno con su propio pin y su propio estado</span>
+
+rojo.<span class="c-fn">on</span>();
+verde.<span class="c-fn">toggle</span>();</code></pre>
+
+      <div class="box key">
+        <div class="bt">Encapsulamiento</div>
+        <p>Los datos van en <code>private</code> y sólo las funciones de la clase pueden tocarlos. El resto
+        del programa se comunica exclusivamente por la <b>interfaz pública</b>. La ventaja concreta: si
+        mañana se cambia cómo se representa el estado internamente, <b>nada de afuera se rompe</b>, porque
+        nadie dependía de esos detalles. Y es imposible dejar el objeto en un estado incoherente desde
+        afuera.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">La diferencia con un <code>struct</code> de C</div>
+        <p>Un <code>struct</code> agrupa datos; una clase agrupa <b>datos y comportamiento</b>, y además
+        controla el acceso. En C se escribiría <code>led_on(&amp;rojo)</code> pasando la estructura como
+        primer parámetro; en C++ se escribe <code>rojo.on()</code> y ese puntero al objeto (llamado
+        <code>this</code>) lo pasa el compilador solo. Es literalmente la misma llamada, con mejor
+        sintaxis.</p>
+      </div>
+    </section>
+
+    <section id="constructores">
+      <h2><span class="n">03</span>Constructores y destructores</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Constructor</div>
+          <p>Se ejecuta <b>automáticamente</b> al crear el objeto. Tiene el mismo nombre que la clase y no
+          devuelve nada. Su trabajo es dejar el objeto listo para usarse.</p>
+          <p style="font-size:13px;margin-top:8px">Puede haber varios (sobrecargados) con distintos
+          parámetros.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--hot)">Destructor</div>
+          <p>Se ejecuta <b>automáticamente</b> al destruirse el objeto: al salir del ámbito o al liberarlo.
+          Se llama <code>~Clase()</code> y no recibe parámetros.</p>
+          <p style="font-size:13px;margin-top:8px">Su trabajo es devolver lo que el objeto haya tomado:
+          memoria, un archivo, un puerto.</p>
+        </div>
+      </div>
+
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">PuertoSerie</span> {
+    <span class="c-ty">int</span> fd;
+  <span class="c-kw">public</span>:
+    <span class="c-fn">PuertoSerie</span>(<span class="c-ty">uint32_t</span> baudios) {
+        fd = <span class="c-fn">abrir_uart</span>(baudios);       <span class="c-com">// toma el recurso</span>
+    }
+    ~<span class="c-fn">PuertoSerie</span>() {
+        <span class="c-fn">cerrar_uart</span>(fd);               <span class="c-com">// lo devuelve, pase lo que pase</span>
+    }
+    <span class="c-ty">void</span> <span class="c-fn">enviar</span>(<span class="c-kw">const</span> <span class="c-ty">char</span> *s);
+};
+
+<span class="c-ty">void</span> <span class="c-fn">tarea</span>() {
+    <span class="c-ty">PuertoSerie</span> p(<span class="c-num">9600</span>);   <span class="c-com">// constructor: abre</span>
+    p.<span class="c-fn">enviar</span>(<span class="c-str">"hola"</span>);
+    <span class="c-kw">if</span> (error) <span class="c-kw">return</span>;      <span class="c-com">// aun saliendo por acá...</span>
+    ...
+}                            <span class="c-com">// ...el destructor cierra el puerto</span></code></pre>
+
+      <div class="box key">
+        <div class="bt">RAII: el patrón más útil de C++</div>
+        <p><i>Resource Acquisition Is Initialization</i>: el recurso se toma en el constructor y se libera en
+        el destructor. Como el destructor se ejecuta <b>siempre</b> al salir del ámbito —por cualquier
+        camino— resulta imposible olvidarse de liberar. En C, en cambio, cada <code>return</code> anticipado
+        es una oportunidad de dejar un recurso tomado. En embebidos se aplica a puertos, buses SPI o I²C, y a
+        secciones críticas: un objeto que deshabilita interrupciones en el constructor y las restaura en el
+        destructor vuelve imposible olvidarse de rehabilitarlas.</p>
+      </div>
+    </section>
+
+    <section id="sobrecarga">
+      <h2><span class="n">04</span>Sobrecarga</h2>
+      <p>En C++ pueden coexistir varias funciones con el mismo nombre si difieren en la <b>cantidad o el
+      tipo</b> de sus parámetros. El compilador elige la correcta según cómo se la llame.</p>
+
+      <pre class="code"><code><span class="c-ty">void</span> <span class="c-fn">mostrar</span>(<span class="c-ty">int</span> v);
+<span class="c-ty">void</span> <span class="c-fn">mostrar</span>(<span class="c-ty">float</span> v);
+<span class="c-ty">void</span> <span class="c-fn">mostrar</span>(<span class="c-kw">const</span> <span class="c-ty">char</span> *s);
+<span class="c-ty">void</span> <span class="c-fn">mostrar</span>(<span class="c-ty">int</span> v, <span class="c-ty">uint8_t</span> base);
+
+<span class="c-fn">mostrar</span>(<span class="c-num">42</span>);           <span class="c-com">// llama a la primera</span>
+<span class="c-fn">mostrar</span>(<span class="c-num">3.14f</span>);        <span class="c-com">// a la segunda</span>
+<span class="c-fn">mostrar</span>(<span class="c-str">"listo"</span>);      <span class="c-com">// a la tercera</span>
+<span class="c-fn">mostrar</span>(<span class="c-num">255</span>, <span class="c-num">16</span>);      <span class="c-com">// a la cuarta: en hexadecimal</span></code></pre>
+
+      <p>En C harían falta cuatro nombres distintos (<code>mostrar_int</code>,
+      <code>mostrar_float</code>…). Es exactamente lo que hace <code>Serial.print()</code> de Arduino, que
+      acepta enteros, decimales y cadenas: son varias funciones sobrecargadas.</p>
+
+      <h3>Sobrecarga de operadores</h3>
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">Medicion</span> {
+    <span class="c-ty">int16_t</span> mV;
+  <span class="c-kw">public</span>:
+    <span class="c-fn">Medicion</span>(<span class="c-ty">int16_t</span> v) : mV(v) {}
+    <span class="c-ty">Medicion</span> <span class="c-kw">operator</span>+(<span class="c-kw">const</span> <span class="c-ty">Medicion</span> &amp;o) <span class="c-kw">const</span> {
+        <span class="c-kw">return</span> <span class="c-ty">Medicion</span>(mV + o.mV);
+    }
+    <span class="c-ty">bool</span> <span class="c-kw">operator</span>&gt;(<span class="c-kw">const</span> <span class="c-ty">Medicion</span> &amp;o) <span class="c-kw">const</span> { <span class="c-kw">return</span> mV &gt; o.mV; }
+};
+
+<span class="c-ty">Medicion</span> a(<span class="c-num">1200</span>), b(<span class="c-num">340</span>);
+<span class="c-ty">Medicion</span> c = a + b;      <span class="c-com">// se lee como matemática</span>
+<span class="c-kw">if</span> (a &gt; b) { ... }</code></pre>
+
+      <div class="box ojo">
+        <div class="bt">Con moderación</div>
+        <p>Sobrecargar operadores tiene sentido cuando la operación es <b>obvia</b> para ese tipo: sumar dos
+        mediciones, comparar dos tiempos, multiplicar dos matrices. Sobrecargar <code>+</code> para que haga
+        algo inesperado vuelve el código indescifrable. La regla es: si al leer <code>a + b</code> alguien
+        puede equivocarse sobre lo que hace, no hay que sobrecargarlo.</p>
+      </div>
+    </section>
+
+    <section id="herencia">
+      <h2><span class="n">05</span>Herencia</h2>
+      <p>Una clase puede <b>derivar</b> de otra: hereda sus datos y sus métodos, y agrega o modifica lo que
+      necesite. Es la forma de expresar una relación «es un».</p>
+
+      <figure>
+        <svg viewBox="0 0 660 250" role="img" aria-label="Jerarquía de clases de sensores con herencia" class="svg-t">
+          <style>.hb{fill:#1c2230;stroke:#58a6ff;stroke-width:2}.hn{fill:#e6edf3;font-size:12.5px;text-anchor:middle;font-weight:700}
+          .hm{fill:#9aa7b4;font-size:10.5px;text-anchor:middle}.hl{stroke:#a371f7;stroke-width:2;fill:none}</style>
+          <rect class="hb" x="240" y="30" width="180" height="62" rx="9" stroke="#a371f7"/>
+          <text class="hn" x="330" y="52" fill="#a371f7">Sensor</text>
+          <text class="hm" x="330" y="70">virtual float leer() = 0;</text>
+          <text class="hm" x="330" y="85">clase abstracta · interfaz</text>
+
+          <rect class="hb" x="30"  y="160" width="170" height="62" rx="9"/>
+          <text class="hn" x="115" y="182">SensorTemp</text>
+          <text class="hm" x="115" y="200">LM35 por A/D</text>
+          <text class="hm" x="115" y="215">float leer() override</text>
+
+          <rect class="hb" x="245" y="160" width="170" height="62" rx="9"/>
+          <text class="hn" x="330" y="182">SensorLuz</text>
+          <text class="hm" x="330" y="200">LDR en divisor</text>
+          <text class="hm" x="330" y="215">float leer() override</text>
+
+          <rect class="hb" x="460" y="160" width="170" height="62" rx="9"/>
+          <text class="hn" x="545" y="182">SensorHum</text>
+          <text class="hm" x="545" y="200">DHT22 por 1-Wire</text>
+          <text class="hm" x="545" y="215">float leer() override</text>
+
+          <g class="hl">
+            <path d="M115,160 L115,124 L330,124 L330,92"/>
+            <path d="M330,160 L330,124"/>
+            <path d="M545,160 L545,124 L330,124"/>
+          </g>
+          <polygon points="330,92 322,104 338,104" fill="#a371f7"/>
+          <text x="330" y="140" fill="#7d8a99" font-size="10.5" text-anchor="middle">«es un»</text>
+        </svg>
+        <figcaption><b>Figura 1.</b> Jerarquía de sensores. La clase base define <b>qué</b> sabe hacer todo
+        sensor; cada derivada define <b>cómo</b> lo hace.</figcaption>
+      </figure>
+
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">Sensor</span> {                     <span class="c-com">// clase base</span>
+  <span class="c-kw">protected</span>:                        <span class="c-com">// visible para las derivadas</span>
+    <span class="c-ty">uint8_t</span> pin;
+  <span class="c-kw">public</span>:
+    <span class="c-fn">Sensor</span>(<span class="c-ty">uint8_t</span> p) : pin(p) {}
+    <span class="c-kw">virtual</span> <span class="c-ty">float</span> <span class="c-fn">leer</span>() = <span class="c-num">0</span>;        <span class="c-com">// = 0 : virtual PURA</span>
+    <span class="c-kw">virtual</span> ~<span class="c-fn">Sensor</span>() {}              <span class="c-com">// destructor virtual: obligatorio</span>
+};
+
+<span class="c-kw">class</span> <span class="c-ty">SensorTemp</span> : <span class="c-kw">public</span> <span class="c-ty">Sensor</span> {   <span class="c-com">// deriva de Sensor</span>
+  <span class="c-kw">public</span>:
+    <span class="c-fn">SensorTemp</span>(<span class="c-ty">uint8_t</span> p) : <span class="c-ty">Sensor</span>(p) {}
+    <span class="c-ty">float</span> <span class="c-fn">leer</span>() <span class="c-kw">override</span> {        <span class="c-com">// LM35: 10 mV por grado</span>
+        <span class="c-kw">return</span> <span class="c-fn">analogRead</span>(pin) * <span class="c-num">500.0f</span> / <span class="c-num">1024.0f</span>;
+    }
+};</code></pre>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Visibilidad</th><th>Quién puede acceder</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><code>private</code></td><td>Sólo la propia clase. Es lo <b>predeterminado</b>.</td></tr>
+            <tr><td class="c"><code>protected</code></td><td>La propia clase y sus derivadas.</td></tr>
+            <tr><td class="c"><code>public</code></td><td>Cualquiera.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="polimorfismo">
+      <h2><span class="n">06</span>Polimorfismo e interfaces</h2>
+      <p>Es la consecuencia poderosa de la herencia: se puede escribir código que trabaje con la clase
+      <b>base</b> y funcione correctamente con cualquier derivada, incluso con las que todavía no
+      existen.</p>
+
+      <pre class="code"><code><span class="c-com">// Esta función no sabe ni le importa qué sensores hay</span>
+<span class="c-ty">void</span> <span class="c-fn">registrar</span>(<span class="c-ty">Sensor</span> *lista[], <span class="c-ty">uint8_t</span> n) {
+    <span class="c-kw">for</span> (<span class="c-ty">uint8_t</span> i = <span class="c-num">0</span>; i &lt; n; i++) {
+        <span class="c-ty">float</span> v = lista[i]-&gt;<span class="c-fn">leer</span>();   <span class="c-com">// llama al leer() CORRECTO</span>
+        <span class="c-fn">guardar</span>(i, v);
+    }
+}
+
+<span class="c-ty">SensorTemp</span> t(<span class="c-num">0</span>);
+<span class="c-ty">SensorLuz</span>  l(<span class="c-num">1</span>);
+<span class="c-ty">SensorHum</span>  h(<span class="c-num">2</span>);
+<span class="c-ty">Sensor</span> *todos[] = { &amp;t, &amp;l, &amp;h };
+
+<span class="c-fn">registrar</span>(todos, <span class="c-num">3</span>);   <span class="c-com">// cada uno se lee como corresponde</span></code></pre>
+
+      <div class="box key">
+        <div class="bt">Cómo funciona por dentro</div>
+        <p>Una clase con funciones <code>virtual</code> lleva un puntero oculto a una <b>tabla de funciones
+        virtuales</b> (<i>vtable</i>). Al llamar <code>lista[i]-&gt;leer()</code>, el programa consulta esa
+        tabla en tiempo de ejecución y salta a la implementación del objeto real. El costo es un puntero por
+        objeto y una indirección por llamada: perfectamente asumible incluso en un microcontrolador de
+        8 bits.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">El destructor de una clase base debe ser <code>virtual</code></div>
+        <p>Si se destruye un objeto derivado a través de un puntero a la base y el destructor <b>no</b> es
+        virtual, sólo se ejecuta el destructor de la base: el de la derivada nunca corre y sus recursos
+        quedan tomados. Es un error clásico y silencioso. La regla es simple: <b>si una clase tiene alguna
+        función virtual, su destructor también debe serlo.</b></p>
+      </div>
+
+      <h3>Interfaces: clases abstractas puras</h3>
+      <p>Una clase cuyos métodos son <b>todos</b> virtuales puros (<code>= 0</code>) no se puede instanciar:
+      define únicamente un <b>contrato</b>. Es el mecanismo con el que se declara «lo que un driver tiene que
+      saber hacer», sin decir nada sobre cómo.</p>
+
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">IDisplay</span> {                 <span class="c-com">// interfaz: sólo el contrato</span>
+  <span class="c-kw">public</span>:
+    <span class="c-kw">virtual</span> <span class="c-ty">void</span> <span class="c-fn">limpiar</span>() = <span class="c-num">0</span>;
+    <span class="c-kw">virtual</span> <span class="c-ty">void</span> <span class="c-fn">escribir</span>(<span class="c-ty">uint8_t</span> f, <span class="c-ty">uint8_t</span> c, <span class="c-kw">const</span> <span class="c-ty">char</span> *t) = <span class="c-num">0</span>;
+    <span class="c-kw">virtual</span> ~<span class="c-fn">IDisplay</span>() {}
+};
+
+<span class="c-kw">class</span> <span class="c-ty">LCD1602</span>  : <span class="c-kw">public</span> <span class="c-ty">IDisplay</span> { <span class="c-com">/* por 4 bits paralelo */</span> };
+<span class="c-kw">class</span> <span class="c-ty">OLED_I2C</span> : <span class="c-kw">public</span> <span class="c-ty">IDisplay</span> { <span class="c-com">/* por bus I2C */</span> };
+<span class="c-kw">class</span> <span class="c-ty">DisplayFalso</span> : <span class="c-kw">public</span> <span class="c-ty">IDisplay</span> { <span class="c-com">/* imprime en consola: para probar */</span> };
+
+<span class="c-com">// El menú funciona con cualquiera de los tres, sin cambiar una línea</span>
+<span class="c-ty">void</span> <span class="c-fn">menu</span>(<span class="c-ty">IDisplay</span> &amp;d) {
+    d.<span class="c-fn">limpiar</span>();
+    d.<span class="c-fn">escribir</span>(<span class="c-num">0</span>, <span class="c-num">0</span>, <span class="c-str">"Temperatura"</span>);
+}</code></pre>
+
+      <div class="box key">
+        <div class="bt">Por qué esto importa en electrónica</div>
+        <p>Permite escribir toda la lógica del equipo <b>antes</b> de tener el hardware, probándola contra un
+        driver falso. Y permite cambiar de LCD a OLED, o de un microcontrolador a otro, tocando una sola
+        clase. Es la versión en C++ del principio de
+        <a href="/publicaciones/mapa-electronica/temas/entornos-c-cpp">separación en drivers</a> que se vio
+        en el eje anterior.</p>
+      </div>
+    </section>
+
+    <section id="excepciones">
+      <h2><span class="n">07</span>Excepciones</h2>
+      <p>Permiten separar el manejo de errores del flujo normal del programa: en vez de que cada función
+      devuelva un código de error que hay que verificar, se <b>lanza</b> una excepción que se captura donde
+      corresponda.</p>
+
+      <pre class="code"><code><span class="c-kw">try</span> {
+    <span class="c-ty">float</span> t = sensor.<span class="c-fn">leer</span>();      <span class="c-com">// puede lanzar</span>
+    <span class="c-fn">procesar</span>(t);
+}
+<span class="c-kw">catch</span> (<span class="c-kw">const</span> <span class="c-ty">SensorDesconectado</span> &amp;e) {
+    <span class="c-fn">alarma</span>(<span class="c-str">"sensor fuera de linea"</span>);
+}
+<span class="c-kw">catch</span> (...) {                     <span class="c-com">// cualquier otra</span>
+    <span class="c-fn">reiniciar</span>();
+}</code></pre>
+
+      <div class="box ojo">
+        <div class="bt">En microcontroladores se suelen desactivar</div>
+        <p>Las excepciones exigen tablas de desenrollado de pila que ocupan varios KB de flash, y su tiempo
+        de propagación <b>no es acotado</b>, lo que las vuelve inaceptables en tiempo real. Por eso casi
+        todos los proyectos embebidos compilan con <code>-fno-exceptions</code> y manejan los errores como en
+        C: con códigos de retorno o con un objeto que representa «valor o error». En una PC, en cambio, las
+        excepciones son la forma normal y recomendada de manejar errores.</p>
+      </div>
+    </section>
+
+    <section id="embebidos">
+      <h2><span class="n">08</span>C++ en microcontroladores</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Usar sin problema</div>
+          <ul style="margin:0;padding-left:18px">
+            <li>Clases, encapsulamiento, métodos.</li>
+            <li>Constructores y destructores (RAII).</li>
+            <li>Sobrecarga de funciones y operadores.</li>
+            <li>Referencias en vez de punteros.</li>
+            <li><code>const</code> y <code>constexpr</code>.</li>
+            <li>Herencia simple y funciones virtuales, con criterio.</li>
+            <li>Plantillas, si no explotan en cantidad de instancias.</li>
+            <li><code>enum class</code> para estados y modos.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--hot)">Evitar</div>
+          <ul style="margin:0;padding-left:18px">
+            <li><b>Excepciones</b> (<code>-fno-exceptions</code>).</li>
+            <li><b>RTTI</b> y <code>dynamic_cast</code> (<code>-fno-rtti</code>).</li>
+            <li><b><code>new</code> y <code>delete</code></b>: misma razón que <code>malloc</code>, la RAM se
+            fragmenta.</li>
+            <li><code>std::vector</code>, <code>std::string</code> y en general la STL con memoria
+            dinámica.</li>
+            <li>Herencia múltiple y jerarquías profundas.</li>
+            <li><code>iostream</code>: agrega decenas de KB.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Arduino es C++</div>
+        <p>Aunque no se lo presente así, el entorno de Arduino compila C++ con <code>avr-g++</code>. Cada
+        biblioteca es una clase: <code>Serial</code> es un objeto de la clase <code>HardwareSerial</code>,
+        <code>Servo</code>, <code>LiquidCrystal</code> y <code>Wire</code> son clases, y
+        <code>Serial.print()</code> está sobrecargada para todos los tipos. Los archivos <code>.ino</code> se
+        concatenan, se les agrega el <code>main()</code> que llama a <code>setup()</code> y después a
+        <code>loop()</code> en un <code>while(1)</code>, y se compilan como C++. Reconocer eso permite pasar
+        de «usar Arduino» a «programar el microcontrolador».</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>En el laboratorio</h2>
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Primera clase</div>
+        <p>Escribir una clase <code>Contador</code> con un valor privado y métodos
+        <code>incrementar()</code>, <code>decrementar()</code>, <code>reiniciar()</code> y
+        <code>valor()</code>, con un tope máximo que se pasa por constructor. Crear tres objetos con topes
+        distintos y comprobar que cada uno mantiene su propio estado. Intentar acceder al dato privado desde
+        afuera y leer el error del compilador: eso <b>es</b> el encapsulamiento.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Constructor, destructor y RAII</div>
+        <p>Clase <code>Recurso</code> cuyo constructor imprima «tomado» y cuyo destructor imprima
+        «liberado». Crear objetos dentro de bloques <code>{ }</code> y en distintos puntos de una función con
+        varios <code>return</code>. Observar el orden exacto en que se ejecutan los destructores: siempre al
+        salir del ámbito, y en orden inverso a la creación.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Herencia y polimorfismo</div>
+        <p>Clase base abstracta <code>Figura</code> con <code>virtual float area() = 0;</code> y derivadas
+        <code>Circulo</code>, <code>Rectangulo</code> y <code>Triangulo</code>. Guardar punteros a las tres en
+        un arreglo de <code>Figura*</code> y recorrerlo sumando áreas. Después <b>quitar</b> la palabra
+        <code>virtual</code> y volver a ejecutar: se llama siempre al método de la base. Es la demostración
+        directa de para qué sirve <code>virtual</code>.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Interfaz de display</div>
+        <p>Definir <code>IDisplay</code> como en el ejemplo y escribir dos implementaciones: una que imprima
+        en la consola y otra que simule un LCD dibujando un recuadro de 16×2 caracteres. Escribir una función
+        <code>menu(IDisplay&amp;)</code> y ejecutarla con las dos, sin modificarla. Es el ensayo directo de
+        cómo se desarrolla software de equipo antes de tener el hardware.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Error</th><th>Consecuencia</th></tr></thead>
+          <tbody>
+            <tr><td>Olvidar el <code>;</code> después de la llave de cierre de una clase</td><td>Cascada de errores de compilación incomprensibles en las líneas siguientes.</td></tr>
+            <tr><td>Destructor de la base no <code>virtual</code></td><td>Al destruir por puntero a la base no corre el destructor de la derivada: fuga de recursos silenciosa.</td></tr>
+            <tr><td>Olvidar <code>virtual</code> en el método que se quiere polimórfico</td><td>Se llama siempre a la versión de la clase base. El programa compila y hace lo que no se quiere.</td></tr>
+            <tr><td>Miembros sin inicializar en el constructor</td><td>Basura. Conviene usar la <b>lista de inicialización</b> (<code>: pin(p), estado(false)</code>).</td></tr>
+            <tr><td>Usar <code>new</code> sin <code>delete</code></td><td>Fuga de memoria. En un micro con 2 KB de RAM, se agota en minutos.</td></tr>
+            <tr><td>Compilar con la STL en un microcontrolador chico</td><td>El programa no entra en la flash, o entra y falla al agotarse la RAM.</td></tr>
+            <tr><td>Sobrecargar operadores de forma poco intuitiva</td><td>Código imposible de leer. La sobrecarga se justifica sólo si el significado es obvio.</td></tr>
+            <tr><td>Poner todo <code>public</code></td><td>Se pierde el encapsulamiento y con él toda la ventaja de usar clases.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">11</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuál es la diferencia entre una clase y un objeto?</summary>
+        <div class="a"><p>La <b>clase</b> es el molde: describe qué datos y qué métodos tiene una entidad. El
+        <b>objeto</b> es un ejemplar concreto creado a partir de ese molde, con sus propios valores. De una
+        clase <code>Led</code> se pueden crear muchos objetos, cada uno con su pin y su estado.</p></div></details>
+
+      <details class="q"><summary>¿Qué gana un programa al declarar los datos como <code>private</code>?</summary>
+        <div class="a"><p>Que nadie de afuera puede dejar el objeto en un estado incoherente, y que la
+        representación interna se puede cambiar sin romper el resto del programa, porque nadie dependía de
+        ella. Eso es el <b>encapsulamiento</b>.</p></div></details>
+
+      <details class="q"><summary>¿Cuándo se ejecuta un destructor y para qué sirve?</summary>
+        <div class="a"><p>Automáticamente, al destruirse el objeto: al salir del ámbito donde se creó, o al
+        hacer <code>delete</code>. Sirve para <b>liberar</b> lo que el objeto haya tomado (memoria, un puerto,
+        un archivo). Como se ejecuta por cualquier camino de salida, hace imposible olvidarse.</p></div></details>
+
+      <details class="q"><summary>¿Qué es RAII y qué problema resuelve?</summary>
+        <div class="a"><p><i>Resource Acquisition Is Initialization</i>: tomar el recurso en el constructor y
+        liberarlo en el destructor. Resuelve el problema de las liberaciones olvidadas, sobre todo cuando una
+        función tiene varios puntos de salida.</p></div></details>
+
+      <details class="q"><summary>¿Qué hace la palabra <code>virtual</code>?</summary>
+        <div class="a"><p>Indica que el método puede ser <b>redefinido</b> en una clase derivada, y que la
+        decisión de cuál ejecutar se toma en <b>tiempo de ejecución</b> según el tipo real del objeto, no
+        según el tipo del puntero. Es lo que hace posible el polimorfismo.</p></div></details>
+
+      <details class="q"><summary>¿Qué es una función virtual pura y qué efecto tiene sobre la clase?</summary>
+        <div class="a"><p>Es la declarada con <code>= 0</code>: no tiene implementación en la base. Convierte
+        a la clase en <b>abstracta</b>, es decir que no se puede instanciar, y obliga a que toda derivada
+        concreta la implemente. Si todos sus métodos lo son, la clase es una <b>interfaz</b>.</p></div></details>
+
+      <details class="q"><summary>¿Por qué el destructor de una clase base debe ser <code>virtual</code>?</summary>
+        <div class="a"><p>Para que, al destruir un objeto derivado a través de un puntero a la base, se
+        ejecute también el destructor de la derivada. Si no lo es, sólo corre el de la base y los recursos de
+        la derivada quedan sin liberar.</p></div></details>
+
+      <details class="q"><summary>¿Por qué se desactivan las excepciones en microcontroladores?</summary>
+        <div class="a"><p>Porque requieren tablas de desenrollado de pila que ocupan varios KB de flash y
+        porque su tiempo de propagación <b>no es acotado</b>, lo que las hace incompatibles con requisitos de
+        tiempo real. Se compila con <code>-fno-exceptions</code> y se manejan errores con códigos de
+        retorno.</p></div></details>
+
+      <details class="q"><summary>Un programa de Arduino, ¿en qué lenguaje está escrito?</summary>
+        <div class="a"><p>En <b>C++</b>. El entorno concatena los archivos <code>.ino</code>, agrega un
+        <code>main()</code> que llama a <code>setup()</code> y luego a <code>loop()</code> dentro de un
+        <code>while(1)</code>, y compila todo con <code>avr-g++</code>. <code>Serial</code>,
+        <code>Servo</code> y <code>LiquidCrystal</code> son clases de C++.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/entornos-c-cpp">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Entornos de desarrollo C y C++</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica">
+        <div class="dir">Fin de 4° año →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«El lenguaje C++»</b> de <b>Informática Electrónica I</b> (4° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

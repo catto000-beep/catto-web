@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elementos básicos del lenguaje C · Informática Electrónica I · Catto</title>
+<meta name="description" content="Estructura de un programa en C, variables y tipos de datos, constantes, operadores, control de flujo, arreglos y cadenas, funciones, el preprocesador y la biblioteca estándar. Eje temático de Informática Electrónica I, 4° año de la Tecnicatura en Electrónica.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/lenguaje-c">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=2">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Informática Electrónica I</a>
+    <span class="anio">4° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática Electrónica I</span> · 72 h · Eje 1 de 3</div>
+    <h1>Elementos básicos del lenguaje C</h1>
+    <p class="lead">C es el idioma de la electrónica. Con él se programan los microcontroladores de 6° y 7°
+    año, los sistemas embebidos de la industria y el núcleo de casi todos los sistemas operativos. Es
+    exigente, pero da control total sobre la máquina.</p>
+    <div class="chips">
+      <span class="chip hi">Programación</span>
+      <span class="chip">Tipos de datos</span>
+      <span class="chip">Control de flujo</span>
+      <span class="chip">Funciones</span>
+      <span class="chip">Preprocesador</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que-c">
+      <h2><span class="n">01</span>Por qué C en una tecnicatura en electrónica</h2>
+      <p>Existen lenguajes más cómodos, pero ninguno reúne estas cuatro cosas a la vez:</p>
+      <ul>
+        <li><b>Acceso directo al hardware.</b> Permite escribir un valor en un registro del microcontrolador
+        o leer un puerto de entrada tal como está en la hoja de datos.</li>
+        <li><b>Eficiencia.</b> El código generado es casi tan compacto y rápido como el escrito en
+        assembler, y eso importa cuando hay 2 KB de memoria.</li>
+        <li><b>Portabilidad.</b> El mismo programa, con ajustes mínimos, compila para un PIC, un AVR, un
+        ARM o una PC.</li>
+        <li><b>Universalidad.</b> Todo fabricante de microcontroladores entrega su compilador de C. Es el
+        denominador común de la industria.</li>
+      </ul>
+
+      <div class="box key">
+        <div class="bt">C es un lenguaje compilado</div>
+        <p>El programa fuente (<code>.c</code>) pasa por el <b>preprocesador</b>, después por el
+        <b>compilador</b> que lo traduce a código objeto (<code>.o</code>), y finalmente por el
+        <b>enlazador</b> (<i>linker</i>), que une los objetos y las bibliotecas y produce el ejecutable. En
+        un microcontrolador ese resultado es un archivo <code>.hex</code> que se graba en la memoria flash.
+        Entender esta cadena es lo que permite interpretar los mensajes de error.</p>
+      </div>
+    </section>
+
+    <section id="estructura">
+      <h2><span class="n">02</span>Estructura de un programa</h2>
+
+      <pre class="code"><code><span class="c-pp">#include</span> <span class="c-str">&lt;stdio.h&gt;</span>      <span class="c-com">// directivas al preprocesador</span>
+<span class="c-pp">#define</span> PI <span class="c-num">3.14159</span>    <span class="c-com">// constante simbólica</span>
+
+<span class="c-ty">float</span> <span class="c-fn">area</span>(<span class="c-ty">float</span> radio);   <span class="c-com">// prototipo de función</span>
+
+<span class="c-ty">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>)             <span class="c-com">// TODO programa tiene un main</span>
+{
+    <span class="c-ty">float</span> r = <span class="c-num">2.5</span>;         <span class="c-com">// declaración con inicialización</span>
+    <span class="c-fn">printf</span>(<span class="c-str">"Area = %.2f\n"</span>, <span class="c-fn">area</span>(r));
+    <span class="c-kw">return</span> <span class="c-num">0</span>;                <span class="c-com">// 0 = terminó sin error</span>
+}
+
+<span class="c-ty">float</span> <span class="c-fn">area</span>(<span class="c-ty">float</span> radio)    <span class="c-com">// definición de la función</span>
+{
+    <span class="c-kw">return</span> PI * radio * radio;
+}</code></pre>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Elemento</th><th>Para qué está</th></tr></thead>
+          <tbody>
+            <tr><td><code>#include</code></td><td>Incorpora un archivo de cabecera con declaraciones ya hechas. Con <code>&lt;&gt;</code> busca en las bibliotecas del sistema; con <code>""</code>, en el directorio del proyecto.</td></tr>
+            <tr><td><code>#define</code></td><td>Define una constante o macro que el preprocesador reemplaza textualmente antes de compilar.</td></tr>
+            <tr><td><b>Prototipo</b></td><td>Le anuncia al compilador cómo se llama una función, qué recibe y qué devuelve, antes de que aparezca su código.</td></tr>
+            <tr><td><code>main()</code></td><td>Punto de entrada. En un microcontrolador nunca termina: su cuerpo suele ser un <code>while(1)</code>.</td></tr>
+            <tr><td><code>{ }</code></td><td>Delimitan bloques. Todo lo declarado dentro de un bloque sólo existe ahí.</td></tr>
+            <tr><td><code>;</code></td><td>Termina cada sentencia. Olvidarlo es el error de compilación número uno.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">C distingue mayúsculas de minúsculas</div>
+        <p><code>contador</code>, <code>Contador</code> y <code>CONTADOR</code> son <b>tres variables
+        distintas</b>. Por convención se usan minúsculas para variables y funciones, y MAYÚSCULAS para
+        constantes definidas con <code>#define</code>.</p>
+      </div>
+    </section>
+
+    <section id="tipos">
+      <h2><span class="n">03</span>Variables, tipos y constantes</h2>
+      <p>Toda variable debe <b>declararse</b> antes de usarse, indicando su tipo. Ese tipo determina cuánta
+      memoria ocupa y qué valores puede guardar.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Tipo</th><th class="c">Tamaño típico<br>(microcontrolador de 8 bits)</th><th class="c">Rango</th><th>Uso</th></tr></thead>
+          <tbody>
+            <tr><td><code>char</code></td><td class="c">1 byte</td><td class="c">−128 a 127</td><td>Un carácter, o un entero chico con signo.</td></tr>
+            <tr><td><code>unsigned char</code></td><td class="c">1 byte</td><td class="c">0 a 255</td><td><b>El tipo más usado en microcontroladores</b>: un puerto, un byte.</td></tr>
+            <tr><td><code>int</code></td><td class="c">2 bytes</td><td class="c">−32.768 a 32.767</td><td>Enteros de propósito general. <b>Ojo:</b> en una PC son 4 bytes.</td></tr>
+            <tr><td><code>unsigned int</code></td><td class="c">2 bytes</td><td class="c">0 a 65.535</td><td>Contadores, valores de un conversor A/D de 10 bits.</td></tr>
+            <tr><td><code>long</code></td><td class="c">4 bytes</td><td class="c">± 2.147.483.648</td><td>Milisegundos transcurridos, frecuencias.</td></tr>
+            <tr><td><code>float</code></td><td class="c">4 bytes</td><td class="c">± 3,4 × 10<sup>38</sup>, 7 dígitos</td><td>Cálculos con decimales. <b>Caro</b> en un micro sin unidad de punto flotante.</td></tr>
+            <tr><td><code>double</code></td><td class="c">8 bytes</td><td class="c">15 dígitos</td><td>Precisión doble. Rara vez justificable en embebidos.</td></tr>
+            <tr><td><code>void</code></td><td class="c">—</td><td class="c">—</td><td>«Nada». Función que no devuelve valor o que no recibe parámetros.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">El tamaño de <code>int</code> depende de la máquina</div>
+        <p>El estándar de C sólo garantiza mínimos, no tamaños exactos. Por eso en programación embebida se
+        usan los tipos de <code>&lt;stdint.h&gt;</code>, que son inequívocos: <code>uint8_t</code>,
+        <code>int16_t</code>, <code>uint32_t</code>. El número es la cantidad de <b>bits</b> y la <code>u</code>
+        indica sin signo. Es la práctica profesional recomendada y evita errores al portar código.</p>
+      </div>
+
+      <h3>Desbordamiento</h3>
+      <pre class="code"><code><span class="c-ty">unsigned char</span> c = <span class="c-num">250</span>;
+c = c + <span class="c-num">10</span>;     <span class="c-com">// NO da 260: da 4, porque 260 no entra en 8 bits</span>
+
+<span class="c-ty">unsigned char</span> i;
+<span class="c-kw">for</span> (i = <span class="c-num">0</span>; i &lt; <span class="c-num">300</span>; i++) { ... }   <span class="c-com">// BUCLE INFINITO: i nunca llega a 300</span></code></pre>
+      <p>El desbordamiento no genera ningún error: el valor simplemente «da la vuelta». Es una de las causas
+      más difíciles de encontrar en un programa embebido, y por eso hay que elegir el tipo pensando en el
+      <b>máximo valor posible</b>, no en el habitual.</p>
+
+      <h3>Constantes</h3>
+      <pre class="code"><code><span class="c-pp">#define</span> LARGO <span class="c-num">10</span>            <span class="c-com">// preprocesador: reemplazo textual, sin tipo</span>
+<span class="c-kw">const</span> <span class="c-ty">float</span> PI = <span class="c-num">3.14159</span>;   <span class="c-com">// variable de sólo lectura, CON tipo</span>
+
+<span class="c-ty">int</span> a = <span class="c-num">255</span>;      <span class="c-com">// decimal</span>
+<span class="c-ty">int</span> b = <span class="c-num">0xFF</span>;     <span class="c-com">// hexadecimal — el más usado con registros</span>
+<span class="c-ty">int</span> c = <span class="c-num">0b11111111</span>; <span class="c-com">// binario (extensión de GCC, muy cómoda para puertos)</span>
+<span class="c-ty">int</span> d = <span class="c-num">0377</span>;     <span class="c-com">// OCTAL: el 0 inicial cambia la base. Trampa clásica</span></code></pre>
+      <p>En electrónica el <b>hexadecimal</b> es el formato natural: cada dígito hex representa exactamente
+      4 bits, así que <code>0xF0</code> se lee de un vistazo como «los cuatro bits altos en 1».</p>
+    </section>
+
+    <section id="operadores">
+      <h2><span class="n">04</span>Operadores</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Aritméticos y de asignación</div>
+          <p style="font-size:13.5px"><code>+ − * / %</code> · <code>++ --</code> ·
+          <code>= += -= *= /=</code></p>
+          <p style="font-size:13px;margin-top:8px">El <code>%</code> es el <b>resto</b> de la división
+          entera. <code>/</code> entre enteros <b>trunca</b>: <code>7/2</code> da 3, no 3,5.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Relacionales y lógicos</div>
+          <p style="font-size:13.5px"><code>== != &lt; &gt; &lt;= &gt;=</code> ·
+          <code>&amp;&amp; || !</code></p>
+          <p style="font-size:13px;margin-top:8px">En C, <b>0 es falso</b> y cualquier otro valor es
+          verdadero.</p>
+        </div>
+      </div>
+
+      <h3>Operadores a nivel de bit: los imprescindibles</h3>
+      <p>Son los que hacen a C apto para electrónica. Permiten manipular <b>bits individuales</b> de un
+      registro sin tocar los demás.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Operador</th><th>Función</th><th>Uso típico</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><code>&amp;</code></td><td>AND bit a bit</td><td><b>Poner bits en 0</b> (enmascarar) y <b>consultar</b> un bit.</td></tr>
+            <tr><td class="c"><code>|</code></td><td>OR bit a bit</td><td><b>Poner bits en 1</b>.</td></tr>
+            <tr><td class="c"><code>^</code></td><td>XOR bit a bit</td><td><b>Invertir</b> bits (toggle).</td></tr>
+            <tr><td class="c"><code>~</code></td><td>Complemento</td><td>Invertir todos los bits.</td></tr>
+            <tr><td class="c"><code>&lt;&lt;</code></td><td>Desplazar a izquierda</td><td>Construir máscaras. Equivale a multiplicar por 2.</td></tr>
+            <tr><td class="c"><code>&gt;&gt;</code></td><td>Desplazar a derecha</td><td>Extraer campos. Equivale a dividir por 2.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <pre class="code"><code><span class="c-com">// Las cuatro operaciones que se usan todo el tiempo con registros:</span>
+
+PORTB |=  (<span class="c-num">1</span> &lt;&lt; <span class="c-num">3</span>);   <span class="c-com">// poner en 1 el bit 3, sin tocar los otros</span>
+PORTB &amp;= ~(<span class="c-num">1</span> &lt;&lt; <span class="c-num">3</span>);   <span class="c-com">// poner en 0 el bit 3</span>
+PORTB ^=  (<span class="c-num">1</span> &lt;&lt; <span class="c-num">3</span>);   <span class="c-com">// invertir el bit 3</span>
+
+<span class="c-kw">if</span> (PINB &amp; (<span class="c-num">1</span> &lt;&lt; <span class="c-num">3</span>)) { <span class="c-com">// ¿el bit 3 está en 1?</span>
+    <span class="c-com">// sí: el pulsador está apretado</span>
+}</code></pre>
+
+      <div class="box key">
+        <div class="bt">Por qué no se escribe <code>PORTB = 8;</code></div>
+        <p>Porque eso pondría el bit 3 en 1 <b>y todos los demás en 0</b>, apagando el resto de las salidas
+        del puerto. Las formas con <code>|=</code> y <code>&amp;= ~</code> modifican <b>sólo</b> el bit que
+        interesa. Es la diferencia entre un programa que funciona y uno que apaga el motor cada vez que
+        prende el LED.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">El error más frecuente de todos: <code>=</code> contra <code>==</code></div>
+        <pre class="code" style="margin-top:10px"><code><span class="c-kw">if</span> (x = <span class="c-num">5</span>)   <span class="c-com">// ASIGNA 5 a x, y como 5 es distinto de 0, SIEMPRE es verdadero</span>
+<span class="c-kw">if</span> (x == <span class="c-num">5</span>)  <span class="c-com">// COMPARA x con 5. Esto es lo que se quería</span></code></pre>
+        <p>No es un error de compilación: el programa compila y anda mal. Los compiladores modernos avisan
+        con un <i>warning</i>, y por eso hay que compilar siempre con <code>-Wall</code> y leer las
+        advertencias.</p>
+      </div>
+    </section>
+
+    <section id="control">
+      <h2><span class="n">05</span>Control de flujo</h2>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Decisión</div>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-kw">if</span> (temp &gt; <span class="c-num">30</span>) {
+    <span class="c-fn">encender_ventilador</span>();
+} <span class="c-kw">else if</span> (temp &lt; <span class="c-num">18</span>) {
+    <span class="c-fn">encender_estufa</span>();
+} <span class="c-kw">else</span> {
+    <span class="c-fn">apagar_todo</span>();
+}
+
+<span class="c-kw">switch</span> (tecla) {
+    <span class="c-kw">case</span> <span class="c-num">1</span>: <span class="c-fn">subir</span>();  <span class="c-kw">break</span>;
+    <span class="c-kw">case</span> <span class="c-num">2</span>: <span class="c-fn">bajar</span>();  <span class="c-kw">break</span>;
+    <span class="c-kw">default</span>: <span class="c-fn">parar</span>();
+}</code></pre>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Repetición</div>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-kw">for</span> (i = <span class="c-num">0</span>; i &lt; <span class="c-num">8</span>; i++) {
+    <span class="c-fn">encender_led</span>(i);
+}
+
+<span class="c-kw">while</span> (!<span class="c-fn">dato_listo</span>()) {
+    <span class="c-com">// espera</span>
+}
+
+<span class="c-kw">do</span> {
+    v = <span class="c-fn">leer_adc</span>();
+} <span class="c-kw">while</span> (v &lt; umbral);
+
+<span class="c-kw">while</span> (<span class="c-num">1</span>) { ... }  <span class="c-com">// bucle principal</span></code></pre>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Olvidar el <code>break</code> en un <code>switch</code></div>
+        <p>Sin <code>break</code>, la ejecución <b>continúa cayendo</b> en el caso siguiente. A veces se hace
+        a propósito (para agrupar casos), pero casi siempre es un olvido y produce un comportamiento
+        desconcertante.</p>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">El bucle principal de un sistema embebido</div>
+        <pre class="code" style="margin-top:10px"><code><span class="c-ty">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>)
+{
+    <span class="c-fn">configurar_puertos</span>();   <span class="c-com">// se ejecuta UNA vez</span>
+    <span class="c-fn">configurar_adc</span>();
+    <span class="c-fn">configurar_timers</span>();
+
+    <span class="c-kw">while</span> (<span class="c-num">1</span>) {              <span class="c-com">// se repite PARA SIEMPRE</span>
+        <span class="c-fn">leer_sensores</span>();
+        <span class="c-fn">procesar</span>();
+        <span class="c-fn">actualizar_salidas</span>();
+    }
+    <span class="c-kw">return</span> <span class="c-num">0</span>;   <span class="c-com">// nunca se llega acá</span>
+}</code></pre>
+        <p>Esta estructura —configuración + bucle infinito— es la de <b>todo</b> programa de microcontrolador,
+        y es literalmente lo que hacen las funciones <code>setup()</code> y <code>loop()</code> de Arduino,
+        que es C por debajo.</p>
+      </div>
+    </section>
+
+    <section id="arreglos">
+      <h2><span class="n">06</span>Arreglos y cadenas</h2>
+      <p>Un <b>arreglo</b> es un conjunto de elementos del mismo tipo, contiguos en memoria, accesibles por
+      un índice que <b>empieza en 0</b>.</p>
+
+      <pre class="code"><code><span class="c-ty">int</span> muestras[<span class="c-num">10</span>];              <span class="c-com">// índices válidos: 0 a 9</span>
+<span class="c-ty">int</span> tabla[<span class="c-num">5</span>] = {<span class="c-num">2</span>, <span class="c-num">4</span>, <span class="c-num">6</span>, <span class="c-num">8</span>, <span class="c-num">10</span>};
+
+muestras[<span class="c-num">0</span>] = <span class="c-num">512</span>;             <span class="c-com">// primer elemento</span>
+muestras[<span class="c-num">9</span>] = <span class="c-num">128</span>;             <span class="c-com">// ÚLTIMO elemento</span>
+muestras[<span class="c-num">10</span>] = <span class="c-num">0</span>;              <span class="c-com">// ¡FUERA DE RANGO! Pisa memoria ajena</span>
+
+<span class="c-com">// Promediar 10 muestras del conversor A/D</span>
+<span class="c-ty">long</span> suma = <span class="c-num">0</span>;
+<span class="c-kw">for</span> (<span class="c-ty">int</span> i = <span class="c-num">0</span>; i &lt; <span class="c-num">10</span>; i++) {
+    muestras[i] = <span class="c-fn">leer_adc</span>();
+    suma += muestras[i];
+}
+<span class="c-ty">int</span> promedio = suma / <span class="c-num">10</span>;</code></pre>
+
+      <div class="box peligro">
+        <div class="bt">C no controla los límites de un arreglo</div>
+        <p>Escribir <code>muestras[10]</code> en un arreglo de 10 elementos <b>no da error</b>: escribe en la
+        posición de memoria siguiente, que puede pertenecer a otra variable, a la pila o a un registro. El
+        programa sigue andando y falla más adelante de forma inexplicable. En una PC esto es un agujero de
+        seguridad clásico (<i>buffer overflow</i>); en un microcontrolador, un cuelgue aleatorio. <b>Verificar
+        los índices es responsabilidad del programador.</b></p>
+      </div>
+
+      <h3>Cadenas de caracteres</h3>
+      <p>En C una cadena es simplemente un arreglo de <code>char</code> terminado por el carácter nulo
+      <code>'\0'</code>. No es un tipo especial.</p>
+
+      <pre class="code"><code><span class="c-ty">char</span> nombre[<span class="c-num">20</span>] = <span class="c-str">"Electronica"</span>;   <span class="c-com">// ocupa 11 letras + 1 del '\0' = 12</span>
+
+<span class="c-pp">#include</span> <span class="c-str">&lt;string.h&gt;</span>
+<span class="c-fn">strlen</span>(nombre);            <span class="c-com">// 11 — no cuenta el '\0'</span>
+<span class="c-fn">strcpy</span>(destino, origen);   <span class="c-com">// copiar</span>
+<span class="c-fn">strcmp</span>(a, b);              <span class="c-com">// comparar: devuelve 0 si son iguales</span>
+<span class="c-fn">strcat</span>(destino, origen);   <span class="c-com">// concatenar</span></code></pre>
+
+      <div class="box ojo">
+        <div class="bt">Hay que reservar lugar para el <code>'\0'</code></div>
+        <p>Un arreglo de 20 <code>char</code> guarda como máximo una cadena de <b>19 caracteres</b>. Y
+        <code>strcmp(a, b)</code> devuelve <b>0 cuando son iguales</b>, lo que es contraintuitivo: se escribe
+        <code>if (strcmp(a,b) == 0)</code>. Nunca comparar cadenas con <code>==</code>, porque eso compara
+        direcciones de memoria, no contenidos.</p>
+      </div>
+    </section>
+
+    <section id="funciones">
+      <h2><span class="n">07</span>Funciones</h2>
+      <p>Dividir el programa en funciones no es cosmética: es lo que permite probar cada parte por separado,
+      reutilizar código y entender un programa de mil líneas.</p>
+
+      <pre class="code"><code><span class="c-com">// tipo_devuelto  nombre(tipo parám1, tipo parám2)</span>
+<span class="c-ty">float</span> <span class="c-fn">celsius_a_fahrenheit</span>(<span class="c-ty">float</span> c)
+{
+    <span class="c-kw">return</span> c * <span class="c-num">9.0</span> / <span class="c-num">5.0</span> + <span class="c-num">32.0</span>;
+}
+
+<span class="c-ty">void</span> <span class="c-fn">parpadear</span>(<span class="c-ty">unsigned char</span> veces)   <span class="c-com">// void: no devuelve nada</span>
+{
+    <span class="c-kw">for</span> (<span class="c-ty">unsigned char</span> i = <span class="c-num">0</span>; i &lt; veces; i++) {
+        PORTB |= (<span class="c-num">1</span> &lt;&lt; <span class="c-num">0</span>);
+        <span class="c-fn">retardo_ms</span>(<span class="c-num">200</span>);
+        PORTB &amp;= ~(<span class="c-num">1</span> &lt;&lt; <span class="c-num">0</span>);
+        <span class="c-fn">retardo_ms</span>(<span class="c-num">200</span>);
+    }
+}</code></pre>
+
+      <div class="box key">
+        <div class="bt">En C los parámetros se pasan por valor</div>
+        <p>La función recibe una <b>copia</b> del argumento. Si la modifica, el original no cambia. Para que
+        una función pueda modificar una variable del que la llamó hay que pasarle su <b>dirección</b>, con
+        punteros — que es el tema central del
+        <a href="/publicaciones/mapa-electronica/temas/entornos-c-cpp">eje siguiente</a>.</p>
+      </div>
+
+      <h3>Ámbito de las variables</h3>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Tipo</th><th>Dónde vive</th><th>Cuándo usarla</th></tr></thead>
+          <tbody>
+            <tr><td><b>Local</b></td><td>Declarada dentro de una función. Nace al entrar y muere al salir.</td><td><b>Siempre que se pueda.</b> Es lo más seguro y ahorra memoria.</td></tr>
+            <tr><td><b>Global</b></td><td>Fuera de toda función. Existe durante todo el programa.</td><td>Sólo para datos que comparten varias partes, típicamente entre el bucle principal y una interrupción.</td></tr>
+            <tr><td><b>Estática</b></td><td><code>static</code> dentro de una función: conserva su valor entre llamadas.</td><td>Contadores internos que no deben ser visibles desde afuera.</td></tr>
+            <tr><td><b>Volátil</b></td><td><code>volatile</code>: le avisa al compilador que puede cambiar por fuera del flujo del programa.</td><td><b>Obligatorio</b> en variables modificadas por una interrupción o mapeadas a un registro de hardware.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Sin <code>volatile</code>, el optimizador rompe el programa</div>
+        <p>Si una variable global se modifica dentro de una interrupción y el bucle principal la lee, el
+        compilador puede «darse cuenta» de que nadie la cambia dentro del bucle y guardarla en un registro
+        para siempre. El programa queda esperando eternamente un cambio que no ve. La palabra
+        <code>volatile</code> le prohíbe esa optimización. Es un error que aparece recién al compilar con
+        optimización activada, y es un clásico de 6° año.</p>
+      </div>
+    </section>
+
+    <section id="preprocesador">
+      <h2><span class="n">08</span>El preprocesador y la biblioteca estándar</h2>
+      <p>El preprocesador actúa <b>antes</b> del compilador y hace reemplazos de texto. No entiende de tipos
+      ni de sintaxis de C.</p>
+
+      <pre class="code"><code><span class="c-pp">#include</span> <span class="c-str">&lt;stdio.h&gt;</span>       <span class="c-com">// pegar el contenido de ese archivo acá</span>
+<span class="c-pp">#define</span> LED_ON  PORTB |= <span class="c-num">1</span>
+<span class="c-pp">#define</span> MAX(a,b) ((a) &gt; (b) ? (a) : (b))   <span class="c-com">// macro con parámetros</span>
+
+<span class="c-pp">#ifdef</span> DEBUG              <span class="c-com">// compilación condicional</span>
+    <span class="c-fn">printf</span>(<span class="c-str">"valor = %d\n"</span>, x);
+<span class="c-pp">#endif</span>
+
+<span class="c-pp">#ifndef</span> CONFIG_H          <span class="c-com">// guarda de inclusión: evita incluir</span>
+<span class="c-pp">#define</span> CONFIG_H          <span class="c-com">// dos veces el mismo archivo</span>
+    ...
+<span class="c-pp">#endif</span></code></pre>
+
+      <div class="box ojo">
+        <div class="bt">Los paréntesis en las macros no son opcionales</div>
+        <p>Con <code>#define DOBLE(x) x*2</code>, la expresión <code>DOBLE(3+1)</code> se expande a
+        <code>3+1*2</code> = <b>5</b>, no 8. Por eso toda macro se escribe envolviendo cada parámetro y el
+        conjunto entre paréntesis: <code>#define DOBLE(x) ((x)*2)</code>. Cuando se puede, es preferible una
+        función <code>inline</code>, que sí respeta los tipos.</p>
+      </div>
+
+      <h3>Las bibliotecas que se usan</h3>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Cabecera</th><th>Contiene</th><th>Nota para embebidos</th></tr></thead>
+          <tbody>
+            <tr><td><code>&lt;stdio.h&gt;</code></td><td><code>printf</code>, <code>scanf</code>, archivos</td><td><code>printf</code> ocupa varios KB: en un micro chico se reemplaza por una función propia de envío por serie.</td></tr>
+            <tr><td><code>&lt;stdlib.h&gt;</code></td><td><code>atoi</code>, <code>rand</code>, <code>malloc</code></td><td><b>Evitar <code>malloc</code></b> en embebidos: fragmenta la memoria y puede fallar sin aviso.</td></tr>
+            <tr><td><code>&lt;string.h&gt;</code></td><td>Manejo de cadenas y de memoria</td><td><code>memset</code> y <code>memcpy</code> son muy útiles con buffers.</td></tr>
+            <tr><td><code>&lt;math.h&gt;</code></td><td><code>sin</code>, <code>sqrt</code>, <code>pow</code></td><td>Muy pesada. Si alcanza, usar aritmética entera o tablas precalculadas.</td></tr>
+            <tr><td><code>&lt;stdint.h&gt;</code></td><td><code>uint8_t</code>, <code>int16_t</code>, …</td><td><b>Usar siempre</b> en programación de microcontroladores.</td></tr>
+            <tr><td><code>&lt;stdbool.h&gt;</code></td><td><code>bool</code>, <code>true</code>, <code>false</code></td><td>Mejora la legibilidad sin costo.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>En el laboratorio</h2>
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Primer programa y ciclo de compilación</div>
+        <p>Con GCC en línea de comandos (no con un entorno gráfico, para ver los pasos):</p>
+        <pre class="code" style="margin-top:10px"><code>gcc -Wall -c hola.c -o hola.o    <span class="c-com"># compilar a objeto</span>
+gcc hola.o -o hola               <span class="c-com"># enlazar</span>
+./hola                           <span class="c-com"># ejecutar</span>
+gcc -E hola.c &gt; hola.i           <span class="c-com"># ver la salida del PREPROCESADOR</span></code></pre>
+        <p>Abrir <code>hola.i</code> y comprobar que el <code>#include</code> se convirtió en cientos de
+        líneas y que los <code>#define</code> desaparecieron reemplazados por su valor. Es la forma más clara
+        de entender qué hace cada etapa.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Tipos y desbordamiento</div>
+        <p>Escribir un programa que declare un <code>unsigned char</code> en 250 y le sume 1 en un bucle,
+        imprimiendo el valor. Observar cómo salta de 255 a 0. Después imprimir
+        <code>sizeof(int)</code>, <code>sizeof(long)</code>, <code>sizeof(float)</code> y comparar con lo que
+        dicen los apuntes: en la PC del taller <code>int</code> va a ocupar 4 bytes, no 2.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Manipulación de bits</div>
+        <p>Simular un puerto con una variable <code>unsigned char puerto = 0;</code> y escribir funciones
+        <code>set_bit(n)</code>, <code>clear_bit(n)</code>, <code>toggle_bit(n)</code> y
+        <code>get_bit(n)</code>. Imprimir el valor en binario después de cada operación. Es exactamente lo
+        que se va a hacer con registros reales en Electrónica Digital III.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Conversión de un valor de conversor A/D</div>
+        <p>Escribir una función que reciba el valor crudo de un conversor A/D de 10 bits (0 a 1023) y lo
+        convierta a tensión con referencia de 5 V. Hacerlo de dos formas: con <code>float</code> y con
+        aritmética entera en milivolt. Comparar los resultados y reflexionar sobre cuál conviene en un
+        microcontrolador de 8 bits. Es el cálculo que va a aparecer en todos los proyectos de sensores.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Error</th><th>Consecuencia</th></tr></thead>
+          <tbody>
+            <tr><td>Falta un <code>;</code></td><td>Error de compilación, señalado a veces en la línea <b>siguiente</b>. Siempre revisar la línea de arriba de la que marca el compilador.</td></tr>
+            <tr><td><code>=</code> en vez de <code>==</code> en un <code>if</code></td><td>Compila, y la condición siempre resulta verdadera. Compilar con <code>-Wall</code>.</td></tr>
+            <tr><td>Índice de arreglo fuera de rango</td><td>No hay error: se pisa memoria ajena y el fallo aparece mucho después, en otro lado.</td></tr>
+            <tr><td>Variable usada sin inicializar</td><td>Contiene basura. En una PC suele dar cero por casualidad; en un micro, cualquier cosa.</td></tr>
+            <tr><td>División entera cuando se esperaban decimales</td><td><code>7/2</code> da 3. Hay que escribir <code>7.0/2</code> o hacer un <i>cast</i>.</td></tr>
+            <tr><td>Falta <code>volatile</code> en una variable de interrupción</td><td>El optimizador la «congela» y el programa se cuelga esperando un cambio que no ve.</td></tr>
+            <tr><td>Falta <code>break</code> en un <code>switch</code></td><td>Se ejecutan también los casos siguientes.</td></tr>
+            <tr><td>Comparar cadenas con <code>==</code></td><td>Compara direcciones de memoria, no contenidos. Hay que usar <code>strcmp</code>.</td></tr>
+            <tr><td>Macro sin paréntesis</td><td>Resultados aritméticos inesperados por precedencia de operadores.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">11</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuáles son las tres etapas por las que pasa un programa en C hasta ser ejecutable?</summary>
+        <div class="a"><p><b>Preprocesador</b> (resuelve <code>#include</code> y <code>#define</code>),
+        <b>compilador</b> (traduce a código objeto) y <b>enlazador</b> (une los objetos con las bibliotecas y
+        genera el ejecutable o el <code>.hex</code>).</p></div></details>
+
+      <details class="q"><summary>¿Qué imprime <code>unsigned char c = 200; c = c + 100;</code>?</summary>
+        <div class="a"><p><b>44</b>. 300 no entra en 8 bits: 300 − 256 = 44. Es un desbordamiento
+        silencioso.</p></div></details>
+
+      <details class="q"><summary>Escribir la instrucción que pone en 1 el bit 5 de <code>PORTC</code> sin alterar los demás.</summary>
+        <div class="a"><p><code>PORTC |= (1 &lt;&lt; 5);</code><br>
+        Para ponerlo en 0: <code>PORTC &amp;= ~(1 &lt;&lt; 5);</code><br>
+        Para invertirlo: <code>PORTC ^= (1 &lt;&lt; 5);</code></p></div></details>
+
+      <details class="q"><summary>¿Cuántos caracteres útiles entran en <code>char texto[16];</code>?</summary>
+        <div class="a"><p><b>15</b>. El decimosexto lugar lo ocupa el terminador <code>'\0'</code>.</p></div></details>
+
+      <details class="q"><summary>¿Por qué <code>if (strcmp(a, b))</code> hace lo contrario de lo que parece?</summary>
+        <div class="a"><p>Porque <code>strcmp</code> devuelve <b>0 cuando las cadenas son iguales</b>, y en C
+        el 0 es falso. Es decir, esa condición se cumple cuando son <b>distintas</b>. Hay que escribir
+        <code>if (strcmp(a, b) == 0)</code>.</p></div></details>
+
+      <details class="q"><summary>¿Qué diferencia hay entre una variable local y una estática dentro de una función?</summary>
+        <div class="a"><p>La <b>local</b> se crea al entrar a la función y se destruye al salir, perdiendo su
+        valor. La <b>estática</b> (<code>static</code>) conserva su valor entre llamadas sucesivas, aunque
+        sigue siendo invisible desde afuera de la función.</p></div></details>
+
+      <details class="q"><summary>¿Cuándo es obligatorio declarar una variable como <code>volatile</code>?</summary>
+        <div class="a"><p>Cuando puede cambiar por fuera del flujo normal del programa: variables modificadas
+        por una <b>interrupción</b>, o mapeadas a un <b>registro de hardware</b>. Sin <code>volatile</code>,
+        el optimizador puede asumir que nadie la cambia y usar una copia en un registro.</p></div></details>
+
+      <details class="q"><summary>¿Por qué se recomienda usar <code>uint8_t</code> en vez de <code>unsigned char</code>?</summary>
+        <div class="a"><p>Porque el tamaño de los tipos básicos de C <b>depende de la plataforma</b>. Los
+        tipos de <code>&lt;stdint.h&gt;</code> declaran explícitamente la cantidad de bits, así que el
+        programa se comporta igual al portarlo a otro microcontrolador o a una PC.</p></div></details>
+
+      <details class="q"><summary>¿Qué imprime <code>printf("%d", 7/2);</code>? ¿Y cómo se obtiene 3,5?</summary>
+        <div class="a"><p>Imprime <b>3</b>: la división entre dos enteros es entera y trunca. Para obtener
+        3,5 hay que forzar punto flotante: <code>7.0/2</code> o <code>(float)7/2</code>, e imprimirlo con
+        <code>%f</code>.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/corrientes-alternas">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Corrientes alternas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/entornos-c-cpp">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Entornos de desarrollo C y C++</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Elementos básicos del lenguaje C»</b> de <b>Informática Electrónica I</b> (4° año),
+  según la «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
