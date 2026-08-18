@@ -143,6 +143,47 @@ function sacarComun(textos){
     console.log(String(dir).padEnd(28), '→', n, 'secciones');
   }
 
+  /* páginas de tema del Mapa de la Tecnicatura: son HTML estáticos de una
+     sola vista, pero muy largos, así que se indexa una entrada por sección
+     (con su ancla) además de la portada. El equivalente de las pestañas. */
+  const TEMAS = path.join(RAIZ, 'publicaciones/mapa-electronica/temas');
+  if (fs.existsSync(TEMAS)) {
+    const archivos = fs.readdirSync(TEMAS).filter(f => f.endsWith('.html')).sort();
+    let secs = 0;
+    for (const f of archivos) {
+      await p.goto('file://' + path.join(TEMAS, f));
+      await p.waitForTimeout(400);
+      const titulo = limpiar(await p.title()).replace(/\s*·\s*Catto\s*$/i, '');
+      const partes = titulo.split('·').map(x => x.trim());
+      const tema = partes[0] || titulo;
+      const materia = partes[1] || 'Tecnicatura en Electrónica';
+      const base = '/publicaciones/mapa-electronica/temas/' + f.replace(/\.html$/, '');
+
+      const datos = await p.evaluate(() => {
+        const cab = document.querySelector('.doc');
+        const portada = [...(cab ? cab.children : [])]
+          .filter(e => !e.matches('section') && !e.matches('hr'))
+          .map(e => e.innerText).join(' ');
+        const secciones = [...document.querySelectorAll('.doc section[id]')].map(s => {
+          const h2 = s.querySelector('h2');
+          const t = h2 ? h2.innerText.replace(/^\d+\s*/, '').trim() : s.id;
+          return { id: s.id, t, x: s.innerText };
+        });
+        return { portada, secciones };
+      });
+
+      entradas.push({ t: tema, d: 'Tema · ' + materia, u: base,
+                      x: limpiar(datos.portada).slice(0, 900) });
+      for (const s of datos.secciones) {
+        const txt = limpiar(s.x).slice(0, 1600);
+        if (txt.length < 80) continue;
+        entradas.push({ t: s.t, d: tema + ' · ' + materia, u: base + '#' + s.id, x: txt });
+        secs++;
+      }
+    }
+    console.log('temas'.padEnd(28), '→', archivos.length, 'páginas ·', secs, 'secciones');
+  }
+
   /* páginas sueltas */
   for (const [arch, url, titulo] of SUELTAS) {
     await p.goto('file://' + path.join(RAIZ, arch));
