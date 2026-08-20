@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instrumentos de medida digitales · Electrónica Digital II · Catto</title>
+<meta name="description" content="Arquitectura de un instrumento digital: acondicionamiento, conversor de doble rampa, contador y display. Multímetros: cuentas, dígitos, exactitud, True RMS, tensión de carga y categorías de seguridad. Frecuencímetros y osciloscopios digitales. Eje temático de Electrónica Digital II, 5° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/instrumentos-digitales">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital II</a>
+    <span class="anio">5° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital II</span> · 96 h · Eje 3 de 4</div>
+    <h1>Instrumentos de medida digitales</h1>
+    <p class="lead">Un instrumento digital no es un instrumento analógico con pantalla de números. Adentro
+    hay una cadena distinta, con errores distintos, y una manera propia de mentir: la de mostrar cinco
+    dígitos firmes de un valor que no es exacto en ninguno de ellos.</p>
+    <div class="chips">
+      <span class="chip hi">Medición</span>
+      <span class="chip">Multímetro</span>
+      <span class="chip">Doble rampa</span>
+      <span class="chip">Frecuencímetro</span>
+      <span class="chip">Exactitud</span>
+    </div>
+    <hr class="rule">
+
+    <section id="analogico-digital">
+      <h2><span class="n">01</span>Qué cambió respecto del instrumento de aguja</h2>
+      <p>En <a href="/publicaciones/mapa-electronica/temas/instrumentos-analogicos">instrumentos analógicos</a>
+      la medición era un fenómeno físico: una corriente producía un par sobre una bobina y la aguja se
+      quedaba donde ese par se equilibraba con el resorte. Acá la medición es un <b>número</b>, y todo el
+      instrumento existe para producirlo.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th>Analógico</th><th>Digital</th></tr></thead>
+          <tbody>
+            <tr><td><b>Lectura</b></td><td>Interpretada por el operador sobre una escala</td><td>Numérica, sin interpretación</td></tr>
+            <tr><td><b>Error de lectura</b></td><td>Paralaje, interpolación entre marcas</td><td>Ninguno: el número es el que es</td></tr>
+            <tr><td><b>Impedancia de entrada</b></td><td>20 kΩ/V típico: <b>carga el circuito</b></td><td>10 MΩ constante en todos los rangos</td></tr>
+            <tr><td><b>Señales que varían</b></td><td>Se ve la tendencia en la aguja</td><td>Los dígitos bailan y no se entiende nada</td></tr>
+            <tr><td><b>Ajuste a cero</b></td><td>Mecánico y del óhmetro, cada vez</td><td>Automático, interno</td></tr>
+            <tr><td><b>Rango</b></td><td>Manual siempre</td><td>Autorango</td></tr>
+            <tr><td><b>Robustez</b></td><td>El movimiento se daña con un golpe</td><td>Electrónica sin partes móviles</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Lo único que el analógico hace mejor</div>
+        <p>Ver <b>cómo cambia</b> una magnitud. Ajustar un preset al máximo, buscar un pico, seguir la carga
+        de un capacitor: la aguja lo muestra de un vistazo y los dígitos no. Por eso muchos multímetros
+        digitales de buena calidad traen un <b>bargraph</b> analógico debajo del número: es exactamente esa
+        función la que se estaba perdiendo.</p>
+      </div>
+    </section>
+
+    <section id="arquitectura">
+      <h2><span class="n">02</span>Arquitectura de un instrumento digital</h2>
+      <p>Todos los instrumentos digitales —multímetro, frecuencímetro, capacímetro, balanza— comparten el
+      mismo esqueleto. Cambia el primer bloque, que es el que traduce la magnitud a una tensión.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 250" role="img" aria-label="Diagrama en bloques de un instrumento digital" class="svg-t">
+          <style>.iq-b{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
+          .iq-n{fill:#e6edf3;font-size:12px;text-anchor:middle;font-weight:600}
+          .iq-s{fill:#9aa7b4;font-size:10px;text-anchor:middle}
+          .iq-d{fill:#7d8a99;font-size:10.5px;text-anchor:middle}</style>
+          <rect class="iq-b" x="16"  y="56" width="104" height="64" rx="9"/>
+          <text class="iq-n" x="68" y="80">Entrada</text><text class="iq-s" x="68" y="98">atenuador,</text><text class="iq-s" x="68" y="112">shunt, rectificador</text>
+          <rect class="iq-b" x="152" y="56" width="104" height="64" rx="9"/>
+          <text class="iq-n" x="204" y="80">Amplificador</text><text class="iq-s" x="204" y="98">de instrumentación</text><text class="iq-s" x="204" y="112">y filtro</text>
+          <rect class="iq-b" x="288" y="56" width="104" height="64" rx="9" stroke="#3fb950"/>
+          <text class="iq-n" x="340" y="80">Conversor</text><text class="iq-s" x="340" y="98">A/D de doble</text><text class="iq-s" x="340" y="112">rampa</text>
+          <rect class="iq-b" x="424" y="56" width="104" height="64" rx="9"/>
+          <text class="iq-n" x="476" y="80">Contador</text><text class="iq-s" x="476" y="98">y control</text><text class="iq-s" x="476" y="112">del rango</text>
+          <rect class="iq-b" x="560" y="56" width="104" height="64" rx="9" stroke="#a371f7"/>
+          <text class="iq-n" x="612" y="80">Display</text><text class="iq-s" x="612" y="98">LCD con</text><text class="iq-s" x="612" y="112">multiplexado</text>
+          <g stroke="#9aa7b4" stroke-width="1.6" fill="none">
+            <line x1="120" y1="88" x2="152" y2="88"/><polygon points="152,88 144,84 144,92" fill="#9aa7b4"/>
+            <line x1="256" y1="88" x2="288" y2="88"/><polygon points="288,88 280,84 280,92" fill="#9aa7b4"/>
+            <line x1="392" y1="88" x2="424" y2="88"/><polygon points="424,88 416,84 416,92" fill="#9aa7b4"/>
+            <line x1="528" y1="88" x2="560" y2="88"/><polygon points="560,88 552,84 552,92" fill="#9aa7b4"/>
+          </g>
+          <rect class="iq-b" x="288" y="164" width="240" height="46" rx="9" stroke="#d29922"/>
+          <text class="iq-n" x="408" y="184">Referencia de tensión</text>
+          <text class="iq-s" x="408" y="200">de ella depende toda la exactitud del aparato</text>
+          <path d="M408,164 V140 h-68 v-20" fill="none" stroke="#d29922" stroke-width="1.6"/>
+          <polygon points="340,120 336,128 344,128" fill="#d29922"/>
+          <path d="M476,140 v-20" fill="none" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="iq-d" x="340" y="238">El bloque de entrada es lo único que cambia entre un voltímetro, un frecuencímetro y una balanza</text>
+        </svg>
+        <figcaption><b>Figura 1.</b> Esqueleto común. La <b>referencia de tensión</b> es el patrón contra el
+        que se compara todo: si deriva con la temperatura o con los años, el instrumento entero se corre, sin
+        que nada parezca fallar.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">El autorango</div>
+        <p>El bloque de control mira el resultado de cada conversión. Si el número supera el fondo de escala
+        (<i>overflow</i>: la pantalla muestra «1» sola o «OL»), sube de rango; si queda por debajo del 10 %,
+        baja, y así aprovecha todos los dígitos. Es cómodo, pero tiene dos costos: <b>tarda</b> mientras
+        busca, y en una señal que cambia mucho puede quedar saltando entre dos rangos. Por eso todo
+        multímetro decente tiene una tecla <b>RANGE</b> para fijarlo a mano, que es lo que conviene usar
+        cuando se está ajustando algo.</p>
+      </div>
+    </section>
+
+    <section id="doble-rampa">
+      <h2><span class="n">03</span>El conversor de doble rampa</h2>
+      <p>Es el corazón de casi todos los multímetros. Ya se lo nombró en
+      <a href="/publicaciones/mapa-electronica/temas/conversores-ad-da">conversores A/D y D/A</a>; acá se lo
+      ve en detalle, porque explica de dónde salen sus tres virtudes: exactitud, inmunidad al ruido de red y
+      costo bajo.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 344" role="img" aria-label="Conversion por doble rampa" class="svg-t" data-anim>
+          <style>.dr-d{fill:#7d8a99;font-size:10.5px}.dr-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="70" y1="250" x2="660" y2="250" stroke="#2a3140" stroke-width="1.4"/>
+          <line x1="70" y1="250" x2="70" y2="54" stroke="#2a3140" stroke-width="1.4"/>
+          <text class="dr-d" x="66" y="50" text-anchor="end">salida del</text>
+          <text class="dr-d" x="66" y="64" text-anchor="end">integrador</text>
+          <path d="M100,250 L300,187.0 L391.0,250" fill="none" stroke="#7d8a99" stroke-width="1.8" stroke-dasharray="6 5"/>
+          <text class="dr-d" x="314.0" y="179.0">entrada menor: la rampa sube menos y se descarga antes</text>
+          <path d="M100,250 L300,106.0 L508.0,250" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <circle cx="100" cy="250" r="6" fill="#ffa657"><animate attributeName="cx" values="100;300;508.0" keyTimes="0;0.5;1" dur="6s" repeatCount="indefinite"/><animate attributeName="cy" values="250;106.0;250" keyTimes="0;0.5;1" dur="6s" repeatCount="indefinite"/></circle>
+          <line x1="300" y1="250" x2="300" y2="60" stroke="#2a3140" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="100" y1="272" x2="300" y2="272" stroke="#58a6ff" stroke-width="1.5"/>
+          <line x1="100" y1="266" x2="100" y2="278" stroke="#58a6ff" stroke-width="1.5"/>
+          <line x1="300" y1="266" x2="300" y2="278" stroke="#58a6ff" stroke-width="1.5"/>
+          <text class="dr-l" x="200" y="290" text-anchor="middle" fill="#58a6ff">t₁ fijo · integra la entrada</text>
+          <line x1="300" y1="272" x2="508.0" y2="272" stroke="#ffa657" stroke-width="1.5"/>
+          <line x1="508.0" y1="266" x2="508.0" y2="278" stroke="#ffa657" stroke-width="1.5"/>
+          <text class="dr-l" x="404.0" y="290" text-anchor="middle" fill="#ffa657">t₂ · se cuenta</text>
+          <rect x="300" y="302" width="0" height="10" rx="3" fill="#ffa657" opacity=".55"><animate attributeName="width" values="0;0;208.0" keyTimes="0;0.5;1" dur="6s" repeatCount="indefinite"/></rect>
+          <text class="dr-d" x="306" y="326">el contador corre sólo durante t₂: su valor final es la lectura</text>
+          <text class="dr-d" x="126" y="152">pendiente ∝ V<tspan baseline-shift="sub" font-size="8">in</tspan></text>
+          <text class="dr-d" x="390" y="192">pendiente fija (−V<tspan baseline-shift="sub" font-size="8">ref</tspan>)</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> Doble rampa, animada. Primero se integra la entrada durante un tiempo
+        <b>fijo</b>: cuanto mayor la tensión, más empinada la rampa. Después se descarga con la referencia, a
+        pendiente <b>fija</b>, y se cuenta cuánto tarda. Ese tiempo es proporcional a la entrada.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>V</mi><mrow><mi>i</mi><mi>n</mi></mrow></msub><mo>=</mo><msub><mi>V</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mo>·</mo><mfrac><msub><mi>t</mi><mn>2</mn></msub><msub><mi>t</mi><mn>1</mn></msub></mfrac></mrow></math>
+        <span class="cap">Ni R ni C aparecen en el resultado: se cancelan entre las dos rampas. Por eso el
+        conversor no depende de la tolerancia del capacitor ni de su deriva térmica.</span>
+      </div>
+
+      <div class="g2">
+        <div class="box key">
+          <div class="bt">Por qué es tan exacto</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>R y C se cancelan: sólo importan V<sub>ref</sub> y el reloj.</li>
+            <li>El reloj se cancela también, porque los dos tiempos se miden con el mismo.</li>
+            <li>Queda un único patrón crítico: la <b>referencia de tensión</b>.</li>
+          </ul>
+        </div>
+        <div class="box key">
+          <div class="bt">Por qué ignora los 50 Hz</div>
+          <p>La primera rampa <b>promedia</b> la entrada durante t<sub>1</sub>. Si t<sub>1</sub> es un
+          múltiplo exacto de 20 ms, cualquier interferencia de red aporta lo mismo por arriba y por abajo del
+          cero: se cancela sola. Es lo que en las hojas de datos se llama <b>NMR</b> (normal mode rejection)
+          y da 60 dB o más a 50 Hz.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">La contra: es lento</div>
+        <p>Entre las dos rampas y el autocero, una medición completa lleva de <b>10 a 400 ms</b>. Un
+        multímetro típico refresca dos o tres veces por segundo, y ese es su límite físico, no una limitación
+        del display. Para señales que cambian rápido no sirve: hay que ir al
+        <a href="/publicaciones/mapa-electronica/temas/osciloscopio">osciloscopio</a>.</p>
+      </div>
+    </section>
+
+    <section id="multimetro">
+      <h2><span class="n">04</span>El multímetro digital: cómo se lee su especificación</h2>
+
+      <h3>Cuentas y dígitos</h3>
+      <p>Un multímetro «de 3½ dígitos» tiene tres dígitos completos (0 a 9) y uno que sólo puede valer 0 o 1:
+      llega hasta <b>1999</b>, que son <b>2000 cuentas</b>. La «cuenta» es la unidad de resolución, y define
+      cuánto vale el último dígito en cada rango.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Dígitos</th><th class="c">Cuentas</th><th class="c">Máxima lectura</th><th class="c">Resolución en 20 V</th><th>Categoría de instrumento</th></tr></thead>
+          <tbody>
+            <tr><td class="c">3½</td><td class="c">2000</td><td class="c">1999</td><td class="c">10 mV</td><td>Multímetro de bolsillo</td></tr>
+            <tr><td class="c">3¾</td><td class="c">4000</td><td class="c">3999</td><td class="c">10 mV</td><td>De taller, gama media</td></tr>
+            <tr><td class="c">4½</td><td class="c">20 000</td><td class="c">19 999</td><td class="c">1 mV</td><td>De banco, laboratorio</td></tr>
+            <tr><td class="c">6½</td><td class="c">2 000 000</td><td class="c">1 999 999</td><td class="c">10 µV</td><td>Patrón de calibración</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Exactitud: no es lo mismo que resolución</h3>
+      <p>La resolución es <b>cuántos números puede mostrar</b>; la exactitud, <b>cuánto se parecen al valor
+      verdadero</b>. Se especifica siempre con dos términos:</p>
+
+      <div class="form">
+        <math display="block"><mrow><mi>e</mi><mo>=</mo><mo>±</mo><mo>(</mo><mi>a</mi><mo>%</mo><mspace width="4px"/><mtext>de la lectura</mtext><mo>+</mo><mi>n</mi><mspace width="4px"/><mtext>dígitos</mtext><mo>)</mo></mrow></math>
+        <span class="cap">El primer término crece con lo que se mide; el segundo es fijo y domina en las
+        lecturas chicas.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Cuánto vale realmente lo que muestra</div>
+        <p>Multímetro de 3½ dígitos, especificación en continua ±(0,5 % + 3 dígitos). Se mide en el rango de
+        <b>20 V</b> (resolución 10 mV) y la pantalla muestra <b>12,45 V</b>.</p>
+        <ul>
+          <li>0,5 % de 12,45 V = <b>62,3 mV</b></li>
+          <li>3 dígitos × 10 mV = <b>30 mV</b></li>
+          <li>Error total: ±92,3 mV ≈ <b>±0,09 V</b></li>
+        </ul>
+        <p>El valor verdadero está entre <b>12,36 V y 12,54 V</b>. La pantalla muestra centésimas, pero la
+        última cifra confiable es la de las décimas. <b>Informar «12,45 V» sin el error es informar de
+        más.</b></p>
+        <p style="margin-top:10px">Ahora la misma medición en el rango de <b>200 V</b> (resolución 100 mV):
+        0,5 % de 12,4 = 62 mV, más 3 × 100 mV = 300 mV, total <b>±0,36 V</b>. Cuatro veces peor sólo por
+        haber dejado el rango alto. <b>Siempre el rango más bajo que no se pase.</b></p>
+      </div>
+
+      <h3>Las cuatro trampas del multímetro digital</h3>
+      <div class="g2">
+        <div class="box ojo">
+          <div class="bt">Valor medio calibrado</div>
+          <p>En alterna, casi todos los económicos rectifican y multiplican por 1,111: sólo aciertan con
+          senoidal pura. Con la salida de un dimmer o de una fuente conmutada el error llega al 40 %. Hace
+          falta <b>True RMS</b>, como se explica en
+          <a href="/publicaciones/mapa-electronica/temas/mediciones-ca">mediciones en CA</a>.</p>
+        </div>
+        <div class="box ojo">
+          <div class="bt">Tensión de carga en corriente</div>
+          <p>Para medir corriente el instrumento intercala un <b>shunt</b>. Esa resistencia deja caer tensión
+          (<i>burden voltage</i>): típicamente 200 mV a fondo de escala. En un circuito de 3,3 V esa caída
+          cambia lo que se está midiendo. Con corrientes chicas conviene usar el rango de mA, no el de 10 A,
+          y siempre revisar el dato en el manual.</p>
+        </div>
+        <div class="box ojo">
+          <div class="bt">Ancho de banda</div>
+          <p>La escala de alterna suele estar especificada de 40 Hz a 400 Hz o 1 kHz. Fuera de ahí la lectura
+          cae sin avisar. Medir la salida de un amplificador de audio a 10 kHz con un multímetro común da un
+          número, y ese número está mal.</p>
+        </div>
+        <div class="box peligro">
+          <div class="bt">Categoría de seguridad</div>
+          <p><b>CAT II</b> tomacorrientes, <b>CAT III</b> tableros y distribución fija, <b>CAT IV</b> acometida
+          y medidor. La categoría no habla de la tensión que mide sino de la energía de un transitorio que
+          puede aguantar sin explotar. Un instrumento CAT II en un tablero industrial es un accidente
+          esperando pasar, y las puntas también tienen categoría.</p>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Funciones que conviene conocer</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Continuidad con zumbador</b>: mide sin mirar la pantalla, indispensable arriba de una
+          escalera.</li>
+          <li><b>Prueba de diodos</b>: inyecta ~1 mA y muestra la caída directa. 0,6 V es silicio, 0,3 V
+          germanio o Schottky, 1,8 V un LED rojo.</li>
+          <li><b>HOLD</b>: congela la lectura, para medir en un lugar donde no se ve la pantalla.</li>
+          <li><b>MIN/MAX</b>: registra extremos; sirve para cazar un pico de arranque de motor.</li>
+          <li><b>REL / cero relativo</b>: descuenta la lectura actual. Es la forma de restar la resistencia
+          de las puntas al medir valores bajos.</li>
+          <li><b>Baja impedancia (LoZ)</b>: descarga las tensiones fantasma que aparecen por acoplamiento
+          capacitivo en cables largos y hacen creer que un conductor está vivo.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="frecuencimetro">
+      <h2><span class="n">05</span>El frecuencímetro digital</h2>
+      <p>Es el caso más puro de instrumento digital: no convierte nada, <b>cuenta</b>. Y lo que cuenta es
+      exactamente lo que se quiere medir.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 280" role="img" aria-label="Conteo por puerta de tiempo" class="svg-t" data-anim>
+          <style>.pu-d{fill:#7d8a99;font-size:10.5px}.pu-l{fill:#9aa7b4;font-size:11px}</style>
+          <rect x="246.0" y="46" width="308.0" height="72" rx="6" fill="#3fb950" opacity=".10"/>
+          <line x1="246.0" y1="46" x2="246.0" y2="118" stroke="#3fb950" stroke-width="1.6"/>
+          <line x1="554.0" y1="46" x2="554.0" y2="118" stroke="#3fb950" stroke-width="1.6"/>
+          <text class="pu-l" x="400.0" y="38" text-anchor="middle" fill="#3fb950">puerta abierta durante exactamente 1 s</text>
+          <path d="M62.0,96.0 L83.0,96.0 L83.0,62.0 L101.0,62.0 L101.0,96.0 L127.0,96.0 L127.0,62.0 L145.0,62.0 L145.0,96.0 L171.0,96.0 L171.0,62.0 L189.0,62.0 L189.0,96.0 L215.0,96.0 L215.0,62.0 L233.0,62.0 L233.0,96.0 L259.0,96.0 L259.0,62.0 L277.0,62.0 L277.0,96.0 L303.0,96.0 L303.0,62.0 L321.0,62.0 L321.0,96.0 L347.0,96.0 L347.0,62.0 L365.0,62.0 L365.0,96.0 L391.0,96.0 L391.0,62.0 L409.0,62.0 L409.0,96.0 L435.0,96.0 L435.0,62.0 L453.0,62.0 L453.0,96.0 L479.0,96.0 L479.0,62.0 L497.0,62.0 L497.0,96.0 L523.0,96.0 L523.0,62.0 L541.0,62.0 L541.0,96.0 L567.0,96.0 L567.0,62.0 L585.0,62.0 L585.0,96.0 L620.0,96.0" fill="none" stroke="#58a6ff" stroke-width="2"/>
+          <text class="pu-d" x="56.0" y="92.0" text-anchor="end">señal</text>
+          <g><line x1="92.0" y1="42" x2="92.0" y2="180" stroke="#f85149" stroke-width="1.5"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.0 0;44.0 0;88.0 0;132.0 0;176.0 0;220.0 0;264.0 0;308.0 0;352.0 0;396.0 0;440.0 0;484.0 0" dur="8s" repeatCount="indefinite"/></g>
+          <rect x="264" y="150" width="150" height="60" rx="10" fill="#11161e" stroke="#2a3140"/>
+          <clipPath id="pu-win"><rect x="265" y="151" width="148" height="58"/></clipPath>
+          <g clip-path="url(#pu-win)"><g>
+          <text x="339" y="192" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">0</text>
+          <text x="339" y="252" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">1</text>
+          <text x="339" y="312" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">2</text>
+          <text x="339" y="372" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">3</text>
+          <text x="339" y="432" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">4</text>
+          <text x="339" y="492" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">5</text>
+          <text x="339" y="552" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">6</text>
+          <text x="339" y="612" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">7</text>
+          <animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 0;0 0;0 0;0 0;0 -60;0 -120;0 -180;0 -240;0 -300;0 -360;0 -420;0 -420" dur="8s" repeatCount="indefinite"/>
+          </g></g>
+          <text class="pu-d" x="339" y="144" text-anchor="middle">contador</text>
+          <text class="pu-d" x="339" y="228" text-anchor="middle">N ciclos en 1 s = N hertz</text>
+          <text class="pu-l" x="60" y="252">Los pulsos que quedan fuera de la ventana no se cuentan. El del borde puede entrar o no:</text>
+          <text class="pu-l" x="60" y="270" fill="#f85149">de ahí la incertidumbre de ±1 cuenta, que pesa mucho cuando N es chico.</text>
+          </svg>
+        <figcaption><b>Figura 3.</b> Conteo por puerta, animado. La base de tiempo abre la compuerta durante
+        exactamente un segundo; los ciclos que entran en esa ventana son los hertz. Los pulsos que quedan
+        fuera no se cuentan, y el último puede entrar o no: de ahí la incertidumbre de ±1 cuenta.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><mi>f</mi><mo>=</mo><mfrac><mi>N</mi><msub><mi>t</mi><mrow><mi>p</mi><mi>u</mi><mi>e</mi><mi>r</mi><mi>t</mi><mi>a</mi></mrow></msub></mfrac><mspace width="30px"/><mfrac><mrow><mi>Δ</mi><mi>f</mi></mrow><mi>f</mi></mfrac><mo>=</mo><mfrac><mn>1</mn><mi>N</mi></mfrac><mo>+</mo><mfrac><mrow><mi>Δ</mi><msub><mi>t</mi><mn>0</mn></msub></mrow><msub><mi>t</mi><mn>0</mn></msub></mfrac></mrow></math>
+        <span class="cap">Dos errores se suman: el de ±1 cuenta, que pesa en frecuencias bajas, y el del
+        cristal de la base de tiempo, que pesa en las altas.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Los dos errores, cada uno en su terreno</div>
+        <p>Frecuencímetro con base de tiempo de 1 s y cristal de <b>10 ppm</b>:</p>
+        <ul>
+          <li>Midiendo <b>50 Hz</b>: N = 50, el error de conteo es 1/50 = <b>2 %</b>, y el del cristal
+          0,001 %. Manda el conteo. Conviene medir el <b>período</b>.</li>
+          <li>Midiendo <b>10 MHz</b>: N = 10<sup>7</sup>, el error de conteo es 0,00001 %, y el del cristal
+          10 ppm = <b>0,001 %</b>, o sea ±100 Hz. Manda el cristal.</li>
+        </ul>
+        <p>Por eso los frecuencímetros de laboratorio traen un oscilador compensado en temperatura (TCXO) o
+        en horno (OCXO), y por eso los buenos tienen entrada para un patrón externo de 10 MHz.</p>
+      </div>
+
+      <div class="g3">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Medir período</div>
+          <p>Se invierte el papel: la señal abre la puerta y se cuentan pulsos del reloj patrón. Para 50 Hz
+          con un reloj de 10 MHz entran 200 000 cuentas: el error de ±1 cuenta cae a 0,0005 %.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Prescaler</div>
+          <p>Por encima de la velocidad del contador, se divide la señal por 10, 64 o 256 antes de contarla y
+          se compensa el resultado. Es lo que permite llegar a UHF.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Recíproco</div>
+          <p>Los instrumentos modernos miden siempre el período de un número entero de ciclos y calculan la
+          frecuencia. Da resolución constante en dígitos, sin importar la frecuencia.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">El acondicionador de entrada</div>
+        <p>Antes del contador hay un <b>Schmitt trigger</b> que convierte cualquier forma de onda en pulsos
+        limpios. Su histéresis es lo que evita que el ruido superpuesto haga cruzar el umbral varias veces
+        por ciclo. Si la señal es muy chica, muy sucia o tiene componente continua, el frecuencímetro lee
+        cualquier cosa o no lee nada: hay que acoplarla en alterna y, si hace falta, amplificarla.</p>
+      </div>
+    </section>
+
+    <section id="otros">
+      <h2><span class="n">06</span>Otros instrumentos digitales del taller</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Instrumento</th><th>Qué mide y cómo</th><th>Lo que hay que mirar</th></tr></thead>
+          <tbody>
+            <tr><td><b>Capacímetro</b></td><td>Carga el capacitor con corriente constante y mide el tiempo, o mide la frecuencia de un oscilador que lo incluye.</td><td>Los electrolíticos tienen ±20 % de tolerancia: un valor «raro» puede ser normal. No mide la resistencia serie (ESR), que es la falla más común.</td></tr>
+            <tr><td><b>Medidor de ESR</b></td><td>Inyecta una señal de ~100 kHz y mide la parte resistiva.</td><td>Es el instrumento que realmente encuentra los electrolíticos secos de una fuente conmutada, con el capacitor todavía en la plaqueta.</td></tr>
+            <tr><td><b>Puente LCR</b></td><td>Mide módulo y fase de la impedancia a una frecuencia elegida.</td><td>La frecuencia de prueba importa: una bobina no vale lo mismo a 100 Hz que a 100 kHz. Se ve en <a href="/publicaciones/mapa-electronica/temas/mediciones-impedancia">mediciones de circuitos estándares</a>.</td></tr>
+            <tr><td><b>Osciloscopio digital</b></td><td>Muestrea y guarda; después dibuja.</td><td>Velocidad de muestreo, profundidad de memoria y ancho de banda real. Y el aliasing, que en un digital es un peligro concreto.</td></tr>
+            <tr><td><b>Pinza amperométrica</b></td><td>Mide el campo magnético alrededor del conductor con un núcleo partido o un sensor Hall.</td><td>Las de transformador sólo miden alterna; las de efecto Hall miden también continua. Hay que abrazar <b>un solo</b> conductor.</td></tr>
+            <tr><td><b>Registrador (data logger)</b></td><td>Un instrumento digital con memoria y reloj.</td><td>Convierte una medición en una serie temporal: es lo que permite encontrar la falla que aparece a las tres de la mañana.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">El osciloscopio digital merece una advertencia aparte</div>
+        <p>Sus dos especificaciones se confunden todo el tiempo. El <b>ancho de banda</b> (por ejemplo
+        100 MHz) es analógico: dice hasta qué frecuencia la señal llega entera al conversor. La
+        <b>velocidad de muestreo</b> (por ejemplo 1 GSa/s) dice cuántas muestras por segundo toma. La regla
+        práctica es que el muestreo sea de <b>5 a 10 veces</b> el ancho de banda; si un equipo declara
+        100 MHz y 100 MSa/s, la cuenta no cierra y con señales rápidas va a mostrar formas que no
+        existen.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Resolución contra exactitud</div>
+        <p>Medir una misma pila con todos los multímetros del taller y anotar las lecturas. Van a diferir en
+        la última cifra o en dos. Buscar en cada manual la especificación y calcular el intervalo de error de
+        cada uno: se verá que <b>todos los intervalos se superponen</b> y que ninguno contradice a los demás.
+        Es la mejor forma de entender que un dígito más no es un valor más verdadero.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · La tensión de carga, medida</div>
+        <p>Armar un LED con su resistencia limitadora a 5 V. Medir la corriente en el rango de mA y anotar.
+        Después medir la tensión sobre el LED con y sin el amperímetro intercalado. La diferencia es la
+        <b>tensión de carga</b> del instrumento. Repetir en el rango de 10 A y comparar: el shunt es
+        distinto.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Rechazo de los 50 Hz</div>
+        <p>Medir una pila con el multímetro y anotar. Después acercar el cable de las puntas a un cable de
+        red (sin tocarlo) y volver a medir: la lectura casi no cambia, porque la doble rampa promedia. Repetir
+        lo mismo con el osciloscopio en continua: ahí sí se ve el zumbido superpuesto. Dos instrumentos, dos
+        respuestas distintas al mismo ruido.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Frecuencia contra período</div>
+        <p>Medir una señal de 50 Hz del generador con el frecuencímetro en modo frecuencia, puerta de 1 s, y
+        anotar cuánto fluctúa el último dígito. Pasar a modo período y comparar la estabilidad. Después medir
+        1 MHz en los dos modos: ahí la ventaja se invierte. Armar una tabla con los cuatro casos.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Antes de medir en un tablero</div>
+        <p>Verificar la categoría del instrumento y de las <b>puntas</b>, que el fusible sea el original (no
+        un alambre), que las puntas no tengan el aislante rajado y que el selector no esté en corriente
+        cuando se va a medir tensión. Poner un multímetro en modo amperímetro sobre 220 V es un cortocircuito
+        franco: por eso los buenos avisan con un zumbador cuando el cable está en el borne de corriente y el
+        selector en tensión.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>Dos multímetros dan valores distintos</td><td>Normal si la diferencia entra en el error de cada uno. Recién es problema si los intervalos no se superponen.</td></tr>
+            <tr><td>La lectura de alterna es 0 con una señal que existe</td><td>Frecuencia fuera del ancho de banda, o entrada acoplada en continua sobre una señal chica montada en un valor grande.</td></tr>
+            <tr><td>Mide tensión donde no hay nada conectado</td><td>Tensión fantasma por acoplamiento capacitivo en cables largos, y la entrada de 10 MΩ no la descarga. Usar el modo LoZ.</td></tr>
+            <tr><td>El circuito deja de funcionar cuando se intercala el amperímetro</td><td>Tensión de carga del shunt. Cambiar de rango o medir la caída sobre una resistencia conocida.</td></tr>
+            <tr><td>La resistencia medida es mayor que la del resistor</td><td>Se está midiendo con el circuito alimentado o con otro componente en paralelo. Y en valores bajos, la resistencia de las puntas: usar REL.</td></tr>
+            <tr><td>El display muestra «1» sola o «OL»</td><td>Fuera de rango, no falla. Subir de rango.</td></tr>
+            <tr><td>El frecuencímetro salta o lee el doble</td><td>Señal con ruido cruzando dos veces el umbral del Schmitt, o amplitud insuficiente.</td></tr>
+            <tr><td>La lectura se corre con los meses</td><td>Deriva de la referencia de tensión. El instrumento necesita calibración: es un servicio con patrón trazable, no un preset que se toca a ojo.</td></tr>
+            <tr><td>Con las pilas gastadas el aparato mide mal antes de avisar</td><td>Varios modelos pierden exactitud antes de mostrar el símbolo de batería baja. Cambiarlas ante cualquier lectura sospechosa.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuántas cuentas tiene un multímetro de 4½ dígitos y cuál es su máxima lectura?</summary>
+        <div class="a"><p>20 000 cuentas, y muestra hasta <b>19 999</b>. El «medio dígito» es el de la
+        izquierda, que sólo puede valer 0 o 1.</p></div></details>
+
+      <details class="q"><summary>Un multímetro de ±(0,8 % + 2 díg) en el rango de 200 V muestra 118,5 V. ¿Cuál es el error?</summary>
+        <div class="a"><p>La resolución en 200 V con 3½ dígitos es 0,1 V. Entonces: 0,8 % de 118,5 = 0,95 V,
+        más 2 × 0,1 = 0,2 V. Error total <b>±1,15 V</b>: el valor verdadero está entre 117,4 y
+        119,7 V.</p></div></details>
+
+      <details class="q"><summary>¿Por qué en la doble rampa no importa la tolerancia del capacitor?</summary>
+        <div class="a"><p>Porque el mismo capacitor se usa para cargar y para descargar. En el cociente
+        t<sub>2</sub>/t<sub>1</sub> el producto RC se cancela, y el resultado depende sólo de la referencia de
+        tensión.</p></div></details>
+
+      <details class="q"><summary>¿Qué tiempo de integración conviene en un país con red de 50 Hz y por qué?</summary>
+        <div class="a"><p>Un múltiplo de <b>20 ms</b> (el período de la red): 20, 40, 100 ms. Así la
+        interferencia de red se promedia a cero durante la primera rampa. En un país de 60 Hz el múltiplo es
+        de 16,67 ms; algunos instrumentos permiten elegirlo.</p></div></details>
+
+      <details class="q"><summary>¿Por qué medir 50 Hz con un frecuencímetro en modo frecuencia da mal?</summary>
+        <div class="a"><p>Porque con puerta de 1 s se cuentan 50 pulsos y la incertidumbre de ±1 cuenta es un
+        <b>2 %</b>. Midiendo el período con un reloj patrón de 10 MHz se cuentan 200 000 pulsos y el error
+        baja a 0,0005 %.</p></div></details>
+
+      <details class="q"><summary>Un cristal de 10 ppm midiendo 10 MHz: ¿cuánto vale el error en hertz?</summary>
+        <div class="a"><p>10 ppm = 10 × 10<sup>−6</sup>, que sobre 10<sup>7</sup> Hz da <b>±100 Hz</b>. Es el
+        piso de exactitud del instrumento: ningún truco de conteo lo mejora.</p></div></details>
+
+      <details class="q"><summary>¿Qué significa que un multímetro sea CAT III 600 V?</summary>
+        <div class="a"><p>Que está diseñado para medir en instalaciones fijas —tableros, líneas de
+        distribución— soportando los transitorios de alta energía que ahí aparecen, hasta 600 V nominales. No
+        es lo mismo que «mide hasta 600 V»: dos instrumentos con el mismo número de volts pueden tener
+        categorías distintas, y ahí está la diferencia de seguridad.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un multímetro digital mide 12 V donde no hay nada conectado?</summary>
+        <div class="a"><p>Por acoplamiento capacitivo entre conductores paralelos: su entrada de 10 MΩ es tan
+        alta que no llega a descargar esa tensión inducida. La función <b>LoZ</b> baja la impedancia de
+        entrada y hace desaparecer la lectura fantasma. Con un instrumento analógico el fenómeno no aparece,
+        porque su bobina carga el circuito.</p></div></details>
+
+      <details class="q"><summary>Un osciloscopio declara 100 MHz de ancho de banda y 100 MSa/s. ¿Qué se puede esperar?</summary>
+        <div class="a"><p>Problemas. Con 100 MSa/s el límite de Nyquist son 50 MHz: una señal de 80 MHz que su
+        entrada deja pasar aparecerá en pantalla como una frecuencia falsa. La relación sana es de 5 a 10
+        muestras por ciclo de la máxima frecuencia declarada.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve la función REL o cero relativo?</summary>
+        <div class="a"><p>Para restar de todas las lecturas siguientes el valor actual. Se usa sobre todo en
+        resistencias bajas —se cortocircuitan las puntas, se pulsa REL y así se descuenta su propia
+        resistencia— y en capacitancias chicas, para descontar la del cable.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/conversores-ad-da">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Conversores A/D y D/A</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/arquitectura-microprocesadores">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Arquitectura de microprocesador y microcontrolador</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Instrumentos de medida digitales»</b> de <b>Electrónica Digital II</b> (5° año),
+  según la «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

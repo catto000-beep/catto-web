@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquitectura de microprocesador y microcontrolador · Electrónica Digital II · Catto</title>
+<meta name="description" content="Bloques internos de una CPU: ALU, registros, contador de programa, unidad de control y buses. Ciclo de búsqueda, decodificación y ejecución. Von Neumann y Harvard, memorias, mapa de memoria y diferencia entre microprocesador y microcontrolador. Eje temático de Electrónica Digital II, 5° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/arquitectura-microprocesadores">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital II</a>
+    <span class="anio">5° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital II</span> · 96 h · Eje 4 de 4</div>
+    <h1>Arquitectura de microprocesador y microcontrolador</h1>
+    <p class="lead">Hasta acá, para cambiar lo que hace un circuito digital había que cambiar los cables. Un
+    procesador invierte eso: el circuito queda fijo y lo que cambia es el <b>contenido de una memoria</b>.
+    Esa es toda la idea, y de ella sale la electrónica de los últimos cincuenta años.</p>
+    <div class="chips">
+      <span class="chip hi">Microcontroladores</span>
+      <span class="chip">CPU</span>
+      <span class="chip">Buses</span>
+      <span class="chip">Memorias</span>
+      <span class="chip">Ciclo de instrucción</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que">
+      <h2><span class="n">01</span>Del circuito cableado al programa</h2>
+      <p>Un secuenciador de diez pasos con
+      <a href="/publicaciones/mapa-electronica/temas/contadores-programables">contadores y compuertas</a>
+      funciona perfecto. El problema aparece cuando el cliente pide que el paso 4 dure el doble, o que la
+      secuencia cambie si un sensor se activa. Con lógica cableada eso es rediseñar la plaqueta.</p>
+
+      <div class="box key">
+        <div class="bt">La idea de programa almacenado</div>
+        <p>En vez de conectar compuertas para cada función, se arma <b>una sola máquina</b> capaz de ejecutar
+        un repertorio corto de operaciones elementales —sumar, comparar, mover un dato, saltar— y se guarda
+        en una memoria la <b>lista</b> de operaciones a ejecutar. Cambiar el comportamiento pasa a ser
+        cambiar esa lista. El hardware queda igual.</p>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th>Lógica cableada</th><th>Procesador</th></tr></thead>
+          <tbody>
+            <tr><td><b>Cómo se cambia</b></td><td>Rediseñando el circuito</td><td>Reescribiendo el programa</td></tr>
+            <tr><td><b>Velocidad</b></td><td>Máxima: todo ocurre en paralelo</td><td>Menor: las operaciones se hacen una por vez</td></tr>
+            <tr><td><b>Costo por unidad</b></td><td>Crece con la complejidad</td><td>Casi constante: el mismo chip hace mucho o poco</td></tr>
+            <tr><td><b>Tiempo de desarrollo</b></td><td>Largo para funciones complejas</td><td>Corto, y se prueba sin soldar</td></tr>
+            <tr><td><b>Dónde gana</b></td><td>Funciones simples y muy rápidas, glue logic</td><td>Todo lo demás</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Hoy la lógica cableada sobrevive en tareas donde el tiempo se mide en nanosegundos o donde hace
+      falta seguridad independiente del software: un enclavamiento de seguridad, la protección de una fuente,
+      la lógica de arranque. Todo lo demás lo hace un microcontrolador de dos dólares.</p>
+    </section>
+
+    <section id="bloques">
+      <h2><span class="n">02</span>Los bloques de adentro</h2>
+      <p>Cualquier CPU, del 6502 al procesador de una notebook, tiene los mismos cinco elementos. Cambian el
+      tamaño y la cantidad, no la función.</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">ALU · Unidad aritmética y lógica</div>
+          <p>Es el único bloque que <b>hace cuentas</b>: suma, resta, AND, OR, XOR, corrimientos. Sus
+          entradas vienen de los registros; su salida vuelve a un registro. Además genera las
+          <b>banderas</b>: cero, acarreo, negativo, desbordamiento. Adentro no hay nada que no se haya visto
+          en <a href="/publicaciones/mapa-electronica/temas/logica-combinacional">lógica combinacional</a>:
+          un sumador de acarreo serie o anticipado y unos multiplexores.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Registros</div>
+          <p>Memoria interna de acceso inmediato, de una palabra cada uno. El <b>acumulador</b> es el que
+          participa en casi toda operación; los de propósito general guardan valores intermedios; los de
+          <b>estado</b> guardan las banderas. Son los flip-flops de
+          <a href="/publicaciones/mapa-electronica/temas/logica-secuencial">lógica secuencial</a>, agrupados
+          de a ocho o dieciséis.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Contador de programa (PC)</div>
+          <p>Un contador binario que guarda la <b>dirección de la próxima instrucción</b>. Se incrementa
+          solo; los saltos y las llamadas a subrutina no son más que <b>cargarle</b> un valor distinto. Todo
+          el control de flujo de un programa —un <code>if</code>, un <code>while</code>, una función— termina
+          siendo eso.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Registro de instrucción y decodificador</div>
+          <p>El IR guarda el código binario que se acaba de leer y el <b>decodificador</b> lo traduce en
+          señales de control: abrir este bus, habilitar aquel registro, decirle a la ALU que sume. Es una
+          máquina de estados: la unidad de control.</p>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Los tres buses</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Bus de direcciones</b>: unidireccional, sale de la CPU. Su ancho fija cuánta memoria se
+          puede direccionar: 16 líneas → 2<sup>16</sup> = 64 KiB; 20 líneas → 1 MiB.</li>
+          <li><b>Bus de datos</b>: bidireccional. Su ancho es el de la palabra: 8, 16, 32 bits.</li>
+          <li><b>Bus de control</b>: lectura/escritura, reloj, reset, interrupciones, espera.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="ciclo">
+      <h2><span class="n">03</span>El ciclo de instrucción</h2>
+      <p>Es lo único que hace un procesador, millones de veces por segundo, desde que se enciende hasta que
+      se apaga: <b>buscar, decodificar, ejecutar</b>. Entenderlo bien vuelve transparente todo lo demás.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 340" role="img" aria-label="Ciclo de busqueda decodificacion y ejecucion" class="svg-t" data-anim>
+          <style>.ci-b{fill:#1c2230;stroke:#58a6ff;stroke-width:1.8}.ci-n{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}.ci-d{fill:#7d8a99;font-size:10px}.ci-l{fill:#9aa7b4;font-size:10.5px;text-anchor:middle}</style>
+          <rect class="ci-b" x="24" y="70" width="140" height="200" rx="10" stroke="#a371f7"/>
+          <text class="ci-n" x="94" y="60">Memoria</text>
+          <rect x="34" y="78" width="120" height="32" rx="6" fill="#58a6ff" opacity="0.10"><animate attributeName="opacity" calcMode="discrete" values="0.34;0.06;0.06;0.06" dur="24s" repeatCount="indefinite"/></rect>
+          <text class="ci-d" x="42" y="100">$0002</text>
+          <text class="ci-d" x="92" y="100" fill="#9aa7b4">MOV A,#5</text>
+          <rect x="34" y="120" width="120" height="32" rx="6" fill="#58a6ff" opacity="0.10"><animate attributeName="opacity" calcMode="discrete" values="0.06;0.34;0.06;0.06" dur="24s" repeatCount="indefinite"/></rect>
+          <text class="ci-d" x="42" y="142">$0003</text>
+          <text class="ci-d" x="92" y="142" fill="#9aa7b4">ADD A,B</text>
+          <rect x="34" y="162" width="120" height="32" rx="6" fill="#58a6ff" opacity="0.10"><animate attributeName="opacity" calcMode="discrete" values="0.06;0.06;0.34;0.06" dur="24s" repeatCount="indefinite"/></rect>
+          <text class="ci-d" x="42" y="184">$0004</text>
+          <text class="ci-d" x="92" y="184" fill="#9aa7b4">OUT P1</text>
+          <rect x="34" y="204" width="120" height="32" rx="6" fill="#58a6ff" opacity="0.10"><animate attributeName="opacity" calcMode="discrete" values="0.06;0.06;0.06;0.34" dur="24s" repeatCount="indefinite"/></rect>
+          <text class="ci-d" x="42" y="226">$0005</text>
+          <text class="ci-d" x="92" y="226" fill="#9aa7b4">JMP $02</text>
+          <rect x="248" y="50" width="428" height="240" rx="12" fill="none" stroke="#3fb950" stroke-width="2"/>
+          <text class="ci-d" x="258" y="44" fill="#3fb950">CPU</text>
+          <rect class="ci-b" x="270" y="80" width="96" height="44" rx="8"/>
+          <text class="ci-n" x="318" y="98">PC</text>
+          <clipPath id="ci-pc"><rect x="271" y="102" width="94" height="21"/></clipPath>
+          <g clip-path="url(#ci-pc)"><g>
+          <text x="318" y="118" class="ci-d" font-size="12" fill="#58a6ff" text-anchor="middle">$0002</text>
+          <text x="318" y="139" class="ci-d" font-size="12" fill="#58a6ff" text-anchor="middle">$0003</text>
+          <text x="318" y="160" class="ci-d" font-size="12" fill="#58a6ff" text-anchor="middle">$0004</text>
+          <text x="318" y="181" class="ci-d" font-size="12" fill="#58a6ff" text-anchor="middle">$0005</text>
+          <animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 0;0 -21;0 -42;0 -63" dur="24s" repeatCount="indefinite"/>
+          </g></g>
+          <rect class="ci-b" x="270" y="170" width="96" height="44" rx="8"/>
+          <text class="ci-n" x="318" y="188">IR</text>
+          <text class="ci-d" x="318" y="206" text-anchor="middle">instrucción</text>
+          <rect class="ci-b" x="396" y="70" width="122" height="58" rx="8"/>
+          <text class="ci-n" x="457" y="94">Decodificador</text>
+          <text class="ci-d" x="457" y="112" text-anchor="middle">unidad de control</text>
+          <polygon points="396,168 518,168 494,232 420,232" fill="#1c2230" stroke="#58a6ff" stroke-width="1.8"><animate attributeName="stroke" calcMode="discrete" values="#58a6ff;#58a6ff;#58a6ff;#3fb950" dur="6s" repeatCount="indefinite"/></polygon>
+          <text class="ci-n" x="457" y="196">ALU</text>
+          <text class="ci-d" x="457" y="214" text-anchor="middle">suma, compara</text>
+          <rect class="ci-b" x="552" y="120" width="106" height="80" rx="8"/>
+          <text class="ci-n" x="605" y="150">Registros</text>
+          <text class="ci-d" x="605" y="168" text-anchor="middle">A · B · banderas</text>
+          <line x1="164" y1="102" x2="270" y2="102" stroke="#9aa7b4" stroke-width="1.6"/>
+          <polygon points="164,102 172,98 172,106" fill="#9aa7b4"/>
+          <text class="ci-l" x="217" y="94">direcciones</text>
+          <line x1="164" y1="192" x2="270" y2="192" stroke="#9aa7b4" stroke-width="1.6"/>
+          <polygon points="270,192 262,188 262,196" fill="#9aa7b4"/>
+          <text class="ci-l" x="217" y="184">datos</text>
+          <line x1="366" y1="192" x2="396" y2="192" stroke="#9aa7b4" stroke-width="1.6"/>
+          <path d="M366,186 L380,186 L380,100 L396,100" fill="none" stroke="#9aa7b4" stroke-width="1.2" opacity=".6"/>
+          <line x1="518" y1="200" x2="552" y2="170" stroke="#9aa7b4" stroke-width="1.6"/>
+          <line x1="457" y1="128" x2="457" y2="168" stroke="#9aa7b4" stroke-width="1.6"/>
+          <g opacity="0"><rect x="-30" y="-9" width="60" height="18" rx="5" fill="#58a6ff" opacity=".85"/><text x="0" y="4" text-anchor="middle" font-size="9.5" fill="#0d1117" font-weight="700">dirección</text><animateTransform attributeName="transform" type="translate" values="262 102;176 102" keyTimes="0;1" begin="0.00s" dur="1.50s" repeatCount="indefinite" fill="freeze"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.02;0.9;1" begin="0.00s" dur="1.50s" repeatCount="indefinite"/></g>
+          <g opacity="0"><rect x="-30" y="-9" width="60" height="18" rx="5" fill="#a371f7" opacity=".85"/><text x="0" y="4" text-anchor="middle" font-size="9.5" fill="#0d1117" font-weight="700">instrucción</text><animateTransform attributeName="transform" type="translate" values="176 192;262 192" keyTimes="0;1" begin="1.50s" dur="1.50s" repeatCount="indefinite" fill="freeze"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.02;0.9;1" begin="1.50s" dur="1.50s" repeatCount="indefinite"/></g>
+          <g opacity="0"><rect x="-30" y="-9" width="60" height="18" rx="5" fill="#d29922" opacity=".85"/><text x="0" y="4" text-anchor="middle" font-size="9.5" fill="#0d1117" font-weight="700">control</text><animateTransform attributeName="transform" type="translate" values="372 176;400 108" keyTimes="0;1" begin="3.00s" dur="1.50s" repeatCount="indefinite" fill="freeze"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.02;0.9;1" begin="3.00s" dur="1.50s" repeatCount="indefinite"/></g>
+          <g opacity="0"><rect x="-30" y="-9" width="60" height="18" rx="5" fill="#3fb950" opacity=".85"/><text x="0" y="4" text-anchor="middle" font-size="9.5" fill="#0d1117" font-weight="700">resultado</text><animateTransform attributeName="transform" type="translate" values="516 204;556 174" keyTimes="0;1" begin="4.50s" dur="1.50s" repeatCount="indefinite" fill="freeze"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.02;0.9;1" begin="4.50s" dur="1.50s" repeatCount="indefinite"/></g>
+          <text x="350" y="318" text-anchor="middle" font-size="12.5" fill="#e6edf3" opacity="0">1 · el PC pone la dirección en el bus<animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="6s" repeatCount="indefinite"/></text>
+          <text x="350" y="318" text-anchor="middle" font-size="12.5" fill="#e6edf3" opacity="0">2 · la memoria devuelve la instrucción al IR<animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="6s" repeatCount="indefinite"/></text>
+          <text x="350" y="318" text-anchor="middle" font-size="12.5" fill="#e6edf3" opacity="0">3 · el decodificador la interpreta<animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="6s" repeatCount="indefinite"/></text>
+          <text x="350" y="318" text-anchor="middle" font-size="12.5" fill="#e6edf3" opacity="0">4 · la ALU ejecuta y el PC avanza<animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="6s" repeatCount="indefinite"/></text>
+          </svg>
+        <figcaption><b>Figura 1.</b> Ciclo de instrucción, animado. El PC pone la dirección en el bus, la
+        memoria devuelve la instrucción, el decodificador la interpreta y la ALU la ejecuta; al final el PC
+        avanza a la siguiente. Un procesador no hace nunca otra cosa.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Fase</th><th>Qué pasa</th><th>Quién trabaja</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>1 · Búsqueda</b></td><td>El PC pone su valor en el bus de direcciones y se activa la lectura.</td><td>PC, bus de direcciones, memoria</td></tr>
+            <tr><td class="c"><b>2 · Recepción</b></td><td>La memoria devuelve el código de la instrucción y se guarda en el IR.</td><td>Memoria, bus de datos, IR</td></tr>
+            <tr><td class="c"><b>3 · Decodificación</b></td><td>La unidad de control interpreta el código y prepara las señales internas.</td><td>Decodificador</td></tr>
+            <tr><td class="c"><b>4 · Ejecución</b></td><td>Se hace la operación: una cuenta en la ALU, una lectura de memoria, un cambio en un puerto.</td><td>ALU, registros, periféricos</td></tr>
+            <tr><td class="c"><b>5 · Avance</b></td><td>El PC se incrementa (o se carga con la dirección del salto) y vuelve a empezar.</td><td>PC</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Qué tarda encender un LED</div>
+        <p>En un microcontrolador de 8 bits a 16 MHz, con un ciclo de instrucción de un ciclo de reloj:</p>
+        <ul>
+          <li>Cada instrucción tarda 1/16 MHz = <b>62,5 ns</b>.</li>
+          <li>Poner un pin en alto es una instrucción: <b>62,5 ns</b>.</li>
+          <li>El lazo típico «encender, esperar, apagar, esperar» con un retardo de 500 ms ejecuta unos
+          <b>8 millones</b> de instrucciones por cada parpadeo, casi todas sin hacer nada.</li>
+        </ul>
+        <p>De ahí que la primera optimización de cualquier programa embebido sea <b>no esperar haciendo
+        nada</b>: para eso están los temporizadores y las interrupciones, que se ven en 6° año.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Ciclo de reloj no es ciclo de instrucción</div>
+        <p>Son cosas distintas y se confunden todo el tiempo. Un PIC clásico divide el reloj por cuatro: con
+        un cristal de 20 MHz ejecuta <b>5 millones de instrucciones por segundo</b>, no veinte. Un AVR
+        ejecuta la mayoría en un solo ciclo, y por eso a 16 MHz rinde más que un PIC a 20. La cifra que hay
+        que buscar en la hoja de datos es <b>MIPS</b>, no la frecuencia del cristal.</p>
+      </div>
+    </section>
+
+    <section id="arquitecturas">
+      <h2><span class="n">04</span>Von Neumann y Harvard</h2>
+      <p>La diferencia está en <b>cuántos caminos</b> hay entre la CPU y la memoria, y tiene una consecuencia
+      práctica directa sobre la velocidad.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 300" role="img" aria-label="Arquitectura Von Neumann y Harvard" class="svg-t" data-anim>
+          <style>.aq-b{fill:#1c2230;stroke:#58a6ff;stroke-width:1.8}.aq-n{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}.aq-d{fill:#7d8a99;font-size:10px;text-anchor:middle}.aq-t{fill:#9aa7b4;font-size:11.5px;text-anchor:middle;font-weight:600}</style>
+          <text class="aq-t" x="170" y="34" fill="#d29922">Von Neumann</text>
+          <rect class="aq-b" x="40" y="90" width="92" height="66" rx="9"/>
+          <text class="aq-n" x="86" y="122">CPU</text>
+          <rect class="aq-b" x="216" y="70" width="104" height="106" rx="9" stroke="#a371f7"/>
+          <text class="aq-n" x="268" y="104">Memoria</text>
+          <text class="aq-d" x="268" y="124">instrucciones</text>
+          <text class="aq-d" x="268" y="142">y datos juntos</text>
+          <line x1="132" y1="123" x2="216" y2="123" stroke="#9aa7b4" stroke-width="3"/>
+          <text class="aq-d" x="174" y="112">un solo bus</text>
+          <g opacity="0"><rect x="-19" y="-8" width="38" height="16" rx="4" fill="#58a6ff"/><text x="0" y="4" text-anchor="middle" font-size="9" fill="#0d1117" font-weight="700">instr</text><animateTransform attributeName="transform" type="translate" values="212 123;138 123" begin="0.0s" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.85;1" begin="0.0s" dur="1.6s" repeatCount="indefinite"/></g>
+          <g opacity="0"><rect x="-19" y="-8" width="38" height="16" rx="4" fill="#3fb950"/><text x="0" y="4" text-anchor="middle" font-size="9" fill="#0d1117" font-weight="700">dato</text><animateTransform attributeName="transform" type="translate" values="212 123;138 123" begin="1.6s" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.85;1" begin="1.6s" dur="1.6s" repeatCount="indefinite"/></g>
+          <text class="aq-d" x="170" y="206">Instrucciones y datos se turnan:</text>
+          <text class="aq-d" x="170" y="224" fill="#d29922">el bus es el cuello de botella</text>
+          <text class="aq-d" x="170" y="248">Computadoras de propósito general</text>
+          <line x1="350" y1="40" x2="350" y2="264" stroke="#2a3140" stroke-width="1" stroke-dasharray="5 6"/>
+          <text class="aq-t" x="524" y="34" fill="#3fb950">Harvard</text>
+          <rect class="aq-b" x="396" y="90" width="92" height="66" rx="9"/>
+          <text class="aq-n" x="442" y="122">CPU</text>
+          <rect class="aq-b" x="572" y="56" width="112" height="58" rx="9" stroke="#a371f7"/>
+          <text class="aq-n" x="628" y="80">Programa</text>
+          <text class="aq-d" x="628" y="98">Flash</text>
+          <rect class="aq-b" x="572" y="140" width="112" height="58" rx="9" stroke="#3fb950"/>
+          <text class="aq-n" x="628" y="164">Datos</text>
+          <text class="aq-d" x="628" y="182">SRAM</text>
+          <path d="M488,108 H530 V85 H572" fill="none" stroke="#9aa7b4" stroke-width="3"/>
+          <path d="M488,138 H530 V169 H572" fill="none" stroke="#9aa7b4" stroke-width="3"/>
+          <g opacity="0"><rect x="-19" y="-8" width="38" height="16" rx="4" fill="#58a6ff"/><text x="0" y="4" text-anchor="middle" font-size="9" fill="#0d1117" font-weight="700">instr</text><animateMotion path="M568,85 H530 V108 H494" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.85;1" dur="1.6s" repeatCount="indefinite"/></g>
+          <g opacity="0"><rect x="-19" y="-8" width="38" height="16" rx="4" fill="#3fb950"/><text x="0" y="4" text-anchor="middle" font-size="9" fill="#0d1117" font-weight="700">dato</text><animateMotion path="M568,169 H530 V138 H494" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.85;1" dur="1.6s" repeatCount="indefinite"/></g>
+          <text class="aq-d" x="524" y="230">Los dos viajan al mismo tiempo:</text>
+          <text class="aq-d" x="524" y="248" fill="#3fb950">busca la próxima mientras ejecuta la actual</text>
+          <text class="aq-d" x="524" y="272">PIC · AVR · casi todos los microcontroladores</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> Las dos arquitecturas, animadas. En Von Neumann, instrucciones y datos
+        comparten el bus: hay que turnarse, y ese turno es el <b>cuello de botella</b>. En Harvard cada uno
+        tiene el suyo y viajan a la vez.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Von Neumann</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>Una sola memoria y un solo bus para instrucciones y datos.</li>
+            <li>Más simple y más barato; el programa puede tratarse como dato (por eso una PC puede compilar
+            y ejecutar lo que compiló).</li>
+            <li>La CPU no puede leer una instrucción y un dato al mismo tiempo.</li>
+            <li>Es la arquitectura de las computadoras de propósito general y de muchos ARM Cortex-M.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Harvard</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>Memoria de programa y memoria de datos separadas, cada una con su bus.</li>
+            <li>Búsqueda y ejecución se solapan: más velocidad con el mismo reloj.</li>
+            <li>Los buses pueden tener <b>anchos distintos</b>: en un PIC, 14 bits de instrucción y 8 de
+            datos.</li>
+            <li>El programa no se puede modificar a sí mismo con facilidad, lo que además es una ventaja de
+            seguridad.</li>
+            <li>Es la arquitectura de PIC, AVR y de casi todos los microcontroladores.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="memorias">
+      <h2><span class="n">05</span>Memorias y mapa de memoria</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Tipo</th><th class="c">Volátil</th><th class="c">Se escribe</th><th>Para qué se usa</th></tr></thead>
+          <tbody>
+            <tr><td><b>SRAM</b></td><td class="c">Sí</td><td class="c">Ilimitado</td><td>Variables del programa y pila. Rápida, cara, ocupa lugar: por eso un micro chico tiene 2 KiB.</td></tr>
+            <tr><td><b>DRAM</b></td><td class="c">Sí</td><td class="c">Ilimitado</td><td>Memoria principal de una computadora. Necesita refresco constante.</td></tr>
+            <tr><td><b>ROM de máscara</b></td><td class="c">No</td><td class="c">Nunca</td><td>Grabada en fábrica. Sólo para producciones enormes.</td></tr>
+            <tr><td><b>EPROM (UVPROM)</b></td><td class="c">No</td><td class="c">Se borra con luz UV</td><td>Histórica: la ventanita de cuarzo. Se borraba en 20 minutos bajo la lámpara.</td></tr>
+            <tr><td><b>EEPROM</b></td><td class="c">No</td><td class="c">Byte por byte, ~10<sup>6</sup> veces</td><td>Guardar la configuración, el número de serie, la última consigna.</td></tr>
+            <tr><td><b>Flash</b></td><td class="c">No</td><td class="c">Por bloques, ~10<sup>4</sup>–10<sup>5</sup></td><td>El programa. Es lo que se graba al «quemar» el micro.</td></tr>
+            <tr><td><b>FRAM</b></td><td class="c">No</td><td class="c">Prácticamente ilimitado</td><td>Registro continuo de datos sin desgaste. Más cara.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">La EEPROM se gasta</div>
+        <p>Está especificada en <b>ciclos de escritura</b>, no en años. Un programa que guarda una variable en
+        EEPROM dentro del lazo principal, cien veces por segundo, agota los 100 000 ciclos de esa celda
+        <b>en menos de veinte minutos</b>. Se escribe sólo cuando el valor cambió, y si hay que registrar
+        seguido, se rota entre varias posiciones. Es un error clásico y el equipo falla recién a los meses,
+        cuando ya está instalado.</p>
+      </div>
+
+      <p>El <b>mapa de memoria</b> es la tabla que dice qué hay en cada dirección: un tramo de RAM, uno de
+      Flash, y —lo más particular de los microcontroladores— los <b>registros de los periféricos</b>, que se
+      leen y escriben como si fueran posiciones de memoria. Encender un LED es escribir un 1 en un bit de una
+      dirección determinada. Eso es lo que hace, por debajo, cualquier función de una biblioteca.</p>
+
+      <pre class="code"><code><span class="c-com">// Los dos renglones hacen lo mismo en un AVR: encender el bit 5 del puerto B</span>
+digitalWrite(<span class="c-num">13</span>, HIGH);        <span class="c-com">// biblioteca: cómodo, unos microsegundos</span>
+PORTB |= (<span class="c-num">1</span> &lt;&lt; PB5);         <span class="c-com">// acceso directo al registro: 62,5 ns</span></code></pre>
+      <p class="codecap">La segunda forma es la que se usa cuando el tiempo importa. Requiere leer la hoja de
+      datos, que es justamente la habilidad que se desarrolla en 6° año.</p>
+    </section>
+
+    <section id="micro-vs-micro">
+      <h2><span class="n">06</span>Microprocesador y microcontrolador</h2>
+      <p>Un <b>microprocesador</b> es una CPU y nada más: necesita memoria externa, controladores y una
+      plaqueta alrededor. Un <b>microcontrolador</b> es una computadora entera en un chip: CPU, memoria,
+      reloj y periféricos.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 300" role="img" aria-label="Que trae adentro un microcontrolador" class="svg-t">
+          <style>.mc-o{fill:none;stroke:#a371f7;stroke-width:2.2}
+          .mc-b{fill:#1c2230;stroke:#58a6ff;stroke-width:1.8}
+          .mc-n{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}
+          .mc-s{fill:#9aa7b4;font-size:9.5px;text-anchor:middle}
+          .mc-d{fill:#7d8a99;font-size:10.5px}</style>
+          <rect class="mc-o" x="24" y="26" width="632" height="230" rx="14"/>
+          <text class="mc-d" x="40" y="18" fill="#a371f7">un solo encapsulado</text>
+          <rect class="mc-b" x="48"  y="52" width="130" height="76" rx="9" stroke="#3fb950"/>
+          <text class="mc-n" x="113" y="80">CPU</text><text class="mc-s" x="113" y="98">ALU · registros</text><text class="mc-s" x="113" y="114">unidad de control</text>
+          <rect class="mc-b" x="200" y="52" width="120" height="76" rx="9"/>
+          <text class="mc-n" x="260" y="80">Flash</text><text class="mc-s" x="260" y="98">el programa</text><text class="mc-s" x="260" y="114">2 a 512 KiB</text>
+          <rect class="mc-b" x="342" y="52" width="120" height="76" rx="9"/>
+          <text class="mc-n" x="402" y="80">SRAM</text><text class="mc-s" x="402" y="98">variables y pila</text><text class="mc-s" x="402" y="114">128 B a 64 KiB</text>
+          <rect class="mc-b" x="484" y="52" width="148" height="76" rx="9"/>
+          <text class="mc-n" x="558" y="80">EEPROM</text><text class="mc-s" x="558" y="98">configuración</text><text class="mc-s" x="558" y="114">que sobrevive al corte</text>
+          <rect class="mc-b" x="48"  y="152" width="130" height="76" rx="9" stroke="#d29922"/>
+          <text class="mc-n" x="113" y="180">Temporizadores</text><text class="mc-s" x="113" y="198">y PWM</text><text class="mc-s" x="113" y="214">cuentan sin la CPU</text>
+          <rect class="mc-b" x="200" y="152" width="120" height="76" rx="9" stroke="#d29922"/>
+          <text class="mc-n" x="260" y="180">Conversor A/D</text><text class="mc-s" x="260" y="198">10 o 12 bits</text><text class="mc-s" x="260" y="214">multiplexado</text>
+          <rect class="mc-b" x="342" y="152" width="120" height="76" rx="9" stroke="#d29922"/>
+          <text class="mc-n" x="402" y="180">Puertos de E/S</text><text class="mc-s" x="402" y="198">cada pin: entrada,</text><text class="mc-s" x="402" y="214">salida o periférico</text>
+          <rect class="mc-b" x="484" y="152" width="148" height="76" rx="9" stroke="#d29922"/>
+          <text class="mc-n" x="558" y="180">Comunicaciones</text><text class="mc-s" x="558" y="198">USART · SPI · I²C</text><text class="mc-s" x="558" y="214">y watchdog</text>
+          <text class="mc-d" x="340" y="278" text-anchor="middle">El microprocesador tiene sólo el bloque verde: todo lo demás va afuera, en la plaqueta</text>
+        </svg>
+        <figcaption><b>Figura 3.</b> Lo que un microcontrolador trae integrado. Los bloques anaranjados —los
+        periféricos— son los que hacen que un chip de pocos dólares reemplace una plaqueta entera, y los que
+        se estudian uno por uno en 6° año.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th>Microprocesador</th><th>Microcontrolador</th></tr></thead>
+          <tbody>
+            <tr><td><b>Memoria</b></td><td>Externa, en chips aparte</td><td>Interna: Flash, SRAM y EEPROM</td></tr>
+            <tr><td><b>Periféricos</b></td><td>Externos</td><td>Integrados: A/D, timers, puertos, comunicación</td></tr>
+            <tr><td><b>Potencia de cálculo</b></td><td>Alta: GHz, 32 y 64 bits</td><td>Modesta: MHz, 8 a 32 bits</td></tr>
+            <tr><td><b>Consumo</b></td><td>Watts</td><td>Miliwatts, y microamperes durmiendo</td></tr>
+            <tr><td><b>Arranque</b></td><td>Sistema operativo, segundos</td><td>Ejecuta el programa en microsegundos</td></tr>
+            <tr><td><b>Uso típico</b></td><td>Computadoras, servidores, celulares</td><td>Electrodomésticos, autos, instrumentos, control</td></tr>
+            <tr><td><b>Costo del sistema</b></td><td>Alto</td><td>Muy bajo: el chip y poco más</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Familias que se van a ver en el taller</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>PIC</b> (Microchip): Harvard, muy difundido en la industria argentina, enorme cantidad de
+          modelos. Es el que se desarrolla en Electrónica Digital III.</li>
+          <li><b>AVR</b> (Microchip/Atmel): el del Arduino UNO. Un ciclo por instrucción y herramientas
+          libres.</li>
+          <li><b>ARM Cortex-M</b> (STM32, RP2040, ESP32 con su propio núcleo): 32 bits, mucha potencia por
+          poco dinero, el estándar actual de la industria.</li>
+          <li><b>ESP32</b>: agrega WiFi y Bluetooth en el mismo chip; es lo que hace posible cualquier
+          proyecto conectado.</li>
+        </ul>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">La hoja de datos es la herramienta, no el tutorial</div>
+        <p>Un microcontrolador se aprende leyendo su <b>datasheet</b> y su manual de referencia: ahí están el
+        mapa de memoria, los registros de cada periférico y los tiempos. Los ejemplos de internet resuelven
+        un caso; la hoja de datos resuelve todos. Aprender a leerla es parte del oficio, y se practica con
+        C, que es el lenguaje en el que están escritos casi todos esos ejemplos —lo que ya se trabajó en
+        <a href="/publicaciones/mapa-electronica/temas/lenguaje-c">elementos básicos del lenguaje C</a>.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Ver el reloj</div>
+        <p>Con un microcontrolador funcionando, medir con el
+        <a href="/publicaciones/mapa-electronica/temas/osciloscopio">osciloscopio</a> la frecuencia del
+        cristal y compararla con lo que dice el circuito. Después escribir un programa que conmute un pin lo
+        más rápido posible y medir la frecuencia de esa señal: de ahí sale <b>cuántos ciclos</b> gasta el
+        lazo. Es la forma directa de comprobar que la CPU ejecuta una instrucción por vez y cuánto tarda.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Los buses, con LED</div>
+        <p>Sobre un sistema con memoria externa (o con un simulador), conectar LED a las líneas bajas del bus
+        de direcciones y hacer correr un programa muy lento. Se ve la cuenta binaria del PC avanzando: es la
+        Figura 1 en el banco.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Biblioteca contra registro</div>
+        <p>Escribir el mismo parpadeo de dos maneras: con la función de la biblioteca y escribiendo directo
+        el registro del puerto. Medir con el osciloscopio la frecuencia máxima alcanzable en cada caso y
+        anotar la diferencia. Suele ser de veinte a cincuenta veces.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Consumo</div>
+        <p>Medir la corriente del microcontrolador con el programa corriendo, y después con el micro en modo
+        de bajo consumo esperando una interrupción. Se pasa de decenas de miliamperes a unos pocos
+        microamperes. Es la razón por la que un sensor a pila dura años.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>El micro no arranca</td><td>Falta el capacitor de 100 nF junto a la alimentación, el pin de reset quedó al aire, o los <i>fuses</i> quedaron configurados para un reloj que no existe en la plaqueta.</td></tr>
+            <tr><td>Se reinicia solo cada tanto</td><td>El watchdog está habilitado y el programa no lo refresca, o hay caídas de tensión por una carga inductiva mal desacoplada.</td></tr>
+            <tr><td>El programa funciona en el simulador y no en la plaqueta</td><td>Tiempos reales: rebotes de pulsadores, capacidades del cableado, o un retardo calculado con el reloj equivocado.</td></tr>
+            <tr><td>Las variables se corrompen sin motivo</td><td>Desbordamiento de la pila: la SRAM es chica y un arreglo grande o una recursión la comen entera.</td></tr>
+            <tr><td>Una lectura del A/D es siempre baja</td><td>Impedancia de la fuente demasiado alta para el sample &amp; hold. Ver <a href="/publicaciones/mapa-electronica/temas/conversores-ad-da">conversores A/D</a>.</td></tr>
+            <tr><td>El equipo falla a los meses de instalado</td><td>Escrituras repetidas en EEPROM: se agotaron los ciclos de una celda.</td></tr>
+            <tr><td>El pin no maneja el relé</td><td>Un pin entrega 20 mA como máximo. Todo lo que consuma más va con transistor, y con diodo volante si es inductivo: <a href="/publicaciones/mapa-electronica/temas/transistores-bipolares">transistor como llave</a>.</td></tr>
+            <tr><td>«Le sobra memoria pero no compila»</td><td>Se confunde Flash con SRAM. Las cadenas de texto viven en Flash, pero muchas bibliotecas las copian a SRAM al arrancar.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuánta memoria puede direccionar un bus de direcciones de 16 líneas?</summary>
+        <div class="a"><p>2<sup>16</sup> = 65 536 posiciones, o sea <b>64 KiB</b>. Con 20 líneas serían 1 MiB
+        y con 32, 4 GiB.</p></div></details>
+
+      <details class="q"><summary>¿Qué guarda el contador de programa y qué pasa cuando hay un salto?</summary>
+        <div class="a"><p>La dirección de la próxima instrucción. Normalmente se incrementa solo; un salto es
+        simplemente <b>cargarle otro valor</b>, y una llamada a subrutina es guardar el valor actual en la
+        pila antes de cargarlo, para poder volver.</p></div></details>
+
+      <details class="q"><summary>Un PIC con cristal de 20 MHz que divide el reloj por cuatro: ¿cuántas instrucciones por segundo ejecuta?</summary>
+        <div class="a"><p>20 MHz / 4 = <b>5 MIPS</b>, y cada instrucción tarda 200 ns. Un AVR de 16 MHz con un
+        ciclo por instrucción ejecuta 16 MIPS: más rápido con un cristal más lento.</p></div></details>
+
+      <details class="q"><summary>¿Cuál es la ventaja concreta de la arquitectura Harvard?</summary>
+        <div class="a"><p>Que puede <b>buscar la próxima instrucción mientras ejecuta la actual</b>, porque
+        instrucciones y datos viajan por buses separados. Además cada bus puede tener el ancho que le
+        conviene.</p></div></details>
+
+      <details class="q"><summary>¿Por qué no conviene guardar un contador en EEPROM dentro del lazo principal?</summary>
+        <div class="a"><p>Porque la EEPROM soporta un número limitado de escrituras por celda (10<sup>5</sup> a
+        10<sup>6</sup>). Escribiendo cien veces por segundo se agota en minutos. Se guarda sólo cuando el
+        valor cambia, o se rota entre varias posiciones.</p></div></details>
+
+      <details class="q"><summary>¿Qué diferencia hay entre Flash, SRAM y EEPROM en un microcontrolador?</summary>
+        <div class="a"><p><b>Flash</b>: el programa, no volátil, se graba por bloques. <b>SRAM</b>: las
+        variables mientras corre, volátil, se borra al cortar la alimentación. <b>EEPROM</b>: datos que deben
+        sobrevivir al corte —configuración, calibración—, escribible byte por byte.</p></div></details>
+
+      <details class="q"><summary>¿Qué son las banderas de la ALU y para qué sirven?</summary>
+        <div class="a"><p>Bits de estado que la ALU deja después de cada operación: cero, acarreo, negativo,
+        desbordamiento. Las instrucciones de salto condicional las consultan, así que son el puente entre la
+        aritmética y el <code>if</code> de un programa.</p></div></details>
+
+      <details class="q"><summary>¿Cuándo conviene lógica cableada en vez de un microcontrolador?</summary>
+        <div class="a"><p>Cuando la respuesta tiene que ser de nanosegundos, cuando la función es tan simple
+        que una compuerta la resuelve, y sobre todo cuando la <b>seguridad</b> no puede depender de que un
+        programa esté corriendo: un enclavamiento o una protección se cablean.</p></div></details>
+
+      <details class="q"><summary>¿Por qué escribir directamente el registro de un puerto es mucho más rápido que usar la función de la biblioteca?</summary>
+        <div class="a"><p>Porque la función verifica el número de pin, busca en una tabla a qué puerto y bit
+        corresponde y recién ahí escribe: son decenas de instrucciones. La escritura directa es
+        <b>una</b>.</p></div></details>
+
+      <details class="q"><summary>Un pin de salida tiene que manejar un motor de 500 mA. ¿Cómo se conecta?</summary>
+        <div class="a"><p>Nunca directo: un pin entrega unos 20 mA. Va con un transistor o un MOSFET como
+        llave, con su resistencia de base, el <b>diodo volante</b> sobre la bobina y, si conviene aislar, un
+        optoacoplador. La alimentación del motor debe ser independiente de la del micro.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/instrumentos-digitales">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Instrumentos de medida digitales</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/semiconductores-especiales">
+        <div class="dir">Tema siguiente · Electrónica Analógica II →</div>
+        <div class="tt">Semiconductores especiales</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Arquitectura de microprocesador y microcontrolador»</b> de
+  <b>Electrónica Digital II</b> (5° año), según la «Propuesta Curricular – Segundo Ciclo de la Modalidad
+  Técnico Profesional, Educación Secundaria – Electrónica», Ministerio de Educación de la Provincia de
+  Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

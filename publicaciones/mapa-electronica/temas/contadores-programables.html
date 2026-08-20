@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contadores programables · Electrónica Digital II · Catto</title>
+<meta name="description" content="Contadores integrados TTL y CMOS: 7490, 4017, 4029, 4040, 74192. Módulo programable por reset asíncrono o por carga síncrona, expansión en cascada, divisores de frecuencia y aplicaciones. Eje temático de Electrónica Digital II, 5° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/contadores-programables">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital II</a>
+    <span class="anio">5° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital II</span> · 96 h · Eje 1 de 4</div>
+    <h1>Contadores programables</h1>
+    <p class="lead">Un contador es un divisor de frecuencia y un registro de estado al mismo tiempo. Lo que
+    lo vuelve <b>programable</b> es poder decidir por hardware —o por software, más adelante— en qué número
+    arranca, hasta dónde llega y en qué sentido cuenta. Todo el temporizado digital sale de ahí.</p>
+    <div class="chips">
+      <span class="chip hi">Lógica secuencial</span>
+      <span class="chip">Contadores integrados</span>
+      <span class="chip">División de frecuencia</span>
+      <span class="chip">Cascada</span>
+    </div>
+    <hr class="rule">
+
+    <section id="repaso">
+      <h2><span class="n">01</span>De dónde venimos: contar es dividir</h2>
+      <p>En <a href="/publicaciones/mapa-electronica/temas/logica-secuencial">lógica secuencial</a> se armaron
+      contadores con flip-flops sueltos. Ahora se usan <b>circuitos integrados contadores</b>, que traen todo
+      resuelto adentro y agregan las patas que permiten programarlos. Pero la idea de fondo no cambió, y
+      conviene tenerla presente porque es la que explica cada aplicación:</p>
+
+      <div class="box key">
+        <div class="bt">La idea que hay que ver en el cronograma</div>
+        <p>Cada etapa de un contador binario <b>divide la frecuencia por dos</b>. Q0 cambia una vez por cada
+        pulso de reloj, Q1 una vez cada dos, Q2 una cada cuatro. Un contador de <i>n</i> etapas es entonces,
+        al mismo tiempo, un <b>contador módulo 2<sup>n</sup></b> y un <b>divisor por 2<sup>n</sup></b>.
+        La misma pata sirve para leer un número o para sacar una frecuencia más baja.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 680 300" role="img" aria-label="Cronograma animado de un contador binario de 4 bits" class="svg-t" data-anim>
+          <style>.cr-l{fill:#9aa7b4;font-size:12px;text-anchor:end;font-weight:600}.cr-d{fill:#7d8a99;font-size:10.5px}.cr-w{fill:none;stroke-width:2.2}</style>
+          <line x1="84.00" y1="24" x2="84.00" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="109.88" y1="24" x2="109.88" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="135.75" y1="24" x2="135.75" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="161.62" y1="24" x2="161.62" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="187.50" y1="24" x2="187.50" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="213.38" y1="24" x2="213.38" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="239.25" y1="24" x2="239.25" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="265.12" y1="24" x2="265.12" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="291.00" y1="24" x2="291.00" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="316.88" y1="24" x2="316.88" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="342.75" y1="24" x2="342.75" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="368.62" y1="24" x2="368.62" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="394.50" y1="24" x2="394.50" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="420.38" y1="24" x2="420.38" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="446.25" y1="24" x2="446.25" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="472.12" y1="24" x2="472.12" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <line x1="498.00" y1="24" x2="498.00" y2="256" stroke="#2a3140" stroke-width="1" opacity=".55"/>
+          <text class="cr-l" x="76" y="48">CLK</text>
+          <path class="cr-w" d="M84.00,52.00 L84.00,30.00 L96.94,30.00 L96.94,52.00 L109.88,52.00 L109.88,30.00 L122.81,30.00 L122.81,52.00 L135.75,52.00 L135.75,30.00 L148.69,30.00 L148.69,52.00 L161.62,52.00 L161.62,30.00 L174.56,30.00 L174.56,52.00 L187.50,52.00 L187.50,30.00 L200.44,30.00 L200.44,52.00 L213.38,52.00 L213.38,30.00 L226.31,30.00 L226.31,52.00 L239.25,52.00 L239.25,30.00 L252.19,30.00 L252.19,52.00 L265.12,52.00 L265.12,30.00 L278.06,30.00 L278.06,52.00 L291.00,52.00 L291.00,30.00 L303.94,30.00 L303.94,52.00 L316.88,52.00 L316.88,30.00 L329.81,30.00 L329.81,52.00 L342.75,52.00 L342.75,30.00 L355.69,30.00 L355.69,52.00 L368.62,52.00 L368.62,30.00 L381.56,30.00 L381.56,52.00 L394.50,52.00 L394.50,30.00 L407.44,30.00 L407.44,52.00 L420.38,52.00 L420.38,30.00 L433.31,30.00 L433.31,52.00 L446.25,52.00 L446.25,30.00 L459.19,30.00 L459.19,52.00 L472.12,52.00 L472.12,30.00 L485.06,30.00 L485.06,52.00 L498.00,52.00" stroke="#58a6ff"/>
+          <text class="cr-l" x="76" y="96">Q0</text>
+          <path class="cr-w" d="M84.00,100.00 L109.88,100.00 L109.88,78.00 L135.75,78.00 L135.75,100.00 L161.62,100.00 L161.62,78.00 L187.50,78.00 L187.50,100.00 L213.38,100.00 L213.38,78.00 L239.25,78.00 L239.25,100.00 L265.12,100.00 L265.12,78.00 L291.00,78.00 L291.00,100.00 L316.88,100.00 L316.88,78.00 L342.75,78.00 L342.75,100.00 L368.62,100.00 L368.62,78.00 L394.50,78.00 L394.50,100.00 L420.38,100.00 L420.38,78.00 L446.25,78.00 L446.25,100.00 L472.12,100.00 L472.12,78.00 L498.00,78.00" stroke="#3fb950"/>
+          <text class="cr-d" x="504" y="96">f/2</text>
+          <text class="cr-l" x="76" y="144">Q1</text>
+          <path class="cr-w" d="M84.00,148.00 L109.88,148.00 L135.75,148.00 L135.75,126.00 L161.62,126.00 L187.50,126.00 L187.50,148.00 L213.38,148.00 L239.25,148.00 L239.25,126.00 L265.12,126.00 L291.00,126.00 L291.00,148.00 L316.88,148.00 L342.75,148.00 L342.75,126.00 L368.62,126.00 L394.50,126.00 L394.50,148.00 L420.38,148.00 L446.25,148.00 L446.25,126.00 L472.12,126.00 L498.00,126.00" stroke="#3fb950"/>
+          <text class="cr-d" x="504" y="144">f/4</text>
+          <text class="cr-l" x="76" y="192">Q2</text>
+          <path class="cr-w" d="M84.00,196.00 L109.88,196.00 L135.75,196.00 L161.62,196.00 L187.50,196.00 L187.50,174.00 L213.38,174.00 L239.25,174.00 L265.12,174.00 L291.00,174.00 L291.00,196.00 L316.88,196.00 L342.75,196.00 L368.62,196.00 L394.50,196.00 L394.50,174.00 L420.38,174.00 L446.25,174.00 L472.12,174.00 L498.00,174.00" stroke="#3fb950"/>
+          <text class="cr-d" x="504" y="192">f/8</text>
+          <text class="cr-l" x="76" y="240">Q3</text>
+          <path class="cr-w" d="M84.00,244.00 L109.88,244.00 L135.75,244.00 L161.62,244.00 L187.50,244.00 L213.38,244.00 L239.25,244.00 L265.12,244.00 L291.00,244.00 L291.00,222.00 L316.88,222.00 L342.75,222.00 L368.62,222.00 L394.50,222.00 L420.38,222.00 L446.25,222.00 L472.12,222.00 L498.00,222.00" stroke="#3fb950"/>
+          <text class="cr-d" x="504" y="240">f/16</text>
+          <g><line x1="96.94" y1="20" x2="96.94" y2="262" stroke="#f85149" stroke-width="1.6" opacity=".9"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;25.88 0;51.75 0;77.62 0;103.50 0;129.38 0;155.25 0;181.12 0;207.00 0;232.88 0;258.75 0;284.62 0;310.50 0;336.38 0;362.25 0;388.12 0" dur="12s" repeatCount="indefinite"/></g>
+          <text class="cr-d" x="291.00" y="278" text-anchor="middle">16 pulsos de reloj = un ciclo completo de la cuenta</text>
+          <rect x="530" y="24" width="132" height="252" rx="12" fill="#161b22" stroke="#2a3140"/>
+          <circle cx="574" cy="56" r="11" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950" dur="12s" repeatCount="indefinite"/></circle>
+          <text class="cr-d" x="596" y="60">Q3</text>
+          <circle cx="574" cy="94" r="11" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#3fb950" dur="12s" repeatCount="indefinite"/></circle>
+          <text class="cr-d" x="596" y="98">Q2</text>
+          <circle cx="574" cy="132" r="11" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#3fb950;#3fb950;#1c2230;#1c2230;#3fb950;#3fb950;#1c2230;#1c2230;#3fb950;#3fb950;#1c2230;#1c2230;#3fb950;#3fb950" dur="12s" repeatCount="indefinite"/></circle>
+          <text class="cr-d" x="596" y="136">Q1</text>
+          <circle cx="574" cy="170" r="11" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#3fb950;#1c2230;#3fb950;#1c2230;#3fb950;#1c2230;#3fb950;#1c2230;#3fb950;#1c2230;#3fb950;#1c2230;#3fb950;#1c2230;#3fb950" dur="12s" repeatCount="indefinite"/></circle>
+          <text class="cr-d" x="596" y="174">Q0</text>
+          <text class="cr-d" x="596" y="196" text-anchor="middle">valor en decimal</text>
+          <rect x="546" y="204" width="100" height="52" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <clipPath id="cr-win"><rect x="547" y="205" width="98" height="50"/></clipPath>
+          <g clip-path="url(#cr-win)"><g>
+          <text x="596" y="242" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">0</text>
+          <text x="596" y="294" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">1</text>
+          <text x="596" y="346" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">2</text>
+          <text x="596" y="398" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">3</text>
+          <text x="596" y="450" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">4</text>
+          <text x="596" y="502" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">5</text>
+          <text x="596" y="554" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">6</text>
+          <text x="596" y="606" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">7</text>
+          <text x="596" y="658" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">8</text>
+          <text x="596" y="710" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">9</text>
+          <text x="596" y="762" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">10</text>
+          <text x="596" y="814" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">11</text>
+          <text x="596" y="866" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">12</text>
+          <text x="596" y="918" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">13</text>
+          <text x="596" y="970" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">14</text>
+          <text x="596" y="1022" fill="#58a6ff" font-size="27" font-weight="700" text-anchor="middle">15</text>
+          <animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 0;0 -52;0 -104;0 -156;0 -208;0 -260;0 -312;0 -364;0 -416;0 -468;0 -520;0 -572;0 -624;0 -676;0 -728;0 -780" dur="12s" repeatCount="indefinite"/>
+          </g></g>
+          </svg>
+        <figcaption><b>Figura 1.</b> Contador binario de 4 bits, animado. El cursor recorre los 16 estados:
+        a la izquierda las formas de onda de cada salida, a la derecha las lámparas y el número en decimal.
+        Se ve que Q0 vale f/2, Q1 f/4, Q2 f/8 y Q3 f/16.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Etapas</th><th class="c">Cuenta hasta</th><th class="c">Módulo</th><th>División de frecuencia</th></tr></thead>
+          <tbody>
+            <tr><td>4 (una década binaria)</td><td class="c">15</td><td class="c">16</td><td>f/16 en la última salida</td></tr>
+            <tr><td>8</td><td class="c">255</td><td class="c">256</td><td>f/256</td></tr>
+            <tr><td>12</td><td class="c">4095</td><td class="c">4096</td><td>f/4096</td></tr>
+            <tr><td>14 (CD4020)</td><td class="c">16383</td><td class="c">16384</td><td>f/16384</td></tr>
+            <tr><td>24 (CD4521)</td><td class="c">16777215</td><td class="c">2<sup>24</sup></td><td>32768 Hz → 1 Hz con 15 etapas</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Esa última fila es el reloj de cuarzo de pulsera: un cristal de <b>32 768 Hz</b> —que es 2<sup>15</sup>—
+      dividido quince veces da exactamente un pulso por segundo. Los cristales de reloj tienen ese valor
+      justamente porque cae redondo en una cadena de flip-flops.</p>
+    </section>
+
+    <section id="asincronos-sincronos">
+      <h2><span class="n">02</span>Asincrónico y sincrónico: la diferencia que importa</h2>
+      <p>Los dos cuentan igual. La diferencia está en <b>cuándo</b> cambia cada etapa, y se paga en velocidad
+      y en pulsos falsos.</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Asincrónico (ripple)</div>
+          <p>El reloj entra sólo en la primera etapa; cada flip-flop dispara al siguiente. Los cambios
+          <b>se propagan en cadena</b>.</p>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>Menos circuito interno, más barato: el CD4040 mete 12 etapas en un DIP16.</li>
+            <li>Retardo total = n × t<sub>PLH</sub>. En 12 etapas de 10 ns son 120 ns de corrimiento.</li>
+            <li>Durante ese corrimiento aparecen <b>estados intermedios falsos</b>: al pasar de 0111 a 1000
+            el contador exhibe 0110, 0100, 0000 y recién 1000.</li>
+            <li>Sirve como divisor de frecuencia, no para decodificar estados.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Sincrónico</div>
+          <p>El reloj llega <b>a todas las etapas a la vez</b>; una red de compuertas decide cuáles cambian
+          en ese flanco.</p>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>Todas las salidas cambian juntas: no hay estados falsos.</li>
+            <li>La frecuencia máxima no depende de la cantidad de etapas.</li>
+            <li>Es el único que se puede decodificar sin riesgo (por ejemplo, para encender un display o
+            disparar un actuador).</li>
+            <li>Casi todos los contadores programables —74190/191/192/193, 4029, 4510, 4516— son sincrónicos.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">El glitch de decodificación</div>
+        <p>Si con un contador asincrónico se decodifica el estado 8 (1000) con una compuerta AND, esa
+        compuerta se activa <b>por unos nanosegundos</b> también en la transición 7 → 8, mientras las etapas
+        se acomodan. Un osciloscopio rápido lo ve como una púa. Un flip-flop conectado a esa salida la toma
+        como un pulso real y el circuito falla una vez cada tanto, sin patrón aparente. Es una de las fallas
+        más difíciles de encontrar en el banco. La solución: contador sincrónico, o validar la decodificación
+        con el reloj.</p>
+      </div>
+    </section>
+
+    <section id="catalogo">
+      <h2><span class="n">03</span>El catálogo que se usa en el taller</h2>
+      <p>No hace falta memorizarlo, pero sí saber en qué familia buscar. Las hojas de datos completas de la
+      serie 40XX están reunidas en la publicación de
+      <a class="ref" href="/publicaciones/logica-digital">lógica digital</a> del sitio.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Integrado</th><th class="c">Tipo</th><th class="c">Módulo</th><th>Para qué se elige</th></tr></thead>
+          <tbody>
+            <tr><td><b>7490</b></td><td class="c">Asincrónico</td><td class="c">2 + 5 = 10</td><td>Década clásica TTL. Trae dos secciones separadas: ÷2 y ÷5. Reset a 0 y reset a 9.</td></tr>
+            <tr><td><b>7493</b></td><td class="c">Asincrónico</td><td class="c">2 + 8 = 16</td><td>Igual que el anterior pero binario. Es el que se usa para armar módulos raros con reset.</td></tr>
+            <tr><td><b>74192 / 74193</b></td><td class="c">Sincrónico</td><td class="c">10 / 16</td><td>Sube y baja por <b>dos entradas de reloj separadas</b>. Con carga paralela. El caballito de batalla del contador programable TTL.</td></tr>
+            <tr><td><b>74190 / 74191</b></td><td class="c">Sincrónico</td><td class="c">10 / 16</td><td>Igual pero con un solo reloj y una pata U/D̄ que elige el sentido.</td></tr>
+            <tr><td><b>74163</b></td><td class="c">Sincrónico</td><td class="c">16</td><td>Carga y borrado <b>sincrónicos</b>: no genera pulsos falsos. El preferido para módulos por carga.</td></tr>
+            <tr><td><b>CD4017</b></td><td class="c">Johnson</td><td class="c">10</td><td>Diez salidas <b>decodificadas</b>: se enciende una por vez. Secuenciadores y luces.</td></tr>
+            <tr><td><b>CD4020 / 4040 / 4060</b></td><td class="c">Asincrónico</td><td class="c">2<sup>14</sup> / 2<sup>12</sup> / 2<sup>14</sup></td><td>Divisores largos. El 4060 trae además el oscilador a cristal adentro.</td></tr>
+            <tr><td><b>CD4029</b></td><td class="c">Sincrónico</td><td class="c">10 o 16</td><td>Programable en todo: sentido, binario o BCD, con carga paralela. Muy usado en CMOS.</td></tr>
+            <tr><td><b>CD4510 / 4516</b></td><td class="c">Sincrónico</td><td class="c">10 / 16</td><td>Los equivalentes CMOS del 74192/193.</td></tr>
+            <tr><td><b>CD4553 / 4026 / 4033</b></td><td class="c">Sincrónico</td><td class="c">10</td><td>Contador + decodificador de siete segmentos en el mismo chip. Frecuencímetros y cuentavueltas.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Las patas que hay que reconocer en cualquiera</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>CLK</b> — reloj. Fijarse si es activo por flanco de subida (↑) o de bajada (↓); el símbolo
+          en la hoja de datos es un triangulito, con círculo si es de bajada.</li>
+          <li><b>CLR / MR / RESET</b> — lleva la cuenta a cero. Puede ser asincrónico (actúa apenas llega) o
+          sincrónico (espera el flanco).</li>
+          <li><b>LOAD / PE</b> — carga en las salidas el número presente en las entradas paralelo.</li>
+          <li><b>P0…P3 / J1…J4</b> — entradas paralelo: el número que se carga.</li>
+          <li><b>U/D̄</b> — sentido de la cuenta.</li>
+          <li><b>CE / ENT / ENP</b> — habilitación. Con la habilitación en reposo el contador queda congelado
+          pero no se borra.</li>
+          <li><b>TC / RCO / CARRY</b> — «terminal count»: avisa que se llegó al final. Es la pata con la que
+          se arma la cascada.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="modulo">
+      <h2><span class="n">04</span>Programar el módulo: las dos maneras</h2>
+      <p>Un 74193 cuenta hasta 16 y un 4510 hasta 10. ¿Y si hace falta contar hasta <b>6</b>, como en los
+      segundos de un reloj, o hasta <b>12</b>? Se le acorta la cuenta. Hay dos técnicas y no son
+      equivalentes.</p>
+
+      <h3>a) Por reset: detectar el estado N y borrar</h3>
+      <p>Se decodifica con una compuerta el primer estado que <b>no</b> se quiere y se lo manda al reset. El
+      contador pasa por ese estado un instante y vuelve a cero.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 300" role="img" aria-label="Modulo 6 por reset asincronico con estado fantasma" class="svg-t" data-anim>
+          <style>.m6-n{fill:#e6edf3;font-size:13px;text-anchor:middle;font-weight:600}.m6-d{fill:#7d8a99;font-size:10.5px}.m6-b{fill:#1c2230;stroke:#58a6ff;stroke-width:2}.m6-t{fill:#9aa7b4;font-size:11px;text-anchor:middle}</style>
+          <circle cx="196.0" cy="148.0" r="98.0" fill="none" stroke="#2a3140" stroke-width="1.4" stroke-dasharray="4 5"/>
+          <circle cx="196.0" cy="50.0" r="21" fill="#1c2230" stroke="#58a6ff" stroke-width="2"/>
+          <text class="m6-n" x="196.0" y="55.0" fill="#e6edf3">0</text>
+          <text class="m6-t" x="196.0" y="20.0">000</text>
+          <circle cx="265.3" cy="78.7" r="21" fill="#1c2230" stroke="#58a6ff" stroke-width="2"/>
+          <text class="m6-n" x="265.3" y="83.7" fill="#e6edf3">1</text>
+          <text class="m6-t" x="265.3" y="48.7">001</text>
+          <circle cx="294.0" cy="148.0" r="21" fill="#1c2230" stroke="#58a6ff" stroke-width="2"/>
+          <text class="m6-n" x="294.0" y="153.0" fill="#e6edf3">2</text>
+          <text class="m6-t" x="294.0" y="118.0">010</text>
+          <circle cx="265.3" cy="217.3" r="21" fill="#1c2230" stroke="#58a6ff" stroke-width="2"/>
+          <text class="m6-n" x="265.3" y="222.3" fill="#e6edf3">3</text>
+          <text class="m6-t" x="265.3" y="257.3">011</text>
+          <circle cx="196.0" cy="246.0" r="21" fill="#1c2230" stroke="#58a6ff" stroke-width="2"/>
+          <text class="m6-n" x="196.0" y="251.0" fill="#e6edf3">4</text>
+          <text class="m6-t" x="196.0" y="286.0">100</text>
+          <circle cx="126.7" cy="217.3" r="21" fill="#1c2230" stroke="#58a6ff" stroke-width="2"/>
+          <text class="m6-n" x="126.7" y="222.3" fill="#e6edf3">5</text>
+          <text class="m6-t" x="126.7" y="257.3">101</text>
+          <circle cx="98.0" cy="148.0" r="21" fill="#2a1a1c" stroke="#f85149" stroke-width="2"/>
+          <text class="m6-n" x="98.0" y="153.0" fill="#e6edf3">6</text>
+          <text class="m6-t" x="98.0" y="118.0">110</text>
+          <circle cx="126.7" cy="78.7" r="21" fill="#161b22" stroke="#3a4250" stroke-width="2"/>
+          <text class="m6-n" x="126.7" y="83.7" fill="#5a6472">7</text>
+          <text class="m6-t" x="126.7" y="48.7">111</text>
+          <circle cx="196.0" cy="50.0" r="26" fill="none" stroke="#3fb950" stroke-width="3"><animate attributeName="cx" calcMode="discrete" keyTimes="0.000;0.164;0.328;0.492;0.656;0.820;0.984;1.000" values="196.0;265.3;294.0;265.3;196.0;126.7;98.0;196.0" dur="6.1s" repeatCount="indefinite"/><animate attributeName="cy" calcMode="discrete" keyTimes="0.000;0.164;0.328;0.492;0.656;0.820;0.984;1.000" values="50.0;78.7;148.0;217.3;246.0;217.3;148.0;50.0" dur="6.1s" repeatCount="indefinite"/></circle>
+          <text class="m6-t" x="124.0" y="206.0" fill="#f85149">estado fantasma</text>
+          <text class="m6-t" x="146.7" y="32.7">no se alcanza</text>
+          <rect class="m6-b" x="400" y="70" width="130" height="96" rx="9"/>
+          <text class="m6-n" x="465" y="104">Contador</text><text class="m6-t" x="465" y="124">4516 · 4 bits</text>
+          <text class="m6-t" x="465" y="146">Q2 Q1 Q0</text>
+          <path d="M560,88 h30 a26,26 0 0 1 0,52 h-30 z" fill="#1c2230" stroke="#d29922" stroke-width="2"/>
+          <text class="m6-t" x="578" y="119" fill="#d29922">&amp;</text>
+          <line x1="530" y1="100" x2="560" y2="100" stroke="#9aa7b4" stroke-width="1.8"/>
+          <line x1="530" y1="128" x2="560" y2="128" stroke="#9aa7b4" stroke-width="1.8"/>
+          <text class="m6-d" x="534" y="95">Q2</text><text class="m6-d" x="534" y="147">Q1</text>
+          <path d="M616,114 h26 v100 H438 v-48" fill="none" stroke="#f85149" stroke-width="2" opacity=".28"/>
+          <path d="M616,114 h26 v100 H438 v-48" fill="none" stroke="#f85149" stroke-width="3.4" opacity="0"><animate attributeName="opacity" keyTimes="0;0.978;0.984;0.998;1" values="0;0;1;0;0" dur="6.1s" repeatCount="indefinite"/></path>
+          <text class="m6-d" x="452" y="234" fill="#f85149">RESET</text>
+          <text class="m6-t" x="465" y="266">Q2 · Q1 = 110 = 6 → borra</text>
+          <text class="m6-t" x="465" y="286" fill="#7d8a99">la cuenta útil es 0…5: seis estados</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> Módulo 6 por reset asíncrono, animado. La cuenta llega a 6 (110), la AND
+        de Q1·Q2 dispara el borrado y el estado dura apenas el retardo de propagación: el <b>estado
+        fantasma</b>, marcado en rojo. Por eso el módulo es 6 aunque se decodifique el 6.</figcaption>
+      </figure>
+
+      <div class="box ojo">
+        <div class="bt">El estado fantasma</div>
+        <p>Ese pasaje relámpago por el estado 6 tiene tres consecuencias prácticas:</p>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li>Si un display está conectado a las salidas, alcanza a <b>parpadear</b> el dígito de más. Con
+          brillo alto se llega a notar.</li>
+          <li>Si otro circuito lee esas salidas, puede tomar el 6 como un valor válido.</li>
+          <li>El pulso de reset es <b>muy angosto</b> (decenas de nanosegundos). En CMOS lento a veces ni
+          alcanza a borrar todos los flip-flops y el contador se cuelga en un estado raro. Se resuelve con un
+          flip-flop que estire el pulso, o usando la otra técnica.</li>
+        </ul>
+      </div>
+
+      <h3>b) Por carga sincrónica: mucho más limpio</h3>
+      <p>Con un contador de carga y borrado <b>sincrónicos</b> (74163, o el 74193 usando su carga paralela),
+      la corrección ocurre en el flanco de reloj, junto con todos los demás cambios. No hay estado fantasma
+      ni pulso angosto.</p>
+
+      <div class="box key">
+        <div class="bt">Dos formas de la misma cuenta</div>
+        <p>Para contar N estados con un contador de 4 bits hay dos caminos simétricos:</p>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Contando para arriba</b>: se carga el valor inicial 16 − N y se usa el acarreo de salida
+          (que aparece en 15) para recargarlo. Ejemplo: para N = 6 se carga 10 y cuenta 10, 11, 12, 13, 14,
+          15 → recarga.</li>
+          <li><b>Contando para abajo</b>: se carga N − 1 y se recarga cuando llega a 0. Para N = 6 se carga
+          5 y cuenta 5, 4, 3, 2, 1, 0 → recarga. Es la forma que usan los temporizadores de los
+          microcontroladores, y por eso conviene acostumbrarse a ella.</li>
+        </ul>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Los segundos de un reloj digital</div>
+        <p>Los segundos van de 00 a 59: hacen falta una década completa para las unidades y un
+        <b>módulo 6</b> para las decenas.</p>
+        <ul>
+          <li>Unidades: un 4510 en modo BCD, módulo 10, sin nada agregado. Su acarreo sale una vez cada 10
+          segundos.</li>
+          <li>Decenas: otro 4510 al que se le decodifica el 6 con una AND entre Q1 y Q2 (110 = 6) hacia el
+          reset. Cuenta 0…5 y vuelve.</li>
+          <li>El acarreo de las decenas, una vez cada 60 s, alimenta el contador de minutos.</li>
+        </ul>
+        <p>El módulo total de la pareja es 10 × 6 = <b>60</b>. La entrada tiene que ser exactamente 1 Hz: de
+        ahí que un reloj de cuarzo divida 32 768 por 2<sup>15</sup>, o que una versión sencilla arranque de
+        los 50 Hz de la red dividiendo por 50.</p>
+      </div>
+    </section>
+
+    <section id="cascada">
+      <h2><span class="n">05</span>Expansión: poner contadores en cascada</h2>
+      <p>Un integrado solo llega hasta 10 o hasta 16. Todo lo demás se arma <b>encadenando</b>, y la forma de
+      encadenar es lo que distingue una cascada que funciona a 20 MHz de una que se cuelga a 2 MHz.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 250" role="img" aria-label="Cascada de dos contadores década con acarreo" class="svg-t" data-anim>
+          <style>.cs-bk{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
+          .cs-n{fill:#e6edf3;font-size:12.5px;text-anchor:middle;font-weight:600}
+          .cs-s{fill:#9aa7b4;font-size:10.5px;text-anchor:middle}
+          .cs-l{fill:#7d8a99;font-size:10.5px}</style>
+          <rect class="cs-bk" x="60" y="60" width="140" height="80" rx="9"/>
+          <text class="cs-n" x="130" y="92">Unidades</text><text class="cs-s" x="130" y="110">4510 · módulo 10</text>
+          <text class="cs-s" x="130" y="128">0 a 9</text>
+          <rect class="cs-bk" x="270" y="60" width="140" height="80" rx="9"/>
+          <text class="cs-n" x="340" y="92">Decenas</text><text class="cs-s" x="340" y="110">4510 · módulo 10</text>
+          <text class="cs-s" x="340" y="128">0 a 9</text>
+          <rect class="cs-bk" x="480" y="60" width="140" height="80" rx="9"/>
+          <text class="cs-n" x="550" y="92">Centenas</text><text class="cs-s" x="550" y="110">4510 · módulo 10</text>
+          <text class="cs-s" x="550" y="128">0 a 9</text>
+
+          <line x1="10" y1="100" x2="60" y2="100" stroke="#9aa7b4" stroke-width="2"/>
+          <text class="cs-l" x="10" y="92">f</text>
+          <circle cx="20" cy="100" r="4.5" fill="#3fb950">
+            <animate attributeName="cx" values="20;58" dur="0.6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="1;1;0" dur="0.6s" repeatCount="indefinite"/>
+          </circle>
+
+          <line x1="200" y1="100" x2="270" y2="100" stroke="#9aa7b4" stroke-width="2"/>
+          <polygon points="270,100 262,96 262,104" fill="#9aa7b4"/>
+          <text class="cs-l" x="212" y="92">acarreo</text>
+          <circle cx="204" cy="100" r="4.5" fill="#d29922">
+            <animate attributeName="cx" keyTimes="0;0.1;1" values="204;268;268" dur="6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.08;0.1;1" dur="6s" repeatCount="indefinite"/>
+          </circle>
+
+          <line x1="410" y1="100" x2="480" y2="100" stroke="#9aa7b4" stroke-width="2"/>
+          <polygon points="480,100 472,96 472,104" fill="#9aa7b4"/>
+          <text class="cs-l" x="422" y="92">acarreo</text>
+          <circle cx="414" cy="100" r="4.5" fill="#f85149">
+            <animate attributeName="cx" keyTimes="0;0.01;1" values="414;478;478" dur="60s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" keyTimes="0;0.008;0.01;1" values="1;1;0;0" dur="60s" repeatCount="indefinite"/>
+          </circle>
+
+          <text class="cs-l" x="130" y="170" text-anchor="middle" fill="#3fb950">1 pulso por unidad</text>
+          <text class="cs-l" x="340" y="170" text-anchor="middle" fill="#d29922">1 cada 10</text>
+          <text class="cs-l" x="550" y="170" text-anchor="middle" fill="#f85149">1 cada 100</text>
+          <text class="cs-l" x="340" y="205" text-anchor="middle">Módulo total = 10 × 10 × 10 = 1000 · la última salida divide la frecuencia por mil</text>
+          <text class="cs-l" x="340" y="228" text-anchor="middle">El dígito menos significativo es el de la izquierda: así se conecta el display</text>
+        </svg>
+        <figcaption><b>Figura 3.</b> Cascada de tres décadas, animada. Cada acarreo es diez veces más lento
+        que el anterior. Es el esqueleto de un frecuencímetro, de un cuentavueltas y del contador de
+        cualquier reloj.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Cascada por reloj (ripple)</div>
+          <p>El acarreo de una etapa se conecta al <b>reloj</b> de la siguiente. Es lo que se hace con
+          contadores asincrónicos y con el 74192/193.</p>
+          <p style="margin-top:8px">Simple, pero los retardos se suman etapa por etapa y las salidas no
+          cambian todas juntas.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Cascada por habilitación</div>
+          <p>El reloj entra <b>en todas las etapas a la vez</b> y el acarreo se conecta a la
+          <b>habilitación</b> de la siguiente: la etapa alta sólo cuenta en el flanco en que la baja está en
+          su último estado.</p>
+          <p style="margin-top:8px">Todo el conjunto sigue siendo sincrónico, sin importar cuántas etapas
+          tenga. Es la forma correcta cuando hay que decodificar la cuenta.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Módulos que no son potencias de diez</div>
+        <p>El módulo total de una cascada es el <b>producto</b> de los módulos. Con dos décadas y un módulo 6
+        se obtiene 600; con un módulo 6 y uno de 10, los 60 segundos. Si hace falta un módulo primo o
+        cualquier número raro —por ejemplo dividir 50 Hz por 50 para obtener 1 Hz— conviene armar un solo
+        contador binario largo y decodificar el valor final, en vez de encadenar módulos chicos.</p>
+      </div>
+    </section>
+
+    <section id="ci4017">
+      <h2><span class="n">06</span>El 4017: contar sin decodificar</h2>
+      <p>Es un caso aparte y merece su sección porque resuelve solo un problema entero. Adentro no hay un
+      contador binario sino un <b>registro de desplazamiento en anillo (Johnson)</b> con la decodificación ya
+      hecha: en lugar de cuatro salidas binarias tiene <b>diez salidas</b>, y en cada pulso se enciende una
+      sola.</p>
+
+      <figure>
+        <svg viewBox="0 0 660 300" role="img" aria-label="Salida caminante del CD4017" class="svg-t" data-anim>
+          <style>.c7-b{fill:#1c2230;stroke:#58a6ff;stroke-width:2}.c7-n{fill:#e6edf3;font-size:13px;text-anchor:middle;font-weight:600}.c7-d{fill:#7d8a99;font-size:10.5px}</style>
+          <rect class="c7-b" x="40" y="30" width="132" height="190" rx="10"/>
+          <text class="c7-n" x="106" y="62">CD4017</text>
+          <text class="c7-d" x="106" y="84" text-anchor="middle">contador Johnson</text>
+          <text class="c7-d" x="106" y="102" text-anchor="middle">10 salidas</text>
+          <text class="c7-d" x="106" y="120" text-anchor="middle">decodificadas</text>
+          <line x1="8" y1="150" x2="40" y2="150" stroke="#9aa7b4" stroke-width="2"/>
+          <text class="c7-d" x="8" y="142">CLK</text>
+          <line x1="8" y1="190" x2="40" y2="190" stroke="#9aa7b4" stroke-width="2"/>
+          <text class="c7-d" x="8" y="182">MR</text>
+          <line x1="172" y1="36" x2="228" y2="36" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="36" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#3fb950;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="40">Q0</text>
+          <line x1="172" y1="56" x2="228" y2="56" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="56" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="60">Q1</text>
+          <line x1="172" y1="76" x2="228" y2="76" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="76" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="80">Q2</text>
+          <line x1="172" y1="96" x2="228" y2="96" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="96" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="100">Q3</text>
+          <line x1="172" y1="116" x2="228" y2="116" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="116" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="120">Q4</text>
+          <line x1="172" y1="136" x2="228" y2="136" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="136" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="140">Q5</text>
+          <line x1="172" y1="156" x2="228" y2="156" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="156" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#1c2230;#1c2230;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="160">Q6</text>
+          <line x1="172" y1="176" x2="228" y2="176" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="176" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#1c2230;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="180">Q7</text>
+          <line x1="172" y1="196" x2="228" y2="196" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="196" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#1c2230" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="200">Q8</text>
+          <line x1="172" y1="216" x2="228" y2="216" stroke="#2a3140" stroke-width="1.6"/>
+          <circle cx="240" cy="216" r="8" stroke="#2a3140" stroke-width="1.5" fill="#1c2230"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="256" y="220">Q9</text>
+          <text class="c7-d" x="470" y="34" text-anchor="middle">una sola salida activa por vez</text>
+          <circle cx="320" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#3fb950;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="1;0.25;0.25;0.25;0.25;0.25;0.25;0.25;0.25;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="350" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#3fb950;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;1;0.25;0.25;0.25;0.25;0.25;0.25;0.25;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="380" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#161b22;#3fb950;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;0.25;1;0.25;0.25;0.25;0.25;0.25;0.25;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="410" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#161b22;#161b22;#3fb950;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;0.25;0.25;1;0.25;0.25;0.25;0.25;0.25;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="440" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#161b22;#161b22;#161b22;#3fb950;#161b22;#161b22;#161b22;#161b22;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;0.25;0.25;0.25;1;0.25;0.25;0.25;0.25;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="470" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#161b22;#161b22;#161b22;#161b22;#3fb950;#161b22;#161b22;#161b22;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;0.25;0.25;0.25;0.25;1;0.25;0.25;0.25;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="500" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#3fb950;#161b22;#161b22;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;0.25;0.25;0.25;0.25;0.25;1;0.25;0.25;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="530" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#3fb950;#161b22;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;0.25;0.25;0.25;0.25;0.25;0.25;1;0.25;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="560" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#3fb950;#161b22" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;0.25;0.25;0.25;0.25;0.25;0.25;0.25;1;0.25" dur="6s" repeatCount="indefinite"/></circle>
+          <circle cx="590" cy="72" r="12" stroke="#2a3140" stroke-width="1.5" fill="#161b22" opacity=".25"><animate attributeName="fill" calcMode="discrete" values="#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#161b22;#3fb950" dur="6s" repeatCount="indefinite"/><animate attributeName="opacity" calcMode="discrete" values="0.25;0.25;0.25;0.25;0.25;0.25;0.25;0.25;0.25;1" dur="6s" repeatCount="indefinite"/></circle>
+          <text class="c7-d" x="470" y="108" text-anchor="middle">secuenciador de diez pasos</text>
+          <path d="M320.00,200.00 L320.00,174.00 L335.00,174.00 L335.00,200.00 L350.00,200.00 L350.00,174.00 L365.00,174.00 L365.00,200.00 L380.00,200.00 L380.00,174.00 L395.00,174.00 L395.00,200.00 L410.00,200.00 L410.00,174.00 L425.00,174.00 L425.00,200.00 L440.00,200.00 L440.00,174.00 L455.00,174.00 L455.00,200.00 L470.00,200.00 L470.00,174.00 L485.00,174.00 L485.00,200.00 L500.00,200.00 L500.00,174.00 L515.00,174.00 L515.00,200.00 L530.00,200.00 L530.00,174.00 L545.00,174.00 L545.00,200.00 L560.00,200.00 L560.00,174.00 L575.00,174.00 L575.00,200.00 L590.00,200.00 L590.00,174.00 L605.00,174.00 L605.00,200.00 L620.00,200.00" fill="none" stroke="#58a6ff" stroke-width="2.2"/>
+          <text class="c7-d" x="312" y="196" text-anchor="end">CLK</text>
+          <g><line x1="335.00" y1="164" x2="335.00" y2="212" stroke="#f85149" stroke-width="1.6"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;30.00 0;60.00 0;90.00 0;120.00 0;150.00 0;180.00 0;210.00 0;240.00 0;270.00 0" dur="6s" repeatCount="indefinite"/></g>
+          <text class="c7-d" x="470" y="244" text-anchor="middle">Con Q6 conectado a MR el ciclo pasa a seis pasos: divisor por 6 sin compuertas</text>
+          <text class="c7-d" x="470" y="268" text-anchor="middle">La salida Q5-9, alta durante medio ciclo, sirve para encadenar otro 4017</text>
+          </svg>
+        <figcaption><b>Figura 4.</b> CD4017, animado. La salida activa «camina» de Q0 a Q9 con cada flanco de
+        reloj. Conectando cualquier salida al RESET se obtiene un secuenciador de menos pasos: con Q6 al
+        reset, el ciclo pasa a ser de seis.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box lab">
+          <div class="bt">Lo que se arma con él en dos minutos</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>Luces secuenciales tipo auto fantástico (con el 4017 + un 555 de reloj).</li>
+            <li>Secuenciador de pasos para un motor.</li>
+            <li>Divisor por cualquier número del 2 al 10, llevando la salida N al reset.</li>
+            <li>Distribuidor de tiempos para multiplexar displays.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Sus patas particulares</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>CP0</b> avanza con flanco de subida; <b>CP1</b> (inhibit) sirve para frenarlo o para
+            usar flanco de bajada.</li>
+            <li><b>MR</b> (reset) vuelve a Q0. Activo en alto.</li>
+            <li><b>Q5-9</b> es una salida de acarreo que queda en alto durante la mitad del ciclo: sirve para
+            encadenar 4017 sin lógica extra.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p>El reloj que lo hace avanzar sale casi siempre de un
+      <a class="ref" href="/publicaciones/simulador-555">555 en astable</a>: ahí se puede elegir la velocidad
+      del secuenciador con un solo par R-C.</p>
+    </section>
+
+    <section id="aplicaciones">
+      <h2><span class="n">07</span>Aplicaciones típicas</h2>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Frecuencímetro</div>
+          <p>Una cascada de décadas con la entrada abierta por una compuerta durante exactamente 1 s. Lo que
+          quede en el contador <b>son los hertz</b>. Es el circuito que se estudia en
+          <a href="/publicaciones/mapa-electronica/temas/mediciones-ca">mediciones en CA</a> y que se retoma
+          completo en <a href="/publicaciones/mapa-electronica/temas/instrumentos-digitales">instrumentos
+          digitales</a>.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Reloj digital</div>
+          <p>Base de tiempo de 1 Hz → módulo 60 (segundos) → módulo 60 (minutos) → módulo 12 o 24 (horas).
+          Cada bloque es la misma pareja de contadores con distinto reset.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Divisor programable de frecuencia</div>
+          <p>Un contador descendente que se recarga con un número N cada vez que llega a cero entrega f/N.
+          Cambiando N —con llaves, con un teclado o desde un microcontrolador— se cambia la división.
+          Es el corazón de un <b>sintetizador PLL</b>, con el que se elige la frecuencia de un transmisor.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Conversión digital-analógica por rampa</div>
+          <p>Un contador que alimenta una red R-2R genera una rampa escalonada. Comparada contra una señal
+          da un conversor A/D de rampa, que se ve en
+          <a href="/publicaciones/mapa-electronica/temas/conversores-ad-da">conversores A/D y D/A</a>.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo resuelto · Cuentavueltas de un motor</div>
+        <p>Un sensor óptico entrega un pulso por vuelta de un eje que gira a 1500 RPM. Se quiere mostrar las
+        vueltas por minuto en tres dígitos.</p>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>1500 RPM = 1500/60 = <b>25 pulsos por segundo</b>.</li>
+          <li>Si se cuenta durante 1 s se leen 25: hay que mostrar RPM, no pulsos por segundo. Se cuenta
+          entonces durante <b>60 s</b>, o se multiplica por 60 eligiendo una ventana de 1 s y contando
+          pulsos de un disco de 60 ranuras.</li>
+          <li>Solución práctica: disco de <b>6 ranuras</b> y ventana de <b>1 s</b>. Se cuentan
+          1500 × 6/60 = <b>150 pulsos</b>, y el display muestra directamente las centenas y decenas de RPM
+          con una coma fija (150 → 1500 RPM con el último cero pintado en el frente).</li>
+          <li>Hacen falta tres décadas en cascada (módulo 1000) y una compuerta de ventana. Con el resultado
+          en 150 sobre 999, el rango llega hasta 9990 RPM.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">08</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · La división por dos, vista en el osciloscopio</div>
+        <p>Armar un CD4040 con un reloj de 10 kHz del generador de funciones. Con el
+        <a href="/publicaciones/mapa-electronica/temas/osciloscopio">osciloscopio</a> de dos canales, dejar
+        el canal 1 en el reloj y recorrer con el canal 2 las salidas Q1 a Q6, midiendo la frecuencia en cada
+        una. Anotar la tabla: 5 kHz, 2,5 kHz, 1,25 kHz, 625 Hz, 312,5 Hz, 156,25 Hz. Es la comprobación
+        directa de que contar y dividir son la misma cosa.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Módulo a pedido</div>
+        <p>Con un 74193 (o 4516) y una compuerta NAND de cuatro entradas, armar sucesivamente los módulos 5,
+        7, 9 y 12 por reset. Verificar cada uno con LED en las cuatro salidas y el reloj bien lento (1 Hz de
+        un 555). Después repetir el módulo 12 por <b>carga paralela</b> y comparar en el osciloscopio la
+        salida Q3 en los dos casos: en la versión por reset se ve la púa del estado fantasma.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Reloj de segundos</div>
+        <p>Base de tiempo de 1 Hz + década 4510 + módulo 6, con dos displays de siete segmentos a través de
+        4511. Verificar que la cuenta va de 00 a 59 y vuelve a 00 sin saltarse el 59 ni mostrar un 60
+        parpadeante. Si el 60 aparece, el reset no está tomado de las salidas correctas.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Secuenciador con 4017</div>
+        <p>555 astable a 2 Hz → 4017 → diez LED. Después, llevar Q6 al reset y comprobar que el ciclo pasa a
+        seis pasos. Por último, usar la salida Q5-9 para encadenar un segundo 4017 y armar un secuenciador de
+        veinte pasos.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Entradas CMOS al aire</div>
+        <p>En CMOS <b>ninguna entrada puede quedar sin conectar</b>, ni siquiera las que no se usan. Una
+        entrada flotante toma cualquier valor, oscila y hace consumir corriente al integrado. Todas las
+        entradas de reset, carga y habilitación que no se usen van a masa o a V<sub>DD</sub> según
+        corresponda. Es la causa número uno de los contadores CMOS «que cuentan cualquier cosa».</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">09</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>El contador salta números o cuenta de a dos</td><td>Rebote del pulsador que hace de reloj. Hace falta un antirrebote (R-C + Schmitt, o un 555 monoestable).</td></tr>
+            <tr><td>La cuenta se cuelga en un número raro</td><td>Pulso de reset demasiado angosto, o entradas CMOS sin conectar.</td></tr>
+            <tr><td>El display muestra un dígito de más, parpadeando</td><td>Estado fantasma del módulo por reset asíncrono. Pasar a carga sincrónica o apagar el display durante el reset.</td></tr>
+            <tr><td>Con la cascada, la etapa alta avanza dos veces</td><td>Se tomó el acarreo por nivel en vez de por flanco, o se conectó a un reloj de flanco contrario al que corresponde.</td></tr>
+            <tr><td>Funciona lento y falla al subir la frecuencia</td><td>Cascada tipo ripple: los retardos acumulados superan el período del reloj. Pasar a cascada por habilitación.</td></tr>
+            <tr><td>La decodificación dispara sola</td><td>Glitch de decodificación sobre un contador asincrónico. Validar con el reloj o usar sincrónico.</td></tr>
+            <tr><td>Cuenta bien con LED pero falla manejando un relé</td><td>El ruido de la bobina vuelve por la alimentación. Desacoplar con 100 nF en cada integrado y diodo volante en el relé.</td></tr>
+            <tr><td>El 4017 enciende dos salidas a la vez</td><td>Reloj con flancos sucios o lentos. Pasar la señal por un Schmitt trigger (40106).</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">10</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuántos flip-flops hacen falta para un contador módulo 12 y cuál es su capacidad real?</summary>
+        <div class="a"><p>Cuatro, porque con tres sólo se llega a 8. La capacidad natural de cuatro etapas es
+        16, así que hay que <b>acortar</b> la cuenta: se decodifica el 12 (1100) hacia el reset, o se carga el
+        4 y se cuenta hasta el desborde.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un cristal de reloj es de 32 768 Hz?</summary>
+        <div class="a"><p>Porque 32 768 = 2<sup>15</sup>. Quince etapas de división binaria —que es lo que hay
+        adentro de cualquier contador— entregan exactamente <b>1 Hz</b> sin ninguna corrección.</p></div></details>
+
+      <details class="q"><summary>¿Qué es el estado fantasma y cómo se elimina?</summary>
+        <div class="a"><p>Es el paso brevísimo por el estado que se decodifica para resetear: el contador
+        llega a ese valor y recién ahí se borra, de modo que existe durante el retardo de propagación. Se
+        elimina programando el módulo por <b>carga sincrónica</b>, o con un contador de borrado sincrónico
+        como el 74163.</p></div></details>
+
+      <details class="q"><summary>Con tres décadas en cascada y un reloj de 1 MHz, ¿qué frecuencia sale de la última?</summary>
+        <div class="a"><p>1 MHz / (10 × 10 × 10) = <b>1000 Hz</b>. Cada década divide por diez.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un contador asincrónico no se puede decodificar con seguridad?</summary>
+        <div class="a"><p>Porque sus etapas no cambian a la vez: durante la propagación aparecen
+        combinaciones intermedias que no corresponden a ningún estado de la cuenta. Una compuerta
+        decodificadora las ve y genera pulsos falsos de pocos nanosegundos.</p></div></details>
+
+      <details class="q"><summary>Se quiere dividir por 7 una señal. ¿Cómo se hace con un contador de 4 bits?</summary>
+        <div class="a"><p>Dos caminos. <b>Ascendente:</b> decodificar el 7 (0111) hacia el reset, con lo que
+        el contador recorre 0…6 y vuelve: siete estados. <b>Descendente y limpio:</b> cargar 6 y recargar al
+        llegar a 0, o cargar 16 − 7 = 9 y recargar con el acarreo. La segunda no tiene estado
+        fantasma.</p></div></details>
+
+      <details class="q"><summary>¿Qué ventaja tiene el 4017 frente a un 4510 con decodificador?</summary>
+        <div class="a"><p>Que ya trae las diez salidas decodificadas y garantiza que <b>sólo una está activa
+        por vez</b>, sin glitches. Ahorra el decodificador y el riesgo de que dos salidas se pisen durante la
+        transición.</p></div></details>
+
+      <details class="q"><summary>En una cascada por habilitación, ¿a dónde va el reloj de la segunda etapa?</summary>
+        <div class="a"><p>Al mismo reloj que la primera. Lo que va del acarreo de la primera a la segunda es
+        la <b>habilitación de conteo</b>, no el reloj. Así todo el conjunto cambia en el mismo flanco y sigue
+        siendo sincrónico.</p></div></details>
+
+      <details class="q"><summary>Un contador de 4 bits arranca en 0110 apenas se enciende el circuito, sin haber contado nada. ¿Qué pasa?</summary>
+        <div class="a"><p>Los flip-flops toman un estado aleatorio al alimentarse. Falta un <b>reset de
+        encendido</b> (power-on reset): un R-C que aplique un pulso de borrado durante los primeros
+        milisegundos.</p></div></details>
+
+      <details class="q"><summary>¿Por qué el temporizador de un microcontrolador cuenta hacia abajo?</summary>
+        <div class="a"><p>Porque detectar el <b>cero</b> es más barato que comparar contra un número
+        arbitrario: alcanza con una NOR de todos los bits. Contando hacia abajo desde N − 1 se programa
+        cualquier módulo con la misma lógica de detección.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/lenguaje-cpp">
+        <div class="dir">← Tema anterior · 4° año</div>
+        <div class="tt">El lenguaje C++</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/conversores-ad-da">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Conversores A/D y D/A</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Contadores programables»</b> de <b>Electrónica Digital II</b> (5° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
