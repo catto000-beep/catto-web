@@ -25,5 +25,8 @@
     });
   }, {rootMargin:'140px 0px'});
 
-  svgs.forEach(function(s){ pausar(s); io.observe(s); });
+  // Arrancan andando: si por lo que fuera el observador no informara nunca,
+  // las figuras se animan igual. Lo unico que hace el observador es frenarlas
+  // mientras estan fuera de la pantalla.
+  svgs.forEach(function(s){ io.observe(s); });
 })();
