@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filtros · Electrónica Analógica II · Catto</title>
+<meta name="description" content="Filtros pasa-bajos, pasa-altos, pasa-banda y elimina-banda. Frecuencia de corte, decibeles, orden y pendiente, filtros R-C y L-C, factor Q y ancho de banda, filtros activos Sallen-Key, respuestas Butterworth, Chebyshev y Bessel. Eje temático de Electrónica Analógica II, 5° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/filtros">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Analógica II</a>
+    <span class="anio">5° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Analógica II</span> · 144 h · Eje 6 de 6</div>
+    <h1>Filtros</h1>
+    <p class="lead">Un filtro separa señales por su <b>frecuencia</b>: deja pasar unas y frena otras. Está en
+    todos lados —en la fuente que alimenta el equipo, antes de cada conversor, en el parlante de agudos, en
+    el sintonizador de una radio— y casi siempre resuelve un problema que ningún otro circuito puede
+    resolver.</p>
+    <div class="chips">
+      <span class="chip hi">Filtros y osciladores</span>
+      <span class="chip">Frecuencia de corte</span>
+      <span class="chip">Decibeles</span>
+      <span class="chip">Sallen-Key</span>
+      <span class="chip">Factor Q</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>La idea: la frecuencia como criterio</h2>
+      <p>Un amplificador hace la señal más grande. Un rectificador la vuelve continua. Un filtro hace algo
+      distinto: <b>elige</b>. Y puede elegir porque los capacitores y las bobinas presentan una reactancia
+      que depende de la frecuencia, cosa que las resistencias no hacen.</p>
+
+      <div class="box key">
+        <div class="bt">Todo sale de estas dos líneas</div>
+        <div class="form" style="margin:10px 0 0">
+          <math display="block"><mrow><msub><mi>X</mi><mi>C</mi></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><mi>f</mi><mi>C</mi></mrow></mfrac><mspace width="34px"/><msub><mi>X</mi><mi>L</mi></msub><mo>=</mo><mn>2</mn><mi>π</mi><mi>f</mi><mi>L</mi></mrow></math>
+        </div>
+        <p style="margin-top:10px">El capacitor se opone <b>menos</b> cuanto más alta es la frecuencia; la
+        bobina, <b>más</b>. Un divisor hecho con una resistencia y uno de ellos ya es un filtro, y de qué
+        lado se tome la salida decide si es pasa-bajos o pasa-altos.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 260" role="img" aria-label="Respuesta de los cuatro tipos de filtro" class="svg-t" data-anim>
+          <style>.c4-d{fill:#7d8a99;font-size:10px;text-anchor:middle}.c4-n{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}</style>
+          <text class="c4-n" x="94" y="44">Pasa-bajos</text>
+          <rect x="20" y="60" width="148" height="96" rx="6" fill="#11161e" stroke="#2a3140"/>
+          <polyline points="20.00,64.04 21.48,64.05 22.96,64.06 24.44,64.07 25.92,64.08 27.40,64.09 28.88,64.10 30.36,64.12 31.84,64.13 33.32,64.15 34.80,64.17 36.28,64.20 37.76,64.23 39.24,64.26 40.72,64.30 42.20,64.35 43.68,64.40 45.16,64.46 46.64,64.52 48.12,64.60 49.60,64.69 51.08,64.79 52.56,64.91 54.04,65.04 55.52,65.19 57.00,65.36 58.48,65.56 59.96,65.78 61.44,66.03 62.92,66.32 64.40,66.65 65.88,67.02 67.36,67.45 68.84,67.92 70.32,68.46 71.80,69.07 73.28,69.74 74.76,70.50 76.24,71.35 77.72,72.29 79.20,73.33 80.68,74.47 82.16,75.73 83.64,77.09 85.12,78.58 86.60,80.18 88.08,81.89 89.56,83.71 91.04,85.64 92.52,87.66 94.00,89.77 95.48,91.96 96.96,94.20 98.44,96.49 99.92,98.82 101.40,101.15 102.88,103.49 104.36,105.81 105.84,108.11 107.32,110.37 108.80,112.57 110.28,114.72 111.76,116.79 113.24,118.80 114.72,120.73 116.20,122.57 117.68,124.34 119.16,126.02 120.64,127.61 122.12,129.13 123.60,130.56 125.08,131.92 126.56,133.19 128.04,134.40 129.52,135.53 131.00,136.59 132.48,137.59 133.96,138.53 135.44,139.41 136.92,140.24 138.40,141.01 139.88,141.73 141.36,142.41 142.84,143.04 144.32,143.63 145.80,144.19 147.28,144.71 148.76,145.19 150.24,145.64 151.72,146.06 153.20,146.46 154.68,146.83 156.16,147.17 157.64,147.49 159.12,147.79 160.60,148.07 162.08,148.33 163.56,148.58 165.04,148.81 166.52,149.02 168.00,149.22" fill="none" stroke="#3fb950" stroke-width="2.2"/>
+          <text class="c4-d" x="40" y="172">grave</text>
+          <text class="c4-d" x="148" y="172">agudo</text>
+          <g><line x1="20.00" y1="60" x2="20.00" y2="156" stroke="#f85149" stroke-width="1.4"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;12.33 0;24.67 0;37.00 0;49.33 0;61.67 0;74.00 0;86.33 0;98.67 0;111.00 0;123.33 0;135.67 0;148.00 0" dur="9s" repeatCount="indefinite"/></g>
+          <rect x="20" y="182" width="148" height="14" rx="4" fill="#1c2230" stroke="#2a3140"/>
+          <rect x="20" y="182" width="0" height="14" rx="4" fill="#3fb950"><animate attributeName="width" calcMode="discrete" values="147.9;147.8;147.3;145.7;141.1;129.0;104.7;72.5;44.6;25.9;14.7;8.3;4.7" dur="9s" repeatCount="indefinite"/></rect>
+          <text class="c4-d" x="94" y="212">salida</text>
+          <text class="c4-n" x="262" y="44">Pasa-altos</text>
+          <rect x="188" y="60" width="148" height="96" rx="6" fill="#11161e" stroke="#2a3140"/>
+          <polyline points="188.00,149.22 189.48,149.02 190.96,148.81 192.44,148.58 193.92,148.33 195.40,148.07 196.88,147.79 198.36,147.49 199.84,147.17 201.32,146.83 202.80,146.46 204.28,146.06 205.76,145.64 207.24,145.19 208.72,144.71 210.20,144.19 211.68,143.63 213.16,143.04 214.64,142.41 216.12,141.73 217.60,141.01 219.08,140.24 220.56,139.41 222.04,138.53 223.52,137.59 225.00,136.59 226.48,135.53 227.96,134.40 229.44,133.19 230.92,131.92 232.40,130.56 233.88,129.13 235.36,127.61 236.84,126.02 238.32,124.34 239.80,122.57 241.28,120.73 242.76,118.80 244.24,116.79 245.72,114.72 247.20,112.57 248.68,110.37 250.16,108.11 251.64,105.81 253.12,103.49 254.60,101.15 256.08,98.82 257.56,96.49 259.04,94.20 260.52,91.96 262.00,89.77 263.48,87.66 264.96,85.64 266.44,83.71 267.92,81.89 269.40,80.18 270.88,78.58 272.36,77.09 273.84,75.73 275.32,74.47 276.80,73.33 278.28,72.29 279.76,71.35 281.24,70.50 282.72,69.74 284.20,69.07 285.68,68.46 287.16,67.92 288.64,67.45 290.12,67.02 291.60,66.65 293.08,66.32 294.56,66.03 296.04,65.78 297.52,65.56 299.00,65.36 300.48,65.19 301.96,65.04 303.44,64.91 304.92,64.79 306.40,64.69 307.88,64.60 309.36,64.52 310.84,64.46 312.32,64.40 313.80,64.35 315.28,64.30 316.76,64.26 318.24,64.23 319.72,64.20 321.20,64.17 322.68,64.15 324.16,64.13 325.64,64.12 327.12,64.10 328.60,64.09 330.08,64.08 331.56,64.07 333.04,64.06 334.52,64.05 336.00,64.04" fill="none" stroke="#58a6ff" stroke-width="2.2"/>
+          <text class="c4-d" x="208" y="172">grave</text>
+          <text class="c4-d" x="316" y="172">agudo</text>
+          <g><line x1="188.00" y1="60" x2="188.00" y2="156" stroke="#f85149" stroke-width="1.4"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;12.33 0;24.67 0;37.00 0;49.33 0;61.67 0;74.00 0;86.33 0;98.67 0;111.00 0;123.33 0;135.67 0;148.00 0" dur="9s" repeatCount="indefinite"/></g>
+          <rect x="188" y="182" width="148" height="14" rx="4" fill="#1c2230" stroke="#2a3140"/>
+          <rect x="188" y="182" width="0" height="14" rx="4" fill="#58a6ff"><animate attributeName="width" calcMode="discrete" values="4.7;8.3;14.7;25.9;44.6;72.5;104.7;129.0;141.1;145.7;147.3;147.8;147.9" dur="9s" repeatCount="indefinite"/></rect>
+          <text class="c4-d" x="262" y="212">salida</text>
+          <text class="c4-n" x="430" y="44">Pasa-banda</text>
+          <rect x="356" y="60" width="148" height="96" rx="6" fill="#11161e" stroke="#2a3140"/>
+          <polyline points="356.00,150.73 357.48,150.64 358.96,150.55 360.44,150.44 361.92,150.33 363.40,150.21 364.88,150.08 366.36,149.94 367.84,149.80 369.32,149.64 370.80,149.47 372.28,149.28 373.76,149.09 375.24,148.88 376.72,148.65 378.20,148.41 379.68,148.15 381.16,147.87 382.64,147.57 384.12,147.24 385.60,146.89 387.08,146.51 388.56,146.11 390.04,145.67 391.52,145.19 393.00,144.68 394.48,144.12 395.96,143.52 397.44,142.86 398.92,142.14 400.40,141.35 401.88,140.49 403.36,139.54 404.84,138.50 406.32,137.33 407.80,136.03 409.28,134.57 410.76,132.93 412.24,131.05 413.72,128.89 415.20,126.39 416.68,123.45 418.16,119.95 419.64,115.74 421.12,110.61 422.60,104.30 424.08,96.52 425.56,87.19 427.04,76.87 428.52,67.81 430.00,64.00 431.48,67.81 432.96,76.87 434.44,87.19 435.92,96.52 437.40,104.30 438.88,110.61 440.36,115.74 441.84,119.95 443.32,123.45 444.80,126.39 446.28,128.89 447.76,131.05 449.24,132.93 450.72,134.57 452.20,136.03 453.68,137.33 455.16,138.50 456.64,139.54 458.12,140.49 459.60,141.35 461.08,142.14 462.56,142.86 464.04,143.52 465.52,144.12 467.00,144.68 468.48,145.19 469.96,145.67 471.44,146.11 472.92,146.51 474.40,146.89 475.88,147.24 477.36,147.57 478.84,147.87 480.32,148.15 481.80,148.41 483.28,148.65 484.76,148.88 486.24,149.09 487.72,149.28 489.20,149.47 490.68,149.64 492.16,149.80 493.64,149.94 495.12,150.08 496.60,150.21 498.08,150.33 499.56,150.44 501.04,150.55 502.52,150.64 504.00,150.73" fill="none" stroke="#a371f7" stroke-width="2.2"/>
+          <text class="c4-d" x="376" y="172">grave</text>
+          <text class="c4-d" x="484" y="172">agudo</text>
+          <g><line x1="356.00" y1="60" x2="356.00" y2="156" stroke="#f85149" stroke-width="1.4"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;12.33 0;24.67 0;37.00 0;49.33 0;61.67 0;74.00 0;86.33 0;98.67 0;111.00 0;123.33 0;135.67 0;148.00 0" dur="9s" repeatCount="indefinite"/></g>
+          <rect x="356" y="182" width="148" height="14" rx="4" fill="#1c2230" stroke="#2a3140"/>
+          <rect x="356" y="182" width="0" height="14" rx="4" fill="#a371f7"><animate attributeName="width" calcMode="discrete" values="2.1;3.8;6.8;12.3;23.3;51.8;148.0;51.8;23.3;12.3;6.8;3.8;2.1" dur="9s" repeatCount="indefinite"/></rect>
+          <text class="c4-d" x="430" y="212">salida</text>
+          <text class="c4-n" x="598" y="44">Elimina-banda</text>
+          <rect x="524" y="60" width="148" height="96" rx="6" fill="#11161e" stroke="#2a3140"/>
+          <polyline points="524.00,64.01 525.48,64.01 526.96,64.01 528.44,64.01 529.92,64.02 531.40,64.02 532.88,64.02 534.36,64.02 535.84,64.03 537.32,64.03 538.80,64.04 540.28,64.04 541.76,64.05 543.24,64.06 544.72,64.06 546.20,64.07 547.68,64.08 549.16,64.10 550.64,64.11 552.12,64.13 553.60,64.15 555.08,64.17 556.56,64.20 558.04,64.23 559.52,64.26 561.00,64.30 562.48,64.35 563.96,64.41 565.44,64.48 566.92,64.55 568.40,64.65 569.88,64.76 571.36,64.89 572.84,65.04 574.32,65.23 575.80,65.46 577.28,65.74 578.76,66.09 580.24,66.53 581.72,67.09 583.20,67.81 584.68,68.76 586.16,70.04 587.64,71.82 589.12,74.34 590.60,78.05 592.08,83.69 593.56,92.48 595.04,106.18 596.52,126.39 598.00,152.00 599.48,126.39 600.96,106.18 602.44,92.48 603.92,83.69 605.40,78.05 606.88,74.34 608.36,71.82 609.84,70.04 611.32,68.76 612.80,67.81 614.28,67.09 615.76,66.53 617.24,66.09 618.72,65.74 620.20,65.46 621.68,65.23 623.16,65.04 624.64,64.89 626.12,64.76 627.60,64.65 629.08,64.55 630.56,64.48 632.04,64.41 633.52,64.35 635.00,64.30 636.48,64.26 637.96,64.23 639.44,64.20 640.92,64.17 642.40,64.15 643.88,64.13 645.36,64.11 646.84,64.10 648.32,64.08 649.80,64.07 651.28,64.06 652.76,64.06 654.24,64.05 655.72,64.04 657.20,64.04 658.68,64.03 660.16,64.03 661.64,64.02 663.12,64.02 664.60,64.02 666.08,64.02 667.56,64.01 669.04,64.01 670.52,64.01 672.00,64.01" fill="none" stroke="#ffa657" stroke-width="2.2"/>
+          <text class="c4-d" x="544" y="172">grave</text>
+          <text class="c4-d" x="652" y="172">agudo</text>
+          <g><line x1="524.00" y1="60" x2="524.00" y2="156" stroke="#f85149" stroke-width="1.4"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;12.33 0;24.67 0;37.00 0;49.33 0;61.67 0;74.00 0;86.33 0;98.67 0;111.00 0;123.33 0;135.67 0;148.00 0" dur="9s" repeatCount="indefinite"/></g>
+          <rect x="524" y="182" width="148" height="14" rx="4" fill="#1c2230" stroke="#2a3140"/>
+          <rect x="524" y="182" width="0" height="14" rx="4" fill="#ffa657"><animate attributeName="width" calcMode="discrete" values="148.0;148.0;147.8;147.5;146.1;138.6;0.0;138.6;146.1;147.5;147.8;148.0;148.0" dur="9s" repeatCount="indefinite"/></rect>
+          <text class="c4-d" x="598" y="212">salida</text>
+          <text class="c4-d" x="350" y="26">un barrido de frecuencia recorre los cuatro filtros a la vez</text>
+          </svg>
+        <figcaption><b>Figura 1.</b> Los cuatro tipos, animados. El barrido recorre el espectro y en cada
+        filtro se ve qué queda a la salida: el pasa-bajos deja pasar lo grave, el pasa-altos lo agudo, el
+        pasa-banda sólo una franja y el elimina-banda todo <b>menos</b> una franja.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Tipo</th><th>Qué deja pasar</th><th>Ejemplo concreto</th></tr></thead>
+          <tbody>
+            <tr><td><b>Pasa-bajos</b></td><td>De continua hasta f<sub>c</sub></td><td>Filtro de la fuente de alimentación; antialias antes de un <a href="/publicaciones/mapa-electronica/temas/conversores-ad-da">A/D</a>; el parlante de graves.</td></tr>
+            <tr><td><b>Pasa-altos</b></td><td>De f<sub>c</sub> para arriba</td><td>Capacitor de acoplamiento entre etapas; el tweeter de una caja acústica.</td></tr>
+            <tr><td><b>Pasa-banda</b></td><td>Sólo una franja alrededor de f<sub>0</sub></td><td>Sintonía de una radio; receptor de control remoto a 38 kHz; ecualizador.</td></tr>
+            <tr><td><b>Elimina-banda</b> (notch)</td><td>Todo menos una franja</td><td>Quitar el zumbido de 50 Hz de una señal biomédica o de audio.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="rc">
+      <h2><span class="n">02</span>El filtro R-C de primer orden</h2>
+      <p>Es el filtro más simple que existe: una resistencia y un capacitor. Vale la pena conocerlo de
+      memoria porque aparece en todas partes, muchas veces <b>sin haber sido puesto a propósito</b>: la
+      resistencia de salida de una etapa y la capacidad del cable forman un pasa-bajos aunque nadie lo haya
+      diseñado.</p>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>f</mi><mi>c</mi></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><mi>R</mi><mi>C</mi></mrow></mfrac></mrow></math>
+        <span class="cap">Con R = 10 kΩ y C = 10 nF: f<sub>c</sub> = 1592 Hz. La misma fórmula sirve para el
+        pasa-bajos y para el pasa-altos: lo que cambia es de dónde se toma la salida.</span>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Qué pasa exactamente en la frecuencia de corte</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li>La reactancia del capacitor <b>iguala</b> a la resistencia: X<sub>C</sub> = R.</li>
+          <li>La salida cae a <b>0,707</b> de la entrada, que son <b>−3 dB</b>.</li>
+          <li>La potencia cae a la <b>mitad</b>: por eso también se la llama frecuencia de media potencia.</li>
+          <li>El desfasaje es de <b>45°</b>.</li>
+        </ul>
+        <p style="margin-top:10px">Y lejos del corte, la pendiente es de <b>−20 dB por década</b>, o lo que
+        es lo mismo, −6 dB por octava: cada vez que la frecuencia se multiplica por diez, la señal se divide
+        por diez.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Curva de respuesta de un filtro pasa-bajos de primer y segundo orden" class="svg-t" data-anim>
+          <style>.bo-d{fill:#7d8a99;font-size:10.5px}.bo-l{fill:#9aa7b4;font-size:11px;text-anchor:middle}</style>
+          <line x1="96.0" y1="54" x2="96.0" y2="250" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-l" x="96.0" y="268">f/100</text>
+          <line x1="202.0" y1="54" x2="202.0" y2="250" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-l" x="202.0" y="268">f/10</text>
+          <line x1="308.0" y1="54" x2="308.0" y2="250" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-l" x="308.0" y="268">fc</text>
+          <line x1="414.0" y1="54" x2="414.0" y2="250" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-l" x="414.0" y="268">10 f</text>
+          <line x1="520.0" y1="54" x2="520.0" y2="250" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-l" x="520.0" y="268">100 f</text>
+          <line x1="96.0" y1="66.0" x2="520.0" y2="66.0" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-d" x="88.0" y="70.0" text-anchor="end">0 dB</text>
+          <line x1="96.0" y1="127.3" x2="520.0" y2="127.3" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-d" x="88.0" y="131.3" text-anchor="end">-20 dB</text>
+          <line x1="96.0" y1="188.7" x2="520.0" y2="188.7" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-d" x="88.0" y="192.7" text-anchor="end">-40 dB</text>
+          <line x1="96.0" y1="250.0" x2="520.0" y2="250.0" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <text class="bo-d" x="88.0" y="254.0" text-anchor="end">-60 dB</text>
+          <polyline points="96.00,66.00 98.12,66.00 100.24,66.00 102.36,66.00 104.48,66.00 106.60,66.00 108.72,66.00 110.84,66.00 112.96,66.00 115.08,66.00 117.20,66.00 119.32,66.00 121.44,66.00 123.56,66.00 125.68,66.00 127.80,66.01 129.92,66.01 132.04,66.01 134.16,66.01 136.28,66.01 138.40,66.01 140.52,66.01 142.64,66.01 144.76,66.01 146.88,66.01 149.00,66.01 151.12,66.01 153.24,66.02 155.36,66.02 157.48,66.02 159.60,66.02 161.72,66.02 163.84,66.03 165.96,66.03 168.08,66.03 170.20,66.03 172.32,66.04 174.44,66.04 176.56,66.04 178.68,66.05 180.80,66.05 182.92,66.06 185.04,66.06 187.16,66.07 189.28,66.08 191.40,66.08 193.52,66.09 195.64,66.10 197.76,66.11 199.88,66.12 202.00,66.13 204.12,66.15 206.24,66.16 208.36,66.17 210.48,66.19 212.60,66.21 214.72,66.23 216.84,66.25 218.96,66.28 221.08,66.30 223.20,66.33 225.32,66.36 227.44,66.40 229.56,66.43 231.68,66.47 233.80,66.52 235.92,66.57 238.04,66.62 240.16,66.68 242.28,66.75 244.40,66.81 246.52,66.89 248.64,66.97 250.76,67.06 252.88,67.16 255.00,67.27 257.12,67.39 259.24,67.51 261.36,67.65 263.48,67.80 265.60,67.96 267.72,68.13 269.84,68.32 271.96,68.53 274.08,68.75 276.20,68.98 278.32,69.24 280.44,69.51 282.56,69.81 284.68,70.13 286.80,70.46 288.92,70.82 291.04,71.21 293.16,71.62 295.28,72.05 297.40,72.51 299.52,73.00 301.64,73.52 303.76,74.06 305.88,74.63 308.00,75.23 310.12,75.86 312.24,76.51 314.36,77.20 316.48,77.91 318.60,78.65 320.72,79.41 322.84,80.21 324.96,81.02 327.08,81.86 329.20,82.73 331.32,83.62 333.44,84.53 335.56,85.46 337.68,86.41 339.80,87.38 341.92,88.37 344.04,89.38 346.16,90.40 348.28,91.44 350.40,92.49 352.52,93.56 354.64,94.64 356.76,95.73 358.88,96.83 361.00,97.94 363.12,99.06 365.24,100.18 367.36,101.32 369.48,102.46 371.60,103.61 373.72,104.77 375.84,105.93 377.96,107.10 380.08,108.28 382.20,109.45 384.32,110.63 386.44,111.82 388.56,113.01 390.68,114.20 392.80,115.40 394.92,116.59 397.04,117.80 399.16,119.00 401.28,120.20 403.40,121.41 405.52,122.62 407.64,123.83 409.76,125.04 411.88,126.25 414.00,127.47 416.12,128.68 418.24,129.90 420.36,131.11 422.48,132.33 424.60,133.55 426.72,134.77 428.84,135.99 430.96,137.21 433.08,138.43 435.20,139.65 437.32,140.87 439.44,142.10 441.56,143.32 443.68,144.54 445.80,145.77 447.92,146.99 450.04,148.21 452.16,149.44 454.28,150.66 456.40,151.89 458.52,153.11 460.64,154.34 462.76,155.56 464.88,156.79 467.00,158.01 469.12,159.24 471.24,160.46 473.36,161.69 475.48,162.92 477.60,164.14 479.72,165.37 481.84,166.59 483.96,167.82 486.08,169.05 488.20,170.27 490.32,171.50 492.44,172.72 494.56,173.95 496.68,175.18 498.80,176.40 500.92,177.63 503.04,178.86 505.16,180.08 507.28,181.31 509.40,182.54 511.52,183.76 513.64,184.99 515.76,186.21 517.88,187.44 520.00,188.67" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <polyline points="96.00,66.00 98.12,66.00 100.24,66.00 102.36,66.00 104.48,66.00 106.60,66.00 108.72,66.00 110.84,66.00 112.96,66.00 115.08,66.00 117.20,66.00 119.32,66.00 121.44,66.00 123.56,66.00 125.68,66.00 127.80,66.00 129.92,66.00 132.04,66.00 134.16,66.00 136.28,66.00 138.40,66.00 140.52,66.00 142.64,66.00 144.76,66.00 146.88,66.00 149.00,66.00 151.12,66.00 153.24,66.00 155.36,66.00 157.48,66.00 159.60,66.00 161.72,66.00 163.84,66.00 165.96,66.00 168.08,66.00 170.20,66.00 172.32,66.00 174.44,66.00 176.56,66.00 178.68,66.00 180.80,66.00 182.92,66.00 185.04,66.00 187.16,66.00 189.28,66.00 191.40,66.00 193.52,66.00 195.64,66.00 197.76,66.00 199.88,66.00 202.00,66.00 204.12,66.00 206.24,66.00 208.36,66.00 210.48,66.00 212.60,66.00 214.72,66.00 216.84,66.00 218.96,66.01 221.08,66.01 223.20,66.01 225.32,66.01 227.44,66.01 229.56,66.01 231.68,66.02 233.80,66.02 235.92,66.03 238.04,66.03 240.16,66.04 242.28,66.04 244.40,66.05 246.52,66.06 248.64,66.08 250.76,66.09 252.88,66.11 255.00,66.13 257.12,66.16 259.24,66.19 261.36,66.23 263.48,66.28 265.60,66.33 267.72,66.40 269.84,66.47 271.96,66.57 274.08,66.68 276.20,66.81 278.32,66.97 280.44,67.16 282.56,67.39 284.68,67.65 286.80,67.96 288.92,68.32 291.04,68.75 293.16,69.24 295.28,69.81 297.40,70.46 299.52,71.21 301.64,72.05 303.76,73.00 305.88,74.06 308.00,75.23 310.12,76.51 312.24,77.91 314.36,79.41 316.48,81.02 318.60,82.73 320.72,84.53 322.84,86.41 324.96,88.37 327.08,90.40 329.20,92.49 331.32,94.64 333.44,96.83 335.56,99.06 337.68,101.32 339.80,103.61 341.92,105.93 344.04,108.28 346.16,110.63 348.28,113.01 350.40,115.40 352.52,117.80 354.64,120.20 356.76,122.62 358.88,125.04 361.00,127.47 363.12,129.90 365.24,132.33 367.36,134.77 369.48,137.21 371.60,139.65 373.72,142.10 375.84,144.54 377.96,146.99 380.08,149.44 382.20,151.89 384.32,154.34 386.44,156.79 388.56,159.24 390.68,161.69 392.80,164.14 394.92,166.59 397.04,169.05 399.16,171.50 401.28,173.95 403.40,176.40 405.52,178.86 407.64,181.31 409.76,183.76 411.88,186.21 414.00,188.67 416.12,191.12 418.24,193.57 420.36,196.03 422.48,198.48 424.60,200.93 426.72,203.39 428.84,205.84 430.96,208.29 433.08,210.75 435.20,213.20 437.32,215.65 439.44,218.11 441.56,220.56 443.68,223.01 445.80,225.47 447.92,227.92 450.04,230.37 452.16,232.83 454.28,235.28 456.40,237.73 458.52,240.19 460.64,242.64 462.76,245.09 464.88,247.55 467.00,250.00 469.12,252.45 471.24,254.91 473.36,256.13 475.48,256.13 477.60,256.13 479.72,256.13 481.84,256.13 483.96,256.13 486.08,256.13 488.20,256.13 490.32,256.13 492.44,256.13 494.56,256.13 496.68,256.13 498.80,256.13 500.92,256.13 503.04,256.13 505.16,256.13 507.28,256.13 509.40,256.13 511.52,256.13 513.64,256.13 515.76,256.13 517.88,256.13 520.00,256.13" fill="none" stroke="#a371f7" stroke-width="2.0"/>
+          <text class="bo-d" x="306" y="146" fill="#3fb950">1.º orden · −20 dB/déc</text>
+          <text class="bo-d" x="246" y="219" fill="#a371f7">2.º orden · −40 dB/déc</text>
+          <circle cx="308.0" cy="75.2" r="4" fill="#f85149"/>
+          <text class="bo-d" x="316.0" y="67.2" fill="#f85149">−3 dB</text>
+          <g><line x1="96.00" y1="54" x2="96.00" y2="250" stroke="#f85149" stroke-width="1.3" opacity=".8"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;35.33 0;70.67 0;106.00 0;141.33 0;176.67 0;212.00 0;247.33 0;282.67 0;318.00 0;353.33 0;388.67 0;424.00 0" dur="9s" repeatCount="indefinite"/></g>
+          <circle cx="96.00" cy="66.00" r="6" fill="#3fb950"><animate attributeName="cx" calcMode="discrete" values="96.00;131.33;166.67;202.00;237.33;272.67;308.00;343.33;378.67;414.00;449.33;484.67;520.00" dur="9s" repeatCount="indefinite"/><animate attributeName="cy" calcMode="discrete" values="66.00;66.01;66.03;66.13;66.60;68.60;75.23;89.04;107.49;127.47;147.81;168.23;188.67" dur="9s" repeatCount="indefinite"/></circle>
+          <line x1="550" y1="150" x2="670" y2="150" stroke="#2a3140" stroke-width="1.2"/>
+          <g transform="translate(610,150)"><g>
+          <polyline points="-56.00,-0.00 -54.83,-6.53 -53.67,-12.94 -52.50,-19.13 -51.33,-25.00 -50.17,-30.44 -49.00,-35.36 -47.83,-39.67 -46.67,-43.30 -45.50,-46.19 -44.33,-48.30 -43.17,-49.57 -42.00,-50.00 -40.83,-49.57 -39.67,-48.30 -38.50,-46.19 -37.33,-43.30 -36.17,-39.67 -35.00,-35.36 -33.83,-30.44 -32.67,-25.00 -31.50,-19.13 -30.33,-12.94 -29.17,-6.53 -28.00,-0.00 -26.83,6.53 -25.67,12.94 -24.50,19.13 -23.33,25.00 -22.17,30.44 -21.00,35.36 -19.83,39.67 -18.67,43.30 -17.50,46.19 -16.33,48.30 -15.17,49.57 -14.00,50.00 -12.83,49.57 -11.67,48.30 -10.50,46.19 -9.33,43.30 -8.17,39.67 -7.00,35.36 -5.83,30.44 -4.67,25.00 -3.50,19.13 -2.33,12.94 -1.17,6.53 0.00,0.00 1.17,-6.53 2.33,-12.94 3.50,-19.13 4.67,-25.00 5.83,-30.44 7.00,-35.36 8.17,-39.67 9.33,-43.30 10.50,-46.19 11.67,-48.30 12.83,-49.57 14.00,-50.00 15.17,-49.57 16.33,-48.30 17.50,-46.19 18.67,-43.30 19.83,-39.67 21.00,-35.36 22.17,-30.44 23.33,-25.00 24.50,-19.13 25.67,-12.94 26.83,-6.53 28.00,-0.00 29.17,6.53 30.33,12.94 31.50,19.13 32.67,25.00 33.83,30.44 35.00,35.36 36.17,39.67 37.33,43.30 38.50,46.19 39.67,48.30 40.83,49.57 42.00,50.00 43.17,49.57 44.33,48.30 45.50,46.19 46.67,43.30 47.83,39.67 49.00,35.36 50.17,30.44 51.33,25.00 52.50,19.13 53.67,12.94 54.83,6.53 56.00,0.00" fill="none" stroke="#3fb950" stroke-width="2"/>
+          <animateTransform attributeName="transform" type="scale" calcMode="discrete" values="1 1.0000;1 0.9998;1 0.9989;1 0.9950;1 0.9776;1 0.9071;1 0.7071;1 0.4210;1 0.2106;1 0.0995;1 0.0464;1 0.0215;1 0.0100" dur="9s" repeatCount="indefinite"/>
+          </g></g>
+          <text class="bo-l" x="610" y="76">señal a la salida</text>
+          <rect x="546" y="212" width="128" height="34" rx="8" fill="#11161e" stroke="#2a3140"/>
+          <clipPath id="bo-w"><rect x="547" y="213" width="126" height="32"/></clipPath>
+          <g clip-path="url(#bo-w)"><g>
+          <text x="610" y="235" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−0,0 dB</text>
+          <text x="610" y="269" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−0,0 dB</text>
+          <text x="610" y="303" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−0,0 dB</text>
+          <text x="610" y="337" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−0,0 dB</text>
+          <text x="610" y="371" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−0,2 dB</text>
+          <text x="610" y="405" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−0,8 dB</text>
+          <text x="610" y="439" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−3,0 dB</text>
+          <text x="610" y="473" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−7,5 dB</text>
+          <text x="610" y="507" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−13,5 dB</text>
+          <text x="610" y="541" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−20,0 dB</text>
+          <text x="610" y="575" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−26,7 dB</text>
+          <text x="610" y="609" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−33,3 dB</text>
+          <text x="610" y="643" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff">−40,0 dB</text>
+          <animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 0;0 -34;0 -68;0 -102;0 -136;0 -170;0 -204;0 -238;0 -272;0 -306;0 -340;0 -374;0 -408" dur="9s" repeatCount="indefinite"/>
+          </g></g>
+          <text class="bo-d" x="308" y="294" text-anchor="middle">escala logarítmica de frecuencia</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> Respuesta de un pasa-bajos, animada. El punto recorre el eje de
+        frecuencias mientras a la derecha se ve la señal de salida: pasa entera en la banda de paso, cae a
+        0,707 en el corte y se desvanece más allá. La curva de segundo orden cae al doble de
+        rápido.</figcaption>
+      </figure>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Atenuación a distintas frecuencias</div>
+        <p>Pasa-bajos R-C con f<sub>c</sub> = 1 kHz, primer orden:</p>
+        <div class="tw" style="margin:10px 0 0">
+          <table class="tab">
+            <thead><tr><th class="c">Frecuencia</th><th class="c">V<sub>sal</sub>/V<sub>ent</sub></th><th class="c">En decibeles</th></tr></thead>
+            <tbody>
+              <tr><td class="c">100 Hz</td><td class="c">0,995</td><td class="c">−0,04 dB</td></tr>
+              <tr><td class="c">1 kHz (f<sub>c</sub>)</td><td class="c">0,707</td><td class="c">−3 dB</td></tr>
+              <tr><td class="c">2 kHz</td><td class="c">0,447</td><td class="c">−7,0 dB</td></tr>
+              <tr><td class="c">10 kHz</td><td class="c">0,0995</td><td class="c">−20 dB</td></tr>
+              <tr><td class="c">100 kHz</td><td class="c">0,00995</td><td class="c">−40 dB</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:12px">La conclusión práctica: un filtro de primer orden <b>no separa bien</b>.
+        Para atenuar cien veces hay que irse dos décadas más allá del corte. Si hay que rechazar algo que
+        está cerca de lo que se quiere conservar, hace falta más orden.</p>
+      </div>
+
+      <div class="form">
+        <math display="block"><mrow><mi>dB</mi><mo>=</mo><mn>20</mn><mo>·</mo><mi>log</mi><mfrac><msub><mi>V</mi><mrow><mi>s</mi><mi>a</mi><mi>l</mi></mrow></msub><msub><mi>V</mi><mrow><mi>e</mi><mi>n</mi><mi>t</mi></mrow></msub></mfrac></mrow></math>
+        <span class="cap">Los decibeles convierten en sumas lo que en veces son multiplicaciones, y por eso
+        se usan siempre en filtros: dos etapas de −20 dB dan −40 dB.</span>
+      </div>
+    </section>
+
+    <section id="orden">
+      <h2><span class="n">03</span>Orden, pendiente y forma de la curva</h2>
+      <p>El <b>orden</b> de un filtro es la cantidad de elementos reactivos que determinan su respuesta. Cada
+      orden agrega <b>20 dB por década</b> de pendiente.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Orden</th><th class="c">Pendiente</th><th class="c">Atenuación una década después</th><th>Cómo se arma</th></tr></thead>
+          <tbody>
+            <tr><td class="c">1</td><td class="c">−20 dB/déc</td><td class="c">10 veces</td><td>Un R-C o un R-L</td></tr>
+            <tr><td class="c">2</td><td class="c">−40 dB/déc</td><td class="c">100 veces</td><td>Un L-C, o un activo Sallen-Key</td></tr>
+            <tr><td class="c">3</td><td class="c">−60 dB/déc</td><td class="c">1000 veces</td><td>Un segundo orden más uno de primero</td></tr>
+            <tr><td class="c">4</td><td class="c">−80 dB/déc</td><td class="c">10 000 veces</td><td>Dos etapas de segundo orden en cascada</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Poner dos R-C en cascada no da un segundo orden bien hecho</div>
+        <p>Cada etapa <b>carga</b> a la anterior, así que la curva resultante no es la esperada: el corte se
+        corre y la transición queda más blanda, no más abrupta. Se resuelve de dos maneras: separando las
+        etapas con un seguidor de tensión, o usando directamente un filtro activo, que es lo que hace la
+        topología Sallen-Key.</p>
+      </div>
+
+      <h3>La forma de la curva: no todos los segundos órdenes son iguales</h3>
+      <p>Con el mismo orden se puede privilegiar cosas distintas, y esa elección tiene nombre propio:</p>
+
+      <div class="g3">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Butterworth</div>
+          <p>Banda de paso <b>lo más plana posible</b>. Es la opción por defecto cuando no hay una razón
+          fuerte para otra cosa. Q = 0,707 en el segundo orden.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Chebyshev</div>
+          <p>Cae <b>más rápido</b> a cambio de aceptar ondulación (rizado) en la banda de paso. Se usa cuando
+          hay que rechazar algo muy cerca de la banda útil.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Bessel</div>
+          <p>Prioriza la <b>fase</b>: retarda todas las frecuencias por igual, así que no deforma los pulsos.
+          Es el de elección para señales cuadradas y datos.</p>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">El factor Q en un filtro</div>
+        <p>Con Q bajo la curva es blanda y sin pico; con Q = 0,707 es plana (Butterworth); con Q alto aparece
+        un <b>pico de resonancia</b> justo antes del corte. En un filtro pasa-banda, en cambio, el Q es
+        directamente su selectividad:</p>
+        <div class="form" style="margin:10px 0 0">
+          <math display="block"><mrow><mi>Q</mi><mo>=</mo><mfrac><msub><mi>f</mi><mn>0</mn></msub><mrow><mi>B</mi><mi>W</mi></mrow></mfrac><mspace width="30px"/><mi>B</mi><mi>W</mi><mo>=</mo><msub><mi>f</mi><mn>2</mn></msub><mo>−</mo><msub><mi>f</mi><mn>1</mn></msub></mrow></math>
+          <span class="cap">f₁ y f₂ son las frecuencias donde la respuesta cae 3 dB. Un pasa-banda centrado
+          en 1 kHz con Q = 10 tiene 100 Hz de ancho de banda.</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="lc-activos">
+      <h2><span class="n">04</span>Pasivos L-C y activos con operacional</h2>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Filtros pasivos L-C</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>No necesitan alimentación y manejan <b>potencia</b>: son los únicos posibles a la salida de
+            un transmisor o en un divisor de frecuencias de parlantes.</li>
+            <li>Funcionan a cualquier frecuencia, incluidos los cientos de MHz.</li>
+            <li>Su respuesta <b>depende de la impedancia de carga</b>: el mismo filtro se comporta distinto
+            con 8 Ω que con 4 Ω.</li>
+            <li>En audio, las bobinas necesarias son grandes, caras y con pérdidas.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Filtros activos</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>Con un <a class="ref" href="/publicaciones/amplificadores-operacionales">operacional</a>,
+            resistencias y capacitores: <b>sin bobinas</b>.</li>
+            <li>Pueden tener ganancia además de filtrar, y su salida es de baja impedancia: se los encadena
+            sin que se carguen entre sí.</li>
+            <li>Permiten Q alto sin componentes voluminosos.</li>
+            <li>Limitados por el ancho de banda del operacional: no sirven en RF. Y necesitan
+            alimentación.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>f</mi><mi>c</mi></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><msqrt><mrow><msub><mi>R</mi><mn>1</mn></msub><msub><mi>R</mi><mn>2</mn></msub><msub><mi>C</mi><mn>1</mn></msub><msub><mi>C</mi><mn>2</mn></msub></mrow></msqrt></mrow></mfrac></mrow></math>
+        <span class="cap">Sallen-Key de segundo orden. Con componentes iguales (R₁ = R₂ = R, C₁ = C₂ = C) se
+        reduce a f<sub>c</sub> = 1/(2πRC), y el Q se ajusta con la ganancia del operacional.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Filtro antialias para un A/D</div>
+        <p>Se muestrea a <b>10 kSa/s</b>, así que hay que rechazar todo lo que esté por encima de
+        <b>5 kHz</b>. Se elige un corte en 3 kHz para dejar margen.</p>
+        <ul>
+          <li>Con <b>primer orden</b>, en 5 kHz la atenuación es de apenas −5,8 dB: pasa algo más de la mitad
+          de la señal indeseada. No sirve.</li>
+          <li>Con <b>cuarto orden Butterworth</b> (dos Sallen-Key en cascada), la atenuación en 5 kHz es de
+          unos −18 dB, y en 10 kHz de −42 dB. Eso ya es aceptable.</li>
+          <li>Componentes para f<sub>c</sub> = 3 kHz con C = 10 nF: R = 1/(2π × 3000 × 10<sup>−8</sup>) =
+          <b>5305 Ω</b> → valor comercial 5,6 kΩ, o 5,1 kΩ si se prefiere quedar por encima de la frecuencia.
+          Los valores de la serie E12 se buscan con la
+          <a class="ref" href="/publicaciones/calculadora-resistores">calculadora de resistores</a>.</li>
+        </ul>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Divisor de frecuencias de una caja acústica</div>
+        <p>Dos vías con corte en <b>3 kHz</b> sobre parlantes de <b>8 Ω</b>, primer orden:</p>
+        <ul>
+          <li>Al tweeter, capacitor en serie: C = 1/(2πf·R) = 1/(6,283 × 3000 × 8) = <b>6,6 µF</b> →
+          se usa 6,8 µF de poliéster, nunca electrolítico común.</li>
+          <li>Al woofer, bobina en serie: L = R/(2πf) = 8/18 850 = <b>424 µH</b>.</li>
+        </ul>
+        <p>Con primer orden las dos vías se superponen bastante alrededor del corte; los divisores comerciales
+        suelen ser de segundo orden por vía, y ahí hay que invertir la polaridad del tweeter para que las dos
+        señales no se cancelen en la zona de cruce.</p>
+      </div>
+    </section>
+
+    <section id="banda">
+      <h2><span class="n">05</span>Pasa-banda y elimina-banda</h2>
+      <p>Se pueden armar de dos maneras: encadenando un pasa-altos con un pasa-bajos (banda ancha) o
+      aprovechando la <b>resonancia</b> de un L-C (banda angosta).</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Por resonancia</div>
+          <p>Un L-C en <b>paralelo</b> presenta impedancia máxima en resonancia: puesto en serie con la
+          señal, deja pasar sólo esa franja. Un L-C en <b>serie</b> hace lo contrario: presenta impedancia
+          mínima, y puesto a masa se lleva esa franja al piso. Es el elimina-banda.</p>
+          <div class="form" style="margin:10px 0 0;padding:10px">
+            <math display="block"><mrow><msub><mi>f</mi><mn>0</mn></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><msqrt><mrow><mi>L</mi><mi>C</mi></mrow></msqrt></mrow></mfrac></mrow></math>
+          </div>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Notch de 50 Hz</div>
+          <p>El caso más pedido: sacar el zumbido de red de una señal chica. Se usa una <b>red doble T</b>
+          activa, que da un rechazo profundo y angosto. Hay que tener cuidado con el ancho: si el notch es
+          demasiado ancho, se lleva también información útil de la señal, y en un electrocardiograma eso
+          deforma el trazado.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Sintonía de radio en AM</div>
+        <p>Una emisora en <b>1 MHz</b> con un tanque de L = 250 µH:</p>
+        <ul>
+          <li>C = 1/(4π²f²L) = 1/(39,48 × 10<sup>12</sup> × 2,5×10<sup>−4</sup>) = <b>101 pF</b>: por eso el
+          capacitor variable de una radio de AM llega a unos 400 pF, lo justo para recorrer toda la
+          banda.</li>
+          <li>Con un Q de 100, el ancho de banda es BW = f₀/Q = 10<sup>6</sup>/100 = <b>10 kHz</b>: entra
+          justo un canal de AM y se rechaza el de al lado.</li>
+        </ul>
+        <p>Ese es exactamente el compromiso de un sintonizador: con Q demasiado alto se pierden los agudos de
+        la modulación; con Q bajo, se cuela la emisora vecina.</p>
+      </div>
+    </section>
+
+    <section id="donde">
+      <h2><span class="n">06</span>Dónde aparecen los filtros, aunque no se los llame así</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Circuito</th><th>Qué filtro es en realidad</th></tr></thead>
+          <tbody>
+            <tr><td>Capacitor de filtro de una fuente</td><td>Pasa-bajos: deja pasar la continua y frena el rizado de 100 Hz.</td></tr>
+            <tr><td>Capacitor de acoplamiento entre etapas</td><td>Pasa-altos: bloquea la continua de polarización y deja pasar la señal.</td></tr>
+            <tr><td>Capacitor de 100 nF junto a cada integrado</td><td>Pasa-bajos hacia la alimentación: manda a masa el ruido rápido.</td></tr>
+            <tr><td>Control de tonos de un amplificador</td><td>Pasa-bajos y pasa-altos ajustables.</td></tr>
+            <tr><td>Antialias antes de un conversor A/D</td><td>Pasa-bajos, y es obligatorio: lo que entra mal ya no se saca.</td></tr>
+            <tr><td>Receptor de control remoto</td><td>Pasa-banda centrado en 38 kHz que separa la señal de la luz ambiente.</td></tr>
+            <tr><td>Antena y sintonizador</td><td>Pasa-banda de Q alto, ver <a href="/publicaciones/mapa-electronica/temas/mediciones-impedancia">mediciones de impedancia</a>.</td></tr>
+            <tr><td>Snubber de un triac</td><td>Filtro que limita el dV/dt (<a href="/publicaciones/mapa-electronica/temas/semiconductores-especiales">semiconductores especiales</a>).</td></tr>
+            <tr><td>Promediar lecturas en un programa</td><td>Un pasa-bajos digital: la media móvil es exactamente eso.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Curva de un R-C, punto por punto</div>
+        <p>R = 10 kΩ y C = 10 nF. Con el generador a amplitud constante, medir la salida a 100, 200, 500 Hz,
+        1, 1,6, 3, 5, 10, 30 y 100 kHz. Graficar en papel <b>semilogarítmico</b> la relación en dB. Verificar
+        que en 1592 Hz la salida es 0,707 y que entre 10 y 100 kHz la curva baja 20 dB. Medir además el
+        desfasaje en el corte: debe dar 45°.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · La cascada que no es un segundo orden</div>
+        <p>Medir la curva de un R-C, después la de dos R-C iguales conectados uno atrás del otro, y por
+        último la de los dos separados por un seguidor con operacional. Comparar las tres curvas: el
+        corrimiento del corte en el caso del medio es el efecto de carga, y se ve perfectamente en el
+        gráfico.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Filtro activo Sallen-Key</div>
+        <p>Armar un pasa-bajos de segundo orden con TL081, R = 10 kΩ y C = 10 nF. Levantar la curva y
+        comprobar la pendiente de 40 dB por década. Después variar la ganancia con un preset y observar cómo
+        aparece un <b>pico</b> antes del corte al subir el Q: es el mismo fenómeno que hace oscilar a un
+        circuito si se va demasiado lejos.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Filtrar el zumbido</div>
+        <p>Sumar a una señal de 1 kHz un poco de 50 Hz tomado de un transformador reductor. Escuchar y ver el
+        resultado en el osciloscopio. Después pasar la mezcla por un pasa-altos de f<sub>c</sub> = 300 Hz y
+        comparar: el zumbido desaparece y la señal queda intacta. Es la solución real a un problema de audio
+        muy común.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 5 · Filtro pasivo con onda cuadrada</div>
+        <p>Inyectar una onda cuadrada de 1 kHz en el R-C de la práctica 1 y observar la salida: se redondea.
+        Bajar la frecuencia de corte y ver cómo la cuadrada se convierte primero en una exponencial y después
+        casi en una triangular. Es la manera más gráfica de entender que una cuadrada está hecha de armónicos
+        y que el filtro se los va sacando.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>El corte medido no coincide con el calculado</td><td>Tolerancia del capacitor, o la impedancia de la etapa siguiente que carga el filtro.</td></tr>
+            <tr><td>Dos filtros en cascada no dan la pendiente esperada</td><td>Efecto de carga entre etapas: falta separarlas con un seguidor o usar un filtro activo.</td></tr>
+            <tr><td>Aparece un pico justo antes del corte</td><td>Q demasiado alto por exceso de ganancia en el Sallen-Key. Ajustar la relación de realimentación.</td></tr>
+            <tr><td>El filtro activo no funciona en alta frecuencia</td><td>Se superó el ancho de banda del operacional. Ahí hay que ir a filtros pasivos L-C.</td></tr>
+            <tr><td>El filtro pasa-bajos deja pasar ruido rápido igual</td><td>El capacitor está por encima de su autorresonancia y se comporta como bobina. Agregar un cerámico chico en paralelo.</td></tr>
+            <tr><td>El divisor de parlantes suena hueco en el cruce</td><td>Cancelación por fase entre las dos vías. En segundo orden hay que invertir la polaridad del tweeter.</td></tr>
+            <tr><td>La señal se deforma aunque las amplitudes estén bien</td><td>Distorsión de fase: cada armónico llega con distinto retardo. Si eso importa, el filtro debe ser Bessel.</td></tr>
+            <tr><td>El notch de 50 Hz se lleva parte de la señal</td><td>Q demasiado bajo: el rechazo es ancho. Hay que angostarlo, aunque se vuelva más sensible a la deriva de los componentes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Qué pasa exactamente en la frecuencia de corte de un filtro R-C?</summary>
+        <div class="a"><p>X<sub>C</sub> = R, la salida cae a <b>0,707</b> de la entrada (−3 dB), la potencia
+        cae a la mitad y el desfasaje es de 45°.</p></div></details>
+
+      <details class="q"><summary>R = 4,7 kΩ y C = 100 nF: ¿frecuencia de corte?</summary>
+        <div class="a"><p>f<sub>c</sub> = 1/(2π × 4700 × 10<sup>−7</sup>) = 1/(2,953×10<sup>−3</sup>) =
+        <b>338,6 Hz</b>.</p></div></details>
+
+      <details class="q"><summary>Un filtro de tercer orden, una década después del corte: ¿cuánto atenúa?</summary>
+        <div class="a"><p>60 dB, que son <b>1000 veces</b> en tensión. Cada orden aporta 20 dB por
+        década.</p></div></details>
+
+      <details class="q"><summary>¿Por qué dos R-C en cascada no dan un segundo orden correcto?</summary>
+        <div class="a"><p>Porque la segunda etapa <b>carga</b> a la primera: la impedancia de una modifica la
+        respuesta de la otra. El corte se corre y la transición queda más blanda. Se separan con un seguidor
+        de tensión o se usa una topología activa como Sallen-Key.</p></div></details>
+
+      <details class="q"><summary>Un pasa-banda centrado en 455 kHz con Q = 50: ¿qué ancho de banda tiene?</summary>
+        <div class="a"><p>BW = f₀/Q = 455 000/50 = <b>9,1 kHz</b>. Es el valor típico de los filtros de
+        frecuencia intermedia de una radio de AM.</p></div></details>
+
+      <details class="q"><summary>¿Cuándo conviene un Bessel en vez de un Butterworth?</summary>
+        <div class="a"><p>Cuando importa la <b>forma de onda</b> y no sólo la amplitud: señales cuadradas,
+        pulsos, datos. Bessel retarda todas las frecuencias por igual, así que no deforma el pulso, a costa
+        de una caída más lenta.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un filtro antialias tiene que ser analógico?</summary>
+        <div class="a"><p>Porque debe actuar <b>antes</b> del muestreo. Después, la frecuencia alta ya quedó
+        reflejada dentro de la banda útil como una señal falsa indistinguible de una real: ningún filtro
+        digital la puede separar.</p></div></details>
+
+      <details class="q"><summary>¿Qué filtro es, en el fondo, el capacitor de acoplamiento entre dos etapas?</summary>
+        <div class="a"><p>Un <b>pasa-altos</b> de primer orden, formado por ese capacitor y la impedancia de
+        entrada de la etapa siguiente. Si el capacitor es chico, se pierden los graves: ese es el criterio
+        para elegirlo.</p></div></details>
+
+      <details class="q"><summary>Se quiere un pasa-bajos de 3 kHz con C = 10 nF: ¿qué resistencia?</summary>
+        <div class="a"><p>R = 1/(2πf<sub>c</sub>C) = 1/(6,283 × 3000 × 10<sup>−8</sup>) = <b>5305 Ω</b>. El
+        valor comercial más cercano de la serie E12 es 5,6 kΩ, que deja el corte en 2842 Hz.</p></div></details>
+
+      <details class="q"><summary>¿Por qué en una caja acústica el tweeter lleva un capacitor en serie?</summary>
+        <div class="a"><p>Porque ese capacitor forma un <b>pasa-altos</b> que impide que las frecuencias
+        graves lleguen al parlante de agudos. Sin él, el tweeter intenta reproducir graves de mucha energía y
+        se destruye.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/osciladores">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Osciladores</div>
+      </a>
+      <a class="r" href="/publicaciones/ca-vectorial">
+        <div class="dir">Tema siguiente · Electrotecnia II →</div>
+        <div class="tt">La corriente alterna</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Filtros»</b> de <b>Electrónica Analógica II</b> (5° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

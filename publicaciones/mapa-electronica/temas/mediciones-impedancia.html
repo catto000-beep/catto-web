@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mediciones de circuitos estándares · Electrónica Analógica II · Catto</title>
+<meta name="description" content="Medición de impedancia en baja y alta frecuencia: métodos directos, puentes de Wheatstone, Maxwell, Hay y Schering, factor Q, ESR, autorresonancia de capacitores y bobinas, puentes LCR y medición de frecuencia. Eje temático de Electrónica Analógica II, 5° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/mediciones-impedancia">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Analógica II</a>
+    <span class="anio">5° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Analógica II</span> · 144 h · Eje 4 de 6</div>
+    <h1>Mediciones de circuitos estándares</h1>
+    <p class="lead">Medir una resistencia es leer un número. Medir una <b>impedancia</b> es leer dos —módulo y
+    fase— y además preguntar <b>a qué frecuencia</b>, porque la respuesta cambia. Un capacitor de 100 nF no
+    vale lo mismo a 1 kHz que a 10 MHz: a cierta altura ya no se comporta como capacitor.</p>
+    <div class="chips">
+      <span class="chip hi">Medición</span>
+      <span class="chip">Impedancia</span>
+      <span class="chip">Puentes</span>
+      <span class="chip">Factor Q</span>
+      <span class="chip">ESR</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que-es">
+      <h2><span class="n">01</span>Qué significa medir una impedancia</h2>
+      <p>En continua alcanza con la ley de Ohm. En alterna la corriente puede estar adelantada o atrasada
+      respecto de la tensión, y hace falta un número complejo para describir el conjunto: la
+      <b>impedancia</b>. Todo esto se desarrolló en
+      <a class="ref" href="/publicaciones/ca-vectorial">el estudio vectorial de la corriente alterna</a>; acá
+      se trata de <b>medirla</b>.</p>
+
+      <div class="form">
+        <math display="block"><mrow><mi>Z</mi><mo>=</mo><mi>R</mi><mo>+</mo><mi>j</mi><mi>X</mi><mspace width="26px"/><mo>|</mo><mi>Z</mi><mo>|</mo><mo>=</mo><msqrt><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>+</mo><msup><mi>X</mi><mn>2</mn></msup></mrow></msqrt><mspace width="26px"/><mi>φ</mi><mo>=</mo><mi>arctg</mi><mfrac><mi>X</mi><mi>R</mi></mfrac></mrow></math>
+        <span class="cap">La parte real disipa potencia; la imaginaria la almacena y la devuelve. Un
+        instrumento que sólo da el módulo está escondiendo la mitad de la información.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · La misma serie R-C, a tres frecuencias</div>
+        <p>R = 1 kΩ en serie con C = 100 nF:</p>
+        <div class="tw" style="margin:10px 0 0">
+          <table class="tab">
+            <thead><tr><th class="c">Frecuencia</th><th class="c">X<sub>C</sub> = 1/2πfC</th><th class="c">|Z|</th><th class="c">Fase</th><th>Se comporta como</th></tr></thead>
+            <tbody>
+              <tr><td class="c">100 Hz</td><td class="c">15 915 Ω</td><td class="c">15 947 Ω</td><td class="c">−86,4°</td><td>Casi un capacitor puro</td></tr>
+              <tr><td class="c">1 kHz</td><td class="c">1 592 Ω</td><td class="c">1 880 Ω</td><td class="c">−57,9°</td><td>Mezcla de los dos</td></tr>
+              <tr><td class="c">10 kHz</td><td class="c">159 Ω</td><td class="c">1 013 Ω</td><td class="c">−9,0°</td><td>Casi una resistencia pura</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:12px">El mismo par de componentes, tres impedancias distintas. Por eso
+        <b>ninguna medición de impedancia significa nada sin la frecuencia a la que se hizo</b>, y por eso los
+        puentes LCR permiten elegirla.</p>
+      </div>
+    </section>
+
+    <section id="directos">
+      <h2><span class="n">02</span>Métodos directos</h2>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Tensión y corriente</div>
+          <p>Se alimenta la impedancia con el generador, se mide la tensión sobre ella y la corriente que la
+          atraviesa (como caída sobre una resistencia patrón chica) y se divide. Da el <b>módulo</b>.</p>
+          <p style="margin-top:8px">Para la fase hace falta un osciloscopio de dos canales: se mide el
+          desplazamiento entre las dos ondas.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Con el osciloscopio</div>
+          <p>Canal 1 sobre el generador, canal 2 sobre la resistencia patrón. La relación de amplitudes da el
+          módulo y el corrimiento horizontal da la fase:</p>
+          <div class="form" style="margin:10px 0 0;padding:10px">
+            <math display="block"><mrow><mi>φ</mi><mo>=</mo><mn>360</mn><mo>°</mo><mo>·</mo><mfrac><mrow><mi>Δ</mi><mi>t</mi></mrow><mi>T</mi></mfrac></mrow></math>
+          </div>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Sustitución</div>
+          <p>Se reemplaza la incógnita por una caja de décadas ajustable hasta que el circuito se comporte
+          igual. Es lento pero muy exacto, porque el patrón y la incógnita ven exactamente el mismo
+          circuito.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Resonancia</div>
+          <p>Se pone la incógnita en un tanque L-C con un patrón conocido y se busca la frecuencia de
+          resonancia. De ahí sale el valor. Es el método clásico para bobinas de RF y el que usa el
+          <b>Q-metro</b>.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">La punta del osciloscopio también es una impedancia</div>
+        <p>Una punta ×1 agrega unos <b>100 pF</b> en paralelo con el punto medido. En un circuito de audio no
+        se nota; en uno de RF, o midiendo un capacitor de 100 pF, el instrumento cambia lo que quiere medir.
+        La punta ×10 baja esa capacidad a unos 10 pF y sube la resistencia a 10 MΩ: <b>para medir impedancias
+        se usa siempre ×10</b>, y compensada con el trimmer contra la onda cuadrada de calibración del
+        equipo.</p>
+      </div>
+    </section>
+
+    <section id="puentes">
+      <h2><span class="n">03</span>Los puentes de medición</h2>
+      <p>Son la familia de instrumentos más exacta que existe, y por una razón conceptual: <b>no miden, sino
+      que comparan</b>. El resultado no depende de la exactitud del detector ni de la tensión de
+      alimentación, sino sólo de la de los patrones. El detector únicamente tiene que distinguir «hay señal»
+      de «no hay señal».</p>
+
+      <figure>
+        <svg viewBox="0 0 660 320" role="img" aria-label="Puente de Wheatstone acercandose al equilibrio" class="svg-t" data-anim>
+          <style>.pt-w{stroke:#9aa7b4;stroke-width:1.8;fill:none}.pt-d{fill:#7d8a99;font-size:10.5px}.pt-l{fill:#9aa7b4;font-size:11px;text-anchor:middle}</style>
+          <line class="pt-w" x1="300" y1="46" x2="168" y2="142"/>
+          <line class="pt-w" x1="300" y1="46" x2="432" y2="142"/>
+          <line class="pt-w" x1="168" y1="142" x2="300" y2="238"/>
+          <line class="pt-w" x1="432" y1="142" x2="300" y2="238"/>
+          <rect x="217.0" y="87.0" width="34" height="14" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4" transform="rotate(36 234.0 94.0)"/>
+          <text class="pt-d" x="190" y="86">R1 · 1 kΩ</text>
+          <rect x="349.0" y="87.0" width="34" height="14" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4" transform="rotate(-36 366.0 94.0)"/>
+          <text class="pt-d" x="374" y="86">R2 · 1,8 kΩ</text>
+          <rect x="217.0" y="183.0" width="34" height="14" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4" transform="rotate(-36 234.0 190.0)"/>
+          <text class="pt-d" x="150" y="206" fill="#d29922">R3 variable</text>
+          <rect x="349.0" y="183.0" width="34" height="14" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4" transform="rotate(36 366.0 190.0)"/>
+          <text class="pt-d" x="392" y="206" fill="#3fb950">Zx · incógnita</text>
+          <line class="pt-w" x1="300" y1="46" x2="300" y2="24"/>
+          <line class="pt-w" x1="300" y1="238" x2="300" y2="272"/>
+          <path class="pt-w" d="M300,24 H86 V272 H300"/>
+          <circle cx="86" cy="148" r="20" fill="#0d1117" stroke="#9aa7b4" stroke-width="1.8"/>
+          <path d="M74,148 q6,-10 12,0 t12,0" fill="none" stroke="#3fb950" stroke-width="1.8"/>
+          <text class="pt-d" x="40" y="122">generador</text>
+          <line class="pt-w" x1="168" y1="142" x2="272" y2="142"/>
+          <line class="pt-w" x1="328" y1="142" x2="432" y2="142"/>
+          <circle cx="300" cy="142" r="28" fill="#11161e" stroke="#58a6ff" stroke-width="1.8"/>
+          <path d="M282,154 a22,22 0 0 1 36,0" fill="none" stroke="#2a3140" stroke-width="1.2"/>
+          <line x1="300" y1="154" x2="300" y2="128" stroke="#f85149" stroke-width="2.2" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" calcMode="discrete" values="-34 300 154;-20 300 154;-9 300 154;-3 300 154;0 300 154" dur="7.5s" repeatCount="indefinite"/></line>
+          <circle cx="300" cy="154" r="3" fill="#f85149"/>
+          <text class="pt-d" x="300" y="188" text-anchor="middle">detector</text>
+          <rect x="440" y="242" width="200" height="44" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <clipPath id="pt-w1"><rect x="441" y="243" width="198" height="42"/></clipPath>
+          <g clip-path="url(#pt-w1)"><g>
+          <text x="540" y="270" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">R3 = 820 Ω</text>
+          <text x="540" y="314" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">R3 = 1200 Ω</text>
+          <text x="540" y="358" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">R3 = 1500 Ω</text>
+          <text x="540" y="402" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">R3 = 1780 Ω</text>
+          <text x="540" y="446" text-anchor="middle" font-size="14" font-weight="700" fill="#3fb950">R3 = 1800 Ω  · equilibrio</text>
+          <animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 0;0 -44;0 -88;0 -132;0 -176" dur="7.5s" repeatCount="indefinite"/>
+          </g></g>
+          <text class="pt-d" x="20" y="308">En el equilibrio no circula corriente por el detector: Zx = R2 · R3 / R1</text>
+          <text class="pt-d" x="440" y="60">Con R1 = 1 kΩ, R2 = 1,8 kΩ</text>
+          <text class="pt-d" x="440" y="76">y R3 = 1800 Ω → Zx = 3,24 kΩ</text>
+          </svg>
+        <figcaption><b>Figura 1.</b> Puente en equilibrio, animado. A medida que la resistencia variable se
+        acerca al valor de equilibrio, la señal en el detector cae hasta anularse. En ese punto vale la
+        relación de brazos, y de ahí sale la incógnita.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><mfrac><msub><mi>Z</mi><mn>1</mn></msub><msub><mi>Z</mi><mn>2</mn></msub></mfrac><mo>=</mo><mfrac><msub><mi>Z</mi><mn>3</mn></msub><msub><mi>Z</mi><mi>x</mi></msub></mfrac><mspace width="26px"/><msub><mi>Z</mi><mi>x</mi></msub><mo>=</mo><mfrac><mrow><msub><mi>Z</mi><mn>2</mn></msub><msub><mi>Z</mi><mn>3</mn></msub></mrow><msub><mi>Z</mi><mn>1</mn></msub></mfrac></mrow></math>
+        <span class="cap">Condición general de equilibrio. Como son números complejos, hay que equilibrar
+        <b>dos cosas a la vez</b>: módulo y fase. De ahí que los puentes de alterna tengan dos perillas y que
+        el ajuste sea iterativo.</span>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Puente</th><th>Para qué sirve</th><th>Detalle</th></tr></thead>
+          <tbody>
+            <tr><td><b>Wheatstone</b></td><td>Resistencias en continua</td><td>El padre de todos. Con él se miden galgas extensiométricas y sensores de temperatura con exactitud de partes por millón.</td></tr>
+            <tr><td><b>Kelvin</b></td><td>Resistencias muy bajas (mΩ)</td><td>De cuatro hilos: descuenta la resistencia de los cables y de los contactos, que si no domina la medición.</td></tr>
+            <tr><td><b>Maxwell</b></td><td>Bobinas de <b>Q bajo</b> (Q &lt; 10)</td><td>Compara la inductancia contra un <b>capacitor</b> patrón, que es mucho más estable que una bobina patrón. L<sub>x</sub> = R<sub>2</sub>·R<sub>3</sub>·C<sub>1</sub>.</td></tr>
+            <tr><td><b>Hay</b></td><td>Bobinas de <b>Q alto</b> (Q &gt; 10)</td><td>Variante del Maxwell con el capacitor y su resistencia en serie en vez de en paralelo.</td></tr>
+            <tr><td><b>Schering</b></td><td>Capacitores y aislaciones</td><td>Mide la <b>tangente de pérdidas</b> de un dieléctrico. Es el instrumento con que se ensayan cables y aisladores de alta tensión.</td></tr>
+            <tr><td><b>Wien</b></td><td>Frecuencia</td><td>Se equilibra a una sola frecuencia: sirve para medirla y, sobre todo, para <b>generarla</b> en el oscilador que lleva su nombre (ver <a href="/publicaciones/mapa-electronica/temas/osciladores">osciladores</a>).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Puente de Maxwell</div>
+        <p>Con R<sub>2</sub> = 1 kΩ, R<sub>3</sub> = 4,7 kΩ y C<sub>1</sub> = 10 nF, en equilibrio:</p>
+        <ul>
+          <li>L<sub>x</sub> = R<sub>2</sub>·R<sub>3</sub>·C<sub>1</sub> = 1000 × 4700 × 10<sup>−8</sup> =
+          <b>47 mH</b></li>
+          <li>Si además R<sub>1</sub> resultó 22 kΩ: R<sub>x</sub> = R<sub>2</sub>·R<sub>3</sub>/R<sub>1</sub>
+          = 4,7×10<sup>6</sup>/22 000 = <b>213,6 Ω</b></li>
+          <li>Q a 1 kHz = 2πfL/R<sub>x</sub> = 6283 × 0,047 / 213,6 = <b>1,38</b></li>
+        </ul>
+        <p>Un Q tan bajo confirma que se eligió bien el puente: para una bobina de Q alto habría que usar el
+        de Hay.</p>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Por qué un puente es más exacto que un instrumento directo</div>
+        <p>Porque en el punto de equilibrio <b>el detector marca cero</b>, y para eso no hace falta que esté
+        calibrado: sólo que sea sensible. Toda la exactitud queda en manos de los tres patrones, que son
+        resistencias y capacitores de precisión, componentes estables y baratos. Es el mismo principio de una
+        balanza de platillos frente a una de resorte.</p>
+      </div>
+    </section>
+
+    <section id="alta-frecuencia">
+      <h2><span class="n">04</span>En alta frecuencia nada es lo que dice ser</h2>
+      <p>Este es el punto que más sorpresas da en el taller. Un componente real no es su símbolo: un
+      capacitor trae inductancia en sus patas y resistencia en sus placas; una bobina trae capacidad entre
+      espiras. A frecuencia baja eso no importa. A frecuencia alta, <b>domina</b>.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 346" role="img" aria-label="Impedancia contra frecuencia de un capacitor y una bobina reales" class="svg-t" data-anim>
+          <style>.zf-d{fill:#7d8a99;font-size:10px}.zf-l{fill:#9aa7b4;font-size:11px;text-anchor:middle}</style>
+          <line x1="96.0" y1="50" x2="96.0" y2="250" stroke="#2a3140" stroke-width="1" opacity=".65"/>
+          <text class="zf-d" x="96.0" y="266" text-anchor="middle">1 k</text>
+          <line x1="158.3" y1="50" x2="158.3" y2="250" stroke="#2a3140" stroke-width="1" opacity=".65"/>
+          <text class="zf-d" x="158.3" y="266" text-anchor="middle">10 k</text>
+          <line x1="220.7" y1="50" x2="220.7" y2="250" stroke="#2a3140" stroke-width="1" opacity=".65"/>
+          <text class="zf-d" x="220.7" y="266" text-anchor="middle">100 k</text>
+          <line x1="283.0" y1="50" x2="283.0" y2="250" stroke="#2a3140" stroke-width="1" opacity=".65"/>
+          <text class="zf-d" x="283.0" y="266" text-anchor="middle">1 M</text>
+          <line x1="345.3" y1="50" x2="345.3" y2="250" stroke="#2a3140" stroke-width="1" opacity=".65"/>
+          <text class="zf-d" x="345.3" y="266" text-anchor="middle">10 M</text>
+          <line x1="407.7" y1="50" x2="407.7" y2="250" stroke="#2a3140" stroke-width="1" opacity=".65"/>
+          <text class="zf-d" x="407.7" y="266" text-anchor="middle">100 M</text>
+          <line x1="470.0" y1="50" x2="470.0" y2="250" stroke="#2a3140" stroke-width="1" opacity=".65"/>
+          <text class="zf-d" x="470.0" y="266" text-anchor="middle">1 G</text>
+          <line x1="96.0" y1="250.0" x2="470.0" y2="250.0" stroke="#2a3140" stroke-width="1" opacity=".5"/>
+          <text class="zf-d" x="90.0" y="254.0" text-anchor="end">10 m</text>
+          <line x1="96.0" y1="218.3" x2="470.0" y2="218.3" stroke="#2a3140" stroke-width="1" opacity=".5"/>
+          <text class="zf-d" x="90.0" y="222.3" text-anchor="end">0,1</text>
+          <line x1="96.0" y1="186.7" x2="470.0" y2="186.7" stroke="#2a3140" stroke-width="1" opacity=".5"/>
+          <text class="zf-d" x="90.0" y="190.7" text-anchor="end">1</text>
+          <line x1="96.0" y1="155.0" x2="470.0" y2="155.0" stroke="#2a3140" stroke-width="1" opacity=".5"/>
+          <text class="zf-d" x="90.0" y="159.0" text-anchor="end">10</text>
+          <line x1="96.0" y1="123.3" x2="470.0" y2="123.3" stroke="#2a3140" stroke-width="1" opacity=".5"/>
+          <text class="zf-d" x="90.0" y="127.3" text-anchor="end">100</text>
+          <line x1="96.0" y1="91.7" x2="470.0" y2="91.7" stroke="#2a3140" stroke-width="1" opacity=".5"/>
+          <text class="zf-d" x="90.0" y="95.7" text-anchor="end">1 k</text>
+          <line x1="96.0" y1="60.0" x2="470.0" y2="60.0" stroke="#2a3140" stroke-width="1" opacity=".5"/>
+          <text class="zf-d" x="90.0" y="64.0" text-anchor="end">10 k</text>
+          <text class="zf-l" x="283.0" y="286">frecuencia (Hz)</text>
+          <text class="zf-d" x="30" y="46">|Z| en Ω</text>
+          <polyline points="96.00,85.28 97.56,86.07 99.12,86.86 100.68,87.65 102.23,88.44 103.79,89.23 105.35,90.03 106.91,90.82 108.47,91.61 110.03,92.40 111.58,93.19 113.14,93.98 114.70,94.78 116.26,95.57 117.82,96.36 119.38,97.15 120.93,97.94 122.49,98.73 124.05,99.53 125.61,100.32 127.17,101.11 128.72,101.90 130.28,102.69 131.84,103.48 133.40,104.28 134.96,105.07 136.52,105.86 138.08,106.65 139.63,107.44 141.19,108.23 142.75,109.03 144.31,109.82 145.87,110.61 147.43,111.40 148.98,112.19 150.54,112.98 152.10,113.78 153.66,114.57 155.22,115.36 156.78,116.15 158.33,116.94 159.89,117.73 161.45,118.53 163.01,119.32 164.57,120.11 166.12,120.90 167.68,121.69 169.24,122.48 170.80,123.28 172.36,124.07 173.92,124.86 175.47,125.65 177.03,126.44 178.59,127.23 180.15,128.03 181.71,128.82 183.27,129.61 184.82,130.40 186.38,131.19 187.94,131.98 189.50,132.78 191.06,133.57 192.62,134.36 194.18,135.15 195.73,135.94 197.29,136.73 198.85,137.53 200.41,138.32 201.97,139.11 203.53,139.90 205.08,140.69 206.64,141.48 208.20,142.28 209.76,143.07 211.32,143.86 212.88,144.65 214.43,145.44 215.99,146.23 217.55,147.03 219.11,147.82 220.67,148.61 222.22,149.40 223.78,150.19 225.34,150.98 226.90,151.78 228.46,152.57 230.02,153.36 231.57,154.15 233.13,154.94 234.69,155.73 236.25,156.53 237.81,157.32 239.37,158.11 240.93,158.90 242.48,159.69 244.04,160.48 245.60,161.28 247.16,162.07 248.72,162.86 250.27,163.65 251.83,164.44 253.39,165.23 254.95,166.03 256.51,166.82 258.07,167.61 259.62,168.40 261.18,169.19 262.74,169.98 264.30,170.78 265.86,171.57 267.42,172.36 268.98,173.15 270.53,173.94 272.09,174.73 273.65,175.53 275.21,176.32 276.77,177.11 278.32,177.90 279.88,178.69 281.44,179.48 283.00,180.28 284.56,181.07 286.12,181.86 287.68,182.65 289.23,183.44 290.79,184.23 292.35,185.03 293.91,185.82 295.47,186.61 297.02,187.40 298.58,188.19 300.14,188.98 301.70,189.78 303.26,190.57 304.82,191.36 306.38,192.15 307.93,192.94 309.49,193.73 311.05,194.53 312.61,195.32 314.17,196.11 315.72,196.90 317.28,197.69 318.84,198.48 320.40,199.28 321.96,200.07 323.52,200.86 325.07,201.65 326.63,202.44 328.19,203.23 329.75,204.03 331.31,204.82 332.87,205.61 334.43,206.40 335.98,207.19 337.54,207.98 339.10,208.78 340.66,209.57 342.22,210.36 343.78,211.15 345.33,211.94 346.89,212.73 348.45,213.53 350.01,214.32 351.57,215.11 353.12,215.90 354.68,216.69 356.24,217.48 357.80,218.28 359.36,219.07 360.92,219.86 362.48,220.65 364.03,221.44 365.59,222.23 367.15,223.03 368.71,223.82 370.27,224.61 371.82,225.40 373.38,226.19 374.94,226.98 376.50,227.78 378.06,228.57 379.62,229.36 381.18,230.15 382.73,230.94 384.29,231.73 385.85,232.53 387.41,233.32 388.97,234.11 390.52,234.90 392.08,235.69 393.64,236.48 395.20,237.28 396.76,238.07 398.32,238.86 399.88,239.65 401.43,240.44 402.99,241.23 404.55,242.03 406.11,242.82 407.67,243.61 409.23,244.40 410.78,245.19 412.34,245.98 413.90,246.78 415.46,247.57 417.02,248.36 418.58,249.15 420.13,249.94 421.69,250.00 423.25,250.00 424.81,250.00 426.37,250.00 427.92,250.00 429.48,250.00 431.04,250.00 432.60,250.00 434.16,250.00 435.72,250.00 437.27,250.00 438.83,250.00 440.39,250.00 441.95,250.00 443.51,250.00 445.07,250.00 446.62,250.00 448.18,250.00 449.74,250.00 451.30,250.00 452.86,250.00 454.42,250.00 455.98,250.00 457.53,250.00 459.09,250.00 460.65,250.00 462.21,250.00 463.77,250.00 465.33,250.00 466.88,250.00 468.44,250.00 470.00,250.00" fill="none" stroke="#7d8a99" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <polyline points="96.00,224.72 97.56,223.93 99.12,223.14 100.68,222.35 102.23,221.56 103.79,220.77 105.35,219.97 106.91,219.18 108.47,218.39 110.03,217.60 111.58,216.81 113.14,216.02 114.70,215.22 116.26,214.43 117.82,213.64 119.38,212.85 120.93,212.06 122.49,211.27 124.05,210.47 125.61,209.68 127.17,208.89 128.72,208.10 130.28,207.31 131.84,206.52 133.40,205.72 134.96,204.93 136.52,204.14 138.08,203.35 139.63,202.56 141.19,201.77 142.75,200.97 144.31,200.18 145.87,199.39 147.43,198.60 148.98,197.81 150.54,197.02 152.10,196.22 153.66,195.43 155.22,194.64 156.78,193.85 158.33,193.06 159.89,192.27 161.45,191.47 163.01,190.68 164.57,189.89 166.12,189.10 167.68,188.31 169.24,187.52 170.80,186.72 172.36,185.93 173.92,185.14 175.47,184.35 177.03,183.56 178.59,182.77 180.15,181.97 181.71,181.18 183.27,180.39 184.82,179.60 186.38,178.81 187.94,178.02 189.50,177.22 191.06,176.43 192.62,175.64 194.18,174.85 195.73,174.06 197.29,173.27 198.85,172.47 200.41,171.68 201.97,170.89 203.53,170.10 205.08,169.31 206.64,168.52 208.20,167.72 209.76,166.93 211.32,166.14 212.88,165.35 214.43,164.56 215.99,163.77 217.55,162.97 219.11,162.18 220.67,161.39 222.22,160.60 223.78,159.81 225.34,159.02 226.90,158.22 228.46,157.43 230.02,156.64 231.57,155.85 233.13,155.06 234.69,154.27 236.25,153.47 237.81,152.68 239.37,151.89 240.93,151.10 242.48,150.31 244.04,149.52 245.60,148.72 247.16,147.93 248.72,147.14 250.27,146.35 251.83,145.56 253.39,144.77 254.95,143.97 256.51,143.18 258.07,142.39 259.62,141.60 261.18,140.81 262.74,140.02 264.30,139.22 265.86,138.43 267.42,137.64 268.98,136.85 270.53,136.06 272.09,135.27 273.65,134.47 275.21,133.68 276.77,132.89 278.32,132.10 279.88,131.31 281.44,130.52 283.00,129.72 284.56,128.93 286.12,128.14 287.68,127.35 289.23,126.56 290.79,125.77 292.35,124.97 293.91,124.18 295.47,123.39 297.02,122.60 298.58,121.81 300.14,121.02 301.70,120.22 303.26,119.43 304.82,118.64 306.38,117.85 307.93,117.06 309.49,116.27 311.05,115.47 312.61,114.68 314.17,113.89 315.72,113.10 317.28,112.31 318.84,111.52 320.40,110.72 321.96,109.93 323.52,109.14 325.07,108.35 326.63,107.56 328.19,106.77 329.75,105.97 331.31,105.18 332.87,104.39 334.43,103.60 335.98,102.81 337.54,102.02 339.10,101.22 340.66,100.43 342.22,99.64 343.78,98.85 345.33,98.06 346.89,97.27 348.45,96.47 350.01,95.68 351.57,94.89 353.12,94.10 354.68,93.31 356.24,92.52 357.80,91.72 359.36,90.93 360.92,90.14 362.48,89.35 364.03,88.56 365.59,87.77 367.15,86.97 368.71,86.18 370.27,85.39 371.82,84.60 373.38,83.81 374.94,83.02 376.50,82.22 378.06,81.43 379.62,80.64 381.18,79.85 382.73,79.06 384.29,78.27 385.85,77.47 387.41,76.68 388.97,75.89 390.52,75.10 392.08,74.31 393.64,73.52 395.20,72.72 396.76,71.93 398.32,71.14 399.88,70.35 401.43,69.56 402.99,68.77 404.55,67.97 406.11,67.18 407.67,66.39 409.23,65.60 410.78,64.81 412.34,64.02 413.90,63.22 415.46,62.43 417.02,61.64 418.58,60.85 420.13,60.06 421.69,60.00 423.25,60.00 424.81,60.00 426.37,60.00 427.92,60.00 429.48,60.00 431.04,60.00 432.60,60.00 434.16,60.00 435.72,60.00 437.27,60.00 438.83,60.00 440.39,60.00 441.95,60.00 443.51,60.00 445.07,60.00 446.62,60.00 448.18,60.00 449.74,60.00 451.30,60.00 452.86,60.00 454.42,60.00 455.98,60.00 457.53,60.00 459.09,60.00 460.65,60.00 462.21,60.00 463.77,60.00 465.33,60.00 466.88,60.00 468.44,60.00 470.00,60.00" fill="none" stroke="#7d8a99" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <polyline points="96.00,85.28 97.56,86.07 99.12,86.86 100.68,87.65 102.23,88.44 103.79,89.23 105.35,90.03 106.91,90.82 108.47,91.61 110.03,92.40 111.58,93.19 113.14,93.98 114.70,94.78 116.26,95.57 117.82,96.36 119.38,97.15 120.93,97.94 122.49,98.73 124.05,99.53 125.61,100.32 127.17,101.11 128.72,101.90 130.28,102.69 131.84,103.48 133.40,104.28 134.96,105.07 136.52,105.86 138.08,106.65 139.63,107.44 141.19,108.23 142.75,109.03 144.31,109.82 145.87,110.61 147.43,111.40 148.98,112.19 150.54,112.98 152.10,113.78 153.66,114.57 155.22,115.36 156.78,116.15 158.33,116.94 159.89,117.73 161.45,118.53 163.01,119.32 164.57,120.11 166.12,120.90 167.68,121.69 169.24,122.48 170.80,123.28 172.36,124.07 173.92,124.86 175.47,125.65 177.03,126.44 178.59,127.23 180.15,128.03 181.71,128.82 183.27,129.61 184.82,130.40 186.38,131.19 187.94,131.98 189.50,132.78 191.06,133.57 192.62,134.36 194.18,135.15 195.73,135.94 197.29,136.73 198.85,137.53 200.41,138.32 201.97,139.11 203.53,139.90 205.08,140.69 206.64,141.48 208.20,142.28 209.76,143.07 211.32,143.86 212.88,144.65 214.43,145.44 215.99,146.24 217.55,147.03 219.11,147.82 220.67,148.61 222.22,149.40 223.78,150.20 225.34,150.99 226.90,151.78 228.46,152.57 230.02,153.36 231.57,154.16 233.13,154.95 234.69,155.74 236.25,156.53 237.81,157.33 239.37,158.12 240.93,158.91 242.48,159.71 244.04,160.50 245.60,161.29 247.16,162.09 248.72,162.88 250.27,163.67 251.83,164.47 253.39,165.26 254.95,166.06 256.51,166.85 258.07,167.65 259.62,168.45 261.18,169.25 262.74,170.04 264.30,170.84 265.86,171.64 267.42,172.44 268.98,173.24 270.53,174.05 272.09,174.85 273.65,175.66 275.21,176.47 276.77,177.28 278.32,178.09 279.88,178.90 281.44,179.72 283.00,180.54 284.56,181.37 286.12,182.20 287.68,183.03 289.23,183.87 290.79,184.71 292.35,185.56 293.91,186.42 295.47,187.29 297.02,188.17 298.58,189.05 300.14,189.95 301.70,190.87 303.26,191.80 304.82,192.75 306.38,193.72 307.93,194.72 309.49,195.74 311.05,196.80 312.61,197.89 314.17,199.03 315.72,200.22 317.28,201.47 318.84,202.80 320.40,204.21 321.96,205.73 323.52,207.38 325.07,209.20 326.63,211.22 328.19,213.50 329.75,216.11 331.31,219.13 332.87,222.55 334.43,225.97 335.98,227.85 337.54,226.51 339.10,223.21 340.66,219.74 342.22,216.64 343.78,213.96 345.33,211.63 346.89,209.56 348.45,207.71 350.01,206.03 351.57,204.49 353.12,203.05 354.68,201.71 356.24,200.45 357.80,199.25 359.36,198.10 360.92,197.00 362.48,195.93 364.03,194.90 365.59,193.90 367.15,192.93 368.71,191.98 370.27,191.04 371.82,190.12 373.38,189.22 374.94,188.33 376.50,187.45 378.06,186.58 379.62,185.72 381.18,184.87 382.73,184.03 384.29,183.19 385.85,182.35 387.41,181.52 388.97,180.70 390.52,179.87 392.08,179.06 393.64,178.24 395.20,177.43 396.76,176.62 398.32,175.81 399.88,175.00 401.43,174.20 402.99,173.39 404.55,172.59 406.11,171.79 407.67,170.99 409.23,170.19 410.78,169.39 412.34,168.60 413.90,167.80 415.46,167.00 417.02,166.21 418.58,165.41 420.13,164.62 421.69,163.82 423.25,163.03 424.81,162.23 426.37,161.44 427.92,160.65 429.48,159.85 431.04,159.06 432.60,158.27 434.16,157.47 435.72,156.68 437.27,155.89 438.83,155.10 440.39,154.30 441.95,153.51 443.51,152.72 445.07,151.93 446.62,151.14 448.18,150.34 449.74,149.55 451.30,148.76 452.86,147.97 454.42,147.18 455.98,146.38 457.53,145.59 459.09,144.80 460.65,144.01 462.21,143.22 463.77,142.42 465.33,141.63 466.88,140.84 468.44,140.05 470.00,139.26" fill="none" stroke="#58a6ff" stroke-width="2.4"/>
+          <polyline points="96.00,224.72 97.56,223.93 99.12,223.14 100.68,222.35 102.23,221.56 103.79,220.77 105.35,219.97 106.91,219.18 108.47,218.39 110.03,217.60 111.58,216.81 113.14,216.02 114.70,215.22 116.26,214.43 117.82,213.64 119.38,212.85 120.93,212.06 122.49,211.27 124.05,210.47 125.61,209.68 127.17,208.89 128.72,208.10 130.28,207.31 131.84,206.52 133.40,205.72 134.96,204.93 136.52,204.14 138.08,203.35 139.63,202.56 141.19,201.77 142.75,200.97 144.31,200.18 145.87,199.39 147.43,198.60 148.98,197.81 150.54,197.02 152.10,196.22 153.66,195.43 155.22,194.64 156.78,193.85 158.33,193.06 159.89,192.27 161.45,191.47 163.01,190.68 164.57,189.89 166.12,189.10 167.68,188.31 169.24,187.52 170.80,186.72 172.36,185.93 173.92,185.14 175.47,184.35 177.03,183.56 178.59,182.77 180.15,181.97 181.71,181.18 183.27,180.39 184.82,179.60 186.38,178.81 187.94,178.02 189.50,177.22 191.06,176.43 192.62,175.64 194.18,174.85 195.73,174.06 197.29,173.27 198.85,172.47 200.41,171.68 201.97,170.89 203.53,170.10 205.08,169.31 206.64,168.52 208.20,167.72 209.76,166.93 211.32,166.14 212.88,165.35 214.43,164.56 215.99,163.77 217.55,162.97 219.11,162.18 220.67,161.39 222.22,160.60 223.78,159.81 225.34,159.02 226.90,158.22 228.46,157.43 230.02,156.64 231.57,155.85 233.13,155.06 234.69,154.27 236.25,153.47 237.81,152.68 239.37,151.89 240.93,151.10 242.48,150.31 244.04,149.52 245.60,148.72 247.16,147.93 248.72,147.14 250.27,146.35 251.83,145.56 253.39,144.76 254.95,143.97 256.51,143.18 258.07,142.39 259.62,141.60 261.18,140.81 262.74,140.01 264.30,139.22 265.86,138.43 267.42,137.64 268.98,136.85 270.53,136.05 272.09,135.26 273.65,134.47 275.21,133.68 276.77,132.88 278.32,132.09 279.88,131.30 281.44,130.51 283.00,129.71 284.56,128.92 286.12,128.13 287.68,127.33 289.23,126.54 290.79,125.75 292.35,124.95 293.91,124.16 295.47,123.36 297.02,122.57 298.58,121.77 300.14,120.98 301.70,120.18 303.26,119.38 304.82,118.59 306.38,117.79 307.93,116.99 309.49,116.19 311.05,115.39 312.61,114.59 314.17,113.78 315.72,112.98 317.28,112.17 318.84,111.36 320.40,110.55 321.96,109.74 323.52,108.92 325.07,108.10 326.63,107.28 328.19,106.46 329.75,105.63 331.31,104.79 332.87,103.95 334.43,103.11 335.98,102.25 337.54,101.39 339.10,100.52 340.66,99.64 342.22,98.75 343.78,97.85 345.33,96.93 346.89,95.99 348.45,95.03 350.01,94.06 351.57,93.05 353.12,92.02 354.68,90.95 356.24,89.84 357.80,88.68 359.36,87.47 360.92,86.19 362.48,84.83 364.03,83.37 365.59,81.78 367.15,80.05 368.71,78.11 370.27,75.91 371.82,73.34 373.38,70.24 374.94,66.29 376.50,60.79 378.06,60.00 379.62,60.00 381.18,60.00 382.73,60.07 384.29,65.80 385.85,69.87 387.41,73.05 388.97,75.66 390.52,77.89 392.08,79.85 393.64,81.61 395.20,83.21 396.76,84.68 398.32,86.05 399.88,87.34 401.43,88.56 402.99,89.72 404.55,90.84 406.11,91.91 407.67,92.95 409.23,93.95 410.78,94.93 412.34,95.89 413.90,96.83 415.46,97.75 417.02,98.66 418.58,99.55 420.13,100.43 421.69,101.30 423.25,102.16 424.81,103.02 426.37,103.86 427.92,104.70 429.48,105.54 431.04,106.37 432.60,107.20 434.16,108.02 435.72,108.84 437.27,109.65 438.83,110.47 440.39,111.28 441.95,112.09 443.51,112.89 445.07,113.70 446.62,114.50 448.18,115.30 449.74,116.11 451.30,116.91 452.86,117.70 454.42,118.50 455.98,119.30 457.53,120.10 459.09,120.89 460.65,121.69 462.21,122.49 463.77,123.28 465.33,124.08 466.88,124.87 468.44,125.66 470.00,126.46" fill="none" stroke="#a371f7" stroke-width="2.4"/>
+          <circle cx="336.1" cy="227.9" r="4.5" fill="#f85149"/>
+          <text class="zf-d" x="220.1" y="243.9" fill="#f85149">autorresonancia 7,1 MHz</text>
+          <text class="zf-d" x="102.0" y="77.3" fill="#58a6ff">capacitor 100 nF</text>
+          <text class="zf-d" x="102.0" y="216.7" fill="#a371f7">bobina 10 µH</text>
+          <text class="zf-d" x="466.0" y="66.0" text-anchor="end">ideales, punteadas</text>
+          <g><line x1="96.00" y1="50" x2="96.00" y2="250" stroke="#f85149" stroke-width="1.3" opacity=".85"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;31.17 0;62.33 0;93.50 0;124.67 0;155.83 0;187.00 0;218.17 0;249.33 0;280.50 0;311.67 0;342.83 0;374.00 0" dur="9s" repeatCount="indefinite"/></g>
+          <circle cx="96.00" cy="85.28" r="5.5" fill="#58a6ff"><animate attributeName="cx" calcMode="discrete" values="96.00;127.17;158.33;189.50;220.67;251.83;283.00;314.17;345.33;376.50;407.67;438.83;470.00" dur="9s" repeatCount="indefinite"/><animate attributeName="cy" calcMode="discrete" values="85.28;101.11;116.94;132.78;148.61;164.47;180.54;199.03;211.63;187.45;170.99;155.10;139.26" dur="9s" repeatCount="indefinite"/></circle>
+          <rect x="500" y="96" width="180" height="120" rx="10" fill="#11161e" stroke="#2a3140"/>
+          <text class="zf-l" x="590" y="88">el capacitor, medido</text>
+          <clipPath id="zf-w"><rect x="501" y="97" width="178" height="118"/></clipPath>
+          <g clip-path="url(#zf-w)"><g>
+          <text x="590" y="140" text-anchor="middle" font-size="13" fill="#9aa7b4">a 1 kHz</text>
+          <text x="590" y="170" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 1,6 kΩ</text>
+          <text x="590" y="194" text-anchor="middle" font-size="11.5" fill="#3fb950">se porta como capacitor</text>
+          <text x="590" y="260" text-anchor="middle" font-size="13" fill="#9aa7b4">a 3,16 kHz</text>
+          <text x="590" y="290" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 503,3 Ω</text>
+          <text x="590" y="314" text-anchor="middle" font-size="11.5" fill="#3fb950">se porta como capacitor</text>
+          <text x="590" y="380" text-anchor="middle" font-size="13" fill="#9aa7b4">a 10 kHz</text>
+          <text x="590" y="410" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 159,2 Ω</text>
+          <text x="590" y="434" text-anchor="middle" font-size="11.5" fill="#3fb950">se porta como capacitor</text>
+          <text x="590" y="500" text-anchor="middle" font-size="13" fill="#9aa7b4">a 31,6 kHz</text>
+          <text x="590" y="530" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 50,3 Ω</text>
+          <text x="590" y="554" text-anchor="middle" font-size="11.5" fill="#3fb950">se porta como capacitor</text>
+          <text x="590" y="620" text-anchor="middle" font-size="13" fill="#9aa7b4">a 100 kHz</text>
+          <text x="590" y="650" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 15,9 Ω</text>
+          <text x="590" y="674" text-anchor="middle" font-size="11.5" fill="#3fb950">se porta como capacitor</text>
+          <text x="590" y="740" text-anchor="middle" font-size="13" fill="#9aa7b4">a 316 kHz</text>
+          <text x="590" y="770" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 5,0 Ω</text>
+          <text x="590" y="794" text-anchor="middle" font-size="11.5" fill="#3fb950">se porta como capacitor</text>
+          <text x="590" y="860" text-anchor="middle" font-size="13" fill="#9aa7b4">a 1 MHz</text>
+          <text x="590" y="890" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 1,6 Ω</text>
+          <text x="590" y="914" text-anchor="middle" font-size="11.5" fill="#3fb950">se porta como capacitor</text>
+          <text x="590" y="980" text-anchor="middle" font-size="13" fill="#9aa7b4">a 3,16 MHz</text>
+          <text x="590" y="1010" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 407 mΩ</text>
+          <text x="590" y="1034" text-anchor="middle" font-size="11.5" fill="#3fb950">se porta como capacitor</text>
+          <text x="590" y="1100" text-anchor="middle" font-size="13" fill="#9aa7b4">a 10 MHz</text>
+          <text x="590" y="1130" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 163 mΩ</text>
+          <text x="590" y="1154" text-anchor="middle" font-size="11.5" fill="#f85149">se porta como bobina</text>
+          <text x="590" y="1220" text-anchor="middle" font-size="13" fill="#9aa7b4">a 31,6 MHz</text>
+          <text x="590" y="1250" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 944 mΩ</text>
+          <text x="590" y="1274" text-anchor="middle" font-size="11.5" fill="#f85149">se porta como bobina</text>
+          <text x="590" y="1340" text-anchor="middle" font-size="13" fill="#9aa7b4">a 100 MHz</text>
+          <text x="590" y="1370" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 3,1 Ω</text>
+          <text x="590" y="1394" text-anchor="middle" font-size="11.5" fill="#f85149">se porta como bobina</text>
+          <text x="590" y="1460" text-anchor="middle" font-size="13" fill="#9aa7b4">a 316 MHz</text>
+          <text x="590" y="1490" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 9,9 Ω</text>
+          <text x="590" y="1514" text-anchor="middle" font-size="11.5" fill="#f85149">se porta como bobina</text>
+          <text x="590" y="1580" text-anchor="middle" font-size="13" fill="#9aa7b4">a 1 GHz</text>
+          <text x="590" y="1610" text-anchor="middle" font-size="19" font-weight="700" fill="#58a6ff">|Z| = 31,4 Ω</text>
+          <text x="590" y="1634" text-anchor="middle" font-size="11.5" fill="#f85149">se porta como bobina</text>
+          <animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 0;0 -120;0 -240;0 -360;0 -480;0 -600;0 -720;0 -840;0 -960;0 -1080;0 -1200;0 -1320;0 -1440" dur="9s" repeatCount="indefinite"/>
+          </g></g>
+          <text class="zf-d" x="20" y="316">Por debajo de su autorresonancia el capacitor baja su impedancia; por encima la sube:</text>
+          <text class="zf-d" x="20" y="336">dejó de filtrar y se comporta como una bobina. Con la bobina pasa lo simétrico.</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> Impedancia contra frecuencia, animada. El capacitor ideal baja para
+        siempre; el real llega a un mínimo —su <b>autorresonancia</b>— y a partir de ahí <b>sube</b>: se
+        comporta como una bobina. Con las bobinas pasa lo simétrico.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">El capacitor real</div>
+          <p>Es C en serie con <b>ESR</b> (resistencia equivalente serie) y <b>ESL</b> (inductancia de las
+          patas y las placas). Por encima de la autorresonancia deja de filtrar.</p>
+          <div class="form" style="margin:10px 0 0;padding:10px">
+            <math display="block"><mrow><msub><mi>f</mi><mi>r</mi></msub><mo>=</mo><mfrac><mn>1</mn><mrow><mn>2</mn><mi>π</mi><msqrt><mrow><mi>L</mi><mi>C</mi></mrow></msqrt></mrow></mfrac></mrow></math>
+          </div>
+          <p style="margin-top:10px">Un electrolítico de 100 µF con 20 nH de ESL resuena en
+          <b>112 kHz</b>: arriba de eso ya no sirve como filtro. Un cerámico de 100 nF con 5 nH resuena en
+          <b>7,1 MHz</b>. Por eso una fuente conmutada lleva <b>los dos en paralelo</b>: cada uno cubre la
+          banda donde el otro falla.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">La bobina real</div>
+          <p>Es L en serie con la resistencia del alambre y en paralelo con la <b>capacidad distribuida</b>
+          entre espiras. Por encima de su autorresonancia se comporta como un capacitor.</p>
+          <p style="margin-top:8px">Además, la resistencia del alambre <b>crece con la frecuencia</b> por el
+          <b>efecto piel</b>: la corriente circula sólo por la superficie. En cobre, a 1 MHz la profundidad
+          efectiva es de apenas <b>66 µm</b>. De ahí el alambre de Litz de las bobinas de RF y el hecho de
+          que un conductor grueso no ayude tanto como uno esperaría.</p>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">El factor Q</div>
+        <p>Es la relación entre la energía almacenada y la disipada por ciclo. Para una bobina,
+        <b>Q = X<sub>L</sub>/R = 2πfL/R</b>. Un Q alto significa poca pérdida: una bobina de aire bien hecha
+        tiene Q de 100 a 300; una con núcleo de ferrita saturado, menos de 10. En un
+        <a href="/publicaciones/mapa-electronica/temas/filtros">filtro</a> el Q determina lo agudo de la
+        curva, y en un <a href="/publicaciones/mapa-electronica/temas/osciladores">oscilador</a>, la
+        estabilidad de la frecuencia.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">El ESR es la falla más frecuente que un capacímetro no ve</div>
+        <p>Un electrolítico envejecido conserva su capacidad y sin embargo ya no filtra: lo que subió es su
+        ESR. Un capacímetro común lo da por bueno. Sólo un <b>medidor de ESR</b> —que inyecta unos 100 kHz y
+        mide la parte resistiva— lo detecta, y además puede hacerlo <b>con el componente soldado en la
+        plaqueta</b>. Es el instrumento que más tiempo ahorra reparando fuentes conmutadas.</p>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Instrumento</th><th>Qué entrega</th><th>Rango típico</th></tr></thead>
+          <tbody>
+            <tr><td><b>Multímetro con función C</b></td><td>Sólo capacidad, a baja frecuencia</td><td>nF a mF, sin ESR ni fase</td></tr>
+            <tr><td><b>Medidor de ESR</b></td><td>Resistencia serie a ~100 kHz</td><td>0,01 a 100 Ω, en circuito</td></tr>
+            <tr><td><b>Puente LCR de banco</b></td><td>L, C, R, Q, D y fase a la frecuencia elegida</td><td>100 Hz a 100 kHz o más</td></tr>
+            <tr><td><b>Q-metro</b></td><td>Q y L por resonancia</td><td>RF: 50 kHz a 50 MHz</td></tr>
+            <tr><td><b>Analizador vectorial (VNA)</b></td><td>Módulo y fase contra frecuencia, barrido completo</td><td>De kHz a GHz. Hoy hay modelos de bolsillo accesibles.</td></tr>
+            <tr><td><b>Medidor de ROE</b></td><td>Relación de onda estacionaria: cuánto se aparta la carga de los 50 Ω</td><td>Antenas y líneas de transmisión</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>La medición de impedancia en antenas y líneas es el terreno de
+      <a href="/publicaciones/mapa-electronica/temas/mediciones-ca">las mediciones de alta frecuencia</a> que
+      se retoman en Telecomunicaciones, donde el objetivo pasa a ser la <b>adaptación</b>: que la carga valga
+      50 Ω para que no vuelva energía por la línea.</p>
+    </section>
+
+    <section id="frecuencia">
+      <h2><span class="n">05</span>Medición de frecuencia</h2>
+      <p>El método por conteo con base de tiempo ya se desarrolló en
+      <a href="/publicaciones/mapa-electronica/temas/instrumentos-digitales">instrumentos de medida
+      digitales</a>. Quedan dos métodos que siguen siendo útiles y que son propios de este eje:</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Figuras de Lissajous</div>
+          <p>Osciloscopio en modo <b>X-Y</b>: la señal desconocida en un eje y una de referencia en el otro.
+          La figura queda quieta sólo si la relación de frecuencias es un cociente de enteros sencillo, y esa
+          relación se lee contando los puntos de tangencia con el borde horizontal y con el vertical:</p>
+          <div class="form" style="margin:10px 0 0;padding:10px">
+            <math display="block"><mrow><mfrac><msub><mi>f</mi><mi>y</mi></msub><msub><mi>f</mi><mi>x</mi></msub></mfrac><mo>=</mo><mfrac><msub><mi>n</mi><mi>x</mi></msub><msub><mi>n</mi><mi>y</mi></msub></mfrac></mrow></math>
+          </div>
+          <p style="margin-top:10px">Además, con las dos frecuencias iguales la figura muestra directamente
+          la <b>diferencia de fase</b>: una recta si están en fase, un círculo si están a 90°.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Por resonancia</div>
+          <p>Se sintoniza un circuito L-C conocido hasta que la respuesta sea máxima. Es el método de los
+          instrumentos de RF —el grid-dip meter— y sirve también al revés: para medir una bobina o un
+          capacitor desconocidos usando una frecuencia conocida.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Impedancia de una serie R-C, medida y calculada</div>
+        <p>Armar R = 1 kΩ con C = 100 nF, alimentar con el generador a 100 Hz, 1 kHz y 10 kHz. Medir con el
+        osciloscopio la tensión total y la caída sobre R (que da la corriente), calcular |Z| y medir el
+        desfasaje con el corrimiento entre las dos ondas. Comparar con la tabla de la sección 1. Las
+        discrepancias mayores al 5 % suelen deberse a la tolerancia del capacitor, que conviene medir
+        aparte.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Puente de Wheatstone</div>
+        <p>Armar el puente con tres resistencias conocidas y una década variable; usar el multímetro en
+        milivolts como detector. Medir varias resistencias desconocidas y comparar con la lectura directa del
+        óhmetro. Después repetir con la fuente a la mitad de tensión: <b>el resultado no cambia</b>, y ese es
+        justamente el punto del método.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Autorresonancia de un capacitor</div>
+        <p>Con generador y osciloscopio, barrer la frecuencia sobre un capacitor cerámico de 100 nF con una
+        resistencia serie chica, y anotar la tensión sobre el capacitor. Va bajando hasta un mínimo y después
+        <b>vuelve a subir</b>. Esa frecuencia es la autorresonancia. Repetir con un electrolítico de 100 µF:
+        la resonancia aparece muchísimo antes. Es la justificación experimental de poner los dos en
+        paralelo.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · ESR de electrolíticos usados</div>
+        <p>Juntar capacitores electrolíticos sacados de equipos viejos. Medirlos primero con el capacímetro
+        —casi todos van a dar bien— y después con el medidor de ESR. Ordenarlos por ESR y compararlos con uno
+        nuevo del mismo valor. Es la práctica que más rápido convence de que la capacidad no alcanza para
+        juzgar un capacitor.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 5 · Lissajous</div>
+        <p>Osciloscopio en X-Y con dos generadores. Ajustar el segundo hasta obtener una elipse quieta
+        (relación 1:1), después buscar 2:1 y 3:2 y dibujar cada figura. Con relación 1:1, variar la fase y
+        observar cómo la elipse pasa de recta a círculo y vuelve.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>La impedancia medida no coincide con la calculada</td><td>Se comparó a frecuencias distintas, o la tolerancia del capacitor (±20 % en electrolíticos) explica sola la diferencia.</td></tr>
+            <tr><td>Al acercar la mano el valor cambia</td><td>Impedancia alta y capacidad del cuerpo. Hay que apantallar el circuito y usar cables cortos.</td></tr>
+            <tr><td>Un capacitor mide bien pero el equipo sigue fallando</td><td>ESR alta. El capacímetro no la ve; hace falta medidor de ESR.</td></tr>
+            <tr><td>El puente no llega a equilibrarse nunca</td><td>Falta el segundo ajuste: en alterna hay que equilibrar módulo <b>y</b> fase, iterando entre las dos perillas.</td></tr>
+            <tr><td>Midiendo resistencias muy bajas, el valor no repite</td><td>Resistencia de cables y contactos. Hace falta medición a cuatro hilos (Kelvin).</td></tr>
+            <tr><td>La bobina mide una inductancia distinta en cada instrumento</td><td>Cada uno la mide a su frecuencia. Con núcleo de ferrita, además, el valor depende del nivel de señal.</td></tr>
+            <tr><td>El capacitor «se comporta como bobina»</td><td>Se está trabajando por encima de su autorresonancia. Es correcto: hay que elegir otro tipo de capacitor.</td></tr>
+            <tr><td>La punta del osciloscopio deforma la señal</td><td>Punta ×1, o punta ×10 sin compensar. Compensarla con la onda cuadrada del propio equipo.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Por qué una medición de impedancia carece de sentido sin indicar la frecuencia?</summary>
+        <div class="a"><p>Porque la reactancia depende de la frecuencia: X<sub>C</sub> = 1/2πfC baja al
+        subir f y X<sub>L</sub> = 2πfL sube. La misma serie R-C puede comportarse como capacitor puro a
+        100 Hz y casi como resistencia pura a 10 kHz.</p></div></details>
+
+      <details class="q"><summary>R = 1 kΩ y C = 100 nF en serie a 1 kHz: ¿módulo y fase?</summary>
+        <div class="a"><p>X<sub>C</sub> = 1/(2π·1000·100 n) = <b>1592 Ω</b>. |Z| = √(1000² + 1592²) =
+        <b>1880 Ω</b>. φ = −arctg(1592/1000) = <b>−57,9°</b>: la corriente adelanta a la tensión.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un puente es más exacto que una medición directa?</summary>
+        <div class="a"><p>Porque compara contra patrones en lugar de medir. En el equilibrio el detector
+        marca <b>cero</b>, así que no necesita estar calibrado ni la fuente ser estable: toda la exactitud
+        está en los componentes patrón.</p></div></details>
+
+      <details class="q"><summary>En un puente de Maxwell con R<sub>2</sub> = 2,2 kΩ, R<sub>3</sub> = 10 kΩ y C<sub>1</sub> = 4,7 nF, ¿cuánto vale la inductancia?</summary>
+        <div class="a"><p>L<sub>x</sub> = R<sub>2</sub>·R<sub>3</sub>·C<sub>1</sub> = 2200 × 10 000 ×
+        4,7×10<sup>−9</sup> = <b>0,1034 H</b>, o sea unos <b>103 mH</b>.</p></div></details>
+
+      <details class="q"><summary>¿Qué es la autorresonancia de un capacitor y por qué importa?</summary>
+        <div class="a"><p>Es la frecuencia a la que su capacidad resuena con la inductancia parásita de sus
+        patas. Por debajo se comporta como capacitor; <b>por encima, como bobina</b>, y deja de filtrar. Por
+        eso en las fuentes se ponen electrolíticos y cerámicos en paralelo.</p></div></details>
+
+      <details class="q"><summary>¿Qué mide un medidor de ESR y por qué no alcanza con un capacímetro?</summary>
+        <div class="a"><p>Mide la <b>resistencia serie</b> del capacitor a unos 100 kHz. Un electrolítico
+        envejecido conserva la capacidad pero aumenta su ESR: el capacímetro lo da por bueno y el circuito
+        igual falla.</p></div></details>
+
+      <details class="q"><summary>¿Qué significa que una bobina tenga Q = 150?</summary>
+        <div class="a"><p>Que a la frecuencia de medición su reactancia es 150 veces mayor que su
+        resistencia: almacena 150 veces más energía de la que disipa por ciclo. Es una bobina de buena
+        calidad, apta para filtros selectivos y osciladores estables.</p></div></details>
+
+      <details class="q"><summary>¿Por qué en alta frecuencia un conductor grueso no baja tanto la resistencia como se esperaría?</summary>
+        <div class="a"><p>Por el <b>efecto piel</b>: la corriente se concentra en la superficie. En cobre a
+        1 MHz la profundidad efectiva es de unos 66 µm, así que el centro del conductor casi no conduce. De
+        ahí el alambre de Litz y los conductores tubulares en RF.</p></div></details>
+
+      <details class="q"><summary>En modo X-Y aparece una figura quieta que toca 3 veces el borde horizontal y 2 el vertical. ¿Qué relación hay entre las frecuencias?</summary>
+        <div class="a"><p>f<sub>y</sub>/f<sub>x</sub> = n<sub>x</sub>/n<sub>y</sub> = <b>3/2</b>. Si la
+        referencia horizontal es de 1 kHz, la señal vertical es de 1,5 kHz.</p></div></details>
+
+      <details class="q"><summary>¿Por qué conviene medir con punta ×10 y no ×1?</summary>
+        <div class="a"><p>Porque la ×1 agrega unos 100 pF y 1 MΩ al circuito, y eso altera lo que se quiere
+        medir. La ×10 baja a unos 10 pF y sube a 10 MΩ, a costa de dividir la señal por diez. Debe estar
+        <b>compensada</b> con la señal cuadrada de calibración del osciloscopio.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/amplificadores-operacionales">
+        <div class="dir">← Tema anterior · publicación del sitio</div>
+        <div class="tt">Amplificadores operacionales</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/osciladores">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Osciladores</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Mediciones de circuitos estándares»</b> de <b>Electrónica Analógica II</b> (5° año),
+  según la «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
