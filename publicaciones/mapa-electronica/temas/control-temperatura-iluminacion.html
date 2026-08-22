@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control con dispositivos · Electrónica Digital III · Catto</title>
+<meta name="description" content="Control de temperatura y de iluminación con microcontrolador: sensores NTC, LM35 y digitales, control todo-nada con histéresis, PID, regulación por PWM y por recorte de fase, relés, relés de estado sólido y aislación con optoacopladores. Eje temático de Electrónica Digital III, 6° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/control-temperatura-iluminacion">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital III</a>
+    <span class="anio">6° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital III</span> · 144 h · Eje 4 de 7</div>
+    <h1>Control con dispositivos</h1>
+    <p class="lead">Acá se junta todo: un sensor entrega una tensión, el conversor la vuelve número, el
+    programa decide, y una salida aislada maneja potencia de red. Los dos casos del programa —temperatura e
+    iluminación— son los más comunes y los que mejor muestran la cadena completa.</p>
+    <div class="chips">
+      <span class="chip hi">Control</span>
+      <span class="chip">Microcontroladores</span>
+      <span class="chip">Sensores</span>
+      <span class="chip">Histéresis</span>
+      <span class="chip">Aislación</span>
+    </div>
+    <hr class="rule">
+
+    <section id="cadena">
+      <h2><span class="n">01</span>La cadena de control</h2>
+      <p>Todo sistema de control automático tiene los mismos cinco eslabones, y cada uno aporta su error y su
+      retardo:</p>
+
+      <figure>
+        <svg viewBox="0 0 680 210" role="img" aria-label="Cadena de un sistema de control con realimentacion" class="svg-t">
+          <style>.cc-b{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
+          .cc-n{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}
+          .cc-s{fill:#9aa7b4;font-size:10px;text-anchor:middle}
+          .cc-d{fill:#7d8a99;font-size:10.5px;text-anchor:middle}</style>
+          <rect class="cc-b" x="16"  y="52" width="104" height="58" rx="9"/>
+          <text class="cc-n" x="68" y="76">Sensor</text><text class="cc-s" x="68" y="94">magnitud → V</text>
+          <rect class="cc-b" x="150" y="52" width="104" height="58" rx="9"/>
+          <text class="cc-n" x="202" y="76">Acondiciona</text><text class="cc-s" x="202" y="94">amplifica y filtra</text>
+          <rect class="cc-b" x="284" y="52" width="112" height="58" rx="9" stroke="#3fb950"/>
+          <text class="cc-n" x="340" y="76">Microcontrolador</text><text class="cc-s" x="340" y="94">A/D · decide · PWM</text>
+          <rect class="cc-b" x="426" y="52" width="104" height="58" rx="9" stroke="#d29922"/>
+          <text class="cc-n" x="478" y="76">Aislación</text><text class="cc-s" x="478" y="94">opto · relé</text>
+          <rect class="cc-b" x="560" y="52" width="104" height="58" rx="9" stroke="#f85149"/>
+          <text class="cc-n" x="612" y="76">Actuador</text><text class="cc-s" x="612" y="94">resistencia · lámpara</text>
+          <g stroke="#9aa7b4" stroke-width="1.6" fill="none">
+            <line x1="120" y1="81" x2="150" y2="81"/><polygon points="150,81 142,77 142,85" fill="#9aa7b4"/>
+            <line x1="254" y1="81" x2="284" y2="81"/><polygon points="284,81 276,77 276,85" fill="#9aa7b4"/>
+            <line x1="396" y1="81" x2="426" y2="81"/><polygon points="426,81 418,77 418,85" fill="#9aa7b4"/>
+            <line x1="530" y1="81" x2="560" y2="81"/><polygon points="560,81 552,77 552,85" fill="#9aa7b4"/>
+          </g>
+          <path d="M612,110 V152 H68 V110" fill="none" stroke="#3fb950" stroke-width="1.8" stroke-dasharray="6 4"/>
+          <polygon points="68,110 64,118 72,118" fill="#3fb950"/>
+          <text class="cc-d" x="340" y="146" fill="#3fb950">realimentación: el sensor mide el efecto de lo que hizo el actuador</text>
+          <text class="cc-d" x="340" y="186">Sin realimentación hay mando, no control: el sistema no sabe si consiguió lo que quería</text>
+        </svg>
+        <figcaption><b>Figura 1.</b> La cadena completa. El lazo cerrado es lo que distingue un
+        <b>control</b> de un simple mando: la decisión se toma comparando la medición con la consigna.</figcaption>
+      </figure>
+    </section>
+
+    <section id="sensores-temp">
+      <h2><span class="n">02</span>Medir temperatura</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Sensor</th><th class="c">Salida</th><th class="c">Rango</th><th>Qué tiene de particular</th></tr></thead>
+          <tbody>
+            <tr><td><b>NTC</b></td><td class="c">Resistencia</td><td class="c">−40 a 150 °C</td><td>Barato y sensible, pero <b>no lineal</b>: hace falta tabla o ecuación. Se lee con un divisor.</td></tr>
+            <tr><td><b>LM35</b></td><td class="c">10 mV/°C</td><td class="c">2 a 150 °C</td><td>Lineal y directo al A/D. No mide bajo cero sin fuente negativa.</td></tr>
+            <tr><td><b>PT100</b></td><td class="c">100 Ω a 0 °C</td><td class="c">−200 a 600 °C</td><td>El patrón industrial: muy estable y lineal. Necesita puente y amplificador de instrumentación.</td></tr>
+            <tr><td><b>Termocupla</b></td><td class="c">~40 µV/°C (tipo K)</td><td class="c">−200 a 1200 °C</td><td>Para hornos. Señal chiquísima: amplificador dedicado y <b>compensación de junta fría</b>.</td></tr>
+            <tr><td><b>DS18B20</b></td><td class="c">Digital, 1-Wire</td><td class="c">−55 a 125 °C</td><td>Ya viene calibrado y con conversor adentro: se conecta con un solo cable de datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo resuelto · Leer un NTC de 10 kΩ</div>
+        <p>NTC de 10 kΩ a 25 °C con B = 3950, en divisor con una resistencia fija de 10 kΩ a 5 V, leído con
+        un A/D de 10 bits.</p>
+        <div class="form" style="margin:12px 0">
+          <math display="block"><mrow><mi>R</mi><mo>(</mo><mi>T</mi><mo>)</mo><mo>=</mo><msub><mi>R</mi><mn>25</mn></msub><mo>·</mo><msup><mi>e</mi><mrow><mi>B</mi><mo>(</mo><mfrac><mn>1</mn><mi>T</mi></mfrac><mo>−</mo><mfrac><mn>1</mn><msub><mi>T</mi><mn>25</mn></msub></mfrac><mo>)</mo></mrow></msup></mrow></math>
+          <span class="cap">Con las temperaturas en <b>kelvin</b>: T<sub>25</sub> = 298,15 K.</span>
+        </div>
+        <ul>
+          <li><b>A 25 °C</b>: R = 10 kΩ. El divisor entrega 5 × 10/(10+10) = <b>2,50 V</b> → 512 cuentas.</li>
+          <li><b>A 50 °C</b> (323,15 K): el exponente vale 3950 × (1/323,15 − 1/298,15) = −1,025, así que
+          R = 10 k × 0,359 = <b>3,59 kΩ</b>. Tensión = 5 × 3,59/13,59 = <b>1,32 V</b> → 270 cuentas.</li>
+          <li>Entre 25 y 50 °C la lectura cambia 242 cuentas: casi <b>10 cuentas por grado</b>. Resolución de
+          sobra.</li>
+        </ul>
+        <p>En el programa no se despeja el logaritmo: se guarda una <b>tabla</b> de cuentas contra
+        temperatura y se interpola. Es más rápido y no arrastra la biblioteca matemática, que en un micro
+        chico ocupa media Flash.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">El autocalentamiento</div>
+        <p>Un NTC de 10 kΩ con 2,5 V disipa 0,6 mW; el encapsulado se calienta y <b>falsea su propia
+        medición</b>. Se corrige alimentando el divisor sólo durante la medición —desde una pata del micro— o
+        subiendo las resistencias. Es un error clásico que aparece como «el sensor lee siempre un grado de
+        más».</p>
+      </div>
+    </section>
+
+    <section id="onoff">
+      <h2><span class="n">03</span>Control todo-nada con histéresis</h2>
+      <p>Es el control más simple y el más usado: si la temperatura está por debajo de la consigna, se
+      enciende; si está por encima, se apaga. Hecho así, tal cual, <b>no funciona</b>: en el umbral el ruido
+      y las variaciones mínimas hacen conmutar el relé decenas de veces por minuto hasta destruirlo.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Control todo-nada con histeresis" class="svg-t" data-anim>
+          <style>.hi-d{fill:#7d8a99;font-size:10.5px}.hi-l{fill:#9aa7b4;font-size:11px}</style>
+          <rect x="92" y="116.7" width="528" height="46.7" fill="#3fb950" opacity=".07"/>
+          <line x1="92" y1="116.7" x2="630" y2="116.7" stroke="#f85149" stroke-width="1.4" stroke-dasharray="6 4"/>
+          <text class="hi-d" x="100" y="108.7" fill="#f85149">26 °C · apaga</text>
+          <line x1="92" y1="163.3" x2="630" y2="163.3" stroke="#3fb950" stroke-width="1.4" stroke-dasharray="6 4"/>
+          <text class="hi-d" x="100" y="155.3" fill="#3fb950">24 °C · enciende</text>
+          <polyline points="92.00,186.67 94.20,184.71 96.40,182.77 98.60,180.86 100.80,178.97 103.00,177.10 105.20,175.25 107.40,173.43 109.60,171.63 111.80,169.85 114.00,168.09 116.20,166.35 118.40,164.64 120.60,162.94 122.80,161.27 125.00,159.61 127.20,157.98 129.40,156.36 131.60,154.76 133.80,153.19 136.00,151.63 138.20,150.09 140.40,148.57 142.60,147.07 144.80,145.58 147.00,144.11 149.20,142.66 151.40,141.23 153.60,139.82 155.80,138.42 158.00,137.04 160.20,135.67 162.40,134.33 164.60,132.99 166.80,131.68 169.00,130.38 171.20,129.09 173.40,127.83 175.60,126.57 177.80,125.33 180.00,124.11 182.20,122.90 184.40,121.70 186.60,120.52 188.80,119.36 191.00,118.21 193.20,117.07 195.40,115.94 197.60,117.82 199.80,119.67 202.00,121.51 204.20,123.33 206.40,125.13 208.60,126.91 210.80,128.67 213.00,130.42 215.20,132.15 217.40,133.86 219.60,135.55 221.80,137.23 224.00,138.89 226.20,140.54 228.40,142.17 230.60,143.78 232.80,145.37 235.00,146.95 237.20,148.52 239.40,150.06 241.60,151.60 243.80,153.11 246.00,154.62 248.20,156.10 250.40,157.58 252.60,159.03 254.80,160.48 257.00,161.91 259.20,163.32 261.40,164.72 263.60,163.02 265.80,161.35 268.00,159.69 270.20,158.05 272.40,156.44 274.60,154.84 276.80,153.26 279.00,151.70 281.20,150.16 283.40,148.64 285.60,147.14 287.80,145.65 290.00,144.18 292.20,142.73 294.40,141.30 296.60,139.89 298.80,138.49 301.00,137.10 303.20,135.74 305.40,134.39 307.60,133.06 309.80,131.74 312.00,130.44 314.20,129.16 316.40,127.89 318.60,126.63 320.80,125.39 323.00,124.17 325.20,122.96 327.40,121.76 329.60,120.58 331.80,119.41 334.00,118.26 336.20,117.12 338.40,116.00 340.60,117.87 342.80,119.72 345.00,121.56 347.20,123.38 349.40,125.18 351.60,126.96 353.80,128.72 356.00,130.47 358.20,132.20 360.40,133.91 362.60,135.60 364.80,137.28 367.00,138.94 369.20,140.58 371.40,142.21 373.60,143.82 375.80,145.42 378.00,147.00 380.20,148.56 382.40,150.11 384.60,151.64 386.80,153.16 389.00,154.66 391.20,156.15 393.40,157.62 395.60,159.07 397.80,160.52 400.00,161.95 402.20,163.36 404.40,161.68 406.60,160.02 408.80,158.38 411.00,156.76 413.20,155.16 415.40,153.58 417.60,152.01 419.80,150.47 422.00,148.94 424.20,147.44 426.40,145.95 428.60,144.47 430.80,143.02 433.00,141.58 435.20,140.17 437.40,138.76 439.60,137.38 441.80,136.01 444.00,134.66 446.20,133.32 448.40,132.00 450.60,130.70 452.80,129.41 455.00,128.14 457.20,126.88 459.40,125.64 461.60,124.41 463.80,123.20 466.00,122.00 468.20,120.81 470.40,119.64 472.60,118.49 474.80,117.35 477.00,116.22 479.20,118.09 481.40,119.94 483.60,121.78 485.80,123.59 488.00,125.39 490.20,127.17 492.40,128.93 494.60,130.67 496.80,132.40 499.00,134.11 501.20,135.80 503.40,137.48 505.60,139.14 507.80,140.78 510.00,142.40 512.20,144.01 514.40,145.61 516.60,147.18 518.80,148.74 521.00,150.29 523.20,151.82 525.40,153.34 527.60,154.84 529.80,156.32 532.00,157.79 534.20,159.25 536.40,160.69 538.60,162.11 540.80,163.53 543.00,161.84 545.20,160.18 547.40,158.54 549.60,156.92 551.80,155.31 554.00,153.73 556.20,152.17 558.40,150.62 560.60,149.09 562.80,147.58 565.00,146.09 567.20,144.62 569.40,143.16 571.60,141.73 573.80,140.30 576.00,138.90 578.20,137.51 580.40,136.14 582.60,134.79 584.80,133.45 587.00,132.13 589.20,130.83 591.40,129.54 593.60,128.26 595.80,127.00 598.00,125.76 600.20,124.53 602.40,123.31 604.60,122.12 606.80,120.93 609.00,119.76 611.20,118.60 613.40,117.46 615.60,116.33 617.80,118.20 620.00,120.05" fill="none" stroke="#ffa657" stroke-width="2.4"/>
+          <line x1="92" y1="226" x2="630" y2="226" stroke="#2a3140" stroke-width="1.2"/>
+          <path d="M92.00,232.00 L195.40,232.00 L195.40,252.00 L261.40,252.00 L261.40,232.00 L338.40,232.00 L338.40,252.00 L402.20,252.00 L402.20,232.00 L477.00,232.00 L477.00,252.00 L540.80,252.00 L540.80,232.00 L615.60,232.00 L615.60,252.00 L620.00,252.00" fill="none" stroke="#58a6ff" stroke-width="2.2"/>
+          <text class="hi-d" x="84" y="248" text-anchor="end">calefactor</text>
+          <g><line x1="92.00" y1="56" x2="92.00" y2="266" stroke="#f85149" stroke-width="1.3" opacity=".8"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;22.96 0;45.91 0;68.87 0;91.83 0;114.78 0;137.74 0;160.70 0;183.65 0;206.61 0;229.57 0;252.52 0;275.48 0;298.43 0;321.39 0;344.35 0;367.30 0;390.26 0;413.22 0;436.17 0;459.13 0;482.09 0;505.04 0;528.00 0" dur="12s" repeatCount="indefinite"/></g>
+          <text class="hi-l" x="92" y="46">temperatura</text>
+          <text class="hi-d" x="32" y="296">La banda muerta evita que el relé conmute sin parar. Cuanto más ancha, menos maniobras y más oscilación.</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> Histéresis, animada. El calefactor enciende recién al bajar del umbral
+        inferior y apaga al pasar el superior. Entre los dos hay una banda muerta: cuanto más ancha, menos
+        conmutaciones y más oscilación de la temperatura.</figcaption>
+      </figure>
+
+      <pre class="code"><code><span class="c-com">// Control con histéresis: dos umbrales, no uno</span>
+<span class="c-kw">if</span> (temp &lt; CONSIGNA - HISTERESIS) calefactor(<span class="c-num">1</span>);   <span class="c-com">// 24 °C: enciende</span>
+<span class="c-kw">if</span> (temp &gt; CONSIGNA + HISTERESIS) calefactor(<span class="c-num">0</span>);   <span class="c-com">// 26 °C: apaga</span>
+<span class="c-com">// Entre 24 y 26 no se hace nada: se conserva el estado anterior</span></code></pre>
+
+      <div class="box key">
+        <div class="bt">Cómo se elige la banda</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Muy angosta</b>: temperatura muy estable, pero el actuador conmuta todo el tiempo. Un relé
+          mecánico tiene del orden de 100 000 maniobras: a una por minuto se agota en dos meses.</li>
+          <li><b>Muy ancha</b>: pocas conmutaciones, pero la temperatura oscila y puede no servir para el
+          proceso.</li>
+          <li>Regla práctica: empezar con un <b>2 %</b> del rango de trabajo y ajustar mirando cuántas veces
+          por hora conmuta.</li>
+          <li>Conviene además un <b>tiempo mínimo de encendido y de apagado</b>: protege compresores y
+          motores, que no toleran arranques seguidos.</li>
+        </ul>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Cuando el todo-nada no alcanza: PID</div>
+        <p>El control todo-nada siempre oscila alrededor de la consigna. Si el proceso exige mantener la
+        temperatura dentro de una décima de grado —un horno de laboratorio, una soldadora de reflow— hace
+        falta un control <b>proporcional-integral-derivativo</b>, que en vez de decidir encendido o apagado
+        calcula <b>cuánta potencia</b> entregar, y la aplica con PWM lento o con control por ciclos enteros.
+        El PID se desarrolla completo en 7° año, dentro de Electrónica Industrial II.</p>
+      </div>
+    </section>
+
+    <section id="iluminacion">
+      <h2><span class="n">04</span>Control de iluminación</h2>
+      <p>El sensor típico es un <b>LDR</b> en divisor, o un fotodiodo si hace falta velocidad o linealidad.
+      Lo interesante está en el actuador: <b>no se regula igual una lámpara incandescente que un LED</b>.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Regulacion por PWM y por recorte de fase" class="svg-t" data-anim>
+          <style>.dm-d{fill:#7d8a99;font-size:10.5px;text-anchor:middle}.dm-t{fill:#e6edf3;font-size:12.5px;text-anchor:middle;font-weight:600}</style>
+          <line x1="350" y1="50" x2="350" y2="286" stroke="#2a3140" stroke-width="1" stroke-dasharray="5 6"/>
+          <text class="dm-t" x="176" y="42">LED con PWM</text>
+          <line x1="34" y1="170" x2="306" y2="170" stroke="#2a3140" stroke-width="1.2"/>
+          <g opacity="0"><path d="M40.00,110.00 L47.80,110.00 L47.80,170.00 L92.00,170.00 L92.00,110.00 L99.80,110.00 L99.80,170.00 L144.00,170.00 L144.00,110.00 L151.80,110.00 L151.80,170.00 L196.00,170.00 L196.00,110.00 L203.80,110.00 L203.80,170.00 L248.00,170.00 L248.00,110.00 L255.80,110.00 L255.80,170.00 L300.00,170.00" fill="none" stroke="#3fb950" stroke-width="2.2"/>
+          <circle cx="176" cy="238" r="22" fill="#3fb950" opacity="0.25" stroke="#9aa7b4" stroke-width="1.5"/>
+          <text class="dm-d" x="176" y="286">ciclo de trabajo 15 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0"><path d="M40.00,110.00 L63.40,110.00 L63.40,170.00 L92.00,170.00 L92.00,110.00 L115.40,110.00 L115.40,170.00 L144.00,170.00 L144.00,110.00 L167.40,110.00 L167.40,170.00 L196.00,170.00 L196.00,110.00 L219.40,110.00 L219.40,170.00 L248.00,170.00 L248.00,110.00 L271.40,110.00 L271.40,170.00 L300.00,170.00" fill="none" stroke="#3fb950" stroke-width="2.2"/>
+          <circle cx="176" cy="238" r="22" fill="#3fb950" opacity="0.52" stroke="#9aa7b4" stroke-width="1.5"/>
+          <text class="dm-d" x="176" y="286">ciclo de trabajo 45 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0"><path d="M40.00,110.00 L81.60,110.00 L81.60,170.00 L92.00,170.00 L92.00,110.00 L133.60,110.00 L133.60,170.00 L144.00,170.00 L144.00,110.00 L185.60,110.00 L185.60,170.00 L196.00,170.00 L196.00,110.00 L237.60,110.00 L237.60,170.00 L248.00,170.00 L248.00,110.00 L289.60,110.00 L289.60,170.00 L300.00,170.00" fill="none" stroke="#3fb950" stroke-width="2.2"/>
+          <circle cx="176" cy="238" r="22" fill="#3fb950" opacity="0.82" stroke="#9aa7b4" stroke-width="1.5"/>
+          <text class="dm-d" x="176" y="286">ciclo de trabajo 80 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1" dur="10s" repeatCount="indefinite"/></g>
+          <text class="dm-d" x="176" y="122">conmuta miles de veces por segundo</text>
+          <text class="dm-t" x="524" y="42">Lámpara con triac</text>
+          <line x1="390" y1="170" x2="666" y2="170" stroke="#2a3140" stroke-width="1.2"/>
+          <polyline points="396.00,170.00 397.65,168.19 399.30,166.39 400.95,164.59 402.60,162.80 404.25,161.03 405.90,159.26 407.55,157.51 409.20,155.79 410.85,154.08 412.50,152.40 414.15,150.74 415.80,149.12 417.45,147.52 419.10,145.97 420.75,144.44 422.40,142.96 424.05,141.52 425.70,140.13 427.35,138.78 429.00,137.47 430.65,136.22 432.30,135.02 433.95,133.88 435.60,132.79 437.25,131.75 438.90,130.78 440.55,129.87 442.20,129.01 443.85,128.23 445.50,127.50 447.15,126.84 448.80,126.25 450.45,125.73 452.10,125.27 453.75,124.88 455.40,124.57 457.05,124.32 458.70,124.14 460.35,124.04 462.00,124.00 463.65,124.04 465.30,124.14 466.95,124.32 468.60,124.57 470.25,124.88 471.90,125.27 473.55,125.73 475.20,126.25 476.85,126.84 478.50,127.50 480.15,128.23 481.80,129.01 483.45,129.87 485.10,130.78 486.75,131.75 488.40,132.79 490.05,133.88 491.70,135.02 493.35,136.22 495.00,137.47 496.65,138.78 498.30,140.13 499.95,141.52 501.60,142.96 503.25,144.44 504.90,145.97 506.55,147.52 508.20,149.12 509.85,150.74 511.50,152.40 513.15,154.08 514.80,155.79 516.45,157.51 518.10,159.26 519.75,161.03 521.40,162.80 523.05,164.59 524.70,166.39 526.35,168.19 528.00,170.00 529.65,171.81 531.30,173.61 532.95,175.41 534.60,177.20 536.25,178.97 537.90,180.74 539.55,182.49 541.20,184.21 542.85,185.92 544.50,187.60 546.15,189.26 547.80,190.88 549.45,192.48 551.10,194.03 552.75,195.56 554.40,197.04 556.05,198.48 557.70,199.87 559.35,201.22 561.00,202.53 562.65,203.78 564.30,204.98 565.95,206.12 567.60,207.21 569.25,208.25 570.90,209.22 572.55,210.13 574.20,210.99 575.85,211.77 577.50,212.50 579.15,213.16 580.80,213.75 582.45,214.27 584.10,214.73 585.75,215.12 587.40,215.43 589.05,215.68 590.70,215.86 592.35,215.96 594.00,216.00 595.65,215.96 597.30,215.86 598.95,215.68 600.60,215.43 602.25,215.12 603.90,214.73 605.55,214.27 607.20,213.75 608.85,213.16 610.50,212.50 612.15,211.77 613.80,210.99 615.45,210.13 617.10,209.22 618.75,208.25 620.40,207.21 622.05,206.12 623.70,204.98 625.35,203.78 627.00,202.53 628.65,201.22 630.30,199.87 631.95,198.48 633.60,197.04 635.25,195.56 636.90,194.03 638.55,192.48 640.20,190.88 641.85,189.26 643.50,187.60 645.15,185.92 646.80,184.21 648.45,182.49 650.10,180.74 651.75,178.97 653.40,177.20 655.05,175.41 656.70,173.61 658.35,171.81 660.00,170.00" fill="none" stroke="#2a3140" stroke-width="1.4" stroke-dasharray="4 4"/>
+          <g opacity="0"><path d="M498.67,170.00 L498.67,140.43 L499.40,141.05 L500.13,141.68 L500.87,142.32 L501.60,142.96 L502.33,143.62 L503.07,144.28 L503.80,144.95 L504.53,145.62 L505.27,146.31 L506.00,147.00 L506.73,147.70 L507.47,148.40 L508.20,149.12 L508.93,149.83 L509.67,150.56 L510.40,151.29 L511.13,152.03 L511.87,152.77 L512.60,153.52 L513.33,154.27 L514.07,155.02 L514.80,155.79 L515.53,156.55 L516.27,157.32 L517.00,158.09 L517.73,158.87 L518.47,159.65 L519.20,160.44 L519.93,161.22 L520.67,162.01 L521.40,162.80 L522.13,163.60 L522.87,164.39 L523.60,165.19 L524.33,165.99 L525.07,166.79 L525.80,167.59 L526.53,168.39 L527.27,169.20 L528.00,170.00 Z M630.67,170.00 L630.67,199.57 L631.40,198.95 L632.13,198.32 L632.87,197.68 L633.60,197.04 L634.33,196.38 L635.07,195.72 L635.80,195.05 L636.53,194.38 L637.27,193.69 L638.00,193.00 L638.73,192.30 L639.47,191.60 L640.20,190.88 L640.93,190.17 L641.67,189.44 L642.40,188.71 L643.13,187.97 L643.87,187.23 L644.60,186.48 L645.33,185.73 L646.07,184.98 L646.80,184.21 L647.53,183.45 L648.27,182.68 L649.00,181.91 L649.73,181.13 L650.47,180.35 L651.20,179.56 L651.93,178.78 L652.67,177.99 L653.40,177.20 L654.13,176.40 L654.87,175.61 L655.60,174.81 L656.33,174.01 L657.07,173.21 L657.80,172.41 L658.53,171.61 L659.27,170.80 L660.00,170.00 Z " fill="#ffa657" opacity=".38" stroke="#ffa657" stroke-width="1.6"/>
+          <circle cx="524" cy="238" r="22" fill="#ffa657" opacity="0.16" stroke="#9aa7b4" stroke-width="1.5"/>
+          <text class="dm-d" x="524" y="286">disparo a 140° · 7 % de potencia</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0"><path d="M462.00,170.00 L462.00,124.00 L463.65,124.04 L465.30,124.14 L466.95,124.32 L468.60,124.57 L470.25,124.88 L471.90,125.27 L473.55,125.73 L475.20,126.25 L476.85,126.84 L478.50,127.50 L480.15,128.23 L481.80,129.01 L483.45,129.87 L485.10,130.78 L486.75,131.75 L488.40,132.79 L490.05,133.88 L491.70,135.02 L493.35,136.22 L495.00,137.47 L496.65,138.78 L498.30,140.13 L499.95,141.52 L501.60,142.96 L503.25,144.44 L504.90,145.97 L506.55,147.52 L508.20,149.12 L509.85,150.74 L511.50,152.40 L513.15,154.08 L514.80,155.79 L516.45,157.51 L518.10,159.26 L519.75,161.03 L521.40,162.80 L523.05,164.59 L524.70,166.39 L526.35,168.19 L528.00,170.00 Z M594.00,170.00 L594.00,216.00 L595.65,215.96 L597.30,215.86 L598.95,215.68 L600.60,215.43 L602.25,215.12 L603.90,214.73 L605.55,214.27 L607.20,213.75 L608.85,213.16 L610.50,212.50 L612.15,211.77 L613.80,210.99 L615.45,210.13 L617.10,209.22 L618.75,208.25 L620.40,207.21 L622.05,206.12 L623.70,204.98 L625.35,203.78 L627.00,202.53 L628.65,201.22 L630.30,199.87 L631.95,198.48 L633.60,197.04 L635.25,195.56 L636.90,194.03 L638.55,192.48 L640.20,190.88 L641.85,189.26 L643.50,187.60 L645.15,185.92 L646.80,184.21 L648.45,182.49 L650.10,180.74 L651.75,178.97 L653.40,177.20 L655.05,175.41 L656.70,173.61 L658.35,171.81 L660.00,170.00 Z " fill="#ffa657" opacity=".38" stroke="#ffa657" stroke-width="1.6"/>
+          <circle cx="524" cy="238" r="22" fill="#ffa657" opacity="0.55" stroke="#9aa7b4" stroke-width="1.5"/>
+          <text class="dm-d" x="524" y="286">disparo a 90° · 50 % de potencia</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0"><path d="M425.33,170.00 L425.33,140.43 L427.90,138.34 L430.47,136.36 L433.03,134.51 L435.60,132.79 L438.17,131.20 L440.73,129.77 L443.30,128.48 L445.87,127.35 L448.43,126.38 L451.00,125.57 L453.57,124.92 L456.13,124.45 L458.70,124.14 L461.27,124.01 L463.83,124.04 L466.40,124.25 L468.97,124.63 L471.53,125.18 L474.10,125.89 L476.67,126.77 L479.23,127.82 L481.80,129.01 L484.37,130.37 L486.93,131.86 L489.50,133.51 L492.07,135.28 L494.63,137.19 L497.20,139.22 L499.77,141.36 L502.33,143.62 L504.90,145.97 L507.47,148.40 L510.03,150.92 L512.60,153.52 L515.17,156.17 L517.73,158.87 L520.30,161.62 L522.87,164.39 L525.43,167.19 L528.00,170.00 Z M557.33,170.00 L557.33,199.57 L559.90,201.66 L562.47,203.64 L565.03,205.49 L567.60,207.21 L570.17,208.80 L572.73,210.23 L575.30,211.52 L577.87,212.65 L580.43,213.62 L583.00,214.43 L585.57,215.08 L588.13,215.55 L590.70,215.86 L593.27,215.99 L595.83,215.96 L598.40,215.75 L600.97,215.37 L603.53,214.82 L606.10,214.11 L608.67,213.23 L611.23,212.18 L613.80,210.99 L616.37,209.63 L618.93,208.14 L621.50,206.49 L624.07,204.72 L626.63,202.81 L629.20,200.78 L631.77,198.64 L634.33,196.38 L636.90,194.03 L639.47,191.60 L642.03,189.08 L644.60,186.48 L647.17,183.83 L649.73,181.13 L652.30,178.38 L654.87,175.61 L657.43,172.81 L660.00,170.00 Z " fill="#ffa657" opacity=".38" stroke="#ffa657" stroke-width="1.6"/>
+          <circle cx="524" cy="238" r="22" fill="#ffa657" opacity="0.94" stroke="#9aa7b4" stroke-width="1.5"/>
+          <text class="dm-d" x="524" y="286">disparo a 40° · 93 % de potencia</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1" dur="10s" repeatCount="indefinite"/></g>
+          <text class="dm-d" x="524" y="122">recorta cada semiciclo de la red</text>
+          <text class="dm-d" x="350" y="310" fill="#7d8a99">El LED se regula en continua y a alta frecuencia; la lámpara de red, decidiendo cuándo dispara el triac.</text>
+          </svg>
+        <figcaption><b>Figura 3.</b> Dos maneras de regular, animadas. A la izquierda, PWM sobre un LED en
+        continua: se conmuta miles de veces por segundo y el ojo integra. A la derecha, recorte de fase sobre
+        la red: el triac se dispara más tarde o más temprano dentro de cada semiciclo.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Carga</th><th>Método</th><th>Cuidados</th></tr></thead>
+          <tbody>
+            <tr><td><b>LED de continua</b></td><td>PWM a más de 200 Hz, o corriente regulada</td><td>Por debajo de 100 Hz se ve el parpadeo; si se va a filmar, conviene más de 1 kHz. El brillo percibido <b>no</b> es proporcional al ciclo de trabajo: el ojo responde de manera logarítmica.</td></tr>
+            <tr><td><b>Incandescente en red</b></td><td>Recorte de fase con triac</td><td>Es el <a href="/publicaciones/mapa-electronica/temas/semiconductores-especiales">dimmer clásico</a>. Genera interferencia y necesita filtro. Todo el circuito está a potencial de red.</td></tr>
+            <tr><td><b>LED de red («dimeable»)</b></td><td>Sólo si el fabricante lo declara</td><td>Una lámpara LED común en un dimmer de triac parpadea, zumba o no enciende: su fuente conmutada no tolera el recorte.</td></tr>
+            <tr><td><b>Tubo fluorescente</b></td><td>Balasto electrónico regulable</td><td>No se regula por fase.</td></tr>
+            <tr><td><b>Calefactor o carga térmica</b></td><td>Ciclos enteros con cruce por cero</td><td>Sin interferencia y sin parpadeo visible, porque la inercia térmica promedia.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">El cruce por cero</div>
+        <p>Para disparar un triac en el instante correcto, el micro necesita saber <b>cuándo la red pasa por
+        cero</b>. Se detecta con un optoacoplador alimentado por la red a través de una resistencia grande:
+        entrega un pulso 100 veces por segundo. A partir de ese pulso se cuenta el retardo —de 0 a 10 ms— y
+        se dispara. Ese mismo pulso sirve además como base de tiempo de 50 Hz, muy exacta, y como detector
+        de corte de energía.</p>
+      </div>
+    </section>
+
+    <section id="aislacion">
+      <h2><span class="n">05</span>Manejar potencia con seguridad</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Relé electromecánico</div>
+          <p>Contactos reales: sirve para continua y alterna, y aísla por construcción. Necesita transistor,
+          <b>diodo volante</b> y una corriente de bobina de decenas de miliamperes. Se desgasta, es lento
+          (milisegundos) y hace ruido, pero tolera sobrecargas.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Relé de estado sólido</div>
+          <p>Un optotriac más un triac. Sin partes móviles, silencioso, millones de maniobras, y con
+          <b>cruce por cero</b> incorporado en la mayoría. A cambio: sólo alterna, disipa calor (necesita
+          disipador) y si falla lo hace <b>en cortocircuito</b>, con la carga encendida.</p>
+        </div>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">La regla de la aislación</div>
+        <p>Entre el circuito del microcontrolador y cualquier cosa conectada a la red tiene que haber una
+        <b>barrera de aislación</b>: optoacoplador, optotriac o la bobina de un relé. Nunca una conexión
+        directa, ni siquiera «sólo para la señal de control». En la plaqueta, esa barrera se respeta con
+        <b>2,5 a 4 mm</b> de separación y, si hace falta, una ranura fresada bajo el componente
+        (<a href="/publicaciones/mapa-electronica/temas/pcb">PCB</a>). Un MOC3021 para disparar el triac y un
+        4N25 para leer el cruce por cero resuelven casi todos los casos.</p>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Termostato completo</div>
+        <p>Un equipo que mantiene 24 a 26 °C con una resistencia de 1500 W en 220 V:</p>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li><b>Sensor</b>: NTC de 10 k en divisor, alimentado desde una pata para evitar
+          autocalentamiento.</li>
+          <li><b>Lectura</b>: A/D de 10 bits, promedio de 16 muestras, tabla de conversión a décimas de
+          grado.</li>
+          <li><b>Decisión</b>: histéresis de ±1 °C y tiempo mínimo de 60 s en cada estado.</li>
+          <li><b>Actuador</b>: la resistencia consume 1500/220 = <b>6,8 A</b>. Se usa un relé de estado
+          sólido de <b>25 A</b> —se sobredimensiona por el pico de arranque y para que caliente menos— con
+          disipador.</li>
+          <li><b>Seguridad</b>: termostato mecánico de rearme manual en serie, independiente del programa. Si
+          el micro se cuelga con la salida encendida, ese termostato corta igual.</li>
+        </ol>
+        <p>El punto 5 no es opcional: <b>ningún programa es una protección</b>. La seguridad se cablea.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Curva del NTC</div>
+        <p>Medir la resistencia del NTC sumergiéndolo en agua a distintas temperaturas, con termómetro
+        patrón. Armar la tabla y graficarla. Comparar con la ecuación exponencial: se verá que ajusta bien en
+        el centro y peor en los extremos, que es exactamente por lo que se usan tablas.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Histéresis, medida</div>
+        <p>Programar el control con histéresis de ±0,2 °C y contar cuántas veces conmuta el relé en cinco
+        minutos. Repetir con ±1 °C y con ±2 °C. Graficar conmutaciones contra ancho de banda y estimar la
+        vida útil del relé en cada caso. Es la práctica que convierte una decisión de diseño en un
+        número.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Brillo y percepción</div>
+        <p>Regular un LED con PWM del 0 al 100 % en pasos iguales y anotar a partir de qué punto se nota el
+        cambio. Después aplicar una curva cuadrática al ciclo de trabajo y repetir: el cambio se percibe
+        <b>parejo</b>. Es la corrección gamma, y explica por qué las regulaciones lineales «no se sienten
+        lineales».</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Cruce por cero</div>
+        <p>Con transformador de aislación y tensión reducida, detectar el cruce por cero con un optoacoplador
+        y medir en el osciloscopio la separación entre pulsos: deben ser <b>10 ms</b>. Usar ese pulso para
+        disparar un triac con retardo variable y verificar el recorte de fase sobre una lámpara chica.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 5 · El programa no es la protección</div>
+        <p>Sobre el termostato armado, provocar un cuelgue del micro con la salida encendida (por ejemplo, un
+        lazo infinito) y comprobar que el termostato mecánico en serie corta igual. Discutir qué otras fallas
+        no cubre el software: relé pegado, sensor desconectado, cable cortado.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>El relé conmuta sin parar en el umbral</td><td>Falta histéresis, o es demasiado angosta para el ruido de la medición.</td></tr>
+            <tr><td>El sensor lee un grado de más</td><td>Autocalentamiento del NTC: bajar la corriente o alimentar el divisor sólo al medir.</td></tr>
+            <tr><td>La temperatura leída salta al encender la carga</td><td>Ruido conducido por la alimentación o acoplado al cable del sensor. Filtrar, apantallar y no compartir la masa de potencia.</td></tr>
+            <tr><td>El micro se reinicia cuando conmuta el relé</td><td>Falta el diodo volante, o el capacitor de desacople, o la fuente no soporta el pico de la bobina.</td></tr>
+            <tr><td>La lámpara LED parpadea con el dimmer</td><td>No es una lámpara regulable: su fuente conmutada no tolera el recorte de fase.</td></tr>
+            <tr><td>El triac queda encendido y no apaga</td><td>Carga inductiva sin snubber, o disparo permanente por ruido en la compuerta.</td></tr>
+            <tr><td>El brillo cambia de golpe al principio y casi nada al final</td><td>Falta corrección gamma: la percepción del ojo no es lineal.</td></tr>
+            <tr><td>El horno sobrepasa la consigna y después baja de más</td><td>Inercia térmica: el control todo-nada siempre sobrepasa. Con PID se corrige.</td></tr>
+            <tr><td>Con el sensor desconectado el equipo calienta al máximo</td><td>El programa no valida la lectura. Una lectura de 0 o de fondo de escala debe interpretarse como <b>falla</b> y apagar.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Qué diferencia hay entre mando y control?</summary>
+        <div class="a"><p>El <b>control</b> tiene realimentación: mide el resultado y corrige. El mando
+        actúa a ciegas. Encender un calefactor con una llave es mando; mantener 25 °C midiendo la temperatura
+        es control.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un control todo-nada necesita histéresis?</summary>
+        <div class="a"><p>Porque con un solo umbral, el ruido y las variaciones mínimas alrededor de la
+        consigna hacen conmutar el actuador continuamente. Con dos umbrales queda una <b>banda muerta</b> en
+        la que no se hace nada.</p></div></details>
+
+      <details class="q"><summary>Un NTC de 10 kΩ en divisor con 10 kΩ, a 25 °C y con 5 V: ¿qué tensión y qué cuentas da en un A/D de 10 bits?</summary>
+        <div class="a"><p>Las dos resistencias son iguales: <b>2,50 V</b>, que sobre 5 V de referencia son
+        512 cuentas de 1024. Es el punto medio exacto de la escala.</p></div></details>
+
+      <details class="q"><summary>¿Por qué se prefiere una tabla antes que la ecuación del NTC?</summary>
+        <div class="a"><p>Porque calcular exponenciales y logaritmos en un micro chico es lento y arrastra la
+        biblioteca matemática, que ocupa mucha Flash. Una tabla con interpolación lineal da el mismo resultado
+        práctico en unos pocos microsegundos.</p></div></details>
+
+      <details class="q"><summary>¿Qué ventajas y desventajas tiene un relé de estado sólido frente a uno mecánico?</summary>
+        <div class="a"><p><b>A favor</b>: sin partes móviles, silencioso, millones de maniobras, conmuta en
+        el cruce por cero. <b>En contra</b>: sólo alterna, disipa calor y necesita disipador, y cuando falla
+        suele quedar <b>en cortocircuito</b>, con la carga encendida.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve detectar el cruce por cero?</summary>
+        <div class="a"><p>Para saber cuándo empieza cada semiciclo y poder disparar el triac con el retardo
+        que corresponde al recorte de fase. De paso, da una base de tiempo de 100 pulsos por segundo muy
+        estable y avisa si se corta la energía.</p></div></details>
+
+      <details class="q"><summary>¿Por qué el brillo de un LED no se percibe proporcional al ciclo de trabajo?</summary>
+        <div class="a"><p>Porque el ojo responde de manera aproximadamente <b>logarítmica</b>: distingue muy
+        bien los cambios en niveles bajos y muy poco en los altos. Se corrige aplicando una curva —gamma— al
+        valor de PWM.</p></div></details>
+
+      <details class="q"><summary>Una resistencia de 1500 W en 220 V: ¿qué corriente conmuta el actuador?</summary>
+        <div class="a"><p>I = P/V = 1500/220 = <b>6,8 A</b>. Se elige un relé o SSR bastante mayor —15 o
+        25 A— para que trabaje frío y tolere el pico inicial.</p></div></details>
+
+      <details class="q"><summary>¿Qué debe hacer el programa si el sensor se desconecta?</summary>
+        <div class="a"><p>Detectarlo: una lectura en cero o en fondo de escala no es una temperatura válida.
+        Ante eso hay que <b>apagar la carga</b> y avisar, nunca seguir controlando con un dato
+        imposible.</p></div></details>
+
+      <details class="q"><summary>¿Por qué la seguridad no puede depender del programa?</summary>
+        <div class="a"><p>Porque el programa puede colgarse, la salida puede quedar activada y el relé puede
+        pegarse. La protección tiene que ser <b>independiente y cableada</b>: un termostato de rearme manual
+        en serie, un fusible térmico, un limitador mecánico.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Periféricos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/memorias-dispositivos-programables">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Sistemas programables y memorias</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Control con dispositivos»</b> de <b>Electrónica Digital III</b> (6° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

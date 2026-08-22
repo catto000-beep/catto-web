@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistemas programables y memorias · Electrónica Digital III · Catto</title>
+<meta name="description" content="Memorias RAM, ROM, EPROM, EEPROM y Flash: organización, líneas de control y decodificación de direcciones. Dispositivos lógicos programables: GAL, CPLD y FPGA, tablas de consulta y lenguajes de descripción de hardware. Eje temático de Electrónica Digital III, 6° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/memorias-dispositivos-programables">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital III</a>
+    <span class="anio">6° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital III</span> · 144 h · Eje 5 de 7</div>
+    <h1>Sistemas programables y memorias</h1>
+    <p class="lead">Dos temas que parecen distintos y son el mismo: guardar bits en un lugar y leerlos
+    después. Una memoria guarda datos; un dispositivo lógico programable guarda <b>la función</b> que va a
+    cumplir el circuito.</p>
+    <div class="chips">
+      <span class="chip hi">Microcontroladores</span>
+      <span class="chip">Memorias</span>
+      <span class="chip">Decodificación</span>
+      <span class="chip">FPGA</span>
+    </div>
+    <hr class="rule">
+
+    <section id="mapa">
+      <h2><span class="n">01</span>El mapa de las memorias</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Tipo</th><th class="c">Volátil</th><th class="c">Escritura</th><th class="c">Ciclos</th><th>Dónde se la encuentra</th></tr></thead>
+          <tbody>
+            <tr><td><b>SRAM</b></td><td class="c">Sí</td><td class="c">Inmediata</td><td class="c">Ilimitados</td><td>Variables del micro, caché del procesador. Rápida y cara: seis transistores por bit.</td></tr>
+            <tr><td><b>DRAM</b></td><td class="c">Sí</td><td class="c">Inmediata</td><td class="c">Ilimitados</td><td>Memoria principal de una PC. Un transistor y un capacitor por bit: barata y densa, pero necesita <b>refresco</b> constante.</td></tr>
+            <tr><td><b>ROM de máscara</b></td><td class="c">No</td><td class="c">En fábrica</td><td class="c">—</td><td>Grabada en el silicio. Sólo se justifica en producciones enormes.</td></tr>
+            <tr><td><b>PROM</b></td><td class="c">No</td><td class="c">Una vez</td><td class="c">1</td><td>Se «queman» fusibles internos. Histórica.</td></tr>
+            <tr><td><b>EPROM (UVPROM)</b></td><td class="c">No</td><td class="c">Eléctrica</td><td class="c">~100</td><td>La de la ventanita de cuarzo: se borra con <b>luz ultravioleta</b> en 20 minutos. Todavía aparece en equipos industriales viejos.</td></tr>
+            <tr><td><b>EEPROM</b></td><td class="c">No</td><td class="c">Byte a byte</td><td class="c">~10<sup>6</sup></td><td>Configuración y calibración. Lenta para escribir (milisegundos por byte).</td></tr>
+            <tr><td><b>Flash NOR</b></td><td class="c">No</td><td class="c">Por bloques</td><td class="c">~10<sup>5</sup></td><td>Programa de micros y BIOS. Se lee byte a byte, lo que permite <b>ejecutar desde ella</b>.</td></tr>
+            <tr><td><b>Flash NAND</b></td><td class="c">No</td><td class="c">Por páginas</td><td class="c">10<sup>3</sup>–10<sup>5</sup></td><td>Pendrives, tarjetas SD, discos SSD. Mucho más densa y barata, pero sólo se lee por páginas.</td></tr>
+            <tr><td><b>FRAM</b></td><td class="c">No</td><td class="c">Inmediata</td><td class="c">10<sup>14</sup></td><td>Registro continuo de datos sin desgaste. Cara y de poca capacidad.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Las tres preguntas que definen una memoria</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li><b>¿Pierde el contenido al cortar la alimentación?</b> Volátil o no volátil.</li>
+          <li><b>¿Cuántas veces se puede escribir?</b> Ese número —la <i>endurance</i>— decide si sirve para
+          guardar un dato que cambia todo el tiempo.</li>
+          <li><b>¿Qué tan rápido responde?</b> Nanosegundos en SRAM, microsegundos en Flash de lectura,
+          milisegundos para escribir una EEPROM.</li>
+        </ol>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">El desgaste no es una anécdota</div>
+        <p>Una celda de Flash NAND de un pendrive barato aguanta unos <b>3000 ciclos</b> de borrado. Si un
+        programa escribiera siempre en la misma posición, el pendrive moriría en minutos. Lo que lo evita es
+        el <b>wear leveling</b>: el controlador reparte las escrituras por todo el chip y lleva un mapa de
+        qué bloque físico corresponde a cada dirección lógica. Es un sistema completo, con su propio
+        procesador, adentro de cada pendrive y de cada SSD.</p>
+      </div>
+    </section>
+
+    <section id="organizacion">
+      <h2><span class="n">02</span>Cómo se organiza y cómo se selecciona</h2>
+      <p>Una memoria es una matriz de celdas con tres grupos de patas: <b>direcciones</b>, <b>datos</b> y
+      <b>control</b>. La capacidad se escribe como «palabras × bits»: una 62256 es de
+      <b>32 K × 8</b>, es decir 32 768 posiciones de un byte.</p>
+
+      <div class="form">
+        <math display="block"><mrow><mi>posiciones</mi><mo>=</mo><msup><mn>2</mn><mi>n</mi></msup><mspace width="30px"/><mi>capacidad</mi><mo>=</mo><msup><mn>2</mn><mi>n</mi></msup><mo>·</mo><mi>m</mi><mspace width="8px"/><mtext>bits</mtext></mrow></math>
+        <span class="cap">n es la cantidad de líneas de dirección y m el ancho de palabra. Con 15 líneas:
+        2<sup>15</sup> = 32 768 posiciones.</span>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Señal</th><th>Nombre</th><th>Qué hace</th></tr></thead>
+          <tbody>
+            <tr><td><b>CS̄ / CĒ</b></td><td>Chip select</td><td>Habilita el chip. Es lo que permite tener varias memorias en el mismo bus: sólo responde la seleccionada.</td></tr>
+            <tr><td><b>OĒ</b></td><td>Output enable</td><td>Saca el dato al bus. Sin él, las salidas quedan en <b>alta impedancia</b>.</td></tr>
+            <tr><td><b>WĒ</b></td><td>Write enable</td><td>Escribe lo que hay en el bus de datos en la dirección presente.</td></tr>
+            <tr><td><b>A0…An</b></td><td>Direcciones</td><td>Eligen la posición.</td></tr>
+            <tr><td><b>D0…D7</b></td><td>Datos</td><td>Bidireccionales, con salidas de tres estados.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 300" role="img" aria-label="Decodificacion de direcciones entre dos memorias" class="svg-t" data-anim>
+          <style>.dc-d{fill:#7d8a99;font-size:10.5px}.dc-n{fill:#e6edf3;font-size:12px;text-anchor:middle;font-weight:600}.dc-s{fill:#9aa7b4;font-size:10px;text-anchor:middle}.dc-w{stroke:#9aa7b4;stroke-width:1.8;fill:none}</style>
+          <text class="dc-d" x="24" y="54">bus de direcciones</text>
+          <rect x="40" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="51" y="102" font-size="8.5">A15</text>
+          <rect x="66" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="77" y="102" font-size="8.5">A14</text>
+          <rect x="92" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="103" y="102" font-size="8.5">A13</text>
+          <rect x="118" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="129" y="102" font-size="8.5">A12</text>
+          <rect x="144" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="155" y="102" font-size="8.5">A11</text>
+          <rect x="170" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="181" y="102" font-size="8.5">A10</text>
+          <rect x="196" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="207" y="102" font-size="8.5">A9</text>
+          <rect x="222" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="233" y="102" font-size="8.5">A8</text>
+          <rect x="248" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="259" y="102" font-size="8.5">A7</text>
+          <rect x="274" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="285" y="102" font-size="8.5">A6</text>
+          <rect x="300" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="311" y="102" font-size="8.5">A5</text>
+          <rect x="326" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="337" y="102" font-size="8.5">A4</text>
+          <rect x="352" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="363" y="102" font-size="8.5">A3</text>
+          <rect x="378" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="389" y="102" font-size="8.5">A2</text>
+          <rect x="404" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="415" y="102" font-size="8.5">A1</text>
+          <rect x="430" y="62" width="22" height="22" rx="3" fill="#1c2230" stroke="#2a3140"/>
+          <text class="dc-s" x="441" y="102" font-size="8.5">A0</text>
+          <path class="dc-w" d="M51,84 V126 H300"/>
+          <text class="dc-d" x="60" y="120" fill="#f85149">A15 elige el chip</text>
+          <path class="dc-w" d="M330,84 V150"/>
+          <text class="dc-d" x="336" y="120">A14…A0 eligen la posición</text>
+          <rect x="300" y="150" width="150" height="52" rx="8" fill="#1c2230" stroke="#58a6ff" stroke-width="1.8"/>
+          <text class="dc-n" x="375" y="172">Memoria 1</text>
+          <text class="dc-s" x="375" y="190">32 K · 0x0000–7FFF</text>
+          <text class="dc-d" x="270" y="180" text-anchor="end">CS̄</text>
+          <path class="dc-w" d="M276,176 H300"/>
+          <rect x="300" y="216" width="150" height="52" rx="8" fill="#1c2230" stroke="#58a6ff" stroke-width="1.8"/>
+          <text class="dc-n" x="375" y="238">Memoria 2</text>
+          <text class="dc-s" x="375" y="256">32 K · 0x8000–FFFF</text>
+          <text class="dc-d" x="270" y="246" text-anchor="end">CS̄</text>
+          <path class="dc-w" d="M276,242 H300"/>
+          <g opacity="0">
+          <rect x="40" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="51" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="66" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="77" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="92" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="103" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="118" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="129" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="144" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="155" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="170" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="181" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="196" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="207" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="222" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="233" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="248" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="259" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="274" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="285" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="300" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="311" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="326" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="337" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="352" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="363" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="378" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="389" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="404" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="415" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="430" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="441" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="300" y="150" width="150" height="52" rx="8" fill="none" stroke="#3fb950" stroke-width="3"/>
+          <circle cx="288" cy="176" r="6" fill="#3fb950"/>
+          <text x="500" y="180" font-size="13" fill="#3fb950">seleccionada</text>
+          <text x="350" y="286" text-anchor="middle" font-size="12.5" fill="#9aa7b4">dirección 0x0100 → responde la memoria 1 · posición 0x0100</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="40" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="51" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="66" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="77" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="92" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="103" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="118" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="129" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="144" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="155" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="170" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="181" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="196" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="207" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="222" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="233" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="248" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="259" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="274" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="285" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="300" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="311" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="326" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="337" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="352" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="363" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="378" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="389" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="404" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="415" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="430" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="441" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="300" y="150" width="150" height="52" rx="8" fill="none" stroke="#3fb950" stroke-width="3"/>
+          <circle cx="288" cy="176" r="6" fill="#3fb950"/>
+          <text x="500" y="180" font-size="13" fill="#3fb950">seleccionada</text>
+          <text x="350" y="286" text-anchor="middle" font-size="12.5" fill="#9aa7b4">dirección 0x7FFF → responde la memoria 1 · última posición</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="40" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="51" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="66" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="77" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="92" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="103" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="118" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="129" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="144" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="155" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="170" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="181" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="196" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="207" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="222" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="233" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="248" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="259" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="274" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="285" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="300" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="311" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="326" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="337" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="352" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="363" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="378" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="389" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="404" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="415" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="430" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="441" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="300" y="216" width="150" height="52" rx="8" fill="none" stroke="#3fb950" stroke-width="3"/>
+          <circle cx="288" cy="242" r="6" fill="#3fb950"/>
+          <text x="500" y="246" font-size="13" fill="#3fb950">seleccionada</text>
+          <text x="350" y="286" text-anchor="middle" font-size="12.5" fill="#9aa7b4">dirección 0x8000 → A15 pasa a 1: responde la memoria 2</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="40" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="51" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="66" y="62" width="22" height="22" rx="3" fill="#3fb950" opacity=".28"/>
+          <text x="77" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#3fb950">1</text>
+          <rect x="92" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="103" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="118" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="129" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="144" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="155" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="170" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="181" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="196" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="207" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="222" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="233" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="248" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="259" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="274" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="285" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="300" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="311" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="326" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="337" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="352" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="363" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="378" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="389" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="404" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="415" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="430" y="62" width="22" height="22" rx="3" fill="#2a3140" opacity=".28"/>
+          <text x="441" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="#7d8a99">0</text>
+          <rect x="300" y="216" width="150" height="52" rx="8" fill="none" stroke="#3fb950" stroke-width="3"/>
+          <circle cx="288" cy="242" r="6" fill="#3fb950"/>
+          <text x="500" y="246" font-size="13" fill="#3fb950">seleccionada</text>
+          <text x="350" y="286" text-anchor="middle" font-size="12.5" fill="#9aa7b4">dirección 0xC000 → responde la memoria 2 · posición 0x4000 interna</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="12s" repeatCount="indefinite"/></g>
+          </svg>
+        <figcaption><b>Figura 1.</b> Decodificación de direcciones, animada. Las líneas altas del bus eligen
+        <b>qué chip</b> responde y las bajas, <b>qué posición dentro de él</b>. Un decodificador 74HC138
+        resuelve el reparto: es el mismo circuito de
+        <a href="/publicaciones/mapa-electronica/temas/logica-combinacional">lógica combinacional</a>.</figcaption>
+      </figure>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Repartir 64 KB entre dos memorias de 32 KB</div>
+        <ul>
+          <li>Cada chip de 32 K necesita <b>15 líneas</b> de dirección (A0 a A14), porque
+          2<sup>15</sup> = 32 768.</li>
+          <li>La línea <b>A15</b> no va a los chips: se usa para elegir cuál responde. Con A15 = 0 se habilita
+          el primero (direcciones 0000 a 7FFF) y con A15 = 1 el segundo (8000 a FFFF).</li>
+          <li>Si hubiera cuatro chips, se usarían A15 y A16 con un decodificador 2 a 4; con ocho, tres líneas
+          y un 74HC138.</li>
+        </ul>
+        <p>Si dos chips quedaran habilitados a la vez, ambos pondrían datos en el bus: es un cortocircuito
+        entre salidas, exactamente lo que el ERC del
+        <a href="/publicaciones/mapa-electronica/temas/esquematicos">esquemático</a> advierte.</p>
+      </div>
+    </section>
+
+    <section id="programables">
+      <h2><span class="n">03</span>Dispositivos lógicos programables</h2>
+      <p>Un circuito con cincuenta compuertas se puede armar con quince integrados de la serie 74 —y ocupar
+      media plaqueta— o con <b>un solo chip programable</b> que se configura por software. Esa es toda la
+      idea, y su evolución tiene tres etapas.</p>
+
+      <div class="g3">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">PAL y GAL</div>
+          <p>Una matriz de conexiones programables entre las entradas y un conjunto de compuertas AND-OR.
+          Reemplazan una decena de integrados 74. La <b>GAL22V10</b> fue durante años el comodín de
+          cualquier diseño digital.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">CPLD</div>
+          <p>Varios bloques tipo GAL unidos por una matriz de interconexión. Cientos de macroceldas,
+          configuración <b>no volátil</b> —funciona apenas se enciende— y tiempos muy predecibles. Ideal para
+          lógica de pegado y decodificación.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">FPGA</div>
+          <p>Miles o millones de bloques lógicos con memoria, multiplicadores y hasta procesadores adentro.
+          Se configura al encender desde una Flash externa. Es lo que permite crear <b>hardware a medida</b>:
+          veinte contadores funcionando en paralelo, sin que ninguno espere al otro.</p>
+        </div>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 344" role="img" aria-label="Tabla de consulta de una FPGA" class="svg-t" data-anim>
+          <style>.lu-d{fill:#7d8a99;font-size:10px}.lu-n{fill:#9aa7b4;font-size:11px;text-anchor:middle}</style>
+          <rect x="250" y="56.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="66.0" font-size="9.5">0000</text>
+          <text class="lu-d" x="346" y="66.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="71.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="81.0" font-size="9.5">0001</text>
+          <text class="lu-d" x="346" y="81.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="86.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="96.0" font-size="9.5">0010</text>
+          <text class="lu-d" x="346" y="96.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="101.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="111.0" font-size="9.5">0011</text>
+          <text class="lu-d" x="346" y="111.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="116.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="126.0" font-size="9.5">0100</text>
+          <text class="lu-d" x="346" y="126.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="131.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="141.0" font-size="9.5">0101</text>
+          <text class="lu-d" x="346" y="141.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="146.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="156.0" font-size="9.5">0110</text>
+          <text class="lu-d" x="346" y="156.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="161.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="171.0" font-size="9.5">0111</text>
+          <text class="lu-d" x="346" y="171.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="176.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="186.0" font-size="9.5">1000</text>
+          <text class="lu-d" x="346" y="186.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="191.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="201.0" font-size="9.5">1001</text>
+          <text class="lu-d" x="346" y="201.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="206.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="216.0" font-size="9.5">1010</text>
+          <text class="lu-d" x="346" y="216.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="221.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="231.0" font-size="9.5">1011</text>
+          <text class="lu-d" x="346" y="231.0" font-size="9.5" fill="#3fb950">1</text>
+          <rect x="250" y="236.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="246.0" font-size="9.5">1100</text>
+          <text class="lu-d" x="346" y="246.0" font-size="9.5" fill="#7d8a99">0</text>
+          <rect x="250" y="251.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="261.0" font-size="9.5">1101</text>
+          <text class="lu-d" x="346" y="261.0" font-size="9.5" fill="#3fb950">1</text>
+          <rect x="250" y="266.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="276.0" font-size="9.5">1110</text>
+          <text class="lu-d" x="346" y="276.0" font-size="9.5" fill="#3fb950">1</text>
+          <rect x="250" y="281.0" width="120" height="13" rx="2" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="lu-d" x="258" y="291.0" font-size="9.5">1111</text>
+          <text class="lu-d" x="346" y="291.0" font-size="9.5" fill="#3fb950">1</text>
+          <text class="lu-n" x="310" y="34">memoria de 16 bits</text>
+          <text class="lu-d" x="254" y="50">D C B A</text>
+          <text class="lu-d" x="334" y="50">salida</text>
+          <text class="lu-n" x="70" y="100">A</text>
+          <line x1="86" y1="96" x2="180" y2="96" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="lu-n" x="70" y="140">B</text>
+          <line x1="86" y1="136" x2="180" y2="136" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="lu-n" x="70" y="180">C</text>
+          <line x1="86" y1="176" x2="180" y2="176" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="lu-n" x="70" y="220">D</text>
+          <line x1="86" y1="216" x2="180" y2="216" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect x="180" y="76" width="52" height="164" rx="8" fill="#1c2230" stroke="#a371f7" stroke-width="1.8"/>
+          <text class="lu-n" x="206" y="164" fill="#a371f7">MUX</text>
+          <line x1="232" y1="158" x2="250" y2="158" stroke="#9aa7b4" stroke-width="1.6"/>
+          <line x1="370" y1="158" x2="430" y2="158" stroke="#9aa7b4" stroke-width="1.6"/>
+          <circle cx="450" cy="158" r="16" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="lu-n" x="450" y="196">salida</text>
+          <g opacity="0">
+          <circle cx="150" cy="96" r="8" fill="#3fb950"/>
+          <text x="150" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="136" r="8" fill="#3fb950"/>
+          <text x="150" y="140" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="176" r="8" fill="#2a3140"/>
+          <text x="150" y="180" text-anchor="middle" font-size="10" font-weight="700" fill="#9aa7b4">0</text>
+          <circle cx="150" cy="216" r="8" fill="#2a3140"/>
+          <text x="150" y="220" text-anchor="middle" font-size="10" font-weight="700" fill="#9aa7b4">0</text>
+          <rect x="250" y="101.0" width="120" height="13" rx="2" fill="#a371f7" opacity=".35"/>
+          <path d="M370,108.0 H400 V158" fill="none" stroke="#a371f7" stroke-width="1.6"/>
+          <circle cx="450" cy="158" r="16" fill="#1c2230" opacity=".85"/>
+          <text x="450" y="163" text-anchor="middle" font-size="14" font-weight="700" fill="#9aa7b4">0</text>
+          <text x="540" y="120" font-size="12" fill="#9aa7b4">entradas DCBA = 0011</text>
+          <text x="540" y="144" font-size="12" fill="#7d8a99">se lee la fila 3</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="150" cy="96" r="8" fill="#3fb950"/>
+          <text x="150" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="136" r="8" fill="#3fb950"/>
+          <text x="150" y="140" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="176" r="8" fill="#3fb950"/>
+          <text x="150" y="180" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="216" r="8" fill="#2a3140"/>
+          <text x="150" y="220" text-anchor="middle" font-size="10" font-weight="700" fill="#9aa7b4">0</text>
+          <rect x="250" y="161.0" width="120" height="13" rx="2" fill="#a371f7" opacity=".35"/>
+          <path d="M370,168.0 H400 V158" fill="none" stroke="#a371f7" stroke-width="1.6"/>
+          <circle cx="450" cy="158" r="16" fill="#1c2230" opacity=".85"/>
+          <text x="450" y="163" text-anchor="middle" font-size="14" font-weight="700" fill="#9aa7b4">0</text>
+          <text x="540" y="120" font-size="12" fill="#9aa7b4">entradas DCBA = 0111</text>
+          <text x="540" y="144" font-size="12" fill="#7d8a99">se lee la fila 7</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="150" cy="96" r="8" fill="#3fb950"/>
+          <text x="150" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="136" r="8" fill="#3fb950"/>
+          <text x="150" y="140" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="176" r="8" fill="#2a3140"/>
+          <text x="150" y="180" text-anchor="middle" font-size="10" font-weight="700" fill="#9aa7b4">0</text>
+          <circle cx="150" cy="216" r="8" fill="#3fb950"/>
+          <text x="150" y="220" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <rect x="250" y="221.0" width="120" height="13" rx="2" fill="#a371f7" opacity=".35"/>
+          <path d="M370,228.0 H400 V158" fill="none" stroke="#a371f7" stroke-width="1.6"/>
+          <circle cx="450" cy="158" r="16" fill="#3fb950" opacity=".85"/>
+          <text x="450" y="163" text-anchor="middle" font-size="14" font-weight="700" fill="#0d1117">1</text>
+          <text x="540" y="120" font-size="12" fill="#9aa7b4">entradas DCBA = 1011</text>
+          <text x="540" y="144" font-size="12" fill="#7d8a99">se lee la fila 11</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="150" cy="96" r="8" fill="#2a3140"/>
+          <text x="150" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#9aa7b4">0</text>
+          <circle cx="150" cy="136" r="8" fill="#3fb950"/>
+          <text x="150" y="140" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="176" r="8" fill="#3fb950"/>
+          <text x="150" y="180" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="216" r="8" fill="#3fb950"/>
+          <text x="150" y="220" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <rect x="250" y="266.0" width="120" height="13" rx="2" fill="#a371f7" opacity=".35"/>
+          <path d="M370,273.0 H400 V158" fill="none" stroke="#a371f7" stroke-width="1.6"/>
+          <circle cx="450" cy="158" r="16" fill="#3fb950" opacity=".85"/>
+          <text x="450" y="163" text-anchor="middle" font-size="14" font-weight="700" fill="#0d1117">1</text>
+          <text x="540" y="120" font-size="12" fill="#9aa7b4">entradas DCBA = 1110</text>
+          <text x="540" y="144" font-size="12" fill="#7d8a99">se lee la fila 14</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="150" cy="96" r="8" fill="#3fb950"/>
+          <text x="150" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="136" r="8" fill="#3fb950"/>
+          <text x="150" y="140" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="176" r="8" fill="#3fb950"/>
+          <text x="150" y="180" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="216" r="8" fill="#3fb950"/>
+          <text x="150" y="220" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <rect x="250" y="281.0" width="120" height="13" rx="2" fill="#a371f7" opacity=".35"/>
+          <path d="M370,288.0 H400 V158" fill="none" stroke="#a371f7" stroke-width="1.6"/>
+          <circle cx="450" cy="158" r="16" fill="#3fb950" opacity=".85"/>
+          <text x="450" y="163" text-anchor="middle" font-size="14" font-weight="700" fill="#0d1117">1</text>
+          <text x="540" y="120" font-size="12" fill="#9aa7b4">entradas DCBA = 1111</text>
+          <text x="540" y="144" font-size="12" fill="#7d8a99">se lee la fila 15</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="150" cy="96" r="8" fill="#3fb950"/>
+          <text x="150" y="100" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="136" r="8" fill="#2a3140"/>
+          <text x="150" y="140" text-anchor="middle" font-size="10" font-weight="700" fill="#9aa7b4">0</text>
+          <circle cx="150" cy="176" r="8" fill="#3fb950"/>
+          <text x="150" y="180" text-anchor="middle" font-size="10" font-weight="700" fill="#0d1117">1</text>
+          <circle cx="150" cy="216" r="8" fill="#2a3140"/>
+          <text x="150" y="220" text-anchor="middle" font-size="10" font-weight="700" fill="#9aa7b4">0</text>
+          <rect x="250" y="131.0" width="120" height="13" rx="2" fill="#a371f7" opacity=".35"/>
+          <path d="M370,138.0 H400 V158" fill="none" stroke="#a371f7" stroke-width="1.6"/>
+          <circle cx="450" cy="158" r="16" fill="#1c2230" opacity=".85"/>
+          <text x="450" y="163" text-anchor="middle" font-size="14" font-weight="700" fill="#9aa7b4">0</text>
+          <text x="540" y="120" font-size="12" fill="#9aa7b4">entradas DCBA = 0101</text>
+          <text x="540" y="144" font-size="12" fill="#7d8a99">se lee la fila 5</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1" dur="12s" repeatCount="indefinite"/></g>
+          <text class="lu-d" x="500" y="216">Cambiar la función es cambiar</text>
+          <text class="lu-d" x="500" y="234">los 16 bits guardados: el mismo</text>
+          <text class="lu-d" x="500" y="252">silicio hace cualquier cosa.</text>
+          <text class="lu-d" x="40" y="330">Una FPGA tiene miles de estas tablas, más flip-flops y una red de interconexión también programable.</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> La tabla de consulta, animada. Adentro de una FPGA no hay compuertas
+        cableadas: hay <b>memorias chiquitas</b> que guardan la tabla de verdad. Cambiar la función es cambiar
+        los bits guardados, y por eso el mismo silicio puede ser un sumador o un decodificador.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Cómo se programan: HDL</div>
+        <p>No se dibujan compuertas: se <b>describe el comportamiento</b> en un lenguaje de descripción de
+        hardware —<b>VHDL</b> o <b>Verilog</b>— y una herramienta de síntesis lo convierte en conexiones
+        concretas.</p>
+        <pre class="code" style="margin-top:10px"><code><span class="c-com">-- VHDL: un contador de 8 bits. No es un programa: es una descripción de circuito.</span>
+<span class="c-kw">process</span>(clk)
+<span class="c-kw">begin</span>
+  <span class="c-kw">if</span> rising_edge(clk) <span class="c-kw">then</span>
+    <span class="c-kw">if</span> reset = <span class="c-str">'1'</span> <span class="c-kw">then</span> cuenta &lt;= (<span class="c-kw">others</span> =&gt; <span class="c-str">'0'</span>);
+    <span class="c-kw">else</span> cuenta &lt;= cuenta + <span class="c-num">1</span>;
+    <span class="c-kw">end</span> <span class="c-kw">if</span>;
+  <span class="c-kw">end</span> <span class="c-kw">if</span>;
+<span class="c-kw">end</span> <span class="c-kw">process</span>;</code></pre>
+        <p style="margin-top:10px">La diferencia conceptual con C es enorme: acá <b>no hay instrucciones que
+        se ejecuten una tras otra</b>. Todo lo descrito ocurre <b>a la vez</b>, en cada flanco de reloj. Si se
+        escriben diez procesos, los diez funcionan simultáneamente, como diez circuitos separados.</p>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th>Microcontrolador</th><th>FPGA</th></tr></thead>
+          <tbody>
+            <tr><td><b>Ejecución</b></td><td>Secuencial: una instrucción por vez</td><td><b>Paralela</b>: todo al mismo tiempo</td></tr>
+            <tr><td><b>Se programa en</b></td><td>C, assembler</td><td>VHDL, Verilog</td></tr>
+            <tr><td><b>Costo</b></td><td>Dólares</td><td>Decenas o cientos de dólares</td></tr>
+            <tr><td><b>Consumo</b></td><td>Bajo</td><td>Alto</td></tr>
+            <tr><td><b>Fuerte en</b></td><td>Lógica compleja, cuentas, comunicación, control</td><td>Muchas señales rápidas en paralelo, procesamiento de video, adquisición veloz</td></tr>
+            <tr><td><b>Ejemplo típico</b></td><td>Termostato, tablero, instrumento</td><td>Analizador lógico, procesamiento de imagen, radio definida por software</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Cuándo conviene cada uno</div>
+        <p>Si el problema entra en un microcontrolador, va en microcontrolador: es más barato, más simple y
+        más fácil de mantener. La FPGA se justifica cuando hace falta <b>paralelismo real</b> o tiempos de
+        nanosegundos: contar veinte encoders a la vez, procesar un video cuadro por cuadro, generar señales
+        con precisión de un ciclo de reloj. Elegir FPGA «porque es más moderna» suele terminar en un
+        proyecto caro que hace lo mismo que un chip de dos dólares.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Leer una memoria a mano</div>
+        <p>Con una EPROM o SRAM en protoboard, llaves en las líneas de dirección y LED en las de datos,
+        recorrer posiciones y anotar el contenido. Manejar CS̄ y OĒ a mano y observar qué pasa con las
+        salidas cuando el chip está deshabilitado: quedan en <b>alta impedancia</b>, ni en 1 ni en 0.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Decodificar direcciones</div>
+        <p>Con un 74HC138 y dos memorias, armar el mapa de 64 KB del ejemplo. Verificar con LED cuál chip se
+        habilita según A15. Después conectar mal a propósito los dos CS̄ juntos y observar en el osciloscopio
+        el conflicto en el bus de datos.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Desgaste de la EEPROM</div>
+        <p>Escribir la misma posición de EEPROM del micro en un lazo rápido y llevar la cuenta de escrituras
+        mostrándola por el puerto serie. Calcular cuánto tardaría en llegar al millón de ciclos. Después
+        escribir el mismo dato rotando entre 16 posiciones y comparar la vida útil resultante.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Un contador en CPLD o FPGA</div>
+        <p>Si hay una placa disponible, describir en VHDL el contador de la sección anterior, sintetizarlo y
+        verlo funcionar en LED. Después <b>duplicar</b> el proceso para tener dos contadores con distinto
+        divisor y comprobar que corren en paralelo, sin que uno demore al otro. Ese experimento es la
+        diferencia entre hardware y software.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>El bus de datos muestra valores raros</td><td>Dos chips habilitados a la vez: conflicto entre salidas. Revisar la decodificación.</td></tr>
+            <tr><td>La memoria lee siempre lo mismo</td><td>Alguna línea de dirección quedó sin conectar o en corto, y varias direcciones apuntan al mismo lugar.</td></tr>
+            <tr><td>La escritura no se guarda</td><td>WĒ y OĒ activos a la vez, o el tiempo de escritura no se respetó.</td></tr>
+            <tr><td>Un dato guardado en EEPROM se corrompe</td><td>Escritura interrumpida por una caída de tensión. Habilitar brown-out y no escribir en cada vuelta del lazo.</td></tr>
+            <tr><td>El pendrive «se murió»</td><td>Celdas agotadas, o la tabla de asignación corrupta por desconectarlo durante una escritura.</td></tr>
+            <tr><td>La FPGA no arranca al encender</td><td>Es volátil: necesita cargar su configuración desde la Flash externa. Si esa Flash no está programada, no hay circuito.</td></tr>
+            <tr><td>El diseño en VHDL «anda mal el orden»</td><td>Se lo pensó como un programa secuencial. En hardware todo ocurre a la vez: el orden de las líneas no define el orden temporal.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">06</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuántas líneas de dirección necesita una memoria de 8 K × 8?</summary>
+        <div class="a"><p>8 K = 8192 = 2<sup>13</sup>, así que <b>13 líneas</b> (A0 a A12) y 8 líneas de
+        datos.</p></div></details>
+
+      <details class="q"><summary>¿Qué diferencia hay entre SRAM y DRAM?</summary>
+        <div class="a"><p>La SRAM guarda cada bit en un biestable de seis transistores: es rápida y no
+        necesita mantenimiento, pero cara y poco densa. La DRAM usa un capacitor por bit: es densa y barata,
+        pero se descarga y necesita <b>refresco</b> permanente.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve la señal CS̄?</summary>
+        <div class="a"><p>Para habilitar el chip. Permite conectar varias memorias al mismo bus: la
+        decodificación de direcciones activa <b>sólo una</b> por vez, y las demás quedan con sus salidas en
+        alta impedancia.</p></div></details>
+
+      <details class="q"><summary>¿Por qué una Flash NAND aguanta menos ciclos que una EEPROM?</summary>
+        <div class="a"><p>Porque prioriza <b>densidad y costo</b>: celdas más chicas, guardando incluso
+        varios bits por celda. Eso desgasta más el óxido en cada borrado. La EEPROM es mucho menos densa pero
+        soporta del orden de un millón de ciclos por byte.</p></div></details>
+
+      <details class="q"><summary>¿Qué es el wear leveling y dónde está implementado?</summary>
+        <div class="a"><p>Repartir las escrituras entre todos los bloques para que ninguno se desgaste
+        primero. Lo hace el <b>controlador</b> que está dentro del pendrive, la tarjeta o el SSD, con su
+        propio procesador y su tabla de traducción.</p></div></details>
+
+      <details class="q"><summary>¿Qué hay adentro de una FPGA en lugar de compuertas?</summary>
+        <div class="a"><p><b>Tablas de consulta</b> (LUT): memorias muy chicas que guardan la tabla de verdad
+        de la función deseada, con un flip-flop asociado. Programar la FPGA es escribir esas tablas y las
+        conexiones entre bloques.</p></div></details>
+
+      <details class="q"><summary>¿Cuál es la diferencia esencial entre programar en C y describir en VHDL?</summary>
+        <div class="a"><p>En C las instrucciones se ejecutan <b>una tras otra</b>; en VHDL se describe
+        hardware que funciona <b>todo al mismo tiempo</b>. Diez procesos en VHDL son diez circuitos
+        simultáneos, no diez pasos.</p></div></details>
+
+      <details class="q"><summary>¿Cuándo conviene una FPGA en vez de un microcontrolador?</summary>
+        <div class="a"><p>Cuando hace falta <b>paralelismo real</b> o tiempos de nanosegundos: muchas señales
+        rápidas atendidas a la vez, procesamiento de video, adquisición de alta velocidad. Para control,
+        comunicación y cálculo moderado, el micro es más barato y más simple.</p></div></details>
+
+      <details class="q"><summary>Un CPLD funciona apenas se enciende y una FPGA no. ¿Por qué?</summary>
+        <div class="a"><p>Porque la configuración del CPLD es <b>no volátil</b> y vive dentro del chip,
+        mientras que la FPGA carga su configuración al arrancar desde una memoria Flash externa. Si esa
+        memoria falla, la FPGA queda sin función.</p></div></details>
+
+      <details class="q"><summary>¿Por qué una EPROM tiene una ventanita de cuarzo?</summary>
+        <div class="a"><p>Porque se borra exponiendo el chip a <b>luz ultravioleta</b>, que descarga las
+        compuertas flotantes de las celdas. Por eso, una vez grabada, la ventana se tapa con una etiqueta: la
+        luz del sol la borraría con el tiempo.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/control-temperatura-iluminacion">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Control con dispositivos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/mantenimiento-pc">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Operación y mantenimiento de PC</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Sistemas programables y memorias»</b> de <b>Electrónica Digital III</b> (6° año),
+  según la «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

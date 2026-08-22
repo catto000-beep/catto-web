@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Periféricos · Electrónica Digital III · Catto</title>
+<meta name="description" content="Temporizadores y preescaler, interrupciones, modo PWM y ciclo de trabajo, módulos de captura y comparación, y conversor A/D interno de un microcontrolador, con los cálculos de tiempo y resolución. Eje temático de Electrónica Digital III, 6° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital III</a>
+    <span class="anio">6° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital III</span> · 144 h · Eje 3 de 7</div>
+    <h1>Periféricos</h1>
+    <p class="lead">Los periféricos son <b>hardware que trabaja solo</b>, en paralelo con la CPU. Un
+    temporizador cuenta mientras el programa hace otra cosa; un módulo PWM sostiene una salida sin que nadie
+    lo atienda. Entenderlos cambia la manera de escribir programas: se deja de esperar.</p>
+    <div class="chips">
+      <span class="chip hi">Microcontroladores</span>
+      <span class="chip">Temporizadores</span>
+      <span class="chip">Interrupciones</span>
+      <span class="chip">PWM</span>
+      <span class="chip">Conversor A/D</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>Dejar de esperar</h2>
+      <p>El primer programa de cualquiera hace parpadear un LED con un retardo. El problema aparece con el
+      segundo requerimiento: <b>mientras espera, el programa no puede hacer nada más</b>. Ni leer un
+      pulsador, ni atender el puerto serie, ni medir una temperatura.</p>
+
+      <pre class="code"><code><span class="c-com">// Así NO: mientras dura el retardo, el micro está preso</span>
+<span class="c-kw">while</span> (<span class="c-num">1</span>) {
+    led_on();  _delay_ms(<span class="c-num">500</span>);
+    led_off(); _delay_ms(<span class="c-num">500</span>);      <span class="c-com">// un pulsador apretado acá no se detecta</span>
+}
+
+<span class="c-com">// Así SÍ: el temporizador cuenta solo y avisa; el lazo queda libre</span>
+<span class="c-kw">while</span> (<span class="c-num">1</span>) {
+    <span class="c-kw">if</span> (bandera_500ms) { bandera_500ms = <span class="c-num">0</span>; led_toggle(); }
+    atender_pulsadores();
+    atender_puerto_serie();
+}</code></pre>
+      <p class="codecap">El segundo esquema —lazo principal que nunca se bloquea más banderas que ponen las
+      interrupciones— es la estructura de casi todo programa embebido serio.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Periférico</th><th>Qué hace solo</th><th>Ejemplo típico</th></tr></thead>
+          <tbody>
+            <tr><td><b>Temporizador / contador</b></td><td>Cuenta pulsos de reloj o eventos externos</td><td>Base de tiempo, medir frecuencia, generar retardos</td></tr>
+            <tr><td><b>PWM</b></td><td>Sostiene una onda cuadrada de ciclo de trabajo ajustable</td><td>Brillo de un LED, velocidad de un motor, servo</td></tr>
+            <tr><td><b>Captura (CCP)</b></td><td>Guarda el valor del contador cuando llega un flanco</td><td>Medir el ancho de un pulso, un período, un sensor ultrasónico</td></tr>
+            <tr><td><b>Comparación</b></td><td>Dispara un evento cuando el contador llega a un valor</td><td>Interrupción periódica exacta, generar frecuencias</td></tr>
+            <tr><td><b>Conversor A/D</b></td><td>Convierte una tensión en un número</td><td>Sensores, potenciómetros, medición de batería</td></tr>
+            <tr><td><b>USART, SPI, I²C</b></td><td>Arma y desarma tramas</td><td><a href="/publicaciones/mapa-electronica/temas/comunicacion-serie">Módulo de comunicación</a></td></tr>
+            <tr><td><b>Watchdog</b></td><td>Vigila que el programa no se cuelgue</td><td>Seguridad en equipos que quedan solos</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="timers">
+      <h2><span class="n">02</span>Temporizadores</h2>
+      <p>Un temporizador es un <b>contador binario</b> —lo mismo que se vio en
+      <a href="/publicaciones/mapa-electronica/temas/contadores-programables">contadores programables</a>—
+      alimentado por el reloj del sistema a través de un <b>preescaler</b>, que es simplemente un divisor.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Contador en modo CTC con su valor de comparacion" class="svg-t" data-anim>
+          <style>.tm-d{fill:#7d8a99;font-size:10.5px}.tm-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="96" y1="244" x2="612" y2="244" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="96" y1="244" x2="96" y2="60" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="96" y1="137.3" x2="612" y2="137.3" stroke="#f85149" stroke-width="1.4" stroke-dasharray="6 4"/>
+          <text class="tm-d" x="102" y="129.3" fill="#f85149">OCR = 249 · comparación</text>
+          <line x1="96" y1="74.0" x2="612" y2="74.0" stroke="#2a3140" stroke-width="1" stroke-dasharray="4 5"/>
+          <text class="tm-d" x="102" y="66.0">desborde (255)</text>
+          <path d="M96.00,244.00 L253.92,137.33 L253.92,244.00 M264.00,244.00 L421.92,137.33 L421.92,244.00 M432.00,244.00 L589.92,137.33 L589.92,244.00 " fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <path d="M96.00,288.00 L253.92,288.00 L253.92,266.00 L264.00,266.00 L421.92,266.00 L421.92,288.00 L432.00,288.00 L589.92,288.00 L589.92,266.00 L600.00,266.00" fill="none" stroke="#58a6ff" stroke-width="2.2"/>
+          <text class="tm-d" x="88" y="282" text-anchor="end">salida</text>
+          <circle cx="96.00" cy="244.00" r="5" fill="#ffa657"><animate attributeName="cx" values="96.00;101.26;106.53;111.79;117.06;122.32;127.58;132.85;138.11;143.38;148.64;153.90;159.17;164.43;169.70;174.96;180.22;185.49;190.75;196.02;201.28;206.54;211.81;217.07;222.34;227.60;232.86;238.13;243.39;248.66;264.00;269.26;274.53;279.79;285.06;290.32;295.58;300.85;306.11;311.38;316.64;321.90;327.17;332.43;337.70;342.96;348.22;353.49;358.75;364.02;369.28;374.54;379.81;385.07;390.34;395.60;400.86;406.13;411.39;416.66;432.00;437.26;442.53;447.79;453.06;458.32;463.58;468.85;474.11;479.38;484.64;489.90;495.17;500.43;505.70;510.96;516.22;521.49;526.75;532.02;537.28;542.54;547.81;553.07;558.34;563.60;568.86;574.13;579.39;584.66" dur="8s" repeatCount="indefinite"/><animate attributeName="cy" values="244.00;240.44;236.89;233.33;229.78;226.22;222.67;219.11;215.56;212.00;208.44;204.89;201.33;197.78;194.22;190.67;187.11;183.56;180.00;176.44;172.89;169.33;165.78;162.22;158.67;155.11;151.56;148.00;144.44;140.89;244.00;240.44;236.89;233.33;229.78;226.22;222.67;219.11;215.56;212.00;208.44;204.89;201.33;197.78;194.22;190.67;187.11;183.56;180.00;176.44;172.89;169.33;165.78;162.22;158.67;155.11;151.56;148.00;144.44;140.89;244.00;240.44;236.89;233.33;229.78;226.22;222.67;219.11;215.56;212.00;208.44;204.89;201.33;197.78;194.22;190.67;187.11;183.56;180.00;176.44;172.89;169.33;165.78;162.22;158.67;155.11;151.56;148.00;144.44;140.89" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="tm-l" x="102" y="52">valor del contador</text>
+          <text class="tm-l" x="612" y="264" text-anchor="end">tiempo</text>
+          <text class="tm-d" x="36" y="314">En modo CTC el contador se reinicia al llegar a OCR: el período queda fijo y exacto.</text>
+          </svg>
+        <figcaption><b>Figura 1.</b> El contador y sus dos eventos, animado. Cuando llega al valor cargado
+        en el registro de <b>comparación</b> se produce un evento y —si está en modo CTC— el contador se
+        reinicia. Si nadie lo detiene, sigue hasta el <b>desborde</b> y vuelve a cero solo.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>t</mi><mrow><mi>t</mi><mi>i</mi><mi>c</mi><mi>k</mi></mrow></msub><mo>=</mo><mfrac><mi>N</mi><msub><mi>f</mi><mrow><mi>o</mi><mi>s</mi><mi>c</mi></mrow></msub></mfrac><mspace width="26px"/><mi>O</mi><mi>C</mi><mi>R</mi><mo>=</mo><mfrac><mrow><msub><mi>f</mi><mrow><mi>o</mi><mi>s</mi><mi>c</mi></mrow></msub><mo>·</mo><mi>t</mi></mrow><mi>N</mi></mfrac><mo>−</mo><mn>1</mn></mrow></math>
+        <span class="cap">N es el preescaler (1, 8, 64, 256, 1024). El «−1» está porque el contador
+        arranca en cero: si se quieren 250 cuentas, el valor de comparación es 249.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo resuelto · Una interrupción cada milisegundo</div>
+        <p>Cristal de <b>16 MHz</b>, temporizador de 8 bits en modo CTC:</p>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>Con preescaler <b>64</b>, cada cuenta dura 64/16 000 000 = <b>4 µs</b>.</li>
+          <li>Para 1 ms hacen falta 1000/4 = <b>250 cuentas</b>.</li>
+          <li>Se carga OCR = 250 − 1 = <b>249</b>. Como entra en 8 bits (máximo 255), sirve.</li>
+          <li>Verificación: (249 + 1) × 4 µs = <b>1000 µs</b> exactos. Sin error, porque 16 MHz es múltiplo
+          de 64 × 1000.</li>
+        </ol>
+        <p style="margin-top:10px">Con preescaler 8 harían falta 2000 cuentas: <b>no entra</b> en 8 bits y
+        hay que usar el temporizador de 16 bits. Ese es el razonamiento completo: elegir el preescaler más
+        chico cuyo resultado entre en el contador, porque cuanto menor es el preescaler, mejor es la
+        resolución.</p>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Los modos que hay que conocer</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Normal</b>: cuenta hasta el máximo y desborda. Simple, pero el período queda fijo por el
+          preescaler.</li>
+          <li><b>CTC</b> (comparar y borrar): cuenta hasta OCR y se reinicia. Es el modo de las <b>bases de
+          tiempo exactas</b>.</li>
+          <li><b>Fast PWM</b> y <b>PWM de fase correcta</b>: la salida cambia sola según el valor de
+          comparación. Ver la sección de PWM.</li>
+          <li><b>Contador de eventos externos</b>: en vez del reloj interno cuenta flancos en una pata. Es
+          un frecuencímetro con dos líneas de código.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="interrupciones">
+      <h2><span class="n">03</span>Interrupciones</h2>
+      <p>Una interrupción es un <b>desvío automático</b>: cuando el periférico levanta su bandera, la CPU
+      termina la instrucción en curso, guarda dónde estaba y salta a una rutina especial. Al terminar,
+      vuelve exactamente al mismo lugar. El programa principal ni se entera.</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Qué se gana</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>Respuesta <b>inmediata</b> a un evento, sin estar preguntando.</li>
+            <li>El lazo principal queda libre.</li>
+            <li>Permite dormir el micro y despertarlo sólo cuando pasa algo.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--hot)">Las reglas de una ISR</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>Cortísima.</b> Poner una bandera, leer un dato, y salir. Nada de retardos, cálculos largos
+            ni mandar caracteres por el puerto serie.</li>
+            <li>Las variables que comparte con el lazo principal se declaran <b>volatile</b>, o el
+            compilador las optimiza y el programa deja de ver los cambios.</li>
+            <li>Si la variable compartida es de más de un byte, hay que leerla con las interrupciones
+            <b>deshabilitadas</b>: si no, se puede leer la mitad vieja y la mitad nueva.</li>
+            <li>La bandera se limpia sola o hay que limpiarla a mano según el periférico: si no se limpia,
+            la interrupción se dispara para siempre.</li>
+          </ul>
+        </div>
+      </div>
+
+      <pre class="code"><code><span class="c-com">// Base de tiempo de 1 ms con el temporizador en CTC</span>
+<span class="c-ty">volatile</span> <span class="c-ty">uint16_t</span> ms = <span class="c-num">0</span>;      <span class="c-com">// volatile: la modifica una interrupción</span>
+
+ISR(TIMER0_COMPA_vect) {          <span class="c-com">// se ejecuta cada 1 ms</span>
+    ms++;                         <span class="c-com">// y nada más: la ISR termina acá</span>
+}
+
+<span class="c-kw">int</span> <span class="c-fn">main</span>(<span class="c-kw">void</span>) {
+    TCCR0A = (<span class="c-num">1</span> &lt;&lt; WGM01);                    <span class="c-com">// modo CTC</span>
+    TCCR0B = (<span class="c-num">1</span> &lt;&lt; CS01) | (<span class="c-num">1</span> &lt;&lt; CS00);      <span class="c-com">// preescaler 64</span>
+    OCR0A  = <span class="c-num">249</span>;                            <span class="c-com">// 250 cuentas de 4 µs = 1 ms</span>
+    TIMSK0 = (<span class="c-num">1</span> &lt;&lt; OCIE0A);                   <span class="c-com">// habilita la interrupción</span>
+    sei();                                     <span class="c-com">// habilita globalmente</span>
+    <span class="c-kw">while</span> (<span class="c-num">1</span>) { <span class="c-com">/* el lazo queda libre para todo lo demás */</span> }
+}</code></pre>
+
+      <div class="box ojo">
+        <div class="bt">Latencia y prioridades</div>
+        <p>Entre que ocurre el evento y que empieza la ISR pasan algunos microsegundos: la CPU termina la
+        instrucción en curso y guarda el contexto. Si además <b>hay otra interrupción ejecutándose</b>, hay
+        que esperarla. Por eso las ISR largas arruinan la respuesta de todo el sistema: una que tarda 2 ms
+        hace perder pulsos a todas las demás. En los micros chicos las prioridades son fijas y están en la
+        tabla de vectores de la hoja de datos.</p>
+      </div>
+    </section>
+
+    <section id="pwm">
+      <h2><span class="n">04</span>PWM: modulación por ancho de pulso</h2>
+      <p>Una salida que conmuta rápido entre 0 y V<sub>CC</sub>, con el <b>tiempo en alto</b> ajustable. El
+      valor medio es proporcional a ese tiempo, y con eso se regula potencia <b>sin disipar</b>: el
+      transistor está saturado o cortado, nunca en el medio.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Ciclo de trabajo de una señal PWM" class="svg-t" data-anim>
+          <style>.pw-d{fill:#7d8a99;font-size:10.5px}.pw-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="86" y1="200" x2="570" y2="200" stroke="#2a3140" stroke-width="1.3"/>
+          <text class="pw-d" x="82" y="204" text-anchor="end">0 V</text>
+          <text class="pw-d" x="82" y="112" text-anchor="end">5 V</text>
+          <g opacity="0">
+          <path d="M96.00,108.00 L103.73,108.00 L103.73,200.00 L173.33,200.00 L173.33,108.00 L181.07,108.00 L181.07,200.00 L250.67,200.00 L250.67,108.00 L258.40,108.00 L258.40,200.00 L328.00,200.00 L328.00,108.00 L335.73,108.00 L335.73,200.00 L405.33,200.00 L405.33,108.00 L413.07,108.00 L413.07,200.00 L482.67,200.00 L482.67,108.00 L490.40,108.00 L490.40,200.00 L560.00,200.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="96" y1="190.80" x2="570" y2="190.80" stroke="#ffa657" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="pw-d" x="576" y="194.80" fill="#ffa657">valor medio = 0,50 V</text>
+          <text x="350" y="266" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">ciclo de trabajo = 10 %</text>
+          <circle cx="620" cy="120" r="26" fill="#ffa657" opacity="0.21" stroke="#9aa7b4" stroke-width="1.6"/>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <path d="M96.00,108.00 L123.07,108.00 L123.07,200.00 L173.33,200.00 L173.33,108.00 L200.40,108.00 L200.40,200.00 L250.67,200.00 L250.67,108.00 L277.73,108.00 L277.73,200.00 L328.00,200.00 L328.00,108.00 L355.07,108.00 L355.07,200.00 L405.33,200.00 L405.33,108.00 L432.40,108.00 L432.40,200.00 L482.67,200.00 L482.67,108.00 L509.73,108.00 L509.73,200.00 L560.00,200.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="96" y1="167.80" x2="570" y2="167.80" stroke="#ffa657" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="pw-d" x="576" y="171.80" fill="#ffa657">valor medio = 1,75 V</text>
+          <text x="350" y="266" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">ciclo de trabajo = 35 %</text>
+          <circle cx="620" cy="120" r="26" fill="#ffa657" opacity="0.43" stroke="#9aa7b4" stroke-width="1.6"/>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <path d="M96.00,108.00 L146.27,108.00 L146.27,200.00 L173.33,200.00 L173.33,108.00 L223.60,108.00 L223.60,200.00 L250.67,200.00 L250.67,108.00 L300.93,108.00 L300.93,200.00 L328.00,200.00 L328.00,108.00 L378.27,108.00 L378.27,200.00 L405.33,200.00 L405.33,108.00 L455.60,108.00 L455.60,200.00 L482.67,200.00 L482.67,108.00 L532.93,108.00 L532.93,200.00 L560.00,200.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="96" y1="140.20" x2="570" y2="140.20" stroke="#ffa657" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="pw-d" x="576" y="144.20" fill="#ffa657">valor medio = 3,25 V</text>
+          <text x="350" y="266" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">ciclo de trabajo = 65 %</text>
+          <circle cx="620" cy="120" r="26" fill="#ffa657" opacity="0.69" stroke="#9aa7b4" stroke-width="1.6"/>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <path d="M96.00,108.00 L165.60,108.00 L165.60,200.00 L173.33,200.00 L173.33,108.00 L242.93,108.00 L242.93,200.00 L250.67,200.00 L250.67,108.00 L320.27,108.00 L320.27,200.00 L328.00,200.00 L328.00,108.00 L397.60,108.00 L397.60,200.00 L405.33,200.00 L405.33,108.00 L474.93,108.00 L474.93,200.00 L482.67,200.00 L482.67,108.00 L552.27,108.00 L552.27,200.00 L560.00,200.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="96" y1="117.20" x2="570" y2="117.20" stroke="#ffa657" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="pw-d" x="576" y="121.20" fill="#ffa657">valor medio = 4,50 V</text>
+          <text x="350" y="266" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">ciclo de trabajo = 90 %</text>
+          <circle cx="620" cy="120" r="26" fill="#ffa657" opacity="0.91" stroke="#9aa7b4" stroke-width="1.6"/>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="10s" repeatCount="indefinite"/></g>
+          <text class="pw-d" x="620" y="164" text-anchor="middle">brillo</text>
+          <text class="pw-l" x="86" y="296">La frecuencia no cambia: lo que cambia es cuánto tiempo la salida está en alto.</text>
+          <text class="pw-l" x="86" y="42">El transistor está saturado o cortado: no disipa, y por eso se regula potencia sin calentar.</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> Ciclo de trabajo, animado. La frecuencia no cambia; lo que cambia es
+        cuánto tiempo la salida está en alto. La línea punteada es el <b>valor medio</b>, que es lo que ve
+        una lámpara, un motor o un filtro R-C.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><mi>D</mi><mo>=</mo><mfrac><msub><mi>t</mi><mrow><mi>a</mi><mi>l</mi><mi>t</mi><mi>o</mi></mrow></msub><mi>T</mi></mfrac><mo>·</mo><mn>100</mn><mspace width="24px"/><msub><mi>V</mi><mrow><mi>m</mi><mi>e</mi><mi>d</mi></mrow></msub><mo>=</mo><mi>D</mi><mo>·</mo><msub><mi>V</mi><mrow><mi>C</mi><mi>C</mi></mrow></msub><mspace width="24px"/><msub><mi>f</mi><mrow><mi>P</mi><mi>W</mi><mi>M</mi></mrow></msub><mo>=</mo><mfrac><msub><mi>f</mi><mrow><mi>o</mi><mi>s</mi><mi>c</mi></mrow></msub><mrow><mi>N</mi><mo>·</mo><msup><mn>2</mn><mi>n</mi></msup></mrow></mfrac></mrow></math>
+        <span class="cap">Con 16 MHz, preescaler 64 y 8 bits de resolución: f = 16 000 000/(64 × 256) =
+        <b>976,6 Hz</b>. Subir la resolución baja la frecuencia, y viceversa: es el compromiso central del
+        PWM.</span>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Aplicación</th><th class="c">Frecuencia adecuada</th><th>Por qué</th></tr></thead>
+          <tbody>
+            <tr><td><b>Brillo de un LED</b></td><td class="c">&gt; 100 Hz</td><td>Por debajo se ve el parpadeo, sobre todo al mover la vista.</td></tr>
+            <tr><td><b>Motor de continua</b></td><td class="c">1 a 20 kHz</td><td>Por debajo de 20 kHz se escucha el zumbido; por encima, las pérdidas de conmutación crecen.</td></tr>
+            <tr><td><b>Calefactor o carga térmica</b></td><td class="c">&lt; 10 Hz</td><td>La inercia térmica promedia sola: no hace falta conmutar rápido.</td></tr>
+            <tr><td><b>Servomotor</b></td><td class="c">50 Hz exactos</td><td>No regula por valor medio: el ángulo lo fija el <b>ancho</b> del pulso, entre 1 y 2 ms.</td></tr>
+            <tr><td><b>Salida analógica (con filtro R-C)</b></td><td class="c">Alta, y filtro lento</td><td>Cuanto más alta la frecuencia, más chico el rizado que queda.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Un servo con el temporizador de 16 bits</div>
+        <p>Cristal de 16 MHz, preescaler <b>8</b> → cada cuenta dura 0,5 µs.</p>
+        <ul>
+          <li>Período de 20 ms (50 Hz) = 20 000 µs / 0,5 = <b>40 000 cuentas</b>: entra justo en 16 bits.</li>
+          <li>Pulso de 1 ms (0°) = <b>2000 cuentas</b>. Pulso de 2 ms (180°) = <b>4000 cuentas</b>.</li>
+          <li>Cada grado son (4000 − 2000)/180 = <b>11,1 cuentas</b>: hay resolución de sobra.</li>
+        </ul>
+        <p>Con el temporizador de 8 bits esto no se puede hacer: no alcanzan las cuentas para 20 ms con
+        resolución útil. Elegir el temporizador correcto es parte del problema.</p>
+      </div>
+    </section>
+
+    <section id="ccp">
+      <h2><span class="n">05</span>Captura y comparación</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Captura</div>
+          <p>Cuando llega un flanco a una pata, el módulo <b>copia el valor del contador</b> en un registro y
+          avisa. La CPU no tiene que estar mirando: el instante queda registrado con la precisión del
+          temporizador.</p>
+          <p style="margin-top:8px">Con dos capturas —flanco de subida y de bajada— se mide el <b>ancho de
+          un pulso</b>. Es la manera correcta de leer un sensor ultrasónico HC-SR04, un receptor de control
+          remoto o la señal de un caudalímetro.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Comparación</div>
+          <p>Al revés: cuando el contador <b>llega</b> a un valor cargado, dispara un evento —interrupción,
+          cambio de una pata, reinicio del contador—. Es lo que hay debajo del modo CTC y del PWM.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Medir distancia con ultrasonido</div>
+        <p>El sensor devuelve un pulso cuyo ancho es proporcional al tiempo de ida y vuelta del sonido.</p>
+        <ul>
+          <li>Con preescaler 8 a 16 MHz, cada cuenta son 0,5 µs.</li>
+          <li>Se capturan los dos flancos y se restan: si la diferencia es de 2320 cuentas, el pulso duró
+          2320 × 0,5 = <b>1160 µs</b>.</li>
+          <li>El sonido viaja a 343 m/s: recorrió 0,001160 × 343 = 0,398 m, <b>ida y vuelta</b>. La distancia
+          es la mitad: <b>19,9 cm</b>.</li>
+        </ul>
+        <p>Midiendo lo mismo con un lazo de espera, cualquier interrupción que ocurra en el medio arruina la
+        medición. Con captura, no.</p>
+      </div>
+    </section>
+
+    <section id="adc">
+      <h2><span class="n">06</span>El conversor A/D interno</h2>
+      <p>Casi siempre es de <b>aproximaciones sucesivas</b>, de 10 o 12 bits, con un multiplexor que permite
+      elegir entre varias patas. Todo lo conceptual está en
+      <a href="/publicaciones/mapa-electronica/temas/conversores-ad-da">conversores A/D y D/A</a>; acá
+      interesan los cuatro parámetros que hay que configurar.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Qué se elige</th><th>Detalle</th></tr></thead>
+          <tbody>
+            <tr><td><b>Canal</b></td><td>Qué pata se mide. El multiplexor es uno solo: se mide un canal por vez, y hay que esperar entre cambios.</td></tr>
+            <tr><td><b>Referencia</b></td><td>La alimentación, una referencia interna (1,1 V típica) o una externa por AREF. <b>Define la escala completa</b> y con ella la resolución.</td></tr>
+            <tr><td><b>Reloj del conversor</b></td><td>Con preescaler propio: debe quedar entre <b>50 y 200 kHz</b> para la máxima exactitud. A 16 MHz con preescaler 128 da 125 kHz, y una conversión tarda unos <b>104 µs</b>.</td></tr>
+            <tr><td><b>Alineación y disparo</b></td><td>Si el resultado se alinea a izquierda (útil para leer sólo 8 bits) y si la conversión arranca por software o por un evento del temporizador.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Los tres errores que arruinan una medición analógica</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Referencia sucia</b>: si se usa V<sub>CC</sub> como referencia y la alimentación tiene
+          rizado, la lectura fluctúa aunque la entrada esté quieta. Referencia interna o externa filtrada.</li>
+          <li><b>Fuente de alta impedancia</b>: el capacitor del sample &amp; hold no llega a cargarse. La
+          hoja de datos pide menos de 10 kΩ; con más, hace falta un seguidor con
+          <a class="ref" href="/publicaciones/amplificadores-operacionales">operacional</a>.</li>
+          <li><b>Ruido digital</b>: conmutaciones del propio micro acopladas a la entrada. Se promedia,
+          se separan las masas y, en los micros que lo tienen, se usa el modo de <b>reducción de ruido</b>
+          que duerme la CPU durante la conversión.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Base de tiempo exacta</div>
+        <p>Configurar el temporizador en CTC para una interrupción cada 1 ms y conmutar una pata en cada
+        interrupción. Medir con el <a href="/publicaciones/mapa-electronica/temas/osciloscopio">osciloscopio</a>:
+        deben salir 500 Hz exactos. Después cambiar el preescaler sin cambiar OCR y ver cómo se corre la
+        frecuencia. Con eso queda clara la fórmula.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Parpadeo sin bloquear</div>
+        <p>Escribir el mismo parpadeo de dos maneras: con <code>_delay_ms()</code> y con la base de tiempo por
+        interrupción. En las dos, agregar un pulsador que encienda otro LED. Con el retardo, el pulsador
+        responde tarde o no responde; con la interrupción, responde siempre. Es la práctica que justifica todo
+        el eje.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · PWM y valor medio</div>
+        <p>Generar PWM a 1 kHz y variar el ciclo de trabajo con un potenciómetro leído por el A/D. Medir con
+        el osciloscopio el ancho del pulso y, con el multímetro en continua, el <b>valor medio</b>. Verificar
+        que V<sub>med</sub> = D × V<sub>CC</sub>. Después agregar un filtro R-C y comparar la salida filtrada
+        con la cruda.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Servo</div>
+        <p>Con el temporizador de 16 bits, mover un servo de 0° a 180° según el potenciómetro. Medir el ancho
+        del pulso en los extremos y verificar que sean 1 y 2 ms. Anotar qué pasa si la frecuencia no es de
+        50 Hz.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 5 · Medir un pulso con captura</div>
+        <p>Generar un pulso de ancho conocido con un <a class="ref" href="/publicaciones/simulador-555">555</a>
+        y medirlo con el módulo de captura. Comparar con la medición del osciloscopio. Repetir agregando una
+        interrupción que consuma tiempo: la medición por captura <b>no cambia</b>, y ese es el punto.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>La interrupción se dispara sin parar</td><td>No se limpió la bandera del periférico, o se la limpió mal.</td></tr>
+            <tr><td>El programa principal no ve el cambio de una variable</td><td>Falta <code>volatile</code>: el compilador la guardó en un registro y no la relee.</td></tr>
+            <tr><td>Un contador de 16 bits da valores absurdos de vez en cuando</td><td>Se lo leyó mientras la interrupción lo modificaba. Hay que leerlo con interrupciones deshabilitadas.</td></tr>
+            <tr><td>El sistema responde lento o pierde pulsos</td><td>Una ISR demasiado larga. Sacar todo lo que no sea imprescindible al lazo principal.</td></tr>
+            <tr><td>El tiempo del temporizador no da lo calculado</td><td>Se olvidó el «−1» del registro de comparación, o el reloj real no es el supuesto (fuses, divisor por 8 activado).</td></tr>
+            <tr><td>El LED con PWM parpadea de manera visible</td><td>Frecuencia demasiado baja: subirla por encima de 100 Hz.</td></tr>
+            <tr><td>El motor con PWM chilla</td><td>Frecuencia dentro de la banda audible. Llevarla por encima de 18 a 20 kHz.</td></tr>
+            <tr><td>El servo tiembla o no llega a los extremos</td><td>Período distinto de 20 ms, o anchos fuera del rango del modelo. Cada servo tiene el suyo.</td></tr>
+            <tr><td>La lectura del A/D salta varias cuentas</td><td>Referencia con rizado, fuente de alta impedancia o ruido. Promediar y revisar las tres causas.</td></tr>
+            <tr><td>Al cambiar de canal, la primera lectura está mal</td><td>Falta esperar el tiempo de adquisición después de mover el multiplexor. Se descarta la primera conversión.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Qué ventaja concreta tiene un temporizador frente a un lazo de retardo?</summary>
+        <div class="a"><p>Que cuenta <b>solo</b>, en paralelo con la CPU. El programa no queda bloqueado y
+        puede atender otras cosas; además, el tiempo no depende de lo que el programa esté haciendo.</p></div></details>
+
+      <details class="q"><summary>Con 8 MHz y preescaler 256, ¿cuánto dura una cuenta y cuánto un desborde de 8 bits?</summary>
+        <div class="a"><p>Cada cuenta dura 256/8 000 000 = <b>32 µs</b>; el desborde ocurre cada 256 × 32 =
+        <b>8,192 ms</b>.</p></div></details>
+
+      <details class="q"><summary>Se quiere una interrupción cada 2 ms con 16 MHz y preescaler 64. ¿Qué valor de comparación?</summary>
+        <div class="a"><p>Cada cuenta son 4 µs; 2000/4 = 500 cuentas → OCR = <b>499</b>. Como no entra en
+        8 bits, hay que usar el temporizador de <b>16 bits</b> (o preescaler 256, con OCR = 124).</p></div></details>
+
+      <details class="q"><summary>¿Por qué una variable compartida con una ISR se declara volatile?</summary>
+        <div class="a"><p>Porque el compilador, al no ver que nadie más la modifica, puede guardarla en un
+        registro y no volver a leerla de memoria. <code>volatile</code> le prohíbe esa optimización y obliga
+        a leerla cada vez.</p></div></details>
+
+      <details class="q"><summary>¿Qué debe hacer —y qué no— una rutina de atención de interrupción?</summary>
+        <div class="a"><p><b>Debe</b>: leer el dato o poner una bandera y salir. <b>No debe</b>: usar
+        retardos, hacer cálculos largos, mandar por el puerto serie ni refrescar el watchdog.</p></div></details>
+
+      <details class="q"><summary>Con PWM de 8 bits, preescaler 8 y 16 MHz, ¿cuál es la frecuencia?</summary>
+        <div class="a"><p>f = 16 000 000/(8 × 256) = <b>7812,5 Hz</b>. Sirve para un motor —está por debajo
+        de lo audible molesto pero conmuta rápido— y de sobra para un LED.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un servo no se controla por valor medio?</summary>
+        <div class="a"><p>Porque su electrónica interna mide el <b>ancho del pulso</b>, no el promedio: entre
+        1 y 2 ms dentro de un período de 20 ms. Dos señales con el mismo valor medio y distinto ancho dan
+        ángulos distintos.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve el módulo de captura?</summary>
+        <div class="a"><p>Para registrar <b>el instante exacto</b> en que llega un flanco, copiando el valor
+        del contador sin intervención de la CPU. Con dos capturas se mide el ancho de un pulso o un período
+        sin que otras tareas afecten la medición.</p></div></details>
+
+      <details class="q"><summary>Se mide una tensión que varía muy poco y la lectura del A/D salta ±3 cuentas. ¿Qué se revisa?</summary>
+        <div class="a"><p>La <b>referencia</b> (rizado de la alimentación), la <b>impedancia de la fuente</b>
+        (demasiado alta para el sample &amp; hold) y el <b>ruido digital</b> acoplado. Además conviene
+        promediar varias lecturas.</p></div></details>
+
+      <details class="q"><summary>¿Por qué conviene descartar la primera conversión después de cambiar de canal?</summary>
+        <div class="a"><p>Porque el capacitor de retención todavía tiene la carga del canal anterior y
+        necesita un tiempo de adquisición para tomar el valor nuevo. La primera lectura queda contaminada por
+        la medición previa.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/comunicacion-serie">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Módulo de comunicación</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/control-temperatura-iluminacion">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Control con dispositivos</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Periféricos»</b> de <b>Electrónica Digital III</b> (6° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

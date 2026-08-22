@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Familia de microcontroladores · Electrónica Digital III · Catto</title>
+<meta name="description" content="Arquitectura interna de un microcontrolador, diagrama de conexiones, registros de función especial, repertorio de instrucciones, memorias Flash, SRAM y EEPROM, puertos de entrada y salida y recursos especiales como watchdog y brown-out. Eje temático de Electrónica Digital III, 6° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/familia-microcontroladores">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital III</a>
+    <span class="anio">6° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital III</span> · 144 h · Eje 1 de 7</div>
+    <h1>Familia de microcontroladores</h1>
+    <p class="lead">En 5° año el microcontrolador era un concepto. Acá pasa a ser un chip concreto con
+    patas numeradas, registros con nombre y una hoja de datos de cuatrocientas páginas. Aprender a leerla
+    es, en buena medida, el contenido del año.</p>
+    <div class="chips">
+      <span class="chip hi">Microcontroladores</span>
+      <span class="chip">Registros</span>
+      <span class="chip">Puertos de E/S</span>
+      <span class="chip">Memorias</span>
+      <span class="chip">Hoja de datos</span>
+    </div>
+    <hr class="rule">
+
+    <section id="de-donde">
+      <h2><span class="n">01</span>De dónde venimos</h2>
+      <p>En <a href="/publicaciones/mapa-electronica/temas/arquitectura-microprocesadores">arquitectura de
+      microprocesador y microcontrolador</a> quedó establecido qué hay adentro: CPU con ALU y registros,
+      memorias, buses y periféricos, todo en un chip. Ahora se trata de <b>usar uno</b>, y eso obliga a
+      responder tres preguntas muy concretas:</p>
+
+      <div class="g3">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">¿Qué pata hace qué?</div>
+          <p>El diagrama de conexiones y la <b>multiplexación</b> de funciones: casi toda pata sirve para
+          varias cosas y hay que elegir.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">¿Qué registro lo configura?</div>
+          <p>Todo lo que el chip hace se decide escribiendo bits en <b>registros de función especial</b>.
+          Programar un periférico es, literalmente, poner unos y ceros en el lugar correcto.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">¿Qué memoria uso?</div>
+          <p>Flash para el programa, SRAM para las variables, EEPROM para lo que debe sobrevivir al corte.
+          Elegir mal cuesta caro.</p>
+        </div>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Familia</th><th class="c">Arquitectura</th><th class="c">Instrucciones</th><th class="c">Velocidad</th><th>Dónde se la ve</th></tr></thead>
+          <tbody>
+            <tr><td><b>PIC de gama media</b><br><span class="v0">16F84A, 16F628A, 16F877A</span></td><td class="c">Harvard, RISC</td><td class="c">35</td><td class="c">20 MHz → 5 MIPS</td><td>Industria argentina, equipamiento en servicio, mucha documentación en español</td></tr>
+            <tr><td><b>PIC de gama alta</b><br><span class="v0">18F, dsPIC</span></td><td class="c">Harvard, RISC</td><td class="c">75+</td><td class="c">40–70 MHz</td><td>Cuando hacen falta más periféricos o cálculo</td></tr>
+            <tr><td><b>AVR</b><br><span class="v0">ATmega328P, ATtiny85</span></td><td class="c">Harvard, RISC</td><td class="c">131</td><td class="c">20 MHz → 20 MIPS</td><td>Arduino. Un ciclo por instrucción y herramientas libres</td></tr>
+            <tr><td><b>ARM Cortex-M</b><br><span class="v0">STM32, RP2040</span></td><td class="c">32 bits</td><td class="c">Thumb-2</td><td class="c">48–480 MHz</td><td>El estándar actual de la industria</td></tr>
+            <tr><td><b>ESP32</b></td><td class="c">32 bits + radio</td><td class="c">—</td><td class="c">240 MHz</td><td>Todo lo que necesita WiFi o Bluetooth</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Por qué se estudia una familia chica y vieja</div>
+        <p>Porque en un PIC de gama media <b>se ve todo</b>: el mapa de memoria entra en una hoja, los
+        registros son ocho bits, no hay sistema operativo ni capas de abstracción, y cada instrucción tarda
+        un tiempo conocido. Lo que se aprende ahí —leer la hoja de datos, configurar un periférico bit por
+        bit, medir tiempos— se traslada tal cual a un ARM de 200 MHz. Al revés no funciona: quien empieza
+        con bibliotecas nunca ve qué hay abajo.</p>
+      </div>
+    </section>
+
+    <section id="patas">
+      <h2><span class="n">02</span>El diagrama de conexiones</h2>
+      <p>Es la primera página útil de cualquier hoja de datos. Muestra el encapsulado con sus patas
+      numeradas y, en cada una, <b>todas</b> las funciones que puede cumplir separadas por barras.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 340" role="img" aria-label="Diagrama de conexiones de un microcontrolador de 28 patas" class="svg-t" data-anim>
+          <style>.pn-d{fill:#9aa7b4;font-size:9.5px}.pn-n{fill:#7d8a99;font-size:9px}.pn-t{fill:#e6edf3;font-size:12px;text-anchor:middle;font-weight:600}</style>
+          <rect x="268" y="32" width="164" height="290" rx="8" fill="#1c2230" stroke="#9aa7b4" stroke-width="2"/>
+          <path d="M326,32 a12,12 0 0 0 24,0" fill="none" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-t" x="350" y="174">microcontrolador</text>
+          <text class="pn-n" x="350" y="192" text-anchor="middle">encapsulado DIP de 28 patas</text>
+          <line x1="256" y1="44.0" x2="268" y2="44.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="47.5" text-anchor="start">1</text>
+          <text class="pn-d" x="254" y="47.5" text-anchor="end">PC6 / RESET</text>
+          <line x1="256" y1="63.0" x2="268" y2="63.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="66.5" text-anchor="start">2</text>
+          <text class="pn-d" x="254" y="66.5" text-anchor="end">PD0 / RXD</text>
+          <line x1="256" y1="82.0" x2="268" y2="82.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="85.5" text-anchor="start">3</text>
+          <text class="pn-d" x="254" y="85.5" text-anchor="end">PD1 / TXD</text>
+          <line x1="256" y1="101.0" x2="268" y2="101.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="104.5" text-anchor="start">4</text>
+          <text class="pn-d" x="254" y="104.5" text-anchor="end">PD2 / INT0</text>
+          <line x1="256" y1="120.0" x2="268" y2="120.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="123.5" text-anchor="start">5</text>
+          <text class="pn-d" x="254" y="123.5" text-anchor="end">PD3 / INT1 / OC2B</text>
+          <line x1="256" y1="139.0" x2="268" y2="139.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="142.5" text-anchor="start">6</text>
+          <text class="pn-d" x="254" y="142.5" text-anchor="end">PD4 / T0</text>
+          <line x1="256" y1="158.0" x2="268" y2="158.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="161.5" text-anchor="start">7</text>
+          <text class="pn-d" x="254" y="161.5" text-anchor="end">VCC</text>
+          <line x1="256" y1="177.0" x2="268" y2="177.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="180.5" text-anchor="start">8</text>
+          <text class="pn-d" x="254" y="180.5" text-anchor="end">GND</text>
+          <line x1="256" y1="196.0" x2="268" y2="196.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="199.5" text-anchor="start">9</text>
+          <text class="pn-d" x="254" y="199.5" text-anchor="end">PB6 / XTAL1</text>
+          <line x1="256" y1="215.0" x2="268" y2="215.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="218.5" text-anchor="start">10</text>
+          <text class="pn-d" x="254" y="218.5" text-anchor="end">PB7 / XTAL2</text>
+          <line x1="256" y1="234.0" x2="268" y2="234.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="237.5" text-anchor="start">11</text>
+          <text class="pn-d" x="254" y="237.5" text-anchor="end">PD5 / OC0B</text>
+          <line x1="256" y1="253.0" x2="268" y2="253.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="256.5" text-anchor="start">12</text>
+          <text class="pn-d" x="254" y="256.5" text-anchor="end">PD6 / OC0A</text>
+          <line x1="256" y1="272.0" x2="268" y2="272.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="275.5" text-anchor="start">13</text>
+          <text class="pn-d" x="254" y="275.5" text-anchor="end">PD7 / AIN1</text>
+          <line x1="256" y1="291.0" x2="268" y2="291.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="278" y="294.5" text-anchor="start">14</text>
+          <text class="pn-d" x="254" y="294.5" text-anchor="end">PB0 / ICP1</text>
+          <line x1="432" y1="291.0" x2="444" y2="291.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="294.5" text-anchor="end">15</text>
+          <text class="pn-d" x="446" y="294.5" text-anchor="start">PB1 / OC1A</text>
+          <line x1="432" y1="272.0" x2="444" y2="272.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="275.5" text-anchor="end">16</text>
+          <text class="pn-d" x="446" y="275.5" text-anchor="start">PB2 / SS / OC1B</text>
+          <line x1="432" y1="253.0" x2="444" y2="253.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="256.5" text-anchor="end">17</text>
+          <text class="pn-d" x="446" y="256.5" text-anchor="start">PB3 / MOSI</text>
+          <line x1="432" y1="234.0" x2="444" y2="234.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="237.5" text-anchor="end">18</text>
+          <text class="pn-d" x="446" y="237.5" text-anchor="start">PB4 / MISO</text>
+          <line x1="432" y1="215.0" x2="444" y2="215.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="218.5" text-anchor="end">19</text>
+          <text class="pn-d" x="446" y="218.5" text-anchor="start">PB5 / SCK</text>
+          <line x1="432" y1="196.0" x2="444" y2="196.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="199.5" text-anchor="end">20</text>
+          <text class="pn-d" x="446" y="199.5" text-anchor="start">AVCC</text>
+          <line x1="432" y1="177.0" x2="444" y2="177.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="180.5" text-anchor="end">21</text>
+          <text class="pn-d" x="446" y="180.5" text-anchor="start">AREF</text>
+          <line x1="432" y1="158.0" x2="444" y2="158.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="161.5" text-anchor="end">22</text>
+          <text class="pn-d" x="446" y="161.5" text-anchor="start">GND</text>
+          <line x1="432" y1="139.0" x2="444" y2="139.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="142.5" text-anchor="end">23</text>
+          <text class="pn-d" x="446" y="142.5" text-anchor="start">PC0 / ADC0</text>
+          <line x1="432" y1="120.0" x2="444" y2="120.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="123.5" text-anchor="end">24</text>
+          <text class="pn-d" x="446" y="123.5" text-anchor="start">PC1 / ADC1</text>
+          <line x1="432" y1="101.0" x2="444" y2="101.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="104.5" text-anchor="end">25</text>
+          <text class="pn-d" x="446" y="104.5" text-anchor="start">PC2 / ADC2</text>
+          <line x1="432" y1="82.0" x2="444" y2="82.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="85.5" text-anchor="end">26</text>
+          <text class="pn-d" x="446" y="85.5" text-anchor="start">PC3 / ADC3</text>
+          <line x1="432" y1="63.0" x2="444" y2="63.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="66.5" text-anchor="end">27</text>
+          <text class="pn-d" x="446" y="66.5" text-anchor="start">PC4 / SDA</text>
+          <line x1="432" y1="44.0" x2="444" y2="44.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="pn-n" x="422" y="47.5" text-anchor="end">28</text>
+          <text class="pn-d" x="446" y="47.5" text-anchor="start">PC5 / SCL</text>
+          <circle cx="284" cy="56.0" r="3.5" fill="#7d8a99"/>
+          <g opacity="0">
+          <rect x="104" y="150.5" width="150" height="15" rx="4" fill="#3fb950" opacity=".22"/>
+          <circle cx="256" cy="158.0" r="4.5" fill="#3fb950"/>
+          <rect x="104" y="169.5" width="150" height="15" rx="4" fill="#3fb950" opacity=".22"/>
+          <circle cx="256" cy="177.0" r="4.5" fill="#3fb950"/>
+          <rect x="442" y="188.5" width="150" height="15" rx="4" fill="#3fb950" opacity=".22"/>
+          <circle cx="444" cy="196.0" r="4.5" fill="#3fb950"/>
+          <rect x="442" y="169.5" width="150" height="15" rx="4" fill="#3fb950" opacity=".22"/>
+          <circle cx="444" cy="177.0" r="4.5" fill="#3fb950"/>
+          <rect x="442" y="150.5" width="150" height="15" rx="4" fill="#3fb950" opacity=".22"/>
+          <circle cx="444" cy="158.0" r="4.5" fill="#3fb950"/>
+          <text x="350" y="330" text-anchor="middle" font-size="12.5" fill="#3fb950">Alimentación: un capacitor de 100 nF en cada par, y todos conectados</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="104" y="36.5" width="150" height="15" rx="4" fill="#f85149" opacity=".22"/>
+          <circle cx="256" cy="44.0" r="4.5" fill="#f85149"/>
+          <rect x="442" y="245.5" width="150" height="15" rx="4" fill="#f85149" opacity=".22"/>
+          <circle cx="444" cy="253.0" r="4.5" fill="#f85149"/>
+          <rect x="442" y="226.5" width="150" height="15" rx="4" fill="#f85149" opacity=".22"/>
+          <circle cx="444" cy="234.0" r="4.5" fill="#f85149"/>
+          <rect x="442" y="207.5" width="150" height="15" rx="4" fill="#f85149" opacity=".22"/>
+          <circle cx="444" cy="215.0" r="4.5" fill="#f85149"/>
+          <text x="350" y="330" text-anchor="middle" font-size="12.5" fill="#f85149">Reset y grabación en circuito (ICSP/ISP)</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="104" y="188.5" width="150" height="15" rx="4" fill="#ffa657" opacity=".22"/>
+          <circle cx="256" cy="196.0" r="4.5" fill="#ffa657"/>
+          <rect x="104" y="207.5" width="150" height="15" rx="4" fill="#ffa657" opacity=".22"/>
+          <circle cx="256" cy="215.0" r="4.5" fill="#ffa657"/>
+          <text x="350" y="330" text-anchor="middle" font-size="12.5" fill="#ffa657">Oscilador: cristal con sus dos capacitores, lo más cerca posible</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="104" y="55.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="256" cy="63.0" r="4.5" fill="#a371f7"/>
+          <rect x="104" y="74.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="256" cy="82.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="264.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="272.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="245.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="253.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="226.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="234.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="207.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="215.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="131.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="139.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="112.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="120.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="93.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="101.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="74.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="82.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="55.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="63.0" r="4.5" fill="#a371f7"/>
+          <rect x="442" y="36.5" width="150" height="15" rx="4" fill="#a371f7" opacity=".22"/>
+          <circle cx="444" cy="44.0" r="4.5" fill="#a371f7"/>
+          <text x="350" y="330" text-anchor="middle" font-size="12.5" fill="#a371f7">Comunicación y entradas analógicas: están fijas en estas patas</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="12s" repeatCount="indefinite"/></g>
+          <text class="pn-n" x="14" y="26">Casi toda pata cumple varias funciones: la barra separa las alternativas y hay que elegir una en el programa.</text>
+          </svg>
+        <figcaption><b>Figura 1.</b> Patas de un microcontrolador de 28 patas, animado. Se destacan por
+        turno los grupos: alimentación, reset y grabación, oscilador y puertos de entrada-salida. Casi toda
+        pata cumple varias funciones y hay que <b>elegir</b> cuál se usa.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Grupo</th><th>Patas típicas</th><th>Qué hay que respetar</th></tr></thead>
+          <tbody>
+            <tr><td><b>Alimentación</b></td><td>V<sub>DD</sub> / V<sub>CC</sub> y V<sub>SS</sub> / GND</td><td>Un capacitor de <b>100 nF</b> pegado a cada par, y si hay varios pares, <b>todos</b> conectados. Sin ese capacitor el micro se resetea solo.</td></tr>
+            <tr><td><b>Reset</b></td><td>MCLR̄ / RESET̄</td><td>Activo en <b>bajo</b>: va con una resistencia de 10 kΩ a positivo. Dejarlo al aire es la causa número uno de que un micro «no arranque».</td></tr>
+            <tr><td><b>Oscilador</b></td><td>OSC1/OSC2, XTAL1/XTAL2</td><td>Cristal con sus dos capacitores de 22 pF, lo más cerca posible. Si se usa el oscilador interno, esas patas quedan libres como E/S.</td></tr>
+            <tr><td><b>Grabación</b></td><td>ICSP: MCLR, PGD, PGC · ISP: MOSI, MISO, SCK, RESET</td><td>Conviene sacarlas a un conector aunque el proyecto sea definitivo: reprogramar sin desoldar vale oro.</td></tr>
+            <tr><td><b>Analógicas</b></td><td>AN0…ANn, V<sub>REF</sub></td><td>Al encender, muchas patas arrancan configuradas como <b>analógicas</b>. Si se las quiere digitales hay que decirlo expresamente.</td></tr>
+            <tr><td><b>Periféricos</b></td><td>TX/RX, SDA/SCL, SDO/SDI/SCK, CCP/PWM, INT</td><td>Están fijas en ciertas patas: el circuito impreso tiene que respetarlas, o hay que usar la remapeabilidad si el chip la tiene.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">La trampa clásica: patas analógicas por defecto</div>
+        <p>En muchos PIC, después del reset el registro <code>ANSEL</code> (o <code>ADCON1</code>) deja
+        varias patas como <b>entradas analógicas</b>. Un programa que las lee como digitales recibe siempre
+        cero, sin que nada indique el error. La primera línea de cualquier programa serio es la
+        configuración de esos registros. En AVR pasa algo parecido con el comparador y con
+        <code>DIDR</code>.</p>
+      </div>
+    </section>
+
+    <section id="registros">
+      <h2><span class="n">03</span>Registros de función especial</h2>
+      <p>La CPU no tiene «instrucciones para encender un LED». Lo que tiene es acceso a un conjunto de
+      posiciones de memoria con nombre —los <b>SFR</b>— donde cada bit gobierna algo del hardware. Todo el
+      manejo de periféricos se reduce a leer y escribir esos bits.</p>
+
+      <pre class="code"><code><span class="c-com">// Tres formas de escribir lo mismo (AVR): poner en 1 el bit 5 del puerto B</span>
+PORTB = PORTB | <span class="c-num">0b00100000</span>;   <span class="c-com">// explícito, poco legible</span>
+PORTB |= (<span class="c-num">1</span> &lt;&lt; PB5);           <span class="c-com">// la forma idiomática</span>
+PORTB |= _BV(PB5);            <span class="c-com">// con la macro de la biblioteca</span>
+
+<span class="c-com">// Y para apagarlo, la máscara invertida</span>
+PORTB &amp;= ~(<span class="c-num">1</span> &lt;&lt; PB5);
+
+<span class="c-com">// Preguntar por un bit de entrada</span>
+<span class="c-kw">if</span> (PIND &amp; (<span class="c-num">1</span> &lt;&lt; PD2)) { <span class="c-com">/* el pin 2 está en alto */</span> }</code></pre>
+      <p class="codecap">Estas cuatro líneas son el 90 % del trabajo con registros. Vienen directamente de
+      los operadores a nivel de bit vistos en
+      <a href="/publicaciones/mapa-electronica/temas/lenguaje-c">lenguaje C</a>.</p>
+
+      <div class="box key">
+        <div class="bt">Cómo se lee la hoja de datos de un registro</div>
+        <p>Cada registro aparece con sus ocho bits, el nombre de cada uno, si es de lectura, de escritura o
+        de las dos, y su <b>valor después del reset</b>. Ese último dato es el que más se pasa por alto: si
+        un bit arranca en 1, el periférico ya está haciendo algo antes de que el programa diga nada.</p>
+        <p style="margin-top:10px">La otra convención importante: una barra sobre el nombre, o una
+        <b>n</b> final (<code>MCLRn</code>, <code>CSn</code>), significa <b>activo en bajo</b>.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Lectura-modificación-escritura</div>
+        <p><code>PORTB |= (1&lt;&lt;PB5)</code> no escribe: <b>lee</b> el puerto, cambia un bit y lo vuelve a
+        escribir. Si otra pata del mismo puerto está cargada —un LED que baja la tensión, un pin todavía
+        conmutando— lo que se lee no es lo que se había escrito, y esa pata cambia de estado sola. Es un
+        error famoso de los PIC. La solución es el registro <b>LAT</b>, que devuelve lo último escrito en
+        vez del estado real de la pata: <code>LATB |= (1&lt;&lt;5)</code>.</p>
+      </div>
+    </section>
+
+    <section id="puertos">
+      <h2><span class="n">04</span>Puertos de entrada y salida</h2>
+      <p>Cada pata digital se maneja con dos o tres registros, y conviene tener el mecanismo claro porque es
+      idéntico en todas las familias, aunque cambien los nombres.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 300" role="img" aria-label="Registros de direccion y de datos gobernando una pata" class="svg-t" data-anim>
+          <style>.pt-d{fill:#7d8a99;font-size:10.5px}.pt-l{fill:#9aa7b4;font-size:11px}.pt-b{fill:#1c2230;stroke:#2a3140;stroke-width:1.2}.pt-w{stroke:#9aa7b4;stroke-width:1.8;fill:none}</style>
+          <text class="pt-l" x="30" y="75">DDRB</text>
+          <rect class="pt-b" x="274" y="58" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="286" y="74" text-anchor="middle">0</text>
+          <rect class="pt-b" x="248" y="58" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="260" y="74" text-anchor="middle">0</text>
+          <rect class="pt-b" x="222" y="58" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="234" y="74" text-anchor="middle">0</text>
+          <rect class="pt-b" x="196" y="58" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="208" y="74" text-anchor="middle">0</text>
+          <rect class="pt-b" x="170" y="58" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="182" y="74" text-anchor="middle">0</text>
+          <rect class="pt-b" x="144" y="58" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="156" y="74" text-anchor="middle"></text>
+          <rect class="pt-b" x="118" y="58" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="130" y="74" text-anchor="middle">0</text>
+          <rect class="pt-b" x="92" y="58" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="104" y="74" text-anchor="middle">0</text>
+          <text class="pt-d" x="142" y="52">bit 5</text>
+          <text class="pt-l" x="30" y="155">PORTB</text>
+          <rect class="pt-b" x="274" y="138" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="286" y="154" text-anchor="middle">0</text>
+          <rect class="pt-b" x="248" y="138" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="260" y="154" text-anchor="middle">0</text>
+          <rect class="pt-b" x="222" y="138" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="234" y="154" text-anchor="middle">0</text>
+          <rect class="pt-b" x="196" y="138" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="208" y="154" text-anchor="middle">0</text>
+          <rect class="pt-b" x="170" y="138" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="182" y="154" text-anchor="middle">0</text>
+          <rect class="pt-b" x="144" y="138" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="156" y="154" text-anchor="middle"></text>
+          <rect class="pt-b" x="118" y="138" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="130" y="154" text-anchor="middle">0</text>
+          <rect class="pt-b" x="92" y="138" width="24" height="24" rx="4"/>
+          <text class="pt-d" x="104" y="154" text-anchor="middle">0</text>
+          <text class="pt-d" x="142" y="132">bit 5</text>
+          <text class="pt-d" x="30" y="200">Sólo se mira el bit 5, que gobierna la pata PB5.</text>
+          <path class="pt-w" d="M300,150 H360"/>
+          <polygon points="360,132 360,168 396,150" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.8"/>
+          <path class="pt-w" d="M396,150 H470"/>
+          <circle cx="470" cy="150" r="6" fill="none" stroke="#9aa7b4" stroke-width="2"/>
+          <text class="pt-d" x="452" y="128">pata PB5</text>
+          <path class="pt-w" d="M300,90 V70 H360"/>
+          <text class="pt-d" x="306" y="64">habilita la salida</text>
+          <g opacity="0">
+          <rect x="144" y="58" width="24" height="24" rx="4" fill="#58a6ff" opacity=".3"/>
+          <text x="156" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#58a6ff">0</text>
+          <rect x="144" y="138" width="24" height="24" rx="4" fill="#58a6ff" opacity=".3"/>
+          <text x="156" y="155" text-anchor="middle" font-size="13" font-weight="700" fill="#58a6ff">0</text>
+          <path class="pt-w" d="M476,150 H560 V196"/>
+          <path class="pt-w" d="M560,196 L586,176"/>
+          <circle cx="560" cy="196" r="3.4" fill="#9aa7b4"/><circle cx="586" cy="176" r="3.4" fill="#9aa7b4"/>
+          <path class="pt-w" d="M586,196 V216 H470"/>
+          <text class="pt-d" x="572" y="236">pulsador a masa</text>
+          <path class="pt-w" d="M470,150 H430 V110" stroke="#58a6ff"/>
+          <polygon points="430,110 426,118 434,118" fill="#58a6ff"/>
+          <text class="pt-d" x="398" y="104" fill="#58a6ff">se lee acá</text>
+          <text x="350" y="286" text-anchor="middle" font-size="13" fill="#58a6ff">DDR = 0 · la pata es entrada: se lee el pulsador</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="144" y="58" width="24" height="24" rx="4" fill="#a371f7" opacity=".3"/>
+          <text x="156" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#a371f7">0</text>
+          <rect x="144" y="138" width="24" height="24" rx="4" fill="#a371f7" opacity=".3"/>
+          <text x="156" y="155" text-anchor="middle" font-size="13" font-weight="700" fill="#a371f7">1</text>
+          <path class="pt-w" d="M476,150 H560 V196"/>
+          <path class="pt-w" d="M560,196 L586,176"/>
+          <circle cx="560" cy="196" r="3.4" fill="#9aa7b4"/><circle cx="586" cy="176" r="3.4" fill="#9aa7b4"/>
+          <path class="pt-w" d="M586,196 V216 H470"/>
+          <text class="pt-d" x="572" y="236">pulsador a masa</text>
+          <path class="pt-w" d="M470,150 H430 V110" stroke="#a371f7"/>
+          <polygon points="430,110 426,118 434,118" fill="#a371f7"/>
+          <text class="pt-d" x="398" y="104" fill="#a371f7">se lee acá</text>
+          <path class="pt-w" d="M500,150 V96" stroke="#a371f7"/>
+          <rect x="493" y="60" width="14" height="34" rx="3" fill="#1c2230" stroke="#a371f7" stroke-width="1.6"/>
+          <path class="pt-w" d="M500,60 V44 M492,44 h16" stroke="#a371f7"/>
+          <text class="pt-d" x="514" y="82" fill="#a371f7">pull-up interna</text>
+          <text x="350" y="286" text-anchor="middle" font-size="13" fill="#a371f7">DDR = 0 y PORT = 1 · entrada con resistencia interna: ya no flota</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="144" y="58" width="24" height="24" rx="4" fill="#3fb950" opacity=".3"/>
+          <text x="156" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#3fb950">1</text>
+          <rect x="144" y="138" width="24" height="24" rx="4" fill="#3fb950" opacity=".3"/>
+          <text x="156" y="155" text-anchor="middle" font-size="13" font-weight="700" fill="#3fb950">1</text>
+          <polygon points="360,132 360,168 396,150" fill="#1c2230" stroke="#3fb950" stroke-width="2.4"/>
+          <circle cx="530" cy="150" r="16" fill="#ffa657" opacity=".9" stroke="#9aa7b4" stroke-width="1.6"/>
+          <path class="pt-w" d="M476,150 H514 M546,150 H586 V212 H470"/>
+          <text class="pt-d" x="512" y="122">LED</text>
+          <text class="pt-d" x="596" y="216">masa</text>
+          <text x="350" y="286" text-anchor="middle" font-size="13" fill="#3fb950">DDR = 1 y PORT = 1 · salida en alto: el LED enciende</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <rect x="144" y="58" width="24" height="24" rx="4" fill="#7d8a99" opacity=".3"/>
+          <text x="156" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#7d8a99">1</text>
+          <rect x="144" y="138" width="24" height="24" rx="4" fill="#7d8a99" opacity=".3"/>
+          <text x="156" y="155" text-anchor="middle" font-size="13" font-weight="700" fill="#7d8a99">0</text>
+          <polygon points="360,132 360,168 396,150" fill="#1c2230" stroke="#7d8a99" stroke-width="2.4"/>
+          <circle cx="530" cy="150" r="16" fill="#1c2230" opacity="1" stroke="#9aa7b4" stroke-width="1.6"/>
+          <path class="pt-w" d="M476,150 H514 M546,150 H586 V212 H470"/>
+          <text class="pt-d" x="512" y="122">LED</text>
+          <text class="pt-d" x="596" y="216">masa</text>
+          <text x="350" y="286" text-anchor="middle" font-size="13" fill="#7d8a99">DDR = 1 y PORT = 0 · salida en bajo: el LED apaga</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="12s" repeatCount="indefinite"/></g>
+          </svg>
+        <figcaption><b>Figura 2.</b> El camino de un pin, animado. El registro de <b>dirección</b> decide si
+        la pata mira hacia afuera o hacia adentro; el de <b>datos</b> fija el nivel cuando es salida; el de
+        <b>lectura</b> devuelve lo que hay en la pata cuando es entrada.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th class="c">PIC</th><th class="c">AVR</th><th>Función</th></tr></thead>
+          <tbody>
+            <tr><td><b>Dirección</b></td><td class="c">TRISx</td><td class="c">DDRx</td><td>Entrada o salida</td></tr>
+            <tr><td><b>Escritura</b></td><td class="c">PORTx / LATx</td><td class="c">PORTx</td><td>Nivel de salida</td></tr>
+            <tr><td><b>Lectura</b></td><td class="c">PORTx</td><td class="c">PINx</td><td>Estado real de la pata</td></tr>
+            <tr><td><b>Resistencia de pull-up</b></td><td class="c">WPUx / OPTION</td><td class="c">PORTx con DDR en entrada</td><td>Evita entradas flotantes</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Los dos convenios son opuestos: no confundirlos</div>
+        <p>En <b>PIC</b>, TRIS en <b>1</b> es <b>entrada</b> (la regla mnemotécnica: 1 parece una I de
+        <i>input</i>, 0 una O de <i>output</i>). En <b>AVR</b>, DDR en <b>1</b> es <b>salida</b>. Es
+        exactamente al revés, y es la confusión más común de quien pasa de una familia a la otra. Un pin
+        configurado como salida por error, conectado a un pulsador que lo lleva a masa, se destruye.</p>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Cuánta corriente puede manejar una pata</div>
+        <ul>
+          <li><b>AVR</b>: 40 mA absolutos por pata, <b>20 mA recomendados</b>, y 200 mA en total para todo el
+          chip.</li>
+          <li><b>PIC de gama media</b>: 25 mA por pata, y 200 mA sumando el puerto completo.</li>
+          <li>Un LED rojo con 2 V de caída alimentado desde 5 V con 330 Ω consume (5 − 2)/330 =
+          <b>9,1 mA</b>: entra sin problema.</li>
+          <li>Ocho LED encendidos a la vez en el mismo puerto son 73 mA: todavía entra, pero
+          <b>si fueran 20 mA cada uno serían 160 mA</b> y el chip se calienta y las tensiones se
+          corren.</li>
+          <li>Un relé de 12 V y 30 mA, un motor o una lámpara <b>nunca</b> van directo: llevan transistor
+          (<a href="/publicaciones/mapa-electronica/temas/transistores-bipolares">transistor como llave</a>)
+          con su diodo volante.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="memorias">
+      <h2><span class="n">05</span>Las tres memorias y los bits de configuración</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Memoria</th><th class="c">PIC16F877A</th><th class="c">ATmega328P</th><th>Qué guarda</th></tr></thead>
+          <tbody>
+            <tr><td><b>Flash</b></td><td class="c">8 K palabras de 14 bits</td><td class="c">32 KB</td><td>El programa. Se graba con el programador o con un bootloader.</td></tr>
+            <tr><td><b>SRAM</b></td><td class="c">368 B</td><td class="c">2 KB</td><td>Variables y pila. Se borra al cortar la alimentación.</td></tr>
+            <tr><td><b>EEPROM</b></td><td class="c">256 B</td><td class="c">1 KB</td><td>Configuración, calibración, contadores: lo que debe sobrevivir al corte.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">368 bytes de RAM son 368 bytes</div>
+        <p>Una cadena de texto de 40 caracteres se come el 11 % de la RAM de un 16F877A. Un arreglo de 100
+        enteros de 16 bits <b>no entra</b>. El compilador no siempre avisa: el programa compila, se graba y
+        falla de manera extraña cuando la pila choca con las variables. Por eso en microcontroladores chicos
+        se usan tipos del tamaño justo (<code>uint8_t</code> en vez de <code>int</code>), se evitan las
+        cadenas y se guardan las constantes en Flash.</p>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Bits de configuración: lo que se decide antes de que el programa corra</div>
+        <p>Se llaman <b>configuration bits</b> en PIC y <b>fuses</b> en AVR. No son memoria de datos: se
+        graban junto con el programa y definen cómo arranca el chip.</p>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Fuente de reloj</b>: cristal, resonador, oscilador interno, con o sin divisor por 8. Es el
+          fuse que más veces deja un chip «muerto»: si se elige cristal externo y no hay cristal, el micro no
+          arranca y tampoco se lo puede reprogramar por la vía normal.</li>
+          <li><b>Watchdog</b>: habilitado o no, y con qué tiempo.</li>
+          <li><b>Brown-out</b>: a qué tensión se resetea el chip si la alimentación cae.</li>
+          <li><b>MCLR</b> como reset o como pata de entrada.</li>
+          <li><b>Protección de código</b>: impide leer la Flash. Se usa en producto terminado; en el taller
+          conviene dejarla apagada.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="instrucciones">
+      <h2><span class="n">06</span>El repertorio de instrucciones</h2>
+      <p>Un PIC de gama media tiene <b>35 instrucciones</b>. No hace falta memorizarlas, pero sí entender
+      qué clases hay y qué tarda cada cosa, porque de ahí salen los tiempos reales del programa.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Clase</th><th>Ejemplos</th><th>Qué hacen</th></tr></thead>
+          <tbody>
+            <tr><td><b>Transferencia</b></td><td>MOVLW, MOVWF, MOVF</td><td>Mover datos entre el acumulador (W) y la memoria.</td></tr>
+            <tr><td><b>Aritméticas y lógicas</b></td><td>ADDWF, SUBWF, ANDWF, XORWF</td><td>Operar, dejando el resultado en W o en el registro.</td></tr>
+            <tr><td><b>De bit</b></td><td>BSF, BCF, BTFSS, BTFSC</td><td>Poner, borrar y <b>probar</b> un bit. Son las que hacen tan cómodo el manejo de periféricos.</td></tr>
+            <tr><td><b>De control</b></td><td>GOTO, CALL, RETURN, RETFIE</td><td>Saltos, subrutinas y retorno de interrupción.</td></tr>
+            <tr><td><b>Especiales</b></td><td>CLRWDT, SLEEP, NOP</td><td>Refrescar el watchdog, dormir, perder un ciclo a propósito.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Cuánto tarda de verdad un retardo</div>
+        <p>PIC con cristal de <b>4 MHz</b>. El reloj se divide por 4, así que un ciclo de instrucción dura
+        <b>1 µs</b>.</p>
+        <ul>
+          <li>Casi todas las instrucciones tardan <b>un ciclo</b>: 1 µs.</li>
+          <li>Las que saltan —GOTO, CALL, y las de prueba cuando efectivamente saltean— tardan <b>dos</b>.</li>
+          <li>Un lazo de retardo de tres instrucciones repetido 250 veces tarda unos 750 µs; anidando dos
+          lazos así se llega al milisegundo con precisión de microsegundos.</li>
+        </ul>
+        <p>Ese cálculo es la razón por la que en un micro se puede <b>garantizar</b> un tiempo, cosa que en
+        una computadora con sistema operativo es imposible. Y también por la que los retardos por lazo se
+        reemplazan por temporizadores en cuanto el programa hace más de una cosa
+        (<a href="/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">periféricos</a>).</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Assembler y C conviven</div>
+        <p>Hoy casi todo se escribe en <b>C</b>, y está bien: es más rápido de escribir y de mantener. Pero
+        conviene saber leer el assembler que genera el compilador, porque es la única manera de responder
+        preguntas como «¿cuántos ciclos tarda esta rutina de atención de interrupción?» o «¿por qué esta
+        variable no se actualiza?». En los entornos actuales se ve con un clic (ventana de desensamblado).</p>
+      </div>
+    </section>
+
+    <section id="especiales">
+      <h2><span class="n">07</span>Recursos especiales</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Watchdog</div>
+          <p>Un contador independiente que <b>resetea el chip</b> si el programa no lo refresca a tiempo. Es
+          la red de seguridad ante un cuelgue: un lazo infinito por un ruido o un dato inesperado no deja el
+          equipo muerto, lo reinicia.</p>
+          <p style="margin-top:8px">Se refresca con <code>CLRWDT</code> (o <code>wdt_reset()</code>) en el
+          lazo principal, <b>nunca dentro de una interrupción</b>: si el programa principal se cuelga y la
+          interrupción sigue corriendo, el watchdog nunca actuaría.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--hot)">Brown-out reset</div>
+          <p>Vigila la alimentación y mantiene el chip en reset mientras la tensión esté por debajo de un
+          umbral. Sin él, al bajar lentamente la tensión el micro sigue ejecutando con datos corruptos:
+          escribe cualquier cosa en la EEPROM y activa salidas al azar. En un equipo que maneja potencia,
+          <b>habilitarlo no es opcional</b>.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Modos de bajo consumo</div>
+          <p><code>SLEEP</code> detiene el reloj de la CPU y baja el consumo de miliamperes a
+          <b>microamperes</b>. El chip despierta con una interrupción, con el watchdog o con un cambio en una
+          pata. Es lo que permite que un sensor a pila dure años.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Power-on reset y arranque</div>
+          <p>El chip espera a que la alimentación se estabilice y recién ahí ejecuta la primera instrucción,
+          que siempre está en la dirección <b>0</b>. Ese retardo es configurable y hay que dejarlo: sin él, el
+          micro arranca antes que el resto del circuito.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">08</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · El circuito mínimo</div>
+        <p>Armar en protoboard lo indispensable para que el micro viva: alimentación con capacitor de 100 nF,
+        MCLR con su resistencia de 10 kΩ, cristal con sus dos capacitores y conector de grabación. Grabar un
+        programa que sólo encienda un LED. Después <b>sacar el capacitor de desacople</b> y observar que el
+        micro se reinicia o funciona errático. Es la demostración más rápida de por qué está ahí.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Registros a mano</div>
+        <p>Sin usar ninguna biblioteca, escribir la configuración de dirección y de nivel de un puerto
+        completo y hacer un contador binario de 8 LED. Después leer la hoja de datos y agregar la
+        configuración de las patas analógicas para que las que faltaban también funcionen. Anotar qué
+        registro resolvió cada cosa.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Medir el reloj</div>
+        <p>Escribir un lazo que conmute una pata lo más rápido posible y medir la frecuencia con el
+        <a href="/publicaciones/mapa-electronica/temas/osciloscopio">osciloscopio</a>. Con esa medición y el
+        número de instrucciones del lazo, calcular el tiempo de instrucción y contrastarlo con el cristal.
+        Repetir cambiando los fuses al oscilador interno y comparar la <b>estabilidad</b>.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Watchdog y bajo consumo</div>
+        <p>Habilitar el watchdog y provocar a propósito un lazo infinito: el equipo debe reiniciarse. Después
+        medir la corriente del micro corriendo y con <code>SLEEP</code>, despertándolo con un pulsador. La
+        diferencia —de decenas de miliamperes a microamperes— explica sola el diseño de cualquier equipo a
+        batería.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 5 · EEPROM</div>
+        <p>Guardar en EEPROM un contador de encendidos y mostrarlo al arrancar. Cortar y volver a dar
+        alimentación varias veces. Discutir cuántas veces por día se escribiría si el contador estuviera en el
+        lazo principal, y en cuánto tiempo se agotarían los 100 000 ciclos de esa celda.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">09</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>El micro no arranca y tampoco se deja grabar</td><td>Fuses con oscilador externo y sin cristal en la plaqueta. Se recupera con un programador que inyecte reloj, o con alta tensión.</td></tr>
+            <tr><td>Se reinicia solo, sobre todo al activar un relé</td><td>Falta el capacitor de 100 nF, o el diodo volante, o la masa está mal distribuida.</td></tr>
+            <tr><td>Una entrada digital siempre lee 0</td><td>La pata quedó configurada como <b>analógica</b> por defecto.</td></tr>
+            <tr><td>Un pulsador lee valores al azar</td><td>Entrada flotante: falta el pull-up (interno o externo) o el antirrebote.</td></tr>
+            <tr><td>Al escribir un bit de un puerto, otro pin cambia solo</td><td>Lectura-modificación-escritura sobre PORT con carga. Usar LAT.</td></tr>
+            <tr><td>El programa compila pero se comporta de manera errática</td><td>Se acabó la SRAM: la pila pisa las variables. Revisar el mapa de memoria que informa el compilador.</td></tr>
+            <tr><td>Funciona alimentado por el programador y no con su fuente</td><td>Alimentación insuficiente o mal filtrada, o falta conectar todos los pares V<sub>DD</sub>/V<sub>SS</sub>.</td></tr>
+            <tr><td>La EEPROM se llenó de datos corruptos</td><td>Escrituras durante una caída de tensión. Habilitar brown-out.</td></tr>
+            <tr><td>El equipo se cuelga una vez por semana</td><td>Sin watchdog. Con watchdog se reinicia solo y además queda registro de que pasó.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">10</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Qué diferencia hay entre TRIS de un PIC y DDR de un AVR?</summary>
+        <div class="a"><p>El convenio es <b>opuesto</b>: en PIC, TRIS en 1 configura la pata como
+        <b>entrada</b>; en AVR, DDR en 1 la configura como <b>salida</b>. Confundirlos puede destruir una
+        pata que quede como salida contra un pulsador a masa.</p></div></details>
+
+      <details class="q"><summary>¿Por qué conviene usar LAT en vez de PORT para escribir?</summary>
+        <div class="a"><p>Porque escribir en PORT implica <b>leer</b> antes el estado real de las patas. Si
+        una pata está cargada, lo leído no coincide con lo escrito y esa pata cambia de estado. LAT devuelve
+        lo último escrito, sin mirar la pata.</p></div></details>
+
+      <details class="q"><summary>Un PIC con cristal de 4 MHz: ¿cuánto dura un ciclo de instrucción?</summary>
+        <div class="a"><p>El reloj se divide por cuatro: 4 MHz/4 = 1 MHz, o sea <b>1 µs</b> por
+        instrucción. Las de salto tardan 2 µs.</p></div></details>
+
+      <details class="q"><summary>¿Qué son los fuses o bits de configuración y por qué son peligrosos?</summary>
+        <div class="a"><p>Definen cómo arranca el chip —reloj, watchdog, brown-out, función de MCLR,
+        protección de código— y se graban con el programa. Si se elige un reloj que la plaqueta no tiene, el
+        micro no arranca <b>ni se deja reprogramar</b> por la vía habitual.</p></div></details>
+
+      <details class="q"><summary>¿Cuánta corriente puede entregar una pata y qué se hace si hace falta más?</summary>
+        <div class="a"><p>Del orden de <b>20 a 25 mA</b>, con un límite total por chip de unos 200 mA. Para
+        más se usa un transistor o un MOSFET como llave, con su resistencia de base y el diodo volante si la
+        carga es inductiva.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve el watchdog y dónde NO hay que refrescarlo?</summary>
+        <div class="a"><p>Resetea el chip si el programa deja de refrescarlo, sacándolo de un cuelgue.
+        <b>No</b> debe refrescarse dentro de una interrupción: si el programa principal se cuelga y la
+        interrupción sigue corriendo, el watchdog no actuaría nunca.</p></div></details>
+
+      <details class="q"><summary>¿Qué protege el brown-out reset?</summary>
+        <div class="a"><p>Impide que el micro ejecute con la alimentación por debajo de su mínimo, situación
+        en la que puede corromper la EEPROM y activar salidas al azar. Lo mantiene en reset hasta que la
+        tensión se recupera.</p></div></details>
+
+      <details class="q"><summary>Un 16F877A tiene 368 bytes de RAM. ¿Entra un arreglo de 100 enteros de 16 bits?</summary>
+        <div class="a"><p>No: 100 × 2 = <b>200 bytes</b> sólo para ese arreglo, más las demás variables y la
+        pila. Aunque numéricamente parezca que entra, en la práctica deja al programa sin margen y termina
+        fallando.</p></div></details>
+
+      <details class="q"><summary>¿Por qué una entrada digital puede leer siempre cero aunque el circuito esté bien?</summary>
+        <div class="a"><p>Porque la pata está configurada como <b>entrada analógica</b>, que es el estado por
+        defecto de muchas patas después del reset. Hay que configurar los registros correspondientes
+        (ANSEL, ADCON1) para pasarlas a digitales.</p></div></details>
+
+      <details class="q"><summary>¿Qué ventaja concreta tiene sacar el conector de grabación en la plaqueta definitiva?</summary>
+        <div class="a"><p>Permite <b>reprogramar el equipo sin desoldar el micro</b>, actualizar el programa
+        en el lugar de instalación y, durante el desarrollo, cargar decenas de versiones por día. Cuesta un
+        conector de cinco patas.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/simulacion-circuitos">
+        <div class="dir">← Tema anterior · 5° año</div>
+        <div class="tt">Simulación de circuitos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/comunicacion-serie">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Módulo de comunicación</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Familia de microcontroladores»</b> de <b>Electrónica Digital III</b> (6° año),
+  según la «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
