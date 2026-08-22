@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motores paso a paso · Electrónica Industrial I · Catto</title>
+<meta name="description" content="Motores paso a paso de imán permanente e híbridos, bobinados unipolar y bipolar, secuencias de paso completo, medio paso y micropasos, drivers por tensión y por corriente, curva par-velocidad, pérdida de pasos y diagnóstico. Eje temático de Electrónica Industrial I, 6° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/motores-paso-a-paso">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Industrial I</a>
+    <span class="anio">6° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Industrial I</span> · 144 h · Eje 9 de 10</div>
+    <h1>Motores paso a paso</h1>
+    <p class="lead">Un motor común gira mientras haya tensión. Un paso a paso avanza <b>un ángulo exacto por
+    cada pulso</b> y se queda ahí. Eso permite posicionar sin sensores, y es lo que hay adentro de una
+    impresora 3D, de un CNC casero o de una máquina de dosificación.</p>
+    <div class="chips">
+      <span class="chip hi">Máquinas eléctricas</span>
+      <span class="chip">Sensores</span>
+      <span class="chip">Micropasos</span>
+      <span class="chip">Drivers</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>Posicionar sin realimentación</h2>
+      <p>El estator tiene varias bobinas y el rotor es un imán permanente dentado. Energizando las bobinas en
+      cierto orden, el rotor <b>salta</b> de una posición estable a la siguiente. Contando pulsos se sabe
+      dónde está, sin encoder.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th>Paso a paso</th><th>Servomotor</th></tr></thead>
+          <tbody>
+            <tr><td><b>Realimentación</b></td><td>No lleva</td><td>Encoder o resolver</td></tr>
+            <tr><td><b>Posición</b></td><td>Contando pulsos, en <b>lazo abierto</b></td><td>Medida y corregida</td></tr>
+            <tr><td><b>Si se sobrecarga</b></td><td><b>Pierde pasos en silencio</b>: nadie se entera</td><td>Detecta el error y avisa</td></tr>
+            <tr><td><b>Par a velocidad cero</b></td><td>Alto, con las bobinas energizadas</td><td>Alto, controlado</td></tr>
+            <tr><td><b>Par a alta velocidad</b></td><td>Cae mucho</td><td>Se mantiene</td></tr>
+            <tr><td><b>Costo</b></td><td>Bajo</td><td>Alto</td></tr>
+            <tr><td><b>Se elige para</b></td><td>Impresoras 3D, CNC chicos, dosificadores, ejes livianos</td><td>Máquinas de producción, ejes exigidos, alta velocidad</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Ángulo de paso</div>
+        <p>El más común es <b>1,8°</b>, que son <b>200 pasos por vuelta</b>. También hay de 0,9° (400 pasos)
+        y, en motores chicos de imán permanente, de 7,5° (48 pasos). Con micropasos de 1/16 el mismo motor de
+        200 pasos entrega <b>3200 posiciones</b> por vuelta.</p>
+      </div>
+    </section>
+
+    <section id="tipos">
+      <h2><span class="n">02</span>Unipolar y bipolar</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Unipolar</div>
+          <p>Cada bobina tiene una <b>derivación central</b>. La corriente circula siempre en el mismo
+          sentido por cada media bobina, así que alcanza con cuatro transistores simples (un ULN2003).</p>
+          <p style="margin-top:8px">Más fácil de manejar, pero sólo se usa media bobina por vez: entrega
+          alrededor de <b>un 30 % menos de par</b> que el mismo motor en bipolar.</p>
+          <p style="margin-top:8px">Se reconoce por tener <b>5 o 6 cables</b>.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Bipolar</div>
+          <p>Dos bobinas sin derivación. Para invertir el campo hay que invertir la corriente, lo que exige
+          un <b>puente en H por bobina</b>: cuatro transistores por fase.</p>
+          <p style="margin-top:8px">Usa la bobina completa: más par por tamaño. Es lo que traen todos los
+          drivers modernos.</p>
+          <p style="margin-top:8px">Se reconoce por tener <b>4 cables</b> (los de 8 permiten conectarlo de
+          las dos formas).</p>
+        </div>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Identificar los cables con el óhmetro</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>Buscar pares con continuidad: los que no tienen continuidad entre sí pertenecen a
+          <b>bobinas distintas</b>.</li>
+          <li>En un motor de 6 cables, dentro de cada terna el cable <b>común</b> mide la mitad de
+          resistencia contra los otros dos.</li>
+          <li>Un motor bipolar de 4 cables da dos pares, sin continuidad entre ellos.</li>
+          <li>Truco práctico: uniendo dos cables y girando el eje a mano, si se siente <b>más duro</b>,
+          esos dos son de la misma bobina.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="secuencias">
+      <h2><span class="n">03</span>Secuencias</h2>
+      <figure>
+        <svg viewBox="0 0 700 330" role="img" aria-label="Secuencia de energizacion de un motor paso a paso" class="svg-t" data-anim>
+          <style>.ps-d{fill:#7d8a99;font-size:10.5px}.ps-l{fill:#9aa7b4;font-size:11px;text-anchor:middle}</style>
+          <circle cx="200" cy="160" r="92" fill="none" stroke="#2a3140" stroke-width="2"/>
+          <circle cx="200.0" cy="84.0" r="18" fill="#1c2230" stroke="#2a3140" stroke-width="1.6"><animate attributeName="fill" calcMode="discrete" values="#3fb950;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ps-l" x="200.0" y="88.0" fill="#e6edf3" font-weight="700">A</text>
+          <circle cx="276.0" cy="160.0" r="18" fill="#1c2230" stroke="#2a3140" stroke-width="1.6"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#3fb950;#3fb950;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ps-l" x="276.0" y="164.0" fill="#e6edf3" font-weight="700">B</text>
+          <circle cx="200.0" cy="236.0" r="18" fill="#1c2230" stroke="#2a3140" stroke-width="1.6"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#1c2230;#1c2230" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ps-l" x="200.0" y="240.0" fill="#e6edf3" font-weight="700">A'</text>
+          <circle cx="124.0" cy="160.0" r="18" fill="#1c2230" stroke="#2a3140" stroke-width="1.6"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ps-l" x="124.0" y="164.0" fill="#e6edf3" font-weight="700">B'</text>
+          <circle cx="200" cy="160" r="40" fill="#1c2230" stroke="#9aa7b4" stroke-width="2"/>
+          <text class="ps-l" x="200" y="222" fill="#7d8a99">rotor</text>
+          <line x1="200" y1="160" x2="200" y2="124" stroke="#e6edf3" stroke-width="3.4" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" calcMode="discrete" values="0 200 160;45 200 160;90 200 160;135 200 160;180 200 160;225 200 160;270 200 160;315 200 160" dur="8s" repeatCount="indefinite"/></line>
+          <text class="ps-d" x="360" y="52">Secuencia de medio paso</text>
+          <rect x="360" y="61" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="76">paso 1</text>
+          <text class="ps-d" x="440" y="76" fill="#3fb950">A</text>
+          <text class="ps-d" x="560" y="76">0°</text>
+          <rect x="360" y="61" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0.34;0;0;0;0;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="87" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="102">paso 2</text>
+          <text class="ps-d" x="440" y="102" fill="#3fb950">A + B</text>
+          <text class="ps-d" x="560" y="102">45°</text>
+          <rect x="360" y="87" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0.34;0;0;0;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="113" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="128">paso 3</text>
+          <text class="ps-d" x="440" y="128" fill="#3fb950">B</text>
+          <text class="ps-d" x="560" y="128">90°</text>
+          <rect x="360" y="113" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0.34;0;0;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="139" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="154">paso 4</text>
+          <text class="ps-d" x="440" y="154" fill="#3fb950">B + A'</text>
+          <text class="ps-d" x="560" y="154">135°</text>
+          <rect x="360" y="139" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0.34;0;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="165" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="180">paso 5</text>
+          <text class="ps-d" x="440" y="180" fill="#3fb950">A'</text>
+          <text class="ps-d" x="560" y="180">180°</text>
+          <rect x="360" y="165" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0.34;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="191" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="206">paso 6</text>
+          <text class="ps-d" x="440" y="206" fill="#3fb950">A' + B'</text>
+          <text class="ps-d" x="560" y="206">225°</text>
+          <rect x="360" y="191" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0.34;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="217" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="232">paso 7</text>
+          <text class="ps-d" x="440" y="232" fill="#3fb950">B'</text>
+          <text class="ps-d" x="560" y="232">270°</text>
+          <rect x="360" y="217" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0.34;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="243" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="258">paso 8</text>
+          <text class="ps-d" x="440" y="258" fill="#3fb950">B' + A</text>
+          <text class="ps-d" x="560" y="258">315°</text>
+          <rect x="360" y="243" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0;0.34" dur="8s" repeatCount="indefinite"/></rect>
+          <text class="ps-d" x="40" y="300">Invirtiendo el orden de la secuencia, el motor gira al revés. No hace falta nada más para cambiar el sentido.</text>
+          </svg>
+        <figcaption><b>Figura 1.</b> Secuencia de energización, animada. Al activar las bobinas en orden, el
+        rotor persigue al campo y avanza un paso por vez. Invirtiendo el orden, gira al revés: eso es todo el
+        control de sentido.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Modo</th><th>Bobinas activas</th><th class="c">Par</th><th class="c">Resolución</th></tr></thead>
+          <tbody>
+            <tr><td><b>Paso completo, una fase</b></td><td>Una por vez</td><td class="c">Menor</td><td class="c">200 pasos</td></tr>
+            <tr><td><b>Paso completo, dos fases</b></td><td>Dos a la vez</td><td class="c"><b>Mayor</b> (≈ 40 % más)</td><td class="c">200 pasos</td></tr>
+            <tr><td><b>Medio paso</b></td><td>Alterna una y dos</td><td class="c">Irregular</td><td class="c">400 pasos</td></tr>
+            <tr><td><b>Micropasos</b></td><td>Corrientes graduadas en las dos bobinas</td><td class="c">Suave y parejo</td><td class="c">1600 a 51 200</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Los micropasos dan suavidad, no exactitud</div>
+        <p>Con 1/16 de paso el movimiento es mucho más suave y silencioso, y se evita la resonancia. Pero la
+        <b>exactitud de posición</b> sigue estando limitada por la mecánica del motor —la tolerancia del
+        dentado ronda el 5 % del paso completo— y el par de retención de cada micropaso es una fracción del
+        total. En un micropaso muy fino, una carga leve puede correr el rotor sin que el driver lo note. Los
+        micropasos son para <b>suavidad</b>; la resolución real la pone la mecánica: correa, husillo o
+        reducción.</p>
+      </div>
+    </section>
+
+    <section id="drivers">
+      <h2><span class="n">04</span>Drivers</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Por tensión</div>
+          <p>Un puente en H simple (L298) o transistores Darlington (ULN2003). Se le aplica tensión a la
+          bobina y la corriente crece según su inductancia.</p>
+          <p style="margin-top:8px">Barato y simple. A alta velocidad, la corriente <b>no llega a
+          establecerse</b> antes del próximo paso y el par se desploma.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Por corriente (chopper)</div>
+          <p>A4988, DRV8825, TMC2209 y similares. Alimentan la bobina con una tensión <b>mucho mayor</b> que
+          la nominal y <b>recortan</b> la corriente al valor programado, midiéndola con una resistencia
+          patrón.</p>
+          <p style="margin-top:8px">La corriente se establece muchísimo más rápido: se conserva par a alta
+          velocidad. Es el estándar actual y trae micropasos incorporados.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Ajustar la corriente del driver</div>
+        <p>Un A4988 con resistencias de medición de 0,1 Ω, para un motor de <b>1,2 A por fase</b>:</p>
+        <ul>
+          <li>La fórmula del fabricante es V<sub>ref</sub> = I<sub>max</sub> × 8 × R<sub>sense</sub>.</li>
+          <li>V<sub>ref</sub> = 1,2 × 8 × 0,1 = <b>0,96 V</b>, medidos entre el potenciómetro del módulo y
+          masa.</li>
+          <li>Con la corriente muy baja el motor pierde pasos; con la corriente muy alta se calienta y el
+          driver entra en protección térmica y corta a destiempo.</li>
+        </ul>
+        <p>Es el ajuste que más problemas causa en impresoras 3D, y se hace con el motor conectado y en
+        reposo.</p>
+      </div>
+    </section>
+
+    <section id="par">
+      <h2><span class="n">05</span>Par, velocidad y pérdida de pasos</h2>
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Curva de par y velocidad de un motor paso a paso" class="svg-t" data-anim>
+          <style>.pv-d{fill:#7d8a99;font-size:10.5px}.pv-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="96" y1="240" x2="574" y2="240" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="96" y1="240" x2="96" y2="54" stroke="#2a3140" stroke-width="1.3"/>
+          <polyline points="96.00,70.00 100.64,70.28 105.28,70.98 109.92,72.02 114.56,73.36 119.20,74.97 123.84,76.82 128.48,78.89 133.12,81.15 137.76,83.57 142.40,86.14 147.04,88.82 151.68,91.61 156.32,94.47 160.96,97.40 165.60,100.38 170.24,103.39 174.88,106.41 179.52,109.44 184.16,112.47 188.80,115.48 193.44,118.46 198.08,121.41 202.72,124.33 207.36,127.20 212.00,130.02 216.64,132.79 221.28,135.50 225.92,138.16 230.56,140.75 235.20,143.28 239.84,145.75 244.48,148.16 249.12,150.50 253.76,152.78 258.40,155.00 263.04,157.15 267.68,159.25 272.32,161.28 276.96,163.25 281.60,165.17 286.24,167.02 290.88,168.82 295.52,170.57 300.16,172.26 304.80,173.90 309.44,175.50 314.08,177.04 318.72,178.53 323.36,179.98 328.00,181.39 332.64,182.75 337.28,184.07 341.92,185.35 346.56,186.59 351.20,187.79 355.84,188.95 360.48,190.08 365.12,191.18 369.76,192.24 374.40,193.28 379.04,194.28 383.68,195.25 388.32,196.19 392.96,197.11 397.60,198.00 402.24,198.86 406.88,199.70 411.52,200.51 416.16,201.30 420.80,202.07 425.44,202.82 430.08,203.55 434.72,204.25 439.36,204.94 444.00,205.61 448.64,206.25 453.28,206.89 457.92,207.50 462.56,208.10 467.20,208.68 471.84,209.25 476.48,209.80 481.12,210.34 485.76,210.86 490.40,211.38 495.04,211.87 499.68,212.36 504.32,212.83 508.96,213.29 513.60,213.74 518.24,214.18 522.88,214.61 527.52,215.03 532.16,215.43 536.80,215.83 541.44,216.22 546.08,216.60 550.72,216.97 555.36,217.33 560.00,217.68" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <polyline points="96.00,146.50 100.64,146.66 105.28,147.04 109.92,147.61 114.56,148.35 119.20,149.23 123.84,150.25 128.48,151.39 133.12,152.63 137.76,153.96 142.40,155.38 147.04,156.85 151.68,158.38 156.32,159.96 160.96,161.57 165.60,163.21 170.24,164.86 174.88,166.53 179.52,168.19 184.16,169.86 188.80,171.51 193.44,173.15 198.08,174.78 202.72,176.38 207.36,177.96 212.00,179.51 216.64,181.03 221.28,182.53 225.92,183.99 230.56,185.41 235.20,186.81 239.84,188.16 244.48,189.49 249.12,190.78 253.76,192.03 258.40,193.25 263.04,194.44 267.68,195.59 272.32,196.70 276.96,197.79 281.60,198.84 286.24,199.86 290.88,200.85 295.52,201.81 300.16,202.74 304.80,203.65 309.44,204.52 314.08,205.37 318.72,206.19 323.36,206.99 328.00,207.76 332.64,208.51 337.28,209.24 341.92,209.94 346.56,210.62 351.20,211.28 355.84,211.92 360.48,212.55 365.12,213.15 369.76,213.73 374.40,214.30 379.04,214.85 383.68,215.39 388.32,215.91 392.96,216.41 397.60,216.90 402.24,217.37 406.88,217.83 411.52,218.28 416.16,218.72 420.80,219.14 425.44,219.55 430.08,219.95 434.72,220.34 439.36,220.72 444.00,221.08 448.64,221.44 453.28,221.79 457.92,222.13 462.56,222.46 467.20,222.78 471.84,223.09 476.48,223.39 481.12,223.69 485.76,223.98 490.40,224.26 495.04,224.53 499.68,224.80 504.32,225.06 508.96,225.31 513.60,225.56 518.24,225.80 522.88,226.03 527.52,226.26 532.16,226.49 536.80,226.71 541.44,226.92 546.08,227.13 550.72,227.33 555.36,227.53 560.00,227.73" fill="none" stroke="#58a6ff" stroke-width="2.4"/>
+          <text class="pv-d" x="305" y="164" fill="#3fb950">par máximo · sólo con rampa</text>
+          <text class="pv-d" x="258" y="215" fill="#58a6ff">par de arranque · sin rampa</text>
+          <text class="pv-l" x="100" y="48">par</text>
+          <text class="pv-l" x="574" y="274" text-anchor="end">velocidad (pasos por segundo)</text>
+          <text class="pv-d" x="212.0" y="258" text-anchor="middle">500</text>
+          <text class="pv-d" x="328.0" y="258" text-anchor="middle">1000</text>
+          <text class="pv-d" x="444.0" y="258" text-anchor="middle">1500</text>
+          <text class="pv-d" x="560.0" y="258" text-anchor="middle">2000</text>
+          <g opacity="0">
+          <line x1="142.4" y1="240" x2="142.4" y2="86.1" stroke="#f85149" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <circle cx="142.4" cy="86.1" r="6" fill="#3fb950"/>
+          <circle cx="142.4" cy="155.4" r="6" fill="#58a6ff"/>
+          <rect x="584" y="96" width="104" height="104" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">200 p/s</text>
+          <text x="636" y="144" text-anchor="middle" font-size="12" fill="#9aa7b4">60 rpm</text>
+          <text x="636" y="168" text-anchor="middle" font-size="12" fill="#3fb950">par 91 %</text>
+          <text x="636" y="188" text-anchor="middle" font-size="12" fill="#58a6ff">arranca 50 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="9s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <line x1="235.2" y1="240" x2="235.2" y2="143.3" stroke="#f85149" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <circle cx="235.2" cy="143.3" r="6" fill="#3fb950"/>
+          <circle cx="235.2" cy="186.8" r="6" fill="#58a6ff"/>
+          <rect x="584" y="96" width="104" height="104" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">600 p/s</text>
+          <text x="636" y="144" text-anchor="middle" font-size="12" fill="#9aa7b4">180 rpm</text>
+          <text x="636" y="168" text-anchor="middle" font-size="12" fill="#3fb950">par 57 %</text>
+          <text x="636" y="188" text-anchor="middle" font-size="12" fill="#58a6ff">arranca 31 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="9s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <line x1="351.2" y1="240" x2="351.2" y2="187.8" stroke="#f85149" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <circle cx="351.2" cy="187.8" r="6" fill="#3fb950"/>
+          <circle cx="351.2" cy="211.3" r="6" fill="#58a6ff"/>
+          <rect x="584" y="96" width="104" height="104" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">1100 p/s</text>
+          <text x="636" y="144" text-anchor="middle" font-size="12" fill="#9aa7b4">330 rpm</text>
+          <text x="636" y="168" text-anchor="middle" font-size="12" fill="#3fb950">par 31 %</text>
+          <text x="636" y="188" text-anchor="middle" font-size="12" fill="#58a6ff">arranca 17 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="9s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <line x1="490.4" y1="240" x2="490.4" y2="211.4" stroke="#f85149" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <circle cx="490.4" cy="211.4" r="6" fill="#3fb950"/>
+          <circle cx="490.4" cy="224.3" r="6" fill="#58a6ff"/>
+          <rect x="584" y="96" width="104" height="104" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">1700 p/s</text>
+          <text x="636" y="144" text-anchor="middle" font-size="12" fill="#9aa7b4">510 rpm</text>
+          <text x="636" y="168" text-anchor="middle" font-size="12" fill="#3fb950">par 17 %</text>
+          <text x="636" y="188" text-anchor="middle" font-size="12" fill="#58a6ff">arranca 9 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="9s" repeatCount="indefinite"/></g>
+          <text class="pv-d" x="96" y="286">Entre las dos curvas el motor sólo puede trabajar si se lo acelera con rampa. Por encima de la verde, pierde pasos.</text>
+          <text class="pv-d" x="96" y="306">Los valores son de un motor típico de 200 pasos por vuelta; cada modelo tiene su curva en la hoja de datos.</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> Curva par-velocidad, animada. El par cae con la velocidad porque la
+        inductancia de la bobina impide que la corriente se establezca. Debajo de la curva de arranque el
+        motor puede partir de golpe; entre las dos curvas, sólo si acelera con rampa.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Tres conceptos de la hoja de datos</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Par de retención</b> (holding): el que resiste con las bobinas energizadas y el motor
+          quieto. Es el número grande que figura en el catálogo.</li>
+          <li><b>Par de arranque</b> (pull-in): hasta qué frecuencia puede arrancar <b>sin rampa</b>.</li>
+          <li><b>Par máximo</b> (pull-out): hasta dónde puede seguir girando si se lo acelera de a poco. Si
+          se lo supera, <b>pierde pasos</b>.</li>
+        </ul>
+        <p style="margin-top:10px">De ahí la regla de oro: <b>siempre acelerar y frenar con rampa</b>. Pedir
+        de golpe la velocidad final es la causa número uno de pasos perdidos.</p>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Velocidad y frecuencia de pulsos</div>
+        <p>Motor de 1,8° (200 pasos) en un husillo de 8 mm por vuelta, con micropasos de 1/16:</p>
+        <ul>
+          <li>Pasos por vuelta = 200 × 16 = <b>3200</b>.</li>
+          <li>Resolución teórica = 8/3200 = <b>0,0025 mm</b> por micropaso.</li>
+          <li>Para avanzar a 20 mm/s: 20/8 = 2,5 vueltas/s → 2,5 × 3200 = <b>8000 pulsos por
+          segundo</b>.</li>
+          <li>A 2,5 vueltas por segundo el motor gira a 150 rpm, donde el par ya es bastante menor que el de
+          retención: hay que verificarlo en la curva.</li>
+        </ul>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Resonancia</div>
+        <p>Alrededor de cierta frecuencia —típicamente entre 100 y 300 pasos por segundo— el motor entra en
+        <b>resonancia mecánica</b>: vibra, hace ruido y puede perder pasos aun sin carga. Se resuelve con
+        micropasos, con amortiguación en el acople o simplemente <b>pasando rápido</b> por esa zona de
+        velocidad.</p>
+      </div>
+    </section>
+
+    <section id="fallas">
+      <h2><span class="n">06</span>Fallas típicas y diagnóstico</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa probable</th><th>Cómo se verifica</th></tr></thead>
+          <tbody>
+            <tr><td>Vibra en el lugar y no gira</td><td>Un cable de una bobina invertido o cortado</td><td>Medir continuidad de cada bobina y revisar el orden de conexión</td></tr>
+            <tr><td>Gira al revés</td><td>Una bobina invertida</td><td>Intercambiar los dos cables de <b>una sola</b> bobina</td></tr>
+            <tr><td>Pierde pasos con carga</td><td>Corriente mal ajustada, velocidad excesiva o falta de rampa</td><td>Medir V<sub>ref</sub>, bajar la velocidad y agregar aceleración</td></tr>
+            <tr><td>Se calienta mucho estando quieto</td><td>Es normal hasta cierto punto: las bobinas están energizadas. Si quema, la corriente está alta</td><td>Medir corriente y temperatura del encapsulado</td></tr>
+            <tr><td>El driver corta cada tanto</td><td>Protección térmica: falta disipador o ventilación</td><td>Tocar el driver, medir su temperatura</td></tr>
+            <tr><td>Ruido y vibración a cierta velocidad</td><td>Resonancia</td><td>Cambiar la velocidad y ver si desaparece</td></tr>
+            <tr><td>El motor «pierde» posición con el tiempo</td><td>Pasos perdidos acumulados: es lazo abierto y nadie corrige</td><td>Volver a referencia con un fin de carrera cada tanto</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Nunca desconectar el motor con el driver energizado</div>
+        <p>Interrumpir la corriente de una bobina genera una sobretensión que destruye el driver de
+        inmediato. Se corta la alimentación <b>antes</b> de tocar los cables del motor. Es el error que más
+        drivers quema en el taller y en las impresoras 3D.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Identificar el motor</div>
+        <p>Con motores de descarte de impresoras y escáneres, determinar con el óhmetro si son unipolares o
+        bipolares, cuántas bobinas tienen y cuál es cada cable. Anotar la resistencia de fase. Después
+        hacerlos girar a mano y sentir el par de detención.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Secuencia a mano</div>
+        <p>Con cuatro llaves o cuatro salidas de un micro a muy baja frecuencia (2 pasos por segundo),
+        recorrer la secuencia de paso completo y observar el avance del eje. Marcar el eje y contar 200 pasos:
+        debe dar una vuelta exacta. Invertir la secuencia y verificar el cambio de sentido.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Curva par-velocidad</div>
+        <p>Con un freno de fricción simple, medir a qué carga el motor empieza a perder pasos para tres
+        velocidades distintas. Graficar. Repetir bajando la corriente del driver a la mitad y comparar las dos
+        curvas.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Micropasos y rampas</div>
+        <p>Comparar el mismo movimiento en paso completo y en 1/16: escuchar el ruido y observar la vibración.
+        Después pedir la velocidad final de golpe y con rampa de aceleración, contando en los dos casos si la
+        posición final coincide con la de partida al volver.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Error</th><th>Consecuencia</th></tr></thead>
+          <tbody>
+            <tr><td>Pedir la velocidad final sin rampa</td><td>El motor no arranca o pierde pasos desde el primer momento.</td></tr>
+            <tr><td>Ajustar la corriente «a ojo»</td><td>De menos, pierde pasos; de más, se calientan motor y driver.</td></tr>
+            <tr><td>Esperar exactitud de los micropasos</td><td>La resolución real la limita la mecánica del motor, no el driver.</td></tr>
+            <tr><td>Desconectar el motor con el driver encendido</td><td>Driver destruido.</td></tr>
+            <tr><td>Usar un motor unipolar como bipolar sin revisar</td><td>Puede funcionar, pero con la mitad del bobinado y menos par si se conecta mal.</td></tr>
+            <tr><td>Confiar en la posición después de horas de trabajo</td><td>Es lazo abierto: los pasos perdidos se acumulan. Hay que rehacer referencia.</td></tr>
+            <tr><td>Elegir paso a paso para un eje muy exigido</td><td>Se pierde par a velocidad y no hay aviso de error: ahí corresponde un servo.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuántos pasos por vuelta tiene un motor de 1,8° y cuántos con micropasos de 1/8?</summary>
+        <div class="a"><p>360/1,8 = <b>200 pasos</b> por vuelta; con 1/8 de micropaso, 200 × 8 =
+        <b>1600</b>.</p></div></details>
+
+      <details class="q"><summary>¿Cómo se distingue un motor unipolar de uno bipolar?</summary>
+        <div class="a"><p>Por la cantidad de cables y la continuidad: el <b>unipolar</b> tiene 5 o 6 e incluye
+        derivación central; el <b>bipolar</b> tiene 4, en dos pares sin continuidad entre sí.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un motor bipolar da más par que el mismo motor en unipolar?</summary>
+        <div class="a"><p>Porque usa la <b>bobina completa</b>, mientras que el unipolar energiza sólo la
+        mitad por vez. La diferencia es de alrededor del 30 %.</p></div></details>
+
+      <details class="q"><summary>¿Qué ventaja tiene un driver por corriente sobre uno por tensión?</summary>
+        <div class="a"><p>Alimenta la bobina con mucha más tensión y <b>recorta</b> la corriente al valor
+        deseado: la corriente se establece mucho más rápido y el motor conserva par a alta
+        velocidad.</p></div></details>
+
+      <details class="q"><summary>Un A4988 con R<sub>sense</sub> = 0,1 Ω para 1,5 A: ¿qué V<sub>ref</sub> hay que ajustar?</summary>
+        <div class="a"><p>V<sub>ref</sub> = 1,5 × 8 × 0,1 = <b>1,2 V</b>.</p></div></details>
+
+      <details class="q"><summary>¿Qué significa que un paso a paso trabaja en lazo abierto?</summary>
+        <div class="a"><p>Que <b>nadie verifica</b> que el rotor se movió: el control cuenta pulsos y supone
+        que el motor los siguió. Si pierde pasos por sobrecarga, la posición real queda corrida y el sistema
+        no se entera.</p></div></details>
+
+      <details class="q"><summary>¿Por qué el par cae al aumentar la velocidad?</summary>
+        <div class="a"><p>Porque la <b>inductancia</b> de las bobinas impide que la corriente se establezca
+        en el poco tiempo que dura cada paso. Con menos corriente hay menos par.</p></div></details>
+
+      <details class="q"><summary>¿Qué diferencia hay entre par de arranque y par máximo?</summary>
+        <div class="a"><p>El de <b>arranque</b> (pull-in) es hasta qué frecuencia puede partir de golpe; el
+        <b>máximo</b> (pull-out) es hasta dónde puede seguir girando si se lo acelera con rampa. Entre las dos
+        curvas, el movimiento sólo es posible acelerando gradualmente.</p></div></details>
+
+      <details class="q"><summary>Husillo de 8 mm, motor de 200 pasos, 1/16: ¿cuántos pulsos por segundo para avanzar 15 mm/s?</summary>
+        <div class="a"><p>3200 micropasos por vuelta; 15/8 = 1,875 vueltas/s → 1,875 × 3200 = <b>6000 pulsos
+        por segundo</b>.</p></div></details>
+
+      <details class="q"><summary>¿Por qué no hay que desconectar el motor con el driver energizado?</summary>
+        <div class="a"><p>Porque interrumpir la corriente de una bobina genera una <b>sobretensión</b> que
+        destruye la etapa de salida del driver.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/sensores-actuadores">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Sensores, actuadores y transductores</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/higiene-seguridad">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Higiene y seguridad laboral</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Motores paso a paso»</b> de <b>Electrónica Industrial I</b> (6° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

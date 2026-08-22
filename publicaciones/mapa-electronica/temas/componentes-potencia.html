@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Componentes de potencia · Electrónica Industrial I · Catto</title>
+<meta name="description" content="SCR, diac, triac, UJT, GTO, MCT e IGBT: principio de funcionamiento, criterios de elección, cálculo de pérdidas de conducción y conmutación, disipación y resistencia térmica, protecciones snubber y diodo volante. Eje temático de Electrónica Industrial I, 6° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/componentes-potencia">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Industrial I</a>
+    <span class="anio">6° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Industrial I</span> · 144 h · Eje 1 de 10</div>
+    <h1>Componentes de potencia</h1>
+    <p class="lead">En electrónica de señal lo que importa es la ganancia. En electrónica de potencia lo que
+    importa es <b>cuánto calor genera el componente y cómo se saca ese calor</b>. Todo lo demás —elegir el
+    dispositivo, dimensionar el disipador, proteger la conmutación— sale de ahí.</p>
+    <div class="chips">
+      <span class="chip hi">Potencia</span>
+      <span class="chip">Tiristores</span>
+      <span class="chip">IGBT</span>
+      <span class="chip">Disipación</span>
+    </div>
+    <hr class="rule">
+
+    <section id="familia">
+      <h2><span class="n">01</span>La familia completa</h2>
+      <p>Algunos ya aparecieron en
+      <a href="/publicaciones/mapa-electronica/temas/semiconductores-especiales">semiconductores
+      especiales</a>. Acá se los ordena por lo que realmente decide la elección: <b>tensión, corriente y
+      frecuencia de conmutación</b>.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Componente</th><th class="c">Se enciende</th><th class="c">Se apaga</th><th class="c">Frecuencia</th><th>Terreno propio</th></tr></thead>
+          <tbody>
+            <tr><td><b>SCR</b></td><td class="c">Pulso de compuerta</td><td class="c">Solo, al cruzar por cero</td><td class="c">Red (50 Hz)</td><td>Rectificadores controlados, arrancadores, control de fase de mucha potencia</td></tr>
+            <tr><td><b>Triac</b></td><td class="c">Pulso, en los dos sentidos</td><td class="c">Solo</td><td class="c">Red</td><td>Control de fase en alterna hasta unos 40 A</td></tr>
+            <tr><td><b>Diac</b></td><td class="c">Por tensión (~32 V)</td><td class="c">Solo</td><td class="c">—</td><td>Disparar triacs de manera pareja</td></tr>
+            <tr><td><b>UJT</b></td><td class="c">Por tensión de emisor</td><td class="c">Solo</td><td class="c">—</td><td>Oscilador de relajación: genera los pulsos de disparo</td></tr>
+            <tr><td><b>GTO</b></td><td class="c">Pulso positivo</td><td class="c"><b>Pulso negativo</b></td><td class="c">Hasta 1 kHz</td><td>Tracción ferroviaria, gran potencia con apagado controlado</td></tr>
+            <tr><td><b>MCT</b></td><td class="c">MOS</td><td class="c">MOS</td><td class="c">kHz</td><td>Tiristor con mando MOS. Prometía mucho; quedó desplazado por el IGBT</td></tr>
+            <tr><td><b>MOSFET</b></td><td class="c">Tensión de compuerta</td><td class="c">Tensión</td><td class="c">10 kHz a 1 MHz</td><td>Baja tensión y alta frecuencia: fuentes conmutadas, automotor</td></tr>
+            <tr><td><b>IGBT</b></td><td class="c">Tensión de compuerta</td><td class="c">Tensión</td><td class="c">2 a 20 kHz</td><td>Media y alta tensión con conmutación rápida: variadores, soldadoras, inversores</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 330" role="img" aria-label="Mapa de eleccion de dispositivos de potencia" class="svg-t" data-anim>
+          <style>.mp-d{fill:#7d8a99;font-size:10px}.mp-n{font-size:12px;font-weight:600;text-anchor:middle}</style>
+          <rect x="110.0" y="62.0" width="154.3" height="94.9" rx="12" fill="#f85149" opacity=".14" stroke="#f85149" stroke-width="1.5"/>
+          <text class="mp-n" x="187.1" y="109.4" fill="#f85149">SCR · GTO</text>
+          <rect x="181.4" y="81.7" width="258.0" height="150.4" rx="12" fill="#3fb950" opacity=".14" stroke="#3fb950" stroke-width="1.5"/>
+          <text class="mp-n" x="310.4" y="156.9" fill="#3fb950">IGBT</text>
+          <rect x="347.2" y="148.5" width="272.8" height="101.5" rx="12" fill="#58a6ff" opacity=".14" stroke="#58a6ff" stroke-width="1.5"/>
+          <text class="mp-n" x="483.6" y="199.3" fill="#58a6ff">MOSFET</text>
+          <line x1="110" y1="250" x2="634" y2="250" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="110" y1="250" x2="110" y2="46" stroke="#2a3140" stroke-width="1.3"/>
+          <text class="mp-d" x="110.0" y="268" text-anchor="middle">50 Hz</text>
+          <text class="mp-d" x="264.3" y="268" text-anchor="middle">1 kHz</text>
+          <text class="mp-d" x="382.8" y="268" text-anchor="middle">10 kHz</text>
+          <text class="mp-d" x="501.4" y="268" text-anchor="middle">100 kHz</text>
+          <text class="mp-d" x="620.0" y="268" text-anchor="middle">1 MHz</text>
+          <text class="mp-d" x="102" y="254.0" text-anchor="end">100 W</text>
+          <text class="mp-d" x="102" y="178.8" text-anchor="end">10 kW</text>
+          <text class="mp-d" x="102" y="103.6" text-anchor="end">1 MW</text>
+          <text class="mp-d" x="365" y="288" text-anchor="middle">frecuencia de conmutación</text>
+          <text class="mp-d" x="86" y="54">potencia</text>
+          <g opacity="0">
+          <circle cx="110.0" cy="223.7" r="9" fill="none" stroke="#f85149" stroke-width="3"/>
+          <circle cx="110.0" cy="223.7" r="3.5" fill="#f85149"/>
+          <text x="350" y="316" text-anchor="middle" font-size="12.5" fill="#f85149">Dimmer de 500 W en red</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="335.7" cy="168.2" r="9" fill="none" stroke="#3fb950" stroke-width="3"/>
+          <circle cx="335.7" cy="168.2" r="3.5" fill="#3fb950"/>
+          <text x="350" y="316" text-anchor="middle" font-size="12.5" fill="#3fb950">Variador de 15 kW a 4 kHz</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="501.4" cy="238.7" r="9" fill="none" stroke="#58a6ff" stroke-width="3"/>
+          <circle cx="501.4" cy="238.7" r="3.5" fill="#58a6ff"/>
+          <text x="350" y="316" text-anchor="middle" font-size="12.5" fill="#58a6ff">Fuente conmutada de 200 W a 100 kHz</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="12s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="202.3" cy="99.6" r="9" fill="none" stroke="#f85149" stroke-width="3"/>
+          <circle cx="202.3" cy="99.6" r="3.5" fill="#f85149"/>
+          <text x="350" y="316" text-anchor="middle" font-size="12.5" fill="#f85149">Tracción ferroviaria, 1 MW</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="12s" repeatCount="indefinite"/></g>
+          <text class="mp-d" x="20" y="30">Cada aplicación cae en una zona: eso decide el componente</text>
+          </svg>
+        <figcaption><b>Figura 1.</b> Mapa de elección, animado. Cada aplicación cae en una zona de potencia y
+        frecuencia, y esa posición decide el componente. Las fronteras se mueven con los años, pero el
+        criterio no cambia.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Los dos que faltaba conocer</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>UJT</b> — transistor uniunión. Con un R-C forma un <b>oscilador de relajación</b>: el
+          capacitor se carga hasta la tensión de disparo y descarga de golpe sobre un transformador de
+          pulsos. Es la manera clásica —anterior a los microcontroladores— de generar el disparo de un SCR
+          con el ángulo ajustable.</li>
+          <li><b>GTO</b> — tiristor apagable por compuerta. Se apaga con un pulso <b>negativo</b> de
+          corriente grande (hasta un quinto de la corriente de ánodo). Eso resuelve la gran limitación del
+          SCR —que en continua no se apaga solo— a costa de un circuito de mando pesado.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="igbt">
+      <h2><span class="n">02</span>El IGBT: lo mejor de los dos mundos</h2>
+      <p>Es el componente central de la electrónica de potencia moderna. Su <b>entrada es la de un
+      MOSFET</b> —compuerta aislada, sin consumo permanente— y su <b>salida es la de un bipolar</b>, con la
+      caída baja de una juntura en vez de una resistencia.</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Por qué conviene en alta tensión</div>
+          <p>En un MOSFET, la R<sub>DS(on)</sub> crece muy rápido con la tensión que debe soportar: un
+          MOSFET de 600 V tiene una resistencia enorme comparado con uno de 60 V. El IGBT, en cambio, cae
+          <b>1,5 a 2,5 V</b> casi sin importar la corriente ni la tensión de bloqueo.</p>
+          <p style="margin-top:8px">Regla práctica: por encima de <b>300 o 400 V</b> y decenas de amperes, el
+          IGBT gana. Por debajo, y a frecuencias altas, gana el MOSFET.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Su punto débil: la cola de corriente</div>
+          <p>Al apagarse, las cargas almacenadas en la zona bipolar tardan en recombinarse y queda una
+          <b>cola de corriente</b> de microsegundos. Esa cola, multiplicada por la tensión, es energía
+          perdida <b>en cada conmutación</b>: por eso el IGBT no llega a las frecuencias del MOSFET.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Cuándo conviene cada uno, con números</div>
+        <p>Conmutando <b>10 A</b> a 20 kHz:</p>
+        <ul>
+          <li><b>En 48 V</b> con un MOSFET de 10 mΩ: pérdidas de conducción = 10² × 0,010 = <b>1 W</b>.
+          Insuperable.</li>
+          <li><b>En 400 V</b>, un MOSFET equivalente tendría del orden de 0,5 Ω: 10² × 0,5 = <b>50 W</b>.
+          Inviable.</li>
+          <li><b>En 400 V con IGBT</b> de V<sub>CE(sat)</sub> = 2 V: 2 × 10 = <b>20 W</b> de conducción, más
+          las pérdidas de conmutación.</li>
+        </ul>
+        <p>El cruce entre las dos tecnologías es exactamente eso: comparar I²R contra V·I.</p>
+      </div>
+    </section>
+
+    <section id="termico">
+      <h2><span class="n">03</span>El cálculo que no se puede saltear: el térmico</h2>
+      <p>Un componente de potencia no se elige por su corriente máxima de catálogo: se elige verificando que
+      <b>su juntura no supere la temperatura admitida</b> con el disipador que se le va a poner. El circuito
+      térmico se resuelve igual que uno eléctrico: la potencia hace de corriente, la temperatura de tensión y
+      las resistencias térmicas de resistencias.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 300" role="img" aria-label="Circuito termico de un componente de potencia" class="svg-t" data-anim>
+          <style>.tr-d{fill:#7d8a99;font-size:10.5px;text-anchor:middle}.tr-n{fill:#9aa7b4;font-size:11px;text-anchor:middle}</style>
+          <text class="tr-n" x="350" y="34">La potencia disipada hace de corriente y la temperatura, de tensión</text>
+          <g opacity="0">
+          <circle cx="70.0" cy="140" r="26" fill="#1c2230" stroke="#f85149" stroke-width="2"/>
+          <text x="70.0" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#f85149">284</text>
+          <text x="70.0" y="152" text-anchor="middle" font-size="9" fill="#7d8a99">°C</text>
+          <text class="tr-d" x="70.0" y="192">juntura</text>
+          <line x1="96.0" y1="140" x2="324.0" y2="140" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect x="190.0" y="130" width="40" height="20" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4"/>
+          <text class="tr-d" x="210.0" y="120">1,5 °C/W</text>
+          <circle cx="350.0" cy="140" r="26" fill="#1c2230" stroke="#2a3140" stroke-width="2"/>
+          <text x="350.0" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#f85149">278</text>
+          <text x="350.0" y="152" text-anchor="middle" font-size="9" fill="#7d8a99">°C</text>
+          <text class="tr-d" x="350.0" y="192">cápsula</text>
+          <line x1="376.0" y1="140" x2="604.0" y2="140" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect x="470.0" y="130" width="40" height="20" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4"/>
+          <text class="tr-d" x="490.0" y="120">60,5 °C/W</text>
+          <circle cx="630.0" cy="140" r="26" fill="#1c2230" stroke="#2a3140" stroke-width="2"/>
+          <text x="630.0" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#e6edf3">40</text>
+          <text x="630.0" y="152" text-anchor="middle" font-size="9" fill="#7d8a99">°C</text>
+          <text class="tr-d" x="630.0" y="192">ambiente</text>
+          <text x="350" y="238" text-anchor="middle" font-size="13.5" fill="#f85149">sin disipador · R total = 62 °C/W</text>
+          <text class="tr-d" x="350" y="262">con 3,94 W disipados y 40 °C de ambiente</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0" dur="8s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="70.0" cy="140" r="26" fill="#1c2230" stroke="#3fb950" stroke-width="2"/>
+          <text x="70.0" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#e6edf3">60</text>
+          <text x="70.0" y="152" text-anchor="middle" font-size="9" fill="#7d8a99">°C</text>
+          <text class="tr-d" x="70.0" y="192">juntura</text>
+          <line x1="96.0" y1="140" x2="230.7" y2="140" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect x="143.3" y="130" width="40" height="20" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4"/>
+          <text class="tr-d" x="163.3" y="120">1,5 °C/W</text>
+          <circle cx="256.7" cy="140" r="26" fill="#1c2230" stroke="#2a3140" stroke-width="2"/>
+          <text x="256.7" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#e6edf3">54</text>
+          <text x="256.7" y="152" text-anchor="middle" font-size="9" fill="#7d8a99">°C</text>
+          <text class="tr-d" x="256.7" y="192">cápsula</text>
+          <line x1="282.7" y1="140" x2="417.3" y2="140" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect x="330.0" y="130" width="40" height="20" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4"/>
+          <text class="tr-d" x="350.0" y="120">0,5 °C/W</text>
+          <circle cx="443.3" cy="140" r="26" fill="#1c2230" stroke="#2a3140" stroke-width="2"/>
+          <text x="443.3" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#e6edf3">52</text>
+          <text x="443.3" y="152" text-anchor="middle" font-size="9" fill="#7d8a99">°C</text>
+          <text class="tr-d" x="443.3" y="192">disipador</text>
+          <line x1="469.3" y1="140" x2="604.0" y2="140" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect x="516.7" y="130" width="40" height="20" rx="3" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.4"/>
+          <text class="tr-d" x="536.7" y="120">3,0 °C/W</text>
+          <circle cx="630.0" cy="140" r="26" fill="#1c2230" stroke="#2a3140" stroke-width="2"/>
+          <text x="630.0" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#e6edf3">40</text>
+          <text x="630.0" y="152" text-anchor="middle" font-size="9" fill="#7d8a99">°C</text>
+          <text class="tr-d" x="630.0" y="192">ambiente</text>
+          <text x="350" y="238" text-anchor="middle" font-size="13.5" fill="#3fb950">con disipador · R total = 5 °C/W</text>
+          <text class="tr-d" x="350" y="262">con 3,94 W disipados y 40 °C de ambiente</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1" dur="8s" repeatCount="indefinite"/></g>
+          <text class="tr-d" x="350" y="288" fill="#7d8a99">El mismo componente, con la misma potencia: lo único que cambia es el camino del calor.</text>
+          </svg>
+        <figcaption><b>Figura 2.</b> El circuito térmico, animado. Cada salto de temperatura es el producto
+        de la potencia por una resistencia térmica. Sin disipador, la última resistencia es enorme y la
+        juntura se va de rango; con disipador, el mismo componente trabaja frío.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>T</mi><mi>j</mi></msub><mo>=</mo><msub><mi>T</mi><mi>a</mi></msub><mo>+</mo><mi>P</mi><mo>·</mo><mo>(</mo><msub><mi>R</mi><mrow><mi>j</mi><mi>c</mi></mrow></msub><mo>+</mo><msub><mi>R</mi><mrow><mi>c</mi><mi>s</mi></mrow></msub><mo>+</mo><msub><mi>R</mi><mrow><mi>s</mi><mi>a</mi></mrow></msub><mo>)</mo></mrow></math>
+        <span class="cap">R<sub>jc</sub> juntura-cápsula (la da el fabricante), R<sub>cs</sub> cápsula-disipador
+        (depende de la mica y la grasa: 0,2 a 1 °C/W) y R<sub>sa</sub> disipador-ambiente (la del
+        disipador elegido).</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo resuelto · ¿Alcanza este disipador?</div>
+        <p>MOSFET conmutando 15 A con R<sub>DS(on)</sub> = 17,5 mΩ, en un ambiente de <b>40 °C</b>.</p>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li><b>Potencia de conducción</b>: P = I²R = 15² × 0,0175 = <b>3,94 W</b>.</li>
+          <li><b>Sin disipador</b>, con R<sub>ja</sub> = 62 °C/W (encapsulado TO-220 al aire):
+          T<sub>j</sub> = 40 + 3,94 × 62 = <b>284 °C</b>. Se destruye.</li>
+          <li><b>Con disipador</b> de 3 °C/W, mica de 0,5 y R<sub>jc</sub> = 1,5:
+          T<sub>j</sub> = 40 + 3,94 × (1,5 + 0,5 + 3) = 40 + 19,7 = <b>59,7 °C</b>. Perfecto.</li>
+          <li>El límite del componente suele ser 150 °C, pero se diseña para no pasar de <b>100 a 110 °C</b>:
+          la vida útil se acorta a la mitad por cada 10 °C de más.</li>
+        </ol>
+        <p style="margin-top:10px">Y falta sumar las <b>pérdidas de conmutación</b>, que en alta frecuencia
+        pueden superar a las de conducción:</p>
+        <div class="form" style="margin:10px 0 0">
+          <math display="block"><mrow><msub><mi>P</mi><mrow><mi>s</mi><mi>w</mi></mrow></msub><mo>≈</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>V</mi><mo>·</mo><mi>I</mi><mo>·</mo><mo>(</mo><msub><mi>t</mi><mrow><mi>o</mi><mi>n</mi></mrow></msub><mo>+</mo><msub><mi>t</mi><mrow><mi>o</mi><mi>f</mi><mi>f</mi></mrow></msub><mo>)</mo><mo>·</mo><mi>f</mi></mrow></math>
+          <span class="cap">Con 300 V, 10 A, 200 ns de transición total y 20 kHz:
+          0,5 × 300 × 10 × 200 n × 20 k = <b>6 W</b>. Al doble de frecuencia, 12 W.</span>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">La corriente de catálogo es optimista</div>
+        <p>Cuando la hoja de datos dice «50 A», casi siempre es con la cápsula a 25 °C —una condición que no
+        existe en la realidad— y sin considerar la conmutación. La corriente utilizable suele ser <b>la mitad
+        o menos</b>. El número que vale es el que sale del cálculo térmico con el disipador real y la
+        temperatura ambiente real, que en un tablero cerrado al sol puede ser de 60 °C.</p>
+      </div>
+    </section>
+
+    <section id="protecciones">
+      <h2><span class="n">04</span>Proteger la conmutación</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--hot)">Diodo volante</div>
+          <p>Toda carga inductiva —relé, motor, bobina de contactor— genera una sobretensión enorme al
+          cortarle la corriente. El diodo en antiparalelo le da camino a esa corriente. <b>Sin él, el
+          transistor se perfora en la primera conmutación.</b> En alterna, el equivalente es el snubber.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Snubber R-C</div>
+          <p>100 Ω en serie con 100 nF en paralelo con el dispositivo. Limita el <b>dv/dt</b> —que puede
+          disparar un tiristor solo— y absorbe el pico de tensión de la conmutación. Es obligatorio con
+          cargas inductivas en triacs.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Limitar el di/dt</div>
+          <p>Un tiristor que enciende demasiado rápido concentra toda la corriente en un punto de la juntura
+          y se destruye localmente. Una inductancia chica en serie limita esa velocidad. Los fabricantes
+          especifican el di/dt máximo en A/µs.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Fusibles ultrarrápidos</div>
+          <p>Un fusible común no protege un semiconductor: el semiconductor se quema antes. Se usan fusibles
+          <b>gR o aR</b>, caracterizados por su <b>I²t</b>, que debe ser menor que el I²t que soporta el
+          dispositivo. Es la única protección real ante un cortocircuito.</p>
+        </div>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Medir con el circuito conectado a la red</div>
+        <p>Todas las prácticas de este eje se hacen con <b>transformador de aislación</b> o con fuente de
+        laboratorio de baja tensión. La masa del osciloscopio está unida a tierra: conectarla a un punto vivo
+        del circuito produce un cortocircuito franco. Para medir tensiones entre dos puntos flotantes hace
+        falta una <b>punta diferencial</b>, no dos canales restados.</p>
+      </div>
+    </section>
+
+    <section id="circuitos">
+      <h2><span class="n">05</span>Dos circuitos resueltos</h2>
+
+      <div class="box ejem">
+        <div class="bt">Rectificador controlado monofásico de media onda</div>
+        <p>Un SCR entre la red de 220 V y una carga resistiva de 44 Ω, disparado a 60°.</p>
+        <ul>
+          <li>Conduce sólo el semiciclo positivo, y sólo desde 60° hasta 180°.</li>
+          <li>Tensión media = (V<sub>p</sub>/2π)(1 + cos α) = (311/6,283) × (1 + 0,5) =
+          <b>74,3 V</b>.</li>
+          <li>Corriente media = 74,3/44 = <b>1,69 A</b>.</li>
+          <li>El SCR debe soportar la tensión inversa de pico, <b>311 V</b>: se elige uno de 600 V, con el
+          margen habitual del doble.</li>
+        </ul>
+        <p>Con disparo a 0° la tensión media sería 99 V, y a 180°, cero: ese es todo el rango de
+        regulación.</p>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Recortador (chopper) de continua</div>
+        <p>Un IGBT conmutando 100 V sobre un motor, con ciclo de trabajo D.</p>
+        <ul>
+          <li>Tensión media sobre la carga = D × 100 V: con D = 0,6, <b>60 V</b>.</li>
+          <li>Hace falta un <b>diodo volante</b> en paralelo con el motor: cuando el IGBT corta, la corriente
+          de la inductancia sigue circulando por ahí.</li>
+          <li>La corriente del motor no se interrumpe: sube y baja alrededor de su valor medio, con un rizado
+          que depende de la frecuencia y de la inductancia.</li>
+        </ul>
+        <p>Ese circuito, con cuatro llaves en puente, es exactamente el <b>variador de velocidad</b> del eje
+        7 de esta materia.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Medir la caída y calcular la disipación</div>
+        <p>Con un MOSFET y un IGBT conduciendo la misma corriente continua (5 A) desde una fuente de
+        laboratorio, medir la caída de tensión de cada uno y calcular la potencia disipada. Medir con
+        termómetro infrarrojo la temperatura del encapsulado a los cinco minutos, con y sin disipador.
+        Comparar con el cálculo térmico.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Disparo con UJT</div>
+        <p>Armar el oscilador de relajación con UJT y un transformador de pulsos, y usarlo para disparar un
+        SCR sobre carga resistiva en baja tensión. Variar el potenciómetro y ver en el osciloscopio cómo se
+        corre el ángulo de disparo. Es el circuito con el que se hacía control de fase antes de los
+        microcontroladores.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · El diodo volante</div>
+        <p>Conmutar un relé con un transistor y observar en el osciloscopio la tensión de colector al cortar,
+        <b>sin</b> el diodo (con tensión reducida y un transistor sacrificable) y <b>con</b> el diodo. El
+        pico pasa de cientos de volts a menos de un volt por encima de la alimentación.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Rectificador controlado</div>
+        <p>Con transformador de aislación y tensión reducida, armar el rectificador controlado del ejemplo y
+        medir la tensión media con multímetro y con osciloscopio para tres ángulos de disparo. Comparar con la
+        fórmula. Repetir con carga inductiva y observar que la corriente ya no se corta en el cruce por
+        cero.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>El componente se quema aunque «aguanta la corriente»</td><td>No se hizo el cálculo térmico: la corriente de catálogo supone condiciones ideales.</td></tr>
+            <tr><td>Se calienta mucho más de lo calculado</td><td>Faltaron las pérdidas de <b>conmutación</b>, o la compuerta no se maneja con tensión suficiente y el dispositivo trabaja en zona lineal.</td></tr>
+            <tr><td>El triac se dispara solo con carga inductiva</td><td>dv/dt excesivo: falta el snubber.</td></tr>
+            <tr><td>El transistor se destruye al cortar un relé</td><td>Falta el diodo volante.</td></tr>
+            <tr><td>El disipador está tibio y el componente hirviendo</td><td>Mal contacto térmico: falta grasa, la mica está mal puesta o el tornillo flojo.</td></tr>
+            <tr><td>Un cortocircuito quemó el semiconductor y el fusible quedó entero</td><td>Fusible común en vez de ultrarrápido: el I²t del fusible es mayor que el del dispositivo.</td></tr>
+            <tr><td>Un MOSFET de 600 V se calienta muchísimo</td><td>A esa tensión su R<sub>DS(on)</sub> es alta: correspondía un IGBT.</td></tr>
+            <tr><td>El SCR no se apaga nunca</td><td>Está alimentado con continua. Hace falta conmutación forzada o un GTO.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuál es la diferencia esencial entre un SCR y un GTO?</summary>
+        <div class="a"><p>El SCR sólo se puede <b>encender</b> por compuerta: se apaga cuando la corriente
+        cae por debajo de la de mantenimiento. El GTO también se <b>apaga</b> por compuerta, con un pulso
+        negativo de corriente considerable.</p></div></details>
+
+      <details class="q"><summary>¿Por qué el IGBT desplazó al MOSFET en alta tensión?</summary>
+        <div class="a"><p>Porque la resistencia de conducción de un MOSFET crece muy rápido con la tensión de
+        bloqueo, mientras que el IGBT mantiene una caída de <b>1,5 a 2,5 V</b> casi independiente. Por encima
+        de 300 o 400 V, el IGBT disipa mucho menos.</p></div></details>
+
+      <details class="q"><summary>Un MOSFET disipa 4 W con R<sub>jc</sub> = 1,5, mica 0,5 y disipador 3 °C/W, a 40 °C de ambiente. ¿Temperatura de juntura?</summary>
+        <div class="a"><p>T<sub>j</sub> = 40 + 4 × (1,5 + 0,5 + 3) = 40 + 20 = <b>60 °C</b>. Muy holgado
+        frente al límite de 150 °C.</p></div></details>
+
+      <details class="q"><summary>¿Qué pasa con las pérdidas de conmutación si se duplica la frecuencia?</summary>
+        <div class="a"><p>Se <b>duplican</b>: son proporcionales a la frecuencia, porque cada transición
+        cuesta la misma energía y hay el doble de transiciones por segundo. Es lo que limita la frecuencia
+        máxima de trabajo.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve un UJT en electrónica de potencia?</summary>
+        <div class="a"><p>Para armar un <b>oscilador de relajación</b> que genere los pulsos de disparo de un
+        SCR o un triac, con el ángulo ajustable por un R-C. Era la solución estándar antes de los
+        microcontroladores.</p></div></details>
+
+      <details class="q"><summary>Un SCR sobre 220 V disparado a 60°, con carga de 44 Ω: ¿tensión media?</summary>
+        <div class="a"><p>V<sub>med</sub> = (V<sub>p</sub>/2π)(1 + cos α) = (311/6,283)(1 + 0,5) =
+        <b>74,3 V</b>, y la corriente media 1,69 A.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un fusible común no protege un semiconductor?</summary>
+        <div class="a"><p>Porque su energía específica <b>I²t</b> es mucho mayor que la que soporta la
+        juntura: el semiconductor se destruye antes de que el fusible actúe. Hacen falta fusibles
+        ultrarrápidos con I²t menor que el del dispositivo.</p></div></details>
+
+      <details class="q"><summary>¿Qué función cumple el snubber además de proteger?</summary>
+        <div class="a"><p>Limita el <b>dv/dt</b>, es decir la velocidad con que sube la tensión sobre el
+        dispositivo. En un triac, un dv/dt excesivo lo dispara solo aunque no haya pulso de compuerta.</p></div></details>
+
+      <details class="q"><summary>¿Qué es la cola de corriente de un IGBT y por qué importa?</summary>
+        <div class="a"><p>La corriente que sigue circulando algunos microsegundos después de quitar la
+        tensión de compuerta, por las cargas almacenadas en la zona bipolar. Como ocurre con tensión alta,
+        genera pérdidas en cada conmutación y limita la frecuencia de trabajo.</p></div></details>
+
+      <details class="q"><summary>¿Por qué se diseña para 100 °C de juntura si el límite es 150?</summary>
+        <div class="a"><p>Porque la vida útil se reduce aproximadamente <b>a la mitad por cada 10 °C</b> de
+        aumento, y porque hay que dejar margen para el peor caso: verano, tablero cerrado, disipador
+        con polvo, ventilador detenido.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/mantenimiento-pc">
+        <div class="dir">← Tema anterior · Electrónica Digital III</div>
+        <div class="tt">Operación y mantenimiento de PC</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/circuitos-trifasicos">
+        <div class="dir">Tema siguiente · desarrollado en 5° año →</div>
+        <div class="tt">Conexión estrella-triángulo</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Componentes de potencia»</b> de <b>Electrónica Industrial I</b> (6° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
