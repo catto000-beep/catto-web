@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programación de PLC · Electrónica Industrial II · Catto</title>
+<meta name="description" content="Lenguajes normalizados por la IEC 61131-3: lista de instrucciones, diagrama de contactos, diagrama de bloques funcionales, texto estructurado y Grafcet o SFC. Reglas del ladder, autorretención, enclavamientos, la trampa del contacto NC físico y método para pasar del organigrama al programa. Eje temático de Electrónica Industrial II, 7° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/programacion-plc">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Industrial II</a>
+    <span class="anio">7° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Industrial II</span> · 120 h · Eje 4 de 8</div>
+    <h1>Programación de PLC</h1>
+    <p class="lead">La norma IEC 61131-3 define cinco lenguajes. No compiten entre sí: cada uno es cómodo
+    para una clase de problema, y en un proyecto real suelen convivir. Lo que no cambia es el método:
+    <b>primero se entiende el proceso, después se escribe</b>.</p>
+    <div class="chips">
+      <span class="chip hi">Ladder</span>
+      <span class="chip">Grafcet</span>
+      <span class="chip">Autorretención</span>
+      <span class="chip">IEC 61131-3</span>
+    </div>
+    <hr class="rule">
+
+    <section id="lenguajes">
+      <h2><span class="n">01</span>Los cinco lenguajes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Lenguaje</th><th class="c">Tipo</th><th>Para qué es bueno</th></tr></thead>
+          <tbody>
+            <tr><td><b>Diagrama de contactos (LD)</b></td><td class="c">gráfico</td><td>Lógica combinacional y de mando. Lo lee cualquier electricista. Es el más usado con diferencia.</td></tr>
+            <tr><td><b>Bloques funcionales (FBD)</b></td><td class="c">gráfico</td><td>Procesos con bloques encadenados: PID, filtros, escalados, comunicación.</td></tr>
+            <tr><td><b>Lista de instrucciones (IL)</b></td><td class="c">textual</td><td>Compacto y muy próximo a la máquina. En retirada, pero aparece en equipos antiguos.</td></tr>
+            <tr><td><b>Texto estructurado (ST)</b></td><td class="c">textual</td><td>Cálculos, lazos, manejo de tablas y todo lo que en ladder queda ilegible.</td></tr>
+            <tr><td><b>Grafcet o SFC</b></td><td class="c">gráfico</td><td><b>Secuencias</b>: etapas, transiciones y acciones. Es el que ordena de verdad una máquina que hace pasos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Cómo se elige</div>
+        <p>Regla práctica: si el problema se describe con «cuando pase esto <b>y</b> aquello, activar
+        aquello», va en <b>ladder</b>. Si se describe con «primero esto, después aquello, y si falla vuelve
+        al inicio», va en <b>Grafcet</b>. Si hay cuentas de por medio, va en <b>texto estructurado</b>.
+        Forzar todo a ladder produce programas de doscientos renglones que nadie puede leer.</p>
+      </div>
+    </section>
+
+    <section id="ladder">
+      <h2><span class="n">02</span>Diagrama de contactos</h2>
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Renglon de diagrama de contactos en ejecucion" class="svg-t" data-anim><style>.ld-t{fill:#e6edf3;font-size:11.5px;font-weight:700}.ld-k{fill:#7d8a99;font-size:9.5px;text-anchor:middle}.ld-c{fill:#9aa7b4;font-size:10.5px}</style><path d="M60 84 L60 200" stroke="#9aa7b4" stroke-width="2"/><path d="M640 84 L640 200" stroke="#9aa7b4" stroke-width="2"/><path d="M120 110 l0 -14 l0 28 M146 110 l0 -14 l0 28" stroke="#9aa7b4" stroke-width="2"/><text class="ld-k" x="133" y="88">marcha</text><path d="M260 110 l0 -14 l0 28 M286 110 l0 -14 l0 28" stroke="#9aa7b4" stroke-width="2"/><path d="M258 118 l30 -20" stroke="#9aa7b4" stroke-width="1.6"/><text class="ld-k" x="273" y="88">paro</text><path d="M400 110 l0 -14 l0 28 M426 110 l0 -14 l0 28" stroke="#9aa7b4" stroke-width="2"/><text class="ld-k" x="413" y="88">emerg_ok</text><path d="M540 110 a 14 16 0 1 0 0 -1 M566 110 a 14 16 0 1 1 0 -1" fill="none" stroke="#9aa7b4" stroke-width="2"/><text class="ld-k" x="553" y="72">motor</text><path d="M120 168 l0 -14 l0 28 M146 168 l0 -14 l0 28" stroke="#9aa7b4" stroke-width="2"/><text class="ld-k" x="133" y="146">motor</text><path d="M60 110 L120 110 M146 110 L260 110" stroke="#9aa7b4" stroke-width="1.6"/><path d="M286 110 L400 110 M426 110 L540 110 M566 110 L640 110" stroke="#9aa7b4" stroke-width="1.6"/><path d="M60 110 L60 168 M60 168 L120 168 M146 168 L246 168 M246 168 L246 110" stroke="#9aa7b4" stroke-width="1.6"/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="12s" repeatCount="indefinite"/><path d="M60 110 L120 110" stroke="#3fb950" stroke-width="2.6"/><path d="M60 110 L60 168 L120 168" stroke="#3fb950" stroke-width="2.6"/><text class="ld-t" x="26" y="60" fill="#7d8a99">En reposo</text><text class="ld-t" x="200" y="60" fill="#7d8a99">motor parado</text><text class="ld-c" x="26" y="246">Nadie aprieta marcha y el motor esta parado: no hay camino completo.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="12s" repeatCount="indefinite"/><path d="M60 110 L120 110" stroke="#3fb950" stroke-width="2.6"/><path d="M60 110 L60 168 L120 168" stroke="#3fb950" stroke-width="2.6"/><path d="M120 110 L146 110" stroke="#3fb950" stroke-width="2.6"/><path d="M120 168 L146 168 L246 168 L246 110" stroke="#3fb950" stroke-width="2.6"/><path d="M146 110 L260 110" stroke="#3fb950" stroke-width="2.6"/><path d="M286 110 L400 110" stroke="#3fb950" stroke-width="2.6"/><path d="M426 110 L540 110" stroke="#3fb950" stroke-width="2.6"/><circle cx="553" cy="110" r="20" fill="#3fb950" fill-opacity="0.30"/><text class="ld-t" x="26" y="60" fill="#3fb950">Se aprieta marcha</text><text class="ld-t" x="200" y="60" fill="#3fb950">motor activo</text><text class="ld-c" x="26" y="246">El camino se cierra por el pulsador y la bobina se activa.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="12s" repeatCount="indefinite"/><path d="M60 110 L120 110" stroke="#3fb950" stroke-width="2.6"/><path d="M60 110 L60 168 L120 168" stroke="#3fb950" stroke-width="2.6"/><path d="M120 168 L146 168 L246 168 L246 110" stroke="#3fb950" stroke-width="2.6"/><path d="M146 110 L260 110" stroke="#3fb950" stroke-width="2.6"/><path d="M286 110 L400 110" stroke="#3fb950" stroke-width="2.6"/><path d="M426 110 L540 110" stroke="#3fb950" stroke-width="2.6"/><circle cx="553" cy="110" r="20" fill="#3fb950" fill-opacity="0.30"/><text class="ld-t" x="26" y="60" fill="#3fb950">Se suelta marcha</text><text class="ld-t" x="200" y="60" fill="#3fb950">motor activo</text><text class="ld-c" x="26" y="246">El contacto del propio motor sostiene el renglon: es la autorretencion.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="12s" repeatCount="indefinite"/><path d="M60 110 L120 110" stroke="#3fb950" stroke-width="2.6"/><path d="M60 110 L60 168 L120 168" stroke="#3fb950" stroke-width="2.6"/><text class="ld-t" x="26" y="60" fill="#f85149">Se aprieta paro</text><text class="ld-t" x="200" y="60" fill="#7d8a99">motor parado</text><text class="ld-c" x="26" y="246">El contacto de paro abre el camino y la bobina cae, aunque siga la autorretencion.</text></g><text class="ld-c" x="26" y="276" fill="#7d8a99">El contacto del propio motor en paralelo con marcha es la autorretencion: sostiene el renglon al soltar el pulsador.</text><text class="ld-c" x="26" y="296" fill="#7d8a99">Ojo: el pulsador de paro es NC en el tablero, y por eso en el programa se representa con un contacto abierto.</text></svg>
+        <figcaption><b>Figura 1.</b> Un renglón de ladder en ejecución, animado. La «corriente» imaginaria
+        recorre de izquierda a derecha: si encuentra un camino completo de contactos cerrados, la bobina se
+        activa.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Elemento</th><th>Qué significa</th></tr></thead>
+          <tbody>
+            <tr><td><b>Contacto normalmente abierto</b></td><td>Conduce cuando el bit vale 1. Se lee «si la señal está activa».</td></tr>
+            <tr><td><b>Contacto normalmente cerrado</b></td><td>Conduce cuando el bit vale 0. Se lee «si la señal <b>no</b> está activa».</td></tr>
+            <tr><td><b>Bobina</b></td><td>Escribe el resultado del renglón en un bit: salida o marca.</td></tr>
+            <tr><td><b>Bobina Set y Reset</b></td><td>Activan o desactivan de manera permanente hasta que el otro actúe. Útiles, pero fáciles de dejar sin su pareja.</td></tr>
+            <tr><td><b>Detección de flanco</b></td><td>Da un pulso de un solo ciclo cuando la señal cambia. Imprescindible para contar y para disparar acciones una sola vez.</td></tr>
+            <tr><td><b>Serie y paralelo</b></td><td>Contactos en serie son un <b>Y</b> lógico; en paralelo, un <b>O</b>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Marcha y paro con autorretención</div>
+        <p>Es el circuito fundamental del que salen casi todos los demás. En ladder:</p>
+        <pre class="code" style="margin-top:8px">   marcha        paro_nc      emergencia_ok      motor
+ ---| |----+------|/|------------| |--------------( )---
+           |
+   motor   |
+ ---| |----+
+</pre>
+        <p style="margin-top:10px">El contacto <b>motor</b> en paralelo con el pulsador de marcha es la
+        <b>autorretención</b>: una vez arrancado, el renglón se sostiene solo aunque se suelte el pulsador.
+        El paro, en serie, corta ese camino.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">La trampa del contacto NC</div>
+        <p>El pulsador de paro físico es <b>normalmente cerrado</b>: en reposo entrega 1 a la entrada. Por lo
+        tanto, en el programa se lo representa con un contacto <b>normalmente abierto</b>, no con uno
+        cerrado. Poner un contacto NC en el programa para un pulsador NC físico invierte la lógica: la
+        máquina no arranca nunca, o peor, arranca cuando se aprieta el paro.</p>
+        <p style="margin-top:8px">La regla que evita el error: <b>el programa se escribe según lo que
+        entrega la entrada</b>, no según cómo se llama el botón. Y se verifica siempre en el monitoreo en
+        línea, mirando el estado real de cada bit.</p>
+      </div>
+    </section>
+
+    <section id="grafcet">
+      <h2><span class="n">03</span>Grafcet: pensar en secuencias</h2>
+      <figure>
+        <svg viewBox="0 0 700 340" role="img" aria-label="Grafcet de una secuencia de dos cilindros" class="svg-t" data-anim><style>.gf-t{fill:#e6edf3;font-size:11.5px;font-weight:700}.gf-k{fill:#7d8a99;font-size:9.5px}.gf-c{fill:#9aa7b4;font-size:10.5px}.gf-n{fill:#e6edf3;font-size:12px;font-weight:700;text-anchor:middle}</style><rect x="150" y="62" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><rect x="146" y="58" width="54" height="42" rx="5" fill="none" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="173" y="85" fill="#7d8a99">0</text><path d="M196 79 L236 79" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="66" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="83" fill="#7d8a99" font-size="11px">reposo</text><path d="M173 96 L173 114" stroke="#2a3140" stroke-width="1.4"/><path d="M159 106 L187 106" stroke="#2a3140" stroke-width="2"/><text class="gf-k" x="194" y="110">ciclo y ambos atras</text><rect x="150" y="114" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><text class="gf-n" x="173" y="137" fill="#7d8a99">1</text><path d="M196 131 L236 131" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="118" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="135" fill="#7d8a99" font-size="11px">A+</text><path d="M173 148 L173 166" stroke="#2a3140" stroke-width="1.4"/><path d="M159 158 L187 158" stroke="#2a3140" stroke-width="2"/><text class="gf-k" x="194" y="162">sensor A avanzado</text><rect x="150" y="166" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><text class="gf-n" x="173" y="189" fill="#7d8a99">2</text><path d="M196 183 L236 183" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="170" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="187" fill="#7d8a99" font-size="11px">B+</text><path d="M173 200 L173 218" stroke="#2a3140" stroke-width="1.4"/><path d="M159 210 L187 210" stroke="#2a3140" stroke-width="2"/><text class="gf-k" x="194" y="214">sensor B avanzado</text><rect x="150" y="218" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><text class="gf-n" x="173" y="241" fill="#7d8a99">3</text><path d="M196 235 L236 235" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="222" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="239" fill="#7d8a99" font-size="11px">A-</text><path d="M173 252 L173 270" stroke="#2a3140" stroke-width="1.4"/><path d="M159 262 L187 262" stroke="#2a3140" stroke-width="2"/><text class="gf-k" x="194" y="266">sensor A atras</text><rect x="150" y="270" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><text class="gf-n" x="173" y="293" fill="#7d8a99">4</text><path d="M196 287 L236 287" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="274" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="291" fill="#7d8a99" font-size="11px">B-</text><path d="M173 304 L173 336 L88 336 L88 79" fill="none" stroke="#2a3140" stroke-width="1.4"/><path d="M88 79 L150 79" stroke="#2a3140" stroke-width="1.4"/><text class="gf-k" x="194" y="318">sensor B atras</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="62" width="46" height="34" rx="4" fill="#9aa7b4" fill-opacity="0.32" stroke="#9aa7b4" stroke-width="2"/><circle cx="173" cy="79" r="6" fill="#9aa7b4"/><rect x="236" y="66" width="86" height="26" rx="4" fill="#9aa7b4" fill-opacity="0.26" stroke="#9aa7b4" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#9aa7b4">Etapa 0 activa</text><text class="gf-c" x="330" y="148">accion: reposo</text><text class="gf-c" x="330" y="172">pasa a la siguiente cuando:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">ciclo y ambos atras</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="114" width="46" height="34" rx="4" fill="#3fb950" fill-opacity="0.32" stroke="#3fb950" stroke-width="2"/><circle cx="173" cy="131" r="6" fill="#3fb950"/><rect x="236" y="118" width="86" height="26" rx="4" fill="#3fb950" fill-opacity="0.26" stroke="#3fb950" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#3fb950">Etapa 1 activa</text><text class="gf-c" x="330" y="148">accion: A+</text><text class="gf-c" x="330" y="172">pasa a la siguiente cuando:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">sensor A avanzado</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="166" width="46" height="34" rx="4" fill="#58a6ff" fill-opacity="0.32" stroke="#58a6ff" stroke-width="2"/><circle cx="173" cy="183" r="6" fill="#58a6ff"/><rect x="236" y="170" width="86" height="26" rx="4" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#58a6ff">Etapa 2 activa</text><text class="gf-c" x="330" y="148">accion: B+</text><text class="gf-c" x="330" y="172">pasa a la siguiente cuando:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">sensor B avanzado</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="218" width="46" height="34" rx="4" fill="#d29922" fill-opacity="0.32" stroke="#d29922" stroke-width="2"/><circle cx="173" cy="235" r="6" fill="#d29922"/><rect x="236" y="222" width="86" height="26" rx="4" fill="#d29922" fill-opacity="0.26" stroke="#d29922" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#d29922">Etapa 3 activa</text><text class="gf-c" x="330" y="148">accion: A-</text><text class="gf-c" x="330" y="172">pasa a la siguiente cuando:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">sensor A atras</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="270" width="46" height="34" rx="4" fill="#bc8cff" fill-opacity="0.32" stroke="#bc8cff" stroke-width="2"/><circle cx="173" cy="287" r="6" fill="#bc8cff"/><rect x="236" y="274" width="86" height="26" rx="4" fill="#bc8cff" fill-opacity="0.26" stroke="#bc8cff" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#bc8cff">Etapa 4 activa</text><text class="gf-c" x="330" y="148">accion: B-</text><text class="gf-c" x="330" y="172">pasa a la siguiente cuando:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">sensor B atras</text></g><rect x="316" y="96" width="356" height="112" rx="7" fill="none" stroke="#2a3140" stroke-width="1"/><text class="gf-c" x="330" y="242" fill="#7d8a99">Solo una etapa activa por vez.</text><text class="gf-c" x="330" y="262" fill="#7d8a99">La transicion se franquea cuando la</text><text class="gf-c" x="330" y="282" fill="#7d8a99">etapa anterior esta activa y su</text><text class="gf-c" x="330" y="302" fill="#7d8a99">condicion es verdadera.</text><text class="gf-c" x="26" y="330" fill="#7d8a99">Escrito asi, el ciclo no puede saltear un paso.</text></svg>
+        <figcaption><b>Figura 2.</b> Un Grafcet en funcionamiento, animado. Sólo una etapa está activa por
+        vez; la transición se cumple cuando su condición es verdadera, y entonces la ficha avanza a la etapa
+        siguiente.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Sus cinco reglas</div>
+          <ol style="margin:8px 0 0;padding-left:20px">
+            <li>La <b>etapa inicial</b> se activa al arrancar.</li>
+            <li>Una transición se franquea si está <b>validada</b> —la etapa anterior activa— y su
+            <b>receptividad</b> es verdadera.</li>
+            <li>Al franquearse, se activa la etapa siguiente y se desactiva la anterior, <b>a la vez</b>.</li>
+            <li>Varias transiciones simultáneamente franqueables se franquean todas.</li>
+            <li>Si una etapa recibe orden de activarse y desactivarse en el mismo instante, queda
+            <b>activa</b>.</li>
+          </ol>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Estructuras</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>Secuencia lineal</b>: una etapa detrás de otra.</li>
+            <li><b>Divergencia O</b>: dos caminos posibles, se toma uno según la condición.</li>
+            <li><b>Divergencia Y</b>: dos ramas que corren <b>en paralelo</b> y se sincronizan al final.</li>
+            <li><b>Salto y bucle</b>: para repetir o saltear etapas.</li>
+          </ul>
+          <p style="margin-top:8px">Se traduce a ladder de manera mecánica: una marca por etapa, con Set y
+          Reset gobernados por las transiciones. Muchos autómatas lo aceptan directamente como SFC.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Secuencia de dos cilindros</div>
+        <p>Ciclo clásico <b>A+ B+ A− B−</b>: sale el cilindro A, sale el B, entra el A, entra el B.</p>
+        <div class="tw" style="margin:10px 0 0">
+          <table class="tab">
+            <thead><tr><th class="c">Etapa</th><th>Acción</th><th>Transición a la siguiente</th></tr></thead>
+            <tbody>
+              <tr><td class="c"><b>0</b></td><td>Reposo, todo adentro.</td><td>Pulsador de ciclo <b>y</b> ambos sensores de retroceso activos.</td></tr>
+              <tr><td class="c"><b>1</b></td><td>Avanzar A.</td><td>Sensor de A avanzado.</td></tr>
+              <tr><td class="c"><b>2</b></td><td>Avanzar B.</td><td>Sensor de B avanzado.</td></tr>
+              <tr><td class="c"><b>3</b></td><td>Retroceder A.</td><td>Sensor de A retrocedido.</td></tr>
+              <tr><td class="c"><b>4</b></td><td>Retroceder B.</td><td>Sensor de B retrocedido, y vuelve a la etapa 0.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:12px">Escrito así, el programa <b>no puede</b> saltear un paso ni quedarse a
+        mitad de camino sin que se note. Escrito directamente en ladder, con marcas sueltas y sin estructura,
+        es donde aparecen los ciclos que se traban y nadie entiende por qué.</p>
+      </div>
+    </section>
+
+    <section id="metodo">
+      <h2><span class="n">04</span>Del proceso al programa</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Paso</th><th>Qué se hace</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>1</b></td><td>Escribir en palabras qué hace la máquina, incluyendo qué pasa ante cada falla y cómo se rearma.</td></tr>
+            <tr><td class="c"><b>2</b></td><td>Listar entradas y salidas con nombre simbólico, tipo y dirección: es la <b>tabla de asignación</b>.</td></tr>
+            <tr><td class="c"><b>3</b></td><td>Dibujar el Grafcet o el organigrama de la secuencia, con sus condiciones.</td></tr>
+            <tr><td class="c"><b>4</b></td><td>Escribir el programa por bloques: seguridad, modos, secuencia, salidas, señalización.</td></tr>
+            <tr><td class="c"><b>5</b></td><td>Simular o probar en vacío, forzando entradas desde el terminal.</td></tr>
+            <tr><td class="c"><b>6</b></td><td>Probar con la máquina, primero en manual y paso a paso, después en automático.</td></tr>
+            <tr><td class="c"><b>7</b></td><td>Documentar: programa comentado, tabla de asignación, Grafcet y manual de operación.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">La estructura que conviene siempre</div>
+        <p>Separar el programa en bloques con un orden fijo: <b>seguridad y condiciones generales</b>,
+        <b>selección de modo</b> (manual, automático, paso a paso), <b>secuencia</b>, <b>gobierno de
+        salidas</b> y <b>señalización</b>. Cada salida física se escribe en <b>un solo lugar</b>, al final,
+        combinando las condiciones de la secuencia con las de seguridad.</p>
+        <p style="margin-top:8px">Esa última regla —una salida, un lugar— evita de raíz el error de las
+        salidas escritas dos veces, que es el que más tiempo hace perder en la puesta en marcha.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Marcha y paro</div>
+        <p>Programar el circuito de autorretención con marcha, paro NC y emergencia, y verificarlo en línea
+        observando el estado de cada bit. Después invertir a propósito el contacto del paro en el programa y
+        analizar exactamente qué pasa y por qué.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Inversión de giro con enclavamientos</div>
+        <p>Programar la inversión de giro de un motor con enclavamiento entre ambos sentidos y temporización
+        de espera al invertir. Verificar que ningún orden de pulsaciones logra activar los dos contactores a
+        la vez, y agregar además el enclavamiento <b>mecánico y eléctrico</b> en el tablero.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Grafcet a ladder</div>
+        <p>Dibujar el Grafcet de la secuencia A+ B+ A− B− y traducirlo a ladder con una marca por etapa.
+        Implementarlo sobre la maqueta neumática. Agregar después una divergencia O para un ciclo alternativo
+        y comprobar cuánto más simple resulta el cambio con la estructura de etapas.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Documentar y entregar</div>
+        <p>Entregar a otro grupo el programa con su tabla de asignación y su Grafcet, y pedirles que hagan
+        una modificación funcional sin explicaciones. Lo que tarden es la medida real de la calidad de la
+        documentación.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Error</th><th>Consecuencia</th></tr></thead>
+          <tbody>
+            <tr><td>Contacto NC en el programa para un pulsador NC físico</td><td>Lógica invertida: la máquina no arranca, o arranca al apretar el paro.</td></tr>
+            <tr><td>Misma salida escrita en varios renglones</td><td>Sólo vale el último: la salida parece no responder.</td></tr>
+            <tr><td>Set sin su Reset correspondiente</td><td>Bits que quedan activos para siempre y estados imposibles de abandonar.</td></tr>
+            <tr><td>Contar sin detección de flanco</td><td>El contador suma una vez por ciclo mientras la señal esté activa: cuentas absurdas.</td></tr>
+            <tr><td>Programar la secuencia con marcas sueltas</td><td>Ciclos que se traban o saltean pasos, sin manera clara de diagnosticar.</td></tr>
+            <tr><td>Todo en ladder, incluidos los cálculos</td><td>Renglones ilegibles donde el texto estructurado ocupaba tres líneas.</td></tr>
+            <tr><td>Sin modo manual ni paso a paso</td><td>Imposible poner a punto la máquina o recuperarla después de una falla.</td></tr>
+            <tr><td>Programa sin comentarios</td><td>Nadie puede mantenerlo, y el programa era la documentación de la máquina.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+
+      <details class="q"><summary>Nombrá los cinco lenguajes de la IEC 61131-3.</summary>
+        <div class="a"><p>Diagrama de contactos, bloques funcionales, lista de instrucciones, texto
+        estructurado y Grafcet o SFC.</p></div></details>
+
+      <details class="q"><summary>¿Cuándo conviene Grafcet en lugar de ladder?</summary>
+        <div class="a"><p>Cuando el problema es una <b>secuencia</b>: primero esto, después aquello. El ladder
+        es mejor para lógica combinacional y de mando.</p></div></details>
+
+      <details class="q"><summary>¿Qué es la autorretención y cómo se implementa?</summary>
+        <div class="a"><p>Un contacto de la propia salida en <b>paralelo</b> con el pulsador de marcha, de
+        modo que el renglón se sostenga cuando el pulsador se suelta. El paro va en serie y corta ese
+        camino.</p></div></details>
+
+      <details class="q"><summary>Un pulsador de paro NC físico: ¿qué contacto lleva en el programa?</summary>
+        <div class="a"><p>Uno <b>normalmente abierto</b>, porque en reposo la entrada vale 1. El programa se
+        escribe según lo que entrega la entrada, no según cómo se llama el botón.</p></div></details>
+
+      <details class="q"><summary>¿Por qué hace falta detección de flanco para contar?</summary>
+        <div class="a"><p>Porque sin ella el contador incrementa <b>en cada ciclo</b> mientras la señal esté
+        activa. El flanco da un pulso de un solo ciclo por cada cambio.</p></div></details>
+
+      <details class="q"><summary>Enunciá la regla de evolución de Grafcet.</summary>
+        <div class="a"><p>Una transición se franquea si está <b>validada</b> —la etapa anterior activa— y su
+        <b>receptividad</b> es verdadera. Al franquearse, se activa la etapa siguiente y se desactiva la
+        anterior de manera simultánea.</p></div></details>
+
+      <details class="q"><summary>¿Qué diferencia hay entre divergencia O y divergencia Y?</summary>
+        <div class="a"><p>En la O se toma <b>uno</b> de los caminos según la condición; en la Y las ramas
+        corren <b>en paralelo</b> y se sincronizan al final.</p></div></details>
+
+      <details class="q"><summary>¿En qué orden se organiza el programa?</summary>
+        <div class="a"><p>Seguridad y condiciones generales, selección de modo, secuencia, gobierno de salidas
+        y señalización.</p></div></details>
+
+      <details class="q"><summary>¿Por qué cada salida física debe escribirse en un solo lugar?</summary>
+        <div class="a"><p>Porque el PLC ejecuta en orden y sólo vale la última escritura. Concentrarla al
+        final, combinando secuencia y seguridad, elimina de raíz ese error.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve el modo paso a paso?</summary>
+        <div class="a"><p>Para poner a punto la máquina y para recuperarla después de una falla, avanzando la
+        secuencia de a una etapa con la supervisión de un operador.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/mando-senalizacion">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Unidades de mando y señalización</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/aplicaciones-plc">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Aplicaciones básicas de programación</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Instrucciones y programación de PLC»</b> de <b>Electrónica Industrial II</b>
+  (7° año), según la «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación
+  Secundaria – Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
