@@ -5,7 +5,8 @@
    adentro de cada publicación, páginas sueltas y archivos de
    descargas, con el pedacito de texto donde aparece.
 
-   El índice vive aparte, en assets/js/buscador-datos.js (77 kB), y no
+   El índice vive aparte, en assets/js/buscador-datos.js (unos 320 kB
+   comprimido, y creciendo con cada tema que se publica), y no
    se baja hasta que alguien toca el buscador: así la portada sigue
    abriendo liviana. Ese archivo lo arma docs/generar-indice.js y hay
    que volver a correrlo cuando se agrega o se cambia una publicación.
