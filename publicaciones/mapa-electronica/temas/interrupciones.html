@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Las interrupciones · Electrónica Digital IV · Catto</title>
+<meta name="description" content="Manejo de interrupciones en un microcontrolador: vector y tabla de vectores, latencia, contexto, prioridades y anidamiento, banderas de pedido, variables compartidas y volatile, secciones críticas, antirrebote por interrupción y errores típicos dentro de una rutina de atención. Eje temático de Electrónica Digital IV, 7° año.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/interrupciones">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-electronica">Mapa de Temas · Electrónica Digital IV</a>
+    <span class="anio">7° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Digital IV</span> · 120 h · Eje 3 de 6</div>
+    <h1>Las interrupciones</h1>
+    <p class="lead">Un programa que pregunta todo el tiempo «¿pasó algo?» desperdicia el procesador y llega
+    tarde. Una interrupción invierte la relación: el hardware avisa, el programa deja lo que estaba
+    haciendo, atiende y vuelve exactamente donde estaba.</p>
+    <div class="chips">
+      <span class="chip hi">Vector</span>
+      <span class="chip">Latencia</span>
+      <span class="chip">Prioridades</span>
+      <span class="chip">volatile</span>
+    </div>
+    <hr class="rule">
+
+    <section id="mecanismo">
+      <h2><span class="n">01</span>Qué ocurre exactamente</h2>
+      <figure>
+        <svg viewBox="0 0 700 326" role="img" aria-label="Secuencia de atencion de una interrupcion" class="svg-t" data-anim><style>.in-t{fill:#e6edf3;font-size:12px;font-weight:700}.in-k{fill:#7d8a99;font-size:10px}.in-c{fill:#9aa7b4;font-size:10.5px}.in-s{fill:#7d8a99;font-size:9.5px;text-anchor:middle}</style><text class="in-k" x="26" y="86">programa</text><text class="in-k" x="26" y="100">principal</text><text class="in-k" x="26" y="206">rutina de</text><text class="in-k" x="26" y="220">atencion</text><rect x="100" y="108" width="132" height="20" rx="4" fill="#58a6ff" fill-opacity="0.35" stroke="#58a6ff" stroke-width="1.2"/><rect x="506" y="108" width="158" height="20" rx="4" fill="#58a6ff" fill-opacity="0.35" stroke="#58a6ff" stroke-width="1.2"/><rect x="268" y="176" width="202" height="20" rx="4" fill="#d29922" fill-opacity="0.35" stroke="#d29922" stroke-width="1.2"/><path d="M232 118 L268 186" stroke="#7d8a99" stroke-width="1.6" stroke-dasharray="4 3"/><path d="M470 186 L506 118" stroke="#7d8a99" stroke-width="1.6" stroke-dasharray="4 3"/><text class="in-s" x="166" y="122">codigo normal</text><text class="in-s" x="585" y="122">sigue donde estaba</text><text class="in-s" x="369" y="190">rutina de atencion</text><path d="M214 62 L214 108" stroke="#f85149" stroke-width="1.8"/><path d="M214 62 l-4 8 h8 z" fill="#f85149"/><text class="in-s" x="214" y="54" fill="#f85149">evento</text><path d="M214 218 L268 218" stroke="#bc8cff" stroke-width="1.4"/><path d="M214 218 l6 -4 v8 z M268 218 l-6 -4 v8 z" fill="#bc8cff"/><text class="in-s" x="241" y="236" fill="#bc8cff">latencia</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0" dur="15s" repeatCount="indefinite"/><circle cx="214" cy="118" r="7" fill="#f85149"/><text class="in-t" x="26" y="252" fill="#f85149">1. El periferico levanta su bandera de pedido</text><text class="in-c" x="26" y="278">El evento ocurrio. La bandera queda marcada aunque la interrupcion todavia no se atienda.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0" dur="15s" repeatCount="indefinite"/><circle cx="232" cy="118" r="7" fill="#7d8a99"/><text class="in-t" x="26" y="252" fill="#7d8a99">2. El nucleo termina la instruccion en curso</text><text class="in-c" x="26" y="278">Nunca se interrumpe una instruccion por la mitad: primero se completa.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0" dur="15s" repeatCount="indefinite"/><circle cx="250" cy="118" r="7" fill="#bc8cff"/><text class="in-t" x="26" y="252" fill="#bc8cff">3. Guarda el contexto en la pila</text><text class="in-c" x="26" y="278">Direccion de retorno y estado del procesador, para poder volver exactamente al mismo punto.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0" dur="15s" repeatCount="indefinite"/><circle cx="268" cy="118" r="7" fill="#58a6ff"/><text class="in-t" x="26" y="252" fill="#58a6ff">4. Salta al vector de esa interrupcion</text><text class="in-c" x="26" y="278">Busca en la tabla de vectores la direccion de la rutina y salta ahi.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0" dur="15s" repeatCount="indefinite"/><circle cx="369" cy="186" r="7" fill="#d29922"/><text class="in-t" x="26" y="252" fill="#d29922">5. Se ejecuta la rutina, corta</text><text class="in-c" x="26" y="278">Levanta una bandera o guarda un dato. En muchas familias hay que borrar el pedido a mano.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1" dur="15s" repeatCount="indefinite"/><circle cx="506" cy="118" r="7" fill="#3fb950"/><text class="in-t" x="26" y="252" fill="#3fb950">6. Restaura el contexto y continua</text><text class="in-c" x="26" y="278">La instruccion de retorno devuelve todo a como estaba: el programa principal ni se entera.</text><text class="in-c" x="26" y="296"></text></g><text class="in-c" x="26" y="320" fill="#7d8a99">La latencia se alarga muchisimo si hay otra rutina corriendo o una seccion critica abierta: por eso deben ser cortas.</text></svg>
+        <figcaption><b>Figura 1.</b> La secuencia completa, animada. Entre el evento y la primera
+        instrucción de la rutina de atención pasa un tiempo —la <b>latencia</b>— que hay que conocer cuando
+        el temporizado importa.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Paso</th><th>Qué pasa</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>1</b></td><td>El periférico detecta el evento y levanta su <b>bandera de pedido</b>.</td></tr>
+            <tr><td class="c"><b>2</b></td><td>Si esa interrupción está habilitada y las interrupciones globales también, el núcleo termina la instrucción en curso.</td></tr>
+            <tr><td class="c"><b>3</b></td><td>Guarda en la pila la dirección de retorno y el estado del procesador: es el <b>contexto</b>.</td></tr>
+            <tr><td class="c"><b>4</b></td><td>Busca en la <b>tabla de vectores</b> la dirección de la rutina de atención y salta ahí.</td></tr>
+            <tr><td class="c"><b>5</b></td><td>Se ejecuta la rutina. En muchas familias hay que <b>borrar la bandera</b> a mano.</td></tr>
+            <tr><td class="c"><b>6</b></td><td>La instrucción de retorno restaura el contexto y el programa sigue como si nada.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Latencia</div>
+        <p>Es el tiempo entre el evento y la primera instrucción de la rutina. Se compone de lo que falta
+        para terminar la instrucción en curso, el guardado del contexto y el salto: típicamente entre
+        <b>4 y 20 ciclos</b>. A 16 MHz eso es del orden de un microsegundo.</p>
+        <p style="margin-top:8px">Pero la latencia real puede ser <b>muchísimo mayor</b> si en ese momento
+        se está ejecutando otra rutina de atención o una sección crítica con interrupciones deshabilitadas.
+        Ese es el motivo por el cual las rutinas deben ser cortas.</p>
+      </div>
+    </section>
+
+    <section id="fuentes">
+      <h2><span class="n">02</span>De dónde vienen</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Fuente</th><th>Para qué se usa</th></tr></thead>
+          <tbody>
+            <tr><td><b>Externa por pin</b></td><td>Un pulsador, un final de carrera, un sensor. Configurable por flanco de subida, de bajada, ambos o por nivel.</td></tr>
+            <tr><td><b>Cambio de estado en un puerto</b></td><td>Un solo vector para todo un grupo de pines: la rutina tiene que averiguar cuál cambió.</td></tr>
+            <tr><td><b>Temporizador</b></td><td>Desbordamiento o comparación: es la base de toda tarea periódica y de las bases de tiempo del sistema.</td></tr>
+            <tr><td><b>Comunicación serie</b></td><td>Byte recibido o registro de transmisión vacío. Evita perder datos sin tener que estar mirando.</td></tr>
+            <tr><td><b>Conversor A/D</b></td><td>Conversión terminada: el programa no espera, lo avisan.</td></tr>
+            <tr><td><b>Captura de entrada</b></td><td>Guarda el valor exacto del temporizador cuando ocurre un flanco. Es la forma precisa de medir períodos y anchos de pulso.</td></tr>
+            <tr><td><b>Perro guardián</b></td><td>Si el programa se cuelga y no lo refresca, reinicia el equipo.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="prioridades">
+      <h2><span class="n">03</span>Prioridades y anidamiento</h2>
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Interrupciones anidadas y no anidadas" class="svg-t" data-anim><style>.pd-t{fill:#e6edf3;font-size:11.5px;font-weight:700}.pd-k{fill:#7d8a99;font-size:10px}.pd-c{fill:#9aa7b4;font-size:10.5px}.pd-s{fill:#7d8a99;font-size:9.5px;text-anchor:middle}</style><path d="M116 226 L664 226" stroke="#9aa7b4" stroke-width="1.2"/><text class="pd-k" x="618" y="244">tiempo</text><text class="pd-k" x="18" y="204">principal</text><path d="M116 210 L664 210" stroke="#2a3140" stroke-width="0.8" stroke-dasharray="3 5"/><text class="pd-k" x="18" y="166">baja prioridad</text><path d="M116 172 L664 172" stroke="#2a3140" stroke-width="0.8" stroke-dasharray="3 5"/><text class="pd-k" x="18" y="128">alta prioridad</text><path d="M116 134 L664 134" stroke="#2a3140" stroke-width="0.8" stroke-dasharray="3 5"/><path d="M225.6 62 L225.6 208" stroke="#d29922" stroke-width="1.4" stroke-dasharray="4 3"/><text class="pd-s" x="225.6" y="56" fill="#d29922">llega A</text><path d="M302.3 62 L302.3 208" stroke="#f85149" stroke-width="1.4" stroke-dasharray="4 3"/><text class="pd-s" x="302.3" y="56" fill="#f85149">llega B</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0" dur="9s" repeatCount="indefinite"/><rect x="116.0" y="190" width="109.6" height="20" rx="4" fill="#58a6ff" fill-opacity="0.42" stroke="#58a6ff" stroke-width="1.2"/><text class="pd-s" x="170.8" y="204">principal</text><rect x="225.6" y="152" width="175.4" height="20" rx="4" fill="#d29922" fill-opacity="0.42" stroke="#d29922" stroke-width="1.2"/><text class="pd-s" x="313.3" y="166">rutina A</text><rect x="401.0" y="114" width="109.6" height="20" rx="4" fill="#f85149" fill-opacity="0.42" stroke="#f85149" stroke-width="1.2"/><text class="pd-s" x="455.8" y="128">rutina B</text><rect x="510.6" y="190" width="153.4" height="20" rx="4" fill="#58a6ff" fill-opacity="0.42" stroke="#58a6ff" stroke-width="1.2"/><text class="pd-s" x="587.3" y="204">principal</text><path d="M302.3 98 L401.0 98" stroke="#f85149" stroke-width="1.4" stroke-dasharray="3 3"/><text class="pd-s" x="351.6" y="92" fill="#f85149">B espera</text><text class="pd-t" x="18" y="38" fill="#d29922">Sin anidamiento</text><text class="pd-c" x="18" y="272">B llega mientras corre A y tiene que esperar a que A termine. Si A es larga, B llega tarde o se pierde.</text><text class="pd-c" x="18" y="290"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1" dur="9s" repeatCount="indefinite"/><rect x="116.0" y="190" width="109.6" height="20" rx="4" fill="#58a6ff" fill-opacity="0.42" stroke="#58a6ff" stroke-width="1.2"/><text class="pd-s" x="170.8" y="204">principal</text><rect x="225.6" y="152" width="76.7" height="20" rx="4" fill="#d29922" fill-opacity="0.42" stroke="#d29922" stroke-width="1.2"/><text class="pd-s" x="264.0" y="166">A</text><rect x="302.3" y="114" width="109.6" height="20" rx="4" fill="#f85149" fill-opacity="0.42" stroke="#f85149" stroke-width="1.2"/><text class="pd-s" x="357.1" y="128">rutina B</text><rect x="411.9" y="152" width="98.6" height="20" rx="4" fill="#d29922" fill-opacity="0.42" stroke="#d29922" stroke-width="1.2"/><text class="pd-s" x="461.2" y="166">A sigue</text><rect x="510.6" y="190" width="153.4" height="20" rx="4" fill="#58a6ff" fill-opacity="0.42" stroke="#58a6ff" stroke-width="1.2"/><text class="pd-s" x="587.3" y="204">principal</text><text class="pd-t" x="18" y="38" fill="#3fb950">Con anidamiento</text><text class="pd-c" x="18" y="272">B interrumpe a A porque tiene mas prioridad, y A retoma despues. Mejor respuesta, mas pila y mas dificil</text><text class="pd-c" x="18" y="290">de razonar.</text></g><text class="pd-c" x="18" y="314" fill="#7d8a99">En los micros de 8 bits sencillos la prioridad la da la posicion en la tabla de vectores; en los ARM es configurable.</text></svg>
+        <figcaption><b>Figura 2.</b> Dos interrupciones que llegan casi juntas, animado. Con anidamiento, la
+        de mayor prioridad interrumpe a la de menor; sin anidamiento, espera a que la otra
+        termine.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Cómo se resuelve el empate</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>En los microcontroladores de 8 bits sencillos, la prioridad la da la <b>posición en la tabla
+            de vectores</b>: no es configurable, y no hay anidamiento salvo que se habilite a mano.</li>
+            <li>En los ARM Cortex-M, el controlador de interrupciones permite asignar una <b>prioridad
+            numérica</b> a cada fuente, y el anidamiento es automático: menor número, mayor prioridad.</li>
+            <li>Anidar da mejor respuesta a lo urgente, pero consume más pila y hace mucho más difícil
+            razonar sobre el programa.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Cómo se asignan</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>Máxima</b>: seguridad. Parada de emergencia, sobrecorriente, falla de alimentación.</li>
+            <li><b>Alta</b>: lo que se pierde si llega tarde. Captura de flancos, recepción serie a alta
+            velocidad.</li>
+            <li><b>Media</b>: bases de tiempo y control periódico.</li>
+            <li><b>Baja</b>: interfaz de usuario, registro, comunicación no crítica.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="compartidas">
+      <h2><span class="n">04</span>El problema de las variables compartidas</h2>
+      <p>Una interrupción puede ocurrir <b>entre dos instrucciones cualesquiera</b> del programa principal.
+      Todo lo que ambos toquen es una fuente potencial de errores que aparecen una vez cada mil, y sólo con
+      el equipo en producción.</p>
+
+      <pre class="code"><span class="c-com">/* MAL: el compilador puede guardar 'listo' en un registro y no releerla nunca */</span>
+<span class="c-ty">uint8_t</span> listo = <span class="c-num">0</span>;
+<span class="c-fn">ISR</span>(INT0_vect) { listo = <span class="c-num">1</span>; }
+<span class="c-kw">while</span> (!listo) { }          <span class="c-com">/* puede quedarse colgado para siempre */</span>
+
+<span class="c-com">/* BIEN: volatile obliga a leerla de memoria en cada vuelta */</span>
+<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> listo = <span class="c-num">0</span>;
+
+<span class="c-com">/* MAL: 'pulsos' es de 32 bits; en un micro de 8 bits se lee en cuatro pasos */</span>
+<span class="c-kw">volatile</span> <span class="c-ty">uint32_t</span> pulsos;
+total = pulsos;            <span class="c-com">/* si la interrupcion cae en el medio, sale un valor imposible */</span>
+
+<span class="c-com">/* BIEN: seccion critica, lo mas corta posible */</span>
+<span class="c-fn">cli</span>();                     <span class="c-com">/* deshabilita interrupciones */</span>
+total = pulsos;
+<span class="c-fn">sei</span>();                     <span class="c-com">/* las vuelve a habilitar */</span></pre>
+
+      <div class="box ojo">
+        <div class="bt">Las dos reglas que evitan el 90 % de los problemas</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>Toda variable compartida entre una rutina de interrupción y el programa principal se declara
+          <b>volatile</b>.</li>
+          <li>Todo acceso a una variable de más bits que el ancho del procesador se hace dentro de una
+          <b>sección crítica</b>, lo más corta posible.</li>
+        </ol>
+        <p style="margin-top:8px">Y una tercera, más importante que las dos: <b>la rutina de atención hace
+        lo mínimo</b>. Levanta una bandera, guarda un dato, y el trabajo pesado lo hace el programa
+        principal.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Lo que nunca va dentro de una rutina de atención</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Esperas y demoras</b>. Bloquean todo el sistema.</li>
+          <li><b>Escribir por puerto serie o en una pantalla</b>. Son operaciones lentas.</li>
+          <li><b>Cálculos con coma flotante</b> en un microcontrolador sin unidad de punto flotante.</li>
+          <li><b>Reservar memoria dinámica</b>.</li>
+          <li>Esperar otra interrupción: si están deshabilitadas, no va a llegar nunca.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="patron">
+      <h2><span class="n">05</span>El patrón que conviene usar siempre</h2>
+      <pre class="code"><span class="c-com">/* Antirrebote de un pulsador por interrupcion + temporizador */</span>
+<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span>  evento = <span class="c-num">0</span>;
+<span class="c-kw">volatile</span> <span class="c-ty">uint16_t</span> t_ultimo = <span class="c-num">0</span>;
+
+<span class="c-fn">ISR</span>(INT0_vect)              <span class="c-com">/* flanco de bajada en el pulsador */</span>
+{
+    <span class="c-ty">uint16_t</span> ahora = <span class="c-fn">ms_actual</span>();
+    <span class="c-kw">if</span> ((<span class="c-ty">uint16_t</span>)(ahora - t_ultimo) &gt; <span class="c-num">30</span>) {   <span class="c-com">/* 30 ms de rebote */</span>
+        evento   = <span class="c-num">1</span>;
+        t_ultimo = ahora;
+    }
+}                            <span class="c-com">/* la rutina termina en microsegundos */</span>
+
+<span class="c-kw">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>)
+{
+    <span class="c-fn">inicializar</span>();
+    <span class="c-kw">while</span> (<span class="c-num">1</span>) {
+        <span class="c-kw">if</span> (evento) {
+            <span class="c-fn">cli</span>(); evento = <span class="c-num">0</span>; <span class="c-fn">sei</span>();   <span class="c-com">/* se consume el evento sin perder otro */</span>
+            <span class="c-fn">atender_pulsador</span>();          <span class="c-com">/* aca si se puede tardar */</span>
+        }
+        <span class="c-fn">otras_tareas</span>();
+    }
+}</pre>
+
+      <div class="box key">
+        <div class="bt">Por qué este patrón funciona</div>
+        <p>La rutina es corta y determinista, el antirrebote no consume tiempo de espera, y el trabajo pesado
+        ocurre en el bucle principal, donde puede tardar sin afectar a nadie. El detalle de la resta con
+        conversión explícita hace que el conteo siga siendo correcto <b>cuando el contador de milisegundos
+        da la vuelta</b>, que es el error que aparece a los 65 segundos de funcionamiento y desconcierta a
+        todo el mundo.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Sondeo contra interrupción</div>
+        <p>Detectar un pulsador de dos maneras: preguntando en el bucle principal y por interrupción, con el
+        programa haciendo además una tarea larga. Medir con el osciloscopio el tiempo entre el flanco y la
+        respuesta en cada caso, y comparar el peor caso de los dos.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Medir la latencia</div>
+        <p>Poner un pin en alto como primera instrucción de la rutina de atención y observar en el
+        osciloscopio la distancia hasta el flanco que la disparó. Repetir con otra interrupción activa y con
+        una sección crítica larga en el programa principal: se ve crecer la latencia.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Reproducir el error de volatile</div>
+        <p>Escribir el bucle de espera <b>sin</b> volatile y compilar con optimización activada. Verificar
+        que se cuelga. Mirar el listado en ensamblador para ver que la variable ni siquiera se relee.
+        Agregar volatile y comprobar la diferencia. Es la mejor manera de que no se olvide más.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 4 · Medir frecuencia por captura</div>
+        <p>Usar la interrupción de captura de entrada para medir el período de una señal, y comparar la
+        precisión con la de medirlo por sondeo. Con captura, el valor del temporizador se toma por hardware
+        en el instante del flanco: la diferencia de exactitud es notable.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Síntoma</th><th>Causa habitual</th></tr></thead>
+          <tbody>
+            <tr><td>La interrupción se dispara sin parar</td><td>No se borra la bandera de pedido dentro de la rutina.</td></tr>
+            <tr><td>La interrupción no se dispara nunca</td><td>Falta habilitarla individualmente, o falta habilitar las globales, o el vector está mal escrito.</td></tr>
+            <tr><td>El programa se cuelga en un bucle de espera</td><td>La variable compartida no está declarada <b>volatile</b>.</td></tr>
+            <tr><td>Un contador de varios bytes da valores absurdos</td><td>Se lee sin sección crítica y la interrupción cae en el medio de la lectura.</td></tr>
+            <tr><td>Un pulsador genera varios eventos</td><td>Rebote mecánico. Se filtra por tiempo, no agregando esperas dentro de la rutina.</td></tr>
+            <tr><td>El sistema se vuelve errático al agregar interrupciones</td><td>Desbordamiento de pila por anidamiento, o rutinas demasiado largas.</td></tr>
+            <tr><td>Falla exactamente a los 65 segundos</td><td>Desbordamiento de un contador de 16 bits en milisegundos, mal comparado.</td></tr>
+            <tr><td>Todo se detiene por momentos</td><td>Hay una espera, una escritura serie o un cálculo pesado dentro de una rutina de atención.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Qué guarda el procesador al atender una interrupción?</summary>
+        <div class="a"><p>La <b>dirección de retorno</b> y el estado del procesador —el contexto— en la pila,
+        para poder continuar exactamente donde estaba al terminar la rutina.</p></div></details>
+
+      <details class="q"><summary>¿Qué es la tabla de vectores?</summary>
+        <div class="a"><p>Una tabla en memoria donde cada fuente de interrupción tiene la dirección de su
+        rutina de atención. El núcleo la consulta para saber adónde saltar.</p></div></details>
+
+      <details class="q"><summary>¿Qué es la latencia y de qué depende?</summary>
+        <div class="a"><p>El tiempo entre el evento y la primera instrucción de la rutina. Depende de la
+        instrucción en curso, del guardado de contexto y, sobre todo, de si hay otra rutina ejecutándose o
+        una sección crítica abierta.</p></div></details>
+
+      <details class="q"><summary>¿Por qué hace falta declarar volatile una variable compartida?</summary>
+        <div class="a"><p>Porque sin esa palabra el compilador puede guardarla en un registro y no volver a
+        leerla de memoria. Como la interrupción la modifica «por afuera», el programa principal nunca se
+        entera del cambio.</p></div></details>
+
+      <details class="q"><summary>¿Qué es una sección crítica y cuándo hace falta?</summary>
+        <div class="a"><p>Un tramo con las interrupciones deshabilitadas. Hace falta al leer o escribir
+        variables de más bits que el ancho del procesador, para que la interrupción no caiga en el medio de
+        la operación.</p></div></details>
+
+      <details class="q"><summary>Nombrá tres cosas que no deben ir dentro de una rutina de atención.</summary>
+        <div class="a"><p>Esperas o demoras, escrituras lentas como el puerto serie o una pantalla, y
+        cálculos pesados o reserva de memoria dinámica.</p></div></details>
+
+      <details class="q"><summary>¿Cómo se resuelve el rebote de un pulsador con interrupciones?</summary>
+        <div class="a"><p>Comparando el instante actual con el del último evento válido y descartando los que
+        llegan antes de unos 20 a 50 ms. Nunca con una espera dentro de la rutina.</p></div></details>
+
+      <details class="q"><summary>¿Qué ventaja tiene la interrupción de captura frente a medir por sondeo?</summary>
+        <div class="a"><p>El valor del temporizador se toma <b>por hardware</b> en el instante exacto del
+        flanco, así que la medición no depende de cuándo llegue el programa a leerlo.</p></div></details>
+
+      <details class="q"><summary>¿Cómo se asignan las prioridades en un sistema real?</summary>
+        <div class="a"><p>Máxima para la seguridad —paradas de emergencia, sobrecorriente—, alta para lo que
+        se pierde si llega tarde, media para las bases de tiempo y baja para la interfaz de usuario y el
+        registro.</p></div></details>
+
+      <details class="q"><summary>¿Por qué las rutinas de atención deben ser cortas?</summary>
+        <div class="a"><p>Porque mientras una se ejecuta, las demás esperan: cada rutina larga aumenta la
+        latencia de todas las otras y puede hacer que se pierdan eventos.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/buses-serie">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Buses de comunicación serie</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/aplicaciones-control">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Aplicaciones con controles</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Las interrupciones»</b> de <b>Electrónica Digital IV</b> (7° año), según la
+  «Propuesta Curricular – Segundo Ciclo de la Modalidad Técnico Profesional, Educación Secundaria –
+  Electrónica», Ministerio de Educación de la Provincia de Córdoba, DGETyFP.
+  <a href="/publicaciones/mapa-electronica">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=1"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=1"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
