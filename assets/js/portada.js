@@ -1,146 +1,70 @@
 /* ============================================================
    catto.ar — Portada: los cuatro años de la tecnicatura
-   Arma las cuatro columnas a partir de /assets/js/tecnicatura.js, que es
-   la misma fuente que usa el Mapa de Temas. Nada esta escrito a mano aca:
-   si se agrega un eje alla, aparece aca solo.
-   1) Las cifras del encabezado.
-   2) Una columna por año, con sus materias; al abrir una, sus ejes.
-   3) El buscador del hero filtra los 95 ejes en vivo.
-   4) La tira de "segui donde ibas", si hay una pagina de tema visitada.
+
+   Las cuatro columnas y los 95 enlaces vienen escritos en el HTML: no los
+   arma este archivo. Eso importa por dos motivos. Un buscador que no ejecuta
+   javascript igual encuentra las 88 páginas de tema —antes no las veía
+   ninguna— y quien tenga el javascript apagado ve la lista completa.
+
+   Acá solo se le agrega comportamiento a lo que ya está:
+   1) Abrir y cerrar cada materia.
+   2) El buscador del encabezado, que filtra los 95 ejes en vivo.
+   3) La tira de "segui donde ibas", si hay una pagina de tema visitada.
+
+   El HTML lo genera scratchpad/generar-anios.js a partir de
+   assets/js/tecnicatura.js, que es la misma fuente que usa el mapa: si se
+   agrega un eje alla, se vuelve a correr el generador y aparece aca.
    ============================================================ */
 (function () {
   "use strict";
 
-  if (typeof MATERIAS === "undefined") return;
-
-  var TEMA_BASE = "/publicaciones/mapa-electronica/temas/";
-  var ANIOS = [4, 5, 6, 7];
-
-  /* Un eje puede apuntar a su pagina de tema (slug) o a una publicacion del
-     sitio que ya trata el tema (ruta absoluta). */
-  function destino(e) {
-    return e.u.charAt(0) === "/" ? e.u : TEMA_BASE + e.u;
-  }
-  function esPagina(e) {
-    return e.u && e.u.charAt(0) !== "/";
-  }
-
-  /* Para buscar sin que importen tildes ni mayusculas. */
-  function pelar(s) {
-    return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function el(tag, clase, texto) {
-    var n = document.createElement(tag);
-    if (clase) n.className = clase;
-    if (texto !== undefined) n.textContent = texto;
-    return n;
-  }
-
-  /* ---------------------------------------------------------------- cifras */
-  var cifras = document.getElementById("cifras");
-  if (cifras) {
-    var ejes = 0, horas = 0, slugs = {};
-    MATERIAS.forEach(function (m) {
-      horas += m.h;
-      m.ejes.forEach(function (e) {
-        ejes++;
-        /* hay ejes de dos materias distintas que comparten pagina (Antenas, por
-           ejemplo, se dicta en 6 y en 7): la pagina se cuenta una sola vez */
-        if (esPagina(e)) slugs[e.u] = 1;
-      });
-    });
-    var paginas = Object.keys(slugs).length;
-    [[4, "años"], [MATERIAS.length, "espacios curriculares"], [ejes, "ejes temáticos"],
-     [paginas, "páginas desarrolladas"], [horas.toLocaleString("es-AR"), "horas reloj"]]
-      .forEach(function (par) {
-        var c = el("span", "cf");
-        c.appendChild(el("b", null, String(par[0])));
-        c.appendChild(el("span", null, par[1]));
-        cifras.appendChild(c);
-      });
-  }
-
-  /* ------------------------------------------------------------ los cuatro */
   var grid = document.getElementById("gridAnios");
   if (!grid) return;
 
-  var filas = [];   // {mat, li, ejes:[{e, li, texto}]}
+  /* Para buscar sin que importen tildes ni mayusculas. Cada eje trae en su
+     data-b el texto ya normalizado: titulo, descripcion, temas transversales,
+     materia y area. */
+  function pelar(s) {
+    return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
 
-  ANIOS.forEach(function (an) {
-    var mats = MATERIAS.filter(function (m) { return m.anio === an; });
-    if (!mats.length) return;
+  /* ---------------------------------------------------------- las materias */
+  var filas = [];
 
-    var col = el("section", "anio");
-    col.setAttribute("data-anio", String(an));
+  [].forEach.call(grid.querySelectorAll(".m-item"), function (li) {
+    var boton = li.querySelector(".m-fila");
+    var lista = li.querySelector(".m-ejes");
+    var cuenta = li.querySelector(".m-c");
+    if (!boton || !lista) return;
 
-    var cab = el("div", "a-head");
-    cab.appendChild(el("span", "a-n", an + "° año"));
-    var nEjes = mats.reduce(function (a, m) { return a + m.ejes.length; }, 0);
-    cab.appendChild(el("span", "a-c", mats.length + " materias · " + nEjes + " temas"));
-    col.appendChild(cab);
-
-    var lista = el("ul", "a-mats");
-    mats.forEach(function (m) {
-      var li = el("li", "m-item");
-
-      var bt = el("button", "m-fila");
-      bt.type = "button";
-      bt.setAttribute("aria-expanded", "false");
-      var punto = el("span", "m-dot");
-      punto.style.background = (AREAS[m.area] || {}).c || "#58a6ff";
-      bt.appendChild(punto);
-      bt.appendChild(el("span", "m-n", m.n));
-      var cta = el("span", "m-c", String(m.ejes.length));
-      bt.appendChild(cta);
-      bt.appendChild(el("span", "m-fl", "›"));
-      li.appendChild(bt);
-
-      var ul = el("ul", "m-ejes");
-      ul.hidden = true;
-      var hijos = [];
-      m.ejes.forEach(function (e) {
-        var lie = el("li");
-        var a = el("a", null, e.t);
-        a.href = destino(e);
-        if (!esPagina(e)) a.className = "publi";
-        lie.appendChild(a);
-        ul.appendChild(lie);
-        /* Se busca sobre todo lo que describe al eje, no solo su titulo: los
-           titulos de la curricula son escuetos y «PLC» o «fibra optica» viven
-           en los temas transversales. */
-        var temas = (e.tm || []).map(function (par) {
-          return (TEMAS[par[0]] || {}).n || "";
-        }).join(" ");
-        hijos.push({ e: e, li: lie,
-                     texto: pelar([e.t, e.d || "", temas, m.n,
-                                   (AREAS[m.area] || {}).n || ""].join(" ")) });
-      });
-      li.appendChild(ul);
-
-      bt.addEventListener("click", function () {
-        var abierto = bt.getAttribute("aria-expanded") === "true";
-        bt.setAttribute("aria-expanded", abierto ? "false" : "true");
-        ul.hidden = abierto;
-      });
-
-      lista.appendChild(li);
-      filas.push({ mat: m, li: li, boton: bt, ul: ul, ejes: hijos, cuenta: cta });
+    var ejes = [].map.call(lista.children, function (x) {
+      return { li: x, texto: x.getAttribute("data-b") || "" };
     });
 
-    col.appendChild(lista);
-    grid.appendChild(col);
+    boton.addEventListener("click", function () {
+      var abierto = li.className.indexOf("abierto") === -1;
+      li.className = abierto ? "m-item abierto" : "m-item";
+      boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+    });
+
+    filas.push({ li: li, boton: boton, cuenta: cuenta, ejes: ejes, total: ejes.length });
   });
+
+  function abrir(f, si) {
+    f.li.className = si ? "m-item abierto" : "m-item";
+    f.boton.setAttribute("aria-expanded", si ? "true" : "false");
+  }
 
   /* -------------------------------------------------------------- filtrado */
   var input = document.getElementById("btIn");
-  var cuenta = document.getElementById("btCuenta");
+  var marcador = document.getElementById("btCuenta");
   var limpiar = document.getElementById("btClear");
   var vacio = document.getElementById("sinResultados");
 
   function filtrar(q) {
     /* palabra por palabra: «fibra optica» tiene que encontrar «fibras opticas» */
     var pal = pelar(q.trim()).split(/\s+/).filter(Boolean);
+    var hallados = 0;
 
     function coincide(t) {
       for (var i = 0; i < pal.length; i++) {
@@ -149,29 +73,25 @@
       return true;
     }
 
-    q = pal.length ? pal.join(" ") : "";
-    var hallados = 0;
-
     filas.forEach(function (f) {
       var visibles = 0;
 
-      f.ejes.forEach(function (h) {
-        var ok = !q || coincide(h.texto);
-        h.li.hidden = !ok;
-        if (ok && q) visibles++;
+      f.ejes.forEach(function (e) {
+        var ok = !pal.length || coincide(e.texto);
+        e.li.hidden = !ok;
+        if (ok && pal.length) visibles++;
       });
 
-      if (!q) {
+      if (!pal.length) {
         f.li.hidden = false;
-        f.ul.hidden = f.boton.getAttribute("aria-expanded") !== "true";
-        f.cuenta.textContent = String(f.ejes.length);
+        f.cuenta.textContent = String(f.total);
+        abrir(f, false);
         return;
       }
-      /* con la busqueda puesta, el numerito cuenta lo que coincide */
-      f.cuenta.textContent = visibles + " de " + f.ejes.length;
+
       f.li.hidden = visibles === 0;
-      f.ul.hidden = visibles === 0;
-      f.boton.setAttribute("aria-expanded", visibles ? "true" : "false");
+      f.cuenta.textContent = visibles + " de " + f.total;
+      abrir(f, visibles > 0);
       hallados += visibles;
     });
 
@@ -180,13 +100,13 @@
       var quedan = [].filter.call(col.querySelectorAll(".m-item"), function (li) {
         return !li.hidden;
       }).length;
-      col.hidden = !!q && quedan === 0;
+      col.hidden = !!pal.length && quedan === 0;
     });
 
-    if (limpiar) limpiar.hidden = !q;
-    if (vacio) vacio.hidden = !(q && hallados === 0);
-    if (cuenta) {
-      cuenta.textContent = !q ? ""
+    if (limpiar) limpiar.hidden = !pal.length;
+    if (vacio) vacio.hidden = !(pal.length && hallados === 0);
+    if (marcador) {
+      marcador.textContent = !pal.length ? ""
         : hallados === 1 ? "1 eje temático" : hallados + " ejes temáticos";
     }
   }
@@ -196,6 +116,7 @@
     input.addEventListener("keydown", function (ev) {
       if (ev.key === "Escape") { input.value = ""; filtrar(""); }
     });
+    if (input.value.trim()) filtrar(input.value);   /* por si el navegador la recordo */
   }
   if (limpiar) {
     limpiar.addEventListener("click", function () {
