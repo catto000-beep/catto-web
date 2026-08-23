@@ -5,16 +5,28 @@
    adentro de cada publicación, páginas sueltas y archivos de
    descargas, con el pedacito de texto donde aparece.
 
-   El índice vive aparte, en assets/js/buscador-datos.js (unos 320 kB
-   comprimido, y creciendo con cada tema que se publica), y no
-   se baja hasta que alguien toca el buscador: así la portada sigue
-   abriendo liviana. Ese archivo lo arma docs/generar-indice.js y hay
-   que volver a correrlo cuando se agrega o se cambia una publicación.
+   El índice vive aparte y no se baja hasta que alguien toca el buscador,
+   así la portada sigue abriendo liviana. Está partido en cinco archivos:
+   buscador-datos.js es el núcleo (unos 40 kB comprimido) y alcanza para
+   que aparezcan resultados enseguida; buscador-datos-4/5/6/7.js traen las
+   secciones de cada año y llegan detrás. Se regeneran con el script del
+   scratchpad partir_indice.py.
    ============================================================ */
 (function () {
   "use strict";
 
-  var DATOS = "/assets/js/buscador-datos.js";
+  /* El índice está partido en varios archivos: primero el núcleo —publicaciones,
+     páginas y una entrada por tema—, que ya alcanza para mostrar resultados, y
+     después las secciones de cada año, que se van sumando solas y refrescan lo
+     que ya está en pantalla. Además, tocar un año no invalida el caché del
+     resto. */
+  var DATOS = [
+    "/assets/js/buscador-datos.js",
+    "/assets/js/buscador-datos-4.js",
+    "/assets/js/buscador-datos-5.js",
+    "/assets/js/buscador-datos-6.js",
+    "/assets/js/buscador-datos-7.js"
+  ];
   var TOPE = 10;          /* resultados que se muestran */
   var ANCHO = 150;        /* largo del pedacito de texto de cada resultado */
 
@@ -44,23 +56,30 @@
     });
   }
 
+  function bajar(url, luego) {
+    var s = document.createElement("script");
+    s.src = url;
+    s.onload = luego;
+    s.onerror = luego;                       /* si falta una parte, se sigue con el resto */
+    document.head.appendChild(s);
+  }
+
+  /* refresca la lista con lo que haya en pantalla, para cuando llega una parte */
+  function refrescar() {
+    preparar(window.CATTO_INDICE || []);
+    if (el.input && el.input.value.trim()) pintar(el.input.value);
+  }
+
   function traer(luego) {
     if (indice) { luego(); return; }
     if (pidiendo) return;
     pidiendo = true;
-    var s = document.createElement("script");
-    s.src = DATOS;
-    s.onload = function () {
+    bajar(DATOS[0], function () {
       pidiendo = false;
       preparar(window.CATTO_INDICE || []);
       luego();
-    };
-    s.onerror = function () {
-      pidiendo = false;
-      indice = [];
-      luego();
-    };
-    document.head.appendChild(s);
+      for (var k = 1; k < DATOS.length; k++) { bajar(DATOS[k], refrescar); }
+    });
   }
 
   /* ---- búsqueda ----
