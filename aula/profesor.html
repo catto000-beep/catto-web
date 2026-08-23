@@ -738,7 +738,9 @@ function verEntregaArchivos(entregaId){
 async function leerPDF(file){
   if(!window.pdfjsLib) throw new Error('No cargó el lector de PDF. Revisá la conexión y recargá.');
   const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  // isEvalSupported en falso cierra la via de la CVE-2024-4367, que permite
+  // ejecutar javascript desde un PDF preparado. La biblioteca es la 3.11.174.
+  const pdf = await pdfjsLib.getDocument({ data: buf, isEvalSupported: false }).promise;
   // En la libreta del CIDI cada estudiante es un único texto "APELLIDO, NOMBRE".
   const NAME = /^[A-Za-zÁÉÍÓÚÑáéíóúñÜüçÇ'’.\- ]+,\s+[A-Za-zÁÉÍÓÚÑáéíóúñÜüçÇ'’.\- ]+$/;
   const items = [];

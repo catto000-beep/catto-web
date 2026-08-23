@@ -12,13 +12,22 @@
 // ============================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ORIGENES = new Set(["https://catto.ar", "https://www.catto.ar"]);
+
+// Solo se le responde a catto.ar. Hoy no hay CSRF posible porque el JWT viaja
+// en una cabecera y otro sitio no puede obtenerlo, pero acotarlo no cuesta nada.
+function corsDe(req: Request) {
+  const o = req.headers.get("Origin") || "";
+  return {
+    "Access-Control-Allow-Origin": ORIGENES.has(o) ? o : "https://catto.ar",
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
 
 Deno.serve(async (req) => {
+  const cors = corsDe(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
@@ -29,16 +38,16 @@ Deno.serve(async (req) => {
     // 1) Verificar que quien llama es el PROFESOR
     const jwt = (req.headers.get("Authorization") || "").replace("Bearer ", "");
     const { data: userData, error: uerr } = await admin.auth.getUser(jwt);
-    if (uerr || !userData?.user) return json({ error: "No autenticado." }, 401);
+    if (uerr || !userData?.user) return json(cors, { error: "No autenticado." }, 401);
     const { data: perfil } = await admin.from("perfil").select("rol").eq("id", userData.user.id).single();
-    if (!perfil || perfil.rol !== "profesor") return json({ error: "Solo el profesor puede importar." }, 403);
+    if (!perfil || perfil.rol !== "profesor") return json(cors, { error: "Solo el profesor puede importar." }, 403);
 
     // 2) Datos de entrada
     const body = await req.json();
     const cursoId = body.curso_id;
     const dominio = body.dominio || "aula.catto.ar";
     const estudiantes = Array.isArray(body.estudiantes) ? body.estudiantes : [];
-    if (!cursoId || !estudiantes.length) return json({ error: "Falta el curso o la lista está vacía." }, 400);
+    if (!cursoId || !estudiantes.length) return json(cors, { error: "Falta el curso o la lista está vacía." }, 400);
 
     // 3) Usuarios ya existentes (para no duplicar)
     const { data: existentes } = await admin.from("perfil").select("usuario");
@@ -78,20 +87,26 @@ Deno.serve(async (req) => {
       creados.push({ nombre, apellido, usuario, password });
     }
 
-    return json({ creados, omitidos });
+    return json(cors, { creados, omitidos });
   } catch (err) {
-    return json({ error: String((err as Error)?.message || err) }, 500);
+    return json(cors, { error: String((err as Error)?.message || err) }, 500);
   }
 });
 
-function json(obj: unknown, status = 200) {
+function json(cors: Record<string, string>, obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } });
 }
 function slug(s: string) {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 function genPass() {
-  const chars = "abcdefghijkmnpqrstuvwxyz23456789"; // sin caracteres ambiguos (0/O, 1/l)
-  let p = ""; for (let i = 0; i < 8; i++) p += chars[Math.floor(Math.random() * chars.length)];
+  // crypto.getRandomValues, no Math.random: Math.random no es criptografico y
+  // su estado se puede reconstruir observando salidas. El rechazo por modulo
+  // se evita porque 256 es multiplo de 32, el largo del alfabeto.
+  const chars = "abcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  let p = "";
+  for (let i = 0; i < bytes.length; i++) p += chars[bytes[i] % chars.length];
   return p;
 }
