@@ -44,3 +44,24 @@
   }, {passive:true});
   marcar();
 })();
+
+/* ============================================================
+   Deja anotada la ultima pagina de tema leida, para la tira
+   "segui donde ibas" de la portada. Se guarda solo en el navegador
+   de quien lee: no sale del equipo.
+   ============================================================ */
+(function(){
+  var h1 = document.querySelector('.doc h1');
+  if(!h1) return;
+  var up = document.querySelector('.tbar .up');      // "Mapa de Temas · Materia"
+  var anio = document.querySelector('.tbar .anio');
+  try{
+    localStorage.setItem('cattoUltimoTema', JSON.stringify({
+      u: location.pathname,
+      t: h1.textContent.trim(),
+      m: up ? up.textContent.replace(/^[^·]*·\s*/, '') : '',
+      a: anio ? anio.textContent.trim() : '',
+      f: Date.now()
+    }));
+  }catch(e){}
+})();
