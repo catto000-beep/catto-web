@@ -137,6 +137,9 @@
     if (quieto) {
       tomarControl(0);
       pintar();
+      /* tomarControl borra la nota, pero aca hace falta: es la unica manera
+         de ver los demas estados. */
+      nota.textContent = "tocá la figura para ver los demás estados";
     } else {
       cuenta.textContent = "1 / " + e.pasos;
     }
