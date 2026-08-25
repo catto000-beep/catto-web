@@ -144,7 +144,7 @@
     border:1px solid var(--line);border-radius:24px;padding:9px 16px;color:var(--txt);
     font-size:13px;text-decoration:none;box-shadow:0 8px 30px rgba(0,0,0,.45);backdrop-filter:blur(8px)}
   .backbar a:hover{border-color:var(--accent);color:var(--accent)}
-  /* Ocultar el encabezado al hacer scroll hacia abajo (reaparece al subir) */
+  /* El encabezado se ve solo con la pagina arriba de todo (ver el script del final) */
   header.top{transition:transform .28s ease}
   header.top.hd-hide{transform:translateY(-100%)}
 
@@ -433,14 +433,30 @@ switchView('mapa');
 (function(){
   const header = document.querySelector('header.top');
   if(!header) return;
-  let lastY = 0;
-  window.addEventListener('scroll', ()=>{
+
+  /* El encabezado se ve unicamente con la pagina arriba de todo. Son dos
+     marcas distintas y no una sola a proposito: entre ellas queda una zona
+     muerta donde no se toca nada. Con un unico umbral, un temblor de dos
+     pixeles justo en el borde —o el rebote del scroll del celular— lo haria
+     aparecer y desaparecer a repeticion. */
+  const MOSTRAR = 8;    // hasta aca se considera que estamos arriba de todo
+  const OCULTAR = 56;   // recien pasando esta marca se esconde
+
+  let oculto = false;
+
+  function revisar(){
     const y = window.scrollY || document.documentElement.scrollTop || 0;
-    if(Math.abs(y - lastY) < 6) return;          // ignora micro-movimientos
-    if(y > lastY && y > 140) header.classList.add('hd-hide');   // bajando
-    else header.classList.remove('hd-hide');                    // subiendo
-    lastY = y;
-  }, {passive:true});
+    let nuevo = oculto;
+    if(y <= MOSTRAR)      nuevo = false;
+    else if(y > OCULTAR)  nuevo = true;
+    /* entre las dos marcas se queda como estaba */
+    if(nuevo === oculto) return;     // no se toca el DOM si no cambia nada
+    oculto = nuevo;
+    header.classList.toggle('hd-hide', oculto);
+  }
+
+  window.addEventListener('scroll', revisar, {passive:true});
+  revisar();   // por si se entra con la pagina ya corrida
 })();
 </script>
 <script src="../../assets/js/starfield.js?v=2"></script>
