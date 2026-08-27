@@ -78,7 +78,8 @@
       <h1>Estudiantes</h1>
       <div class="crumb">Cuentas por curso</div>
       <div class="inline" style="margin-bottom:18px">
-        <button class="btn sm" style="width:auto" onclick="formImportar()">📥 Importar lista del curso</button>
+        <button class="btn sm" style="width:auto" onclick="formAgregarEstudiante()">➕ Agregar estudiante</button>
+        <button class="btn ghost sm" style="width:auto" onclick="formImportar()">📥 Importar lista del curso</button>
       </div>
       <div id="estudBox"><div class="empty">Cargando…</div></div>
     </section>
@@ -411,7 +412,7 @@ function cursoEstudCard(nombre, alumnos){
 }
 function renderEstud(){
   const box=document.getElementById('estudBox');
-  if(!ESTUD.length){ box.innerHTML='<div class="empty">Todavía no hay estudiantes cargados. Usá “📥 Importar lista del curso”.</div>'; return; }
+  if(!ESTUD.length){ box.innerHTML='<div class="empty">Todavía no hay estudiantes cargados. Agregalos de a uno con “➕ Agregar estudiante”, o todos juntos con “📥 Importar lista del curso”.</div>'; return; }
   let html = CURSOS.map(c=>cursoEstudCard(c.nombre, ESTUD.filter(e=>e.curso_id===c.id))).join('');
   const sinCurso = ESTUD.filter(e=>!CURSOS.find(c=>c.id===e.curso_id));
   if(sinCurso.length) html += cursoEstudCard('Sin curso asignado', sinCurso);
@@ -781,6 +782,66 @@ async function cargarPDF(file){
     msg.style.color='var(--ok)'; msg.textContent=`✓ ${lista.length} estudiante(s) leídos del PDF. Revisá la previsualización abajo.`;
     previsualizar();
   }catch(e){ msg.style.color='var(--hot)'; msg.textContent='Error leyendo PDF: '+e.message; }
+}
+
+/* ---------- Alta de un estudiante suelto ----------
+   Reusa la misma Edge Function que la importacion masiva, con una lista de
+   uno: asi la cuenta se crea igual, con la misma verificacion de que quien
+   llama es el profesor, y sale por el mismo lugar el usuario y la clave. */
+function formAgregarEstudiante(){
+  if(!CURSOS.length) return alert('Primero creá un curso.');
+  showModal(`<div class="mh"><h3>Agregar estudiante</h3><button class="x" onclick="closeM()">✕</button></div>
+   <div class="mb">
+     <div><label>Apellido</label><input id="g_ape" autocomplete="off" placeholder="García"></div>
+     <div><label>Nombre</label><input id="g_nom" autocomplete="off" placeholder="Juan"></div>
+     <div><label>Curso</label><select id="g_curso">${CURSOS.map(c=>`<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}</select></div>
+     <div id="g_prev" class="note" style="margin-top:4px">El usuario se arma solo con el apellido y el nombre.</div>
+   </div>
+   <div class="mf">
+     <button class="btn ghost sm" style="width:auto" onclick="closeM()">Cancelar</button>
+     <button class="btn sm" id="g_btn" style="width:auto" onclick="agregarEstudiante()">Crear cuenta</button>
+   </div>`);
+  const ape=document.getElementById('g_ape'), nom=document.getElementById('g_nom');
+  [ape,nom].forEach(i=>{
+    i.addEventListener('input', previsualizarUno);
+    i.addEventListener('keydown', e=>{ if(e.key==='Enter') agregarEstudiante(); });
+  });
+  ape.focus();
+}
+function previsualizarUno(){
+  const apellido=(document.getElementById('g_ape').value||'').trim();
+  const nombre=(document.getElementById('g_nom').value||'').trim();
+  const box=document.getElementById('g_prev');
+  if(!apellido || !nombre){
+    box.innerHTML='El usuario se arma solo con el apellido y el nombre.'; return;
+  }
+  const u = genUsuarios([{apellido, nombre}])[0].usuario;
+  box.innerHTML = `Se va a crear el usuario <code>${esc(u)}</code>, con una contraseña al azar que vas a ver en la pantalla siguiente.`;
+}
+async function agregarEstudiante(){
+  const apellido=(document.getElementById('g_ape').value||'').trim();
+  const nombre=(document.getElementById('g_nom').value||'').trim();
+  const box=document.getElementById('g_prev');
+  if(!apellido || !nombre){
+    box.innerHTML='<span style="color:var(--warn)">Faltan el apellido y el nombre.</span>';
+    document.getElementById(apellido?'g_nom':'g_ape').focus();
+    return;
+  }
+  const curso_id = parseInt(document.getElementById('g_curso').value);
+  const cursoNombre = CURSOS.find(c=>c.id===curso_id)?.nombre || '';
+  const btn=document.getElementById('g_btn'); btn.disabled=true; btn.textContent='Creando…';
+  try{
+    const { data, error } = await sb.functions.invoke('importar-estudiantes', {
+      body:{ curso_id, estudiantes:[{ nombre, apellido }], dominio: window.AULA_CONFIG.EMAIL_DOMAIN }
+    });
+    if(error) throw error;
+    if(data && data.error) throw new Error(data.error);
+    await cargarTodo();
+    mostrarResultado(data, cursoNombre);
+  }catch(e){
+    alert('Error: '+e.message);
+    btn.disabled=false; btn.textContent='Crear cuenta';
+  }
 }
 
 /* ---------- Importación masiva de estudiantes ---------- */
