@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Banco de instrumentos virtual: un osciloscopio analógico de dos canales y un generador de funciones, con cables BNC que se enchufan arrastrando. Se manejan las perillas de VOLTS/DIV, TIEMPO/DIV y disparo, y se lee la onda contando divisiones en la pantalla.">
-<title>Simulador de instrumental · Osciloscopio y generador · catto.ar</title>
+<meta name="description" content="Banco de instrumentos virtual: un osciloscopio analógico de dos canales, dos generadores de funciones, un multiplicador analógico y un sumador, con cables BNC que se enchufan arrastrando. Sirve para armar una doble banda lateral con portadora suprimida y una AM, y para leer la onda contando divisiones.">
+<title>Simulador de instrumental · Osciloscopio, generadores y modulación · catto.ar</title>
 <link rel="canonical" href="https://catto.ar/publicaciones/simulador-instrumental">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -13,8 +13,8 @@
 <meta name="theme-color" content="#0d1117">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Catto">
-<meta property="og:title" content="Simulador de instrumental · Osciloscopio y generador de funciones">
-<meta property="og:description" content="Un osciloscopio analógico de dos canales y un generador de funciones sobre la mesa, con cables BNC que se enchufan arrastrando. Para aprender a medir contando divisiones.">
+<meta property="og:title" content="Simulador de instrumental · Osciloscopio, generadores y modulación">
+<meta property="og:description" content="Osciloscopio de dos canales, dos generadores de funciones, un multiplicador y un sumador, con cables BNC que se enchufan arrastrando. Para armar una DBL-PS y una AM y verlas en pantalla.">
 <meta property="og:url" content="https://catto.ar/publicaciones/simulador-instrumental">
 <meta property="og:image" content="https://catto.ar/assets/img/chancho-volador.png">
 <meta property="og:locale" content="es_AR">
@@ -39,28 +39,36 @@
     background:linear-gradient(180deg,rgba(31,111,235,.10),transparent);
   }
   .top h1{margin:0;font-size:23px;letter-spacing:.2px}
-  .top .sub{color:var(--muted);font-size:13.5px;margin-top:5px;max-width:80ch}
+  .top .sub{color:var(--muted);font-size:13.5px;margin-top:5px;max-width:84ch}
   .volver{display:inline-flex;align-items:center;gap:7px;color:#9aa7b4;font-size:13px;
     text-decoration:none;margin-bottom:10px}
   .volver span.ic{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
     background:linear-gradient(135deg,#1f6feb,#a371f7);font-size:13px}
 
-  main{max-width:1180px;margin:0 auto;padding:0 20px}
+  main{max-width:1620px;margin:0 auto;padding:0 20px}
   section{margin-top:26px}
   h2.t{font-size:16px;margin:0 0 4px;letter-spacing:.2px}
   p.st{color:var(--muted);font-size:13.5px;margin:0 0 14px}
 
   /* ---------------- la mesa ---------------- */
+  .mesa-scroll{overflow-x:auto;overflow-y:hidden;border-radius:16px;
+    -webkit-overflow-scrolling:touch}
   .mesa{
-    position:relative; display:flex; gap:18px; flex-wrap:wrap;
-    padding:18px 18px 140px; border-radius:16px;
+    position:relative; display:flex; flex-direction:column; gap:104px;
+    min-width:1240px; padding:18px 18px 34px; border-radius:16px;
     background:linear-gradient(180deg,#12161d,#0f1319);
     border:1px solid var(--line);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
   }
-  #osc{width:calc(61.9% - 9px)}
-  #gen{width:calc(38.1% - 9px)}
-  #osc,#gen{height:auto;display:block;min-width:0;
+  /* Las dos filas reparten el mismo total de unidades y tienen la misma
+     cantidad de huecos, así que todo el banco queda a una sola escala. */
+  .fila{display:flex;gap:18px;align-items:flex-start}
+  .fila > *{min-width:0}
+  #osc{flex:700 1 0}
+  #gen1,#gen2{flex:430 1 0}
+  .hueco{flex:1060 1 0;display:block;height:1px}
+  #mul,#sum{flex:250 1 0}
+  #osc,#gen1,#gen2,#mul,#sum{height:auto;display:block;
     filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
   #cables{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
   .mesa text{font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
@@ -71,16 +79,19 @@
   .clic{cursor:pointer}
   .jack{cursor:grab;touch-action:none}
 
-  .pista{color:var(--soft);font-size:12.5px;margin:10px 2px 0;display:flex;
-    gap:14px;flex-wrap:wrap;align-items:center}
+  .pista{color:var(--soft);font-size:12.5px;margin:12px 2px 0;display:flex;
+    gap:12px;flex-wrap:wrap;align-items:center}
+  .pista .sep{width:1px;height:20px;background:var(--line)}
   .btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);
     border-radius:9px;padding:7px 13px;font-size:12.5px;cursor:pointer;font-family:inherit}
   .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.fuerte{border-color:#2f4a6d;background:#16233a;color:#cfe3ff}
+  .btn.fuerte:hover{border-color:var(--accent);color:#fff}
   label.chk{display:inline-flex;align-items:center;gap:7px;cursor:pointer;
     color:var(--muted);font-size:12.5px}
 
   /* ---------------- lectura ---------------- */
-  .rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
   .caja{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .caja h3{margin:0 0 8px;font-size:12px;letter-spacing:1.1px;text-transform:uppercase;
     color:var(--accent);font-weight:600}
@@ -104,11 +115,15 @@
   ol.pract li.ok{color:#dbe6dd}
   ol.pract li.ok::before{content:"✓";background:rgba(63,185,80,.16);border-color:var(--ok);color:var(--ok)}
 
-  .texto{max-width:78ch}
+  .texto{max-width:80ch}
   .texto p{font-size:14.5px;color:#cdd6df}
   .texto h3{font-size:15px;margin:22px 0 6px}
   .texto ul{font-size:14.5px;color:#cdd6df;padding-left:20px}
   .texto li{margin:5px 0}
+  .form{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:8px;padding:11px 16px;margin:12px 0;font-size:15px;color:#e6edf3;
+    overflow-x:auto}
+  .form span{display:block;font-size:12.5px;color:var(--muted);margin-top:5px}
 
   .backbar{position:fixed;right:16px;bottom:16px;z-index:200}
   .backbar a{display:inline-flex;align-items:center;gap:7px;background:rgba(22,27,34,.92);
@@ -129,14 +144,12 @@
     transform:translate(-50%,-50%);filter:blur(7px);border-radius:50%;
     background:radial-gradient(circle at 50% 55%, rgba(240,214,170,.24), rgba(230,160,150,.10) 45%, transparent 70%)}
 
-  .arrastrar-mesa{display:none;color:var(--soft);font-size:12.5px}
+  .arrastrar-mesa{display:none}
+  @media (max-width:1300px){ .arrastrar-mesa{display:inline} }
   @media (max-width:900px){
-    /* apilar los equipos obliga al cable a cruzar el frente del de abajo.
-       En su lugar la mesa se corre de costado, como se recorre un banco */
-    .mesa{min-width:1120px;padding:16px 16px 130px}
-    .arrastrar-mesa{display:block}
     header.top{padding:20px 18px 16px}
     .top h1{font-size:20px}
+    main{padding:0 12px}
   }
 </style>
 </head>
@@ -151,12 +164,14 @@
 <header class="top">
   <a class="volver" href="/"><span class="ic">🐷</span>Volver a catto.ar</a>
   <h1>🔬 Simulador de instrumental</h1>
-  <div class="sub">Un osciloscopio analógico de dos canales y un generador de funciones sobre la
-    mesa. Los cables BNC se enchufan arrastrando desde un conector hasta el otro, y todas las
-    perillas del frente andan. Es el banco del laboratorio de
-    <a href="/publicaciones/mapa-electronica/temas/osciloscopio">El osciloscopio</a> y
-    <a href="/publicaciones/mapa-electronica/temas/mediciones-ca">Mediciones en CA</a>,
-    para practicar antes de tocar el equipo de verdad.</div>
+  <div class="sub">Un banco con cinco equipos: el osciloscopio analógico de dos canales, dos
+    generadores de funciones, un multiplicador analógico y un sumador. Los cables BNC se enchufan
+    arrastrando de un conector al otro y todas las perillas del frente andan. Alcanza para medir
+    una señal contando divisiones y también para fabricar una <b>doble banda lateral con portadora
+    suprimida</b> y una <b>modulación de amplitud</b>, y verlas en pantalla. Es el banco de
+    <a href="/publicaciones/mapa-electronica/temas/osciloscopio">El osciloscopio</a>,
+    <a href="/publicaciones/mapa-electronica/temas/mediciones-ca">Mediciones en CA</a> y
+    <a href="/publicaciones/mc1496-modulador">el modulador MC1496</a>.</div>
 </header>
 
 <main>
@@ -164,79 +179,96 @@
 <section>
   <div class="mesa-scroll"><div class="mesa" id="mesa">
 
-    <!-- =================== OSCILOSCOPIO =================== -->
-    <svg id="osc" viewBox="0 0 700 520" fill="#ccd4dd" role="img"
-         aria-label="Frente de un osciloscopio analógico de dos canales">
-      <defs>
-        <linearGradient id="gCaja" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#5c646f"/><stop offset=".5" stop-color="#484f59"/>
-          <stop offset="1" stop-color="#343a43"/>
-        </linearGradient>
-        <linearGradient id="gPanel" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#4a515c"/><stop offset="1" stop-color="#3b414b"/>
-        </linearGradient>
-        <linearGradient id="gBox" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#434a54"/><stop offset="1" stop-color="#3a4049"/>
-        </linearGradient>
-        <radialGradient id="gPerilla" cx=".34" cy=".28" r=".9">
-          <stop offset="0" stop-color="#727a86"/><stop offset=".5" stop-color="#3e444d"/>
-          <stop offset="1" stop-color="#1e2228"/>
-        </radialGradient>
-        <radialGradient id="gTapa" cx=".34" cy=".28" r=".85">
-          <stop offset="0" stop-color="#828a96"/><stop offset="1" stop-color="#383d45"/>
-        </radialGradient>
-        <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#4e535a"/><stop offset=".22" stop-color="#cfd4da"/>
-          <stop offset=".5" stop-color="#8b9199"/><stop offset=".8" stop-color="#c9ced5"/>
-          <stop offset="1" stop-color="#454a51"/>
-        </linearGradient>
-        <linearGradient id="gMetal2" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#3a3f45"/><stop offset=".25" stop-color="#a9aeb5"/>
-          <stop offset=".55" stop-color="#6e737a"/><stop offset=".85" stop-color="#a4a9b0"/>
-          <stop offset="1" stop-color="#33373d"/>
-        </linearGradient>
-        <radialGradient id="gPantalla" cx=".5" cy=".4" r=".78">
-          <stop offset="0" stop-color="#0e1c14"/><stop offset="1" stop-color="#040806"/>
-        </radialGradient>
-        <linearGradient id="gVidrio" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#ffffff" stop-opacity=".075"/>
-          <stop offset=".38" stop-color="#ffffff" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="gBoton" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#535a65"/><stop offset="1" stop-color="#383e47"/>
-        </linearGradient>
-        <linearGradient id="gBotonOn" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#e6ebf2"/><stop offset="1" stop-color="#b9c2cd"/>
-        </linearGradient>
-        <linearGradient id="gLogo" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#1f6feb"/><stop offset="1" stop-color="#a371f7"/>
-        </linearGradient>
-        <linearGradient id="gDisplay" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#1b0d0c"/><stop offset="1" stop-color="#100706"/>
-        </linearGradient>
-        <filter id="fFosforo" x="-15%" y="-25%" width="130%" height="150%">
-          <feGaussianBlur stdDeviation="2.6"/>
-        </filter>
-        <filter id="fLed" x="-120%" y="-120%" width="340%" height="340%">
-          <feGaussianBlur stdDeviation="2.4"/>
-        </filter>
-        <clipPath id="cPantalla"><rect x="26" y="68" width="380" height="304" rx="10"/></clipPath>
-      </defs>
-    </svg>
+    <div class="fila">
+      <!-- =================== OSCILOSCOPIO =================== -->
+      <svg id="osc" viewBox="0 0 700 520" fill="#ccd4dd" role="img"
+           aria-label="Frente de un osciloscopio analógico de dos canales">
+        <defs>
+          <linearGradient id="gCaja" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5c646f"/><stop offset=".5" stop-color="#484f59"/>
+            <stop offset="1" stop-color="#343a43"/>
+          </linearGradient>
+          <linearGradient id="gPanel" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#4a515c"/><stop offset="1" stop-color="#3b414b"/>
+          </linearGradient>
+          <linearGradient id="gBox" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#434a54"/><stop offset="1" stop-color="#3a4049"/>
+          </linearGradient>
+          <radialGradient id="gPerilla" cx=".34" cy=".28" r=".9">
+            <stop offset="0" stop-color="#727a86"/><stop offset=".5" stop-color="#3e444d"/>
+            <stop offset="1" stop-color="#1e2228"/>
+          </radialGradient>
+          <radialGradient id="gTapa" cx=".34" cy=".28" r=".85">
+            <stop offset="0" stop-color="#828a96"/><stop offset="1" stop-color="#383d45"/>
+          </radialGradient>
+          <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#4e535a"/><stop offset=".22" stop-color="#cfd4da"/>
+            <stop offset=".5" stop-color="#8b9199"/><stop offset=".8" stop-color="#c9ced5"/>
+            <stop offset="1" stop-color="#454a51"/>
+          </linearGradient>
+          <linearGradient id="gMetal2" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#3a3f45"/><stop offset=".25" stop-color="#a9aeb5"/>
+            <stop offset=".55" stop-color="#6e737a"/><stop offset=".85" stop-color="#a4a9b0"/>
+            <stop offset="1" stop-color="#33373d"/>
+          </linearGradient>
+          <radialGradient id="gPantalla" cx=".5" cy=".4" r=".78">
+            <stop offset="0" stop-color="#0e1c14"/><stop offset="1" stop-color="#040806"/>
+          </radialGradient>
+          <linearGradient id="gVidrio" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ffffff" stop-opacity=".075"/>
+            <stop offset=".38" stop-color="#ffffff" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="gBoton" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#535a65"/><stop offset="1" stop-color="#383e47"/>
+          </linearGradient>
+          <linearGradient id="gBotonOn" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e6ebf2"/><stop offset="1" stop-color="#b9c2cd"/>
+          </linearGradient>
+          <linearGradient id="gLogo" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1f6feb"/><stop offset="1" stop-color="#a371f7"/>
+          </linearGradient>
+          <linearGradient id="gDisplay" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1b0d0c"/><stop offset="1" stop-color="#100706"/>
+          </linearGradient>
+          <filter id="fFosforo" x="-15%" y="-25%" width="130%" height="150%">
+            <feGaussianBlur stdDeviation="2.6"/>
+          </filter>
+          <filter id="fLed" x="-120%" y="-120%" width="340%" height="340%">
+            <feGaussianBlur stdDeviation="2.4"/>
+          </filter>
+          <clipPath id="cPantalla"><rect x="26" y="68" width="380" height="304" rx="10"/></clipPath>
+        </defs>
+      </svg>
 
-    <!-- =================== GENERADOR =================== -->
-    <svg id="gen" viewBox="0 0 430 520" fill="#ccd4dd" role="img"
-         aria-label="Frente de un generador de funciones"></svg>
+      <!-- =================== GENERADORES =================== -->
+      <svg id="gen1" viewBox="0 0 430 520" fill="#ccd4dd" role="img"
+           aria-label="Frente del generador de funciones 1"></svg>
+      <svg id="gen2" viewBox="0 0 430 520" fill="#ccd4dd" role="img"
+           aria-label="Frente del generador de funciones 2"></svg>
+    </div>
+
+    <div class="fila">
+      <i class="hueco"></i>
+      <!-- =================== MÓDULOS =================== -->
+      <svg id="mul" viewBox="0 0 250 210" fill="#ccd4dd" role="img"
+           aria-label="Frente del multiplicador analógico"></svg>
+      <svg id="sum" viewBox="0 0 250 210" fill="#ccd4dd" role="img"
+           aria-label="Frente del sumador"></svg>
+    </div>
 
     <!-- =================== CABLES =================== -->
     <svg id="cables" aria-hidden="true"></svg>
   </div></div>
 
   <div class="pista">
-    <span>Arrastrá desde un conector <b>BNC</b> para tirar un cable. Soltalo sobre otro conector para enchufarlo.</span>
-    <span class="arrastrar-mesa">Deslizá la mesa de costado para llegar al otro equipo.</span>
-    <label class="chk"><input type="checkbox" id="ayudas"> Ayudas de lectura sobre la pantalla</label>
-    <button class="btn" id="bReset">Volver al estado inicial</button>
+    <span>Arrastrá desde un conector <b>BNC</b> para tirar un cable y soltalo sobre otro para
+      enchufarlo.<span class="arrastrar-mesa"> Deslizá la mesa de costado para llegar a todo.</span></span>
+    <span class="sep"></span>
+    <button class="btn fuerte" id="bDbl">Armar una DBL-PS</button>
+    <button class="btn fuerte" id="bAm">Armar una AM</button>
+    <span class="sep"></span>
+    <label class="chk"><input type="checkbox" id="ayudas"> Ayudas de lectura</label>
+    <button class="btn" id="bReset">Estado inicial</button>
     <button class="btn" id="bCables">Sacar los cables</button>
   </div>
 </section>
@@ -256,13 +288,15 @@
     <div class="caja">
       <h3>Práctica guiada</h3>
       <ol class="pract" id="pract">
-        <li data-p="conectado">Conectá la <b>SALIDA</b> del generador a la entrada <b>CH 1</b> del osciloscopio.</li>
-        <li data-p="senoidal">Elegí la función <b>senoidal</b>.</li>
-        <li data-p="mil">Llevá la frecuencia a <b>2 kHz</b>, con el dial y el multiplicador.</li>
-        <li data-p="seisvpp">Poné la amplitud en <b>4 Vpp</b>.</li>
+        <li data-p="conectado">Conectá la <b>SALIDA</b> del generador 1 a la entrada <b>CH 1</b>.</li>
+        <li data-p="senoidal">Elegí la función <b>senoidal</b> en el generador 1.</li>
+        <li data-p="dosk">Llevá su frecuencia a <b>2 kHz</b>, con el dial y el multiplicador.</li>
+        <li data-p="cuatro">Poné su amplitud en <b>4 Vpp</b>.</li>
         <li data-p="alto">Elegí el <b>VOLTS/DIV</b> para que la onda ocupe entre 4 y 7 divisiones de alto.</li>
         <li data-p="ancho">Elegí el <b>TIEMPO/DIV</b> para ver entre 2 y 3 ciclos completos.</li>
         <li data-p="firme">Pasá el disparo a <b>NORM</b> y dejá la imagen quieta.</li>
+        <li data-p="dbl">Armá la <b>DBL-PS</b>: moduladora al <b>X</b>, portadora al <b>Y</b>, y la salida <b>W</b> al CH 1.</li>
+        <li data-p="am">Convertila en <b>AM</b>: sumá la <b>W</b> con la portadora y llevá la <b>S</b> al CH 1.</li>
       </ol>
     </div>
   </div>
@@ -271,7 +305,7 @@
 <section class="texto">
   <h2 class="t">Cómo se usa</h2>
 
-  <h3>El generador arma la señal</h3>
+  <h3>Los generadores arman las señales</h3>
   <p>La frecuencia sale de dos controles que trabajan juntos: el dial grande da un número entre 0,2
     y 2, y la fila de botones lo multiplica por 1, 10, 100, 1000 y así hasta un millón. Poner 1 kHz
     es dejar el dial en 1 y apretar el multiplicador ×1k. Los generadores analógicos siempre se
@@ -279,8 +313,10 @@
   <p>La perilla de amplitud fija cuántos volts de pico a pico entrega, el atenuador de −20 dB
     divide esa salida por diez cuando hacen falta señales chicas, y el corrimiento continuo sube o
     baja toda la onda sumándole una componente de continua. La salida <b>SINC</b> es aparte: entrega
-    siempre una cuadrada de 0 a 4 V a la misma frecuencia, pensada para disparar otro equipo o para
-    mirar por el segundo canal.</p>
+    siempre una cuadrada de 0 a 4 V a la misma frecuencia, pensada para disparar otro equipo.</p>
+  <p>Los dos generadores son el mismo modelo. En los ejemplos de modulación al <b>1</b> lo usamos de
+    moduladora, que es la señal que lleva la información, y al <b>2</b> de portadora, que es la
+    señal rápida que la transporta.</p>
 
   <h3>El osciloscopio la dibuja</h3>
   <p>La pantalla está dividida en 10 divisiones a lo ancho y 8 a lo alto. Ese enrejado es toda la
@@ -296,31 +332,81 @@
 
   <h3>El disparo es lo que la deja quieta</h3>
   <p>Un osciloscopio analógico dibuja la onda de izquierda a derecha una y otra vez. Si cada barrido
-    arranca en un punto distinto de la señal, los dibujos no se superponen y la imagen corre. El
-    circuito de disparo resuelve eso: espera a que la señal pase por un nivel de tensión determinado
-    y recién ahí larga el barrido. Así todos los barridos empiezan en el mismo punto de la onda y la
-    imagen queda congelada.</p>
-  <p>La perilla de <b>NIVEL</b> elige a qué altura se hace esa comparación, y la de pendiente si se
-    dispara cuando la señal sube o cuando baja. En <b>AUTO</b>, si el nivel quedó fuera del alcance
-    de la señal el equipo larga el barrido igual, y por eso se ve la onda corriendo. En <b>NORM</b>
-    no larga nada y la pantalla queda en negro. Es el error más común del laboratorio, y ahora se
-    puede reproducir sin romper nada.</p>
+    empieza en un punto distinto de la señal, los dibujos no se superponen y la imagen corre. El
+    circuito de disparo espera a que la señal pase por un nivel de tensión determinado y recién ahí
+    larga el barrido, así que todos los barridos arrancan en el mismo punto de la onda.</p>
+  <p>En <b>AUTO</b>, si el nivel quedó fuera del alcance de la señal el equipo larga el barrido
+    igual, y por eso se ve la onda corriendo. En <b>NORM</b> no larga nada y la pantalla queda en
+    negro. Es el error más común del laboratorio, y acá se puede reproducir sin romper nada.</p>
+  <p>Cuando en la pantalla conviven dos frecuencias muy distintas, como en una modulación, conviene
+    disparar con la más lenta. Por eso en los dos ejemplos armados la moduladora va al canal 2 y el
+    disparo toma de ahí: así la envolvente queda quieta y no tiembla.</p>
+
+  <h3>El multiplicador y la doble banda lateral</h3>
+  <p>El multiplicador entrega en su salida el producto de sus dos entradas, dividido por diez. Esa
+    división no es un capricho: los integrados multiplicadores reales traen esa constante para que
+    dos señales de diez volts no den cien, que no entrarían en la fuente de alimentación.</p>
+  <div class="form">W = X · Y / 10 V
+    <span>Con las dos entradas en volts, la salida también queda en volts.</span></div>
+  <p>Si a la entrada X le ponemos la moduladora y a la Y la portadora, las dos senoidales, el
+    producto de dos cosenos da la identidad de siempre: dos cosenos de frecuencias nuevas, la suma
+    y la resta de las originales.</p>
+  <div class="form">cos(ω<sub>m</sub>t) · cos(ω<sub>c</sub>t) = ½ cos(ω<sub>c</sub>−ω<sub>m</sub>)t + ½ cos(ω<sub>c</sub>+ω<sub>m</sub>)t
+    <span>Las dos bandas laterales. La portadora sola no aparece por ningún lado.</span></div>
+  <p>Eso es una <b>doble banda lateral con portadora suprimida</b>: hay banda lateral inferior y
+    superior, y no hay portadora. En la pantalla se reconoce por dos cosas. La envolvente toca el
+    cero entre lomo y lomo, y en cada uno de esos cruces la fase de la portadora se da vuelta, así
+    que el dibujo parece rebotar contra el eje en vez de apoyarse. Con la moduladora al lado, en el
+    canal 2, se ve que hay un lomo por cada semiciclo de la moduladora: dos lomos por cada ciclo de
+    ella.</p>
+  <p>Es la señal que fabrica el <a href="/publicaciones/mc1496-modulador">modulador balanceado
+    MC1496</a>, que es un multiplicador de cuatro cuadrantes hecho integrado.</p>
+
+  <h3>El sumador y la AM</h3>
+  <p>Una AM común es una doble banda lateral a la que se le devuelve la portadora. Eso es
+    exactamente lo que hace el sumador: toma la salida del multiplicador por una entrada, la
+    portadora por la otra, y entrega la suma.</p>
+  <div class="form">S = A + B
+    <span>Saturando en ±12 V, que son los rieles de la fuente.</span></div>
+  <p>Sacando factor común la portadora queda a la vista de dónde sale la forma de la AM:</p>
+  <div class="form">V<sub>c</sub>·cos(ω<sub>c</sub>t) + (V<sub>m</sub>V<sub>c</sub>/10)·cos(ω<sub>m</sub>t)·cos(ω<sub>c</sub>t)
+    = V<sub>c</sub>·cos(ω<sub>c</sub>t) · [ 1 + (V<sub>m</sub>/10)·cos(ω<sub>m</sub>t) ]
+    <span>El corchete es la envolvente, y lo que multiplica al coseno de adentro es el índice de
+      modulación.</span></div>
+  <p>O sea que acá el <b>índice de modulación</b> es la amplitud de pico de la moduladora dividida
+    por los 10 V de la constante del multiplicador. Con la moduladora en 10 Vpp su pico es 5 V y el
+    índice da 0,5, un 50 %. Subiéndola al máximo de 20 Vpp el pico llega a 10 V y el índice da 1: la
+    envolvente toca el cero y la modulación es del 100 %. Más que eso no se puede, y por eso el
+    generador no entrega más.</p>
+  <p>La diferencia con la doble banda se ve de un vistazo. En la AM la envolvente nunca cruza el
+    cero mientras el índice sea menor que uno, y la portadora no cambia de fase en ningún momento.
+    Se puede ir y venir entre las dos con los botones de acá arriba y mirar la pantalla.</p>
 
   <h3>Los modos de la pantalla</h3>
   <ul>
     <li><b>CH 1</b> y <b>CH 2</b> muestran un solo canal.</li>
-    <li><b>DUAL</b> muestra los dos, cada uno con su propia sensibilidad y su propia posición.</li>
+    <li><b>DUAL</b> muestra los dos, cada uno con su propia sensibilidad y su propia posición. Es el
+      modo de los dos ejemplos: arriba la señal modulada, abajo la moduladora.</li>
     <li><b>SUMA</b> dibuja la suma de los dos canales, que es lo que hace el amplificador vertical
-      cuando se lo deja sumar.</li>
+      cuando se lo deja sumar. No hay que confundirlo con el módulo sumador: acá la suma es del
+      dibujo, no de la señal, y no se puede sacar por ningún conector.</li>
     <li><b>X-Y</b> apaga la base de tiempo y usa el canal 1 para el eje horizontal y el 2 para el
-      vertical. Con la salida principal en un canal y la de sincronismo en el otro aparecen las
-      figuras de Lissajous, que sirven para comparar frecuencias y fases.</li>
+      vertical. Con dos senoidales aparecen las figuras de Lissajous, que sirven para comparar
+      frecuencias y fases. Con una AM y su moduladora aparece el trapecio de modulación, que es la
+      manera clásica de medir el índice sin contar divisiones.</li>
   </ul>
 
-  <p style="margin-top:22px;color:var(--soft);font-size:13px">Los dos frentes están inspirados en
-    los osciloscopios y generadores analógicos de banco que se usaron durante décadas en las
-    escuelas técnicas. No reproducen ningún equipo en particular: son un frente genérico armado con
-    la disposición de controles que casi todos comparten.</p>
+  <h3>Un detalle del banco</h3>
+  <p>Para armar la AM, la portadora tiene que ir a dos lugares a la vez: a la entrada Y del
+    multiplicador y a una entrada del sumador. Acá las salidas se reparten solas y aceptan varios
+    cables; las entradas, en cambio, admiten uno solo. En el laboratorio de verdad eso se resuelve
+    con una <b>T de BNC</b>, y hay que tener presente que al repartir una salida entre dos entradas
+    la carga cambia y la amplitud puede caer.</p>
+
+  <p style="margin-top:22px;color:var(--soft);font-size:13px">Los frentes están inspirados en los
+    equipos analógicos de banco que se usaron durante décadas en las escuelas técnicas. No
+    reproducen ningún modelo en particular: son frentes genéricos armados con la disposición de
+    controles que casi todos comparten.</p>
 </section>
 
 </main>
@@ -335,7 +421,7 @@
 var NS = "http://www.w3.org/2000/svg";
 function E(p, t, a){
   var n = document.createElementNS(NS, t);
-  if(a) for(var k in a){ if(a[k]!==null && a[k]!==undefined) n.setAttribute(k, a[k]); }
+  if(a) for(var k in a){ if(a[k] !== null && a[k] !== undefined) n.setAttribute(k, a[k]); }
   if(p) p.appendChild(n);
   return n;
 }
@@ -348,8 +434,6 @@ function coma(n, d){
   if(Math.abs(n) < Math.pow(10, -d) / 2) n = 0;   /* nada de "−0,00" */
   return n.toFixed(d).replace(".", ",");
 }
-
-/* punto del evento en las coordenadas internas de un svg */
 function ptSVG(svg, ev){
   var p = svg.createSVGPoint();
   p.x = ev.clientX; p.y = ev.clientY;
@@ -376,103 +460,205 @@ function fmtTiempo(t){
   return coma(t, 1) + " s";
 }
 function fmtSeg(t){
-  if(t < 1e-6) return coma(t * 1e9, 1) + " ns";
-  if(t < 1e-3) return coma(t * 1e6, 2) + " µs";
-  if(t < 1)    return coma(t * 1e3, 3) + " ms";
+  /* los cortes llevan medio dígito de tolerancia, si no un período de
+     0,999999 ms sale como "1000,00 µs" en vez de "1,000 ms" */
+  if(t < 0.99995e-6)  return coma(t * 1e9, 1) + " ns";
+  if(t < 0.999995e-3) return coma(t * 1e6, 2) + " µs";
+  if(t < 0.9999995)   return coma(t * 1e3, 3) + " ms";
   return coma(t, 3) + " s";
 }
 function fmtFrec(f){
-  /* los umbrales llevan medio dígito de tolerancia: 999,998 Hz se muestra
-     como 1,000 kHz y no como 1000,00 Hz */
+  /* con medio dígito de tolerancia: 999,998 Hz se muestra como 1,000 kHz */
   if(f >= 999950) return coma(f / 1e6, 3) + " MHz";
   if(f >= 999.95) return coma(f / 1e3, 3) + " kHz";
-  if(f >= 1)   return coma(f, 2) + " Hz";
+  if(f >= 1)      return coma(f, 2) + " Hz";
   return coma(f, 3) + " Hz";
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Estado de los dos equipos
+   Estado del banco
    ══════════════════════════════════════════════════════════════════ */
 var VDIV = [0.005,0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20];
 var TDIV = [0.2e-6,0.5e-6,1e-6,2e-6,5e-6,10e-6,20e-6,50e-6,
             0.1e-3,0.2e-3,0.5e-3,1e-3,2e-3,5e-3,10e-3,20e-3,50e-3,0.1,0.2,0.5];
 var RANGOS = [1,10,100,1000,10000,100000,1000000];
 var RANGOS_TXT = ["×1","×10","×100","×1k","×10k","×100k","×1M"];
+var RIEL = 12;                        /* saturación de los módulos, en volts */
+
+/* el dial vale 0,2·10^d, así que recorre de 0,2 a 2 */
+var D_1  = Math.log10(1 / 0.2);       /* dial que marca 1   */
+var D_2  = 1;                         /* dial que marca 2   */
+var D_05 = Math.log10(0.5 / 0.2);     /* dial que marca 0,5 */
 
 var INICIAL = {
   osc: { pot:true, inten:0.72, foco:0.42,
-         v1:8, v2:8, pos1:0, pos2:0, ac1:"CC", ac2:"CC",
-         modo:"CH1", t:9, posH:0,
+         v1:8, v2:8, pos1:1.8, pos2:-1.8, ac1:"CC", ac2:"CC",
+         modo:"DUAL", t:9, posH:0,
          trigFuente:"ch1", trigPend:1, trigModo:"AUTO", trigNivel:0.5 },
-  gen: { pot:true, func:"seno", dial:0.6989700043, rango:3, amp:0.3, off:0.5, sim:0.5,
+  gen1:{ pot:true, func:"seno", dial:D_1,  rango:3, amp:0.3, off:0.5, sim:0.5,
+         aten:false, salida:true },
+  gen2:{ pot:true, func:"seno", dial:D_05, rango:4, amp:0.3, off:0.5, sim:0.5,
          aten:false, salida:true }
 };
-var O = {}, G = {};
+var O = {}, GEN = {1:{}, 2:{}};
+function copiar(dst, src){ for(var k in src) dst[k] = src[k]; }
 function reset(){
-  var k;
-  for(k in INICIAL.osc) O[k] = INICIAL.osc[k];
-  for(k in INICIAL.gen) G[k] = INICIAL.gen[k];
+  copiar(O, INICIAL.osc); copiar(GEN[1], INICIAL.gen1); copiar(GEN[2], INICIAL.gen2);
 }
 reset();
 
-/* ---- lo que entrega el generador ---- */
-function frecGen(){
-  /* el dial recorre de 0,2 a 2 con escala logarítmica, como los diales reales */
-  return 0.2 * Math.pow(10, G.dial) * RANGOS[G.rango];
-}
-function ampGen(){ return G.amp * 20 * (G.aten ? 0.1 : 1); }   /* Vpp, 0 a 20 */
-function offGen(){ return (G.off - 0.5) * 20; }                /* −10 a +10 V  */
-function simGen(){ return 0.1 + G.sim * 0.8; }                 /* 10 % a 90 %  */
+/* ---- lo que entrega cada generador ---- */
+function frecGen(n){ return 0.2 * Math.pow(10, GEN[n].dial) * RANGOS[GEN[n].rango]; }
+function ampGen(n){ return GEN[n].amp * 20 * (GEN[n].aten ? 0.1 : 1); }   /* Vpp  */
+function offGen(n){ return (GEN[n].off - 0.5) * 20; }                     /* V cc */
+function simGen(n){ return 0.1 + GEN[n].sim * 0.8; }                      /* 10-90 % */
 
-function senalSalida(t){
-  if(!G.pot || !G.salida) return 0;
-  var f = frecGen(), s = simGen(), A = ampGen() / 2, y;
+function salidaGen(n, t){
+  var g = GEN[n];
+  if(!g.pot || !g.salida) return 0;
+  var f = frecGen(n), s = simGen(n), A = ampGen(n) / 2, y;
   var ph = t * f; ph = ph - Math.floor(ph);
-  if(G.func === "seno")      y = Math.sin(2 * Math.PI * ph);
-  else if(G.func === "cuad") y = ph < s ? 1 : -1;
+  if(g.func === "seno")      y = Math.sin(2 * Math.PI * ph);
+  else if(g.func === "cuad") y = ph < s ? 1 : -1;
   else                       y = ph < s ? (-1 + 2 * ph / s) : (1 - 2 * (ph - s) / (1 - s));
-  return y * A + offGen();
+  return y * A + offGen(n);
 }
-function senalSinc(t){
-  if(!G.pot) return 0;
-  var f = frecGen(), ph = t * f; ph = ph - Math.floor(ph);
+function sincGen(n, t){
+  if(!GEN[n].pot) return 0;
+  var ph = t * frecGen(n); ph = ph - Math.floor(ph);
   return ph < 0.5 ? 4 : 0;
 }
-function senalCruda(jack, t){
-  if(jack === "gen.out")  return senalSalida(t);
-  if(jack === "gen.sinc") return senalSinc(t);
-  return 0;
-}
 
-/* media de una señal a lo largo de un período: la que saca el acoplamiento en CA */
-var medias = { "gen.out":0, "gen.sinc":0 };
-function recalcularMedias(){
-  var P = 1 / frecGen(), i, N = 400, a = 0, b = 0;
-  for(i = 0; i < N; i++){ var t = P * i / N; a += senalSalida(t); b += senalSinc(t); }
-  medias["gen.out"] = a / N; medias["gen.sinc"] = b / N;
-}
+/* ══════════════════════════════════════════════════════════════════
+   La red de cables: quién alimenta a quién
+   Las entradas admiten un solo cable; las salidas se reparten.
+   ══════════════════════════════════════════════════════════════════ */
+var TIPO = {
+  "gen1.out":"s", "gen1.sinc":"s", "gen2.out":"s", "gen2.sinc":"s",
+  "mul.x":"e", "mul.y":"e", "mul.w":"s",
+  "sum.a":"e", "sum.b":"e", "sum.s":"s",
+  "osc.ch1":"e", "osc.ch2":"e"
+};
+var FUENTE = {};                    /* jack de entrada -> jack que lo alimenta */
+var SATURA = {mul:false, sum:false};
 
-/* ---- qué llega a cada canal ---- */
-function fuenteDe(ch){
+function reconstruirRed(){
+  FUENTE = {};
   for(var i = 0; i < CABLES.length; i++){
     var c = CABLES[i], a = c.a.jack, b = c.b.jack;
-    if(a === "osc." + ch && b) return b;
-    if(b === "osc." + ch && a) return a;
+    if(!a || !b) continue;
+    if(TIPO[a] === "e" && TIPO[b] === "s") FUENTE[a] = b;
+    if(TIPO[b] === "e" && TIPO[a] === "s") FUENTE[b] = a;
   }
-  return null;
+}
+
+/* La profundidad frena un lazo, por ejemplo la W del multiplicador metida en
+   su propia X. No se usa un conjunto de visitados porque una misma salida
+   puede alimentar las dos entradas de un módulo, que es elevar al cuadrado. */
+function valorEn(jack, t, prof){
+  if(!jack || prof > 5) return 0;
+  switch(jack){
+    case "gen1.out":  return salidaGen(1, t);
+    case "gen1.sinc": return sincGen(1, t);
+    case "gen2.out":  return salidaGen(2, t);
+    case "gen2.sinc": return sincGen(2, t);
+    case "mul.w":
+      return valorEn(FUENTE["mul.x"], t, prof + 1) *
+             valorEn(FUENTE["mul.y"], t, prof + 1) / 10;
+    case "sum.s":
+      return valorEn(FUENTE["sum.a"], t, prof + 1) +
+             valorEn(FUENTE["sum.b"], t, prof + 1);
+  }
+  return 0;
+}
+function valorJack(jack, t){
+  var v = valorEn(jack, t, 0);
+  /* los módulos no pueden pasarse de los rieles de su fuente */
+  if(jack === "mul.w" || jack === "sum.s") return clamp(v, -RIEL, RIEL);
+  return v;
+}
+
+/* qué generadores terminan alimentando un jack: sirve para elegir la ventana
+   de disparo y de medición, y para explicar la pantalla */
+function generadoresDe(jack, prof, acum){
+  acum = acum || {};
+  if(!jack || prof > 5) return acum;
+  if(jack === "gen1.out" || jack === "gen1.sinc"){ acum[1] = true; return acum; }
+  if(jack === "gen2.out" || jack === "gen2.sinc"){ acum[2] = true; return acum; }
+  if(jack === "mul.w"){
+    generadoresDe(FUENTE["mul.x"], prof + 1, acum);
+    generadoresDe(FUENTE["mul.y"], prof + 1, acum);
+  }else if(jack === "sum.s"){
+    generadoresDe(FUENTE["sum.a"], prof + 1, acum);
+    generadoresDe(FUENTE["sum.b"], prof + 1, acum);
+  }
+  return acum;
+}
+
+function fuenteDe(ch){ return FUENTE["osc." + ch] || null; }
+
+/* Ventana con la que se busca el disparo y se mide: el período más largo de
+   los generadores que llegan al canal. En una modulación ése es el de la
+   envolvente, que es el dibujo que se repite. */
+function periodoLargo(jack){
+  var g = generadoresDe(jack, 0, {}), P = 0, n;
+  for(n = 1; n <= 2; n++) if(g[n]){
+    var f = frecGen(n);
+    if(f > 0) P = Math.max(P, 1 / f);
+  }
+  return P;
+}
+function ventanaDe(ch){
+  var src = fuenteDe(ch);
+  return (src ? periodoLargo(src) : 0) || 1e-3;
+}
+function frecMaxDe(ch){
+  var src = fuenteDe(ch);
+  if(!src) return 1e3;
+  var g = generadoresDe(src, 0, {}), F = 0, n;
+  for(n = 1; n <= 2; n++) if(g[n]) F = Math.max(F, frecGen(n));
+  return F || 1e3;
+}
+
+/* ---- qué llega a cada canal, ya con el acoplamiento aplicado ---- */
+var MEDIA = {ch1:0, ch2:0};
+function recalcularMedias(){
+  var ch, i, N = 400;
+  for(ch in MEDIA){
+    var src = fuenteDe(ch);
+    if(!src){ MEDIA[ch] = 0; continue; }
+    var P = ventanaDe(ch), s = 0;
+    for(i = 0; i < N; i++) s += valorJack(src, P * i / N);
+    MEDIA[ch] = s / N;
+  }
 }
 function valorCanal(ch, t){
   var ac = ch === "ch1" ? O.ac1 : O.ac2;
   if(ac === "GND") return 0;
   var src = fuenteDe(ch);
   if(!src) return 0;
-  var v = senalCruda(src, t);
-  if(ac === "CA") v -= medias[src] || 0;
+  var v = valorJack(src, t);
+  if(ac === "CA") v -= MEDIA[ch];
   return v;
 }
 function vdivDe(ch){ return VDIV[ch === "ch1" ? O.v1 : O.v2]; }
 function posDe(ch){ return ch === "ch1" ? O.pos1 : O.pos2; }
 function nivelDisparo(){ return (O.trigNivel - 0.5) * 8 * vdivDe(O.trigFuente); }
+
+/* ¿algún módulo está pegado contra los rieles? */
+function revisarSaturacion(){
+  var pares = [["mul", "mul.w", "mul.x", "mul.y"], ["sum", "sum.s", "sum.a", "sum.b"]];
+  var res = {mul:false, sum:false}, k, j, N = 150;
+  for(k = 0; k < 2; k++){
+    var mod = pares[k][0], jack = pares[k][1];
+    if(!FUENTE[pares[k][2]] && !FUENTE[pares[k][3]]) continue;
+    var P = periodoLargo(jack) || 1e-3;
+    for(j = 0; j < N; j++){
+      if(Math.abs(valorEn(jack, P * j / N, 0)) > RIEL + 1e-9){ res[mod] = true; break; }
+    }
+  }
+  SATURA = res;
+}
 
 /* ══════════════════════════════════════════════════════════════════
    Piezas del frente
@@ -540,7 +726,7 @@ function arrastrar(g, svg, cx, cy, leer, escribir){
 /* perilla continua (0 a 1) */
 function perilla(svg, par, o){
   var g = E(par, "g", {class:"ctl", tabindex:0, role:"slider",
-                       "aria-label":o.aria || o.label || "perilla"});
+                       "aria-label":o.aria || "perilla"});
   var i, n = o.marcas === undefined ? 11 : o.marcas;
   for(i = 0; i < n; i++){
     var a = (-140 + 280 * i / (n - 1)) * Math.PI / 180;
@@ -585,17 +771,15 @@ function llaveRot(svg, par, o){
   }
   var rot = cuerpoPerilla(g, o.cx, o.cy, o.r);
   function pintar(){
-    var i = o.leer();
     rot.setAttribute("transform",
-      "rotate(" + (-140 + 280 * i / (n - 1)) + " " + o.cx + " " + o.cy + ")");
+      "rotate(" + (-140 + 280 * o.leer() / (n - 1)) + " " + o.cx + " " + o.cy + ")");
   }
   function ponerFrac(f){
     var idx = Math.round(f * (n - 1));
-    if(idx !== o.leer()){ o.set(idx); }
+    if(idx !== o.leer()) o.set(idx);
     pintar(); refrescar();
   }
-  arrastrar(g, svg, o.cx, o.cy,
-    function(){ return o.leer() / (n - 1); }, ponerFrac);
+  arrastrar(g, svg, o.cx, o.cy, function(){ return o.leer() / (n - 1); }, ponerFrac);
   g.addEventListener("wheel", function(ev){
     ev.preventDefault();
     o.set(clamp(o.leer() + (ev.deltaY < 0 ? 1 : -1), 0, n - 1)); pintar(); refrescar();
@@ -622,6 +806,7 @@ function ventana(par, x, y, w, h){
 }
 
 /* botón cuadrado que se enciende */
+var BOTONES = [];
 function boton(par, o){
   var g = E(par, "g", {class:"clic", tabindex:0, role:"button", "aria-label":o.aria || o.txt});
   var r = E(g, "rect", {x:o.x, y:o.y, width:o.w, height:o.h, rx:4,
@@ -646,11 +831,11 @@ function boton(par, o){
   BOTONES.push(pintar);
   return {pintar:pintar};
 }
-var BOTONES = [];
 
 /* llave deslizante de tres posiciones */
 function llave3(par, o){
-  var g = E(par, "g", {class:"clic", tabindex:0, role:"button", "aria-label":o.aria || "acoplamiento"});
+  var g = E(par, "g", {class:"clic", tabindex:0, role:"button",
+                       "aria-label":o.aria || "acoplamiento"});
   var h = 46, w = 15, x = o.cx - w / 2, y = o.cy - h / 2;
   E(g, "rect", {x:x, y:y, width:w, height:h, rx:6, fill:"#20242a", stroke:"#15181d"});
   var i;
@@ -659,10 +844,7 @@ function llave3(par, o){
        {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.4});
   var pal = E(g, "rect", {x:x + 1.6, y:y + 2, width:w - 3.2, height:13, rx:4,
                           fill:"url(#gMetal2)", stroke:"#15181d", "stroke-width":.6});
-  function pintar(){
-    var i = o.leer();
-    pal.setAttribute("y", y + 2 + i * (h - 17) / 2);
-  }
+  function pintar(){ pal.setAttribute("y", y + 2 + o.leer() * (h - 17) / 2); }
   function tocar(ev){
     ev.preventDefault(); ev.stopPropagation();
     o.set((o.leer() + 1) % 3); pintar(); refrescar();
@@ -680,8 +862,8 @@ function encendido(par, cx, cy, leer, set){
   var g = E(par, "g", {class:"clic", tabindex:0, role:"switch", "aria-label":"encendido"});
   E(g, "circle", {cx:cx, cy:cy, r:12, fill:"url(#gPerilla)", stroke:"#191d22"});
   E(g, "circle", {cx:cx, cy:cy, r:7.5, fill:"#2a2f36", stroke:"#15181d", "stroke-width":.8});
-  var m = E(g, "path", {d:"M " + cx + " " + (cy - 5) + " L " + cx + " " + (cy - 0.5),
-                        stroke:"#c9d2dc", "stroke-width":1.6, "stroke-linecap":"round", fill:"none"});
+  E(g, "path", {d:"M " + cx + " " + (cy - 5) + " L " + cx + " " + (cy - 0.5),
+                stroke:"#c9d2dc", "stroke-width":1.6, "stroke-linecap":"round", fill:"none"});
   E(g, "circle", {cx:cx, cy:cy + 0.6, r:3.6, fill:"none", stroke:"#c9d2dc", "stroke-width":1.3});
   var halo = E(par, "circle", {cx:cx - 28, cy:cy, r:5, fill:"#3fb950", filter:"url(#fLed)"});
   var led = E(par, "circle", {cx:cx - 28, cy:cy, r:3.4, fill:"#48d15e", stroke:"#0f1a12"});
@@ -698,29 +880,29 @@ function encendido(par, cx, cy, leer, set){
   return {pintar:pintar};
 }
 
-/* conector BNC de panel */
+/* conector BNC de panel. `dir` dice para dónde sale el cable: +1 abajo, −1 arriba */
+var JACKS = {};
 function bnc(par, o){
   var g = E(par, "g", {class:"jack", "data-jack":o.id, tabindex:0, role:"button",
                        "aria-label":"conector " + (o.aria || o.id)});
   E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r + 3, fill:"#23272d", stroke:"#15181d"});
-  E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r, fill:"url(#gMetal2)", stroke:"#1c1f24", "stroke-width":1});
-  /* las dos orejas del bayoneta */
+  E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r, fill:"url(#gMetal2)", stroke:"#1c1f24",
+                  "stroke-width":1});
   var i;
   for(i = 0; i < 2; i++){
     var a = (i ? 1 : -1) * Math.PI / 2;
     E(g, "rect", {x:o.cx + Math.cos(a) * (o.r - 1.5) - 2, y:o.cy - 3.2,
-                  width:4, height:6.4, rx:1.4, fill:"#aeb4bb", stroke:"#33383e", "stroke-width":.5});
+                  width:4, height:6.4, rx:1.4, fill:"#aeb4bb", stroke:"#33383e",
+                  "stroke-width":.5});
   }
   E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r * 0.62, fill:"#15171b", stroke:"#0c0e11"});
   E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r * 0.5, fill:"#e8e3d2", opacity:".9"});
   E(g, "circle", {cx:o.cx, cy:o.cy, r:1.7, fill:"#d8c98f", stroke:"#8a7c4e", "stroke-width":.6});
-  /* zona sensible generosa para el dedo */
   E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r + 6, fill:"transparent"});
-  JACKS[o.id] = g;
+  JACKS[o.id] = {g:g, dir:o.dir || 1};
   g.addEventListener("pointerdown", function(ev){ tomarJack(o.id, ev); });
   return g;
 }
-var JACKS = {};
 
 /* placa con la marca */
 function marca(par, x, y, modelo, detalle){
@@ -733,12 +915,25 @@ function marca(par, x, y, modelo, detalle){
   TX(par, x + 90, y + 21, detalle, {"font-size":8.6, fill:"#9aa5b1", "letter-spacing":1.5});
 }
 
+/* piloto chico de dos estados */
+function piloto(par, cx, cy, color){
+  var halo = E(par, "circle", {cx:cx, cy:cy, r:5.5, fill:color, filter:"url(#fLed)", opacity:"0"});
+  var led = E(par, "circle", {cx:cx, cy:cy, r:4, fill:"#2b2320", stroke:"#15181d",
+                              "stroke-width":.8});
+  return function(on){
+    halo.setAttribute("opacity", on ? ".9" : "0");
+    led.setAttribute("fill", on ? color : "#2b2320");
+  };
+}
+
 /* ══════════════════════════════════════════════════════════════════
    El frente del osciloscopio
    ══════════════════════════════════════════════════════════════════ */
 var svgOsc = document.getElementById("osc");
-var svgGen = document.getElementById("gen");
-var vent = {};   /* ventanitas de valor */
+var svgGen = {1:document.getElementById("gen1"), 2:document.getElementById("gen2")};
+var svgMul = document.getElementById("mul");
+var svgSum = document.getElementById("sum");
+var vent = {};
 var trazoCH1, trazoCH2, trazoXY, ledDisp, grupoAyudas, pantallaViva, filtroFoco;
 
 function armarOsciloscopio(){
@@ -757,21 +952,23 @@ function armarOsciloscopio(){
 
   var gr = E(s, "g", {"clip-path":"url(#cPantalla)"});
   var i, j;
-  /* enrejado de 10 por 8 divisiones */
   for(i = 1; i < 10; i++)
     E(gr, "line", {x1:26 + i * 38, y1:68, x2:26 + i * 38, y2:372,
-                   stroke:"#7fe3a0", "stroke-width":i === 5 ? .9 : .55, opacity:i === 5 ? ".38" : ".17"});
+                   stroke:"#7fe3a0", "stroke-width":i === 5 ? .9 : .55,
+                   opacity:i === 5 ? ".38" : ".17"});
   for(i = 1; i < 8; i++)
     E(gr, "line", {x1:26, y1:68 + i * 38, x2:406, y2:68 + i * 38,
-                   stroke:"#7fe3a0", "stroke-width":i === 4 ? .9 : .55, opacity:i === 4 ? ".38" : ".17"});
-  /* marquitas de 0,2 división sobre los ejes centrales */
+                   stroke:"#7fe3a0", "stroke-width":i === 4 ? .9 : .55,
+                   opacity:i === 4 ? ".38" : ".17"});
   for(i = 0; i < 10; i++) for(j = 1; j < 5; j++){
     var x = 26 + i * 38 + j * 7.6;
-    E(gr, "line", {x1:x, y1:216, x2:x, y2:224, stroke:"#7fe3a0", "stroke-width":.5, opacity:".22"});
+    E(gr, "line", {x1:x, y1:216, x2:x, y2:224, stroke:"#7fe3a0", "stroke-width":.5,
+                   opacity:".22"});
   }
   for(i = 0; i < 8; i++) for(j = 1; j < 5; j++){
     var y = 68 + i * 38 + j * 7.6;
-    E(gr, "line", {x1:211, y1:y, x2:219, y2:y, stroke:"#7fe3a0", "stroke-width":.5, opacity:".22"});
+    E(gr, "line", {x1:211, y1:y, x2:219, y2:y, stroke:"#7fe3a0", "stroke-width":.5,
+                   opacity:".22"});
   }
   E(gr, "rect", {x:26, y:68, width:380, height:304, fill:"none",
                  stroke:"#7fe3a0", "stroke-width":.9, opacity:".3"});
@@ -782,7 +979,6 @@ function armarOsciloscopio(){
   trazoCH1 = E(pantallaViva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
   trazoCH2 = E(pantallaViva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
   grupoAyudas = E(s, "g", {"clip-path":"url(#cPantalla)", opacity:"0"});
-  /* reflejo del vidrio */
   E(s, "rect", {x:26, y:68, width:380, height:304, rx:10, fill:"url(#gVidrio)",
                 "pointer-events":"none"});
   filtroFoco = document.querySelector("#fFosforo feGaussianBlur");
@@ -792,11 +988,11 @@ function armarOsciloscopio(){
                                     "font-weight":600});
   var modos = ["CH 1","CH 2","DUAL","SUMA","X-Y"], claves = ["CH1","CH2","DUAL","ADD","XY"];
   for(i = 0; i < 5; i++){
-    (function(k){
-      boton(s, {x:18 + i * 80, y:398, w:75, h:22, txt:modos[i],
+    (function(k, ix){
+      boton(s, {x:18 + ix * 80, y:398, w:75, h:22, txt:modos[ix],
                 activo:function(){ return O.modo === k; },
                 tocar:function(){ O.modo = k; }});
-    })(claves[i]);
+    })(claves[i], i);
   }
 
   /* ---------- brillo, foco y entradas ---------- */
@@ -811,9 +1007,9 @@ function armarOsciloscopio(){
   TX(s, 300, 436, "ENTRADAS  ·  1 MΩ  25 pF", {"font-size":8, "letter-spacing":1.4,
      fill:"#7fb8e8", "text-anchor":"middle", "font-weight":600});
   etiqueta(s, 250, 454, "CH 1", {"font-size":9.6, fill:"#dbe3ec", "font-weight":600});
-  bnc(s, {cx:250, cy:479, r:18, id:"osc.ch1", aria:"canal 1"});
+  bnc(s, {cx:250, cy:479, r:18, id:"osc.ch1", aria:"canal 1", dir:1});
   etiqueta(s, 340, 454, "CH 2", {"font-size":9.6, fill:"#dbe3ec", "font-weight":600});
-  bnc(s, {cx:340, cy:479, r:18, id:"osc.ch2", aria:"canal 2"});
+  bnc(s, {cx:340, cy:479, r:18, id:"osc.ch2", aria:"canal 2", dir:1});
   etiqueta(s, 398, 454, "⏚", {"font-size":9.6, fill:"#dbe3ec"});
   E(s, "circle", {cx:398, cy:479, r:8, fill:"url(#gMetal2)", stroke:"#1c1f24"});
   E(s, "circle", {cx:398, cy:479, r:3.4, fill:"#15171b"});
@@ -826,12 +1022,14 @@ function armarOsciloscopio(){
       var n = f.ch;
       TX(s, 436, f.y - 26, "CH " + n, {"font-size":9.2, fill:"#7fb8e8", "font-weight":700,
                                        "letter-spacing":1});
-      llaveRot(svgOsc, s, {cx:472, cy:f.y, r:20, valores:VDIV, aria:"volts por división canal " + n,
+      llaveRot(svgOsc, s, {cx:472, cy:f.y, r:20, valores:VDIV,
+        aria:"volts por división canal " + n,
         leer:function(){ return n === 1 ? O.v1 : O.v2; },
         set:function(v){ if(n === 1) O.v1 = v; else O.v2 = v; }});
       etiqueta(s, 534, f.y - 20, "VOLTS/DIV");
       vent["v" + n] = ventana(s, 502, f.y - 14, 64, 25);
-      perilla(svgOsc, s, {cx:598, cy:f.y, r:15, marcas:9, aria:"posición vertical canal " + n,
+      perilla(svgOsc, s, {cx:598, cy:f.y, r:15, marcas:9,
+        aria:"posición vertical canal " + n,
         leer:function(){ return (n === 1 ? O.pos1 : O.pos2) / 8 + 0.5; },
         set:function(v){ var p = (v - 0.5) * 8; if(n === 1) O.pos1 = p; else O.pos2 = p; }});
       etiqueta(s, 598, f.y - 22, "POSICIÓN ↕");
@@ -883,35 +1081,38 @@ function armarOsciloscopio(){
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   El frente del generador
+   El frente de un generador  (los dos son el mismo modelo)
    ══════════════════════════════════════════════════════════════════ */
-var displayFrec, displayPer, displayAmp, displayOff, previa;
+var disp = {1:{}, 2:{}};
 
-function armarGenerador(){
-  var s = svgGen;
+function armarGenerador(n){
+  var s = svgGen[n], G = GEN[n], d = disp[n] = {};
   E(s, "rect", {x:0, y:0, width:430, height:520, rx:16, fill:"url(#gCaja)", stroke:"#1e2228"});
   E(s, "rect", {x:6, y:6, width:418, height:508, rx:12, fill:"url(#gPanel)", stroke:"#2b3037"});
 
   marca(s, 16, 14, "FG-2020  ·  GENERADOR", "DE FUNCIONES  ·  2 MHz");
-  encendido(s, 394, 28, function(){ return G.pot; }, function(v){ G.pot = v; });
+  /* el número de unidad, bien visible, para no confundir los dos */
+  E(s, "rect", {x:350, y:14, width:26, height:24, rx:6, fill:"#1c2230", stroke:"#3d4756"});
+  TX(s, 363, 32, String(n), {"font-size":15, "text-anchor":"middle", fill:"#7fb8e8",
+                             "font-weight":700});
+  encendido(s, 402, 28, function(){ return G.pot; }, function(v){ G.pot = v; });
   E(s, "line", {x1:16, y1:48, x2:414, y2:48, stroke:"#2c3138"});
 
   /* ---------- el dial grande ---------- */
   caja(s, 14, 58, 196, 204, "FRECUENCIA");
   var cx = 112, cy = 168, i;
   E(s, "circle", {cx:cx, cy:cy, r:66, fill:"#3c424b", stroke:"#2c3138"});
-  /* escala impresa, logarítmica de 0,2 a 2 */
   var marcasDial = [0.2,0.3,0.4,0.5,0.6,0.8,1,1.5,2];
   for(i = 0; i < marcasDial.length; i++){
-    var f = Math.log10(marcasDial[i] / 0.2);
-    var a = (-140 + 280 * f) * Math.PI / 180;
+    var fr = Math.log10(marcasDial[i] / 0.2);
+    var a = (-140 + 280 * fr) * Math.PI / 180;
     var sn = Math.sin(a), cs = -Math.cos(a);
     E(s, "line", {x1:cx + sn * 48, y1:cy + cs * 48, x2:cx + sn * 53, y2:cy + cs * 53,
                   stroke:"#c3ccd6", "stroke-width":1.2, "stroke-linecap":"round"});
     TX(s, cx + sn * 60, cy + cs * 60 + 3, coma(marcasDial[i], marcasDial[i] % 1 ? 1 : 0),
        {"font-size":7.8, "text-anchor":"middle", fill:"#b6c0cb"});
   }
-  perilla(svgGen, s, {cx:cx, cy:cy, r:42, marcas:0, aria:"dial de frecuencia",
+  perilla(s, s, {cx:cx, cy:cy, r:42, marcas:0, aria:"dial de frecuencia del generador " + n,
     leer:function(){ return G.dial; }, set:function(v){ G.dial = v; }});
   TX(s, cx, 250, "el dial multiplica al rango", {"font-size":7.6, "text-anchor":"middle",
      fill:"#8e99a6"});
@@ -920,20 +1121,20 @@ function armarGenerador(){
   caja(s, 218, 58, 198, 204, "LECTURA");
   E(s, "rect", {x:228, y:82, width:178, height:46, rx:7, fill:"url(#gDisplay)",
                 stroke:"#2a1512", "stroke-width":1.4});
-  displayFrec = TX(s, 317, 115, "1,000 kHz",
+  d.frec = TX(s, 317, 115, "1,000 kHz",
     {"font-size":21, "text-anchor":"middle", fill:"#ff5f45",
      "font-family":"ui-monospace,Consolas,monospace", "letter-spacing":.5});
-  displayPer = TX(s, 317, 144, "T = 1,000 ms",
-    {"font-size":9.5, "text-anchor":"middle", fill:"#a9b3bf"});
+  d.per = TX(s, 317, 144, "T = 1,000 ms", {"font-size":9.5, "text-anchor":"middle",
+     fill:"#a9b3bf"});
   E(s, "line", {x1:230, y1:153, x2:404, y2:153, stroke:"#2c3138"});
-  displayAmp = TX(s, 317, 174, "6,00 Vpp",
-    {"font-size":16, "text-anchor":"middle", fill:"#dfe6ee", "font-weight":600});
-  displayOff = TX(s, 317, 190, "continua  0,00 V",
-    {"font-size":8.6, "text-anchor":"middle", fill:"#a9b3bf"});
+  d.amp = TX(s, 317, 174, "6,00 Vpp", {"font-size":16, "text-anchor":"middle",
+     fill:"#dfe6ee", "font-weight":600});
+  d.off = TX(s, 317, 190, "continua  0,00 V", {"font-size":8.6, "text-anchor":"middle",
+     fill:"#a9b3bf"});
   E(s, "rect", {x:228, y:198, width:178, height:52, rx:7, fill:"#0b120d", stroke:"#1b2a20"});
   E(s, "line", {x1:228, y1:224, x2:406, y2:224, stroke:"#2f5f42", "stroke-width":.7});
-  previa = E(s, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.6,
-                         "stroke-linejoin":"round"});
+  d.previa = E(s, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.6,
+                           "stroke-linejoin":"round"});
 
   /* ---------- rango ---------- */
   TX(s, 18, 282, "RANGO  ·  MULTIPLICADOR  (Hz)", {"font-size":8.4, "letter-spacing":1.4,
@@ -959,11 +1160,10 @@ function armarGenerador(){
     (function(k, ix){
       boton(s, {x:16 + ix * 70, y:344, w:62, h:46, aria:"función " + k,
         dibujo:function(g){
-          var p = E(g, "path", {d:glifos[k], fill:"none", stroke:"#c3ccd6",
+          return [E(g, "path", {d:glifos[k], fill:"none", stroke:"#c3ccd6",
                                 "stroke-width":1.8, "stroke-linecap":"round",
                                 "stroke-linejoin":"round",
-                                transform:"translate(" + (31 + ix * 70) + " 367)"});
-          return [p];
+                                transform:"translate(" + (31 + ix * 70) + " 367)"})];
         },
         activo:function(){ return G.func === k; },
         tocar:function(){ G.func = k; }});
@@ -982,24 +1182,83 @@ function armarGenerador(){
 
   /* ---------- perillas y conectores ---------- */
   E(s, "line", {x1:16, y1:400, x2:414, y2:400, stroke:"#2c3138"});
-  perilla(svgGen, s, {cx:54, cy:448, r:23, marcas:11, aria:"amplitud",
+  perilla(s, s, {cx:54, cy:448, r:23, marcas:11, aria:"amplitud del generador " + n,
     leer:function(){ return G.amp; }, set:function(v){ G.amp = v; }});
   etiqueta(s, 54, 484, "AMPLITUD");
   etiqueta(s, 54, 494, "0 – 20 Vpp", {"font-size":6.8, fill:"#8e99a6"});
-  perilla(svgGen, s, {cx:132, cy:448, r:19, marcas:11, aria:"corrimiento de continua",
+  perilla(s, s, {cx:132, cy:448, r:19, marcas:11, aria:"continua del generador " + n,
     leer:function(){ return G.off; }, set:function(v){ G.off = v; }});
   etiqueta(s, 132, 484, "CONTINUA");
   etiqueta(s, 132, 494, "−10 a +10 V", {"font-size":6.8, fill:"#8e99a6"});
-  perilla(svgGen, s, {cx:206, cy:448, r:19, marcas:11, aria:"simetría",
+  perilla(s, s, {cx:206, cy:448, r:19, marcas:11, aria:"simetría del generador " + n,
     leer:function(){ return G.sim; }, set:function(v){ G.sim = v; }});
   etiqueta(s, 206, 484, "SIMETRÍA");
   etiqueta(s, 206, 494, "10 – 90 %", {"font-size":6.8, fill:"#8e99a6"});
 
   E(s, "line", {x1:262, y1:412, x2:262, y2:496, stroke:"#2c3138"});
   etiqueta(s, 306, 428, "SALIDA  50 Ω", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
-  bnc(s, {cx:306, cy:454, r:18, id:"gen.out", aria:"salida principal"});
+  bnc(s, {cx:306, cy:454, r:18, id:"gen" + n + ".out",
+          aria:"salida del generador " + n, dir:1});
   etiqueta(s, 380, 428, "SINC  TTL", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
-  bnc(s, {cx:380, cy:454, r:15, id:"gen.sinc", aria:"sincronismo"});
+  bnc(s, {cx:380, cy:454, r:15, id:"gen" + n + ".sinc",
+          aria:"sincronismo del generador " + n, dir:1});
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Los dos módulos de la fila de abajo. Van con los conectores arriba,
+   que es por donde bajan los cables desde los instrumentos.
+   ══════════════════════════════════════════════════════════════════ */
+var pilotoMul = null, pilotoSum = null;
+
+function armarModulo(s, o){
+  E(s, "rect", {x:0, y:0, width:250, height:210, rx:13, fill:"url(#gCaja)", stroke:"#1e2228"});
+  E(s, "rect", {x:5, y:5, width:240, height:200, rx:10, fill:"url(#gPanel)", stroke:"#2b3037"});
+
+  var xs = [46, 125, 204], i;
+  for(i = 0; i < 3; i++){
+    bnc(s, {cx:xs[i], cy:36, r:i === 2 ? 16 : 15, id:o.jacks[i], aria:o.aria[i], dir:-1});
+    TX(s, xs[i], 64, o.bornes[i], {"font-size":11.5, "text-anchor":"middle",
+       fill:i === 2 ? "#8ee6a8" : "#dbe3ec", "font-weight":700});
+    TX(s, xs[i], 74, i === 2 ? "salida" : "entrada", {"font-size":6.6, "text-anchor":"middle",
+       fill:"#8e99a6", "letter-spacing":.5});
+  }
+  E(s, "line", {x1:16, y1:82, x2:234, y2:82, stroke:"#2c3138"});
+
+  TX(s, 125, 100, o.titulo, {"font-size":9.5, "letter-spacing":1.8, fill:"#7fb8e8",
+     "text-anchor":"middle", "font-weight":600});
+
+  E(s, "rect", {x:22, y:110, width:206, height:34, rx:6, fill:"#15181d", stroke:"#0d0f12"});
+  E(s, "rect", {x:23, y:111, width:204, height:16, rx:5, fill:"#fff", opacity:".035"});
+  TX(s, 125, 133, o.formula, {"font-size":14, "text-anchor":"middle", fill:"#dfe6ee",
+     "font-weight":600});
+
+  TX(s, 125, 158, o.nota, {"font-size":7.4, "text-anchor":"middle", fill:"#8e99a6"});
+
+  var pil = piloto(s, 92, 176, "#f85149");
+  TX(s, 104, 179, "SATURA  ±12 V", {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.6});
+
+  E(s, "rect", {x:16, y:189, width:14, height:12, rx:3, fill:"url(#gLogo)"});
+  TX(s, 23, 198, "c", {"font-size":8, "text-anchor":"middle", fill:"#fff", "font-weight":700});
+  TX(s, 36, 198, "catto  " + o.modelo, {"font-size":7.2, fill:"#8e99a6", "letter-spacing":1});
+  return pil;
+}
+
+function armarMultiplicador(){
+  pilotoMul = armarModulo(svgMul, {
+    jacks:["mul.x","mul.y","mul.w"], bornes:["X","Y","W"],
+    aria:["entrada X del multiplicador","entrada Y del multiplicador",
+          "salida del multiplicador"],
+    titulo:"MULTIPLICADOR", formula:"W = X · Y / 10 V", modelo:"MX-100",
+    nota:"cuatro cuadrantes, como el integrado real"
+  });
+}
+function armarSumador(){
+  pilotoSum = armarModulo(svgSum, {
+    jacks:["sum.a","sum.b","sum.s"], bornes:["A","B","S"],
+    aria:["entrada A del sumador","entrada B del sumador","salida del sumador"],
+    titulo:"SUMADOR", formula:"S = A + B", modelo:"SM-100",
+    nota:"ganancia unitaria en las dos entradas"
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1010,7 +1269,8 @@ var svgCab = document.getElementById("cables");
 var CABLES = [];
 var arrastreCable = null;
 var COLORES = [{jac:"#16181c", luz:"#5c636d"}, {jac:"#5e1418", luz:"#b0555a"},
-               {jac:"#123a20", luz:"#4f9166"}, {jac:"#2a2140", luz:"#7b6ab0"}];
+               {jac:"#123a20", luz:"#4f9166"}, {jac:"#2a2140", luz:"#7b6ab0"},
+               {jac:"#4a3a10", luz:"#a08c4a"}, {jac:"#123048", luz:"#4d86ad"}];
 var proximoColor = 0;
 
 function escala(){
@@ -1018,14 +1278,16 @@ function escala(){
   return r.width ? r.width / 700 : 1;
 }
 function posJack(id){
-  var g = JACKS[id];
-  if(!g) return {x:0, y:0};
-  var r = g.getBoundingClientRect(), b = mesa.getBoundingClientRect();
+  var j = JACKS[id];
+  if(!j) return {x:0, y:0};
+  var r = j.g.getBoundingClientRect(), b = mesa.getBoundingClientRect();
   return {x:r.left + r.width / 2 - b.left, y:r.top + r.height / 2 - b.top};
 }
+function dirJack(id){ return JACKS[id] ? JACKS[id].dir : 1; }
 function puntoDe(e){ return e.jack ? posJack(e.jack) : {x:e.x, y:e.y}; }
+function dirDe(e){ return e.jack ? dirJack(e.jack) : 1; }
 
-function jackOcupado(id, salvo){
+function cableEn(id, salvo){
   for(var i = 0; i < CABLES.length; i++){
     var c = CABLES[i];
     if(c === salvo) continue;
@@ -1033,7 +1295,6 @@ function jackOcupado(id, salvo){
   }
   return null;
 }
-
 function nuevoCable(jackA, extremoB){
   var c = {a:{jack:jackA}, b:extremoB, color:COLORES[proximoColor % COLORES.length]};
   proximoColor++;
@@ -1045,15 +1306,15 @@ function tomarJack(id, ev){
   ev.preventDefault(); ev.stopPropagation();
   var b = mesa.getBoundingClientRect();
   var p = {x:ev.clientX - b.left, y:ev.clientY - b.top};
-  var cab = jackOcupado(id, null), extremo;
-  if(cab){                       /* estaba enchufado: se desenchufa */
+  var cab = cableEn(id, null), extremo;
+  if(cab && TIPO[id] === "e"){        /* de una entrada se desenchufa el que había */
     extremo = cab.a.jack === id ? "a" : "b";
     cab[extremo] = {x:p.x, y:p.y};
-  }else{                         /* estaba libre: nace un cable */
+  }else{                               /* de una salida siempre nace uno nuevo */
     cab = nuevoCable(id, {x:p.x, y:p.y});
     extremo = "b";
   }
-  arrastreCable = {cable:cab, extremo:extremo, nuevoDesde:id};
+  arrastreCable = {cable:cab, extremo:extremo};
   try{ mesa.setPointerCapture(ev.pointerId); }catch(e){}
   pintarCables();
 }
@@ -1084,37 +1345,42 @@ function soltar(ev){
   }
   var otro = a.extremo === "a" ? a.cable.b : a.cable.a;
   if(mejor && mejor !== otro.jack){
-    var ocupa = jackOcupado(mejor, a.cable);
-    if(ocupa){                       /* si había otro cable ahí, queda colgando */
-      var e = ocupa.a.jack === mejor ? "a" : "b";
-      var q2 = posJack(mejor);
-      ocupa[e] = {x:q2.x + 42 * esc, y:q2.y + 78 * esc};
+    if(TIPO[mejor] === "e"){
+      var ocupa = cableEn(mejor, a.cable);
+      if(ocupa){                    /* la entrada estaba tomada: el otro queda colgando */
+        var e = ocupa.a.jack === mejor ? "a" : "b";
+        var q2 = posJack(mejor);
+        ocupa[e] = {x:q2.x + 46 * esc, y:q2.y + 86 * esc};
+      }
     }
     a.cable[a.extremo] = {jack:mejor};
+  }
+  /* un cable con las dos puntas al aire no sirve de nada */
+  if(!a.cable.a.jack && !a.cable.b.jack){
+    var ix = CABLES.indexOf(a.cable);
+    if(ix >= 0) CABLES.splice(ix, 1);
   }
   pintarCables(); refrescar();
 }
 mesa.addEventListener("pointerup", soltar);
 mesa.addEventListener("pointercancel", soltar);
 
-/* dibuja el enchufe BNC apuntando hacia abajo */
-function enchufe(par, x, y, esc, cable, extremo){
-  var g = E(par, "g", {style:"pointer-events:auto;cursor:grab;touch-action:none"});
-  var k = esc;
-  E(g, "rect", {x:x - 10 * k, y:y - 2 * k, width:20 * k, height:9 * k, rx:2 * k,
+/* enchufe BNC; dir +1 apunta hacia abajo y −1 hacia arriba */
+function enchufe(par, x, y, esc, dir, cable, extremo){
+  var g = E(par, "g", {style:"pointer-events:auto;cursor:grab;touch-action:none",
+                       transform:"translate(" + x + " " + y + ") scale(1 " + dir + ")"});
+  var k = esc, i;
+  E(g, "rect", {x:-10 * k, y:-2 * k, width:20 * k, height:9 * k, rx:2 * k,
                 fill:"url(#gMetal)", stroke:"#22262c", "stroke-width":.8 * k});
-  E(g, "rect", {x:x - 8 * k, y:y + 7 * k, width:16 * k, height:14 * k, rx:1.6 * k,
+  E(g, "rect", {x:-8 * k, y:7 * k, width:16 * k, height:14 * k, rx:1.6 * k,
                 fill:"url(#gMetal2)", stroke:"#22262c", "stroke-width":.8 * k});
-  var i;
   for(i = 0; i < 5; i++)
-    E(g, "line", {x1:x - 8 * k, y1:y + (9.5 + i * 2.6) * k, x2:x + 8 * k, y2:y + (9.5 + i * 2.6) * k,
+    E(g, "line", {x1:-8 * k, y1:(9.5 + i * 2.6) * k, x2:8 * k, y2:(9.5 + i * 2.6) * k,
                   stroke:"#3d4249", "stroke-width":.7 * k, opacity:".8"});
-  E(g, "path", {d:"M " + (x - 6.5 * k) + " " + (y + 21 * k) +
-                   " L " + (x + 6.5 * k) + " " + (y + 21 * k) +
-                   " L " + (x + 4 * k) + " " + (y + 32 * k) +
-                   " L " + (x - 4 * k) + " " + (y + 32 * k) + " Z",
+  E(g, "path", {d:"M " + (-6.5 * k) + " " + (21 * k) + " L " + (6.5 * k) + " " + (21 * k) +
+                   " L " + (4 * k) + " " + (32 * k) + " L " + (-4 * k) + " " + (32 * k) + " Z",
                 fill:"#1b1e22", stroke:"#0e1013", "stroke-width":.8 * k});
-  E(g, "rect", {x:x - 12 * k, y:y - 4 * k, width:24 * k, height:40 * k, fill:"transparent"});
+  E(g, "rect", {x:-12 * k, y:-4 * k, width:24 * k, height:40 * k, fill:"transparent"});
   g.addEventListener("pointerdown", function(ev){ tomarPunta(cable, extremo, ev); });
   return g;
 }
@@ -1125,24 +1391,33 @@ function pintarCables(){
   for(i = 0; i < CABLES.length; i++){
     var c = CABLES[i];
     var A = puntoDe(c.a), B = puntoDe(c.b);
+    var dA = dirDe(c.a), dB = dirDe(c.b);
     var stub = 30 * esc;
-    var A2 = {x:A.x, y:A.y + stub}, B2 = {x:B.x, y:B.y + stub};
+    var A2 = {x:A.x, y:A.y + stub * dA}, B2 = {x:B.x, y:B.y + stub * dB};
     var d = Math.hypot(B2.x - A2.x, B2.y - A2.y);
     /* un cable de banco mide alrededor de un metro: siempre sobra tramo, y
        ese sobrante es el que se descuelga */
     var largo = Math.max(620 * esc, d * 1.16);
     var holgura = Math.max(0, largo - d);
     var caida = Math.min(230 * esc, 26 * esc + holgura * 0.78);
-    /* en pantalla angosta los equipos quedan uno debajo del otro: ahí el
-       cable no cuelga, cruza. Se le da panza para un costado, que es como
-       se acomoda un cable apoyado sobre el frente de un equipo */
-    var dy = Math.abs(B2.y - A2.y), dx = Math.abs(B2.x - A2.x), lat = 0;
-    if(dy > dx * 1.2 && dy > 100 * esc){
-      var lado = (A2.x + B2.x) / 2 < mesa.clientWidth / 2 ? -1 : 1;
-      lat = lado * Math.min(110 * esc, dy * 0.3);
-      caida = Math.max(caida, dy * 0.42);
+    var lat = 0;
+    if(dA === dB){
+      /* los dos salen para el mismo lado: el cable cuelga. Si el tramo es casi
+         vertical se le da panza para un costado, que es como se acomoda un
+         cable apoyado sobre el frente de un equipo */
+      var dy = Math.abs(B2.y - A2.y), dx = Math.abs(B2.x - A2.x);
+      if(dy > dx * 1.2 && dy > 100 * esc){
+        var lado = (A2.x + B2.x) / 2 < mesa.clientWidth / 2 ? -1 : 1;
+        lat = lado * Math.min(110 * esc, dy * 0.3);
+        caida = Math.max(caida, dy * 0.42);
+      }
+    }else{
+      /* uno mira para arriba y el otro para abajo: el cable hace una ese entre
+         las dos filas y no necesita tanta panza */
+      caida = Math.min(caida, 0.42 * d + 24 * esc);
     }
-    var c1 = {x:A2.x + lat, y:A2.y + caida}, c2 = {x:B2.x + lat, y:B2.y + caida};
+    var c1 = {x:A2.x + lat, y:A2.y + caida * dA};
+    var c2 = {x:B2.x + lat, y:B2.y + caida * dB};
     var dd = "M " + A2.x + " " + A2.y + " C " + c1.x + " " + c1.y + ", " +
              c2.x + " " + c2.y + ", " + B2.x + " " + B2.y;
     var g = E(svgCab, "g", {});
@@ -1154,8 +1429,8 @@ function pintarCables(){
     E(g, "path", {d:dd, fill:"none", stroke:c.color.luz, "stroke-opacity":".55",
                   "stroke-width":2.2 * esc, "stroke-linecap":"round",
                   transform:"translate(" + (-1.4 * esc) + "," + (-1.6 * esc) + ")"});
-    enchufe(g, A.x, A.y, esc, c, "a");
-    enchufe(g, B.x, B.y, esc, c, "b");
+    enchufe(g, A.x, A.y, esc, dA, c, "a");
+    enchufe(g, B.x, B.y, esc, dB, c, "b");
   }
 }
 
@@ -1167,20 +1442,20 @@ var PX = 26, PY = 68, PW = 380, PH = 304, DIV = 38;
 /* busca el punto de la señal donde arranca el barrido */
 function buscarDisparo(){
   if(!fuenteDe(O.trigFuente)) return null;
-  var f = frecGen(); if(!f) return null;
-  var P = 1 / f, N = 1000, niv = nivelDisparo();
   /* la ventana se estira un poco más de un período: el cruce de una senoidal
-     con el nivel en cero cae justo en el borde, y buscando sólo hasta P se
-     escapaba por redondeo */
-  var vent = P * 1.02;
+     con el nivel en cero cae justo en el borde y se escapaba por redondeo */
+  var vt = ventanaDe(O.trigFuente) * 1.02;
+  /* resolución: unas veinte muestras por ciclo de la señal más rápida */
+  var N = Math.round(clamp(vt * frecMaxDe(O.trigFuente) * 20, 500, 2600));
+  var niv = nivelDisparo();
   var prev = valorCanal(O.trigFuente, 0), i, t, v;
   for(i = 1; i <= N; i++){
-    t = vent * i / N; v = valorCanal(O.trigFuente, t);
+    t = vt * i / N; v = valorCanal(O.trigFuente, t);
     var sube = O.trigPend > 0 && prev < niv && v >= niv;
     var baja = O.trigPend < 0 && prev > niv && v <= niv;
     if(sube || baja){
-      var tt = vent * (i - 1) / N;
-      if(v !== prev) tt += (vent / N) * ((niv - prev) / (v - prev));
+      var tt = vt * (i - 1) / N;
+      if(v !== prev) tt += (vt / N) * ((niv - prev) / (v - prev));
       return tt;
     }
     prev = v;
@@ -1188,30 +1463,46 @@ function buscarDisparo(){
   return null;
 }
 
-function bandaCanal(ch, t0, span){
-  var vdiv = vdivDe(ch), pos = posDe(ch);
-  var cols = 190, sub = 4, arriba = [], abajo = [], i, j;
+/* El trazo se dibuja como una banda entre el mínimo y el máximo de cada
+   columna, que es como se ve en un tubo real: cuando entran muchos ciclos en
+   la pantalla, el haz llena la zona en vez de dibujar una línea. */
+function banda(t0, span, valor, fmax){
+  var cols = 190;
+  /* cuando en una columna entra más de un ciclo hay que mirar más adentro,
+     si no la banda queda más finita de lo que en realidad es */
+  var porCol = span * (fmax || 0) / cols;
+  var sub = Math.round(clamp(porCol * 12, 5, 30));
+  var arriba = [], abajo = [], i, j;
   for(i = 0; i <= cols; i++){
-    var x = PX + PW * i / cols;
-    var mn = Infinity, mx = -Infinity;
+    var x = PX + PW * i / cols, mn = Infinity, mx = -Infinity;
     for(j = 0; j < sub; j++){
-      var t = t0 + span * (i + j / sub) / cols;
-      var v = valorCanal(ch, t);
+      var v = valor(t0 + span * (i + j / sub) / cols);
       if(v < mn) mn = v;
       if(v > mx) mx = v;
     }
-    var yA = PY + PH / 2 - (mx / vdiv + pos) * DIV;
-    var yB = PY + PH / 2 - (mn / vdiv + pos) * DIV;
-    if(yB - yA < 1.6){ var m = (yA + yB) / 2; yA = m - 0.8; yB = m + 0.8; }
+    var yA = PY + PH / 2 - mx * DIV, yB = PY + PH / 2 - mn * DIV;
+    if(yB - yA < 1.6){ var c = (yA + yB) / 2; yA = c - 0.8; yB = c + 0.8; }
     arriba.push(x.toFixed(1) + " " + clamp(yA, PY - 6, PY + PH + 6).toFixed(1));
     abajo.push(x.toFixed(1) + " " + clamp(yB, PY - 6, PY + PH + 6).toFixed(1));
   }
   abajo.reverse();
   return "M " + arriba.join(" L ") + " L " + abajo.join(" L ") + " Z";
 }
+function bandaCanal(ch, t0, span){
+  var vdiv = vdivDe(ch), pos = posDe(ch);
+  return banda(t0, span, function(t){ return valorCanal(ch, t) / vdiv + pos; },
+               frecMaxDe(ch));
+}
+function bandaSuma(t0, span){
+  return banda(t0, span, function(t){
+    return valorCanal("ch1", t) / VDIV[O.v1] + O.pos1 +
+           valorCanal("ch2", t) / VDIV[O.v2] + O.pos2;
+  }, Math.max(frecMaxDe("ch1"), frecMaxDe("ch2")));
+}
 
 function curvaXY(){
-  var pts = [], N = 900, f = frecGen(), P = f ? 1 / f : 1e-3, i;
+  var pts = [], N = 1400, i;
+  var P = Math.max(ventanaDe("ch1"), ventanaDe("ch2"));
   for(i = 0; i <= N; i++){
     var t = P * 3 * i / N;
     var x = PX + PW / 2 + (valorCanal("ch1", t) / VDIV[O.v1] + O.pos1) * DIV;
@@ -1222,7 +1513,7 @@ function curvaXY(){
   return "M " + pts.join(" L ");
 }
 
-var t0Libre = 0, ultimo = 0, disparado = false, ayudasOn = false;
+var t0Libre = 0, ultimo = 0, ayudasOn = false;
 var reducido = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function dibujarPantalla(ahora){
@@ -1235,8 +1526,7 @@ function dibujarPantalla(ahora){
     ledDisp.setAttribute("fill", "#243028");
     return;
   }
-  var op = 0.25 + O.inten * 0.75;
-  pantallaViva.setAttribute("opacity", op.toFixed(3));
+  pantallaViva.setAttribute("opacity", (0.25 + O.inten * 0.75).toFixed(3));
   filtroFoco.setAttribute("stdDeviation", (0.7 + Math.abs(O.foco - 0.42) * 9).toFixed(2));
 
   if(O.modo === "XY"){
@@ -1250,14 +1540,13 @@ function dibujarPantalla(ahora){
 
   var span = TDIV[O.t] * 10;
   var tDisp = buscarDisparo();
-  disparado = tDisp !== null;
-  ledDisp.setAttribute("fill", disparado ? "#5ce872" : "#243028");
+  ledDisp.setAttribute("fill", tDisp !== null ? "#5ce872" : "#243028");
 
   var t0;
-  if(disparado){
+  if(tDisp !== null){
     t0 = tDisp;
   }else if(O.trigModo === "AUTO"){
-    var P = frecGen() ? 1 / frecGen() : 1;
+    var P = ventanaDe(O.trigFuente);
     if(!reducido) t0Libre = (t0Libre + dt * P * 0.28) % P;
     t0 = t0Libre;
   }else{
@@ -1269,33 +1558,13 @@ function dibujarPantalla(ahora){
 
   var m = O.modo;
   trazoCH1.setAttribute("d",
-    (m === "CH1" || m === "DUAL") ? bandaCanal("ch1", t0, span) : "");
+    m === "ADD" ? bandaSuma(t0, span)
+                : ((m === "CH1" || m === "DUAL") ? bandaCanal("ch1", t0, span) : ""));
   trazoCH2.setAttribute("d",
     (m === "CH2" || m === "DUAL") ? bandaCanal("ch2", t0, span) : "");
-  if(m === "ADD") trazoCH1.setAttribute("d", bandaSuma(t0, span));
 
-  if(ayudasOn) dibujarAyudas(t0);
+  if(ayudasOn) dibujarAyudas();
   else grupoAyudas.setAttribute("opacity", "0");
-}
-
-function bandaSuma(t0, span){
-  var cols = 190, sub = 4, arriba = [], abajo = [], i, j;
-  for(i = 0; i <= cols; i++){
-    var x = PX + PW * i / cols, mn = Infinity, mx = -Infinity;
-    for(j = 0; j < sub; j++){
-      var t = t0 + span * (i + j / sub) / cols;
-      var d = valorCanal("ch1", t) / VDIV[O.v1] + O.pos1 +
-              valorCanal("ch2", t) / VDIV[O.v2] + O.pos2;
-      if(d < mn) mn = d;
-      if(d > mx) mx = d;
-    }
-    var yA = PY + PH / 2 - mx * DIV, yB = PY + PH / 2 - mn * DIV;
-    if(yB - yA < 1.6){ var c = (yA + yB) / 2; yA = c - 0.8; yB = c + 0.8; }
-    arriba.push(x.toFixed(1) + " " + clamp(yA, PY - 6, PY + PH + 6).toFixed(1));
-    abajo.push(x.toFixed(1) + " " + clamp(yB, PY - 6, PY + PH + 6).toFixed(1));
-  }
-  abajo.reverse();
-  return "M " + arriba.join(" L ") + " L " + abajo.join(" L ") + " Z";
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1308,7 +1577,11 @@ function canalVivo(){
   return null;
 }
 function medir(ch){
-  var f = frecGen(), P = 1 / f, N = 720, i;
+  var P = ventanaDe(ch), i;
+  /* unas ochenta muestras por ciclo de la señal más rápida: con menos, el
+     pico de una portadora de 20 kHz dentro de una envolvente de 1 kHz se
+     erraba por medio por ciento y los Vpp no cerraban con la cuenta */
+  var N = Math.round(clamp(P * frecMaxDe(ch) * 80, 1200, 8000));
   var mn = Infinity, mx = -Infinity, sum = 0, cua = 0;
   for(i = 0; i < N; i++){
     var v = valorCanal(ch, P * i / N);
@@ -1316,11 +1589,15 @@ function medir(ch){
     if(v > mx) mx = v;
     sum += v; cua += v * v;
   }
+  var src = fuenteDe(ch), gs = src ? generadoresDe(src, 0, {}) : {};
+  var lista = [];
+  if(gs[1]) lista.push(1);
+  if(gs[2]) lista.push(2);
   return {min:mn, max:mx, pp:mx - mn, med:sum / N, rms:Math.sqrt(cua / N),
-          f:f, P:P, pico:Math.max(Math.abs(mn), Math.abs(mx))};
+          P:P, f:1 / P, gens:lista, pico:Math.max(Math.abs(mn), Math.abs(mx))};
 }
 
-function dibujarAyudas(t0){
+function dibujarAyudas(){
   while(grupoAyudas.firstChild) grupoAyudas.removeChild(grupoAyudas.firstChild);
   var ch = canalVivo();
   if(!ch || !O.pot || O.modo === "XY"){ grupoAyudas.setAttribute("opacity", "0"); return; }
@@ -1328,46 +1605,39 @@ function dibujarAyudas(t0){
   var m = medir(ch), vdiv = vdivDe(ch), pos = posDe(ch);
   var yA = PY + PH / 2 - (m.max / vdiv + pos) * DIV;
   var yB = PY + PH / 2 - (m.min / vdiv + pos) * DIV;
-  var divAlto = m.pp / vdiv;
-  var g = grupoAyudas;
-  var col = "#ffd479";
-  /* alto */
-  var xa = PX + 46;
+  var g = grupoAyudas, col = "#ffd479", xa = PX + 46;
   E(g, "line", {x1:PX, y1:yA, x2:PX + PW, y2:yA, stroke:col, "stroke-width":.8,
                 "stroke-dasharray":"3 4", opacity:".55"});
   E(g, "line", {x1:PX, y1:yB, x2:PX + PW, y2:yB, stroke:col, "stroke-width":.8,
                 "stroke-dasharray":"3 4", opacity:".55"});
   E(g, "line", {x1:xa, y1:yA, x2:xa, y2:yB, stroke:col, "stroke-width":1.3});
-  E(g, "path", {d:"M " + (xa - 4) + " " + (yA + 6) + " L " + xa + " " + yA + " L " + (xa + 4) + " " + (yA + 6),
-                fill:"none", stroke:col, "stroke-width":1.3});
-  E(g, "path", {d:"M " + (xa - 4) + " " + (yB - 6) + " L " + xa + " " + yB + " L " + (xa + 4) + " " + (yB - 6),
-                fill:"none", stroke:col, "stroke-width":1.3});
-  var et = TX(g, xa + 8, (yA + yB) / 2 + 4, coma(divAlto, 1) + " div",
+  E(g, "path", {d:"M " + (xa-4) + " " + (yA+6) + " L " + xa + " " + yA +
+                   " L " + (xa+4) + " " + (yA+6), fill:"none", stroke:col, "stroke-width":1.3});
+  E(g, "path", {d:"M " + (xa-4) + " " + (yB-6) + " L " + xa + " " + yB +
+                   " L " + (xa+4) + " " + (yB-6), fill:"none", stroke:col, "stroke-width":1.3});
+  var et = TX(g, xa + 8, (yA + yB) / 2 + 4, coma(m.pp / vdiv, 1) + " div",
               {"font-size":11, fill:col, "font-weight":600});
   et.setAttribute("paint-order", "stroke");
-  et.setAttribute("stroke", "#04080699");
-  et.setAttribute("stroke-width", "3");
-  /* ancho de un ciclo */
-  var tdiv = TDIV[O.t];
-  var anchoPx = (m.P / tdiv) * DIV;
+  et.setAttribute("stroke", "#04080699"); et.setAttribute("stroke-width", "3");
+
+  var anchoPx = (m.P / TDIV[O.t]) * DIV;
   if(anchoPx > 6 && anchoPx < PW * 1.4){
     var yl = PY + PH - 34;
-    E(g, "line", {x1:PX + 20, y1:yl, x2:PX + 20 + anchoPx, y2:yl, stroke:col, "stroke-width":1.3});
-    E(g, "line", {x1:PX + 20, y1:yl - 6, x2:PX + 20, y2:yl + 6, stroke:col, "stroke-width":1.3});
+    E(g, "line", {x1:PX + 20, y1:yl, x2:PX + 20 + anchoPx, y2:yl, stroke:col,
+                  "stroke-width":1.3});
+    E(g, "line", {x1:PX + 20, y1:yl - 6, x2:PX + 20, y2:yl + 6, stroke:col,
+                  "stroke-width":1.3});
     E(g, "line", {x1:PX + 20 + anchoPx, y1:yl - 6, x2:PX + 20 + anchoPx, y2:yl + 6,
                   stroke:col, "stroke-width":1.3});
-    var e2 = TX(g, PX + 24 + anchoPx / 2, yl - 10, coma(m.P / tdiv, 1) + " div",
+    var e2 = TX(g, PX + 24 + anchoPx / 2, yl - 10, coma(m.P / TDIV[O.t], 1) + " div",
                 {"font-size":11, fill:col, "font-weight":600, "text-anchor":"middle"});
     e2.setAttribute("paint-order", "stroke");
-    e2.setAttribute("stroke", "#04080699");
-    e2.setAttribute("stroke-width", "3");
+    e2.setAttribute("stroke", "#04080699"); e2.setAttribute("stroke-width", "3");
   }
-  /* nivel de disparo */
   var yn = PY + PH / 2 - (nivelDisparo() / vdivDe(O.trigFuente) + posDe(O.trigFuente)) * DIV;
-  if(yn > PY - 4 && yn < PY + PH + 4){
-    E(g, "path", {d:"M " + (PX + 2) + " " + (yn - 5) + " L " + (PX + 11) + " " + yn +
-                     " L " + (PX + 2) + " " + (yn + 5) + " Z", fill:"#ff8f6b", opacity:".9"});
-  }
+  if(yn > PY - 4 && yn < PY + PH + 4)
+    E(g, "path", {d:"M " + (PX+2) + " " + (yn-5) + " L " + (PX+11) + " " + yn +
+                     " L " + (PX+2) + " " + (yn+5) + " Z", fill:"#ff8f6b", opacity:".9"});
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -1378,40 +1648,44 @@ var elValores = document.getElementById("valores");
 var elPract = document.getElementById("pract");
 
 function refrescar(){
+  reconstruirRed();
   recalcularMedias();
+  revisarSaturacion();
   vent.v1.textContent = fmtVolt(VDIV[O.v1]) + "/div";
   vent.v2.textContent = fmtVolt(VDIV[O.v2]) + "/div";
-  vent.t.textContent = fmtTiempo(TDIV[O.t]) + "/div";
+  vent.t.textContent  = fmtTiempo(TDIV[O.t]) + "/div";
   BOTONES.forEach(function(f){ f(); });
-
-  /* el generador */
-  if(G.pot){
-    displayFrec.textContent = fmtFrec(frecGen());
-    displayFrec.setAttribute("fill", "#ff5f45");
-    displayPer.textContent = "T = " + fmtSeg(1 / frecGen());
-    displayAmp.textContent = G.salida ? coma(ampGen(), 2) + " Vpp" : "salida cortada";
-    displayOff.textContent = "continua  " + (offGen() >= 0 ? "+" : "−") +
-                             coma(Math.abs(offGen()), 2) + " V" +
-                             (G.aten ? "   ·   −20 dB" : "");
-  }else{
-    displayFrec.textContent = "—"; displayFrec.setAttribute("fill", "#3a1c18");
-    displayPer.textContent = ""; displayAmp.textContent = ""; displayOff.textContent = "";
-  }
-  dibujarPrevia();
+  if(pilotoMul) pilotoMul(SATURA.mul);
+  if(pilotoSum) pilotoSum(SATURA.sum);
+  refrescarGenerador(1);
+  refrescarGenerador(2);
   textoMedidas();
   revisarPractica();
 }
 
-function dibujarPrevia(){
-  if(!G.pot || !G.salida){ previa.setAttribute("d", ""); return; }
-  var pts = [], N = 160, i, A = 22;
-  var mx = Math.max(1e-9, ampGen() / 2 + Math.abs(offGen()));
-  for(i = 0; i <= N; i++){
-    var t = (2 / frecGen()) * i / N;
-    var v = senalSalida(t) / mx;
-    pts.push((230 + 176 * i / N).toFixed(1) + " " + (224 - v * A).toFixed(1));
+function refrescarGenerador(n){
+  var G = GEN[n], d = disp[n];
+  if(!d || !d.frec) return;
+  if(G.pot){
+    d.frec.textContent = fmtFrec(frecGen(n));
+    d.frec.setAttribute("fill", "#ff5f45");
+    d.per.textContent = "T = " + fmtSeg(1 / frecGen(n));
+    d.amp.textContent = G.salida ? coma(ampGen(n), 2) + " Vpp" : "salida cortada";
+    d.off.textContent = "continua  " + (offGen(n) >= 0 ? "+" : "−") +
+                        coma(Math.abs(offGen(n)), 2) + " V" + (G.aten ? "   ·   −20 dB" : "");
+  }else{
+    d.frec.textContent = "—"; d.frec.setAttribute("fill", "#3a1c18");
+    d.per.textContent = ""; d.amp.textContent = ""; d.off.textContent = "";
   }
-  previa.setAttribute("d", "M " + pts.join(" L "));
+  if(!G.pot || !G.salida){ d.previa.setAttribute("d", ""); return; }
+  var pts = [], N = 160, i, A = 22;
+  var mx = Math.max(1e-9, ampGen(n) / 2 + Math.abs(offGen(n)));
+  for(i = 0; i <= N; i++){
+    var t = (2 / frecGen(n)) * i / N;
+    pts.push((230 + 176 * i / N).toFixed(1) + " " +
+             (224 - salidaGen(n, t) / mx * A).toFixed(1));
+  }
+  d.previa.setAttribute("d", "M " + pts.join(" L "));
 }
 
 function textoMedidas(){
@@ -1422,13 +1696,13 @@ function textoMedidas(){
   }
   if(O.modo === "XY"){
     elCuenta.innerHTML = '<p>En <b>X-Y</b> no hay base de tiempo: el canal 1 corre el haz a lo ' +
-      'ancho y el canal 2 a lo alto. La figura que aparece compara las dos señales en frecuencia ' +
-      'y en fase.</p>';
+      'ancho y el canal 2 a lo alto. La figura compara las dos señales en frecuencia y en fase. ' +
+      'Con una AM en el canal 1 y su moduladora en el 2 aparece el trapecio de modulación.</p>';
     elValores.innerHTML = ""; return;
   }
   if(!ch){
     elCuenta.innerHTML = '<p class="apagado">No llega señal al canal que está en pantalla. ' +
-      'Enchufá un cable desde la salida del generador.</p>';
+      'Enchufá un cable desde la salida de un generador o de un módulo.</p>';
     elValores.innerHTML = ""; return;
   }
   var m = medir(ch), vdiv = vdivDe(ch), tdiv = TDIV[O.t];
@@ -1442,40 +1716,66 @@ function textoMedidas(){
   if(buscarDisparo() === null && O.trigModo === "AUTO")
     aviso += '<p style="color:var(--warn)">La imagen corre porque el nivel de disparo quedó ' +
       'fuera de la señal. Movelo hasta que se encienda el piloto DISPARADO.</p>';
+  if(SATURA.mul || SATURA.sum)
+    aviso += '<p style="color:var(--hot)">Un módulo está pegando contra los ±12 V de su fuente. ' +
+      'Bajá la amplitud de los generadores.</p>';
+
+  var linea2;
+  if(m.gens.length > 1){
+    linea2 = '<p>En este canal se combinan las dos frecuencias: <b>' + fmtFrec(frecGen(1)) +
+      '</b> y <b>' + fmtFrec(frecGen(2)) + '</b>. El dibujo se repite con el período más largo, ' +
+      '<b>' + fmtSeg(m.P) + '</b>, que en la pantalla ocupa <b>' + coma(dAncho, 1) +
+      ' divisiones</b>. Ésa es la envolvente.</p>';
+  }else{
+    linea2 = '<p>Un ciclo entra en <b>' + coma(dAncho, 1) + ' divisiones</b>. Con la base de ' +
+      'tiempo en <b>' + fmtTiempo(tdiv) + '/div</b>: ' + coma(dAncho, 1) + ' × ' +
+      fmtTiempo(tdiv) + ' = <b>' + fmtSeg(m.P) + '</b>, o sea <b>' + fmtFrec(m.f) + '</b>.</p>';
+  }
 
   elCuenta.innerHTML =
     '<p>La onda ocupa <b>' + coma(dAlto, 1) + ' divisiones</b> de alto. Con la llave en <b>' +
       fmtVolt(vdiv) + '/div</b>: ' + coma(dAlto, 1) + ' × ' + fmtVolt(vdiv) + ' = <b>' +
-      coma(m.pp, 2) + ' Vpp</b>.</p>' +
-    '<p>Un ciclo entra en <b>' + coma(dAncho, 1) + ' divisiones</b>. Con la base de tiempo en <b>' +
-      fmtTiempo(tdiv) + '/div</b>: ' + coma(dAncho, 1) + ' × ' + fmtTiempo(tdiv) + ' = <b>' +
-      fmtSeg(m.P) + '</b>, o sea <b>' + fmtFrec(m.f) + '</b>.</p>' +
+      coma(m.pp, 2) + ' Vpp</b>.</p>' + linea2 +
     (acopl === "CA" ? '<p style="color:var(--soft)">El canal está en CA, así que la continua ' +
       'de la señal no se ve: la onda queda centrada en el cero.</p>' : "") + aviso;
 
+  var rotT = m.gens.length > 1 ? "Se repite cada" : "Período";
+  var rotF = m.gens.length > 1 ? "O sea" : "Frecuencia";
   var vals = [["Vpp", coma(m.pp, 2) + " V"], ["V pico", coma(m.pico, 2) + " V"],
               ["V eficaz", coma(m.rms, 2) + " V"], ["V medio", coma(m.med, 2) + " V"],
-              ["Período", fmtSeg(m.P)], ["Frecuencia", fmtFrec(m.f)]];
+              [rotT, fmtSeg(m.P)], [rotF, fmtFrec(m.f)]];
   elValores.innerHTML = vals.map(function(v){
     return '<div class="val"><span>' + v[0] + '</span><b>' + v[1] + '</b></div>';
   }).join("");
 }
 
 /* ---- práctica guiada ---- */
+function esSalidaGen(j){ return j === "gen1.out" || j === "gen2.out"; }
 function revisarPractica(){
-  var conectado = fuenteDe("ch1") === "gen.out";
-  var f = frecGen(), m = null;
-  if(conectado) m = medir("ch1");
+  var conectado = fuenteDe("ch1") === "gen1.out";
+  var f = frecGen(1), m = conectado ? medir("ch1") : null;
   var dAlto = m ? m.pp / VDIV[O.v1] : 0;
   var dAncho = m ? m.P / TDIV[O.t] : 0;
+
+  var x = FUENTE["mul.x"], y = FUENTE["mul.y"];
+  var dbl = esSalidaGen(x) && esSalidaGen(y) && x !== y && fuenteDe("ch1") === "mul.w";
+
+  var a = FUENTE["sum.a"], b = FUENTE["sum.b"], am = false;
+  if(fuenteDe("ch1") === "sum.s" && (a === "mul.w" || b === "mul.w")){
+    var port = (a === "mul.w") ? b : a;
+    am = esSalidaGen(port) && (port === x || port === y);
+  }
+
   var ok = {
     conectado: conectado,
-    senoidal: G.func === "seno",
-    mil: f > 1900 && f < 2105,
-    seisvpp: Math.abs(ampGen() - 4) < 0.28 && G.salida && G.pot,
+    senoidal: GEN[1].func === "seno",
+    dosk: f > 1900 && f < 2105,
+    cuatro: Math.abs(ampGen(1) - 4) < 0.28 && GEN[1].salida && GEN[1].pot,
     alto: conectado && dAlto >= 3.9 && dAlto <= 7.1,
     ancho: conectado && dAncho >= 3.28 && dAncho <= 5.1,
-    firme: O.trigModo === "NORM" && buscarDisparo() !== null && O.pot
+    firme: O.trigModo === "NORM" && buscarDisparo() !== null && O.pot,
+    dbl: dbl,
+    am: am
   };
   var lis = elPract.querySelectorAll("li"), i;
   for(i = 0; i < lis.length; i++)
@@ -1483,18 +1783,63 @@ function revisarPractica(){
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Arranque
+   Armado, ejemplos y arranque
    ══════════════════════════════════════════════════════════════════ */
-armarOsciloscopio();
-armarGenerador();
+function armarTodo(){
+  var hijos = Array.prototype.slice.call(svgOsc.childNodes);
+  hijos.forEach(function(n){ if(n.tagName !== "defs") svgOsc.removeChild(n); });
+  [svgGen[1], svgGen[2], svgMul, svgSum].forEach(function(s){
+    while(s.firstChild) s.removeChild(s.firstChild);
+  });
+  BOTONES.length = 0;
+  JACKS = {};
+  armarOsciloscopio();
+  armarGenerador(1);
+  armarGenerador(2);
+  armarMultiplicador();
+  armarSumador();
+  pintarCables();
+  refrescar();
+}
 
 function cablesIniciales(){
   CABLES.length = 0; proximoColor = 0;
-  nuevoCable("gen.out", {jack:"osc.ch1"});
-  nuevoCable("gen.sinc", {jack:"osc.ch2"});
-  pintarCables();
+  nuevoCable("gen1.out", {jack:"osc.ch1"});
+  nuevoCable("gen2.out", {jack:"osc.ch2"});
 }
+
+/* Los dos ejemplos armados: moduladora de 1 kHz y portadora de 20 kHz, las dos
+   de 10 Vpp. Con esos números el índice de modulación da justo 0,5. */
+function ejemplo(cual){
+  reset();
+  GEN[1].dial = D_1; GEN[1].rango = 3; GEN[1].amp = 0.5;    /* 1 kHz,  10 Vpp */
+  GEN[2].dial = D_2; GEN[2].rango = 4; GEN[2].amp = 0.5;    /* 20 kHz, 10 Vpp */
+  CABLES.length = 0; proximoColor = 0;
+  nuevoCable("gen1.out",  {jack:"mul.x"});
+  nuevoCable("gen2.out",  {jack:"mul.y"});
+  nuevoCable("gen1.out",  {jack:"osc.ch2"});
+  if(cual === "am"){
+    nuevoCable("mul.w",   {jack:"sum.a"});
+    nuevoCable("gen2.out",{jack:"sum.b"});
+    nuevoCable("sum.s",   {jack:"osc.ch1"});
+    O.v1 = 9;                 /* 5 V/div: los 15 Vpp de la AM entran en 3 divisiones */
+  }else{
+    nuevoCable("mul.w",   {jack:"osc.ch1"});
+    O.v1 = 7;                 /* 1 V/div: los 5 Vpp de la DBL ocupan 5 divisiones  */
+  }
+  O.v2 = 9;                   /* 5 V/div para la moduladora */
+  O.pos1 = 1.5; O.pos2 = -2.6;
+  O.t = 9;                    /* 0,2 ms/div: dos ciclos de envolvente */
+  O.modo = "DUAL";
+  O.trigFuente = "ch2";       /* se dispara con la moduladora: la envolvente queda quieta */
+  O.trigNivel = 0.5;
+  armarTodo();
+}
+
+armarTodo();
 cablesIniciales();
+pintarCables();
+refrescar();
 
 document.getElementById("ayudas").addEventListener("change", function(ev){
   ayudasOn = ev.target.checked;
@@ -1503,24 +1848,10 @@ document.getElementById("bCables").addEventListener("click", function(){
   CABLES.length = 0; pintarCables(); refrescar();
 });
 document.getElementById("bReset").addEventListener("click", function(){
-  reset();
-  cablesIniciales();
-  redibujarTodo();
+  reset(); cablesIniciales(); armarTodo();
 });
-
-/* al reiniciar hay que volver a girar las perillas; la manera más simple y
-   segura es rearmar los dos frentes desde cero */
-function redibujarTodo(){
-  var hijosO = Array.prototype.slice.call(svgOsc.childNodes);
-  hijosO.forEach(function(n){ if(n.tagName !== "defs") svgOsc.removeChild(n); });
-  while(svgGen.firstChild) svgGen.removeChild(svgGen.firstChild);
-  BOTONES.length = 0;
-  JACKS = {};
-  armarOsciloscopio();
-  armarGenerador();
-  pintarCables();
-  refrescar();
-}
+document.getElementById("bDbl").addEventListener("click", function(){ ejemplo("dbl"); });
+document.getElementById("bAm").addEventListener("click", function(){ ejemplo("am"); });
 
 var reobs = window.ResizeObserver ? new ResizeObserver(function(){ pintarCables(); }) : null;
 if(reobs) reobs.observe(mesa);
@@ -1530,10 +1861,14 @@ window.addEventListener("load", pintarCables);
 var cuadro = 0;
 function bucle(ahora){
   dibujarPantalla(ahora);
-  if((cuadro++ % 20) === 0){ textoMedidas(); revisarPractica(); }
+  if((cuadro++ % 20) === 0){
+    revisarSaturacion();
+    if(pilotoMul) pilotoMul(SATURA.mul);
+    if(pilotoSum) pilotoSum(SATURA.sum);
+    textoMedidas(); revisarPractica();
+  }
   requestAnimationFrame(bucle);
 }
-refrescar();
 requestAnimationFrame(bucle);
 
 })();
