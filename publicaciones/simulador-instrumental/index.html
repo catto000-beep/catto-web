@@ -182,8 +182,8 @@
   </div></div>
 
   <div class="pista">
-    <span>Arrastrá desde un <b>BNC</b> para tirar un cable y soltalo sobre otro para
-      enchufarlo.<span class="arrastrar-mesa"> Deslizá la mesa de costado para llegar a todo.</span></span>
+    <span>Arrastrá desde un <b>BNC</b> para tirar un cable y soltalo sobre otro para enchufarlo.
+      Las perillas se giran arrastrando o con las flechitas del costado.<span class="arrastrar-mesa"> Deslizá la mesa de costado para llegar a todo.</span></span>
     <span class="sep"></span>
     <button class="btn fuerte" id="bDbl">DBL-PS</button>
     <button class="btn fuerte" id="bAm">AM</button>
@@ -239,6 +239,12 @@
     otro, porque tiene que salir por la izquierda y volver a entrar por la derecha, igual que en
     una mesa de verdad. Los cinco botones de arriba arman solos las conexiones de cada ejemplo, y
     después se puede desenchufar y probar otra cosa.</p>
+
+  <p>Cada perilla y cada llave se maneja de tres maneras: arrastrando, con la rueda del ratón, o
+    con el par de flechitas que tienen al costado. Las flechas mueven el control de a un paso por
+    vez y, si se las mantiene apretadas, siguen avanzando solas. Sirven para ajustar sin depender
+    del pulso, que es lo que hace falta cuando uno quiere mover la frecuencia de a poquito mirando
+    el trazo.</p>
 
   <h3>Los generadores</h3>
   <p>La frecuencia sale de dos controles que trabajan juntos: el dial grande da un número entre 0,2
@@ -814,6 +820,47 @@ function arrastrar(g, svg, cx, cy, leer, escribir){
   g.addEventListener("pointerup", fin);
   g.addEventListener("pointercancel", fin);
 }
+/* Par de botones para mover un control de a pasos, sin depender del pulso de
+   la mano. `lado` los pone a la derecha o a la izquierda; manteniéndolos
+   apretados, repiten. */
+function pasitos(par, o){
+  var w = 14, h = 12, sep = (o.sep === undefined ? 3 : o.sep);
+  var x = o.lado === "izq" ? (o.cx - o.alcance - sep - w) : (o.cx + o.alcance + sep);
+  var ys = [o.cy - h - 1, o.cy + 1];
+  [1, -1].forEach(function(d, i){
+    var g = E(par, "g", {class:"clic", tabindex:0, role:"button",
+                         "aria-label":(d > 0 ? "subir " : "bajar ") + (o.aria || "")});
+    var caja = E(g, "rect", {x:x, y:ys[i], width:w, height:h, rx:3, fill:"url(#gBoton)",
+                             stroke:"#22262c", "stroke-width":.8});
+    var cy = ys[i] + h / 2;
+    E(g, "path", {d: d > 0
+        ? "M " + (x + 4) + " " + (cy + 2.1) + " L " + (x + 7) + " " + (cy - 2.4) +
+          " L " + (x + 10) + " " + (cy + 2.1) + " Z"
+        : "M " + (x + 4) + " " + (cy - 2.1) + " L " + (x + 7) + " " + (cy + 2.4) +
+          " L " + (x + 10) + " " + (cy - 2.1) + " Z",
+      fill:"#c3ccd6"});
+    E(g, "rect", {x:x - 3, y:ys[i] - 3, width:w + 6, height:h + 6, fill:"transparent"});
+    var espera = null, repite = null;
+    function fin(){
+      clearTimeout(espera); clearInterval(repite);
+      caja.setAttribute("fill", "url(#gBoton)");
+    }
+    g.addEventListener("pointerdown", function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      try{ g.setPointerCapture(ev.pointerId); }catch(e){}
+      caja.setAttribute("fill", "url(#gBotonOn)");
+      o.paso(d);
+      espera = setTimeout(function(){ repite = setInterval(function(){ o.paso(d); }, 110); }, 420);
+    });
+    g.addEventListener("pointerup", fin);
+    g.addEventListener("pointercancel", fin);
+    g.addEventListener("keydown", function(ev){
+      if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); o.paso(d); }
+    });
+  });
+}
+
+/* perilla continua, de 0 a 1 */
 function perilla(svg, o){
   var g = E(svg, "g", {class:"ctl", tabindex:0, role:"slider",
                        "aria-label":o.aria || "perilla"});
@@ -832,6 +879,10 @@ function perilla(svg, o){
       "rotate(" + (-140 + 280 * o.leer()) + " " + o.cx + " " + o.cy + ")");
   }
   arrastrar(g, svg, o.cx, o.cy, o.leer, function(v){ o.set(v); pintar(); refrescar(); });
+  if(o.pasos !== false)
+    pasitos(svg, {cx:o.cx, cy:o.cy, alcance:(o.alcance || o.r + (n ? 8 : 0)),
+      lado:o.lado, sep:o.sep, aria:o.aria,
+      paso:function(d){ o.set(clamp(o.leer() + d * 0.02, 0, 1)); pintar(); refrescar(); }});
   g.addEventListener("wheel", function(ev){
     ev.preventDefault();
     o.set(clamp(o.leer() + (ev.deltaY < 0 ? 0.03 : -0.03), 0, 1)); pintar(); refrescar();
@@ -867,6 +918,8 @@ function llaveRot(svg, o){
     if(idx !== o.leer()) o.set(idx);
     pintar(); refrescar();
   });
+  pasitos(svg, {cx:o.cx, cy:o.cy, alcance:o.r + 7, lado:o.lado, sep:o.sep, aria:o.aria,
+    paso:function(d){ o.set(clamp(o.leer() + d, 0, n - 1)); pintar(); refrescar(); }});
   g.addEventListener("wheel", function(ev){
     ev.preventDefault();
     o.set(clamp(o.leer() + (ev.deltaY < 0 ? 1 : -1), 0, n - 1)); pintar(); refrescar();
@@ -1169,10 +1222,10 @@ function armarOsciloscopio(o){
   })(claves[i], i);
 
   /* ---------- brillo, foco y entradas ---------- */
-  perilla(s, {cx:52, cy:472, r:17, marcas:9, aria:"intensidad " + o,
+  perilla(s, {cx:52, cy:472, r:17, marcas:9, aria:"intensidad " + o, pasos:false,
     leer:function(){ return O.inten; }, set:function(v){ O.inten = v; }});
   etiqueta(s, 52, 500, "INTENSIDAD");
-  perilla(s, {cx:122, cy:472, r:17, marcas:9, aria:"enfoque " + o,
+  perilla(s, {cx:122, cy:472, r:17, marcas:9, aria:"enfoque " + o, pasos:false,
     leer:function(){ return O.foco; }, set:function(v){ O.foco = v; }});
   etiqueta(s, 122, 500, "ENFOQUE");
   E(s, "line", {x1:168, y1:444, x2:168, y2:502, stroke:"#2c3138"});
@@ -1189,7 +1242,8 @@ function armarOsciloscopio(o){
     var n = f.n;
     TX(s, 436, f.y - 26, "CH " + n, {"font-size":9.2, fill:"#7fb8e8", "font-weight":700,
                                      "letter-spacing":1});
-    llaveRot(s, {cx:472, cy:f.y, r:20, valores:VDIV, aria:"volts por división canal " + n,
+    llaveRot(s, {cx:472, cy:f.y, r:20, valores:VDIV, lado:"izq",
+      aria:"volts por división canal " + n,
       leer:function(){ return n === 1 ? O.v1 : O.v2; },
       set:function(v){ if(n === 1) O.v1 = v; else O.v2 = v; }});
     etiqueta(s, 534, f.y - 20, "VOLTS/DIV");
@@ -1198,16 +1252,17 @@ function armarOsciloscopio(o){
       leer:function(){ return (n === 1 ? O.pos1 : O.pos2) / 8 + 0.5; },
       set:function(v){ var p = (v - 0.5) * 8; if(n === 1) O.pos1 = p; else O.pos2 = p; }});
     etiqueta(s, 598, f.y - 22, "POSICIÓN ↕");
-    llave3(s, {cx:646, cy:f.y, textos:["CC","⏚","CA"], aria:"acoplamiento canal " + n,
+    llave3(s, {cx:656, cy:f.y, textos:["CC","⏚","CA"], aria:"acoplamiento canal " + n,
       leer:function(){ var a = n === 1 ? O.ac1 : O.ac2;
                        return a === "CC" ? 0 : (a === "GND" ? 1 : 2); },
       set:function(v){ var a = ["CC","GND","CA"][v]; if(n === 1) O.ac1 = a; else O.ac2 = a; }});
-    etiqueta(s, 646, f.y - 26, "ACOPL.");
+    etiqueta(s, 656, f.y - 26, "ACOPL.");
   });
 
   /* ---------- horizontal ---------- */
   caja(s, 424, 280, 260, 110, "HORIZONTAL");
   llaveRot(s, {cx:472, cy:344, r:20, valores:TDIV, aria:"tiempo por división",
+    lado:"izq",
     leer:function(){ return O.t; }, set:function(v){ O.t = v; }});
   etiqueta(s, 542, 324, "TIEMPO/DIV");
   P.vt = ventana(s, 502, 330, 80, 25);
@@ -1217,9 +1272,9 @@ function armarOsciloscopio(o){
 
   /* ---------- disparo ---------- */
   caja(s, 424, 398, 260, 110, "DISPARO");
-  perilla(s, {cx:468, cy:460, r:20, marcas:11, aria:"nivel de disparo",
+  perilla(s, {cx:472, cy:460, r:20, marcas:11, aria:"nivel de disparo", lado:"izq",
     leer:function(){ return O.trigNivel; }, set:function(v){ O.trigNivel = v; }});
-  etiqueta(s, 468, 494, "NIVEL");
+  etiqueta(s, 472, 494, "NIVEL");
   TX(s, 508, 425, "PENDIENTE", {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.7});
   boton(s, {x:508, y:429, w:38, h:19, txt:"↗", fs:10,
             activo:function(){ return O.trigPend > 0; }, tocar:function(){ O.trigPend = 1; }});
@@ -1292,7 +1347,8 @@ function armarGenerador(n){
     TX(g, cx + sn * 60, cy + cs * 60 + 3, coma(marcasDial[i], marcasDial[i] % 1 ? 1 : 0),
        {"font-size":7.8, "text-anchor":"middle", fill:"#b6c0cb"});
   }
-  perilla(g, {cx:cx, cy:cy, r:42, marcas:0, aria:"dial de frecuencia del generador " + n,
+  perilla(g, {cx:cx, cy:cy, r:42, marcas:0, alcance:66, sep:4,
+    aria:"dial de frecuencia del generador " + n,
     leer:function(){ return G.dial; }, set:function(v){ G.dial = v; }});
   TX(g, cx, 278, "el dial multiplica al rango", {"font-size":7.6, "text-anchor":"middle",
      fill:"#8e99a6"});
@@ -1431,9 +1487,9 @@ function armarFiltro(tipo){
     leer:function(){ return F.corte; }, set:function(v){ F.corte = v; }});
   TX(s, 106, 136, "CORTE", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
      "letter-spacing":.7});
-  TX(s, 214, 80, "FRECUENCIA DE CORTE", {"font-size":6.8, "text-anchor":"middle",
+  TX(s, 219, 80, "FRECUENCIA DE CORTE", {"font-size":6.8, "text-anchor":"middle",
      fill:"#a7b1bd", "letter-spacing":.5});
-  d.corte = ventana(s, 148, 86, 132, 28, 13);
+  d.corte = ventana(s, 158, 86, 122, 28, 13);
 
   /* la curvita de respuesta, tres décadas alrededor del corte */
   E(s, "rect", {x:70, y:150, width:104, height:48, rx:5, fill:"#0b120d", stroke:"#1b2a20"});
@@ -1503,12 +1559,13 @@ function armarAnalizador(){
 
   /* ---------- frecuencia ---------- */
   caja(s, 424, 58, 260, 150, "FRECUENCIA");
-  perilla(s, {cx:468, cy:120, r:20, marcas:11, aria:"frecuencia central",
+  perilla(s, {cx:472, cy:120, r:20, marcas:11, aria:"frecuencia central", lado:"izq",
     leer:function(){ return AE.centro; }, set:function(v){ AE.centro = v; }});
   TX(s, 566, 102, "CENTRO", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
      "letter-spacing":.7});
   P.vCentro = ventana(s, 506, 108, 120, 26, 12.5);
-  llaveRot(s, {cx:468, cy:176, r:20, valores:SPANS, aria:"span por división",
+  llaveRot(s, {cx:472, cy:176, r:20, valores:SPANS, aria:"span por división",
+    lado:"izq",
     leer:function(){ return AE.spanIdx; }, set:function(v){ AE.spanIdx = v; }});
   TX(s, 566, 158, "SPAN/DIV", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
      "letter-spacing":.7});
@@ -1516,7 +1573,7 @@ function armarAnalizador(){
 
   /* ---------- amplitud ---------- */
   caja(s, 424, 216, 260, 120, "AMPLITUD");
-  perilla(s, {cx:468, cy:280, r:20, marcas:11, aria:"nivel de referencia",
+  perilla(s, {cx:472, cy:280, r:20, marcas:11, aria:"nivel de referencia", lado:"izq",
     leer:function(){ return (AE.ref + 40) / 80; },
     set:function(v){ AE.ref = Math.round(v * 80 - 40); }});
   TX(s, 552, 258, "REFERENCIA", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
@@ -1529,12 +1586,13 @@ function armarAnalizador(){
 
   /* ---------- análisis ---------- */
   caja(s, 424, 344, 260, 164, "ANÁLISIS");
-  llaveRot(s, {cx:468, cy:402, r:20, valores:RBWS, aria:"ancho de banda de resolución",
+  llaveRot(s, {cx:472, cy:402, r:20, valores:RBWS, aria:"ancho de banda de resolución",
+    lado:"izq",
     leer:function(){ return AE.rbwIdx; }, set:function(v){ AE.rbwIdx = v; }});
   TX(s, 566, 384, "RESOLUCIÓN", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
      "letter-spacing":.7});
   P.vRbw = ventana(s, 506, 390, 120, 26, 12.5);
-  perilla(s, {cx:468, cy:464, r:20, marcas:11, aria:"marcador",
+  perilla(s, {cx:472, cy:464, r:20, marcas:11, aria:"marcador", lado:"izq",
     leer:function(){ return AE.marca; }, set:function(v){ AE.marca = v; }});
   TX(s, 566, 446, "MARCADOR", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
      "letter-spacing":.7});
