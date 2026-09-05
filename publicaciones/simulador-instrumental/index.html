@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Banco de instrumentos virtual: un osciloscopio analógico de dos canales, dos generadores de funciones, un multiplicador analógico y un sumador, con cables BNC que se enchufan arrastrando. Sirve para armar una doble banda lateral con portadora suprimida y una AM, y para leer la onda contando divisiones.">
-<title>Simulador de instrumental · Osciloscopio, generadores y modulación · catto.ar</title>
+<meta name="description" content="Banco de laboratorio virtual: dos osciloscopios analógicos, un analizador de espectro, dos generadores de funciones, un multiplicador, un sumador y filtros pasa-bajos y pasa-altos. Los cables BNC se enchufan arrastrando. Sirve para armar y comparar una doble banda lateral con portadora suprimida, una AM y las dos bandas laterales únicas, y para medir su ancho de banda.">
+<title>Simulador de instrumental · Banco de modulación · catto.ar</title>
 <link rel="canonical" href="https://catto.ar/publicaciones/simulador-instrumental">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
@@ -13,8 +13,8 @@
 <meta name="theme-color" content="#0d1117">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Catto">
-<meta property="og:title" content="Simulador de instrumental · Osciloscopio, generadores y modulación">
-<meta property="og:description" content="Osciloscopio de dos canales, dos generadores de funciones, un multiplicador y un sumador, con cables BNC que se enchufan arrastrando. Para armar una DBL-PS y una AM y verlas en pantalla.">
+<meta property="og:title" content="Simulador de instrumental · Banco de modulación">
+<meta property="og:description" content="Dos osciloscopios, un analizador de espectro, dos generadores, un multiplicador, un sumador y dos filtros. Para armar la DBL-PS, la AM y las dos bandas laterales únicas y verlas en pantalla.">
 <meta property="og:url" content="https://catto.ar/publicaciones/simulador-instrumental">
 <meta property="og:image" content="https://catto.ar/assets/img/chancho-volador.png">
 <meta property="og:locale" content="es_AR">
@@ -24,7 +24,6 @@
     --txt:#e6edf3; --muted:#9aa7b4; --soft:#7d8a99;
     --accent:#58a6ff; --accent2:#1f6feb;
     --ok:#3fb950; --warn:#d29922; --hot:#f85149; --violet:#a371f7;
-    --r:14px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -39,37 +38,33 @@
     background:linear-gradient(180deg,rgba(31,111,235,.10),transparent);
   }
   .top h1{margin:0;font-size:23px;letter-spacing:.2px}
-  .top .sub{color:var(--muted);font-size:13.5px;margin-top:5px;max-width:84ch}
+  .top .sub{color:var(--muted);font-size:13.5px;margin-top:5px;max-width:88ch}
   .volver{display:inline-flex;align-items:center;gap:7px;color:#9aa7b4;font-size:13px;
     text-decoration:none;margin-bottom:10px}
   .volver span.ic{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
     background:linear-gradient(135deg,#1f6feb,#a371f7);font-size:13px}
 
-  main{max-width:1620px;margin:0 auto;padding:0 20px}
+  main{max-width:1900px;margin:0 auto;padding:0 20px}
   section{margin-top:26px}
   h2.t{font-size:16px;margin:0 0 4px;letter-spacing:.2px}
   p.st{color:var(--muted);font-size:13.5px;margin:0 0 14px}
 
-  /* ---------------- la mesa ---------------- */
+  /* ---------------- la mesa ----------------
+     Todo el banco vive en un sistema de coordenadas propio de 2200 x 1672
+     unidades. Cada equipo se ubica en porcentajes de ese rectangulo, asi que
+     el conjunto entero se agranda y se achica de una sola pieza y los cables,
+     que se dibujan en las mismas unidades, siempre caen donde tienen que caer. */
   .mesa-scroll{overflow-x:auto;overflow-y:hidden;border-radius:16px;
     -webkit-overflow-scrolling:touch}
   .mesa{
-    position:relative; display:flex; flex-direction:column; gap:104px;
-    min-width:1240px; padding:18px 18px 34px; border-radius:16px;
+    position:relative; width:100%; min-width:1320px; aspect-ratio:2200/1672;
+    border-radius:16px;
     background:linear-gradient(180deg,#12161d,#0f1319);
     border:1px solid var(--line);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
   }
-  /* Las dos filas reparten el mismo total de unidades y tienen la misma
-     cantidad de huecos, así que todo el banco queda a una sola escala. */
-  .fila{display:flex;gap:18px;align-items:flex-start}
-  .fila > *{min-width:0}
-  #osc{flex:700 1 0}
-  #gen1,#gen2{flex:430 1 0}
-  .hueco{flex:1060 1 0;display:block;height:1px}
-  #mul,#sum{flex:250 1 0}
-  #osc,#gen1,#gen2,#mul,#sum{height:auto;display:block;
-    filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
+  .mesa > svg.eq{position:absolute;display:block;
+    filter:drop-shadow(0 14px 26px rgba(0,0,0,.55))}
   #cables{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
   .mesa text{font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
     -webkit-user-select:none;user-select:none}
@@ -78,9 +73,10 @@
   .ctl:focus-visible circle:first-of-type{stroke:#58a6ff;stroke-width:2}
   .clic{cursor:pointer}
   .jack{cursor:grab;touch-action:none}
+  .franja{position:absolute;left:0;font-size:0}
 
   .pista{color:var(--soft);font-size:12.5px;margin:12px 2px 0;display:flex;
-    gap:12px;flex-wrap:wrap;align-items:center}
+    gap:10px;flex-wrap:wrap;align-items:center}
   .pista .sep{width:1px;height:20px;background:var(--line)}
   .btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);
     border-radius:9px;padding:7px 13px;font-size:12.5px;cursor:pointer;font-family:inherit}
@@ -91,18 +87,18 @@
     color:var(--muted);font-size:12.5px}
 
   /* ---------------- lectura ---------------- */
-  .rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
   .caja{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
   .caja h3{margin:0 0 8px;font-size:12px;letter-spacing:1.1px;text-transform:uppercase;
     color:var(--accent);font-weight:600}
   .caja p{margin:0 0 8px;font-size:13.5px;color:#cdd6df}
   .caja p:last-child{margin-bottom:0}
   .caja b{color:#fff}
-  .vals{display:flex;flex-wrap:wrap;gap:8px}
+  .vals{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
   .val{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
-    padding:7px 11px;min-width:92px}
+    padding:6px 10px;min-width:86px}
   .val span{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--soft)}
-  .val b{display:block;font-size:16px;color:var(--txt);font-weight:600;margin-top:1px}
+  .val b{display:block;font-size:15px;color:var(--txt);font-weight:600;margin-top:1px}
   .apagado{color:var(--soft);font-style:italic}
 
   ol.pract{margin:0;padding-left:0;list-style:none;counter-reset:p}
@@ -145,8 +141,9 @@
     background:radial-gradient(circle at 50% 55%, rgba(240,214,170,.24), rgba(230,160,150,.10) 45%, transparent 70%)}
 
   .arrastrar-mesa{display:none}
-  @media (max-width:1300px){ .arrastrar-mesa{display:inline} }
+  @media (max-width:1400px){ .arrastrar-mesa{display:inline} }
   @media (max-width:900px){
+    .mesa{min-width:1750px}
     header.top{padding:20px 18px 16px}
     .top h1{font-size:20px}
     main{padding:0 12px}
@@ -164,13 +161,16 @@
 <header class="top">
   <a class="volver" href="/"><span class="ic">🐷</span>Volver a catto.ar</a>
   <h1>🔬 Simulador de instrumental</h1>
-  <div class="sub">Un banco con cinco equipos: el osciloscopio analógico de dos canales, dos
-    generadores de funciones, un multiplicador analógico y un sumador. Los cables BNC se enchufan
-    arrastrando de un conector al otro y todas las perillas del frente andan. Alcanza para medir
-    una señal contando divisiones y también para fabricar una <b>doble banda lateral con portadora
-    suprimida</b> y una <b>modulación de amplitud</b>, y verlas en pantalla. Es el banco de
+  <div class="sub">Un banco de laboratorio con nueve equipos: dos osciloscopios analógicos de dos
+    canales, un analizador de espectro, dos generadores de funciones, un multiplicador, un sumador
+    y dos filtros, uno pasa-bajos y otro pasa-altos. Los cables BNC se enchufan arrastrando de un
+    conector al otro y todas las perillas del frente andan. Alcanza para medir una señal contando
+    divisiones y también para fabricar las cuatro modulaciones de amplitud clásicas
+    <b>—doble banda lateral con portadora suprimida, AM, banda lateral única superior e
+    inferior—</b> compararlas en pantalla y medirles el ancho de banda. Es el banco de
     <a href="/publicaciones/mapa-electronica/temas/osciloscopio">El osciloscopio</a>,
-    <a href="/publicaciones/mapa-electronica/temas/mediciones-ca">Mediciones en CA</a> y
+    <a href="/publicaciones/mapa-electronica/temas/mediciones-ca">Mediciones en CA</a>,
+    <a href="/publicaciones/mapa-electronica/temas/sistemas-modulacion">Sistemas de modulación</a> y
     <a href="/publicaciones/mc1496-modulador">el modulador MC1496</a>.</div>
 </header>
 
@@ -178,94 +178,18 @@
 
 <section>
   <div class="mesa-scroll"><div class="mesa" id="mesa">
-
-    <div class="fila">
-      <!-- =================== OSCILOSCOPIO =================== -->
-      <svg id="osc" viewBox="0 0 700 520" fill="#ccd4dd" role="img"
-           aria-label="Frente de un osciloscopio analógico de dos canales">
-        <defs>
-          <linearGradient id="gCaja" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#5c646f"/><stop offset=".5" stop-color="#484f59"/>
-            <stop offset="1" stop-color="#343a43"/>
-          </linearGradient>
-          <linearGradient id="gPanel" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#4a515c"/><stop offset="1" stop-color="#3b414b"/>
-          </linearGradient>
-          <linearGradient id="gBox" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#434a54"/><stop offset="1" stop-color="#3a4049"/>
-          </linearGradient>
-          <radialGradient id="gPerilla" cx=".34" cy=".28" r=".9">
-            <stop offset="0" stop-color="#727a86"/><stop offset=".5" stop-color="#3e444d"/>
-            <stop offset="1" stop-color="#1e2228"/>
-          </radialGradient>
-          <radialGradient id="gTapa" cx=".34" cy=".28" r=".85">
-            <stop offset="0" stop-color="#828a96"/><stop offset="1" stop-color="#383d45"/>
-          </radialGradient>
-          <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#4e535a"/><stop offset=".22" stop-color="#cfd4da"/>
-            <stop offset=".5" stop-color="#8b9199"/><stop offset=".8" stop-color="#c9ced5"/>
-            <stop offset="1" stop-color="#454a51"/>
-          </linearGradient>
-          <linearGradient id="gMetal2" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#3a3f45"/><stop offset=".25" stop-color="#a9aeb5"/>
-            <stop offset=".55" stop-color="#6e737a"/><stop offset=".85" stop-color="#a4a9b0"/>
-            <stop offset="1" stop-color="#33373d"/>
-          </linearGradient>
-          <radialGradient id="gPantalla" cx=".5" cy=".4" r=".78">
-            <stop offset="0" stop-color="#0e1c14"/><stop offset="1" stop-color="#040806"/>
-          </radialGradient>
-          <linearGradient id="gVidrio" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#ffffff" stop-opacity=".075"/>
-            <stop offset=".38" stop-color="#ffffff" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="gBoton" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#535a65"/><stop offset="1" stop-color="#383e47"/>
-          </linearGradient>
-          <linearGradient id="gBotonOn" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#e6ebf2"/><stop offset="1" stop-color="#b9c2cd"/>
-          </linearGradient>
-          <linearGradient id="gLogo" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#1f6feb"/><stop offset="1" stop-color="#a371f7"/>
-          </linearGradient>
-          <linearGradient id="gDisplay" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#1b0d0c"/><stop offset="1" stop-color="#100706"/>
-          </linearGradient>
-          <filter id="fFosforo" x="-15%" y="-25%" width="130%" height="150%">
-            <feGaussianBlur stdDeviation="2.6"/>
-          </filter>
-          <filter id="fLed" x="-120%" y="-120%" width="340%" height="340%">
-            <feGaussianBlur stdDeviation="2.4"/>
-          </filter>
-          <clipPath id="cPantalla"><rect x="26" y="68" width="380" height="304" rx="10"/></clipPath>
-        </defs>
-      </svg>
-
-      <!-- =================== GENERADORES =================== -->
-      <svg id="gen1" viewBox="0 0 430 520" fill="#ccd4dd" role="img"
-           aria-label="Frente del generador de funciones 1"></svg>
-      <svg id="gen2" viewBox="0 0 430 520" fill="#ccd4dd" role="img"
-           aria-label="Frente del generador de funciones 2"></svg>
-    </div>
-
-    <div class="fila">
-      <i class="hueco"></i>
-      <!-- =================== MÓDULOS =================== -->
-      <svg id="mul" viewBox="0 0 250 210" fill="#ccd4dd" role="img"
-           aria-label="Frente del multiplicador analógico"></svg>
-      <svg id="sum" viewBox="0 0 250 210" fill="#ccd4dd" role="img"
-           aria-label="Frente del sumador"></svg>
-    </div>
-
-    <!-- =================== CABLES =================== -->
-    <svg id="cables" aria-hidden="true"></svg>
+    <svg id="cables" viewBox="0 0 2200 1672" aria-hidden="true"></svg>
   </div></div>
 
   <div class="pista">
-    <span>Arrastrá desde un conector <b>BNC</b> para tirar un cable y soltalo sobre otro para
+    <span>Arrastrá desde un <b>BNC</b> para tirar un cable y soltalo sobre otro para
       enchufarlo.<span class="arrastrar-mesa"> Deslizá la mesa de costado para llegar a todo.</span></span>
     <span class="sep"></span>
-    <button class="btn fuerte" id="bDbl">Armar una DBL-PS</button>
-    <button class="btn fuerte" id="bAm">Armar una AM</button>
+    <button class="btn fuerte" id="bDbl">DBL-PS</button>
+    <button class="btn fuerte" id="bAm">AM</button>
+    <button class="btn fuerte" id="bBls">BLU superior</button>
+    <button class="btn fuerte" id="bBli">BLU inferior</button>
+    <button class="btn fuerte" id="bTodo">Las cuatro juntas</button>
     <span class="sep"></span>
     <label class="chk"><input type="checkbox" id="ayudas"> Ayudas de lectura</label>
     <button class="btn" id="bReset">Estado inicial</button>
@@ -274,29 +198,27 @@
 </section>
 
 <section>
-  <h2 class="t">Qué está midiendo</h2>
-  <p class="st">Lo mismo que haría cualquiera frente al equipo: contar divisiones y multiplicar por lo que dice la llave.</p>
+  <h2 class="t">Qué están midiendo</h2>
+  <p class="st">Lo mismo que haría cualquiera frente al equipo: contar divisiones en el osciloscopio y leer las rayas en el analizador.</p>
   <div class="rejilla">
     <div class="caja">
-      <h3>La cuenta en pantalla</h3>
+      <h3>Osciloscopio A</h3>
       <div id="cuenta"><p class="apagado">Sin señal en pantalla.</p></div>
+      <div class="vals" id="valores"></div>
     </div>
     <div class="caja">
-      <h3>Valores de la señal</h3>
-      <div class="vals" id="valores"></div>
+      <h3>Analizador de espectro</h3>
+      <div id="espectroTxt"><p class="apagado">Sin señal en la entrada.</p></div>
     </div>
     <div class="caja">
       <h3>Práctica guiada</h3>
       <ol class="pract" id="pract">
-        <li data-p="conectado">Conectá la <b>SALIDA</b> del generador 1 a la entrada <b>CH 1</b>.</li>
-        <li data-p="senoidal">Elegí la función <b>senoidal</b> en el generador 1.</li>
-        <li data-p="dosk">Llevá su frecuencia a <b>2 kHz</b>, con el dial y el multiplicador.</li>
-        <li data-p="cuatro">Poné su amplitud en <b>4 Vpp</b>.</li>
-        <li data-p="alto">Elegí el <b>VOLTS/DIV</b> para que la onda ocupe entre 4 y 7 divisiones de alto.</li>
-        <li data-p="ancho">Elegí el <b>TIEMPO/DIV</b> para ver entre 2 y 3 ciclos completos.</li>
-        <li data-p="firme">Pasá el disparo a <b>NORM</b> y dejá la imagen quieta.</li>
-        <li data-p="dbl">Armá la <b>DBL-PS</b>: moduladora al <b>X</b>, portadora al <b>Y</b>, y la salida <b>W</b> al CH 1.</li>
-        <li data-p="am">Convertila en <b>AM</b>: sumá la <b>W</b> con la portadora y llevá la <b>S</b> al CH 1.</li>
+        <li data-p="dbl">Armá la <b>DBL-PS</b>: moduladora al <b>X</b>, portadora al <b>Y</b>, y la <b>W</b> a un canal del osciloscopio A.</li>
+        <li data-p="am">Convertila en <b>AM</b>: sumale la portadora y llevá la <b>S</b> al otro canal.</li>
+        <li data-p="ae">Enchufá el <b>analizador</b> a la AM y ajustá el centro para ver las rayas.</li>
+        <li data-p="rbw">Bajá el <b>ancho de banda de resolución</b> hasta que las tres rayas se separen.</li>
+        <li data-p="bls">Sacá la <b>banda lateral superior</b> con el pasa-altos y llevala al osciloscopio B.</li>
+        <li data-p="bli">Sacá la <b>inferior</b> con el pasa-bajos y llevala al otro canal del B.</li>
       </ol>
     </div>
   </div>
@@ -305,103 +227,136 @@
 <section class="texto">
   <h2 class="t">Cómo se usa</h2>
 
-  <h3>Los generadores arman las señales</h3>
+  <h3>Cómo está armada la mesa</h3>
+  <p>El banco tiene tres franjas y la señal sube de abajo hacia arriba. Abajo del todo están las
+    <b>fuentes</b>, los dos generadores, con sus salidas arriba del frente. En el medio está el
+    <b>procesamiento</b>: el multiplicador, el sumador y los dos filtros, cada uno con las entradas
+    abajo y la salida arriba. Y arriba de todo está la <b>medición</b>: los dos osciloscopios y el
+    analizador, con las entradas abajo, donde siempre estuvieron.</p>
+  <p>Con esa disposición los cables viajan siempre por los dos pasillos que quedan entre franjas y
+    no cruzan el frente de ningún equipo. Los cinco botones de arriba arman solos las conexiones de
+    cada ejemplo, y después se puede desenchufar y probar otra cosa.</p>
+
+  <h3>Los generadores</h3>
   <p>La frecuencia sale de dos controles que trabajan juntos: el dial grande da un número entre 0,2
-    y 2, y la fila de botones lo multiplica por 1, 10, 100, 1000 y así hasta un millón. Poner 1 kHz
-    es dejar el dial en 1 y apretar el multiplicador ×1k. Los generadores analógicos siempre se
+    y 2, y la fila de botones lo multiplica por 1, 10, 100 y así hasta un millón. Poner 1 kHz es
+    dejar el dial en 1 y apretar el multiplicador ×1k. Los generadores analógicos siempre se
     manejaron de esa manera, y por eso tienen ese dial enorme con la escala impresa alrededor.</p>
-  <p>La perilla de amplitud fija cuántos volts de pico a pico entrega, el atenuador de −20 dB
-    divide esa salida por diez cuando hacen falta señales chicas, y el corrimiento continuo sube o
-    baja toda la onda sumándole una componente de continua. La salida <b>SINC</b> es aparte: entrega
-    siempre una cuadrada de 0 a 4 V a la misma frecuencia, pensada para disparar otro equipo.</p>
-  <p>Los dos generadores son el mismo modelo. En los ejemplos de modulación al <b>1</b> lo usamos de
-    moduladora, que es la señal que lleva la información, y al <b>2</b> de portadora, que es la
-    señal rápida que la transporta.</p>
+  <p>Los dos son el mismo modelo. En los ejemplos al <b>1</b> lo usamos de moduladora, que es la
+    señal que lleva la información, y al <b>2</b> de portadora, la señal rápida que la transporta.</p>
 
-  <h3>El osciloscopio la dibuja</h3>
+  <h3>Los osciloscopios</h3>
   <p>La pantalla está dividida en 10 divisiones a lo ancho y 8 a lo alto. Ese enrejado es toda la
-    regla que hay: el instrumento no dice cuánto mide nada, lo dice la llave. Si la llave de
+    regla que hay: el instrumento no dice cuánto mide nada, lo dice la llave. Si el
     <b>VOLTS/DIV</b> está en 2 V y la onda ocupa 3 divisiones de alto, la señal tiene 6 volts de
-    pico a pico. Si la llave de <b>TIEMPO/DIV</b> está en 0,2 ms y un ciclo entra en 5 divisiones,
-    el período es 1 ms y la frecuencia es su inversa, 1 kHz.</p>
-  <p>El acoplamiento decide qué llega al canal. En <b>CC</b> pasa todo, la señal alterna y la
-    continua sobre la que está montada. En <b>CA</b> un capacitor bloquea la continua y deja la onda
-    centrada, que es lo que conviene para mirar un rizado chico sobre una tensión grande. En
-    <b>⏚</b> la entrada se pone a masa: el trazo se va a una línea recta que sirve para marcar dónde
-    está el cero antes de medir.</p>
-
-  <h3>El disparo es lo que la deja quieta</h3>
-  <p>Un osciloscopio analógico dibuja la onda de izquierda a derecha una y otra vez. Si cada barrido
-    empieza en un punto distinto de la señal, los dibujos no se superponen y la imagen corre. El
-    circuito de disparo espera a que la señal pase por un nivel de tensión determinado y recién ahí
-    larga el barrido, así que todos los barridos arrancan en el mismo punto de la onda.</p>
-  <p>En <b>AUTO</b>, si el nivel quedó fuera del alcance de la señal el equipo larga el barrido
-    igual, y por eso se ve la onda corriendo. En <b>NORM</b> no larga nada y la pantalla queda en
-    negro. Es el error más común del laboratorio, y acá se puede reproducir sin romper nada.</p>
-  <p>Cuando en la pantalla conviven dos frecuencias muy distintas, como en una modulación, conviene
-    disparar con la más lenta. Por eso en los dos ejemplos armados la moduladora va al canal 2 y el
-    disparo toma de ahí: así la envolvente queda quieta y no tiembla.</p>
+    pico a pico. Si el <b>TIEMPO/DIV</b> está en 0,2 ms y un ciclo entra en 5 divisiones, el período
+    es 1 ms y la frecuencia es su inversa, 1 kHz.</p>
+  <p>Hay dos osciloscopios y cada uno tiene dos canales, así que se pueden mirar cuatro señales a
+    la vez. Es justo lo que hace falta para poner una al lado de la otra la doble banda lateral, la
+    AM y las dos bandas laterales únicas.</p>
+  <p>El <b>disparo</b> es lo que deja la imagen quieta: espera a que la señal pase por un nivel de
+    tensión y recién ahí larga el barrido, así todos los barridos arrancan en el mismo punto de la
+    onda. En <b>AUTO</b>, si el nivel quedó fuera de la señal el equipo barre igual y la imagen
+    corre; en <b>NORM</b> no barre y la pantalla queda negra. Cuando conviven dos frecuencias muy
+    distintas conviene disparar con la más lenta, y por eso en los ejemplos la moduladora va a un
+    canal y el disparo toma de ahí.</p>
 
   <h3>El multiplicador y la doble banda lateral</h3>
-  <p>El multiplicador entrega en su salida el producto de sus dos entradas, dividido por diez. Esa
-    división no es un capricho: los integrados multiplicadores reales traen esa constante para que
-    dos señales de diez volts no den cien, que no entrarían en la fuente de alimentación.</p>
+  <p>El multiplicador entrega el producto de sus dos entradas dividido por diez. Esa división no es
+    un capricho: los integrados multiplicadores reales traen esa constante para que dos señales de
+    diez volts no den cien, que no entrarían en la fuente.</p>
   <div class="form">W = X · Y / 10 V
     <span>Con las dos entradas en volts, la salida también queda en volts.</span></div>
-  <p>Si a la entrada X le ponemos la moduladora y a la Y la portadora, las dos senoidales, el
-    producto de dos cosenos da la identidad de siempre: dos cosenos de frecuencias nuevas, la suma
-    y la resta de las originales.</p>
+  <p>Con la moduladora en X y la portadora en Y, el producto de dos cosenos da la identidad de
+    siempre: dos cosenos de frecuencias nuevas, la suma y la resta de las originales.</p>
   <div class="form">cos(ω<sub>m</sub>t) · cos(ω<sub>c</sub>t) = ½ cos(ω<sub>c</sub>−ω<sub>m</sub>)t + ½ cos(ω<sub>c</sub>+ω<sub>m</sub>)t
     <span>Las dos bandas laterales. La portadora sola no aparece por ningún lado.</span></div>
-  <p>Eso es una <b>doble banda lateral con portadora suprimida</b>: hay banda lateral inferior y
-    superior, y no hay portadora. En la pantalla se reconoce por dos cosas. La envolvente toca el
-    cero entre lomo y lomo, y en cada uno de esos cruces la fase de la portadora se da vuelta, así
-    que el dibujo parece rebotar contra el eje en vez de apoyarse. Con la moduladora al lado, en el
-    canal 2, se ve que hay un lomo por cada semiciclo de la moduladora: dos lomos por cada ciclo de
-    ella.</p>
-  <p>Es la señal que fabrica el <a href="/publicaciones/mc1496-modulador">modulador balanceado
-    MC1496</a>, que es un multiplicador de cuatro cuadrantes hecho integrado.</p>
+  <p>Eso es una <b>doble banda lateral con portadora suprimida</b>. En el osciloscopio se reconoce
+    porque la envolvente toca el cero entre lomo y lomo, y en cada uno de esos cruces la fase de la
+    portadora se da vuelta: el dibujo parece rebotar contra el eje en vez de apoyarse. En el
+    analizador se reconoce porque hay dos rayas y en el medio, donde debería estar la portadora,
+    no hay nada.</p>
 
   <h3>El sumador y la AM</h3>
-  <p>Una AM común es una doble banda lateral a la que se le devuelve la portadora. Eso es
-    exactamente lo que hace el sumador: toma la salida del multiplicador por una entrada, la
-    portadora por la otra, y entrega la suma.</p>
-  <div class="form">S = A + B
-    <span>Saturando en ±12 V, que son los rieles de la fuente.</span></div>
-  <p>Sacando factor común la portadora queda a la vista de dónde sale la forma de la AM:</p>
+  <p>Una AM común es una doble banda lateral a la que se le devuelve la portadora, y eso es
+    exactamente lo que hace el sumador.</p>
   <div class="form">V<sub>c</sub>·cos(ω<sub>c</sub>t) + (V<sub>m</sub>V<sub>c</sub>/10)·cos(ω<sub>m</sub>t)·cos(ω<sub>c</sub>t)
     = V<sub>c</sub>·cos(ω<sub>c</sub>t) · [ 1 + (V<sub>m</sub>/10)·cos(ω<sub>m</sub>t) ]
     <span>El corchete es la envolvente, y lo que multiplica al coseno de adentro es el índice de
       modulación.</span></div>
-  <p>O sea que acá el <b>índice de modulación</b> es la amplitud de pico de la moduladora dividida
-    por los 10 V de la constante del multiplicador. Con la moduladora en 10 Vpp su pico es 5 V y el
-    índice da 0,5, un 50 %. Subiéndola al máximo de 20 Vpp el pico llega a 10 V y el índice da 1: la
-    envolvente toca el cero y la modulación es del 100 %. Más que eso no se puede, y por eso el
-    generador no entrega más.</p>
-  <p>La diferencia con la doble banda se ve de un vistazo. En la AM la envolvente nunca cruza el
-    cero mientras el índice sea menor que uno, y la portadora no cambia de fase en ningún momento.
-    Se puede ir y venir entre las dos con los botones de acá arriba y mirar la pantalla.</p>
+  <p>El <b>índice de modulación</b> es entonces la amplitud de pico de la moduladora dividida por
+    los 10 V de la constante del multiplicador. Con la moduladora en 10 Vpp su pico es 5 V y el
+    índice da 0,5, un 50 %. Subiéndola al máximo de 20 Vpp el índice llega a 1, la envolvente toca
+    el cero y la modulación es del 100 %.</p>
+  <p>En el analizador la diferencia salta a la vista: aparece una tercera raya en el medio, la
+    portadora, más alta que las dos laterales. Y el ancho de banda no cambia: sigue siendo el doble
+    de la frecuencia moduladora, porque las bandas laterales están donde estaban.</p>
 
-  <h3>Los modos de la pantalla</h3>
+  <h3>Los filtros y la banda lateral única</h3>
+  <p>Si la información va completa en cada banda lateral, mandar las dos es gastar el doble de
+    ancho de banda para decir lo mismo. La <b>banda lateral única</b> deja pasar una y tira la otra.
+    El método más viejo para lograrlo es el que está armado acá: se hace la doble banda y se le
+    pone un filtro que corte justo en la frecuencia de la portadora.</p>
+  <p>El <b>pasa-altos</b> deja la de arriba y da la banda lateral superior; el <b>pasa-bajos</b>
+    deja la de abajo y da la inferior. Los dos filtros son Butterworth, que es la respuesta plana
+    en la banda de paso que se estudia primero, y tienen la frecuencia de corte y la cantidad de
+    polos a mano.</p>
+  <p>Acá aparece el problema de verdad de este método. Las dos bandas laterales están separadas
+    por el doble de la frecuencia moduladora, y para tirar una sin tocar la otra el filtro tiene que
+    caer muchísimo en ese tramo. Con la moduladora en 1 kHz y la portadora en 20 kHz están a 19 y
+    21 kHz, apenas un 10 % de diferencia: no hay filtro Butterworth razonable que las separe. Por
+    eso los ejemplos de banda lateral única usan una moduladora bastante más alta, de 8 kHz sobre
+    una portadora de 32 kHz, donde las bandas quedan en 24 y 40 kHz y un filtro de 16 polos ya
+    rechaza la que sobra unos 30 dB.</p>
+  <p>En un equipo de radio de verdad esto se resuelve con un <b>filtro de cuarzo</b> o mecánico,
+    trabajando en una frecuencia intermedia alta, donde el salto entre una banda y la otra es de
+    unos cientos de hertz sobre varios megahertz. Ninguna red de resistores y capacitores llega a
+    eso; hace falta la selectividad de un cristal. Subiendo los polos del filtro y mirando el
+    analizador se ve exactamente cuánto mejora y cuánto falta.</p>
+  <p>Y hay algo que conviene mirar en el osciloscopio: la banda lateral única de un tono solo
+    <b>es una senoidal común</b>, de amplitud constante y de frecuencia igual a la portadora más o
+    menos la moduladora. Toda la información quedó en la frecuencia. Por eso una BLU no se puede
+    demodular con un detector de envolvente y hace falta reponer la portadora en el receptor.</p>
+
+  <h3>El analizador de espectro</h3>
+  <p>El osciloscopio dibuja la señal contra el tiempo; el analizador la dibuja contra la
+    frecuencia. Cada componente senoidal aparece como una raya parada en su frecuencia, y la altura
+    dice su amplitud. Es la misma señal vista desde el otro lado.</p>
+  <p>Los controles son los de cualquier analizador. La <b>frecuencia central</b> y el
+    <b>span por división</b> eligen qué pedazo del espectro se mira. La <b>referencia</b> fija qué
+    nivel corresponde al borde de arriba de la pantalla, y de ahí para abajo van 10 dB por
+    división. El <b>marcador</b> es un cursor vertical que informa la frecuencia y el nivel donde
+    se lo pare.</p>
+  <p>El control que más enseña es el <b>ancho de banda de resolución</b>. Un analizador no ve rayas
+    infinitamente finas: cada componente se dibuja con el ancho del filtro que usa para medir. Si
+    ese filtro es más ancho que la separación entre dos componentes, las dos se ven como una sola
+    loma. Bajándolo aparecen separadas. Con la portadora en 20 kHz y la moduladora en 1 kHz hay que
+    bajarlo por debajo del kilohertz para llegar a contar las tres rayas de la AM.</p>
+  <p>Con el marcador puesto en la raya de más a la izquierda y después en la de más a la derecha se
+    lee el <b>ancho de banda ocupado</b>. En la doble banda y en la AM da lo mismo, el doble de la
+    moduladora; en la banda lateral única da la mitad. Ése es todo el negocio de la BLU.</p>
+
+  <h3>Los modos de la pantalla del osciloscopio</h3>
   <ul>
     <li><b>CH 1</b> y <b>CH 2</b> muestran un solo canal.</li>
-    <li><b>DUAL</b> muestra los dos, cada uno con su propia sensibilidad y su propia posición. Es el
-      modo de los dos ejemplos: arriba la señal modulada, abajo la moduladora.</li>
+    <li><b>DUAL</b> muestra los dos, cada uno con su sensibilidad y su posición.</li>
     <li><b>SUMA</b> dibuja la suma de los dos canales, que es lo que hace el amplificador vertical
-      cuando se lo deja sumar. No hay que confundirlo con el módulo sumador: acá la suma es del
-      dibujo, no de la señal, y no se puede sacar por ningún conector.</li>
+      cuando se lo deja sumar. No es lo mismo que el módulo sumador: acá la suma es del dibujo y no
+      se puede sacar por ningún conector.</li>
     <li><b>X-Y</b> apaga la base de tiempo y usa el canal 1 para el eje horizontal y el 2 para el
-      vertical. Con dos senoidales aparecen las figuras de Lissajous, que sirven para comparar
-      frecuencias y fases. Con una AM y su moduladora aparece el trapecio de modulación, que es la
-      manera clásica de medir el índice sin contar divisiones.</li>
+      vertical. Con dos senoidales aparecen las figuras de Lissajous; con una AM en un canal y su
+      moduladora en el otro aparece el trapecio de modulación, que es la manera clásica de medir el
+      índice sin contar divisiones.</li>
   </ul>
 
-  <h3>Un detalle del banco</h3>
-  <p>Para armar la AM, la portadora tiene que ir a dos lugares a la vez: a la entrada Y del
-    multiplicador y a una entrada del sumador. Acá las salidas se reparten solas y aceptan varios
-    cables; las entradas, en cambio, admiten uno solo. En el laboratorio de verdad eso se resuelve
+  <h3>Dos detalles del banco</h3>
+  <p>Las salidas aceptan varios cables y las entradas uno solo. Eso hace falta porque la portadora
+    tiene que ir a dos lugares a la vez para armar la AM. En el laboratorio de verdad se resuelve
     con una <b>T de BNC</b>, y hay que tener presente que al repartir una salida entre dos entradas
     la carga cambia y la amplitud puede caer.</p>
+  <p>Los dos módulos que hacen cuentas, el multiplicador y el sumador, recortan la salida en
+    ±12 V, que son los rieles de su fuente, y encienden un piloto cuando eso pasa. Es el mismo
+    límite que tiene cualquier circuito con amplificadores operacionales alimentado a esa tensión.</p>
 
   <p style="margin-top:22px;color:var(--soft);font-size:13px">Los frentes están inspirados en los
     equipos analógicos de banco que se usaron durante décadas en las escuelas técnicas. No
@@ -416,7 +371,7 @@
 (function(){
 
 /* ══════════════════════════════════════════════════════════════════
-   Utilidades de SVG
+   Utilidades
    ══════════════════════════════════════════════════════════════════ */
 var NS = "http://www.w3.org/2000/svg";
 function E(p, t, a){
@@ -431,7 +386,7 @@ function TX(p, x, y, txt, a){
 }
 function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
 function coma(n, d){
-  if(Math.abs(n) < Math.pow(10, -d) / 2) n = 0;   /* nada de "−0,00" */
+  if(Math.abs(n) < Math.pow(10, -d) / 2) n = 0;
   return n.toFixed(d).replace(".", ",");
 }
 function ptSVG(svg, ev){
@@ -440,15 +395,11 @@ function ptSVG(svg, ev){
   var m = svg.getScreenCTM();
   return m ? p.matrixTransform(m.inverse()) : {x:0, y:0};
 }
-/* ángulo en grados, 0 arriba y creciendo en el sentido del reloj */
 function angulo(svg, ev, cx, cy){
   var p = ptSVG(svg, ev);
   return Math.atan2(p.x - cx, -(p.y - cy)) * 180 / Math.PI;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   Formatos
-   ══════════════════════════════════════════════════════════════════ */
 function fmtVolt(v){
   if(v < 0.999) return coma(v * 1000, 0) + " mV";
   return coma(v, 0) + " V";
@@ -460,19 +411,54 @@ function fmtTiempo(t){
   return coma(t, 1) + " s";
 }
 function fmtSeg(t){
-  /* los cortes llevan medio dígito de tolerancia, si no un período de
-     0,999999 ms sale como "1000,00 µs" en vez de "1,000 ms" */
   if(t < 0.99995e-6)  return coma(t * 1e9, 1) + " ns";
   if(t < 0.999995e-3) return coma(t * 1e6, 2) + " µs";
   if(t < 0.9999995)   return coma(t * 1e3, 3) + " ms";
   return coma(t, 3) + " s";
 }
 function fmtFrec(f){
-  /* con medio dígito de tolerancia: 999,998 Hz se muestra como 1,000 kHz */
   if(f >= 999950) return coma(f / 1e6, 3) + " MHz";
   if(f >= 999.95) return coma(f / 1e3, 3) + " kHz";
   if(f >= 1)      return coma(f, 2) + " Hz";
   return coma(f, 3) + " Hz";
+}
+function fmtFrecCorta(f){
+  if(f >= 999950) return coma(f / 1e6, 2) + " MHz";
+  if(f >= 999.95) return coma(f / 1e3, 1) + " kHz";
+  return coma(f, 0) + " Hz";
+}
+
+/* Transformada rápida de Fourier, radix 2, en el lugar. Es la que convierte
+   una vuelta entera de la señal en sus componentes, y con ella se filtran las
+   señales y se dibuja el espectro. */
+function fft(re, im, inverso){
+  var n = re.length, i, j, k, m, t, bit;
+  for(i = 1, j = 0; i < n; i++){
+    bit = n >> 1;
+    for(; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if(i < j){
+      t = re[i]; re[i] = re[j]; re[j] = t;
+      t = im[i]; im[i] = im[j]; im[j] = t;
+    }
+  }
+  for(m = 2; m <= n; m <<= 1){
+    var ang = (inverso ? 2 : -2) * Math.PI / m;
+    var wr = Math.cos(ang), wi = Math.sin(ang), mitad = m >> 1;
+    for(i = 0; i < n; i += m){
+      var ur = 1, ui = 0;
+      for(k = 0; k < mitad; k++){
+        var a = i + k, b = a + mitad;
+        var tr = re[b] * ur - im[b] * ui;
+        var ti = re[b] * ui + im[b] * ur;
+        re[b] = re[a] - tr; im[b] = im[a] - ti;
+        re[a] += tr;        im[a] += ti;
+        var nur = ur * wr - ui * wi;
+        ui = ur * wi + ui * wr; ur = nur;
+      }
+    }
+  }
+  if(inverso) for(i = 0; i < n; i++){ re[i] /= n; im[i] /= n; }
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -483,35 +469,46 @@ var TDIV = [0.2e-6,0.5e-6,1e-6,2e-6,5e-6,10e-6,20e-6,50e-6,
             0.1e-3,0.2e-3,0.5e-3,1e-3,2e-3,5e-3,10e-3,20e-3,50e-3,0.1,0.2,0.5];
 var RANGOS = [1,10,100,1000,10000,100000,1000000];
 var RANGOS_TXT = ["×1","×10","×100","×1k","×10k","×100k","×1M"];
-var RIEL = 12;                        /* saturación de los módulos, en volts */
+var SPANS = [100,200,500,1e3,2e3,5e3,10e3,20e3,50e3,100e3];      /* Hz por división */
+var RBWS  = [10,30,100,300,1e3,3e3,10e3];                        /* Hz              */
+var ORDENES = [2,4,8,16];                                        /* polos           */
+var RIEL = 12;
 
-/* el dial vale 0,2·10^d, así que recorre de 0,2 a 2 */
-var D_1  = Math.log10(1 / 0.2);       /* dial que marca 1   */
-var D_2  = 1;                         /* dial que marca 2   */
-var D_05 = Math.log10(0.5 / 0.2);     /* dial que marca 0,5 */
+var D_1 = Math.log10(1 / 0.2), D_2 = 1, D_08 = Math.log10(0.8 / 0.2);
 
-var INICIAL = {
-  osc: { pot:true, inten:0.72, foco:0.42,
-         v1:8, v2:8, pos1:1.8, pos2:-1.8, ac1:"CC", ac2:"CC",
-         modo:"DUAL", t:9, posH:0,
-         trigFuente:"ch1", trigPend:1, trigModo:"AUTO", trigNivel:0.5 },
-  gen1:{ pot:true, func:"seno", dial:D_1,  rango:3, amp:0.3, off:0.5, sim:0.5,
-         aten:false, salida:true },
-  gen2:{ pot:true, func:"seno", dial:D_05, rango:4, amp:0.3, off:0.5, sim:0.5,
-         aten:false, salida:true }
-};
-var O = {}, GEN = {1:{}, 2:{}};
-function copiar(dst, src){ for(var k in src) dst[k] = src[k]; }
+function oscInicial(){
+  return { pot:true, inten:0.72, foco:0.42,
+           v1:8, v2:8, pos1:1.8, pos2:-1.8, ac1:"CC", ac2:"CC",
+           modo:"DUAL", t:9, posH:0,
+           trigFuente:"ch1", trigPend:1, trigModo:"AUTO", trigNivel:0.5 };
+}
+function genInicial(dial, rango){
+  return { pot:true, func:"seno", dial:dial, rango:rango, amp:0.3, off:0.5, sim:0.5,
+           aten:false, salida:true };
+}
+var OSC = {}, GEN = {}, FIL = {}, AE = {};
 function reset(){
-  copiar(O, INICIAL.osc); copiar(GEN[1], INICIAL.gen1); copiar(GEN[2], INICIAL.gen2);
+  OSC = {a:oscInicial(), b:oscInicial()};
+  OSC.b.modo = "CH1";
+  GEN = {1:genInicial(D_1, 3), 2:genInicial(D_08, 4)};   /* 1 kHz y 8 kHz */
+  FIL = {lpf:{pot:true, corte:0.5, orden:2}, hpf:{pot:true, corte:0.5, orden:2}};
+  AE  = {pot:true, centro:0.62, spanIdx:5, rbwIdx:4, ref:20, log:true, marca:0.5};
 }
 reset();
 
-/* ---- lo que entrega cada generador ---- */
+/* corte del filtro: perilla logarítmica de 100 Hz a 500 kHz */
+function corteFil(n){ return 100 * Math.pow(10, FIL[n].corte * 3.699); }
+function centroAE(){ return 100 * Math.pow(10, AE.centro * 3.699); }
+function spanAE(){ return SPANS[AE.spanIdx]; }        /* por división */
+function rbwAE(){ return RBWS[AE.rbwIdx]; }
+function iniAE(){ return Math.max(0, centroAE() - spanAE() * 5); }
+function finAE(){ return iniAE() + spanAE() * 10; }
+function marcaAE(){ return iniAE() + AE.marca * (finAE() - iniAE()); }
+
 function frecGen(n){ return 0.2 * Math.pow(10, GEN[n].dial) * RANGOS[GEN[n].rango]; }
-function ampGen(n){ return GEN[n].amp * 20 * (GEN[n].aten ? 0.1 : 1); }   /* Vpp  */
-function offGen(n){ return (GEN[n].off - 0.5) * 20; }                     /* V cc */
-function simGen(n){ return 0.1 + GEN[n].sim * 0.8; }                      /* 10-90 % */
+function ampGen(n){ return GEN[n].amp * 20 * (GEN[n].aten ? 0.1 : 1); }
+function offGen(n){ return (GEN[n].off - 0.5) * 20; }
+function simGen(n){ return 0.1 + GEN[n].sim * 0.8; }
 
 function salidaGen(n, t){
   var g = GEN[n];
@@ -530,16 +527,18 @@ function sincGen(n, t){
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   La red de cables: quién alimenta a quién
-   Las entradas admiten un solo cable; las salidas se reparten.
+   La red de cables
    ══════════════════════════════════════════════════════════════════ */
 var TIPO = {
   "gen1.out":"s", "gen1.sinc":"s", "gen2.out":"s", "gen2.sinc":"s",
   "mul.x":"e", "mul.y":"e", "mul.w":"s",
   "sum.a":"e", "sum.b":"e", "sum.s":"s",
-  "osc.ch1":"e", "osc.ch2":"e"
+  "lpf.in":"e", "lpf.out":"s",
+  "hpf.in":"e", "hpf.out":"s",
+  "oscA.ch1":"e", "oscA.ch2":"e", "oscB.ch1":"e", "oscB.ch2":"e",
+  "ae.in":"e"
 };
-var FUENTE = {};                    /* jack de entrada -> jack que lo alimenta */
+var FUENTE = {};
 var SATURA = {mul:false, sum:false};
 
 function reconstruirRed(){
@@ -552,9 +551,65 @@ function reconstruirRed(){
   }
 }
 
-/* La profundidad frena un lazo, por ejemplo la W del multiplicador metida en
-   su propia X. No se usa un conjunto de visitados porque una misma salida
-   puede alimentar las dos entradas de un módulo, que es elevar al cuadrado. */
+/* ---- respuesta de los filtros Butterworth, en el plano de la frecuencia ----
+   Se arma como cascada de secciones de segundo orden, con los Q que le tocan a
+   cada una. Devuelve la parte real y la imaginaria, porque para rehacer la
+   onda hace falta la fase y no sólo cuánto atenúa. */
+function respFiltro(tipo, f, fc, orden){
+  var u = f / fc, re = 1, im = 0, i;
+  for(i = 0; i < orden / 2; i++){
+    var Q = 1 / (2 * Math.cos((2 * i + 1) * Math.PI / (2 * orden)));
+    var dr = 1 - u * u, di = u / Q;
+    var nr = (tipo === "lpf") ? 1 : -u * u;
+    var den = dr * dr + di * di;
+    if(den < 1e-30) den = 1e-30;
+    var qr = (nr * dr) / den, qi = (-nr * di) / den;
+    var pr = re * qr - im * qi;
+    im = re * qi + im * qr; re = pr;
+  }
+  return [re, im];
+}
+
+/* ---- el buffer de un filtro ----
+   Toda señal del banco es periódica. Se toma una vuelta entera, se la pasa a
+   frecuencia, se multiplica cada componente por la respuesta del filtro y se
+   vuelve al tiempo. Sale el régimen permanente exacto, sin transitorio. */
+var BUF = {}, armando = {};
+function bufferFiltro(jack){
+  if(BUF[jack]) return BUF[jack];
+  if(armando[jack]) return null;
+  armando[jack] = 1;
+  var tipo = jack.slice(0, 3), F = FIL[tipo];
+  var src = FUENTE[tipo + ".in"];
+  var N = 2048, i;
+  var P = (src ? periodoLargo(src) : 0) || 1e-3;
+  var re = new Float64Array(N), im = new Float64Array(N);
+  if(src && F.pot) for(i = 0; i < N; i++) re[i] = valorJack(src, P * i / N);
+  if(src && F.pot){
+    fft(re, im, false);
+    var fc = corteFil(tipo), orden = F.orden;
+    var H0 = respFiltro(tipo, 0, fc, orden);
+    re[0] *= H0[0]; im[0] *= H0[0];
+    for(i = 1; i < N / 2; i++){
+      var H = respFiltro(tipo, i / P, fc, orden);
+      var ar = re[i], ai = im[i];
+      re[i] = ar * H[0] - ai * H[1];
+      im[i] = ar * H[1] + ai * H[0];
+      var j = N - i, br = re[j], bi = im[j];
+      re[j] = br * H[0] + bi * H[1];
+      im[j] = bi * H[0] - br * H[1];
+    }
+    var HN = respFiltro(tipo, (N / 2) / P, fc, orden);
+    var mN = Math.hypot(HN[0], HN[1]);
+    re[N / 2] *= mN; im[N / 2] = 0;
+    fft(re, im, true);
+  }
+  var b = {P:P, y:re};
+  BUF[jack] = b;
+  armando[jack] = 0;
+  return b;
+}
+
 function valorEn(jack, t, prof){
   if(!jack || prof > 5) return 0;
   switch(jack){
@@ -568,21 +623,27 @@ function valorEn(jack, t, prof){
     case "sum.s":
       return valorEn(FUENTE["sum.a"], t, prof + 1) +
              valorEn(FUENTE["sum.b"], t, prof + 1);
+    case "lpf.out": case "hpf.out": {
+      var b = bufferFiltro(jack);
+      if(!b) return 0;
+      var N = b.y.length;
+      var u = (t / b.P) % 1; if(u < 0) u += 1;
+      var x = u * N, i0 = Math.floor(x), fr = x - i0;
+      return b.y[i0 % N] * (1 - fr) + b.y[(i0 + 1) % N] * fr;
+    }
   }
   return 0;
 }
 function valorJack(jack, t){
   var v = valorEn(jack, t, 0);
-  /* los módulos no pueden pasarse de los rieles de su fuente */
   if(jack === "mul.w" || jack === "sum.s") return clamp(v, -RIEL, RIEL);
   return v;
 }
 
-/* qué generadores terminan alimentando un jack: sirve para elegir la ventana
-   de disparo y de medición, y para explicar la pantalla */
+/* qué generadores terminan alimentando un jack */
 function generadoresDe(jack, prof, acum){
   acum = acum || {};
-  if(!jack || prof > 5) return acum;
+  if(!jack || prof > 6) return acum;
   if(jack === "gen1.out" || jack === "gen1.sinc"){ acum[1] = true; return acum; }
   if(jack === "gen2.out" || jack === "gen2.sinc"){ acum[2] = true; return acum; }
   if(jack === "mul.w"){
@@ -591,15 +652,13 @@ function generadoresDe(jack, prof, acum){
   }else if(jack === "sum.s"){
     generadoresDe(FUENTE["sum.a"], prof + 1, acum);
     generadoresDe(FUENTE["sum.b"], prof + 1, acum);
+  }else if(jack === "lpf.out"){
+    generadoresDe(FUENTE["lpf.in"], prof + 1, acum);
+  }else if(jack === "hpf.out"){
+    generadoresDe(FUENTE["hpf.in"], prof + 1, acum);
   }
   return acum;
 }
-
-function fuenteDe(ch){ return FUENTE["osc." + ch] || null; }
-
-/* Ventana con la que se busca el disparo y se mide: el período más largo de
-   los generadores que llegan al canal. En una modulación ése es el de la
-   envolvente, que es el dibujo que se repite. */
 function periodoLargo(jack){
   var g = generadoresDe(jack, 0, {}), P = 0, n;
   for(n = 1; n <= 2; n++) if(g[n]){
@@ -608,56 +667,87 @@ function periodoLargo(jack){
   }
   return P;
 }
-function ventanaDe(ch){
-  var src = fuenteDe(ch);
+function frecMax(jack){
+  var g = generadoresDe(jack, 0, {}), F = 0, n;
+  for(n = 1; n <= 2; n++) if(g[n]) F = Math.max(F, frecGen(n));
+  return F;
+}
+
+function fuenteDe(o, ch){ return FUENTE["osc" + o.toUpperCase() + "." + ch] || null; }
+function ventanaDe(o, ch){
+  var src = fuenteDe(o, ch);
   return (src ? periodoLargo(src) : 0) || 1e-3;
 }
-function frecMaxDe(ch){
-  var src = fuenteDe(ch);
-  if(!src) return 1e3;
-  var g = generadoresDe(src, 0, {}), F = 0, n;
-  for(n = 1; n <= 2; n++) if(g[n]) F = Math.max(F, frecGen(n));
-  return F || 1e3;
+function frecMaxDe(o, ch){
+  var src = fuenteDe(o, ch);
+  return (src ? frecMax(src) : 0) || 1e3;
 }
 
-/* ---- qué llega a cada canal, ya con el acoplamiento aplicado ---- */
-var MEDIA = {ch1:0, ch2:0};
+var MEDIA = {};
 function recalcularMedias(){
-  var ch, i, N = 400;
-  for(ch in MEDIA){
-    var src = fuenteDe(ch);
-    if(!src){ MEDIA[ch] = 0; continue; }
-    var P = ventanaDe(ch), s = 0;
-    for(i = 0; i < N; i++) s += valorJack(src, P * i / N);
-    MEDIA[ch] = s / N;
-  }
+  MEDIA = {};
+  ["a","b"].forEach(function(o){
+    ["ch1","ch2"].forEach(function(ch){
+      var src = fuenteDe(o, ch), k = o + ch;
+      if(!src){ MEDIA[k] = 0; return; }
+      var P = ventanaDe(o, ch), s = 0, N = 400, i;
+      for(i = 0; i < N; i++) s += valorJack(src, P * i / N);
+      MEDIA[k] = s / N;
+    });
+  });
 }
-function valorCanal(ch, t){
+function valorCanal(o, ch, t){
+  var O = OSC[o];
   var ac = ch === "ch1" ? O.ac1 : O.ac2;
   if(ac === "GND") return 0;
-  var src = fuenteDe(ch);
+  var src = fuenteDe(o, ch);
   if(!src) return 0;
   var v = valorJack(src, t);
-  if(ac === "CA") v -= MEDIA[ch];
+  if(ac === "CA") v -= MEDIA[o + ch];
   return v;
 }
-function vdivDe(ch){ return VDIV[ch === "ch1" ? O.v1 : O.v2]; }
-function posDe(ch){ return ch === "ch1" ? O.pos1 : O.pos2; }
-function nivelDisparo(){ return (O.trigNivel - 0.5) * 8 * vdivDe(O.trigFuente); }
+function vdivDe(o, ch){ return VDIV[ch === "ch1" ? OSC[o].v1 : OSC[o].v2]; }
+function posDe(o, ch){ return ch === "ch1" ? OSC[o].pos1 : OSC[o].pos2; }
+function nivelDisparo(o){
+  return (OSC[o].trigNivel - 0.5) * 8 * vdivDe(o, OSC[o].trigFuente);
+}
 
-/* ¿algún módulo está pegado contra los rieles? */
 function revisarSaturacion(){
-  var pares = [["mul", "mul.w", "mul.x", "mul.y"], ["sum", "sum.s", "sum.a", "sum.b"]];
+  var pares = [["mul","mul.w","mul.x","mul.y"], ["sum","sum.s","sum.a","sum.b"]];
   var res = {mul:false, sum:false}, k, j, N = 150;
   for(k = 0; k < 2; k++){
     var mod = pares[k][0], jack = pares[k][1];
     if(!FUENTE[pares[k][2]] && !FUENTE[pares[k][3]]) continue;
     var P = periodoLargo(jack) || 1e-3;
-    for(j = 0; j < N; j++){
+    for(j = 0; j < N; j++)
       if(Math.abs(valorEn(jack, P * j / N, 0)) > RIEL + 1e-9){ res[mod] = true; break; }
-    }
   }
   SATURA = res;
+}
+
+/* ---- el espectro que ve el analizador ----
+   Una vuelta entera de la señal, pasada a frecuencia. Como la ventana es
+   exactamente un período, cada componente cae justo en su casillero y no hay
+   derrame: las rayas salen limpias. */
+var ESPECTRO = [];
+function calcularEspectro(){
+  ESPECTRO = [];
+  var src = FUENTE["ae.in"];
+  if(!src || !AE.pot) return;
+  var N = 4096, i;
+  var P = periodoLargo(src) || 1e-3;
+  var re = new Float64Array(N), im = new Float64Array(N);
+  for(i = 0; i < N; i++) re[i] = valorJack(src, P * i / N);
+  fft(re, im, false);
+  var lin = [], amax = 1e-12;
+  for(i = 0; i <= N / 2; i++){
+    var A = 2 * Math.hypot(re[i], im[i]) / N;
+    if(i === 0 || i === N / 2) A /= 2;
+    if(A > amax) amax = A;
+    lin.push({f:i / P, A:A});
+  }
+  var piso = amax * 2e-5;                       /* unos 94 dB por debajo */
+  for(i = 0; i < lin.length; i++) if(lin[i].A > piso) ESPECTRO.push(lin[i]);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -676,13 +766,11 @@ function etiqueta(par, x, y, txt, extra){
   if(extra) for(var k in extra) a[k] = extra[k];
   return TX(par, x, y, txt, a);
 }
-
-/* cuerpo de una perilla; devuelve el grupo que rota */
 function cuerpoPerilla(par, cx, cy, r){
   E(par, "ellipse", {cx:cx, cy:cy + 2.5, rx:r + 1.5, ry:r, fill:"#0b0d10", opacity:".55"});
-  E(par, "circle", {cx:cx, cy:cy, r:r, fill:"url(#gPerilla)", stroke:"#191d22", "stroke-width":1.2});
-  var rot = E(par, "g", {});
-  var i, n = 26;
+  E(par, "circle", {cx:cx, cy:cy, r:r, fill:"url(#gPerilla)", stroke:"#191d22",
+                    "stroke-width":1.2});
+  var rot = E(par, "g", {}), i, n = 26;
   for(i = 0; i < n; i++){
     var a = i * 2 * Math.PI / n, s = Math.sin(a), c = -Math.cos(a);
     E(rot, "line", {x1:cx + s * (r - 1), y1:cy + c * (r - 1),
@@ -696,8 +784,6 @@ function cuerpoPerilla(par, cx, cy, r){
   E(par, "circle", {cx:cx - r * 0.13, cy:cy - r * 0.15, r:r * 0.14, fill:"#fff", opacity:".16"});
   return rot;
 }
-
-/* arrastre angular común a todas las perillas */
 function arrastrar(g, svg, cx, cy, leer, escribir){
   var prev = 0, activo = false;
   g.addEventListener("pointerdown", function(ev){
@@ -722,10 +808,8 @@ function arrastrar(g, svg, cx, cy, leer, escribir){
   g.addEventListener("pointerup", fin);
   g.addEventListener("pointercancel", fin);
 }
-
-/* perilla continua (0 a 1) */
-function perilla(svg, par, o){
-  var g = E(par, "g", {class:"ctl", tabindex:0, role:"slider",
+function perilla(svg, o){
+  var g = E(svg, "g", {class:"ctl", tabindex:0, role:"slider",
                        "aria-label":o.aria || "perilla"});
   var i, n = o.marcas === undefined ? 11 : o.marcas;
   for(i = 0; i < n; i++){
@@ -756,11 +840,9 @@ function perilla(svg, par, o){
   pintar();
   return {pintar:pintar};
 }
-
-/* llave rotativa con posiciones fijas */
-function llaveRot(svg, par, o){
+function llaveRot(svg, o){
   var n = o.valores.length;
-  var g = E(par, "g", {class:"ctl", tabindex:0, role:"listbox", "aria-label":o.aria || "llave"});
+  var g = E(svg, "g", {class:"ctl", tabindex:0, role:"listbox", "aria-label":o.aria || "llave"});
   var i;
   for(i = 0; i < n; i++){
     var a = (-140 + 280 * i / (n - 1)) * Math.PI / 180;
@@ -774,12 +856,11 @@ function llaveRot(svg, par, o){
     rot.setAttribute("transform",
       "rotate(" + (-140 + 280 * o.leer() / (n - 1)) + " " + o.cx + " " + o.cy + ")");
   }
-  function ponerFrac(f){
+  arrastrar(g, svg, o.cx, o.cy, function(){ return o.leer() / (n - 1); }, function(f){
     var idx = Math.round(f * (n - 1));
     if(idx !== o.leer()) o.set(idx);
     pintar(); refrescar();
-  }
-  arrastrar(g, svg, o.cx, o.cy, function(){ return o.leer() / (n - 1); }, ponerFrac);
+  });
   g.addEventListener("wheel", function(ev){
     ev.preventDefault();
     o.set(clamp(o.leer() + (ev.deltaY < 0 ? 1 : -1), 0, n - 1)); pintar(); refrescar();
@@ -794,18 +875,14 @@ function llaveRot(svg, par, o){
   pintar();
   return {pintar:pintar};
 }
-
-/* ventanita impresa con el valor elegido */
-function ventana(par, x, y, w, h){
+function ventana(par, x, y, w, h, fs){
   E(par, "rect", {x:x, y:y, width:w, height:h, rx:5, fill:"#15181d",
                   stroke:"#0d0f12", "stroke-width":1});
   E(par, "rect", {x:x + 1, y:y + 1, width:w - 2, height:h / 2, rx:4,
                   fill:"#fff", opacity:".04"});
   return TX(par, x + w / 2, y + h / 2 + 4.5, "",
-            {"font-size":11.5, "text-anchor":"middle", fill:"#dfe6ee", "font-weight":600});
+            {"font-size":fs || 11.5, "text-anchor":"middle", fill:"#dfe6ee", "font-weight":600});
 }
-
-/* botón cuadrado que se enciende */
 var BOTONES = [];
 function boton(par, o){
   var g = E(par, "g", {class:"clic", tabindex:0, role:"button", "aria-label":o.aria || o.txt});
@@ -831,14 +908,11 @@ function boton(par, o){
   BOTONES.push(pintar);
   return {pintar:pintar};
 }
-
-/* llave deslizante de tres posiciones */
 function llave3(par, o){
   var g = E(par, "g", {class:"clic", tabindex:0, role:"button",
                        "aria-label":o.aria || "acoplamiento"});
-  var h = 46, w = 15, x = o.cx - w / 2, y = o.cy - h / 2;
+  var h = 46, w = 15, x = o.cx - w / 2, y = o.cy - h / 2, i;
   E(g, "rect", {x:x, y:y, width:w, height:h, rx:6, fill:"#20242a", stroke:"#15181d"});
-  var i;
   for(i = 0; i < 3; i++)
     TX(g, o.cx + 12, y + 9 + i * (h - 16) / 2, o.textos[i],
        {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.4});
@@ -856,8 +930,6 @@ function llave3(par, o){
   pintar();
   return {pintar:pintar};
 }
-
-/* botón de encendido, con su piloto */
 function encendido(par, cx, cy, leer, set){
   var g = E(par, "g", {class:"clic", tabindex:0, role:"switch", "aria-label":"encendido"});
   E(g, "circle", {cx:cx, cy:cy, r:12, fill:"url(#gPerilla)", stroke:"#191d22"});
@@ -865,8 +937,8 @@ function encendido(par, cx, cy, leer, set){
   E(g, "path", {d:"M " + cx + " " + (cy - 5) + " L " + cx + " " + (cy - 0.5),
                 stroke:"#c9d2dc", "stroke-width":1.6, "stroke-linecap":"round", fill:"none"});
   E(g, "circle", {cx:cx, cy:cy + 0.6, r:3.6, fill:"none", stroke:"#c9d2dc", "stroke-width":1.3});
-  var halo = E(par, "circle", {cx:cx - 28, cy:cy, r:5, fill:"#3fb950", filter:"url(#fLed)"});
-  var led = E(par, "circle", {cx:cx - 28, cy:cy, r:3.4, fill:"#48d15e", stroke:"#0f1a12"});
+  var halo = E(par, "circle", {cx:cx - 27, cy:cy, r:5, fill:"#3fb950", filter:"url(#fLed)"});
+  var led = E(par, "circle", {cx:cx - 27, cy:cy, r:3.4, fill:"#48d15e", stroke:"#0f1a12"});
   function pintar(){
     var on = leer();
     halo.setAttribute("opacity", on ? ".85" : "0");
@@ -879,8 +951,27 @@ function encendido(par, cx, cy, leer, set){
   BOTONES.push(pintar);
   return {pintar:pintar};
 }
+function piloto(par, cx, cy, color){
+  var halo = E(par, "circle", {cx:cx, cy:cy, r:5.5, fill:color, filter:"url(#fLed)", opacity:"0"});
+  var led = E(par, "circle", {cx:cx, cy:cy, r:4, fill:"#2b2320", stroke:"#15181d",
+                              "stroke-width":.8});
+  return function(on){
+    halo.setAttribute("opacity", on ? ".9" : "0");
+    led.setAttribute("fill", on ? color : "#2b2320");
+  };
+}
+function marca(par, x, y, modelo, detalle){
+  E(par, "rect", {x:x, y:y, width:30, height:24, rx:6, fill:"url(#gLogo)"});
+  TX(par, x + 15, y + 17, "c", {"font-size":16, "text-anchor":"middle", fill:"#fff",
+                                "font-weight":700});
+  TX(par, x + 38, y + 18, "catto", {"font-size":15, fill:"#e8eef5", "font-weight":700,
+                                    "letter-spacing":.3});
+  TX(par, x + 90, y + 11, modelo, {"font-size":8.6, fill:"#9aa5b1", "letter-spacing":1.5});
+  TX(par, x + 90, y + 21, detalle, {"font-size":8.6, fill:"#9aa5b1", "letter-spacing":1.5});
+}
 
-/* conector BNC de panel. `dir` dice para dónde sale el cable: +1 abajo, −1 arriba */
+/* conector BNC. `dir` dice para dónde sale el cable: +1 abajo, −1 arriba.
+   La posición se guarda en coordenadas de la mesa, no del equipo. */
 var JACKS = {};
 function bnc(par, o){
   var g = E(par, "g", {class:"jack", "data-jack":o.id, tabindex:0, role:"button",
@@ -899,49 +990,108 @@ function bnc(par, o){
   E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r * 0.5, fill:"#e8e3d2", opacity:".9"});
   E(g, "circle", {cx:o.cx, cy:o.cy, r:1.7, fill:"#d8c98f", stroke:"#8a7c4e", "stroke-width":.6});
   E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r + 6, fill:"transparent"});
-  JACKS[o.id] = {g:g, dir:o.dir || 1};
+  JACKS[o.id] = {x:o.org.x + o.cx, y:o.org.y + o.cy, dir:o.dir || 1};
   g.addEventListener("pointerdown", function(ev){ tomarJack(o.id, ev); });
   return g;
 }
 
-/* placa con la marca */
-function marca(par, x, y, modelo, detalle){
-  E(par, "rect", {x:x, y:y, width:30, height:24, rx:6, fill:"url(#gLogo)"});
-  TX(par, x + 15, y + 17, "c", {"font-size":16, "text-anchor":"middle", fill:"#fff",
-                                "font-weight":700});
-  TX(par, x + 38, y + 18, "catto", {"font-size":15, fill:"#e8eef5", "font-weight":700,
-                                    "letter-spacing":.3});
-  TX(par, x + 90, y + 11, modelo, {"font-size":8.6, fill:"#9aa5b1", "letter-spacing":1.5});
-  TX(par, x + 90, y + 21, detalle, {"font-size":8.6, fill:"#9aa5b1", "letter-spacing":1.5});
-}
+/* ══════════════════════════════════════════════════════════════════
+   La mesa: dónde va cada equipo, en unidades del banco
+   ══════════════════════════════════════════════════════════════════ */
+var BW = 2200, BH = 1672;
+var UBIC = {
+  oscA:{x:26,   y:26,   w:700, h:520},
+  oscB:{x:750,  y:26,   w:700, h:520},
+  ae:  {x:1474, y:26,   w:700, h:520},
+  mul: {x:410,  y:706,  w:300, h:260},
+  sum: {x:770,  y:706,  w:300, h:260},
+  lpf: {x:1130, y:706,  w:300, h:260},
+  hpf: {x:1490, y:706,  w:300, h:260},
+  gen1:{x:640,  y:1126, w:430, h:520},
+  gen2:{x:1130, y:1126, w:430, h:520}
+};
+var mesa = document.getElementById("mesa");
+var svgCab = document.getElementById("cables");
+var SVGS = {};
 
-/* piloto chico de dos estados */
-function piloto(par, cx, cy, color){
-  var halo = E(par, "circle", {cx:cx, cy:cy, r:5.5, fill:color, filter:"url(#fLed)", opacity:"0"});
-  var led = E(par, "circle", {cx:cx, cy:cy, r:4, fill:"#2b2320", stroke:"#15181d",
-                              "stroke-width":.8});
-  return function(on){
-    halo.setAttribute("opacity", on ? ".9" : "0");
-    led.setAttribute("fill", on ? color : "#2b2320");
-  };
+function crearSvg(id){
+  var u = UBIC[id];
+  var s = E(null, "svg", {
+    id:id, class:"eq", viewBox:"0 0 " + u.w + " " + u.h, fill:"#ccd4dd", role:"img"
+  });
+  s.style.left = (u.x / BW * 100) + "%";
+  s.style.top = (u.y / BH * 100) + "%";
+  s.style.width = (u.w / BW * 100) + "%";
+  mesa.insertBefore(s, svgCab);
+  SVGS[id] = s;
+  return s;
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   El frente del osciloscopio
+   Definiciones gráficas, una sola vez para todo el banco
    ══════════════════════════════════════════════════════════════════ */
-var svgOsc = document.getElementById("osc");
-var svgGen = {1:document.getElementById("gen1"), 2:document.getElementById("gen2")};
-var svgMul = document.getElementById("mul");
-var svgSum = document.getElementById("sum");
-var vent = {};
-var trazoCH1, trazoCH2, trazoXY, ledDisp, grupoAyudas, pantallaViva, filtroFoco;
+function armarDefs(s){
+  var d = E(s, "defs", {});
+  d.innerHTML =
+    '<linearGradient id="gCaja" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#5c646f"/><stop offset=".5" stop-color="#484f59"/>' +
+      '<stop offset="1" stop-color="#343a43"/></linearGradient>' +
+    '<linearGradient id="gPanel" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#4a515c"/><stop offset="1" stop-color="#3b414b"/></linearGradient>' +
+    '<linearGradient id="gBox" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#434a54"/><stop offset="1" stop-color="#3a4049"/></linearGradient>' +
+    '<radialGradient id="gPerilla" cx=".34" cy=".28" r=".9">' +
+      '<stop offset="0" stop-color="#727a86"/><stop offset=".5" stop-color="#3e444d"/>' +
+      '<stop offset="1" stop-color="#1e2228"/></radialGradient>' +
+    '<radialGradient id="gTapa" cx=".34" cy=".28" r=".85">' +
+      '<stop offset="0" stop-color="#828a96"/><stop offset="1" stop-color="#383d45"/></radialGradient>' +
+    '<linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0" stop-color="#4e535a"/><stop offset=".22" stop-color="#cfd4da"/>' +
+      '<stop offset=".5" stop-color="#8b9199"/><stop offset=".8" stop-color="#c9ced5"/>' +
+      '<stop offset="1" stop-color="#454a51"/></linearGradient>' +
+    '<linearGradient id="gMetal2" x1="0" y1="0" x2="1" y2="0">' +
+      '<stop offset="0" stop-color="#3a3f45"/><stop offset=".25" stop-color="#a9aeb5"/>' +
+      '<stop offset=".55" stop-color="#6e737a"/><stop offset=".85" stop-color="#a4a9b0"/>' +
+      '<stop offset="1" stop-color="#33373d"/></linearGradient>' +
+    '<radialGradient id="gPantalla" cx=".5" cy=".4" r=".78">' +
+      '<stop offset="0" stop-color="#0e1c14"/><stop offset="1" stop-color="#040806"/></radialGradient>' +
+    '<linearGradient id="gVidrio" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#ffffff" stop-opacity=".075"/>' +
+      '<stop offset=".38" stop-color="#ffffff" stop-opacity="0"/></linearGradient>' +
+    '<linearGradient id="gBoton" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#535a65"/><stop offset="1" stop-color="#383e47"/></linearGradient>' +
+    '<linearGradient id="gBotonOn" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#e6ebf2"/><stop offset="1" stop-color="#b9c2cd"/></linearGradient>' +
+    '<linearGradient id="gLogo" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#1f6feb"/><stop offset="1" stop-color="#a371f7"/></linearGradient>' +
+    '<linearGradient id="gDisplay" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#1b0d0c"/><stop offset="1" stop-color="#100706"/></linearGradient>' +
+    '<filter id="fFosforo" x="-15%" y="-25%" width="130%" height="150%">' +
+      '<feGaussianBlur stdDeviation="2.6"/></filter>' +
+    '<filter id="fLed" x="-120%" y="-120%" width="340%" height="340%">' +
+      '<feGaussianBlur stdDeviation="2.4"/></filter>' +
+    '<clipPath id="cPantA"><rect x="26" y="68" width="380" height="304" rx="10"/></clipPath>' +
+    '<clipPath id="cPantB"><rect x="26" y="68" width="380" height="304" rx="10"/></clipPath>' +
+    '<clipPath id="cPantAE"><rect x="26" y="68" width="380" height="304" rx="10"/></clipPath>';
+}
 
-function armarOsciloscopio(){
-  var s = svgOsc;
+/* ══════════════════════════════════════════════════════════════════
+   El frente de un osciloscopio
+   ══════════════════════════════════════════════════════════════════ */
+var PX = 26, PY = 68, PW = 380, PH = 304, DIV = 38;
+var partesOsc = {a:{}, b:{}};
+
+function armarOsciloscopio(o){
+  var id = "osc" + o.toUpperCase(), s = SVGS[id], org = UBIC[id], O = OSC[o];
+  var P = partesOsc[o] = {};
+  var clip = o === "a" ? "cPantA" : "cPantB";
   E(s, "rect", {x:0, y:0, width:700, height:520, rx:16, fill:"url(#gCaja)", stroke:"#1e2228"});
   E(s, "rect", {x:6, y:6, width:688, height:508, rx:12, fill:"url(#gPanel)", stroke:"#2b3037"});
 
   marca(s, 16, 14, "OS-2205  ·  OSCILOSCOPIO", "DOS CANALES  ·  20 MHz");
+  E(s, "rect", {x:352, y:14, width:26, height:24, rx:6, fill:"#1c2230", stroke:"#3d4756"});
+  TX(s, 365, 32, o.toUpperCase(), {"font-size":14, "text-anchor":"middle", fill:"#7fb8e8",
+                                   "font-weight":700});
   encendido(s, 664, 28, function(){ return O.pot; }, function(v){ O.pot = v; });
   E(s, "line", {x1:16, y1:48, x2:684, y2:48, stroke:"#2c3138"});
 
@@ -949,112 +1099,93 @@ function armarOsciloscopio(){
   E(s, "rect", {x:16, y:58, width:400, height:326, rx:12, fill:"#20242a", stroke:"#15181d"});
   E(s, "rect", {x:22, y:64, width:388, height:314, rx:11, fill:"#101317"});
   E(s, "rect", {x:26, y:68, width:380, height:304, rx:10, fill:"url(#gPantalla)"});
-
-  var gr = E(s, "g", {"clip-path":"url(#cPantalla)"});
-  var i, j;
+  var gr = E(s, "g", {"clip-path":"url(#" + clip + ")"}), i, j;
   for(i = 1; i < 10; i++)
-    E(gr, "line", {x1:26 + i * 38, y1:68, x2:26 + i * 38, y2:372,
-                   stroke:"#7fe3a0", "stroke-width":i === 5 ? .9 : .55,
-                   opacity:i === 5 ? ".38" : ".17"});
+    E(gr, "line", {x1:26 + i * 38, y1:68, x2:26 + i * 38, y2:372, stroke:"#7fe3a0",
+                   "stroke-width":i === 5 ? .9 : .55, opacity:i === 5 ? ".38" : ".17"});
   for(i = 1; i < 8; i++)
-    E(gr, "line", {x1:26, y1:68 + i * 38, x2:406, y2:68 + i * 38,
-                   stroke:"#7fe3a0", "stroke-width":i === 4 ? .9 : .55,
-                   opacity:i === 4 ? ".38" : ".17"});
-  for(i = 0; i < 10; i++) for(j = 1; j < 5; j++){
-    var x = 26 + i * 38 + j * 7.6;
-    E(gr, "line", {x1:x, y1:216, x2:x, y2:224, stroke:"#7fe3a0", "stroke-width":.5,
-                   opacity:".22"});
-  }
-  for(i = 0; i < 8; i++) for(j = 1; j < 5; j++){
-    var y = 68 + i * 38 + j * 7.6;
-    E(gr, "line", {x1:211, y1:y, x2:219, y2:y, stroke:"#7fe3a0", "stroke-width":.5,
-                   opacity:".22"});
-  }
-  E(gr, "rect", {x:26, y:68, width:380, height:304, fill:"none",
-                 stroke:"#7fe3a0", "stroke-width":.9, opacity:".3"});
+    E(gr, "line", {x1:26, y1:68 + i * 38, x2:406, y2:68 + i * 38, stroke:"#7fe3a0",
+                   "stroke-width":i === 4 ? .9 : .55, opacity:i === 4 ? ".38" : ".17"});
+  for(i = 0; i < 10; i++) for(j = 1; j < 5; j++)
+    E(gr, "line", {x1:26 + i * 38 + j * 7.6, y1:216, x2:26 + i * 38 + j * 7.6, y2:224,
+                   stroke:"#7fe3a0", "stroke-width":.5, opacity:".22"});
+  for(i = 0; i < 8; i++) for(j = 1; j < 5; j++)
+    E(gr, "line", {x1:211, y1:68 + i * 38 + j * 7.6, x2:219, y2:68 + i * 38 + j * 7.6,
+                   stroke:"#7fe3a0", "stroke-width":.5, opacity:".22"});
+  E(gr, "rect", {x:26, y:68, width:380, height:304, fill:"none", stroke:"#7fe3a0",
+                 "stroke-width":.9, opacity:".3"});
 
-  pantallaViva = E(s, "g", {"clip-path":"url(#cPantalla)"});
-  trazoXY  = E(pantallaViva, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.5,
-                                      "stroke-linejoin":"round", filter:"url(#fFosforo)"});
-  trazoCH1 = E(pantallaViva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
-  trazoCH2 = E(pantallaViva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
-  grupoAyudas = E(s, "g", {"clip-path":"url(#cPantalla)", opacity:"0"});
+  P.viva = E(s, "g", {"clip-path":"url(#" + clip + ")"});
+  P.xy  = E(P.viva, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.5,
+                             "stroke-linejoin":"round", filter:"url(#fFosforo)"});
+  P.t1  = E(P.viva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
+  P.t2  = E(P.viva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
+  P.ayudas = E(s, "g", {"clip-path":"url(#" + clip + ")", opacity:"0"});
   E(s, "rect", {x:26, y:68, width:380, height:304, rx:10, fill:"url(#gVidrio)",
                 "pointer-events":"none"});
-  filtroFoco = document.querySelector("#fFosforo feGaussianBlur");
 
   /* ---------- modo vertical ---------- */
   TX(s, 18, 394, "MODO  VERTICAL", {"font-size":8.4, "letter-spacing":1.5, fill:"#7fb8e8",
                                     "font-weight":600});
   var modos = ["CH 1","CH 2","DUAL","SUMA","X-Y"], claves = ["CH1","CH2","DUAL","ADD","XY"];
-  for(i = 0; i < 5; i++){
-    (function(k, ix){
-      boton(s, {x:18 + ix * 80, y:398, w:75, h:22, txt:modos[ix],
-                activo:function(){ return O.modo === k; },
-                tocar:function(){ O.modo = k; }});
-    })(claves[i], i);
-  }
+  for(i = 0; i < 5; i++) (function(k, ix){
+    boton(s, {x:18 + ix * 80, y:398, w:75, h:22, txt:modos[ix],
+              activo:function(){ return O.modo === k; }, tocar:function(){ O.modo = k; }});
+  })(claves[i], i);
 
   /* ---------- brillo, foco y entradas ---------- */
-  perilla(svgOsc, s, {cx:52, cy:472, r:17, marcas:9, aria:"intensidad",
+  perilla(s, {cx:52, cy:472, r:17, marcas:9, aria:"intensidad " + o,
     leer:function(){ return O.inten; }, set:function(v){ O.inten = v; }});
   etiqueta(s, 52, 500, "INTENSIDAD");
-  perilla(svgOsc, s, {cx:122, cy:472, r:17, marcas:9, aria:"enfoque",
+  perilla(s, {cx:122, cy:472, r:17, marcas:9, aria:"enfoque " + o,
     leer:function(){ return O.foco; }, set:function(v){ O.foco = v; }});
   etiqueta(s, 122, 500, "ENFOQUE");
-
   E(s, "line", {x1:168, y1:444, x2:168, y2:502, stroke:"#2c3138"});
   TX(s, 300, 436, "ENTRADAS  ·  1 MΩ  25 pF", {"font-size":8, "letter-spacing":1.4,
      fill:"#7fb8e8", "text-anchor":"middle", "font-weight":600});
   etiqueta(s, 250, 454, "CH 1", {"font-size":9.6, fill:"#dbe3ec", "font-weight":600});
-  bnc(s, {cx:250, cy:479, r:18, id:"osc.ch1", aria:"canal 1", dir:1});
+  bnc(s, {cx:250, cy:479, r:18, id:id + ".ch1", aria:"canal 1 del " + o, dir:1, org:org});
   etiqueta(s, 340, 454, "CH 2", {"font-size":9.6, fill:"#dbe3ec", "font-weight":600});
-  bnc(s, {cx:340, cy:479, r:18, id:"osc.ch2", aria:"canal 2", dir:1});
+  bnc(s, {cx:340, cy:479, r:18, id:id + ".ch2", aria:"canal 2 del " + o, dir:1, org:org});
   etiqueta(s, 398, 454, "⏚", {"font-size":9.6, fill:"#dbe3ec"});
   E(s, "circle", {cx:398, cy:479, r:8, fill:"url(#gMetal2)", stroke:"#1c1f24"});
   E(s, "circle", {cx:398, cy:479, r:3.4, fill:"#15171b"});
 
   /* ---------- vertical ---------- */
   caja(s, 424, 58, 260, 214, "VERTICAL");
-  var filas = [{y:126, ch:1}, {y:200, ch:2}];
-  for(i = 0; i < 2; i++){
-    (function(f){
-      var n = f.ch;
-      TX(s, 436, f.y - 26, "CH " + n, {"font-size":9.2, fill:"#7fb8e8", "font-weight":700,
-                                       "letter-spacing":1});
-      llaveRot(svgOsc, s, {cx:472, cy:f.y, r:20, valores:VDIV,
-        aria:"volts por división canal " + n,
-        leer:function(){ return n === 1 ? O.v1 : O.v2; },
-        set:function(v){ if(n === 1) O.v1 = v; else O.v2 = v; }});
-      etiqueta(s, 534, f.y - 20, "VOLTS/DIV");
-      vent["v" + n] = ventana(s, 502, f.y - 14, 64, 25);
-      perilla(svgOsc, s, {cx:598, cy:f.y, r:15, marcas:9,
-        aria:"posición vertical canal " + n,
-        leer:function(){ return (n === 1 ? O.pos1 : O.pos2) / 8 + 0.5; },
-        set:function(v){ var p = (v - 0.5) * 8; if(n === 1) O.pos1 = p; else O.pos2 = p; }});
-      etiqueta(s, 598, f.y - 22, "POSICIÓN ↕");
-      llave3(s, {cx:646, cy:f.y, textos:["CC","⏚","CA"], aria:"acoplamiento canal " + n,
-        leer:function(){ var a = n === 1 ? O.ac1 : O.ac2;
-                         return a === "CC" ? 0 : (a === "GND" ? 1 : 2); },
-        set:function(v){ var a = ["CC","GND","CA"][v]; if(n === 1) O.ac1 = a; else O.ac2 = a; }});
-      etiqueta(s, 646, f.y - 26, "ACOPL.");
-    })(filas[i]);
-  }
+  [{y:126, n:1}, {y:200, n:2}].forEach(function(f){
+    var n = f.n;
+    TX(s, 436, f.y - 26, "CH " + n, {"font-size":9.2, fill:"#7fb8e8", "font-weight":700,
+                                     "letter-spacing":1});
+    llaveRot(s, {cx:472, cy:f.y, r:20, valores:VDIV, aria:"volts por división canal " + n,
+      leer:function(){ return n === 1 ? O.v1 : O.v2; },
+      set:function(v){ if(n === 1) O.v1 = v; else O.v2 = v; }});
+    etiqueta(s, 534, f.y - 20, "VOLTS/DIV");
+    P["v" + n] = ventana(s, 502, f.y - 14, 64, 25);
+    perilla(s, {cx:598, cy:f.y, r:15, marcas:9, aria:"posición vertical canal " + n,
+      leer:function(){ return (n === 1 ? O.pos1 : O.pos2) / 8 + 0.5; },
+      set:function(v){ var p = (v - 0.5) * 8; if(n === 1) O.pos1 = p; else O.pos2 = p; }});
+    etiqueta(s, 598, f.y - 22, "POSICIÓN ↕");
+    llave3(s, {cx:646, cy:f.y, textos:["CC","⏚","CA"], aria:"acoplamiento canal " + n,
+      leer:function(){ var a = n === 1 ? O.ac1 : O.ac2;
+                       return a === "CC" ? 0 : (a === "GND" ? 1 : 2); },
+      set:function(v){ var a = ["CC","GND","CA"][v]; if(n === 1) O.ac1 = a; else O.ac2 = a; }});
+    etiqueta(s, 646, f.y - 26, "ACOPL.");
+  });
 
   /* ---------- horizontal ---------- */
   caja(s, 424, 280, 260, 110, "HORIZONTAL");
-  llaveRot(svgOsc, s, {cx:472, cy:344, r:20, valores:TDIV, aria:"tiempo por división",
+  llaveRot(s, {cx:472, cy:344, r:20, valores:TDIV, aria:"tiempo por división",
     leer:function(){ return O.t; }, set:function(v){ O.t = v; }});
   etiqueta(s, 542, 324, "TIEMPO/DIV");
-  vent.t = ventana(s, 502, 330, 80, 25);
-  perilla(svgOsc, s, {cx:626, cy:344, r:15, marcas:9, aria:"posición horizontal",
-    leer:function(){ return O.posH / 10 + 0.5; },
-    set:function(v){ O.posH = (v - 0.5) * 10; }});
+  P.vt = ventana(s, 502, 330, 80, 25);
+  perilla(s, {cx:626, cy:344, r:15, marcas:9, aria:"posición horizontal",
+    leer:function(){ return O.posH / 10 + 0.5; }, set:function(v){ O.posH = (v - 0.5) * 10; }});
   etiqueta(s, 626, 322, "POSICIÓN ↔");
 
   /* ---------- disparo ---------- */
   caja(s, 424, 398, 260, 110, "DISPARO");
-  perilla(svgOsc, s, {cx:468, cy:460, r:20, marcas:11, aria:"nivel de disparo",
+  perilla(s, {cx:468, cy:460, r:20, marcas:11, aria:"nivel de disparo",
     leer:function(){ return O.trigNivel; }, set:function(v){ O.trigNivel = v; }});
   etiqueta(s, 468, 494, "NIVEL");
   TX(s, 508, 425, "PENDIENTE", {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.7});
@@ -1076,31 +1207,37 @@ function armarOsciloscopio(){
   boton(s, {x:602, y:469, w:64, h:19, txt:"NORM",
             activo:function(){ return O.trigModo === "NORM"; },
             tocar:function(){ O.trigModo = "NORM"; }});
-  ledDisp = E(s, "circle", {cx:610, cy:459, r:4, fill:"#243028", stroke:"#0f1a12"});
+  P.led = E(s, "circle", {cx:610, cy:459, r:4, fill:"#243028", stroke:"#0f1a12"});
   TX(s, 620, 462, "DISPARADO", {"font-size":7.2, fill:"#a7b1bd", "letter-spacing":.6});
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   El frente de un generador  (los dos son el mismo modelo)
+   El frente de un generador. Las salidas van arriba, que es de donde
+   salen los cables hacia la franja de arriba.
    ══════════════════════════════════════════════════════════════════ */
 var disp = {1:{}, 2:{}};
 
 function armarGenerador(n){
-  var s = svgGen[n], G = GEN[n], d = disp[n] = {};
+  var id = "gen" + n, s = SVGS[id], org = UBIC[id], G = GEN[n], d = disp[n] = {}, i;
   E(s, "rect", {x:0, y:0, width:430, height:520, rx:16, fill:"url(#gCaja)", stroke:"#1e2228"});
   E(s, "rect", {x:6, y:6, width:418, height:508, rx:12, fill:"url(#gPanel)", stroke:"#2b3037"});
 
-  marca(s, 16, 14, "FG-2020  ·  GENERADOR", "DE FUNCIONES  ·  2 MHz");
-  /* el número de unidad, bien visible, para no confundir los dos */
-  E(s, "rect", {x:350, y:14, width:26, height:24, rx:6, fill:"#1c2230", stroke:"#3d4756"});
-  TX(s, 363, 32, String(n), {"font-size":15, "text-anchor":"middle", fill:"#7fb8e8",
+  /* ---------- salidas, arriba de todo ---------- */
+  etiqueta(s, 306, 20, "SALIDA  50 Ω", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
+  bnc(s, {cx:306, cy:46, r:18, id:id + ".out", aria:"salida del generador " + n,
+          dir:-1, org:org});
+  etiqueta(s, 380, 20, "SINC  TTL", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
+  bnc(s, {cx:380, cy:46, r:15, id:id + ".sinc", aria:"sincronismo del generador " + n,
+          dir:-1, org:org});
+  marca(s, 16, 24, "FG-2020  ·  GENERADOR", "DE FUNCIONES  ·  2 MHz");
+  E(s, "rect", {x:232, y:24, width:26, height:24, rx:6, fill:"#1c2230", stroke:"#3d4756"});
+  TX(s, 245, 42, String(n), {"font-size":15, "text-anchor":"middle", fill:"#7fb8e8",
                              "font-weight":700});
-  encendido(s, 402, 28, function(){ return G.pot; }, function(v){ G.pot = v; });
-  E(s, "line", {x1:16, y1:48, x2:414, y2:48, stroke:"#2c3138"});
+  E(s, "line", {x1:16, y1:76, x2:414, y2:76, stroke:"#2c3138"});
 
   /* ---------- el dial grande ---------- */
-  caja(s, 14, 58, 196, 204, "FRECUENCIA");
-  var cx = 112, cy = 168, i;
+  caja(s, 14, 86, 196, 204, "FRECUENCIA");
+  var cx = 112, cy = 196;
   E(s, "circle", {cx:cx, cy:cy, r:66, fill:"#3c424b", stroke:"#2c3138"});
   var marcasDial = [0.2,0.3,0.4,0.5,0.6,0.8,1,1.5,2];
   for(i = 0; i < marcasDial.length; i++){
@@ -1112,180 +1249,264 @@ function armarGenerador(n){
     TX(s, cx + sn * 60, cy + cs * 60 + 3, coma(marcasDial[i], marcasDial[i] % 1 ? 1 : 0),
        {"font-size":7.8, "text-anchor":"middle", fill:"#b6c0cb"});
   }
-  perilla(s, s, {cx:cx, cy:cy, r:42, marcas:0, aria:"dial de frecuencia del generador " + n,
+  perilla(s, {cx:cx, cy:cy, r:42, marcas:0, aria:"dial de frecuencia del generador " + n,
     leer:function(){ return G.dial; }, set:function(v){ G.dial = v; }});
-  TX(s, cx, 250, "el dial multiplica al rango", {"font-size":7.6, "text-anchor":"middle",
+  TX(s, cx, 278, "el dial multiplica al rango", {"font-size":7.6, "text-anchor":"middle",
      fill:"#8e99a6"});
 
   /* ---------- lectura ---------- */
-  caja(s, 218, 58, 198, 204, "LECTURA");
-  E(s, "rect", {x:228, y:82, width:178, height:46, rx:7, fill:"url(#gDisplay)",
+  caja(s, 218, 86, 198, 204, "LECTURA");
+  E(s, "rect", {x:228, y:110, width:178, height:46, rx:7, fill:"url(#gDisplay)",
                 stroke:"#2a1512", "stroke-width":1.4});
-  d.frec = TX(s, 317, 115, "1,000 kHz",
-    {"font-size":21, "text-anchor":"middle", fill:"#ff5f45",
-     "font-family":"ui-monospace,Consolas,monospace", "letter-spacing":.5});
-  d.per = TX(s, 317, 144, "T = 1,000 ms", {"font-size":9.5, "text-anchor":"middle",
+  d.frec = TX(s, 317, 143, "1,000 kHz", {"font-size":21, "text-anchor":"middle",
+     fill:"#ff5f45", "font-family":"ui-monospace,Consolas,monospace", "letter-spacing":.5});
+  d.per = TX(s, 317, 172, "T = 1,000 ms", {"font-size":9.5, "text-anchor":"middle",
      fill:"#a9b3bf"});
-  E(s, "line", {x1:230, y1:153, x2:404, y2:153, stroke:"#2c3138"});
-  d.amp = TX(s, 317, 174, "6,00 Vpp", {"font-size":16, "text-anchor":"middle",
+  E(s, "line", {x1:230, y1:181, x2:404, y2:181, stroke:"#2c3138"});
+  d.amp = TX(s, 317, 202, "6,00 Vpp", {"font-size":16, "text-anchor":"middle",
      fill:"#dfe6ee", "font-weight":600});
-  d.off = TX(s, 317, 190, "continua  0,00 V", {"font-size":8.6, "text-anchor":"middle",
+  d.off = TX(s, 317, 218, "continua  0,00 V", {"font-size":8.6, "text-anchor":"middle",
      fill:"#a9b3bf"});
-  E(s, "rect", {x:228, y:198, width:178, height:52, rx:7, fill:"#0b120d", stroke:"#1b2a20"});
-  E(s, "line", {x1:228, y1:224, x2:406, y2:224, stroke:"#2f5f42", "stroke-width":.7});
+  E(s, "rect", {x:228, y:226, width:178, height:52, rx:7, fill:"#0b120d", stroke:"#1b2a20"});
+  E(s, "line", {x1:228, y1:252, x2:406, y2:252, stroke:"#2f5f42", "stroke-width":.7});
   d.previa = E(s, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.6,
                            "stroke-linejoin":"round"});
 
   /* ---------- rango ---------- */
-  TX(s, 18, 282, "RANGO  ·  MULTIPLICADOR  (Hz)", {"font-size":8.4, "letter-spacing":1.4,
+  TX(s, 18, 310, "RANGO  ·  MULTIPLICADOR  (Hz)", {"font-size":8.4, "letter-spacing":1.4,
      fill:"#7fb8e8", "font-weight":600});
-  for(i = 0; i < 7; i++){
-    (function(k){
-      boton(s, {x:16 + k * 58, y:288, w:54, h:28, txt:RANGOS_TXT[k], fs:9,
-                activo:function(){ return G.rango === k; },
-                tocar:function(){ G.rango = k; }});
-    })(i);
-  }
+  for(i = 0; i < 7; i++) (function(k){
+    boton(s, {x:16 + k * 58, y:316, w:54, h:28, txt:RANGOS_TXT[k], fs:9,
+              activo:function(){ return G.rango === k; }, tocar:function(){ G.rango = k; }});
+  })(i);
 
-  /* ---------- función ---------- */
-  TX(s, 18, 338, "FUNCIÓN", {"font-size":8.4, "letter-spacing":1.4, fill:"#7fb8e8",
+  /* ---------- función y atenuador ---------- */
+  TX(s, 18, 366, "FUNCIÓN", {"font-size":8.4, "letter-spacing":1.4, fill:"#7fb8e8",
      "font-weight":600});
   var glifos = {
-    seno: "M 0 0 C 5 -13, 11 -13, 16 0 C 21 13, 27 13, 32 0",
-    cuad: "M 0 10 L 0 -10 L 16 -10 L 16 10 L 32 10 L 32 -10",
-    tri:  "M 0 10 L 8 -10 L 24 10 L 32 -1"
+    seno:"M 0 0 C 5 -13, 11 -13, 16 0 C 21 13, 27 13, 32 0",
+    cuad:"M 0 10 L 0 -10 L 16 -10 L 16 10 L 32 10 L 32 -10",
+    tri: "M 0 10 L 8 -10 L 24 10 L 32 -1"
   };
-  var funcs = ["seno","cuad","tri"];
-  for(i = 0; i < 3; i++){
-    (function(k, ix){
-      boton(s, {x:16 + ix * 70, y:344, w:62, h:46, aria:"función " + k,
-        dibujo:function(g){
-          return [E(g, "path", {d:glifos[k], fill:"none", stroke:"#c3ccd6",
-                                "stroke-width":1.8, "stroke-linecap":"round",
-                                "stroke-linejoin":"round",
-                                transform:"translate(" + (31 + ix * 70) + " 367)"})];
-        },
-        activo:function(){ return G.func === k; },
-        tocar:function(){ G.func = k; }});
-    })(funcs[i], i);
-  }
-
-  /* ---------- atenuador y salida ---------- */
-  TX(s, 240, 338, "SALIDA", {"font-size":8.4, "letter-spacing":1.4, fill:"#7fb8e8",
+  ["seno","cuad","tri"].forEach(function(k, ix){
+    boton(s, {x:16 + ix * 70, y:372, w:62, h:46, aria:"función " + k,
+      dibujo:function(g){
+        return [E(g, "path", {d:glifos[k], fill:"none", stroke:"#c3ccd6", "stroke-width":1.8,
+                              "stroke-linecap":"round", "stroke-linejoin":"round",
+                              transform:"translate(" + (31 + ix * 70) + " 395)"})];
+      },
+      activo:function(){ return G.func === k; }, tocar:function(){ G.func = k; }});
+  });
+  TX(s, 240, 366, "ATENUADOR", {"font-size":8.4, "letter-spacing":1.4, fill:"#7fb8e8",
      "font-weight":600});
-  boton(s, {x:240, y:344, w:80, h:20, txt:"−20 dB",
+  boton(s, {x:240, y:372, w:80, h:20, txt:"−20 dB",
             activo:function(){ return G.aten; }, tocar:function(){ G.aten = !G.aten; }});
-  boton(s, {x:240, y:370, w:80, h:20, txt:"ON / OFF",
+  boton(s, {x:240, y:398, w:80, h:20, txt:"ON / OFF",
             activo:function(){ return G.salida; }, tocar:function(){ G.salida = !G.salida; }});
-  TX(s, 330, 358, "el atenuador", {"font-size":7.2, fill:"#8e99a6"});
-  TX(s, 330, 368, "divide por diez", {"font-size":7.2, fill:"#8e99a6"});
+  TX(s, 330, 386, "divide", {"font-size":7.2, fill:"#8e99a6"});
+  TX(s, 330, 396, "por diez", {"font-size":7.2, fill:"#8e99a6"});
 
-  /* ---------- perillas y conectores ---------- */
-  E(s, "line", {x1:16, y1:400, x2:414, y2:400, stroke:"#2c3138"});
-  perilla(s, s, {cx:54, cy:448, r:23, marcas:11, aria:"amplitud del generador " + n,
+  /* ---------- perillas ---------- */
+  E(s, "line", {x1:16, y1:428, x2:414, y2:428, stroke:"#2c3138"});
+  perilla(s, {cx:54, cy:464, r:23, marcas:11, aria:"amplitud del generador " + n,
     leer:function(){ return G.amp; }, set:function(v){ G.amp = v; }});
-  etiqueta(s, 54, 484, "AMPLITUD");
-  etiqueta(s, 54, 494, "0 – 20 Vpp", {"font-size":6.8, fill:"#8e99a6"});
-  perilla(s, s, {cx:132, cy:448, r:19, marcas:11, aria:"continua del generador " + n,
+  etiqueta(s, 54, 498, "AMPLITUD");
+  etiqueta(s, 54, 508, "0 – 20 Vpp", {"font-size":6.8, fill:"#8e99a6"});
+  perilla(s, {cx:132, cy:464, r:19, marcas:11, aria:"continua del generador " + n,
     leer:function(){ return G.off; }, set:function(v){ G.off = v; }});
-  etiqueta(s, 132, 484, "CONTINUA");
-  etiqueta(s, 132, 494, "−10 a +10 V", {"font-size":6.8, fill:"#8e99a6"});
-  perilla(s, s, {cx:206, cy:448, r:19, marcas:11, aria:"simetría del generador " + n,
+  etiqueta(s, 132, 498, "CONTINUA");
+  etiqueta(s, 132, 508, "−10 a +10 V", {"font-size":6.8, fill:"#8e99a6"});
+  perilla(s, {cx:206, cy:464, r:19, marcas:11, aria:"simetría del generador " + n,
     leer:function(){ return G.sim; }, set:function(v){ G.sim = v; }});
-  etiqueta(s, 206, 484, "SIMETRÍA");
-  etiqueta(s, 206, 494, "10 – 90 %", {"font-size":6.8, fill:"#8e99a6"});
-
-  E(s, "line", {x1:262, y1:412, x2:262, y2:496, stroke:"#2c3138"});
-  etiqueta(s, 306, 428, "SALIDA  50 Ω", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
-  bnc(s, {cx:306, cy:454, r:18, id:"gen" + n + ".out",
-          aria:"salida del generador " + n, dir:1});
-  etiqueta(s, 380, 428, "SINC  TTL", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
-  bnc(s, {cx:380, cy:454, r:15, id:"gen" + n + ".sinc",
-          aria:"sincronismo del generador " + n, dir:1});
+  etiqueta(s, 206, 498, "SIMETRÍA");
+  etiqueta(s, 206, 508, "10 – 90 %", {"font-size":6.8, fill:"#8e99a6"});
+  E(s, "line", {x1:262, y1:436, x2:262, y2:508, stroke:"#2c3138"});
+  encendido(s, 392, 464, function(){ return G.pot; }, function(v){ G.pot = v; });
+  etiqueta(s, 380, 498, "ENCENDIDO");
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Los dos módulos de la fila de abajo. Van con los conectores arriba,
-   que es por donde bajan los cables desde los instrumentos.
+   Los módulos de la franja del medio: entradas abajo, salida arriba
    ══════════════════════════════════════════════════════════════════ */
 var pilotoMul = null, pilotoSum = null;
 
-function armarModulo(s, o){
-  E(s, "rect", {x:0, y:0, width:250, height:210, rx:13, fill:"url(#gCaja)", stroke:"#1e2228"});
-  E(s, "rect", {x:5, y:5, width:240, height:200, rx:10, fill:"url(#gPanel)", stroke:"#2b3037"});
-
-  var xs = [46, 125, 204], i;
-  for(i = 0; i < 3; i++){
-    bnc(s, {cx:xs[i], cy:36, r:i === 2 ? 16 : 15, id:o.jacks[i], aria:o.aria[i], dir:-1});
-    TX(s, xs[i], 64, o.bornes[i], {"font-size":11.5, "text-anchor":"middle",
-       fill:i === 2 ? "#8ee6a8" : "#dbe3ec", "font-weight":700});
-    TX(s, xs[i], 74, i === 2 ? "salida" : "entrada", {"font-size":6.6, "text-anchor":"middle",
-       fill:"#8e99a6", "letter-spacing":.5});
-  }
-  E(s, "line", {x1:16, y1:82, x2:234, y2:82, stroke:"#2c3138"});
-
-  TX(s, 125, 100, o.titulo, {"font-size":9.5, "letter-spacing":1.8, fill:"#7fb8e8",
+function marcoModulo(s, titulo, modelo){
+  E(s, "rect", {x:0, y:0, width:300, height:260, rx:13, fill:"url(#gCaja)", stroke:"#1e2228"});
+  E(s, "rect", {x:5, y:5, width:290, height:250, rx:10, fill:"url(#gPanel)", stroke:"#2b3037"});
+  E(s, "line", {x1:16, y1:76, x2:284, y2:76, stroke:"#2c3138"});
+  TX(s, 150, 96, titulo, {"font-size":9.5, "letter-spacing":1.8, fill:"#7fb8e8",
      "text-anchor":"middle", "font-weight":600});
+  E(s, "line", {x1:16, y1:188, x2:284, y2:188, stroke:"#2c3138"});
+  E(s, "rect", {x:14, y:238, width:14, height:12, rx:3, fill:"url(#gLogo)"});
+  TX(s, 21, 247, "c", {"font-size":8, "text-anchor":"middle", fill:"#fff", "font-weight":700});
+  TX(s, 34, 247, "catto  " + modelo, {"font-size":7.2, fill:"#8e99a6", "letter-spacing":1});
+}
 
-  E(s, "rect", {x:22, y:110, width:206, height:34, rx:6, fill:"#15181d", stroke:"#0d0f12"});
-  E(s, "rect", {x:23, y:111, width:204, height:16, rx:5, fill:"#fff", opacity:".035"});
-  TX(s, 125, 133, o.formula, {"font-size":14, "text-anchor":"middle", fill:"#dfe6ee",
+function armarCuenta(id, o){
+  var s = SVGS[id], org = UBIC[id];
+  marcoModulo(s, o.titulo, o.modelo);
+  etiqueta(s, 150, 20, o.bornes[2], {"font-size":11.5, fill:"#8ee6a8", "font-weight":700});
+  etiqueta(s, 150, 30, "salida", {"font-size":6.6, fill:"#8e99a6"});
+  bnc(s, {cx:150, cy:54, r:16, id:o.jacks[2], aria:o.aria[2], dir:-1, org:org});
+  E(s, "rect", {x:30, y:106, width:240, height:34, rx:6, fill:"#15181d", stroke:"#0d0f12"});
+  E(s, "rect", {x:31, y:107, width:238, height:16, rx:5, fill:"#fff", opacity:".035"});
+  TX(s, 150, 129, o.formula, {"font-size":14, "text-anchor":"middle", fill:"#dfe6ee",
      "font-weight":600});
-
-  TX(s, 125, 158, o.nota, {"font-size":7.4, "text-anchor":"middle", fill:"#8e99a6"});
-
-  var pil = piloto(s, 92, 176, "#f85149");
-  TX(s, 104, 179, "SATURA  ±12 V", {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.6});
-
-  E(s, "rect", {x:16, y:189, width:14, height:12, rx:3, fill:"url(#gLogo)"});
-  TX(s, 23, 198, "c", {"font-size":8, "text-anchor":"middle", fill:"#fff", "font-weight":700});
-  TX(s, 36, 198, "catto  " + o.modelo, {"font-size":7.2, fill:"#8e99a6", "letter-spacing":1});
+  TX(s, 150, 154, o.nota, {"font-size":7.4, "text-anchor":"middle", fill:"#8e99a6"});
+  var pil = piloto(s, 108, 172, "#f85149");
+  TX(s, 120, 175, "SATURA  ±12 V", {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.6});
+  [0, 1].forEach(function(k){
+    var x = k ? 205 : 95;
+    etiqueta(s, x, 206, o.bornes[k], {"font-size":11.5, fill:"#dbe3ec", "font-weight":700});
+    etiqueta(s, x, 216, "entrada", {"font-size":6.6, fill:"#8e99a6"});
+    bnc(s, {cx:x, cy:230, r:15, id:o.jacks[k], aria:o.aria[k], dir:1, org:org});
+  });
   return pil;
 }
 
-function armarMultiplicador(){
-  pilotoMul = armarModulo(svgMul, {
-    jacks:["mul.x","mul.y","mul.w"], bornes:["X","Y","W"],
-    aria:["entrada X del multiplicador","entrada Y del multiplicador",
-          "salida del multiplicador"],
-    titulo:"MULTIPLICADOR", formula:"W = X · Y / 10 V", modelo:"MX-100",
-    nota:"cuatro cuadrantes, como el integrado real"
+function armarFiltro(tipo){
+  var s = SVGS[tipo], org = UBIC[tipo], F = FIL[tipo];
+  var esBajo = tipo === "lpf";
+  var d = {};
+  marcoModulo(s, esBajo ? "FILTRO PASA-BAJOS" : "FILTRO PASA-ALTOS",
+              esBajo ? "FB-100" : "FA-100");
+  etiqueta(s, 150, 20, "SALIDA", {"font-size":10.5, fill:"#8ee6a8", "font-weight":700});
+  bnc(s, {cx:150, cy:54, r:16, id:tipo + ".out", aria:"salida del filtro", dir:-1, org:org});
+
+  /* curvita de respuesta */
+  E(s, "rect", {x:16, y:106, width:74, height:44, rx:5, fill:"#0b120d", stroke:"#1b2a20"});
+  d.curva = E(s, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.5,
+                          "stroke-linejoin":"round"});
+  d.marcaFc = E(s, "line", {x1:0, y1:108, x2:0, y2:148, stroke:"#ffd479", "stroke-width":.8,
+                            "stroke-dasharray":"2 3", opacity:".8"});
+
+  perilla(s, {cx:126, cy:128, r:20, marcas:11, aria:"frecuencia de corte",
+    leer:function(){ return F.corte; }, set:function(v){ F.corte = v; }});
+  TX(s, 224, 112, "FRECUENCIA DE CORTE", {"font-size":6.8, "text-anchor":"middle",
+     fill:"#a7b1bd", "letter-spacing":.5});
+  d.corte = ventana(s, 158, 118, 132, 26, 12.5);
+
+  TX(s, 16, 166, "ORDEN", {"font-size":7.6, fill:"#a7b1bd", "letter-spacing":.7});
+  ORDENES.forEach(function(p, ix){
+    boton(s, {x:58 + ix * 60, y:158, w:56, h:20, txt:p + " polos", fs:7.8,
+              activo:function(){ return F.orden === p; }, tocar:function(){ F.orden = p; }});
   });
+  etiqueta(s, 150, 206, "ENTRADA", {"font-size":10.5, fill:"#dbe3ec", "font-weight":700});
+  bnc(s, {cx:150, cy:230, r:16, id:tipo + ".in", aria:"entrada del filtro", dir:1, org:org});
+  return d;
 }
-function armarSumador(){
-  pilotoSum = armarModulo(svgSum, {
-    jacks:["sum.a","sum.b","sum.s"], bornes:["A","B","S"],
-    aria:["entrada A del sumador","entrada B del sumador","salida del sumador"],
-    titulo:"SUMADOR", formula:"S = A + B", modelo:"SM-100",
-    nota:"ganancia unitaria en las dos entradas"
-  });
+
+/* ══════════════════════════════════════════════════════════════════
+   El frente del analizador de espectro
+   ══════════════════════════════════════════════════════════════════ */
+var partesAE = {};
+
+function armarAnalizador(){
+  var s = SVGS.ae, org = UBIC.ae, P = partesAE = {}, i, j;
+  E(s, "rect", {x:0, y:0, width:700, height:520, rx:16, fill:"url(#gCaja)", stroke:"#1e2228"});
+  E(s, "rect", {x:6, y:6, width:688, height:508, rx:12, fill:"url(#gPanel)", stroke:"#2b3037"});
+  marca(s, 16, 14, "AE-3010  ·  ANALIZADOR", "DE ESPECTRO  ·  500 kHz");
+  encendido(s, 664, 28, function(){ return AE.pot; }, function(v){ AE.pot = v; });
+  E(s, "line", {x1:16, y1:48, x2:684, y2:48, stroke:"#2c3138"});
+
+  E(s, "rect", {x:16, y:58, width:400, height:326, rx:12, fill:"#20242a", stroke:"#15181d"});
+  E(s, "rect", {x:22, y:64, width:388, height:314, rx:11, fill:"#101317"});
+  E(s, "rect", {x:26, y:68, width:380, height:304, rx:10, fill:"url(#gPantalla)"});
+  var gr = E(s, "g", {"clip-path":"url(#cPantAE)"});
+  for(i = 1; i < 10; i++)
+    E(gr, "line", {x1:26 + i * 38, y1:68, x2:26 + i * 38, y2:372, stroke:"#7fe3a0",
+                   "stroke-width":i === 5 ? .9 : .55, opacity:i === 5 ? ".38" : ".17"});
+  for(i = 1; i < 8; i++)
+    E(gr, "line", {x1:26, y1:68 + i * 38, x2:406, y2:68 + i * 38, stroke:"#7fe3a0",
+                   "stroke-width":.55, opacity:".17"});
+  E(gr, "rect", {x:26, y:68, width:380, height:304, fill:"none", stroke:"#7fe3a0",
+                 "stroke-width":.9, opacity:".3"});
+
+  P.viva = E(s, "g", {"clip-path":"url(#cPantAE)"});
+  P.marcador = E(P.viva, "line", {x1:0, y1:68, x2:0, y2:372, stroke:"#ffd479",
+                                  "stroke-width":1, opacity:".85"});
+  P.trazo = E(P.viva, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.4,
+                               "stroke-linejoin":"round", filter:"url(#fFosforo)"});
+  P.ref = TX(s, 34, 84, "REF  +20,0 dBV", {"font-size":8.4, fill:"#8fe0a8",
+     "letter-spacing":.5});
+  P.esc = TX(s, 34, 96, "10 dB/div", {"font-size":8.4, fill:"#8fe0a8", "letter-spacing":.5});
+  E(s, "rect", {x:26, y:68, width:380, height:304, rx:10, fill:"url(#gVidrio)",
+                "pointer-events":"none"});
+
+  P.ini = TX(s, 30, 398, "0 Hz", {"font-size":8.4, fill:"#a7b1bd"});
+  P.cen = TX(s, 216, 398, "20,0 kHz", {"font-size":8.4, fill:"#a7b1bd", "text-anchor":"middle"});
+  P.fin = TX(s, 402, 398, "40,0 kHz", {"font-size":8.4, fill:"#a7b1bd", "text-anchor":"end"});
+  E(s, "rect", {x:26, y:410, width:280, height:28, rx:6, fill:"#15181d", stroke:"#0d0f12"});
+  P.lecMarca = TX(s, 166, 429, "marcador —", {"font-size":11, "text-anchor":"middle",
+     fill:"#ffd479", "font-weight":600});
+  TX(s, 166, 452, "MARCADOR", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
+     "letter-spacing":.8});
+  etiqueta(s, 366, 454, "ENTRADA  1 MΩ", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
+  bnc(s, {cx:366, cy:479, r:18, id:"ae.in", aria:"entrada del analizador", dir:1, org:org});
+
+  /* ---------- frecuencia ---------- */
+  caja(s, 424, 58, 260, 150, "FRECUENCIA");
+  perilla(s, {cx:468, cy:120, r:20, marcas:11, aria:"frecuencia central",
+    leer:function(){ return AE.centro; }, set:function(v){ AE.centro = v; }});
+  TX(s, 566, 102, "CENTRO", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
+     "letter-spacing":.7});
+  P.vCentro = ventana(s, 506, 108, 120, 26, 12.5);
+  llaveRot(s, {cx:468, cy:176, r:20, valores:SPANS, aria:"span por división",
+    leer:function(){ return AE.spanIdx; }, set:function(v){ AE.spanIdx = v; }});
+  TX(s, 566, 158, "SPAN/DIV", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
+     "letter-spacing":.7});
+  P.vSpan = ventana(s, 506, 164, 120, 26, 12.5);
+
+  /* ---------- amplitud ---------- */
+  caja(s, 424, 216, 260, 120, "AMPLITUD");
+  perilla(s, {cx:468, cy:280, r:20, marcas:11, aria:"nivel de referencia",
+    leer:function(){ return (AE.ref + 40) / 80; },
+    set:function(v){ AE.ref = Math.round(v * 80 - 40); }});
+  TX(s, 552, 258, "REFERENCIA", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
+     "letter-spacing":.7});
+  P.vRef = ventana(s, 502, 266, 100, 26, 12.5);
+  boton(s, {x:614, y:262, w:60, h:20, txt:"LOG",
+            activo:function(){ return AE.log; }, tocar:function(){ AE.log = true; }});
+  boton(s, {x:614, y:288, w:60, h:20, txt:"LIN",
+            activo:function(){ return !AE.log; }, tocar:function(){ AE.log = false; }});
+
+  /* ---------- análisis ---------- */
+  caja(s, 424, 344, 260, 164, "ANÁLISIS");
+  llaveRot(s, {cx:468, cy:402, r:20, valores:RBWS, aria:"ancho de banda de resolución",
+    leer:function(){ return AE.rbwIdx; }, set:function(v){ AE.rbwIdx = v; }});
+  TX(s, 566, 384, "RESOLUCIÓN", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
+     "letter-spacing":.7});
+  P.vRbw = ventana(s, 506, 390, 120, 26, 12.5);
+  perilla(s, {cx:468, cy:464, r:20, marcas:11, aria:"marcador",
+    leer:function(){ return AE.marca; }, set:function(v){ AE.marca = v; }});
+  TX(s, 566, 446, "MARCADOR", {"font-size":7.4, "text-anchor":"middle", fill:"#a7b1bd",
+     "letter-spacing":.7});
+  P.vMarca = ventana(s, 506, 452, 120, 26, 12.5);
 }
 
 /* ══════════════════════════════════════════════════════════════════
    Los cables
    ══════════════════════════════════════════════════════════════════ */
-var mesa = document.getElementById("mesa");
-var svgCab = document.getElementById("cables");
 var CABLES = [];
 var arrastreCable = null;
 var COLORES = [{jac:"#16181c", luz:"#5c636d"}, {jac:"#5e1418", luz:"#b0555a"},
                {jac:"#123a20", luz:"#4f9166"}, {jac:"#2a2140", luz:"#7b6ab0"},
-               {jac:"#4a3a10", luz:"#a08c4a"}, {jac:"#123048", luz:"#4d86ad"}];
+               {jac:"#4a3a10", luz:"#a08c4a"}, {jac:"#123048", luz:"#4d86ad"},
+               {jac:"#3d1a30", luz:"#9a5a86"}, {jac:"#1d3a3a", luz:"#4f9a9a"}];
 var proximoColor = 0;
 
-function escala(){
-  var r = svgOsc.getBoundingClientRect();
-  return r.width ? r.width / 700 : 1;
+function ptBanco(ev){
+  var p = svgCab.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  var m = svgCab.getScreenCTM();
+  return m ? p.matrixTransform(m.inverse()) : {x:0, y:0};
 }
-function posJack(id){
-  var j = JACKS[id];
-  if(!j) return {x:0, y:0};
-  var r = j.g.getBoundingClientRect(), b = mesa.getBoundingClientRect();
-  return {x:r.left + r.width / 2 - b.left, y:r.top + r.height / 2 - b.top};
+function puntoDe(e){
+  if(!e.jack) return {x:e.x, y:e.y};
+  var j = JACKS[e.jack];
+  return j ? {x:j.x, y:j.y} : {x:0, y:0};
 }
-function dirJack(id){ return JACKS[id] ? JACKS[id].dir : 1; }
-function puntoDe(e){ return e.jack ? posJack(e.jack) : {x:e.x, y:e.y}; }
-function dirDe(e){ return e.jack ? dirJack(e.jack) : 1; }
+function dirDe(e){ return e.jack && JACKS[e.jack] ? JACKS[e.jack].dir : 1; }
 
 function cableEn(id, salvo){
   for(var i = 0; i < CABLES.length; i++){
@@ -1301,16 +1522,13 @@ function nuevoCable(jackA, extremoB){
   CABLES.push(c);
   return c;
 }
-
 function tomarJack(id, ev){
   ev.preventDefault(); ev.stopPropagation();
-  var b = mesa.getBoundingClientRect();
-  var p = {x:ev.clientX - b.left, y:ev.clientY - b.top};
-  var cab = cableEn(id, null), extremo;
-  if(cab && TIPO[id] === "e"){        /* de una entrada se desenchufa el que había */
+  var p = ptBanco(ev), cab = cableEn(id, null), extremo;
+  if(cab && TIPO[id] === "e"){
     extremo = cab.a.jack === id ? "a" : "b";
     cab[extremo] = {x:p.x, y:p.y};
-  }else{                               /* de una salida siempre nace uno nuevo */
+  }else{
     cab = nuevoCable(id, {x:p.x, y:p.y});
     extremo = "b";
   }
@@ -1320,42 +1538,38 @@ function tomarJack(id, ev){
 }
 function tomarPunta(cab, extremo, ev){
   ev.preventDefault(); ev.stopPropagation();
-  var b = mesa.getBoundingClientRect();
-  if(cab[extremo].jack) cab[extremo] = {x:ev.clientX - b.left, y:ev.clientY - b.top};
+  var p = ptBanco(ev);
+  if(cab[extremo].jack) cab[extremo] = {x:p.x, y:p.y};
   arrastreCable = {cable:cab, extremo:extremo};
   try{ mesa.setPointerCapture(ev.pointerId); }catch(e){}
   pintarCables();
 }
-
 mesa.addEventListener("pointermove", function(ev){
   if(!arrastreCable) return;
-  var b = mesa.getBoundingClientRect();
-  arrastreCable.cable[arrastreCable.extremo] = {x:ev.clientX - b.left, y:ev.clientY - b.top};
+  var p = ptBanco(ev);
+  arrastreCable.cable[arrastreCable.extremo] = {x:p.x, y:p.y};
   pintarCables();
 });
 function soltar(ev){
   if(!arrastreCable) return;
   var a = arrastreCable; arrastreCable = null;
-  var b = mesa.getBoundingClientRect();
-  var p = {x:ev.clientX - b.left, y:ev.clientY - b.top};
-  var esc = escala(), mejor = null, dm = 34 * esc, id;
+  var p = ptBanco(ev), mejor = null, dm = 40, id;
   for(id in JACKS){
-    var q = posJack(id), d = Math.hypot(q.x - p.x, q.y - p.y);
+    var q = JACKS[id], d = Math.hypot(q.x - p.x, q.y - p.y);
     if(d < dm){ dm = d; mejor = id; }
   }
   var otro = a.extremo === "a" ? a.cable.b : a.cable.a;
   if(mejor && mejor !== otro.jack){
     if(TIPO[mejor] === "e"){
       var ocupa = cableEn(mejor, a.cable);
-      if(ocupa){                    /* la entrada estaba tomada: el otro queda colgando */
+      if(ocupa){
         var e = ocupa.a.jack === mejor ? "a" : "b";
-        var q2 = posJack(mejor);
-        ocupa[e] = {x:q2.x + 46 * esc, y:q2.y + 86 * esc};
+        var q2 = JACKS[mejor];
+        ocupa[e] = {x:q2.x + 54, y:q2.y + 100 * JACKS[mejor].dir};
       }
     }
     a.cable[a.extremo] = {jack:mejor};
   }
-  /* un cable con las dos puntas al aire no sirve de nada */
   if(!a.cable.a.jack && !a.cable.b.jack){
     var ix = CABLES.indexOf(a.cable);
     if(ix >= 0) CABLES.splice(ix, 1);
@@ -1365,92 +1579,77 @@ function soltar(ev){
 mesa.addEventListener("pointerup", soltar);
 mesa.addEventListener("pointercancel", soltar);
 
-/* enchufe BNC; dir +1 apunta hacia abajo y −1 hacia arriba */
-function enchufe(par, x, y, esc, dir, cable, extremo){
+function enchufe(par, x, y, dir, cable, extremo){
   var g = E(par, "g", {style:"pointer-events:auto;cursor:grab;touch-action:none",
                        transform:"translate(" + x + " " + y + ") scale(1 " + dir + ")"});
-  var k = esc, i;
-  E(g, "rect", {x:-10 * k, y:-2 * k, width:20 * k, height:9 * k, rx:2 * k,
-                fill:"url(#gMetal)", stroke:"#22262c", "stroke-width":.8 * k});
-  E(g, "rect", {x:-8 * k, y:7 * k, width:16 * k, height:14 * k, rx:1.6 * k,
-                fill:"url(#gMetal2)", stroke:"#22262c", "stroke-width":.8 * k});
+  var i;
+  E(g, "rect", {x:-11, y:-2, width:22, height:10, rx:2, fill:"url(#gMetal)",
+                stroke:"#22262c", "stroke-width":.9});
+  E(g, "rect", {x:-9, y:8, width:18, height:15, rx:1.8, fill:"url(#gMetal2)",
+                stroke:"#22262c", "stroke-width":.9});
   for(i = 0; i < 5; i++)
-    E(g, "line", {x1:-8 * k, y1:(9.5 + i * 2.6) * k, x2:8 * k, y2:(9.5 + i * 2.6) * k,
-                  stroke:"#3d4249", "stroke-width":.7 * k, opacity:".8"});
-  E(g, "path", {d:"M " + (-6.5 * k) + " " + (21 * k) + " L " + (6.5 * k) + " " + (21 * k) +
-                   " L " + (4 * k) + " " + (32 * k) + " L " + (-4 * k) + " " + (32 * k) + " Z",
-                fill:"#1b1e22", stroke:"#0e1013", "stroke-width":.8 * k});
-  E(g, "rect", {x:-12 * k, y:-4 * k, width:24 * k, height:40 * k, fill:"transparent"});
+    E(g, "line", {x1:-9, y1:10.5 + i * 2.8, x2:9, y2:10.5 + i * 2.8, stroke:"#3d4249",
+                  "stroke-width":.8, opacity:".8"});
+  E(g, "path", {d:"M -7 23 L 7 23 L 4.5 35 L -4.5 35 Z", fill:"#1b1e22", stroke:"#0e1013",
+                "stroke-width":.9});
+  E(g, "rect", {x:-14, y:-5, width:28, height:44, fill:"transparent"});
   g.addEventListener("pointerdown", function(ev){ tomarPunta(cable, extremo, ev); });
   return g;
 }
 
 function pintarCables(){
   while(svgCab.firstChild) svgCab.removeChild(svgCab.firstChild);
-  var esc = escala(), i;
+  var i;
   for(i = 0; i < CABLES.length; i++){
     var c = CABLES[i];
     var A = puntoDe(c.a), B = puntoDe(c.b);
     var dA = dirDe(c.a), dB = dirDe(c.b);
-    var stub = 30 * esc;
-    var A2 = {x:A.x, y:A.y + stub * dA}, B2 = {x:B.x, y:B.y + stub * dB};
+    var A2 = {x:A.x, y:A.y + 33 * dA}, B2 = {x:B.x, y:B.y + 33 * dB};
     var d = Math.hypot(B2.x - A2.x, B2.y - A2.y);
-    /* un cable de banco mide alrededor de un metro: siempre sobra tramo, y
-       ese sobrante es el que se descuelga */
-    var largo = Math.max(620 * esc, d * 1.16);
+    /* un cable de banco mide alrededor de un metro: siempre sobra tramo, y ese
+       sobrante es el que se descuelga */
+    var largo = Math.max(700, d * 1.16);
     var holgura = Math.max(0, largo - d);
-    var caida = Math.min(230 * esc, 26 * esc + holgura * 0.78);
+    var caida = Math.min(260, 30 * 1 + holgura * 0.78);
     var lat = 0;
     if(dA === dB){
-      /* los dos salen para el mismo lado: el cable cuelga. Si el tramo es casi
-         vertical se le da panza para un costado, que es como se acomoda un
-         cable apoyado sobre el frente de un equipo */
       var dy = Math.abs(B2.y - A2.y), dx = Math.abs(B2.x - A2.x);
-      if(dy > dx * 1.2 && dy > 100 * esc){
-        var lado = (A2.x + B2.x) / 2 < mesa.clientWidth / 2 ? -1 : 1;
-        lat = lado * Math.min(110 * esc, dy * 0.3);
+      if(dy > dx * 1.2 && dy > 120){
+        var lado = (A2.x + B2.x) / 2 < BW / 2 ? -1 : 1;
+        lat = lado * Math.min(130, dy * 0.3);
         caida = Math.max(caida, dy * 0.42);
       }
     }else{
-      /* uno mira para arriba y el otro para abajo: el cable hace una ese entre
-         las dos filas y no necesita tanta panza */
-      caida = Math.min(caida, 0.42 * d + 24 * esc);
+      caida = Math.min(caida, 0.42 * d + 28);
     }
     var c1 = {x:A2.x + lat, y:A2.y + caida * dA};
     var c2 = {x:B2.x + lat, y:B2.y + caida * dB};
     var dd = "M " + A2.x + " " + A2.y + " C " + c1.x + " " + c1.y + ", " +
              c2.x + " " + c2.y + ", " + B2.x + " " + B2.y;
     var g = E(svgCab, "g", {});
-    E(g, "path", {d:dd, fill:"none", stroke:"#000", "stroke-opacity":".45",
-                  "stroke-width":10 * esc, "stroke-linecap":"round",
-                  transform:"translate(0," + (3 * esc) + ")"});
-    E(g, "path", {d:dd, fill:"none", stroke:c.color.jac, "stroke-width":8.4 * esc,
+    E(g, "path", {d:dd, fill:"none", stroke:"#000", "stroke-opacity":".45", "stroke-width":11,
+                  "stroke-linecap":"round", transform:"translate(0,3)"});
+    E(g, "path", {d:dd, fill:"none", stroke:c.color.jac, "stroke-width":9,
                   "stroke-linecap":"round"});
     E(g, "path", {d:dd, fill:"none", stroke:c.color.luz, "stroke-opacity":".55",
-                  "stroke-width":2.2 * esc, "stroke-linecap":"round",
-                  transform:"translate(" + (-1.4 * esc) + "," + (-1.6 * esc) + ")"});
-    enchufe(g, A.x, A.y, esc, dA, c, "a");
-    enchufe(g, B.x, B.y, esc, dB, c, "b");
+                  "stroke-width":2.4, "stroke-linecap":"round", transform:"translate(-1.5,-1.7)"});
+    enchufe(g, A.x, A.y, dA, c, "a");
+    enchufe(g, B.x, B.y, dB, c, "b");
   }
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   La pantalla
+   Las pantallas de los osciloscopios
    ══════════════════════════════════════════════════════════════════ */
-var PX = 26, PY = 68, PW = 380, PH = 304, DIV = 38;
-
-/* busca el punto de la señal donde arranca el barrido */
-function buscarDisparo(){
-  if(!fuenteDe(O.trigFuente)) return null;
-  /* la ventana se estira un poco más de un período: el cruce de una senoidal
-     con el nivel en cero cae justo en el borde y se escapaba por redondeo */
-  var vt = ventanaDe(O.trigFuente) * 1.02;
-  /* resolución: unas veinte muestras por ciclo de la señal más rápida */
-  var N = Math.round(clamp(vt * frecMaxDe(O.trigFuente) * 20, 500, 2600));
-  var niv = nivelDisparo();
-  var prev = valorCanal(O.trigFuente, 0), i, t, v;
+function buscarDisparo(o){
+  var O = OSC[o], ch = O.trigFuente;
+  if(!fuenteDe(o, ch)) return null;
+  var vt = ventanaDe(o, ch) * 1.02;
+  var N = Math.round(clamp(vt * frecMaxDe(o, ch) * 20, 500, 2600));
+  var niv = nivelDisparo(o);
+  var prev = valorCanal(o, ch, 0), i, t, v;
   for(i = 1; i <= N; i++){
-    t = vt * i / N; v = valorCanal(O.trigFuente, t);
+    t = vt * i / N; v = valorCanal(o, ch, t);
     var sube = O.trigPend > 0 && prev < niv && v >= niv;
     var baja = O.trigPend < 0 && prev > niv && v <= niv;
     if(sube || baja){
@@ -1462,14 +1661,11 @@ function buscarDisparo(){
   }
   return null;
 }
-
-/* El trazo se dibuja como una banda entre el mínimo y el máximo de cada
-   columna, que es como se ve en un tubo real: cuando entran muchos ciclos en
-   la pantalla, el haz llena la zona en vez de dibujar una línea. */
+/* El trazo va como banda entre el mínimo y el máximo de cada columna: cuando
+   entran muchos ciclos en la pantalla, el haz llena la zona igual que en un
+   tubo de verdad. */
 function banda(t0, span, valor, fmax){
   var cols = 190;
-  /* cuando en una columna entra más de un ciclo hay que mirar más adentro,
-     si no la banda queda más finita de lo que en realidad es */
   var porCol = span * (fmax || 0) / cols;
   var sub = Math.round(clamp(porCol * 12, 5, 30));
   var arriba = [], abajo = [], i, j;
@@ -1488,145 +1684,187 @@ function banda(t0, span, valor, fmax){
   abajo.reverse();
   return "M " + arriba.join(" L ") + " L " + abajo.join(" L ") + " Z";
 }
-function bandaCanal(ch, t0, span){
-  var vdiv = vdivDe(ch), pos = posDe(ch);
-  return banda(t0, span, function(t){ return valorCanal(ch, t) / vdiv + pos; },
-               frecMaxDe(ch));
-}
-function bandaSuma(t0, span){
-  return banda(t0, span, function(t){
-    return valorCanal("ch1", t) / VDIV[O.v1] + O.pos1 +
-           valorCanal("ch2", t) / VDIV[O.v2] + O.pos2;
-  }, Math.max(frecMaxDe("ch1"), frecMaxDe("ch2")));
-}
-
-function curvaXY(){
-  var pts = [], N = 1400, i;
-  var P = Math.max(ventanaDe("ch1"), ventanaDe("ch2"));
+function curvaXY(o){
+  var O = OSC[o], pts = [], N = 1400, i;
+  var P = Math.max(ventanaDe(o, "ch1"), ventanaDe(o, "ch2"));
   for(i = 0; i <= N; i++){
     var t = P * 3 * i / N;
-    var x = PX + PW / 2 + (valorCanal("ch1", t) / VDIV[O.v1] + O.pos1) * DIV;
-    var y = PY + PH / 2 - (valorCanal("ch2", t) / VDIV[O.v2] + O.pos2) * DIV;
+    var x = PX + PW / 2 + (valorCanal(o, "ch1", t) / VDIV[O.v1] + O.pos1) * DIV;
+    var y = PY + PH / 2 - (valorCanal(o, "ch2", t) / VDIV[O.v2] + O.pos2) * DIV;
     pts.push(clamp(x, PX - 6, PX + PW + 6).toFixed(1) + " " +
              clamp(y, PY - 6, PY + PH + 6).toFixed(1));
   }
   return "M " + pts.join(" L ");
 }
 
-var t0Libre = 0, ultimo = 0, ayudasOn = false;
+var libre = {a:0, b:0}, ultimo = 0, ayudasOn = false;
 var reducido = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var filtroFoco = null;
 
-function dibujarPantalla(ahora){
-  var dt = ultimo ? (ahora - ultimo) / 1000 : 0;
-  ultimo = ahora;
-
+function dibujarOsc(o, dt){
+  var O = OSC[o], P = partesOsc[o];
   if(!O.pot){
-    trazoCH1.setAttribute("d", ""); trazoCH2.setAttribute("d", "");
-    trazoXY.setAttribute("d", ""); grupoAyudas.setAttribute("opacity", "0");
-    ledDisp.setAttribute("fill", "#243028");
+    P.t1.setAttribute("d", ""); P.t2.setAttribute("d", ""); P.xy.setAttribute("d", "");
+    P.ayudas.setAttribute("opacity", "0");
+    P.led.setAttribute("fill", "#243028");
     return;
   }
-  pantallaViva.setAttribute("opacity", (0.25 + O.inten * 0.75).toFixed(3));
-  filtroFoco.setAttribute("stdDeviation", (0.7 + Math.abs(O.foco - 0.42) * 9).toFixed(2));
-
+  P.viva.setAttribute("opacity", (0.25 + O.inten * 0.75).toFixed(3));
   if(O.modo === "XY"){
-    trazoCH1.setAttribute("d", ""); trazoCH2.setAttribute("d", "");
-    trazoXY.setAttribute("d", curvaXY());
-    ledDisp.setAttribute("fill", "#243028");
-    grupoAyudas.setAttribute("opacity", "0");
+    P.t1.setAttribute("d", ""); P.t2.setAttribute("d", "");
+    P.xy.setAttribute("d", curvaXY(o));
+    P.led.setAttribute("fill", "#243028");
+    P.ayudas.setAttribute("opacity", "0");
     return;
   }
-  trazoXY.setAttribute("d", "");
-
+  P.xy.setAttribute("d", "");
   var span = TDIV[O.t] * 10;
-  var tDisp = buscarDisparo();
-  ledDisp.setAttribute("fill", tDisp !== null ? "#5ce872" : "#243028");
-
+  var tDisp = buscarDisparo(o);
+  P.led.setAttribute("fill", tDisp !== null ? "#5ce872" : "#243028");
   var t0;
-  if(tDisp !== null){
-    t0 = tDisp;
-  }else if(O.trigModo === "AUTO"){
-    var P = ventanaDe(O.trigFuente);
-    if(!reducido) t0Libre = (t0Libre + dt * P * 0.28) % P;
-    t0 = t0Libre;
+  if(tDisp !== null) t0 = tDisp;
+  else if(O.trigModo === "AUTO"){
+    var Pp = ventanaDe(o, O.trigFuente);
+    if(!reducido) libre[o] = (libre[o] + dt * Pp * 0.28) % Pp;
+    t0 = libre[o];
   }else{
-    trazoCH1.setAttribute("d", ""); trazoCH2.setAttribute("d", "");
-    grupoAyudas.setAttribute("opacity", "0");
+    P.t1.setAttribute("d", ""); P.t2.setAttribute("d", "");
+    P.ayudas.setAttribute("opacity", "0");
     return;
   }
   t0 -= O.posH * TDIV[O.t];
-
   var m = O.modo;
-  trazoCH1.setAttribute("d",
-    m === "ADD" ? bandaSuma(t0, span)
-                : ((m === "CH1" || m === "DUAL") ? bandaCanal("ch1", t0, span) : ""));
-  trazoCH2.setAttribute("d",
-    (m === "CH2" || m === "DUAL") ? bandaCanal("ch2", t0, span) : "");
-
-  if(ayudasOn) dibujarAyudas();
-  else grupoAyudas.setAttribute("opacity", "0");
+  if(m === "ADD"){
+    P.t1.setAttribute("d", banda(t0, span, function(t){
+      return valorCanal(o, "ch1", t) / VDIV[O.v1] + O.pos1 +
+             valorCanal(o, "ch2", t) / VDIV[O.v2] + O.pos2;
+    }, Math.max(frecMaxDe(o, "ch1"), frecMaxDe(o, "ch2"))));
+    P.t2.setAttribute("d", "");
+  }else{
+    P.t1.setAttribute("d", (m === "CH1" || m === "DUAL") ? banda(t0, span, function(t){
+      return valorCanal(o, "ch1", t) / VDIV[O.v1] + O.pos1;
+    }, frecMaxDe(o, "ch1")) : "");
+    P.t2.setAttribute("d", (m === "CH2" || m === "DUAL") ? banda(t0, span, function(t){
+      return valorCanal(o, "ch2", t) / VDIV[O.v2] + O.pos2;
+    }, frecMaxDe(o, "ch2")) : "");
+  }
+  if(ayudasOn) dibujarAyudas(o);
+  else P.ayudas.setAttribute("opacity", "0");
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Medidas: lo que se cuenta en la pantalla
+   La pantalla del analizador
    ══════════════════════════════════════════════════════════════════ */
-function canalVivo(){
-  if(O.modo === "CH2") return fuenteDe("ch2") ? "ch2" : null;
+function nivelY(v){
+  /* v en volts de pico; devuelve la coordenada vertical en la pantalla */
+  if(AE.log){
+    var db = 20 * Math.log10(Math.max(v, 1e-7));
+    return PY + (AE.ref - db) / 10 * DIV;
+  }
+  var plena = Math.pow(10, AE.ref / 20);
+  return PY + PH - (v / plena) * PH;
+}
+function dibujarAnalizador(){
+  var P = partesAE;
+  if(!AE.pot || !FUENTE["ae.in"]){
+    P.trazo.setAttribute("d", "");
+    P.marcador.setAttribute("opacity", "0");
+    return;
+  }
+  P.marcador.setAttribute("opacity", ".85");
+  var f0 = iniAE(), f1 = finAE(), cols = 190, i, k;
+  var hz = (f1 - f0) / cols;
+  var sigma = rbwAE() / 2.355;
+  var pot = new Float64Array(cols + 1);
+  for(k = 0; k < ESPECTRO.length; k++){
+    var L = ESPECTRO[k];
+    if(L.f < f0 - 4 * sigma || L.f > f1 + 4 * sigma) continue;
+    var c0 = Math.max(0, Math.floor((L.f - 4 * sigma - f0) / hz));
+    var c1 = Math.min(cols, Math.ceil((L.f + 4 * sigma - f0) / hz));
+    for(i = c0; i <= c1; i++){
+      var df = (f0 + i * hz) - L.f;
+      var g = Math.exp(-(df * df) / (2 * sigma * sigma));
+      var a = L.A * g;
+      pot[i] += a * a;
+    }
+  }
+  var pts = [];
+  for(i = 0; i <= cols; i++){
+    /* un piso de ruido tenue, que es lo que se ve en cualquier analizador.
+       Si el visitante pidió menos animación, el pasto queda quieto. */
+    var ruido = 2e-9 * (1 + 0.7 * (reducido ? ((i * 2654435761) % 1000) / 1000
+                                            : Math.random()));
+    var v = Math.sqrt(pot[i] + ruido);
+    var x = PX + PW * i / cols;
+    pts.push(x.toFixed(1) + " " + clamp(nivelY(v), PY - 4, PY + PH + 4).toFixed(1));
+  }
+  P.trazo.setAttribute("d", "M " + pts.join(" L "));
+  var xm = PX + PW * clamp(AE.marca, 0, 1);
+  P.marcador.setAttribute("x1", xm); P.marcador.setAttribute("x2", xm);
+}
+function nivelEnMarcador(){
+  var fm = marcaAE(), sigma = rbwAE() / 2.355, p = 0, k;
+  for(k = 0; k < ESPECTRO.length; k++){
+    var df = ESPECTRO[k].f - fm;
+    if(Math.abs(df) > 4 * sigma) continue;
+    var a = ESPECTRO[k].A * Math.exp(-(df * df) / (2 * sigma * sigma));
+    p += a * a;
+  }
+  return Math.sqrt(p);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Medidas y ayudas
+   ══════════════════════════════════════════════════════════════════ */
+function canalVivo(o){
+  var O = OSC[o];
+  if(O.modo === "CH2") return fuenteDe(o, "ch2") ? "ch2" : null;
   if(O.modo === "CH1" || O.modo === "DUAL" || O.modo === "ADD")
-    return fuenteDe("ch1") ? "ch1" : (O.modo === "DUAL" && fuenteDe("ch2") ? "ch2" : null);
+    return fuenteDe(o, "ch1") ? "ch1" : (O.modo === "DUAL" && fuenteDe(o, "ch2") ? "ch2" : null);
   return null;
 }
-function medir(ch){
-  var P = ventanaDe(ch), i;
-  /* unas ochenta muestras por ciclo de la señal más rápida: con menos, el
-     pico de una portadora de 20 kHz dentro de una envolvente de 1 kHz se
-     erraba por medio por ciento y los Vpp no cerraban con la cuenta */
-  var N = Math.round(clamp(P * frecMaxDe(ch) * 80, 1200, 8000));
+function medir(o, ch){
+  var P = ventanaDe(o, ch), i;
+  var N = Math.round(clamp(P * frecMaxDe(o, ch) * 80, 1200, 8000));
   var mn = Infinity, mx = -Infinity, sum = 0, cua = 0;
   for(i = 0; i < N; i++){
-    var v = valorCanal(ch, P * i / N);
+    var v = valorCanal(o, ch, P * i / N);
     if(v < mn) mn = v;
     if(v > mx) mx = v;
     sum += v; cua += v * v;
   }
-  var src = fuenteDe(ch), gs = src ? generadoresDe(src, 0, {}) : {};
+  var src = fuenteDe(o, ch), gs = src ? generadoresDe(src, 0, {}) : {};
   var lista = [];
   if(gs[1]) lista.push(1);
   if(gs[2]) lista.push(2);
   return {min:mn, max:mx, pp:mx - mn, med:sum / N, rms:Math.sqrt(cua / N),
           P:P, f:1 / P, gens:lista, pico:Math.max(Math.abs(mn), Math.abs(mx))};
 }
-
-function dibujarAyudas(){
-  while(grupoAyudas.firstChild) grupoAyudas.removeChild(grupoAyudas.firstChild);
-  var ch = canalVivo();
-  if(!ch || !O.pot || O.modo === "XY"){ grupoAyudas.setAttribute("opacity", "0"); return; }
-  grupoAyudas.setAttribute("opacity", "1");
-  var m = medir(ch), vdiv = vdivDe(ch), pos = posDe(ch);
+function dibujarAyudas(o){
+  var P = partesOsc[o], O = OSC[o];
+  while(P.ayudas.firstChild) P.ayudas.removeChild(P.ayudas.firstChild);
+  var ch = canalVivo(o);
+  if(!ch || !O.pot || O.modo === "XY"){ P.ayudas.setAttribute("opacity", "0"); return; }
+  P.ayudas.setAttribute("opacity", "1");
+  var m = medir(o, ch), vdiv = vdivDe(o, ch), pos = posDe(o, ch);
   var yA = PY + PH / 2 - (m.max / vdiv + pos) * DIV;
   var yB = PY + PH / 2 - (m.min / vdiv + pos) * DIV;
-  var g = grupoAyudas, col = "#ffd479", xa = PX + 46;
+  var g = P.ayudas, col = "#ffd479", xa = PX + 46;
   E(g, "line", {x1:PX, y1:yA, x2:PX + PW, y2:yA, stroke:col, "stroke-width":.8,
                 "stroke-dasharray":"3 4", opacity:".55"});
   E(g, "line", {x1:PX, y1:yB, x2:PX + PW, y2:yB, stroke:col, "stroke-width":.8,
                 "stroke-dasharray":"3 4", opacity:".55"});
   E(g, "line", {x1:xa, y1:yA, x2:xa, y2:yB, stroke:col, "stroke-width":1.3});
-  E(g, "path", {d:"M " + (xa-4) + " " + (yA+6) + " L " + xa + " " + yA +
-                   " L " + (xa+4) + " " + (yA+6), fill:"none", stroke:col, "stroke-width":1.3});
-  E(g, "path", {d:"M " + (xa-4) + " " + (yB-6) + " L " + xa + " " + yB +
-                   " L " + (xa+4) + " " + (yB-6), fill:"none", stroke:col, "stroke-width":1.3});
   var et = TX(g, xa + 8, (yA + yB) / 2 + 4, coma(m.pp / vdiv, 1) + " div",
               {"font-size":11, fill:col, "font-weight":600});
   et.setAttribute("paint-order", "stroke");
   et.setAttribute("stroke", "#04080699"); et.setAttribute("stroke-width", "3");
-
   var anchoPx = (m.P / TDIV[O.t]) * DIV;
   if(anchoPx > 6 && anchoPx < PW * 1.4){
     var yl = PY + PH - 34;
     E(g, "line", {x1:PX + 20, y1:yl, x2:PX + 20 + anchoPx, y2:yl, stroke:col,
                   "stroke-width":1.3});
-    E(g, "line", {x1:PX + 20, y1:yl - 6, x2:PX + 20, y2:yl + 6, stroke:col,
-                  "stroke-width":1.3});
+    E(g, "line", {x1:PX + 20, y1:yl - 6, x2:PX + 20, y2:yl + 6, stroke:col, "stroke-width":1.3});
     E(g, "line", {x1:PX + 20 + anchoPx, y1:yl - 6, x2:PX + 20 + anchoPx, y2:yl + 6,
                   stroke:col, "stroke-width":1.3});
     var e2 = TX(g, PX + 24 + anchoPx / 2, yl - 10, coma(m.P / TDIV[O.t], 1) + " div",
@@ -1634,32 +1872,42 @@ function dibujarAyudas(){
     e2.setAttribute("paint-order", "stroke");
     e2.setAttribute("stroke", "#04080699"); e2.setAttribute("stroke-width", "3");
   }
-  var yn = PY + PH / 2 - (nivelDisparo() / vdivDe(O.trigFuente) + posDe(O.trigFuente)) * DIV;
+  var yn = PY + PH / 2 - (nivelDisparo(o) / vdivDe(o, O.trigFuente) + posDe(o, O.trigFuente)) * DIV;
   if(yn > PY - 4 && yn < PY + PH + 4)
     E(g, "path", {d:"M " + (PX+2) + " " + (yn-5) + " L " + (PX+11) + " " + yn +
                      " L " + (PX+2) + " " + (yn+5) + " Z", fill:"#ff8f6b", opacity:".9"});
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   Refrescos de texto
+   Refrescos
    ══════════════════════════════════════════════════════════════════ */
 var elCuenta = document.getElementById("cuenta");
 var elValores = document.getElementById("valores");
+var elEspectro = document.getElementById("espectroTxt");
 var elPract = document.getElementById("pract");
+var partesFil = {};
 
 function refrescar(){
+  BUF = {};
   reconstruirRed();
   recalcularMedias();
   revisarSaturacion();
-  vent.v1.textContent = fmtVolt(VDIV[O.v1]) + "/div";
-  vent.v2.textContent = fmtVolt(VDIV[O.v2]) + "/div";
-  vent.t.textContent  = fmtTiempo(TDIV[O.t]) + "/div";
+  calcularEspectro();
+  ["a","b"].forEach(function(o){
+    var P = partesOsc[o], O = OSC[o];
+    if(!P.v1) return;
+    P.v1.textContent = fmtVolt(VDIV[O.v1]) + "/div";
+    P.v2.textContent = fmtVolt(VDIV[O.v2]) + "/div";
+    P.vt.textContent = fmtTiempo(TDIV[O.t]) + "/div";
+  });
   BOTONES.forEach(function(f){ f(); });
   if(pilotoMul) pilotoMul(SATURA.mul);
   if(pilotoSum) pilotoSum(SATURA.sum);
-  refrescarGenerador(1);
-  refrescarGenerador(2);
+  refrescarGenerador(1); refrescarGenerador(2);
+  refrescarFiltro("lpf"); refrescarFiltro("hpf");
+  refrescarAnalizador();
   textoMedidas();
+  textoEspectro();
   revisarPractica();
 }
 
@@ -1680,102 +1928,200 @@ function refrescarGenerador(n){
   if(!G.pot || !G.salida){ d.previa.setAttribute("d", ""); return; }
   var pts = [], N = 160, i, A = 22;
   var mx = Math.max(1e-9, ampGen(n) / 2 + Math.abs(offGen(n)));
-  for(i = 0; i <= N; i++){
-    var t = (2 / frecGen(n)) * i / N;
+  for(i = 0; i <= N; i++)
     pts.push((230 + 176 * i / N).toFixed(1) + " " +
-             (224 - salidaGen(n, t) / mx * A).toFixed(1));
-  }
+             (252 - salidaGen(n, (2 / frecGen(n)) * i / N) / mx * A).toFixed(1));
   d.previa.setAttribute("d", "M " + pts.join(" L "));
 }
 
+function refrescarFiltro(tipo){
+  var d = partesFil[tipo], F = FIL[tipo];
+  if(!d || !d.corte) return;
+  var fc = corteFil(tipo);
+  d.corte.textContent = fmtFrecCorta(fc);
+  /* la curvita: tres décadas alrededor del corte, en dB */
+  var pts = [], i, N = 60;
+  for(i = 0; i <= N; i++){
+    var f = fc * Math.pow(10, -1.5 + 3 * i / N);
+    var H = respFiltro(tipo, f, fc, F.orden);
+    var db = 20 * Math.log10(Math.max(Math.hypot(H[0], H[1]), 1e-4));
+    var x = 20 + 66 * i / N;
+    var y = 112 + clamp(-db, 0, 60) / 60 * 34;
+    pts.push(x.toFixed(1) + " " + y.toFixed(1));
+  }
+  d.curva.setAttribute("d", "M " + pts.join(" L "));
+  d.marcaFc.setAttribute("x1", 20 + 66 * 0.5);
+  d.marcaFc.setAttribute("x2", 20 + 66 * 0.5);
+}
+
+function refrescarAnalizador(){
+  var P = partesAE;
+  if(!P.vCentro) return;
+  P.vCentro.textContent = fmtFrecCorta(centroAE());
+  P.vSpan.textContent = fmtFrecCorta(spanAE()) + "/div";
+  P.vRbw.textContent = fmtFrecCorta(rbwAE());
+  P.vRef.textContent = (AE.ref >= 0 ? "+" : "−") + coma(Math.abs(AE.ref), 0) + " dBV";
+  P.vMarca.textContent = fmtFrecCorta(marcaAE());
+  P.ini.textContent = fmtFrecCorta(iniAE());
+  P.cen.textContent = fmtFrecCorta(centroAE());
+  P.fin.textContent = fmtFrecCorta(finAE());
+  P.ref.textContent = "REF  " + (AE.ref >= 0 ? "+" : "−") + coma(Math.abs(AE.ref), 0) + " dBV";
+  P.esc.textContent = AE.log ? "10 dB/div"
+                             : coma(Math.pow(10, AE.ref / 20) / 8, 2) + " V/div";
+  var v = nivelEnMarcador();
+  P.lecMarca.textContent = AE.pot && FUENTE["ae.in"]
+    ? fmtFrecCorta(marcaAE()) + "   " +
+      (AE.log ? coma(20 * Math.log10(Math.max(v, 1e-7)), 1) + " dBV"
+              : coma(v, 3) + " V")
+    : "marcador —";
+}
+
 function textoMedidas(){
-  var ch = canalVivo();
+  var o = "a", O = OSC[o], ch = canalVivo(o);
   if(!O.pot){
-    elCuenta.innerHTML = '<p class="apagado">El osciloscopio está apagado.</p>';
+    elCuenta.innerHTML = '<p class="apagado">El osciloscopio A está apagado.</p>';
     elValores.innerHTML = ""; return;
   }
   if(O.modo === "XY"){
     elCuenta.innerHTML = '<p>En <b>X-Y</b> no hay base de tiempo: el canal 1 corre el haz a lo ' +
-      'ancho y el canal 2 a lo alto. La figura compara las dos señales en frecuencia y en fase. ' +
-      'Con una AM en el canal 1 y su moduladora en el 2 aparece el trapecio de modulación.</p>';
+      'ancho y el canal 2 a lo alto. Con una AM en un canal y su moduladora en el otro aparece ' +
+      'el trapecio de modulación.</p>';
     elValores.innerHTML = ""; return;
   }
   if(!ch){
-    elCuenta.innerHTML = '<p class="apagado">No llega señal al canal que está en pantalla. ' +
-      'Enchufá un cable desde la salida de un generador o de un módulo.</p>';
+    elCuenta.innerHTML = '<p class="apagado">No llega señal al canal que está en pantalla.</p>';
     elValores.innerHTML = ""; return;
   }
-  var m = medir(ch), vdiv = vdivDe(ch), tdiv = TDIV[O.t];
+  var m = medir(o, ch), vdiv = vdivDe(o, ch), tdiv = TDIV[O.t];
   var dAlto = m.pp / vdiv, dAncho = m.P / tdiv;
-  var acopl = ch === "ch1" ? O.ac1 : O.ac2;
   var aviso = "";
   if(dAlto > 8) aviso = '<p style="color:var(--warn)">La onda es más alta que la pantalla: ' +
     'bajá la sensibilidad girando VOLTS/DIV hacia números más grandes.</p>';
   else if(dAlto < 0.5) aviso = '<p style="color:var(--warn)">La onda es muy chica para medirla ' +
     'bien: subí la sensibilidad hacia números más chicos.</p>';
-  if(buscarDisparo() === null && O.trigModo === "AUTO")
+  if(buscarDisparo(o) === null && O.trigModo === "AUTO")
     aviso += '<p style="color:var(--warn)">La imagen corre porque el nivel de disparo quedó ' +
-      'fuera de la señal. Movelo hasta que se encienda el piloto DISPARADO.</p>';
+      'fuera de la señal.</p>';
   if(SATURA.mul || SATURA.sum)
     aviso += '<p style="color:var(--hot)">Un módulo está pegando contra los ±12 V de su fuente. ' +
       'Bajá la amplitud de los generadores.</p>';
-
   var linea2;
-  if(m.gens.length > 1){
-    linea2 = '<p>En este canal se combinan las dos frecuencias: <b>' + fmtFrec(frecGen(1)) +
-      '</b> y <b>' + fmtFrec(frecGen(2)) + '</b>. El dibujo se repite con el período más largo, ' +
-      '<b>' + fmtSeg(m.P) + '</b>, que en la pantalla ocupa <b>' + coma(dAncho, 1) +
-      ' divisiones</b>. Ésa es la envolvente.</p>';
-  }else{
-    linea2 = '<p>Un ciclo entra en <b>' + coma(dAncho, 1) + ' divisiones</b>. Con la base de ' +
-      'tiempo en <b>' + fmtTiempo(tdiv) + '/div</b>: ' + coma(dAncho, 1) + ' × ' +
-      fmtTiempo(tdiv) + ' = <b>' + fmtSeg(m.P) + '</b>, o sea <b>' + fmtFrec(m.f) + '</b>.</p>';
-  }
-
+  if(m.gens.length > 1)
+    linea2 = '<p>Se combinan <b>' + fmtFrec(frecGen(1)) + '</b> y <b>' + fmtFrec(frecGen(2)) +
+      '</b>. El dibujo se repite cada <b>' + fmtSeg(m.P) + '</b>, que ocupa <b>' +
+      coma(dAncho, 1) + ' divisiones</b>: ésa es la envolvente.</p>';
+  else
+    linea2 = '<p>Un ciclo entra en <b>' + coma(dAncho, 1) + ' divisiones</b>. Con la base en <b>' +
+      fmtTiempo(tdiv) + '/div</b> son <b>' + fmtSeg(m.P) + '</b>, o sea <b>' + fmtFrec(m.f) +
+      '</b>.</p>';
   elCuenta.innerHTML =
     '<p>La onda ocupa <b>' + coma(dAlto, 1) + ' divisiones</b> de alto. Con la llave en <b>' +
       fmtVolt(vdiv) + '/div</b>: ' + coma(dAlto, 1) + ' × ' + fmtVolt(vdiv) + ' = <b>' +
-      coma(m.pp, 2) + ' Vpp</b>.</p>' + linea2 +
-    (acopl === "CA" ? '<p style="color:var(--soft)">El canal está en CA, así que la continua ' +
-      'de la señal no se ve: la onda queda centrada en el cero.</p>' : "") + aviso;
-
-  var rotT = m.gens.length > 1 ? "Se repite cada" : "Período";
-  var rotF = m.gens.length > 1 ? "O sea" : "Frecuencia";
+      coma(m.pp, 2) + ' Vpp</b>.</p>' + linea2 + aviso;
   var vals = [["Vpp", coma(m.pp, 2) + " V"], ["V pico", coma(m.pico, 2) + " V"],
               ["V eficaz", coma(m.rms, 2) + " V"], ["V medio", coma(m.med, 2) + " V"],
-              [rotT, fmtSeg(m.P)], [rotF, fmtFrec(m.f)]];
+              [m.gens.length > 1 ? "Se repite cada" : "Período", fmtSeg(m.P)]];
   elValores.innerHTML = vals.map(function(v){
     return '<div class="val"><span>' + v[0] + '</span><b>' + v[1] + '</b></div>';
   }).join("");
 }
 
-/* ---- práctica guiada ---- */
-function esSalidaGen(j){ return j === "gen1.out" || j === "gen2.out"; }
-function revisarPractica(){
-  var conectado = fuenteDe("ch1") === "gen1.out";
-  var f = frecGen(1), m = conectado ? medir("ch1") : null;
-  var dAlto = m ? m.pp / VDIV[O.v1] : 0;
-  var dAncho = m ? m.P / TDIV[O.t] : 0;
+function textoEspectro(){
+  if(!AE.pot){
+    elEspectro.innerHTML = '<p class="apagado">El analizador está apagado.</p>'; return;
+  }
+  if(!FUENTE["ae.in"] || !ESPECTRO.length){
+    elEspectro.innerHTML = '<p class="apagado">Sin señal en la entrada. Enchufá un cable a la ' +
+      'entrada del analizador.</p>'; return;
+  }
+  var amax = 0, k;
+  for(k = 0; k < ESPECTRO.length; k++) amax = Math.max(amax, ESPECTRO[k].A);
+  var rayas = ESPECTRO.filter(function(L){ return L.A >= amax * 0.01 && L.f > 0; });
+  if(!rayas.length){
+    elEspectro.innerHTML = '<p class="apagado">Sólo hay continua en la entrada.</p>'; return;
+  }
+  function db(L){ return 20 * Math.log10(Math.max(L.A / amax, 1e-6)); }
+  var lista = rayas.slice(0, 7).map(function(L){
+    return '<b>' + fmtFrec(L.f) + '</b> (' + coma(db(L), 1) + ' dB)';
+  }).join(", ");
 
-  var x = FUENTE["mul.x"], y = FUENTE["mul.y"];
-  var dbl = esSalidaGen(x) && esSalidaGen(y) && x !== y && fuenteDe("ch1") === "mul.w";
+  /* Las que mandan son las que están dentro de 20 dB de la mayor. Con ese
+     criterio una banda lateral única bien filtrada cuenta como una sola raya,
+     aunque le quede el resto de la otra abajo de todo. */
+  var fuertes = rayas.filter(function(L){ return L.A >= amax * 0.1; });
+  var debiles = rayas.filter(function(L){ return L.A < amax * 0.1; });
+  var f0 = fuertes[0].f, f1 = fuertes[fuertes.length - 1].f, bw = f1 - f0;
 
-  var a = FUENTE["sum.a"], b = FUENTE["sum.b"], am = false;
-  if(fuenteDe("ch1") === "sum.s" && (a === "mul.w" || b === "mul.w")){
-    var port = (a === "mul.w") ? b : a;
-    am = esSalidaGen(port) && (port === x || port === y);
+  var quees = "";
+  if(fuertes.length === 1){
+    quees = 'Quedó <b>una sola raya</b>, en ' + fmtFrec(f0) + '. Eso es una <b>banda lateral ' +
+      'única</b>: con una moduladora de un tono solo, la señal transmitida es una senoidal común ' +
+      'y toda la información está en su frecuencia.';
+  }else if(fuertes.length === 2 && Math.abs(db(fuertes[0]) - db(fuertes[1])) < 6){
+    quees = 'Dos rayas parejas y nada en el medio: es una <b>doble banda lateral con portadora ' +
+      'suprimida</b>. La portadora no se transmite y por eso no aparece.';
+  }else if(fuertes.length === 3 && fuertes[1].A > fuertes[0].A && fuertes[1].A > fuertes[2].A){
+    var m = 2 * Math.sqrt(fuertes[0].A * fuertes[2].A) / fuertes[1].A;
+    quees = 'Tres rayas y la del medio más alta: es una <b>AM</b>. La del medio es la portadora y ' +
+      'las de los costados, las bandas laterales. Con esa relación de alturas el <b>índice de ' +
+      'modulación</b> vale <b>' + coma(m, 2) + '</b>.';
+  }else{
+    quees = 'Hay <b>' + fuertes.length + ' componentes</b> de peso en la entrada.';
   }
 
+  var resto = "";
+  if(debiles.length){
+    var peor = debiles[0];
+    for(k = 1; k < debiles.length; k++) if(debiles[k].A > peor.A) peor = debiles[k];
+    resto = '<p>Todavía asoma algo en ' + fmtFrec(peor.f) + ', pero <b>' +
+      coma(-db(peor), 0) + ' dB</b> más abajo. Ése es el resto de lo que el filtro tenía que ' +
+      'tirar: subiendo los polos baja más, y bajándolos vuelve a crecer.</p>';
+  }
+
+  var ancho;
+  if(fuertes.length === 1){
+    ancho = '<p>Con una sola componente el <b>ancho de banda ocupado</b> se desplomó: la doble ' +
+      'banda necesitaba el doble de la moduladora y acá alcanza con la mitad de eso. Ése es todo ' +
+      'el negocio de la banda lateral única.</p>';
+  }else{
+    ancho = '<p>De la primera a la última hay <b>' + fmtFrec(bw) + '</b>: ése es el <b>ancho de ' +
+      'banda ocupado</b>.</p>';
+  }
+
+  var sep = "";
+  if(fuertes.length > 1 && rbwAE() > bw / 2)
+    sep = '<p style="color:var(--warn)">El ancho de banda de resolución es demasiado grande para ' +
+      'separarlas: bajalo hasta que las rayas se despeguen.</p>';
+
+  elEspectro.innerHTML = '<p>Componentes por encima de 40 dB de la mayor: ' + lista + '. ' +
+    quees + '</p>' + ancho + resto + sep;
+}
+
+function esSalidaGen(j){ return j === "gen1.out" || j === "gen2.out"; }
+function algunCanal(o, jack){
+  return fuenteDe(o, "ch1") === jack || fuenteDe(o, "ch2") === jack;
+}
+function revisarPractica(){
+  var x = FUENTE["mul.x"], y = FUENTE["mul.y"];
+  var hayMul = esSalidaGen(x) && esSalidaGen(y) && x !== y;
+  var dbl = hayMul && algunCanal("a", "mul.w");
+  var a = FUENTE["sum.a"], b = FUENTE["sum.b"], am = false, port = null;
+  if(a === "mul.w" || b === "mul.w"){
+    port = (a === "mul.w") ? b : a;
+    am = hayMul && esSalidaGen(port) && (port === x || port === y) && algunCanal("a", "sum.s");
+  }
+  var fmod = 0, n;
+  for(n = 1; n <= 2; n++) if(GEN[n].pot) fmod = fmod ? Math.min(fmod, frecGen(n)) : frecGen(n);
   var ok = {
-    conectado: conectado,
-    senoidal: GEN[1].func === "seno",
-    dosk: f > 1900 && f < 2105,
-    cuatro: Math.abs(ampGen(1) - 4) < 0.28 && GEN[1].salida && GEN[1].pot,
-    alto: conectado && dAlto >= 3.9 && dAlto <= 7.1,
-    ancho: conectado && dAncho >= 3.28 && dAncho <= 5.1,
-    firme: O.trigModo === "NORM" && buscarDisparo() !== null && O.pot,
     dbl: dbl,
-    am: am
+    am: am,
+    ae: FUENTE["ae.in"] === "sum.s" && ESPECTRO.length > 0 &&
+        centroAE() > iniAE() && ESPECTRO.some(function(L){
+          return L.f > iniAE() && L.f < finAE() && L.A > 0.05;
+        }),
+    rbw: rbwAE() <= fmod / 2 && fmod > 0,
+    bls: FUENTE["hpf.in"] === "mul.w" && algunCanal("b", "hpf.out"),
+    bli: FUENTE["lpf.in"] === "mul.w" && algunCanal("b", "lpf.out")
   };
   var lis = elPract.querySelectorAll("li"), i;
   for(i = 0; i < lis.length; i++)
@@ -1786,53 +2132,122 @@ function revisarPractica(){
    Armado, ejemplos y arranque
    ══════════════════════════════════════════════════════════════════ */
 function armarTodo(){
-  var hijos = Array.prototype.slice.call(svgOsc.childNodes);
-  hijos.forEach(function(n){ if(n.tagName !== "defs") svgOsc.removeChild(n); });
-  [svgGen[1], svgGen[2], svgMul, svgSum].forEach(function(s){
-    while(s.firstChild) s.removeChild(s.firstChild);
+  Array.prototype.slice.call(mesa.querySelectorAll("svg.eq")).forEach(function(n){
+    mesa.removeChild(n);
   });
   BOTONES.length = 0;
   JACKS = {};
-  armarOsciloscopio();
+  ["oscA","oscB","ae","mul","sum","lpf","hpf","gen1","gen2"].forEach(crearSvg);
+  armarDefs(SVGS.oscA);
+  armarOsciloscopio("a");
+  armarOsciloscopio("b");
+  armarAnalizador();
+  pilotoMul = armarCuenta("mul", {
+    jacks:["mul.x","mul.y","mul.w"], bornes:["X","Y","W"],
+    aria:["entrada X del multiplicador","entrada Y del multiplicador","salida del multiplicador"],
+    titulo:"MULTIPLICADOR", formula:"W = X · Y / 10 V", modelo:"MX-100",
+    nota:"cuatro cuadrantes, como el integrado real"});
+  pilotoSum = armarCuenta("sum", {
+    jacks:["sum.a","sum.b","sum.s"], bornes:["A","B","S"],
+    aria:["entrada A del sumador","entrada B del sumador","salida del sumador"],
+    titulo:"SUMADOR", formula:"S = A + B", modelo:"SM-100",
+    nota:"ganancia unitaria en las dos entradas"});
+  partesFil.lpf = armarFiltro("lpf");
+  partesFil.hpf = armarFiltro("hpf");
   armarGenerador(1);
   armarGenerador(2);
-  armarMultiplicador();
-  armarSumador();
+  filtroFoco = SVGS.oscA.querySelector("#fFosforo feGaussianBlur");
   pintarCables();
   refrescar();
 }
 
 function cablesIniciales(){
   CABLES.length = 0; proximoColor = 0;
-  nuevoCable("gen1.out", {jack:"osc.ch1"});
-  nuevoCable("gen2.out", {jack:"osc.ch2"});
+  nuevoCable("gen1.out", {jack:"oscA.ch1"});
+  nuevoCable("gen2.out", {jack:"oscA.ch2"});
 }
 
-/* Los dos ejemplos armados: moduladora de 1 kHz y portadora de 20 kHz, las dos
-   de 10 Vpp. Con esos números el índice de modulación da justo 0,5. */
+/* frecuencia de corte -> valor de perilla */
+function perillaCorte(f){ return clamp(Math.log10(f / 100) / 3.699, 0, 1); }
+function perillaCentro(f){ return clamp(Math.log10(f / 100) / 3.699, 0, 1); }
+/* Deja el generador en una frecuencia: busca el multiplicador de rango con el
+   que el dial cae dentro de su escala, de 0,2 a 2, y después fija el dial. Sin
+   esto, pedirle 32 kHz con el rango en ×10k topaba el dial en 2 y salían 20. */
+function ponerFrec(n, f){
+  for(var r = 0; r < RANGOS.length; r++){
+    var d = f / RANGOS[r];
+    if(d >= 0.19999 && d <= 2.0001){
+      GEN[n].rango = r;
+      GEN[n].dial = clamp(Math.log10(d / 0.2), 0, 1);
+      return;
+    }
+  }
+  GEN[n].rango = RANGOS.length - 1; GEN[n].dial = 1;
+}
+
+/* ---- los cinco ejemplos armados ---- */
 function ejemplo(cual){
   reset();
-  GEN[1].dial = D_1; GEN[1].rango = 3; GEN[1].amp = 0.5;    /* 1 kHz,  10 Vpp */
-  GEN[2].dial = D_2; GEN[2].rango = 4; GEN[2].amp = 0.5;    /* 20 kHz, 10 Vpp */
+  var lento = (cual === "dbl" || cual === "am");
+  var fm = lento ? 1000 : 8000;
+  var fc = lento ? 20000 : 32000;
+  ponerFrec(1, fm); GEN[1].amp = 0.5;
+  ponerFrec(2, fc); GEN[2].amp = 0.5;
+  FIL.lpf.corte = perillaCorte(fc); FIL.lpf.orden = 16;
+  FIL.hpf.corte = perillaCorte(fc); FIL.hpf.orden = 16;
+
   CABLES.length = 0; proximoColor = 0;
-  nuevoCable("gen1.out",  {jack:"mul.x"});
-  nuevoCable("gen2.out",  {jack:"mul.y"});
-  nuevoCable("gen1.out",  {jack:"osc.ch2"});
-  if(cual === "am"){
-    nuevoCable("mul.w",   {jack:"sum.a"});
-    nuevoCable("gen2.out",{jack:"sum.b"});
-    nuevoCable("sum.s",   {jack:"osc.ch1"});
-    O.v1 = 9;                 /* 5 V/div: los 15 Vpp de la AM entran en 3 divisiones */
+  nuevoCable("gen1.out", {jack:"mul.x"});
+  nuevoCable("gen2.out", {jack:"mul.y"});
+
+  var A = OSC.a, B = OSC.b;
+  A.modo = "DUAL"; A.t = lento ? 9 : 7; A.v2 = 9; A.pos1 = 1.6; A.pos2 = -2.6;
+  A.trigFuente = "ch2";
+  B.modo = "DUAL"; B.t = A.t; B.v1 = 8; B.v2 = 8; B.pos1 = 1.8; B.pos2 = -1.8;
+  B.trigFuente = "ch1";
+
+  /* en los tres primeros ejemplos la moduladora va al canal 2 del A y de ahí
+     toma el disparo, que es lo que deja quieta la envolvente */
+  if(cual !== "todo") nuevoCable("gen1.out", {jack:"oscA.ch2"});
+
+  if(cual === "dbl"){
+    nuevoCable("mul.w", {jack:"oscA.ch1"});
+    nuevoCable("mul.w", {jack:"ae.in"});
+    A.v1 = 7;
+  }else if(cual === "am"){
+    nuevoCable("mul.w",    {jack:"sum.a"});
+    nuevoCable("gen2.out", {jack:"sum.b"});
+    nuevoCable("sum.s",    {jack:"oscA.ch1"});
+    nuevoCable("mul.w",    {jack:"oscB.ch1"});
+    nuevoCable("sum.s",    {jack:"ae.in"});
+    A.v1 = 9; B.v1 = 7; B.modo = "CH1"; B.pos1 = 0;
+  }else if(cual === "bls" || cual === "bli"){
+    var f = cual === "bls" ? "hpf" : "lpf";
+    nuevoCable("mul.w",     {jack:"oscA.ch1"});
+    nuevoCable("mul.w",     {jack:f + ".in"});
+    nuevoCable(f + ".out",  {jack:"oscB.ch1"});
+    nuevoCable(f + ".out",  {jack:"ae.in"});
+    A.v1 = 7; B.v1 = 7; B.modo = "CH1"; B.pos1 = 0;
   }else{
-    nuevoCable("mul.w",   {jack:"osc.ch1"});
-    O.v1 = 7;                 /* 1 V/div: los 5 Vpp de la DBL ocupan 5 divisiones  */
+    /* las cuatro juntas: cada una en su canal, dos arriba y dos abajo */
+    nuevoCable("mul.w",    {jack:"sum.a"});
+    nuevoCable("gen2.out", {jack:"sum.b"});
+    nuevoCable("mul.w",    {jack:"lpf.in"});
+    nuevoCable("mul.w",    {jack:"hpf.in"});
+    nuevoCable("mul.w",    {jack:"oscA.ch1"});    /* DBL-PS      */
+    nuevoCable("sum.s",    {jack:"oscA.ch2"});    /* AM          */
+    nuevoCable("hpf.out",  {jack:"oscB.ch1"});    /* BLU superior */
+    nuevoCable("lpf.out",  {jack:"oscB.ch2"});    /* BLU inferior */
+    nuevoCable("sum.s",    {jack:"ae.in"});
+    A.v1 = 8; A.v2 = 9; A.pos1 = 2.2; A.pos2 = -2.2; A.trigFuente = "ch1";
+    B.v1 = 7; B.v2 = 7; B.pos1 = 2.2; B.pos2 = -2.2; B.trigFuente = "ch1";
   }
-  O.v2 = 9;                   /* 5 V/div para la moduladora */
-  O.pos1 = 1.5; O.pos2 = -2.6;
-  O.t = 9;                    /* 0,2 ms/div: dos ciclos de envolvente */
-  O.modo = "DUAL";
-  O.trigFuente = "ch2";       /* se dispara con la moduladora: la envolvente queda quieta */
-  O.trigNivel = 0.5;
+
+  /* el analizador, centrado en la portadora con un span cómodo */
+  AE.centro = perillaCentro(fc);
+  AE.spanIdx = lento ? 3 : 5;              /* 1 kHz/div o 5 kHz/div */
+  AE.rbwIdx = lento ? 1 : 2;               /* 30 Hz o 100 Hz        */
+  AE.ref = 20; AE.marca = 0.5;
   armarTodo();
 }
 
@@ -1852,20 +2267,24 @@ document.getElementById("bReset").addEventListener("click", function(){
 });
 document.getElementById("bDbl").addEventListener("click", function(){ ejemplo("dbl"); });
 document.getElementById("bAm").addEventListener("click", function(){ ejemplo("am"); });
-
-var reobs = window.ResizeObserver ? new ResizeObserver(function(){ pintarCables(); }) : null;
-if(reobs) reobs.observe(mesa);
-window.addEventListener("resize", pintarCables);
-window.addEventListener("load", pintarCables);
+document.getElementById("bBls").addEventListener("click", function(){ ejemplo("bls"); });
+document.getElementById("bBli").addEventListener("click", function(){ ejemplo("bli"); });
+document.getElementById("bTodo").addEventListener("click", function(){ ejemplo("todo"); });
 
 var cuadro = 0;
 function bucle(ahora){
-  dibujarPantalla(ahora);
-  if((cuadro++ % 20) === 0){
+  var dt = ultimo ? (ahora - ultimo) / 1000 : 0;
+  ultimo = ahora;
+  if(filtroFoco)
+    filtroFoco.setAttribute("stdDeviation", (0.7 + Math.abs(OSC.a.foco - 0.42) * 9).toFixed(2));
+  dibujarOsc("a", dt);
+  dibujarOsc("b", dt);
+  dibujarAnalizador();
+  if((cuadro++ % 24) === 0){
     revisarSaturacion();
     if(pilotoMul) pilotoMul(SATURA.mul);
     if(pilotoSum) pilotoSum(SATURA.sum);
-    textoMedidas(); revisarPractica();
+    textoMedidas(); textoEspectro(); revisarPractica(); refrescarAnalizador();
   }
   requestAnimationFrame(bucle);
 }
