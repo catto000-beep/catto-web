@@ -262,7 +262,12 @@
     es 1 ms y la frecuencia es su inversa, 1 kHz.</p>
   <p>Hay dos osciloscopios y cada uno tiene dos canales, así que se pueden mirar cuatro señales a
     la vez. Es justo lo que hace falta para poner una al lado de la otra la doble banda lateral, la
-    AM y las dos bandas laterales únicas.</p>
+    AM y las dos bandas laterales únicas. El canal 1 dibuja en verde y el canal 2 en celeste, con
+    un puntito del mismo color al lado de cada rótulo, para no confundirse cuando los dos trazos se
+    cruzan.</p>
+  <p>La llave de <b>VOLTS/DIV</b> no sigue la secuencia 1-2-5 de los equipos de banco sino la
+    1-2-3-5-7. Los escalones intermedios sirven: una AM de 15 volts de pico a pico se sale de la
+    pantalla en 2 V/div y queda chica en 5, mientras que en 3 V/div ocupa cinco divisiones justas.</p>
   <p>El <b>disparo</b> es lo que deja la imagen quieta: espera a que la señal pase por un nivel de
     tensión y recién ahí larga el barrido, así todos los barridos arrancan en el mismo punto de la
     onda. En <b>AUTO</b>, si el nivel quedó fuera de la señal el equipo barre igual y la imagen
@@ -476,7 +481,14 @@ function fft(re, im, inverso){
 /* ══════════════════════════════════════════════════════════════════
    Estado del banco
    ══════════════════════════════════════════════════════════════════ */
-var VDIV = [0.005,0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20];
+/* La secuencia clásica de un osciloscopio es 1-2-5. Acá se le agregan el 3
+   y el 7 de cada década: con 15 Vpp en pantalla, 5 V/div deja la onda en 3
+   divisiones y 2 V/div se sale, mientras que 3 V/div la deja en 5. */
+var VDIV = [0.005,0.01,0.02,0.03,0.05,0.07,0.1,0.2,0.3,0.5,0.7,1,2,3,5,7,10,20];
+function iV(v){
+  for(var i = 0; i < VDIV.length; i++) if(Math.abs(VDIV[i] - v) < 1e-9) return i;
+  return 0;
+}
 var TDIV = [0.2e-6,0.5e-6,1e-6,2e-6,5e-6,10e-6,20e-6,50e-6,
             0.1e-3,0.2e-3,0.5e-3,1e-3,2e-3,5e-3,10e-3,20e-3,50e-3,0.1,0.2,0.5];
 var RANGOS = [1,10,100,1000,10000,100000,1000000];
@@ -490,7 +502,7 @@ var D_1 = Math.log10(1 / 0.2), D_2 = 1, D_08 = Math.log10(0.8 / 0.2);
 
 function oscInicial(){
   return { pot:true, inten:0.72, foco:0.42,
-           v1:8, v2:8, pos1:1.8, pos2:-1.8, ac1:"CC", ac2:"CC",
+           v1:iV(2), v2:iV(2), pos1:1.8, pos2:-1.8, ac1:"CC", ac2:"CC",
            modo:"DUAL", t:9, posH:0,
            trigFuente:"ch1", trigPend:1, trigModo:"AUTO", trigNivel:0.5 };
 }
@@ -593,8 +605,11 @@ function bufferFiltro(jack){
   armando[jack] = 1;
   var tipo = jack.slice(0, 3), F = FIL[tipo];
   var src = FUENTE[tipo + ".in"];
-  var N = 2048, i;
+  var i;
   var P = (src ? periodoLargo(src) : 0) || 1e-3;
+  /* el buffer sólo tiene que alcanzar para la componente más rápida */
+  var fmx = (src ? frecMax(src) : 0) || 1e3, N = 512;
+  while(N < 32 * P * fmx && N < 4096) N *= 2;
   var re = new Float64Array(N), im = new Float64Array(N);
   if(src && F.pot) for(i = 0; i < N; i++) re[i] = valorJack(src, P * i / N);
   if(src && F.pot){
@@ -746,8 +761,11 @@ function calcularEspectro(){
   ESPECTRO = [];
   var src = FUENTE["ae.in"];
   if(!src || !AE.pot) return;
-  var N = 4096, i;
+  var i;
   var P = periodoLargo(src) || 1e-3;
+  /* la transformada tiene que llegar hasta donde mira la pantalla */
+  var tope = Math.max(finAE(), frecMax(src) || 1e3), N = 2048;
+  while(N < 3 * P * tope && N < 8192) N *= 2;
   var re = new Float64Array(N), im = new Float64Array(N);
   for(i = 0; i < N; i++) re[i] = valorJack(src, P * i / N);
   fft(re, im, false);
@@ -796,17 +814,31 @@ function cuerpoPerilla(par, cx, cy, r){
   E(par, "circle", {cx:cx - r * 0.13, cy:cy - r * 0.15, r:r * 0.14, fill:"#fff", opacity:".16"});
   return rot;
 }
-function arrastrar(g, svg, cx, cy, leer, escribir){
-  var prev = 0, activo = false;
+/* Arrastre angular. `getScreenCTM` obliga al navegador a recalcular el diseño
+   de la página entera, así que la matriz se pide una sola vez al agarrar el
+   control y se reusa en cada movimiento. Antes se la pedía en cada uno, y con
+   un ratón de mil eventos por segundo eso solo se comía el cuadro. */
+function arrastrar(g, nodo, cx, cy, leer, escribir){
+  var prev = 0, activo = false, inv = null, punto = null;
+  function angDe(ev){
+    if(!inv || !punto) return prev;
+    punto.x = ev.clientX; punto.y = ev.clientY;
+    var q = punto.matrixTransform(inv);
+    return Math.atan2(q.x - cx, -(q.y - cy)) * 180 / Math.PI;
+  }
   g.addEventListener("pointerdown", function(ev){
     ev.preventDefault(); ev.stopPropagation();
     try{ g.setPointerCapture(ev.pointerId); }catch(e){}
-    activo = true; prev = angulo(svg, ev, cx, cy);
+    var raiz = nodo.ownerSVGElement || nodo;
+    var m = nodo.getScreenCTM();
+    inv = m ? m.inverse() : null;
+    punto = raiz.createSVGPoint();
+    activo = true; prev = angDe(ev);
     g.style.cursor = "grabbing";
   });
   g.addEventListener("pointermove", function(ev){
     if(!activo) return;
-    var a = angulo(svg, ev, cx, cy), d = a - prev;
+    var a = angDe(ev), d = a - prev;
     while(d > 180) d -= 360;
     while(d < -180) d += 360;
     prev = a;
@@ -814,12 +846,13 @@ function arrastrar(g, svg, cx, cy, leer, escribir){
   });
   function fin(ev){
     if(!activo) return;
-    activo = false; g.style.cursor = "grab";
+    activo = false; inv = null; g.style.cursor = "grab";
     try{ g.releasePointerCapture(ev.pointerId); }catch(e){}
   }
   g.addEventListener("pointerup", fin);
   g.addEventListener("pointercancel", fin);
 }
+
 /* Par de botones para mover un control de a pasos, sin depender del pulso de
    la mano. `lado` los pone a la derecha o a la izquierda; manteniéndolos
    apretados, repiten. */
@@ -951,9 +984,11 @@ function boton(par, o){
   if(o.txt) t = TX(g, o.x + o.w / 2, o.y + o.h / 2 + 3.4, o.txt,
                    {"font-size":o.fs || 8.6, "text-anchor":"middle", fill:"#c3ccd6",
                     "letter-spacing":.5, "font-weight":600});
-  var extra = o.dibujo ? o.dibujo(g) : null;
+  var extra = o.dibujo ? o.dibujo(g) : null, antes = null;
   function pintar(){
     var on = o.activo();
+    if(on === antes) return;
+    antes = on;
     r.setAttribute("fill", on ? "url(#gBotonOn)" : "url(#gBoton)");
     if(t) t.setAttribute("fill", on ? "#1a1f26" : "#c3ccd6");
     if(extra) extra.forEach(function(e){ e.setAttribute("stroke", on ? "#1a1f26" : "#c3ccd6"); });
@@ -998,8 +1033,11 @@ function encendido(par, cx, cy, leer, set){
   E(g, "circle", {cx:cx, cy:cy + 0.6, r:3.6, fill:"none", stroke:"#c9d2dc", "stroke-width":1.3});
   var halo = E(par, "circle", {cx:cx - 27, cy:cy, r:5, fill:"#3fb950", filter:"url(#fLed)"});
   var led = E(par, "circle", {cx:cx - 27, cy:cy, r:3.4, fill:"#48d15e", stroke:"#0f1a12"});
+  var antesPot = null;
   function pintar(){
     var on = leer();
+    if(on === antesPot) return;
+    antesPot = on;
     halo.setAttribute("opacity", on ? ".85" : "0");
     led.setAttribute("fill", on ? "#5ce872" : "#243028");
   }
@@ -1014,7 +1052,10 @@ function piloto(par, cx, cy, color){
   var halo = E(par, "circle", {cx:cx, cy:cy, r:5.5, fill:color, filter:"url(#fLed)", opacity:"0"});
   var led = E(par, "circle", {cx:cx, cy:cy, r:4, fill:"#2b2320", stroke:"#15181d",
                               "stroke-width":.8});
+  var antes = null;
   return function(on){
+    if(on === antes) return;
+    antes = on;
     halo.setAttribute("opacity", on ? ".9" : "0");
     led.setAttribute("fill", on ? color : "#2b2320");
   };
@@ -1167,6 +1208,9 @@ function armarDefs(s){
    El frente de un osciloscopio
    ══════════════════════════════════════════════════════════════════ */
 var PX = 26, PY = 68, PW = 380, PH = 304, DIV = 38;
+/* el canal 1 conserva el verde del fósforo; el 2 va en celeste, que es
+   como los distinguen los osciloscopios de dos trazos */
+var VERDE = "#63ff92", CELESTE = "#5ad6ff";
 var partesOsc = {a:{}, b:{}};
 
 function armarOsciloscopio(o){
@@ -1206,8 +1250,8 @@ function armarOsciloscopio(o){
   P.viva = E(s, "g", {"clip-path":"url(#" + clip + ")"});
   P.xy  = E(P.viva, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.5,
                              "stroke-linejoin":"round", filter:"url(#fFosforo)"});
-  P.t1  = E(P.viva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
-  P.t2  = E(P.viva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
+  P.t1  = E(P.viva, "path", {fill:VERDE, stroke:"none", filter:"url(#fFosforo)"});
+  P.t2  = E(P.viva, "path", {fill:CELESTE, stroke:"none", filter:"url(#fFosforo)"});
   P.ayudas = E(s, "g", {"clip-path":"url(#" + clip + ")", opacity:"0"});
   E(s, "rect", {x:26, y:68, width:380, height:304, rx:10, fill:"url(#gVidrio)",
                 "pointer-events":"none"});
@@ -1240,7 +1284,8 @@ function armarOsciloscopio(o){
   caja(s, 424, 58, 260, 214, "VERTICAL");
   [{y:126, n:1}, {y:200, n:2}].forEach(function(f){
     var n = f.n;
-    TX(s, 436, f.y - 26, "CH " + n, {"font-size":9.2, fill:"#7fb8e8", "font-weight":700,
+    E(s, "circle", {cx:438, cy:f.y - 29, r:3.4, fill:n === 1 ? VERDE : CELESTE});
+    TX(s, 446, f.y - 26, "CH " + n, {"font-size":9.2, fill:"#7fb8e8", "font-weight":700,
                                      "letter-spacing":1});
     llaveRot(s, {cx:472, cy:f.y, r:20, valores:VDIV, lado:"izq",
       aria:"volts por división canal " + n,
@@ -1610,11 +1655,18 @@ var COLORES = [{jac:"#16181c", luz:"#5c636d"}, {jac:"#5e1418", luz:"#b0555a"},
                {jac:"#3d1a30", luz:"#9a5a86"}, {jac:"#1d3a3a", luz:"#4f9a9a"}];
 var proximoColor = 0;
 
-function ptBanco(ev){
-  var p = svgCab.createSVGPoint();
-  p.x = ev.clientX; p.y = ev.clientY;
+/* misma idea que en las perillas: la matriz se toma al agarrar el cable */
+var invBanco = null, ptoBanco = null;
+function tomarMatriz(){
   var m = svgCab.getScreenCTM();
-  return m ? p.matrixTransform(m.inverse()) : {x:0, y:0};
+  invBanco = m ? m.inverse() : null;
+  ptoBanco = svgCab.createSVGPoint();
+}
+function ptBanco(ev){
+  if(!invBanco || !ptoBanco) tomarMatriz();
+  if(!invBanco) return {x:0, y:0};
+  ptoBanco.x = ev.clientX; ptoBanco.y = ev.clientY;
+  return ptoBanco.matrixTransform(invBanco);
 }
 function puntoDe(e){
   if(!e.jack) return {x:e.x, y:e.y};
@@ -1642,6 +1694,7 @@ function nuevoCable(jackA, extremoB){
 }
 function tomarJack(id, ev){
   ev.preventDefault(); ev.stopPropagation();
+  tomarMatriz();
   var p = ptBanco(ev), cab = cableEn(id, null), extremo;
   if(cab && TIPO[id] === "e"){
     extremo = cab.a.jack === id ? "a" : "b";
@@ -1656,6 +1709,7 @@ function tomarJack(id, ev){
 }
 function tomarPunta(cab, extremo, ev){
   ev.preventDefault(); ev.stopPropagation();
+  tomarMatriz();
   var p = ptBanco(ev);
   if(cab[extremo].jack) cab[extremo] = {x:p.x, y:p.y};
   arrastreCable = {cable:cab, extremo:extremo};
@@ -1809,8 +1863,11 @@ function banda(t0, span, valor, fmax){
     }
     var yA = PY + PH / 2 - mx * DIV, yB = PY + PH / 2 - mn * DIV;
     if(yB - yA < 1.6){ var c = (yA + yB) / 2; yA = c - 0.8; yB = c + 0.8; }
-    arriba.push(x.toFixed(1) + " " + clamp(yA, PY - 6, PY + PH + 6).toFixed(1));
-    abajo.push(x.toFixed(1) + " " + clamp(yB, PY - 6, PY + PH + 6).toFixed(1));
+    /* redondear a la unidad en vez de formatear con decimales: son mil
+       quinientos números por cuadro y toFixed es caro */
+    var xr = (x + 0.5) | 0;
+    arriba.push(xr + " " + ((clamp(yA, PY - 6, PY + PH + 6) + 0.5) | 0));
+    abajo.push(xr + " " + ((clamp(yB, PY - 6, PY + PH + 6) + 0.5) | 0));
   }
   abajo.reverse();
   return "M " + arriba.join(" L ") + " L " + abajo.join(" L ") + " Z";
@@ -1822,8 +1879,8 @@ function curvaXY(o){
     var t = P * 3 * i / N;
     var x = PX + PW / 2 + (valorCanal(o, "ch1", t) / VDIV[O.v1] + O.pos1) * DIV;
     var y = PY + PH / 2 - (valorCanal(o, "ch2", t) / VDIV[O.v2] + O.pos2) * DIV;
-    pts.push(clamp(x, PX - 6, PX + PW + 6).toFixed(1) + " " +
-             clamp(y, PY - 6, PY + PH + 6).toFixed(1));
+    pts.push(((clamp(x, PX - 6, PX + PW + 6) + 0.5) | 0) + " " +
+             ((clamp(y, PY - 6, PY + PH + 6) + 0.5) | 0));
   }
   return "M " + pts.join(" L ");
 }
@@ -1850,7 +1907,7 @@ function dibujarOsc(o, dt){
   }
   P.xy.setAttribute("d", "");
   var span = TDIV[O.t] * 10;
-  var tDisp = buscarDisparo(o);
+  var tDisp = disparoCache[o];
   P.led.setAttribute("fill", tDisp !== null ? "#5ce872" : "#243028");
   var t0;
   if(tDisp !== null) t0 = tDisp;
@@ -1927,7 +1984,7 @@ function dibujarAnalizador(){
                                             : Math.random()));
     var v = Math.sqrt(pot[i] + ruido);
     var x = PX + PW * i / cols;
-    pts.push(x.toFixed(1) + " " + clamp(nivelY(v), PY - 4, PY + PH + 4).toFixed(1));
+    pts.push(((x + 0.5) | 0) + " " + ((clamp(nivelY(v), PY - 4, PY + PH + 4) + 0.5) | 0));
   }
   P.trazo.setAttribute("d", "M " + pts.join(" L "));
   var xm = PX + PW * clamp(AE.marca, 0, 1);
@@ -1977,7 +2034,7 @@ function dibujarAyudas(o){
   var ch = canalVivo(o);
   if(!ch || !O.pot || O.modo === "XY"){ P.ayudas.setAttribute("opacity", "0"); return; }
   P.ayudas.setAttribute("opacity", "1");
-  var m = medir(o, ch), vdiv = vdivDe(o, ch), pos = posDe(o, ch);
+  var m = medidaCache[o] || medir(o, ch), vdiv = vdivDe(o, ch), pos = posDe(o, ch);
   var yA = PY + PH / 2 - (m.max / vdiv + pos) * DIV;
   var yB = PY + PH / 2 - (m.min / vdiv + pos) * DIV;
   var g = P.ayudas, col = "#ffd479", xa = PX + 46;
@@ -2018,7 +2075,36 @@ var elEspectro = document.getElementById("espectroTxt");
 var elPract = document.getElementById("pract");
 var partesFil = {};
 
+/* Un ratón de los rápidos manda mil eventos por segundo, y cada uno pedía un
+   recálculo entero del banco. Acá el primero pasa derecho y los que vienen
+   atrás se juntan en uno solo, así que nunca se recalcula más de sesenta
+   veces por segundo, una por cuadro de pantalla. */
+var ultimoRefresco = 0, refrescoColgado = null;
 function refrescar(){
+  var t = (window.performance ? performance.now() : Date.now());
+  if(t - ultimoRefresco >= 16){
+    ultimoRefresco = t;
+    if(refrescoColgado){ clearTimeout(refrescoColgado); refrescoColgado = null; }
+    refrescarYa();
+  }else if(!refrescoColgado){
+    refrescoColgado = setTimeout(function(){
+      refrescoColgado = null;
+      ultimoRefresco = (window.performance ? performance.now() : Date.now());
+      refrescarYa();
+    }, 16);
+  }
+}
+
+var disparoCache = {a:null, b:null}, medidaCache = {}, textoSucio = true;
+/* Los textos los rehace el bucle de dibujo, pero si el navegador lo frena
+   —una pestaña de fondo, por ejemplo— este reloj los pone al día igual. */
+var relojTexto = null;
+function textosAlDia(){
+  if(!textoSucio) return;
+  textoSucio = false;
+  textoMedidas(); textoEspectro(); revisarPractica();
+}
+function refrescarYa(){
   BUF = {};
   reconstruirRed();
   recalcularMedias();
@@ -2037,9 +2123,16 @@ function refrescar(){
   refrescarGenerador(1); refrescarGenerador(2);
   refrescarFiltro("lpf"); refrescarFiltro("hpf");
   refrescarAnalizador();
-  textoMedidas();
-  textoEspectro();
-  revisarPractica();
+  /* el punto de disparo y las medidas dependen sólo de los mandos, así que se
+     calculan acá una vez y no en cada cuadro */
+  medidaCache = {};
+  ["a","b"].forEach(function(o){
+    disparoCache[o] = buscarDisparo(o);
+    var ch = canalVivo(o);
+    if(ch) medidaCache[o] = medir(o, ch);
+  });
+  textoSucio = true;
+  if(!relojTexto) relojTexto = setTimeout(function(){ relojTexto = null; textosAlDia(); }, 130);
 }
 
 function refrescarGenerador(n){
@@ -2120,14 +2213,14 @@ function textoMedidas(){
     elCuenta.innerHTML = '<p class="apagado">No llega señal al canal que está en pantalla.</p>';
     elValores.innerHTML = ""; return;
   }
-  var m = medir(o, ch), vdiv = vdivDe(o, ch), tdiv = TDIV[O.t];
+  var m = medidaCache[o] || medir(o, ch), vdiv = vdivDe(o, ch), tdiv = TDIV[O.t];
   var dAlto = m.pp / vdiv, dAncho = m.P / tdiv;
   var aviso = "";
   if(dAlto > 8) aviso = '<p style="color:var(--warn)">La onda es más alta que la pantalla: ' +
     'bajá la sensibilidad girando VOLTS/DIV hacia números más grandes.</p>';
   else if(dAlto < 0.5) aviso = '<p style="color:var(--warn)">La onda es muy chica para medirla ' +
     'bien: subí la sensibilidad hacia números más chicos.</p>';
-  if(buscarDisparo(o) === null && O.trigModo === "AUTO")
+  if(disparoCache[o] === null && O.trigModo === "AUTO")
     aviso += '<p style="color:var(--warn)">La imagen corre porque el nivel de disparo quedó ' +
       'fuera de la señal.</p>';
   if(SATURA.mul || SATURA.sum)
@@ -2288,7 +2381,7 @@ function armarTodo(){
   armarGenerador(2);
   filtroFoco = SVGS.oscA.querySelector("#fFosforo feGaussianBlur");
   pintarCables();
-  refrescar();
+  refrescarYa();
 }
 
 function cablesIniciales(){
@@ -2331,9 +2424,9 @@ function ejemplo(cual){
   nuevoCable("gen2.out", {jack:"mul.y"});
 
   var A = OSC.a, B = OSC.b;
-  A.modo = "DUAL"; A.t = lento ? 9 : 7; A.v2 = 9; A.pos1 = 1.6; A.pos2 = -2.6;
+  A.modo = "DUAL"; A.t = lento ? 9 : 7; A.v2 = iV(5); A.pos1 = 1.6; A.pos2 = -2.6;
   A.trigFuente = "ch2";
-  B.modo = "DUAL"; B.t = A.t; B.v1 = 8; B.v2 = 8; B.pos1 = 1.8; B.pos2 = -1.8;
+  B.modo = "DUAL"; B.t = A.t; B.v1 = iV(2); B.v2 = iV(2); B.pos1 = 1.8; B.pos2 = -1.8;
   B.trigFuente = "ch1";
 
   /* en los tres primeros ejemplos la moduladora va al canal 2 del A y de ahí
@@ -2343,21 +2436,21 @@ function ejemplo(cual){
   if(cual === "dbl"){
     nuevoCable("mul.w", {jack:"oscA.ch1"});
     nuevoCable("mul.w", {jack:"ae.in"});
-    A.v1 = 7;
+    A.v1 = iV(1);
   }else if(cual === "am"){
     nuevoCable("mul.w",    {jack:"sum.a"});
     nuevoCable("gen2.out", {jack:"sum.b"});
     nuevoCable("sum.s",    {jack:"oscA.ch1"});
     nuevoCable("mul.w",    {jack:"oscB.ch1"});
     nuevoCable("sum.s",    {jack:"ae.in"});
-    A.v1 = 9; B.v1 = 7; B.modo = "CH1"; B.pos1 = 0;
+    A.v1 = iV(5); B.v1 = iV(1); B.modo = "CH1"; B.pos1 = 0;
   }else if(cual === "bls" || cual === "bli"){
     var f = cual === "bls" ? "hpf" : "lpf";
     nuevoCable("mul.w",     {jack:"oscA.ch1"});
     nuevoCable("mul.w",     {jack:f + ".in"});
     nuevoCable(f + ".out",  {jack:"oscB.ch1"});
     nuevoCable(f + ".out",  {jack:"ae.in"});
-    A.v1 = 7; B.v1 = 7; B.modo = "CH1"; B.pos1 = 0;
+    A.v1 = iV(1); B.v1 = iV(1); B.modo = "CH1"; B.pos1 = 0;
   }else{
     /* las cuatro juntas: cada una en su canal, dos arriba y dos abajo */
     nuevoCable("mul.w",    {jack:"sum.a"});
@@ -2369,8 +2462,8 @@ function ejemplo(cual){
     nuevoCable("hpf.out",  {jack:"oscB.ch1"});    /* BLU superior */
     nuevoCable("lpf.out",  {jack:"oscB.ch2"});    /* BLU inferior */
     nuevoCable("sum.s",    {jack:"ae.in"});
-    A.v1 = 8; A.v2 = 9; A.pos1 = 2.2; A.pos2 = -2.2; A.trigFuente = "ch1";
-    B.v1 = 7; B.v2 = 7; B.pos1 = 2.2; B.pos2 = -2.2; B.trigFuente = "ch1";
+    A.v1 = iV(2); A.v2 = iV(5); A.pos1 = 2.2; A.pos2 = -2.2; A.trigFuente = "ch1";
+    B.v1 = iV(1); B.v2 = iV(1); B.pos1 = 2.2; B.pos2 = -2.2; B.trigFuente = "ch1";
   }
 
   /* el analizador, centrado en la portadora con un span cómodo */
@@ -2384,7 +2477,7 @@ function ejemplo(cual){
 armarTodo();
 cablesIniciales();
 pintarCables();
-refrescar();
+refrescarYa();
 
 document.getElementById("ayudas").addEventListener("change", function(ev){
   ayudasOn = ev.target.checked;
@@ -2410,11 +2503,14 @@ function bucle(ahora){
   dibujarOsc("a", dt);
   dibujarOsc("b", dt);
   dibujarAnalizador();
-  if((cuadro++ % 24) === 0){
+  cuadro++;
+  /* los textos se rehacen como mucho diez veces por segundo, y sólo si algo
+     cambió; el resto del tiempo el cuadro se va entero en dibujar */
+  if((cuadro % 6) === 0) textosAlDia();
+  if((cuadro % 30) === 0){
     revisarSaturacion();
     if(pilotoMul) pilotoMul(SATURA.mul);
     if(pilotoSum) pilotoSum(SATURA.sum);
-    textoMedidas(); textoEspectro(); revisarPractica(); refrescarAnalizador();
   }
   requestAnimationFrame(bucle);
 }
