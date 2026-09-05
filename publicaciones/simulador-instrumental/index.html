@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Banco de instrumentos virtual: un osciloscopio analógico de dos canales y un generador de funciones, con cables BNC que se enchufan arrastrando. Se manejan las perillas de VOLTS/DIV, TIEMPO/DIV y disparo, y se lee la onda contando divisiones en la pantalla.">
+<title>Simulador de instrumental · Osciloscopio y generador · catto.ar</title>
+<link rel="canonical" href="https://catto.ar/publicaciones/simulador-instrumental">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="author" content="Catto">
+<meta name="theme-color" content="#0d1117">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Catto">
+<meta property="og:title" content="Simulador de instrumental · Osciloscopio y generador de funciones">
+<meta property="og:description" content="Un osciloscopio analógico de dos canales y un generador de funciones sobre la mesa, con cables BNC que se enchufan arrastrando. Para aprender a medir contando divisiones.">
+<meta property="og:url" content="https://catto.ar/publicaciones/simulador-instrumental">
+<meta property="og:image" content="https://catto.ar/assets/img/chancho-volador.png">
+<meta property="og:locale" content="es_AR">
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3140;
+    --txt:#e6edf3; --muted:#9aa7b4; --soft:#7d8a99;
+    --accent:#58a6ff; --accent2:#1f6feb;
+    --ok:#3fb950; --warn:#d29922; --hot:#f85149; --violet:#a371f7;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, #1b2740 0%, var(--bg) 55%);
+    color:var(--txt); font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased; padding-bottom:70px;
+  }
+  a{color:var(--accent)}
+  header.top{
+    padding:24px 28px 18px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(31,111,235,.10),transparent);
+  }
+  .top h1{margin:0;font-size:23px;letter-spacing:.2px}
+  .top .sub{color:var(--muted);font-size:13.5px;margin-top:5px;max-width:80ch}
+  .volver{display:inline-flex;align-items:center;gap:7px;color:#9aa7b4;font-size:13px;
+    text-decoration:none;margin-bottom:10px}
+  .volver span.ic{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;
+    background:linear-gradient(135deg,#1f6feb,#a371f7);font-size:13px}
+
+  main{max-width:1180px;margin:0 auto;padding:0 20px}
+  section{margin-top:26px}
+  h2.t{font-size:16px;margin:0 0 4px;letter-spacing:.2px}
+  p.st{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+
+  /* ---------------- la mesa ---------------- */
+  .mesa{
+    position:relative; display:flex; gap:18px; flex-wrap:wrap;
+    padding:18px 18px 140px; border-radius:16px;
+    background:linear-gradient(180deg,#12161d,#0f1319);
+    border:1px solid var(--line);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+  }
+  #osc{width:calc(61.9% - 9px)}
+  #gen{width:calc(38.1% - 9px)}
+  #osc,#gen{height:auto;display:block;min-width:0;
+    filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
+  #cables{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
+  .mesa text{font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+    -webkit-user-select:none;user-select:none}
+  .ctl{cursor:grab;touch-action:none}
+  .ctl:focus{outline:none}
+  .ctl:focus-visible circle:first-of-type{stroke:#58a6ff;stroke-width:2}
+  .clic{cursor:pointer}
+  .jack{cursor:grab;touch-action:none}
+
+  .pista{color:var(--soft);font-size:12.5px;margin:10px 2px 0;display:flex;
+    gap:14px;flex-wrap:wrap;align-items:center}
+  .btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);
+    border-radius:9px;padding:7px 13px;font-size:12.5px;cursor:pointer;font-family:inherit}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  label.chk{display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+    color:var(--muted);font-size:12.5px}
+
+  /* ---------------- lectura ---------------- */
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .caja{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .caja h3{margin:0 0 8px;font-size:12px;letter-spacing:1.1px;text-transform:uppercase;
+    color:var(--accent);font-weight:600}
+  .caja p{margin:0 0 8px;font-size:13.5px;color:#cdd6df}
+  .caja p:last-child{margin-bottom:0}
+  .caja b{color:#fff}
+  .vals{display:flex;flex-wrap:wrap;gap:8px}
+  .val{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+    padding:7px 11px;min-width:92px}
+  .val span{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--soft)}
+  .val b{display:block;font-size:16px;color:var(--txt);font-weight:600;margin-top:1px}
+  .apagado{color:var(--soft);font-style:italic}
+
+  ol.pract{margin:0;padding-left:0;list-style:none;counter-reset:p}
+  ol.pract li{position:relative;padding:7px 0 7px 34px;font-size:13.5px;color:#cdd6df;
+    border-bottom:1px solid rgba(42,49,64,.6)}
+  ol.pract li:last-child{border-bottom:0}
+  ol.pract li::before{counter-increment:p;content:counter(p);position:absolute;left:0;top:8px;
+    width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--soft)}
+  ol.pract li.ok{color:#dbe6dd}
+  ol.pract li.ok::before{content:"✓";background:rgba(63,185,80,.16);border-color:var(--ok);color:var(--ok)}
+
+  .texto{max-width:78ch}
+  .texto p{font-size:14.5px;color:#cdd6df}
+  .texto h3{font-size:15px;margin:22px 0 6px}
+  .texto ul{font-size:14.5px;color:#cdd6df;padding-left:20px}
+  .texto li{margin:5px 0}
+
+  .backbar{position:fixed;right:16px;bottom:16px;z-index:200}
+  .backbar a{display:inline-flex;align-items:center;gap:7px;background:rgba(22,27,34,.92);
+    border:1px solid var(--line);border-radius:24px;padding:9px 16px;color:var(--txt);
+    font-size:13px;text-decoration:none;box-shadow:0 8px 30px rgba(0,0,0,.45);backdrop-filter:blur(8px)}
+  .backbar a:hover{border-color:var(--accent);color:var(--accent)}
+
+  .starfield{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .starfield i{position:absolute;display:block;border-radius:50%}
+  .starfield .mw{position:absolute;inset:0;filter:blur(12px);opacity:.85;
+    background:
+      radial-gradient(24% 40% at 84% 70%, rgba(216,183,140,.20), transparent 62%),
+      radial-gradient(14% 24% at 88% 74%, rgba(236,150,168,.13), transparent 60%),
+      radial-gradient(32% 46% at 74% 52%, rgba(150,120,95,.11), transparent 68%),
+      radial-gradient(40% 56% at 62% 38%, rgba(120,140,196,.10), transparent 70%),
+      radial-gradient(30% 46% at 48% 22%, rgba(112,132,188,.08), transparent 72%)}
+  .starfield .mw-core{position:absolute;left:84%;top:70%;width:150px;height:90px;
+    transform:translate(-50%,-50%);filter:blur(7px);border-radius:50%;
+    background:radial-gradient(circle at 50% 55%, rgba(240,214,170,.24), rgba(230,160,150,.10) 45%, transparent 70%)}
+
+  .arrastrar-mesa{display:none;color:var(--soft);font-size:12.5px}
+  @media (max-width:900px){
+    /* apilar los equipos obliga al cable a cruzar el frente del de abajo.
+       En su lugar la mesa se corre de costado, como se recorre un banco */
+    .mesa{min-width:1120px;padding:16px 16px 130px}
+    .arrastrar-mesa{display:block}
+    header.top{padding:20px 18px 16px}
+    .top h1{font-size:20px}
+  }
+</style>
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="220" data-band="220">
+  <div class="mw"></div>
+  <div class="mw-core"></div>
+</div>
+<div class="backbar"><a href="/" title="Volver a catto.ar">← catto.ar</a></div>
+
+<header class="top">
+  <a class="volver" href="/"><span class="ic">🐷</span>Volver a catto.ar</a>
+  <h1>🔬 Simulador de instrumental</h1>
+  <div class="sub">Un osciloscopio analógico de dos canales y un generador de funciones sobre la
+    mesa. Los cables BNC se enchufan arrastrando desde un conector hasta el otro, y todas las
+    perillas del frente andan. Es el banco del laboratorio de
+    <a href="/publicaciones/mapa-electronica/temas/osciloscopio">El osciloscopio</a> y
+    <a href="/publicaciones/mapa-electronica/temas/mediciones-ca">Mediciones en CA</a>,
+    para practicar antes de tocar el equipo de verdad.</div>
+</header>
+
+<main>
+
+<section>
+  <div class="mesa-scroll"><div class="mesa" id="mesa">
+
+    <!-- =================== OSCILOSCOPIO =================== -->
+    <svg id="osc" viewBox="0 0 700 520" fill="#ccd4dd" role="img"
+         aria-label="Frente de un osciloscopio analógico de dos canales">
+      <defs>
+        <linearGradient id="gCaja" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#5c646f"/><stop offset=".5" stop-color="#484f59"/>
+          <stop offset="1" stop-color="#343a43"/>
+        </linearGradient>
+        <linearGradient id="gPanel" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#4a515c"/><stop offset="1" stop-color="#3b414b"/>
+        </linearGradient>
+        <linearGradient id="gBox" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#434a54"/><stop offset="1" stop-color="#3a4049"/>
+        </linearGradient>
+        <radialGradient id="gPerilla" cx=".34" cy=".28" r=".9">
+          <stop offset="0" stop-color="#727a86"/><stop offset=".5" stop-color="#3e444d"/>
+          <stop offset="1" stop-color="#1e2228"/>
+        </radialGradient>
+        <radialGradient id="gTapa" cx=".34" cy=".28" r=".85">
+          <stop offset="0" stop-color="#828a96"/><stop offset="1" stop-color="#383d45"/>
+        </radialGradient>
+        <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#4e535a"/><stop offset=".22" stop-color="#cfd4da"/>
+          <stop offset=".5" stop-color="#8b9199"/><stop offset=".8" stop-color="#c9ced5"/>
+          <stop offset="1" stop-color="#454a51"/>
+        </linearGradient>
+        <linearGradient id="gMetal2" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#3a3f45"/><stop offset=".25" stop-color="#a9aeb5"/>
+          <stop offset=".55" stop-color="#6e737a"/><stop offset=".85" stop-color="#a4a9b0"/>
+          <stop offset="1" stop-color="#33373d"/>
+        </linearGradient>
+        <radialGradient id="gPantalla" cx=".5" cy=".4" r=".78">
+          <stop offset="0" stop-color="#0e1c14"/><stop offset="1" stop-color="#040806"/>
+        </radialGradient>
+        <linearGradient id="gVidrio" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#ffffff" stop-opacity=".075"/>
+          <stop offset=".38" stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="gBoton" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#535a65"/><stop offset="1" stop-color="#383e47"/>
+        </linearGradient>
+        <linearGradient id="gBotonOn" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#e6ebf2"/><stop offset="1" stop-color="#b9c2cd"/>
+        </linearGradient>
+        <linearGradient id="gLogo" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#1f6feb"/><stop offset="1" stop-color="#a371f7"/>
+        </linearGradient>
+        <linearGradient id="gDisplay" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#1b0d0c"/><stop offset="1" stop-color="#100706"/>
+        </linearGradient>
+        <filter id="fFosforo" x="-15%" y="-25%" width="130%" height="150%">
+          <feGaussianBlur stdDeviation="2.6"/>
+        </filter>
+        <filter id="fLed" x="-120%" y="-120%" width="340%" height="340%">
+          <feGaussianBlur stdDeviation="2.4"/>
+        </filter>
+        <clipPath id="cPantalla"><rect x="26" y="68" width="380" height="304" rx="10"/></clipPath>
+      </defs>
+    </svg>
+
+    <!-- =================== GENERADOR =================== -->
+    <svg id="gen" viewBox="0 0 430 520" fill="#ccd4dd" role="img"
+         aria-label="Frente de un generador de funciones"></svg>
+
+    <!-- =================== CABLES =================== -->
+    <svg id="cables" aria-hidden="true"></svg>
+  </div></div>
+
+  <div class="pista">
+    <span>Arrastrá desde un conector <b>BNC</b> para tirar un cable. Soltalo sobre otro conector para enchufarlo.</span>
+    <span class="arrastrar-mesa">Deslizá la mesa de costado para llegar al otro equipo.</span>
+    <label class="chk"><input type="checkbox" id="ayudas"> Ayudas de lectura sobre la pantalla</label>
+    <button class="btn" id="bReset">Volver al estado inicial</button>
+    <button class="btn" id="bCables">Sacar los cables</button>
+  </div>
+</section>
+
+<section>
+  <h2 class="t">Qué está midiendo</h2>
+  <p class="st">Lo mismo que haría cualquiera frente al equipo: contar divisiones y multiplicar por lo que dice la llave.</p>
+  <div class="rejilla">
+    <div class="caja">
+      <h3>La cuenta en pantalla</h3>
+      <div id="cuenta"><p class="apagado">Sin señal en pantalla.</p></div>
+    </div>
+    <div class="caja">
+      <h3>Valores de la señal</h3>
+      <div class="vals" id="valores"></div>
+    </div>
+    <div class="caja">
+      <h3>Práctica guiada</h3>
+      <ol class="pract" id="pract">
+        <li data-p="conectado">Conectá la <b>SALIDA</b> del generador a la entrada <b>CH 1</b> del osciloscopio.</li>
+        <li data-p="senoidal">Elegí la función <b>senoidal</b>.</li>
+        <li data-p="mil">Llevá la frecuencia a <b>2 kHz</b>, con el dial y el multiplicador.</li>
+        <li data-p="seisvpp">Poné la amplitud en <b>4 Vpp</b>.</li>
+        <li data-p="alto">Elegí el <b>VOLTS/DIV</b> para que la onda ocupe entre 4 y 7 divisiones de alto.</li>
+        <li data-p="ancho">Elegí el <b>TIEMPO/DIV</b> para ver entre 2 y 3 ciclos completos.</li>
+        <li data-p="firme">Pasá el disparo a <b>NORM</b> y dejá la imagen quieta.</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="texto">
+  <h2 class="t">Cómo se usa</h2>
+
+  <h3>El generador arma la señal</h3>
+  <p>La frecuencia sale de dos controles que trabajan juntos: el dial grande da un número entre 0,2
+    y 2, y la fila de botones lo multiplica por 1, 10, 100, 1000 y así hasta un millón. Poner 1 kHz
+    es dejar el dial en 1 y apretar el multiplicador ×1k. Los generadores analógicos siempre se
+    manejaron de esa manera, y por eso tienen ese dial enorme con la escala impresa alrededor.</p>
+  <p>La perilla de amplitud fija cuántos volts de pico a pico entrega, el atenuador de −20 dB
+    divide esa salida por diez cuando hacen falta señales chicas, y el corrimiento continuo sube o
+    baja toda la onda sumándole una componente de continua. La salida <b>SINC</b> es aparte: entrega
+    siempre una cuadrada de 0 a 4 V a la misma frecuencia, pensada para disparar otro equipo o para
+    mirar por el segundo canal.</p>
+
+  <h3>El osciloscopio la dibuja</h3>
+  <p>La pantalla está dividida en 10 divisiones a lo ancho y 8 a lo alto. Ese enrejado es toda la
+    regla que hay: el instrumento no dice cuánto mide nada, lo dice la llave. Si la llave de
+    <b>VOLTS/DIV</b> está en 2 V y la onda ocupa 3 divisiones de alto, la señal tiene 6 volts de
+    pico a pico. Si la llave de <b>TIEMPO/DIV</b> está en 0,2 ms y un ciclo entra en 5 divisiones,
+    el período es 1 ms y la frecuencia es su inversa, 1 kHz.</p>
+  <p>El acoplamiento decide qué llega al canal. En <b>CC</b> pasa todo, la señal alterna y la
+    continua sobre la que está montada. En <b>CA</b> un capacitor bloquea la continua y deja la onda
+    centrada, que es lo que conviene para mirar un rizado chico sobre una tensión grande. En
+    <b>⏚</b> la entrada se pone a masa: el trazo se va a una línea recta que sirve para marcar dónde
+    está el cero antes de medir.</p>
+
+  <h3>El disparo es lo que la deja quieta</h3>
+  <p>Un osciloscopio analógico dibuja la onda de izquierda a derecha una y otra vez. Si cada barrido
+    arranca en un punto distinto de la señal, los dibujos no se superponen y la imagen corre. El
+    circuito de disparo resuelve eso: espera a que la señal pase por un nivel de tensión determinado
+    y recién ahí larga el barrido. Así todos los barridos empiezan en el mismo punto de la onda y la
+    imagen queda congelada.</p>
+  <p>La perilla de <b>NIVEL</b> elige a qué altura se hace esa comparación, y la de pendiente si se
+    dispara cuando la señal sube o cuando baja. En <b>AUTO</b>, si el nivel quedó fuera del alcance
+    de la señal el equipo larga el barrido igual, y por eso se ve la onda corriendo. En <b>NORM</b>
+    no larga nada y la pantalla queda en negro. Es el error más común del laboratorio, y ahora se
+    puede reproducir sin romper nada.</p>
+
+  <h3>Los modos de la pantalla</h3>
+  <ul>
+    <li><b>CH 1</b> y <b>CH 2</b> muestran un solo canal.</li>
+    <li><b>DUAL</b> muestra los dos, cada uno con su propia sensibilidad y su propia posición.</li>
+    <li><b>SUMA</b> dibuja la suma de los dos canales, que es lo que hace el amplificador vertical
+      cuando se lo deja sumar.</li>
+    <li><b>X-Y</b> apaga la base de tiempo y usa el canal 1 para el eje horizontal y el 2 para el
+      vertical. Con la salida principal en un canal y la de sincronismo en el otro aparecen las
+      figuras de Lissajous, que sirven para comparar frecuencias y fases.</li>
+  </ul>
+
+  <p style="margin-top:22px;color:var(--soft);font-size:13px">Los dos frentes están inspirados en
+    los osciloscopios y generadores analógicos de banco que se usaron durante décadas en las
+    escuelas técnicas. No reproducen ningún equipo en particular: son un frente genérico armado con
+    la disposición de controles que casi todos comparten.</p>
+</section>
+
+</main>
+
+<script>
+"use strict";
+(function(){
+
+/* ══════════════════════════════════════════════════════════════════
+   Utilidades de SVG
+   ══════════════════════════════════════════════════════════════════ */
+var NS = "http://www.w3.org/2000/svg";
+function E(p, t, a){
+  var n = document.createElementNS(NS, t);
+  if(a) for(var k in a){ if(a[k]!==null && a[k]!==undefined) n.setAttribute(k, a[k]); }
+  if(p) p.appendChild(n);
+  return n;
+}
+function TX(p, x, y, txt, a){
+  a = a || {}; a.x = x; a.y = y;
+  var n = E(p, "text", a); n.textContent = txt; return n;
+}
+function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
+function coma(n, d){
+  if(Math.abs(n) < Math.pow(10, -d) / 2) n = 0;   /* nada de "−0,00" */
+  return n.toFixed(d).replace(".", ",");
+}
+
+/* punto del evento en las coordenadas internas de un svg */
+function ptSVG(svg, ev){
+  var p = svg.createSVGPoint();
+  p.x = ev.clientX; p.y = ev.clientY;
+  var m = svg.getScreenCTM();
+  return m ? p.matrixTransform(m.inverse()) : {x:0, y:0};
+}
+/* ángulo en grados, 0 arriba y creciendo en el sentido del reloj */
+function angulo(svg, ev, cx, cy){
+  var p = ptSVG(svg, ev);
+  return Math.atan2(p.x - cx, -(p.y - cy)) * 180 / Math.PI;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Formatos
+   ══════════════════════════════════════════════════════════════════ */
+function fmtVolt(v){
+  if(v < 0.999) return coma(v * 1000, 0) + " mV";
+  return coma(v, 0) + " V";
+}
+function fmtTiempo(t){
+  if(t < 0.9995e-6) return coma(t * 1e9, 0) + " ns";
+  if(t < 0.9995e-3) return (t * 1e6 < 0.999 ? coma(t * 1e6, 1) : coma(t * 1e6, 0)) + " µs";
+  if(t < 0.9995)    return (t * 1e3 < 0.999 ? coma(t * 1e3, 1) : coma(t * 1e3, 0)) + " ms";
+  return coma(t, 1) + " s";
+}
+function fmtSeg(t){
+  if(t < 1e-6) return coma(t * 1e9, 1) + " ns";
+  if(t < 1e-3) return coma(t * 1e6, 2) + " µs";
+  if(t < 1)    return coma(t * 1e3, 3) + " ms";
+  return coma(t, 3) + " s";
+}
+function fmtFrec(f){
+  /* los umbrales llevan medio dígito de tolerancia: 999,998 Hz se muestra
+     como 1,000 kHz y no como 1000,00 Hz */
+  if(f >= 999950) return coma(f / 1e6, 3) + " MHz";
+  if(f >= 999.95) return coma(f / 1e3, 3) + " kHz";
+  if(f >= 1)   return coma(f, 2) + " Hz";
+  return coma(f, 3) + " Hz";
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Estado de los dos equipos
+   ══════════════════════════════════════════════════════════════════ */
+var VDIV = [0.005,0.01,0.02,0.05,0.1,0.2,0.5,1,2,5,10,20];
+var TDIV = [0.2e-6,0.5e-6,1e-6,2e-6,5e-6,10e-6,20e-6,50e-6,
+            0.1e-3,0.2e-3,0.5e-3,1e-3,2e-3,5e-3,10e-3,20e-3,50e-3,0.1,0.2,0.5];
+var RANGOS = [1,10,100,1000,10000,100000,1000000];
+var RANGOS_TXT = ["×1","×10","×100","×1k","×10k","×100k","×1M"];
+
+var INICIAL = {
+  osc: { pot:true, inten:0.72, foco:0.42,
+         v1:8, v2:8, pos1:0, pos2:0, ac1:"CC", ac2:"CC",
+         modo:"CH1", t:9, posH:0,
+         trigFuente:"ch1", trigPend:1, trigModo:"AUTO", trigNivel:0.5 },
+  gen: { pot:true, func:"seno", dial:0.6989700043, rango:3, amp:0.3, off:0.5, sim:0.5,
+         aten:false, salida:true }
+};
+var O = {}, G = {};
+function reset(){
+  var k;
+  for(k in INICIAL.osc) O[k] = INICIAL.osc[k];
+  for(k in INICIAL.gen) G[k] = INICIAL.gen[k];
+}
+reset();
+
+/* ---- lo que entrega el generador ---- */
+function frecGen(){
+  /* el dial recorre de 0,2 a 2 con escala logarítmica, como los diales reales */
+  return 0.2 * Math.pow(10, G.dial) * RANGOS[G.rango];
+}
+function ampGen(){ return G.amp * 20 * (G.aten ? 0.1 : 1); }   /* Vpp, 0 a 20 */
+function offGen(){ return (G.off - 0.5) * 20; }                /* −10 a +10 V  */
+function simGen(){ return 0.1 + G.sim * 0.8; }                 /* 10 % a 90 %  */
+
+function senalSalida(t){
+  if(!G.pot || !G.salida) return 0;
+  var f = frecGen(), s = simGen(), A = ampGen() / 2, y;
+  var ph = t * f; ph = ph - Math.floor(ph);
+  if(G.func === "seno")      y = Math.sin(2 * Math.PI * ph);
+  else if(G.func === "cuad") y = ph < s ? 1 : -1;
+  else                       y = ph < s ? (-1 + 2 * ph / s) : (1 - 2 * (ph - s) / (1 - s));
+  return y * A + offGen();
+}
+function senalSinc(t){
+  if(!G.pot) return 0;
+  var f = frecGen(), ph = t * f; ph = ph - Math.floor(ph);
+  return ph < 0.5 ? 4 : 0;
+}
+function senalCruda(jack, t){
+  if(jack === "gen.out")  return senalSalida(t);
+  if(jack === "gen.sinc") return senalSinc(t);
+  return 0;
+}
+
+/* media de una señal a lo largo de un período: la que saca el acoplamiento en CA */
+var medias = { "gen.out":0, "gen.sinc":0 };
+function recalcularMedias(){
+  var P = 1 / frecGen(), i, N = 400, a = 0, b = 0;
+  for(i = 0; i < N; i++){ var t = P * i / N; a += senalSalida(t); b += senalSinc(t); }
+  medias["gen.out"] = a / N; medias["gen.sinc"] = b / N;
+}
+
+/* ---- qué llega a cada canal ---- */
+function fuenteDe(ch){
+  for(var i = 0; i < CABLES.length; i++){
+    var c = CABLES[i], a = c.a.jack, b = c.b.jack;
+    if(a === "osc." + ch && b) return b;
+    if(b === "osc." + ch && a) return a;
+  }
+  return null;
+}
+function valorCanal(ch, t){
+  var ac = ch === "ch1" ? O.ac1 : O.ac2;
+  if(ac === "GND") return 0;
+  var src = fuenteDe(ch);
+  if(!src) return 0;
+  var v = senalCruda(src, t);
+  if(ac === "CA") v -= medias[src] || 0;
+  return v;
+}
+function vdivDe(ch){ return VDIV[ch === "ch1" ? O.v1 : O.v2]; }
+function posDe(ch){ return ch === "ch1" ? O.pos1 : O.pos2; }
+function nivelDisparo(){ return (O.trigNivel - 0.5) * 8 * vdivDe(O.trigFuente); }
+
+/* ══════════════════════════════════════════════════════════════════
+   Piezas del frente
+   ══════════════════════════════════════════════════════════════════ */
+function caja(par, x, y, w, h, titulo){
+  E(par, "rect", {x:x, y:y, width:w, height:h, rx:10, fill:"url(#gBox)",
+                  stroke:"#2c3138", "stroke-width":1});
+  E(par, "line", {x1:x+1, y1:y+1, x2:x+w-1, y2:y+1, stroke:"#646c78",
+                  "stroke-width":1, opacity:".5"});
+  if(titulo) TX(par, x + 12, y + 18, titulo,
+                {"font-size":9, "letter-spacing":1.7, fill:"#7fb8e8", "font-weight":600});
+}
+function etiqueta(par, x, y, txt, extra){
+  var a = {"font-size":7.6, "letter-spacing":.7, fill:"#a7b1bd", "text-anchor":"middle"};
+  if(extra) for(var k in extra) a[k] = extra[k];
+  return TX(par, x, y, txt, a);
+}
+
+/* cuerpo de una perilla; devuelve el grupo que rota */
+function cuerpoPerilla(par, cx, cy, r){
+  E(par, "ellipse", {cx:cx, cy:cy + 2.5, rx:r + 1.5, ry:r, fill:"#0b0d10", opacity:".55"});
+  E(par, "circle", {cx:cx, cy:cy, r:r, fill:"url(#gPerilla)", stroke:"#191d22", "stroke-width":1.2});
+  var rot = E(par, "g", {});
+  var i, n = 26;
+  for(i = 0; i < n; i++){
+    var a = i * 2 * Math.PI / n, s = Math.sin(a), c = -Math.cos(a);
+    E(rot, "line", {x1:cx + s * (r - 1), y1:cy + c * (r - 1),
+                    x2:cx + s * (r - 4.2), y2:cy + c * (r - 4.2),
+                    stroke:"#1a1e23", "stroke-width":1.1, opacity:".8"});
+  }
+  E(rot, "rect", {x:cx - 1.7, y:cy - r + 2.5, width:3.4, height:r * 0.66, rx:1.7,
+                  fill:"#eef3f9", opacity:".92"});
+  E(par, "circle", {cx:cx, cy:cy, r:r * 0.44, fill:"url(#gTapa)", stroke:"#20242a",
+                    "stroke-width":.8});
+  E(par, "circle", {cx:cx - r * 0.13, cy:cy - r * 0.15, r:r * 0.14, fill:"#fff", opacity:".16"});
+  return rot;
+}
+
+/* arrastre angular común a todas las perillas */
+function arrastrar(g, svg, cx, cy, leer, escribir){
+  var prev = 0, activo = false;
+  g.addEventListener("pointerdown", function(ev){
+    ev.preventDefault(); ev.stopPropagation();
+    try{ g.setPointerCapture(ev.pointerId); }catch(e){}
+    activo = true; prev = angulo(svg, ev, cx, cy);
+    g.style.cursor = "grabbing";
+  });
+  g.addEventListener("pointermove", function(ev){
+    if(!activo) return;
+    var a = angulo(svg, ev, cx, cy), d = a - prev;
+    while(d > 180) d -= 360;
+    while(d < -180) d += 360;
+    prev = a;
+    escribir(clamp(leer() + d / 280, 0, 1));
+  });
+  function fin(ev){
+    if(!activo) return;
+    activo = false; g.style.cursor = "grab";
+    try{ g.releasePointerCapture(ev.pointerId); }catch(e){}
+  }
+  g.addEventListener("pointerup", fin);
+  g.addEventListener("pointercancel", fin);
+}
+
+/* perilla continua (0 a 1) */
+function perilla(svg, par, o){
+  var g = E(par, "g", {class:"ctl", tabindex:0, role:"slider",
+                       "aria-label":o.aria || o.label || "perilla"});
+  var i, n = o.marcas === undefined ? 11 : o.marcas;
+  for(i = 0; i < n; i++){
+    var a = (-140 + 280 * i / (n - 1)) * Math.PI / 180;
+    var s = Math.sin(a), c = -Math.cos(a);
+    var largo = (i === 0 || i === n - 1 || i === (n - 1) / 2) ? 5 : 3;
+    E(g, "line", {x1:o.cx + s * (o.r + 3), y1:o.cy + c * (o.r + 3),
+                  x2:o.cx + s * (o.r + 3 + largo), y2:o.cy + c * (o.r + 3 + largo),
+                  stroke:"#8e98a5", "stroke-width":1.1, "stroke-linecap":"round"});
+  }
+  var rot = cuerpoPerilla(g, o.cx, o.cy, o.r);
+  function pintar(){
+    rot.setAttribute("transform",
+      "rotate(" + (-140 + 280 * o.leer()) + " " + o.cx + " " + o.cy + ")");
+  }
+  arrastrar(g, svg, o.cx, o.cy, o.leer, function(v){ o.set(v); pintar(); refrescar(); });
+  g.addEventListener("wheel", function(ev){
+    ev.preventDefault();
+    o.set(clamp(o.leer() + (ev.deltaY < 0 ? 0.03 : -0.03), 0, 1)); pintar(); refrescar();
+  }, {passive:false});
+  g.addEventListener("keydown", function(ev){
+    var d = 0;
+    if(ev.key === "ArrowUp" || ev.key === "ArrowRight") d = 0.02;
+    if(ev.key === "ArrowDown" || ev.key === "ArrowLeft") d = -0.02;
+    if(!d) return;
+    ev.preventDefault(); o.set(clamp(o.leer() + d, 0, 1)); pintar(); refrescar();
+  });
+  pintar();
+  return {pintar:pintar};
+}
+
+/* llave rotativa con posiciones fijas */
+function llaveRot(svg, par, o){
+  var n = o.valores.length;
+  var g = E(par, "g", {class:"ctl", tabindex:0, role:"listbox", "aria-label":o.aria || "llave"});
+  var i;
+  for(i = 0; i < n; i++){
+    var a = (-140 + 280 * i / (n - 1)) * Math.PI / 180;
+    var s = Math.sin(a), c = -Math.cos(a);
+    E(g, "line", {x1:o.cx + s * (o.r + 3), y1:o.cy + c * (o.r + 3),
+                  x2:o.cx + s * (o.r + 7), y2:o.cy + c * (o.r + 7),
+                  stroke:"#939daa", "stroke-width":1.1, "stroke-linecap":"round"});
+  }
+  var rot = cuerpoPerilla(g, o.cx, o.cy, o.r);
+  function pintar(){
+    var i = o.leer();
+    rot.setAttribute("transform",
+      "rotate(" + (-140 + 280 * i / (n - 1)) + " " + o.cx + " " + o.cy + ")");
+  }
+  function ponerFrac(f){
+    var idx = Math.round(f * (n - 1));
+    if(idx !== o.leer()){ o.set(idx); }
+    pintar(); refrescar();
+  }
+  arrastrar(g, svg, o.cx, o.cy,
+    function(){ return o.leer() / (n - 1); }, ponerFrac);
+  g.addEventListener("wheel", function(ev){
+    ev.preventDefault();
+    o.set(clamp(o.leer() + (ev.deltaY < 0 ? 1 : -1), 0, n - 1)); pintar(); refrescar();
+  }, {passive:false});
+  g.addEventListener("keydown", function(ev){
+    var d = 0;
+    if(ev.key === "ArrowUp" || ev.key === "ArrowRight") d = 1;
+    if(ev.key === "ArrowDown" || ev.key === "ArrowLeft") d = -1;
+    if(!d) return;
+    ev.preventDefault(); o.set(clamp(o.leer() + d, 0, n - 1)); pintar(); refrescar();
+  });
+  pintar();
+  return {pintar:pintar};
+}
+
+/* ventanita impresa con el valor elegido */
+function ventana(par, x, y, w, h){
+  E(par, "rect", {x:x, y:y, width:w, height:h, rx:5, fill:"#15181d",
+                  stroke:"#0d0f12", "stroke-width":1});
+  E(par, "rect", {x:x + 1, y:y + 1, width:w - 2, height:h / 2, rx:4,
+                  fill:"#fff", opacity:".04"});
+  return TX(par, x + w / 2, y + h / 2 + 4.5, "",
+            {"font-size":11.5, "text-anchor":"middle", fill:"#dfe6ee", "font-weight":600});
+}
+
+/* botón cuadrado que se enciende */
+function boton(par, o){
+  var g = E(par, "g", {class:"clic", tabindex:0, role:"button", "aria-label":o.aria || o.txt});
+  var r = E(g, "rect", {x:o.x, y:o.y, width:o.w, height:o.h, rx:4,
+                        fill:"url(#gBoton)", stroke:"#22262c", "stroke-width":1});
+  var t = null;
+  if(o.txt) t = TX(g, o.x + o.w / 2, o.y + o.h / 2 + 3.4, o.txt,
+                   {"font-size":o.fs || 8.6, "text-anchor":"middle", fill:"#c3ccd6",
+                    "letter-spacing":.5, "font-weight":600});
+  var extra = o.dibujo ? o.dibujo(g) : null;
+  function pintar(){
+    var on = o.activo();
+    r.setAttribute("fill", on ? "url(#gBotonOn)" : "url(#gBoton)");
+    if(t) t.setAttribute("fill", on ? "#1a1f26" : "#c3ccd6");
+    if(extra) extra.forEach(function(e){ e.setAttribute("stroke", on ? "#1a1f26" : "#c3ccd6"); });
+  }
+  function tocar(ev){ ev.preventDefault(); ev.stopPropagation(); o.tocar(); refrescar(); }
+  g.addEventListener("pointerdown", tocar);
+  g.addEventListener("keydown", function(ev){
+    if(ev.key === "Enter" || ev.key === " ") tocar(ev);
+  });
+  pintar();
+  BOTONES.push(pintar);
+  return {pintar:pintar};
+}
+var BOTONES = [];
+
+/* llave deslizante de tres posiciones */
+function llave3(par, o){
+  var g = E(par, "g", {class:"clic", tabindex:0, role:"button", "aria-label":o.aria || "acoplamiento"});
+  var h = 46, w = 15, x = o.cx - w / 2, y = o.cy - h / 2;
+  E(g, "rect", {x:x, y:y, width:w, height:h, rx:6, fill:"#20242a", stroke:"#15181d"});
+  var i;
+  for(i = 0; i < 3; i++)
+    TX(g, o.cx + 12, y + 9 + i * (h - 16) / 2, o.textos[i],
+       {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.4});
+  var pal = E(g, "rect", {x:x + 1.6, y:y + 2, width:w - 3.2, height:13, rx:4,
+                          fill:"url(#gMetal2)", stroke:"#15181d", "stroke-width":.6});
+  function pintar(){
+    var i = o.leer();
+    pal.setAttribute("y", y + 2 + i * (h - 17) / 2);
+  }
+  function tocar(ev){
+    ev.preventDefault(); ev.stopPropagation();
+    o.set((o.leer() + 1) % 3); pintar(); refrescar();
+  }
+  g.addEventListener("pointerdown", tocar);
+  g.addEventListener("keydown", function(ev){
+    if(ev.key === "Enter" || ev.key === " ") tocar(ev);
+  });
+  pintar();
+  return {pintar:pintar};
+}
+
+/* botón de encendido, con su piloto */
+function encendido(par, cx, cy, leer, set){
+  var g = E(par, "g", {class:"clic", tabindex:0, role:"switch", "aria-label":"encendido"});
+  E(g, "circle", {cx:cx, cy:cy, r:12, fill:"url(#gPerilla)", stroke:"#191d22"});
+  E(g, "circle", {cx:cx, cy:cy, r:7.5, fill:"#2a2f36", stroke:"#15181d", "stroke-width":.8});
+  var m = E(g, "path", {d:"M " + cx + " " + (cy - 5) + " L " + cx + " " + (cy - 0.5),
+                        stroke:"#c9d2dc", "stroke-width":1.6, "stroke-linecap":"round", fill:"none"});
+  E(g, "circle", {cx:cx, cy:cy + 0.6, r:3.6, fill:"none", stroke:"#c9d2dc", "stroke-width":1.3});
+  var halo = E(par, "circle", {cx:cx - 28, cy:cy, r:5, fill:"#3fb950", filter:"url(#fLed)"});
+  var led = E(par, "circle", {cx:cx - 28, cy:cy, r:3.4, fill:"#48d15e", stroke:"#0f1a12"});
+  function pintar(){
+    var on = leer();
+    halo.setAttribute("opacity", on ? ".85" : "0");
+    led.setAttribute("fill", on ? "#5ce872" : "#243028");
+  }
+  g.addEventListener("pointerdown", function(ev){
+    ev.preventDefault(); ev.stopPropagation(); set(!leer()); pintar(); refrescar();
+  });
+  pintar();
+  BOTONES.push(pintar);
+  return {pintar:pintar};
+}
+
+/* conector BNC de panel */
+function bnc(par, o){
+  var g = E(par, "g", {class:"jack", "data-jack":o.id, tabindex:0, role:"button",
+                       "aria-label":"conector " + (o.aria || o.id)});
+  E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r + 3, fill:"#23272d", stroke:"#15181d"});
+  E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r, fill:"url(#gMetal2)", stroke:"#1c1f24", "stroke-width":1});
+  /* las dos orejas del bayoneta */
+  var i;
+  for(i = 0; i < 2; i++){
+    var a = (i ? 1 : -1) * Math.PI / 2;
+    E(g, "rect", {x:o.cx + Math.cos(a) * (o.r - 1.5) - 2, y:o.cy - 3.2,
+                  width:4, height:6.4, rx:1.4, fill:"#aeb4bb", stroke:"#33383e", "stroke-width":.5});
+  }
+  E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r * 0.62, fill:"#15171b", stroke:"#0c0e11"});
+  E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r * 0.5, fill:"#e8e3d2", opacity:".9"});
+  E(g, "circle", {cx:o.cx, cy:o.cy, r:1.7, fill:"#d8c98f", stroke:"#8a7c4e", "stroke-width":.6});
+  /* zona sensible generosa para el dedo */
+  E(g, "circle", {cx:o.cx, cy:o.cy, r:o.r + 6, fill:"transparent"});
+  JACKS[o.id] = g;
+  g.addEventListener("pointerdown", function(ev){ tomarJack(o.id, ev); });
+  return g;
+}
+var JACKS = {};
+
+/* placa con la marca */
+function marca(par, x, y, modelo, detalle){
+  E(par, "rect", {x:x, y:y, width:30, height:24, rx:6, fill:"url(#gLogo)"});
+  TX(par, x + 15, y + 17, "c", {"font-size":16, "text-anchor":"middle", fill:"#fff",
+                                "font-weight":700});
+  TX(par, x + 38, y + 18, "catto", {"font-size":15, fill:"#e8eef5", "font-weight":700,
+                                    "letter-spacing":.3});
+  TX(par, x + 90, y + 11, modelo, {"font-size":8.6, fill:"#9aa5b1", "letter-spacing":1.5});
+  TX(par, x + 90, y + 21, detalle, {"font-size":8.6, fill:"#9aa5b1", "letter-spacing":1.5});
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   El frente del osciloscopio
+   ══════════════════════════════════════════════════════════════════ */
+var svgOsc = document.getElementById("osc");
+var svgGen = document.getElementById("gen");
+var vent = {};   /* ventanitas de valor */
+var trazoCH1, trazoCH2, trazoXY, ledDisp, grupoAyudas, pantallaViva, filtroFoco;
+
+function armarOsciloscopio(){
+  var s = svgOsc;
+  E(s, "rect", {x:0, y:0, width:700, height:520, rx:16, fill:"url(#gCaja)", stroke:"#1e2228"});
+  E(s, "rect", {x:6, y:6, width:688, height:508, rx:12, fill:"url(#gPanel)", stroke:"#2b3037"});
+
+  marca(s, 16, 14, "OS-2205  ·  OSCILOSCOPIO", "DOS CANALES  ·  20 MHz");
+  encendido(s, 664, 28, function(){ return O.pot; }, function(v){ O.pot = v; });
+  E(s, "line", {x1:16, y1:48, x2:684, y2:48, stroke:"#2c3138"});
+
+  /* ---------- el tubo ---------- */
+  E(s, "rect", {x:16, y:58, width:400, height:326, rx:12, fill:"#20242a", stroke:"#15181d"});
+  E(s, "rect", {x:22, y:64, width:388, height:314, rx:11, fill:"#101317"});
+  E(s, "rect", {x:26, y:68, width:380, height:304, rx:10, fill:"url(#gPantalla)"});
+
+  var gr = E(s, "g", {"clip-path":"url(#cPantalla)"});
+  var i, j;
+  /* enrejado de 10 por 8 divisiones */
+  for(i = 1; i < 10; i++)
+    E(gr, "line", {x1:26 + i * 38, y1:68, x2:26 + i * 38, y2:372,
+                   stroke:"#7fe3a0", "stroke-width":i === 5 ? .9 : .55, opacity:i === 5 ? ".38" : ".17"});
+  for(i = 1; i < 8; i++)
+    E(gr, "line", {x1:26, y1:68 + i * 38, x2:406, y2:68 + i * 38,
+                   stroke:"#7fe3a0", "stroke-width":i === 4 ? .9 : .55, opacity:i === 4 ? ".38" : ".17"});
+  /* marquitas de 0,2 división sobre los ejes centrales */
+  for(i = 0; i < 10; i++) for(j = 1; j < 5; j++){
+    var x = 26 + i * 38 + j * 7.6;
+    E(gr, "line", {x1:x, y1:216, x2:x, y2:224, stroke:"#7fe3a0", "stroke-width":.5, opacity:".22"});
+  }
+  for(i = 0; i < 8; i++) for(j = 1; j < 5; j++){
+    var y = 68 + i * 38 + j * 7.6;
+    E(gr, "line", {x1:211, y1:y, x2:219, y2:y, stroke:"#7fe3a0", "stroke-width":.5, opacity:".22"});
+  }
+  E(gr, "rect", {x:26, y:68, width:380, height:304, fill:"none",
+                 stroke:"#7fe3a0", "stroke-width":.9, opacity:".3"});
+
+  pantallaViva = E(s, "g", {"clip-path":"url(#cPantalla)"});
+  trazoXY  = E(pantallaViva, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.5,
+                                      "stroke-linejoin":"round", filter:"url(#fFosforo)"});
+  trazoCH1 = E(pantallaViva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
+  trazoCH2 = E(pantallaViva, "path", {fill:"#63ff92", stroke:"none", filter:"url(#fFosforo)"});
+  grupoAyudas = E(s, "g", {"clip-path":"url(#cPantalla)", opacity:"0"});
+  /* reflejo del vidrio */
+  E(s, "rect", {x:26, y:68, width:380, height:304, rx:10, fill:"url(#gVidrio)",
+                "pointer-events":"none"});
+  filtroFoco = document.querySelector("#fFosforo feGaussianBlur");
+
+  /* ---------- modo vertical ---------- */
+  TX(s, 18, 394, "MODO  VERTICAL", {"font-size":8.4, "letter-spacing":1.5, fill:"#7fb8e8",
+                                    "font-weight":600});
+  var modos = ["CH 1","CH 2","DUAL","SUMA","X-Y"], claves = ["CH1","CH2","DUAL","ADD","XY"];
+  for(i = 0; i < 5; i++){
+    (function(k){
+      boton(s, {x:18 + i * 80, y:398, w:75, h:22, txt:modos[i],
+                activo:function(){ return O.modo === k; },
+                tocar:function(){ O.modo = k; }});
+    })(claves[i]);
+  }
+
+  /* ---------- brillo, foco y entradas ---------- */
+  perilla(svgOsc, s, {cx:52, cy:472, r:17, marcas:9, aria:"intensidad",
+    leer:function(){ return O.inten; }, set:function(v){ O.inten = v; }});
+  etiqueta(s, 52, 500, "INTENSIDAD");
+  perilla(svgOsc, s, {cx:122, cy:472, r:17, marcas:9, aria:"enfoque",
+    leer:function(){ return O.foco; }, set:function(v){ O.foco = v; }});
+  etiqueta(s, 122, 500, "ENFOQUE");
+
+  E(s, "line", {x1:168, y1:444, x2:168, y2:502, stroke:"#2c3138"});
+  TX(s, 300, 436, "ENTRADAS  ·  1 MΩ  25 pF", {"font-size":8, "letter-spacing":1.4,
+     fill:"#7fb8e8", "text-anchor":"middle", "font-weight":600});
+  etiqueta(s, 250, 454, "CH 1", {"font-size":9.6, fill:"#dbe3ec", "font-weight":600});
+  bnc(s, {cx:250, cy:479, r:18, id:"osc.ch1", aria:"canal 1"});
+  etiqueta(s, 340, 454, "CH 2", {"font-size":9.6, fill:"#dbe3ec", "font-weight":600});
+  bnc(s, {cx:340, cy:479, r:18, id:"osc.ch2", aria:"canal 2"});
+  etiqueta(s, 398, 454, "⏚", {"font-size":9.6, fill:"#dbe3ec"});
+  E(s, "circle", {cx:398, cy:479, r:8, fill:"url(#gMetal2)", stroke:"#1c1f24"});
+  E(s, "circle", {cx:398, cy:479, r:3.4, fill:"#15171b"});
+
+  /* ---------- vertical ---------- */
+  caja(s, 424, 58, 260, 214, "VERTICAL");
+  var filas = [{y:126, ch:1}, {y:200, ch:2}];
+  for(i = 0; i < 2; i++){
+    (function(f){
+      var n = f.ch;
+      TX(s, 436, f.y - 26, "CH " + n, {"font-size":9.2, fill:"#7fb8e8", "font-weight":700,
+                                       "letter-spacing":1});
+      llaveRot(svgOsc, s, {cx:472, cy:f.y, r:20, valores:VDIV, aria:"volts por división canal " + n,
+        leer:function(){ return n === 1 ? O.v1 : O.v2; },
+        set:function(v){ if(n === 1) O.v1 = v; else O.v2 = v; }});
+      etiqueta(s, 534, f.y - 20, "VOLTS/DIV");
+      vent["v" + n] = ventana(s, 502, f.y - 14, 64, 25);
+      perilla(svgOsc, s, {cx:598, cy:f.y, r:15, marcas:9, aria:"posición vertical canal " + n,
+        leer:function(){ return (n === 1 ? O.pos1 : O.pos2) / 8 + 0.5; },
+        set:function(v){ var p = (v - 0.5) * 8; if(n === 1) O.pos1 = p; else O.pos2 = p; }});
+      etiqueta(s, 598, f.y - 22, "POSICIÓN ↕");
+      llave3(s, {cx:646, cy:f.y, textos:["CC","⏚","CA"], aria:"acoplamiento canal " + n,
+        leer:function(){ var a = n === 1 ? O.ac1 : O.ac2;
+                         return a === "CC" ? 0 : (a === "GND" ? 1 : 2); },
+        set:function(v){ var a = ["CC","GND","CA"][v]; if(n === 1) O.ac1 = a; else O.ac2 = a; }});
+      etiqueta(s, 646, f.y - 26, "ACOPL.");
+    })(filas[i]);
+  }
+
+  /* ---------- horizontal ---------- */
+  caja(s, 424, 280, 260, 110, "HORIZONTAL");
+  llaveRot(svgOsc, s, {cx:472, cy:344, r:20, valores:TDIV, aria:"tiempo por división",
+    leer:function(){ return O.t; }, set:function(v){ O.t = v; }});
+  etiqueta(s, 542, 324, "TIEMPO/DIV");
+  vent.t = ventana(s, 502, 330, 80, 25);
+  perilla(svgOsc, s, {cx:626, cy:344, r:15, marcas:9, aria:"posición horizontal",
+    leer:function(){ return O.posH / 10 + 0.5; },
+    set:function(v){ O.posH = (v - 0.5) * 10; }});
+  etiqueta(s, 626, 322, "POSICIÓN ↔");
+
+  /* ---------- disparo ---------- */
+  caja(s, 424, 398, 260, 110, "DISPARO");
+  perilla(svgOsc, s, {cx:468, cy:460, r:20, marcas:11, aria:"nivel de disparo",
+    leer:function(){ return O.trigNivel; }, set:function(v){ O.trigNivel = v; }});
+  etiqueta(s, 468, 494, "NIVEL");
+  TX(s, 508, 425, "PENDIENTE", {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.7});
+  boton(s, {x:508, y:429, w:38, h:19, txt:"↗", fs:10,
+            activo:function(){ return O.trigPend > 0; }, tocar:function(){ O.trigPend = 1; }});
+  boton(s, {x:550, y:429, w:38, h:19, txt:"↘", fs:10,
+            activo:function(){ return O.trigPend < 0; }, tocar:function(){ O.trigPend = -1; }});
+  TX(s, 508, 465, "FUENTE", {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.7});
+  boton(s, {x:508, y:469, w:38, h:19, txt:"CH1",
+            activo:function(){ return O.trigFuente === "ch1"; },
+            tocar:function(){ O.trigFuente = "ch1"; }});
+  boton(s, {x:550, y:469, w:38, h:19, txt:"CH2",
+            activo:function(){ return O.trigFuente === "ch2"; },
+            tocar:function(){ O.trigFuente = "ch2"; }});
+  TX(s, 602, 425, "MODO", {"font-size":7.4, fill:"#a7b1bd", "letter-spacing":.7});
+  boton(s, {x:602, y:429, w:64, h:19, txt:"AUTO",
+            activo:function(){ return O.trigModo === "AUTO"; },
+            tocar:function(){ O.trigModo = "AUTO"; }});
+  boton(s, {x:602, y:469, w:64, h:19, txt:"NORM",
+            activo:function(){ return O.trigModo === "NORM"; },
+            tocar:function(){ O.trigModo = "NORM"; }});
+  ledDisp = E(s, "circle", {cx:610, cy:459, r:4, fill:"#243028", stroke:"#0f1a12"});
+  TX(s, 620, 462, "DISPARADO", {"font-size":7.2, fill:"#a7b1bd", "letter-spacing":.6});
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   El frente del generador
+   ══════════════════════════════════════════════════════════════════ */
+var displayFrec, displayPer, displayAmp, displayOff, previa;
+
+function armarGenerador(){
+  var s = svgGen;
+  E(s, "rect", {x:0, y:0, width:430, height:520, rx:16, fill:"url(#gCaja)", stroke:"#1e2228"});
+  E(s, "rect", {x:6, y:6, width:418, height:508, rx:12, fill:"url(#gPanel)", stroke:"#2b3037"});
+
+  marca(s, 16, 14, "FG-2020  ·  GENERADOR", "DE FUNCIONES  ·  2 MHz");
+  encendido(s, 394, 28, function(){ return G.pot; }, function(v){ G.pot = v; });
+  E(s, "line", {x1:16, y1:48, x2:414, y2:48, stroke:"#2c3138"});
+
+  /* ---------- el dial grande ---------- */
+  caja(s, 14, 58, 196, 204, "FRECUENCIA");
+  var cx = 112, cy = 168, i;
+  E(s, "circle", {cx:cx, cy:cy, r:66, fill:"#3c424b", stroke:"#2c3138"});
+  /* escala impresa, logarítmica de 0,2 a 2 */
+  var marcasDial = [0.2,0.3,0.4,0.5,0.6,0.8,1,1.5,2];
+  for(i = 0; i < marcasDial.length; i++){
+    var f = Math.log10(marcasDial[i] / 0.2);
+    var a = (-140 + 280 * f) * Math.PI / 180;
+    var sn = Math.sin(a), cs = -Math.cos(a);
+    E(s, "line", {x1:cx + sn * 48, y1:cy + cs * 48, x2:cx + sn * 53, y2:cy + cs * 53,
+                  stroke:"#c3ccd6", "stroke-width":1.2, "stroke-linecap":"round"});
+    TX(s, cx + sn * 60, cy + cs * 60 + 3, coma(marcasDial[i], marcasDial[i] % 1 ? 1 : 0),
+       {"font-size":7.8, "text-anchor":"middle", fill:"#b6c0cb"});
+  }
+  perilla(svgGen, s, {cx:cx, cy:cy, r:42, marcas:0, aria:"dial de frecuencia",
+    leer:function(){ return G.dial; }, set:function(v){ G.dial = v; }});
+  TX(s, cx, 250, "el dial multiplica al rango", {"font-size":7.6, "text-anchor":"middle",
+     fill:"#8e99a6"});
+
+  /* ---------- lectura ---------- */
+  caja(s, 218, 58, 198, 204, "LECTURA");
+  E(s, "rect", {x:228, y:82, width:178, height:46, rx:7, fill:"url(#gDisplay)",
+                stroke:"#2a1512", "stroke-width":1.4});
+  displayFrec = TX(s, 317, 115, "1,000 kHz",
+    {"font-size":21, "text-anchor":"middle", fill:"#ff5f45",
+     "font-family":"ui-monospace,Consolas,monospace", "letter-spacing":.5});
+  displayPer = TX(s, 317, 144, "T = 1,000 ms",
+    {"font-size":9.5, "text-anchor":"middle", fill:"#a9b3bf"});
+  E(s, "line", {x1:230, y1:153, x2:404, y2:153, stroke:"#2c3138"});
+  displayAmp = TX(s, 317, 174, "6,00 Vpp",
+    {"font-size":16, "text-anchor":"middle", fill:"#dfe6ee", "font-weight":600});
+  displayOff = TX(s, 317, 190, "continua  0,00 V",
+    {"font-size":8.6, "text-anchor":"middle", fill:"#a9b3bf"});
+  E(s, "rect", {x:228, y:198, width:178, height:52, rx:7, fill:"#0b120d", stroke:"#1b2a20"});
+  E(s, "line", {x1:228, y1:224, x2:406, y2:224, stroke:"#2f5f42", "stroke-width":.7});
+  previa = E(s, "path", {fill:"none", stroke:"#63ff92", "stroke-width":1.6,
+                         "stroke-linejoin":"round"});
+
+  /* ---------- rango ---------- */
+  TX(s, 18, 282, "RANGO  ·  MULTIPLICADOR  (Hz)", {"font-size":8.4, "letter-spacing":1.4,
+     fill:"#7fb8e8", "font-weight":600});
+  for(i = 0; i < 7; i++){
+    (function(k){
+      boton(s, {x:16 + k * 58, y:288, w:54, h:28, txt:RANGOS_TXT[k], fs:9,
+                activo:function(){ return G.rango === k; },
+                tocar:function(){ G.rango = k; }});
+    })(i);
+  }
+
+  /* ---------- función ---------- */
+  TX(s, 18, 338, "FUNCIÓN", {"font-size":8.4, "letter-spacing":1.4, fill:"#7fb8e8",
+     "font-weight":600});
+  var glifos = {
+    seno: "M 0 0 C 5 -13, 11 -13, 16 0 C 21 13, 27 13, 32 0",
+    cuad: "M 0 10 L 0 -10 L 16 -10 L 16 10 L 32 10 L 32 -10",
+    tri:  "M 0 10 L 8 -10 L 24 10 L 32 -1"
+  };
+  var funcs = ["seno","cuad","tri"];
+  for(i = 0; i < 3; i++){
+    (function(k, ix){
+      boton(s, {x:16 + ix * 70, y:344, w:62, h:46, aria:"función " + k,
+        dibujo:function(g){
+          var p = E(g, "path", {d:glifos[k], fill:"none", stroke:"#c3ccd6",
+                                "stroke-width":1.8, "stroke-linecap":"round",
+                                "stroke-linejoin":"round",
+                                transform:"translate(" + (31 + ix * 70) + " 367)"});
+          return [p];
+        },
+        activo:function(){ return G.func === k; },
+        tocar:function(){ G.func = k; }});
+    })(funcs[i], i);
+  }
+
+  /* ---------- atenuador y salida ---------- */
+  TX(s, 240, 338, "SALIDA", {"font-size":8.4, "letter-spacing":1.4, fill:"#7fb8e8",
+     "font-weight":600});
+  boton(s, {x:240, y:344, w:80, h:20, txt:"−20 dB",
+            activo:function(){ return G.aten; }, tocar:function(){ G.aten = !G.aten; }});
+  boton(s, {x:240, y:370, w:80, h:20, txt:"ON / OFF",
+            activo:function(){ return G.salida; }, tocar:function(){ G.salida = !G.salida; }});
+  TX(s, 330, 358, "el atenuador", {"font-size":7.2, fill:"#8e99a6"});
+  TX(s, 330, 368, "divide por diez", {"font-size":7.2, fill:"#8e99a6"});
+
+  /* ---------- perillas y conectores ---------- */
+  E(s, "line", {x1:16, y1:400, x2:414, y2:400, stroke:"#2c3138"});
+  perilla(svgGen, s, {cx:54, cy:448, r:23, marcas:11, aria:"amplitud",
+    leer:function(){ return G.amp; }, set:function(v){ G.amp = v; }});
+  etiqueta(s, 54, 484, "AMPLITUD");
+  etiqueta(s, 54, 494, "0 – 20 Vpp", {"font-size":6.8, fill:"#8e99a6"});
+  perilla(svgGen, s, {cx:132, cy:448, r:19, marcas:11, aria:"corrimiento de continua",
+    leer:function(){ return G.off; }, set:function(v){ G.off = v; }});
+  etiqueta(s, 132, 484, "CONTINUA");
+  etiqueta(s, 132, 494, "−10 a +10 V", {"font-size":6.8, fill:"#8e99a6"});
+  perilla(svgGen, s, {cx:206, cy:448, r:19, marcas:11, aria:"simetría",
+    leer:function(){ return G.sim; }, set:function(v){ G.sim = v; }});
+  etiqueta(s, 206, 484, "SIMETRÍA");
+  etiqueta(s, 206, 494, "10 – 90 %", {"font-size":6.8, fill:"#8e99a6"});
+
+  E(s, "line", {x1:262, y1:412, x2:262, y2:496, stroke:"#2c3138"});
+  etiqueta(s, 306, 428, "SALIDA  50 Ω", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
+  bnc(s, {cx:306, cy:454, r:18, id:"gen.out", aria:"salida principal"});
+  etiqueta(s, 380, 428, "SINC  TTL", {"font-size":8.6, fill:"#dbe3ec", "font-weight":600});
+  bnc(s, {cx:380, cy:454, r:15, id:"gen.sinc", aria:"sincronismo"});
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Los cables
+   ══════════════════════════════════════════════════════════════════ */
+var mesa = document.getElementById("mesa");
+var svgCab = document.getElementById("cables");
+var CABLES = [];
+var arrastreCable = null;
+var COLORES = [{jac:"#16181c", luz:"#5c636d"}, {jac:"#5e1418", luz:"#b0555a"},
+               {jac:"#123a20", luz:"#4f9166"}, {jac:"#2a2140", luz:"#7b6ab0"}];
+var proximoColor = 0;
+
+function escala(){
+  var r = svgOsc.getBoundingClientRect();
+  return r.width ? r.width / 700 : 1;
+}
+function posJack(id){
+  var g = JACKS[id];
+  if(!g) return {x:0, y:0};
+  var r = g.getBoundingClientRect(), b = mesa.getBoundingClientRect();
+  return {x:r.left + r.width / 2 - b.left, y:r.top + r.height / 2 - b.top};
+}
+function puntoDe(e){ return e.jack ? posJack(e.jack) : {x:e.x, y:e.y}; }
+
+function jackOcupado(id, salvo){
+  for(var i = 0; i < CABLES.length; i++){
+    var c = CABLES[i];
+    if(c === salvo) continue;
+    if(c.a.jack === id || c.b.jack === id) return c;
+  }
+  return null;
+}
+
+function nuevoCable(jackA, extremoB){
+  var c = {a:{jack:jackA}, b:extremoB, color:COLORES[proximoColor % COLORES.length]};
+  proximoColor++;
+  CABLES.push(c);
+  return c;
+}
+
+function tomarJack(id, ev){
+  ev.preventDefault(); ev.stopPropagation();
+  var b = mesa.getBoundingClientRect();
+  var p = {x:ev.clientX - b.left, y:ev.clientY - b.top};
+  var cab = jackOcupado(id, null), extremo;
+  if(cab){                       /* estaba enchufado: se desenchufa */
+    extremo = cab.a.jack === id ? "a" : "b";
+    cab[extremo] = {x:p.x, y:p.y};
+  }else{                         /* estaba libre: nace un cable */
+    cab = nuevoCable(id, {x:p.x, y:p.y});
+    extremo = "b";
+  }
+  arrastreCable = {cable:cab, extremo:extremo, nuevoDesde:id};
+  try{ mesa.setPointerCapture(ev.pointerId); }catch(e){}
+  pintarCables();
+}
+function tomarPunta(cab, extremo, ev){
+  ev.preventDefault(); ev.stopPropagation();
+  var b = mesa.getBoundingClientRect();
+  if(cab[extremo].jack) cab[extremo] = {x:ev.clientX - b.left, y:ev.clientY - b.top};
+  arrastreCable = {cable:cab, extremo:extremo};
+  try{ mesa.setPointerCapture(ev.pointerId); }catch(e){}
+  pintarCables();
+}
+
+mesa.addEventListener("pointermove", function(ev){
+  if(!arrastreCable) return;
+  var b = mesa.getBoundingClientRect();
+  arrastreCable.cable[arrastreCable.extremo] = {x:ev.clientX - b.left, y:ev.clientY - b.top};
+  pintarCables();
+});
+function soltar(ev){
+  if(!arrastreCable) return;
+  var a = arrastreCable; arrastreCable = null;
+  var b = mesa.getBoundingClientRect();
+  var p = {x:ev.clientX - b.left, y:ev.clientY - b.top};
+  var esc = escala(), mejor = null, dm = 34 * esc, id;
+  for(id in JACKS){
+    var q = posJack(id), d = Math.hypot(q.x - p.x, q.y - p.y);
+    if(d < dm){ dm = d; mejor = id; }
+  }
+  var otro = a.extremo === "a" ? a.cable.b : a.cable.a;
+  if(mejor && mejor !== otro.jack){
+    var ocupa = jackOcupado(mejor, a.cable);
+    if(ocupa){                       /* si había otro cable ahí, queda colgando */
+      var e = ocupa.a.jack === mejor ? "a" : "b";
+      var q2 = posJack(mejor);
+      ocupa[e] = {x:q2.x + 42 * esc, y:q2.y + 78 * esc};
+    }
+    a.cable[a.extremo] = {jack:mejor};
+  }
+  pintarCables(); refrescar();
+}
+mesa.addEventListener("pointerup", soltar);
+mesa.addEventListener("pointercancel", soltar);
+
+/* dibuja el enchufe BNC apuntando hacia abajo */
+function enchufe(par, x, y, esc, cable, extremo){
+  var g = E(par, "g", {style:"pointer-events:auto;cursor:grab;touch-action:none"});
+  var k = esc;
+  E(g, "rect", {x:x - 10 * k, y:y - 2 * k, width:20 * k, height:9 * k, rx:2 * k,
+                fill:"url(#gMetal)", stroke:"#22262c", "stroke-width":.8 * k});
+  E(g, "rect", {x:x - 8 * k, y:y + 7 * k, width:16 * k, height:14 * k, rx:1.6 * k,
+                fill:"url(#gMetal2)", stroke:"#22262c", "stroke-width":.8 * k});
+  var i;
+  for(i = 0; i < 5; i++)
+    E(g, "line", {x1:x - 8 * k, y1:y + (9.5 + i * 2.6) * k, x2:x + 8 * k, y2:y + (9.5 + i * 2.6) * k,
+                  stroke:"#3d4249", "stroke-width":.7 * k, opacity:".8"});
+  E(g, "path", {d:"M " + (x - 6.5 * k) + " " + (y + 21 * k) +
+                   " L " + (x + 6.5 * k) + " " + (y + 21 * k) +
+                   " L " + (x + 4 * k) + " " + (y + 32 * k) +
+                   " L " + (x - 4 * k) + " " + (y + 32 * k) + " Z",
+                fill:"#1b1e22", stroke:"#0e1013", "stroke-width":.8 * k});
+  E(g, "rect", {x:x - 12 * k, y:y - 4 * k, width:24 * k, height:40 * k, fill:"transparent"});
+  g.addEventListener("pointerdown", function(ev){ tomarPunta(cable, extremo, ev); });
+  return g;
+}
+
+function pintarCables(){
+  while(svgCab.firstChild) svgCab.removeChild(svgCab.firstChild);
+  var esc = escala(), i;
+  for(i = 0; i < CABLES.length; i++){
+    var c = CABLES[i];
+    var A = puntoDe(c.a), B = puntoDe(c.b);
+    var stub = 30 * esc;
+    var A2 = {x:A.x, y:A.y + stub}, B2 = {x:B.x, y:B.y + stub};
+    var d = Math.hypot(B2.x - A2.x, B2.y - A2.y);
+    /* un cable de banco mide alrededor de un metro: siempre sobra tramo, y
+       ese sobrante es el que se descuelga */
+    var largo = Math.max(620 * esc, d * 1.16);
+    var holgura = Math.max(0, largo - d);
+    var caida = Math.min(230 * esc, 26 * esc + holgura * 0.78);
+    /* en pantalla angosta los equipos quedan uno debajo del otro: ahí el
+       cable no cuelga, cruza. Se le da panza para un costado, que es como
+       se acomoda un cable apoyado sobre el frente de un equipo */
+    var dy = Math.abs(B2.y - A2.y), dx = Math.abs(B2.x - A2.x), lat = 0;
+    if(dy > dx * 1.2 && dy > 100 * esc){
+      var lado = (A2.x + B2.x) / 2 < mesa.clientWidth / 2 ? -1 : 1;
+      lat = lado * Math.min(110 * esc, dy * 0.3);
+      caida = Math.max(caida, dy * 0.42);
+    }
+    var c1 = {x:A2.x + lat, y:A2.y + caida}, c2 = {x:B2.x + lat, y:B2.y + caida};
+    var dd = "M " + A2.x + " " + A2.y + " C " + c1.x + " " + c1.y + ", " +
+             c2.x + " " + c2.y + ", " + B2.x + " " + B2.y;
+    var g = E(svgCab, "g", {});
+    E(g, "path", {d:dd, fill:"none", stroke:"#000", "stroke-opacity":".45",
+                  "stroke-width":10 * esc, "stroke-linecap":"round",
+                  transform:"translate(0," + (3 * esc) + ")"});
+    E(g, "path", {d:dd, fill:"none", stroke:c.color.jac, "stroke-width":8.4 * esc,
+                  "stroke-linecap":"round"});
+    E(g, "path", {d:dd, fill:"none", stroke:c.color.luz, "stroke-opacity":".55",
+                  "stroke-width":2.2 * esc, "stroke-linecap":"round",
+                  transform:"translate(" + (-1.4 * esc) + "," + (-1.6 * esc) + ")"});
+    enchufe(g, A.x, A.y, esc, c, "a");
+    enchufe(g, B.x, B.y, esc, c, "b");
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   La pantalla
+   ══════════════════════════════════════════════════════════════════ */
+var PX = 26, PY = 68, PW = 380, PH = 304, DIV = 38;
+
+/* busca el punto de la señal donde arranca el barrido */
+function buscarDisparo(){
+  if(!fuenteDe(O.trigFuente)) return null;
+  var f = frecGen(); if(!f) return null;
+  var P = 1 / f, N = 1000, niv = nivelDisparo();
+  /* la ventana se estira un poco más de un período: el cruce de una senoidal
+     con el nivel en cero cae justo en el borde, y buscando sólo hasta P se
+     escapaba por redondeo */
+  var vent = P * 1.02;
+  var prev = valorCanal(O.trigFuente, 0), i, t, v;
+  for(i = 1; i <= N; i++){
+    t = vent * i / N; v = valorCanal(O.trigFuente, t);
+    var sube = O.trigPend > 0 && prev < niv && v >= niv;
+    var baja = O.trigPend < 0 && prev > niv && v <= niv;
+    if(sube || baja){
+      var tt = vent * (i - 1) / N;
+      if(v !== prev) tt += (vent / N) * ((niv - prev) / (v - prev));
+      return tt;
+    }
+    prev = v;
+  }
+  return null;
+}
+
+function bandaCanal(ch, t0, span){
+  var vdiv = vdivDe(ch), pos = posDe(ch);
+  var cols = 190, sub = 4, arriba = [], abajo = [], i, j;
+  for(i = 0; i <= cols; i++){
+    var x = PX + PW * i / cols;
+    var mn = Infinity, mx = -Infinity;
+    for(j = 0; j < sub; j++){
+      var t = t0 + span * (i + j / sub) / cols;
+      var v = valorCanal(ch, t);
+      if(v < mn) mn = v;
+      if(v > mx) mx = v;
+    }
+    var yA = PY + PH / 2 - (mx / vdiv + pos) * DIV;
+    var yB = PY + PH / 2 - (mn / vdiv + pos) * DIV;
+    if(yB - yA < 1.6){ var m = (yA + yB) / 2; yA = m - 0.8; yB = m + 0.8; }
+    arriba.push(x.toFixed(1) + " " + clamp(yA, PY - 6, PY + PH + 6).toFixed(1));
+    abajo.push(x.toFixed(1) + " " + clamp(yB, PY - 6, PY + PH + 6).toFixed(1));
+  }
+  abajo.reverse();
+  return "M " + arriba.join(" L ") + " L " + abajo.join(" L ") + " Z";
+}
+
+function curvaXY(){
+  var pts = [], N = 900, f = frecGen(), P = f ? 1 / f : 1e-3, i;
+  for(i = 0; i <= N; i++){
+    var t = P * 3 * i / N;
+    var x = PX + PW / 2 + (valorCanal("ch1", t) / VDIV[O.v1] + O.pos1) * DIV;
+    var y = PY + PH / 2 - (valorCanal("ch2", t) / VDIV[O.v2] + O.pos2) * DIV;
+    pts.push(clamp(x, PX - 6, PX + PW + 6).toFixed(1) + " " +
+             clamp(y, PY - 6, PY + PH + 6).toFixed(1));
+  }
+  return "M " + pts.join(" L ");
+}
+
+var t0Libre = 0, ultimo = 0, disparado = false, ayudasOn = false;
+var reducido = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function dibujarPantalla(ahora){
+  var dt = ultimo ? (ahora - ultimo) / 1000 : 0;
+  ultimo = ahora;
+
+  if(!O.pot){
+    trazoCH1.setAttribute("d", ""); trazoCH2.setAttribute("d", "");
+    trazoXY.setAttribute("d", ""); grupoAyudas.setAttribute("opacity", "0");
+    ledDisp.setAttribute("fill", "#243028");
+    return;
+  }
+  var op = 0.25 + O.inten * 0.75;
+  pantallaViva.setAttribute("opacity", op.toFixed(3));
+  filtroFoco.setAttribute("stdDeviation", (0.7 + Math.abs(O.foco - 0.42) * 9).toFixed(2));
+
+  if(O.modo === "XY"){
+    trazoCH1.setAttribute("d", ""); trazoCH2.setAttribute("d", "");
+    trazoXY.setAttribute("d", curvaXY());
+    ledDisp.setAttribute("fill", "#243028");
+    grupoAyudas.setAttribute("opacity", "0");
+    return;
+  }
+  trazoXY.setAttribute("d", "");
+
+  var span = TDIV[O.t] * 10;
+  var tDisp = buscarDisparo();
+  disparado = tDisp !== null;
+  ledDisp.setAttribute("fill", disparado ? "#5ce872" : "#243028");
+
+  var t0;
+  if(disparado){
+    t0 = tDisp;
+  }else if(O.trigModo === "AUTO"){
+    var P = frecGen() ? 1 / frecGen() : 1;
+    if(!reducido) t0Libre = (t0Libre + dt * P * 0.28) % P;
+    t0 = t0Libre;
+  }else{
+    trazoCH1.setAttribute("d", ""); trazoCH2.setAttribute("d", "");
+    grupoAyudas.setAttribute("opacity", "0");
+    return;
+  }
+  t0 -= O.posH * TDIV[O.t];
+
+  var m = O.modo;
+  trazoCH1.setAttribute("d",
+    (m === "CH1" || m === "DUAL") ? bandaCanal("ch1", t0, span) : "");
+  trazoCH2.setAttribute("d",
+    (m === "CH2" || m === "DUAL") ? bandaCanal("ch2", t0, span) : "");
+  if(m === "ADD") trazoCH1.setAttribute("d", bandaSuma(t0, span));
+
+  if(ayudasOn) dibujarAyudas(t0);
+  else grupoAyudas.setAttribute("opacity", "0");
+}
+
+function bandaSuma(t0, span){
+  var cols = 190, sub = 4, arriba = [], abajo = [], i, j;
+  for(i = 0; i <= cols; i++){
+    var x = PX + PW * i / cols, mn = Infinity, mx = -Infinity;
+    for(j = 0; j < sub; j++){
+      var t = t0 + span * (i + j / sub) / cols;
+      var d = valorCanal("ch1", t) / VDIV[O.v1] + O.pos1 +
+              valorCanal("ch2", t) / VDIV[O.v2] + O.pos2;
+      if(d < mn) mn = d;
+      if(d > mx) mx = d;
+    }
+    var yA = PY + PH / 2 - mx * DIV, yB = PY + PH / 2 - mn * DIV;
+    if(yB - yA < 1.6){ var c = (yA + yB) / 2; yA = c - 0.8; yB = c + 0.8; }
+    arriba.push(x.toFixed(1) + " " + clamp(yA, PY - 6, PY + PH + 6).toFixed(1));
+    abajo.push(x.toFixed(1) + " " + clamp(yB, PY - 6, PY + PH + 6).toFixed(1));
+  }
+  abajo.reverse();
+  return "M " + arriba.join(" L ") + " L " + abajo.join(" L ") + " Z";
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Medidas: lo que se cuenta en la pantalla
+   ══════════════════════════════════════════════════════════════════ */
+function canalVivo(){
+  if(O.modo === "CH2") return fuenteDe("ch2") ? "ch2" : null;
+  if(O.modo === "CH1" || O.modo === "DUAL" || O.modo === "ADD")
+    return fuenteDe("ch1") ? "ch1" : (O.modo === "DUAL" && fuenteDe("ch2") ? "ch2" : null);
+  return null;
+}
+function medir(ch){
+  var f = frecGen(), P = 1 / f, N = 720, i;
+  var mn = Infinity, mx = -Infinity, sum = 0, cua = 0;
+  for(i = 0; i < N; i++){
+    var v = valorCanal(ch, P * i / N);
+    if(v < mn) mn = v;
+    if(v > mx) mx = v;
+    sum += v; cua += v * v;
+  }
+  return {min:mn, max:mx, pp:mx - mn, med:sum / N, rms:Math.sqrt(cua / N),
+          f:f, P:P, pico:Math.max(Math.abs(mn), Math.abs(mx))};
+}
+
+function dibujarAyudas(t0){
+  while(grupoAyudas.firstChild) grupoAyudas.removeChild(grupoAyudas.firstChild);
+  var ch = canalVivo();
+  if(!ch || !O.pot || O.modo === "XY"){ grupoAyudas.setAttribute("opacity", "0"); return; }
+  grupoAyudas.setAttribute("opacity", "1");
+  var m = medir(ch), vdiv = vdivDe(ch), pos = posDe(ch);
+  var yA = PY + PH / 2 - (m.max / vdiv + pos) * DIV;
+  var yB = PY + PH / 2 - (m.min / vdiv + pos) * DIV;
+  var divAlto = m.pp / vdiv;
+  var g = grupoAyudas;
+  var col = "#ffd479";
+  /* alto */
+  var xa = PX + 46;
+  E(g, "line", {x1:PX, y1:yA, x2:PX + PW, y2:yA, stroke:col, "stroke-width":.8,
+                "stroke-dasharray":"3 4", opacity:".55"});
+  E(g, "line", {x1:PX, y1:yB, x2:PX + PW, y2:yB, stroke:col, "stroke-width":.8,
+                "stroke-dasharray":"3 4", opacity:".55"});
+  E(g, "line", {x1:xa, y1:yA, x2:xa, y2:yB, stroke:col, "stroke-width":1.3});
+  E(g, "path", {d:"M " + (xa - 4) + " " + (yA + 6) + " L " + xa + " " + yA + " L " + (xa + 4) + " " + (yA + 6),
+                fill:"none", stroke:col, "stroke-width":1.3});
+  E(g, "path", {d:"M " + (xa - 4) + " " + (yB - 6) + " L " + xa + " " + yB + " L " + (xa + 4) + " " + (yB - 6),
+                fill:"none", stroke:col, "stroke-width":1.3});
+  var et = TX(g, xa + 8, (yA + yB) / 2 + 4, coma(divAlto, 1) + " div",
+              {"font-size":11, fill:col, "font-weight":600});
+  et.setAttribute("paint-order", "stroke");
+  et.setAttribute("stroke", "#04080699");
+  et.setAttribute("stroke-width", "3");
+  /* ancho de un ciclo */
+  var tdiv = TDIV[O.t];
+  var anchoPx = (m.P / tdiv) * DIV;
+  if(anchoPx > 6 && anchoPx < PW * 1.4){
+    var yl = PY + PH - 34;
+    E(g, "line", {x1:PX + 20, y1:yl, x2:PX + 20 + anchoPx, y2:yl, stroke:col, "stroke-width":1.3});
+    E(g, "line", {x1:PX + 20, y1:yl - 6, x2:PX + 20, y2:yl + 6, stroke:col, "stroke-width":1.3});
+    E(g, "line", {x1:PX + 20 + anchoPx, y1:yl - 6, x2:PX + 20 + anchoPx, y2:yl + 6,
+                  stroke:col, "stroke-width":1.3});
+    var e2 = TX(g, PX + 24 + anchoPx / 2, yl - 10, coma(m.P / tdiv, 1) + " div",
+                {"font-size":11, fill:col, "font-weight":600, "text-anchor":"middle"});
+    e2.setAttribute("paint-order", "stroke");
+    e2.setAttribute("stroke", "#04080699");
+    e2.setAttribute("stroke-width", "3");
+  }
+  /* nivel de disparo */
+  var yn = PY + PH / 2 - (nivelDisparo() / vdivDe(O.trigFuente) + posDe(O.trigFuente)) * DIV;
+  if(yn > PY - 4 && yn < PY + PH + 4){
+    E(g, "path", {d:"M " + (PX + 2) + " " + (yn - 5) + " L " + (PX + 11) + " " + yn +
+                     " L " + (PX + 2) + " " + (yn + 5) + " Z", fill:"#ff8f6b", opacity:".9"});
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Refrescos de texto
+   ══════════════════════════════════════════════════════════════════ */
+var elCuenta = document.getElementById("cuenta");
+var elValores = document.getElementById("valores");
+var elPract = document.getElementById("pract");
+
+function refrescar(){
+  recalcularMedias();
+  vent.v1.textContent = fmtVolt(VDIV[O.v1]) + "/div";
+  vent.v2.textContent = fmtVolt(VDIV[O.v2]) + "/div";
+  vent.t.textContent = fmtTiempo(TDIV[O.t]) + "/div";
+  BOTONES.forEach(function(f){ f(); });
+
+  /* el generador */
+  if(G.pot){
+    displayFrec.textContent = fmtFrec(frecGen());
+    displayFrec.setAttribute("fill", "#ff5f45");
+    displayPer.textContent = "T = " + fmtSeg(1 / frecGen());
+    displayAmp.textContent = G.salida ? coma(ampGen(), 2) + " Vpp" : "salida cortada";
+    displayOff.textContent = "continua  " + (offGen() >= 0 ? "+" : "−") +
+                             coma(Math.abs(offGen()), 2) + " V" +
+                             (G.aten ? "   ·   −20 dB" : "");
+  }else{
+    displayFrec.textContent = "—"; displayFrec.setAttribute("fill", "#3a1c18");
+    displayPer.textContent = ""; displayAmp.textContent = ""; displayOff.textContent = "";
+  }
+  dibujarPrevia();
+  textoMedidas();
+  revisarPractica();
+}
+
+function dibujarPrevia(){
+  if(!G.pot || !G.salida){ previa.setAttribute("d", ""); return; }
+  var pts = [], N = 160, i, A = 22;
+  var mx = Math.max(1e-9, ampGen() / 2 + Math.abs(offGen()));
+  for(i = 0; i <= N; i++){
+    var t = (2 / frecGen()) * i / N;
+    var v = senalSalida(t) / mx;
+    pts.push((230 + 176 * i / N).toFixed(1) + " " + (224 - v * A).toFixed(1));
+  }
+  previa.setAttribute("d", "M " + pts.join(" L "));
+}
+
+function textoMedidas(){
+  var ch = canalVivo();
+  if(!O.pot){
+    elCuenta.innerHTML = '<p class="apagado">El osciloscopio está apagado.</p>';
+    elValores.innerHTML = ""; return;
+  }
+  if(O.modo === "XY"){
+    elCuenta.innerHTML = '<p>En <b>X-Y</b> no hay base de tiempo: el canal 1 corre el haz a lo ' +
+      'ancho y el canal 2 a lo alto. La figura que aparece compara las dos señales en frecuencia ' +
+      'y en fase.</p>';
+    elValores.innerHTML = ""; return;
+  }
+  if(!ch){
+    elCuenta.innerHTML = '<p class="apagado">No llega señal al canal que está en pantalla. ' +
+      'Enchufá un cable desde la salida del generador.</p>';
+    elValores.innerHTML = ""; return;
+  }
+  var m = medir(ch), vdiv = vdivDe(ch), tdiv = TDIV[O.t];
+  var dAlto = m.pp / vdiv, dAncho = m.P / tdiv;
+  var acopl = ch === "ch1" ? O.ac1 : O.ac2;
+  var aviso = "";
+  if(dAlto > 8) aviso = '<p style="color:var(--warn)">La onda es más alta que la pantalla: ' +
+    'bajá la sensibilidad girando VOLTS/DIV hacia números más grandes.</p>';
+  else if(dAlto < 0.5) aviso = '<p style="color:var(--warn)">La onda es muy chica para medirla ' +
+    'bien: subí la sensibilidad hacia números más chicos.</p>';
+  if(buscarDisparo() === null && O.trigModo === "AUTO")
+    aviso += '<p style="color:var(--warn)">La imagen corre porque el nivel de disparo quedó ' +
+      'fuera de la señal. Movelo hasta que se encienda el piloto DISPARADO.</p>';
+
+  elCuenta.innerHTML =
+    '<p>La onda ocupa <b>' + coma(dAlto, 1) + ' divisiones</b> de alto. Con la llave en <b>' +
+      fmtVolt(vdiv) + '/div</b>: ' + coma(dAlto, 1) + ' × ' + fmtVolt(vdiv) + ' = <b>' +
+      coma(m.pp, 2) + ' Vpp</b>.</p>' +
+    '<p>Un ciclo entra en <b>' + coma(dAncho, 1) + ' divisiones</b>. Con la base de tiempo en <b>' +
+      fmtTiempo(tdiv) + '/div</b>: ' + coma(dAncho, 1) + ' × ' + fmtTiempo(tdiv) + ' = <b>' +
+      fmtSeg(m.P) + '</b>, o sea <b>' + fmtFrec(m.f) + '</b>.</p>' +
+    (acopl === "CA" ? '<p style="color:var(--soft)">El canal está en CA, así que la continua ' +
+      'de la señal no se ve: la onda queda centrada en el cero.</p>' : "") + aviso;
+
+  var vals = [["Vpp", coma(m.pp, 2) + " V"], ["V pico", coma(m.pico, 2) + " V"],
+              ["V eficaz", coma(m.rms, 2) + " V"], ["V medio", coma(m.med, 2) + " V"],
+              ["Período", fmtSeg(m.P)], ["Frecuencia", fmtFrec(m.f)]];
+  elValores.innerHTML = vals.map(function(v){
+    return '<div class="val"><span>' + v[0] + '</span><b>' + v[1] + '</b></div>';
+  }).join("");
+}
+
+/* ---- práctica guiada ---- */
+function revisarPractica(){
+  var conectado = fuenteDe("ch1") === "gen.out";
+  var f = frecGen(), m = null;
+  if(conectado) m = medir("ch1");
+  var dAlto = m ? m.pp / VDIV[O.v1] : 0;
+  var dAncho = m ? m.P / TDIV[O.t] : 0;
+  var ok = {
+    conectado: conectado,
+    senoidal: G.func === "seno",
+    mil: f > 1900 && f < 2105,
+    seisvpp: Math.abs(ampGen() - 4) < 0.28 && G.salida && G.pot,
+    alto: conectado && dAlto >= 3.9 && dAlto <= 7.1,
+    ancho: conectado && dAncho >= 3.28 && dAncho <= 5.1,
+    firme: O.trigModo === "NORM" && buscarDisparo() !== null && O.pot
+  };
+  var lis = elPract.querySelectorAll("li"), i;
+  for(i = 0; i < lis.length; i++)
+    lis[i].classList.toggle("ok", !!ok[lis[i].getAttribute("data-p")]);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   Arranque
+   ══════════════════════════════════════════════════════════════════ */
+armarOsciloscopio();
+armarGenerador();
+
+function cablesIniciales(){
+  CABLES.length = 0; proximoColor = 0;
+  nuevoCable("gen.out", {jack:"osc.ch1"});
+  nuevoCable("gen.sinc", {jack:"osc.ch2"});
+  pintarCables();
+}
+cablesIniciales();
+
+document.getElementById("ayudas").addEventListener("change", function(ev){
+  ayudasOn = ev.target.checked;
+});
+document.getElementById("bCables").addEventListener("click", function(){
+  CABLES.length = 0; pintarCables(); refrescar();
+});
+document.getElementById("bReset").addEventListener("click", function(){
+  reset();
+  cablesIniciales();
+  redibujarTodo();
+});
+
+/* al reiniciar hay que volver a girar las perillas; la manera más simple y
+   segura es rearmar los dos frentes desde cero */
+function redibujarTodo(){
+  var hijosO = Array.prototype.slice.call(svgOsc.childNodes);
+  hijosO.forEach(function(n){ if(n.tagName !== "defs") svgOsc.removeChild(n); });
+  while(svgGen.firstChild) svgGen.removeChild(svgGen.firstChild);
+  BOTONES.length = 0;
+  JACKS = {};
+  armarOsciloscopio();
+  armarGenerador();
+  pintarCables();
+  refrescar();
+}
+
+var reobs = window.ResizeObserver ? new ResizeObserver(function(){ pintarCables(); }) : null;
+if(reobs) reobs.observe(mesa);
+window.addEventListener("resize", pintarCables);
+window.addEventListener("load", pintarCables);
+
+var cuadro = 0;
+function bucle(ahora){
+  dibujarPantalla(ahora);
+  if((cuadro++ % 20) === 0){ textoMedidas(); revisarPractica(); }
+  requestAnimationFrame(bucle);
+}
+refrescar();
+requestAnimationFrame(bucle);
+
+})();
+</script>
+<script src="/assets/js/starfield.js?v=2"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
