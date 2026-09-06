@@ -1719,13 +1719,13 @@ function tomarPunta(cab, extremo, ev){
   if(cab[extremo].jack) cab[extremo] = {x:p.x, y:p.y};
   arrastreCable = {cable:cab, extremo:extremo};
   try{ mesa.setPointerCapture(ev.pointerId); }catch(e){}
-  pintarCables();
+  moverCable(cab);
 }
 mesa.addEventListener("pointermove", function(ev){
   if(!arrastreCable) return;
   var p = ptBanco(ev);
   arrastreCable.cable[arrastreCable.extremo] = {x:p.x, y:p.y};
-  pintarCables();
+  moverCable(arrastreCable.cable);
 });
 function soltar(ev){
   if(!arrastreCable) return;
@@ -1757,12 +1757,10 @@ function soltar(ev){
 mesa.addEventListener("pointerup", soltar);
 mesa.addEventListener("pointercancel", soltar);
 
-function enchufe(par, x, y, dir, cable, extremo){
-  /* el enchufe está dibujado apuntando hacia abajo; se lo gira hasta que mire
-     para donde sale el cable */
-  var ang = Math.atan2(dir.y, dir.x) * 180 / Math.PI - 90;
-  var g = E(par, "g", {style:"pointer-events:auto;cursor:grab;touch-action:none",
-                       transform:"translate(" + x + " " + y + ") rotate(" + ang.toFixed(2) + ")"});
+/* El enchufe se dibuja apuntando hacia abajo y en el origen; después se lo
+   lleva a su lugar y se lo gira con una transformación. */
+function enchufe(par, cable, extremo){
+  var g = E(par, "g", {style:"pointer-events:auto;cursor:grab;touch-action:none"});
   var i;
   E(g, "rect", {x:-11, y:-2, width:22, height:10, rx:2, fill:"url(#gMetal)",
                 stroke:"#22262c", "stroke-width":.9});
@@ -1778,53 +1776,84 @@ function enchufe(par, x, y, dir, cable, extremo){
   return g;
 }
 
+function un(v){ return Math.round(v * 10) / 10; }
+
+/* Por dónde va el cable: el recorrido y hacia dónde miran las dos puntas. */
+function recorrido(c){
+  var A = puntoDe(c.a), B = puntoDe(c.b);
+  var dA = dirDe(c.a), dB = dirDe(c.b);
+  var A2 = {x:A.x + 34 * dA.x, y:A.y + 34 * dA.y};
+  var B2 = {x:B.x + 34 * dB.x, y:B.y + 34 * dB.y};
+  var d = Math.hypot(B2.x - A2.x, B2.y - A2.y);
+  /* el cable siempre es un poco más largo que la distancia, y ese sobrante es
+     el que se descuelga */
+  var largo = 70 + d * 1.32;
+  var holgura = Math.max(0, largo - d);
+  /* `salida` es cuánto sigue el cable la dirección del conector antes de
+     doblar; `peso` es cuánto lo tira la gravedad para abajo */
+  var salida = Math.min(200, 30 + holgura * 0.5);
+  var peso = Math.min(170, 26 + holgura * 0.42);
+  var latA = 0, latB = 0;
+  var mismo = Math.abs(dA.x - dB.x) < 0.01 && Math.abs(dA.y - dB.y) < 0.01;
+  var dy = Math.abs(B2.y - A2.y), dx = Math.abs(B2.x - A2.x);
+  if(mismo && Math.abs(dA.y) > 0.9 && dy > dx * 1.2 && dy > 120){
+    /* los dos cuelgan para el mismo lado y el tramo es casi vertical: se le da
+       panza para un costado, como se acomoda un cable sobre un frente */
+    var lado = (A2.x + B2.x) / 2 < BW / 2 ? -1 : 1;
+    latA = latB = lado * Math.min(130, dy * 0.3);
+  }else if(Math.abs(dA.y) > 0.9 && Math.abs(dB.y) > 0.9 && !mismo &&
+           dx < 160 && dy > 420){
+    /* dos módulos de la misma columna, con otro en el medio: el cable pasa por
+       el costado en vez de por encima */
+    latA = latB = -Math.min(210, dy * 0.24);
+  }
+  var c1 = {x:A2.x + salida * dA.x + latA,
+            y:A2.y + salida * dA.y + peso * (1 - Math.abs(dA.y) * 0.55)};
+  var c2 = {x:B2.x + salida * dB.x + latB,
+            y:B2.y + salida * dB.y + peso * (1 - Math.abs(dB.y) * 0.55)};
+  return {
+    d: "M " + un(A2.x) + " " + un(A2.y) + " C " + un(c1.x) + " " + un(c1.y) + ", " +
+       un(c2.x) + " " + un(c2.y) + ", " + un(B2.x) + " " + un(B2.y),
+    ta: "translate(" + un(A.x) + " " + un(A.y) + ") rotate(" +
+        un(Math.atan2(dA.y, dA.x) * 180 / Math.PI - 90) + ")",
+    tb: "translate(" + un(B.x) + " " + un(B.y) + ") rotate(" +
+        un(Math.atan2(dB.y, dB.x) * 180 / Math.PI - 90) + ")"
+  };
+}
+
+/* Sólo cambia el recorrido: cinco atributos, nada de crear ni destruir. */
+function moverCable(c){
+  if(!c.dom) return;
+  var r = recorrido(c);
+  c.dom.sombra.setAttribute("d", r.d);
+  c.dom.funda.setAttribute("d", r.d);
+  c.dom.brillo.setAttribute("d", r.d);
+  c.dom.pa.setAttribute("transform", r.ta);
+  c.dom.pb.setAttribute("transform", r.tb);
+}
+
+/* Rehace todos los cables. Se llama sólo cuando cambia el conjunto: al
+   enchufar, al desenchufar o al armar un ejemplo. Mientras se arrastra una
+   punta no se pasa por acá. */
 function pintarCables(){
   while(svgCab.firstChild) svgCab.removeChild(svgCab.firstChild);
-  var i;
-  for(i = 0; i < CABLES.length; i++){
+  for(var i = 0; i < CABLES.length; i++){
     var c = CABLES[i];
-    var A = puntoDe(c.a), B = puntoDe(c.b);
-    var dA = dirDe(c.a), dB = dirDe(c.b);
-    var A2 = {x:A.x + 34 * dA.x, y:A.y + 34 * dA.y};
-    var B2 = {x:B.x + 34 * dB.x, y:B.y + 34 * dB.y};
-    var d = Math.hypot(B2.x - A2.x, B2.y - A2.y);
-    /* un cable de banco mide alrededor de un metro: siempre sobra tramo, y ese
-       sobrante es el que se descuelga */
-    var largo = 70 + d * 1.32;
-    var holgura = Math.max(0, largo - d);
-    /* `salida` es cuánto sigue el cable la dirección del conector antes de
-       doblar; `peso` es cuánto lo tira la gravedad para abajo */
-    var salida = Math.min(200, 30 + holgura * 0.5);
-    var peso = Math.min(170, 26 + holgura * 0.42);
-    var latA = 0, latB = 0;
-    var mismo = Math.abs(dA.x - dB.x) < 0.01 && Math.abs(dA.y - dB.y) < 0.01;
-    var dy = Math.abs(B2.y - A2.y), dx = Math.abs(B2.x - A2.x);
-    if(mismo && Math.abs(dA.y) > 0.9 && dy > dx * 1.2 && dy > 120){
-      /* los dos cuelgan para el mismo lado y el tramo es casi vertical: se le
-         da panza para un costado, como se acomoda un cable sobre un frente */
-      var lado = (A2.x + B2.x) / 2 < BW / 2 ? -1 : 1;
-      latA = latB = lado * Math.min(130, dy * 0.3);
-    }else if(Math.abs(dA.y) > 0.9 && Math.abs(dB.y) > 0.9 && !mismo &&
-             dx < 160 && dy > 420){
-      /* dos módulos de la misma columna, con otro en el medio: el cable pasa
-         por el costado en vez de por encima */
-      latA = latB = -Math.min(210, dy * 0.24);
-    }
-    var c1 = {x:A2.x + salida * dA.x + latA,
-              y:A2.y + salida * dA.y + peso * (1 - Math.abs(dA.y) * 0.55)};
-    var c2 = {x:B2.x + salida * dB.x + latB,
-              y:B2.y + salida * dB.y + peso * (1 - Math.abs(dB.y) * 0.55)};
-    var dd = "M " + A2.x + " " + A2.y + " C " + c1.x + " " + c1.y + ", " +
-             c2.x + " " + c2.y + ", " + B2.x + " " + B2.y;
     var g = E(svgCab, "g", {});
-    E(g, "path", {d:dd, fill:"none", stroke:"#000", "stroke-opacity":".45", "stroke-width":11,
-                  "stroke-linecap":"round", transform:"translate(0,3)"});
-    E(g, "path", {d:dd, fill:"none", stroke:c.color.jac, "stroke-width":9,
-                  "stroke-linecap":"round"});
-    E(g, "path", {d:dd, fill:"none", stroke:c.color.luz, "stroke-opacity":".55",
-                  "stroke-width":2.4, "stroke-linecap":"round", transform:"translate(-1.5,-1.7)"});
-    enchufe(g, A.x, A.y, dA, c, "a");
-    enchufe(g, B.x, B.y, dB, c, "b");
+    c.dom = {
+      g: g,
+      sombra: E(g, "path", {fill:"none", stroke:"#000", "stroke-opacity":".45",
+                            "stroke-width":11, "stroke-linecap":"round",
+                            transform:"translate(0,3)"}),
+      funda:  E(g, "path", {fill:"none", stroke:c.color.jac, "stroke-width":9,
+                            "stroke-linecap":"round"}),
+      brillo: E(g, "path", {fill:"none", stroke:c.color.luz, "stroke-opacity":".55",
+                            "stroke-width":2.4, "stroke-linecap":"round",
+                            transform:"translate(-1.5,-1.7)"}),
+      pa: enchufe(g, c, "a"),
+      pb: enchufe(g, c, "b")
+    };
+    moverCable(c);
   }
 }
 
