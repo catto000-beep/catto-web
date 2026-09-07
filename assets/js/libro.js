@@ -183,10 +183,30 @@ function armarLibro(origen){
     }
     return mejor;
   }
-  /* sólo se parten los párrafos: una fórmula o un recuadro se mudan
-     enteros a la página siguiente */
+  /* Los párrafos se cortan por palabras. Una fórmula o una tabla se mudan
+     enteras. Y una lista o un recuadro que no entran ni en una página
+     vacía se parten por sus renglones, que es lo único sensato. */
   function sePuedePartir(el){
     return el.tagName === "P" && !el.querySelector("img,svg,table,math");
+  }
+  function recortarHijos(el, desde, hasta){
+    var hijos = Array.prototype.slice.call(el.children), i;
+    for(i = hijos.length - 1; i >= 0; i--)
+      if(i < desde || i >= hasta) el.removeChild(hijos[i]);
+    return el;
+  }
+  function cuantosHijosEntran(el, hueco, alto){
+    var n = el.children.length, lo = 1, hi = n - 1, mejor = 0;
+    while(lo <= hi){
+      var mid = (lo + hi) >> 1;
+      var prueba = el.cloneNode(true);
+      recortarHijos(prueba, 0, mid);
+      hueco.appendChild(prueba);
+      var entra = hueco.scrollHeight <= alto;
+      hueco.removeChild(prueba);
+      if(entra){ mejor = mid; lo = mid + 1; } else { hi = mid - 1; }
+    }
+    return mejor;
   }
 
   function repartir(){
@@ -198,11 +218,21 @@ function armarLibro(origen){
     var alto = hueco.clientHeight;
 
     var paginas = [], actual = [];
-    function cerrar(){
+    /* Un subtítulo solo al pie queda huérfano, así que se va con su texto
+       a la página siguiente. Se hace al cerrar y no después: moviendo el
+       subtítulo con la página ya armada, la de destino rebalsaba y el
+       texto de abajo quedaba cortado. */
+    function cerrar(arrastrarTitulo){
       if(!actual.length) return;
+      var colgado = null;
+      if(arrastrarTitulo && actual.length > 1){
+        var ult = actual[actual.length - 1];
+        if(/^H[234]$/.test(ult.tagName)) colgado = actual.pop();
+      }
       paginas.push(actual);
       actual = [];
       hueco.innerHTML = "";
+      if(colgado){ hueco.appendChild(colgado); actual.push(colgado); }
     }
 
     Array.prototype.slice.call(fuente.children).forEach(function(b){
@@ -215,34 +245,47 @@ function armarLibro(origen){
         if(sePuedePartir(pendiente)){
           var total = contarPalabras(pendiente);
           var corte = cuantasEntran(pendiente, total, hueco, alto);
-          /* no vale la pena partir por tres palabras: queda una viuda fea */
-          if(corte >= 6 && total - corte >= 6){
+          /* Una viuda de tres palabras al empezar la página queda fea, pero
+             mandar el párrafo entero por eso deja media página en blanco.
+             Se baja el corte hasta que abajo queden seis palabras. */
+          if(corte > total - 6) corte = total - 6;
+          if(corte >= 6){
             var cabeza = pendiente.cloneNode(true); recortar(cabeza, 0, corte);
             var cola   = pendiente.cloneNode(true); recortar(cola, corte, total);
             cola.className = (cola.className ? cola.className + " " : "") + "lb-sigue";
             hueco.appendChild(cabeza);
             actual.push(cabeza);
-            cerrar();
+            cerrar(false);
             pendiente = cola;
             continue;
           }
         }
-        if(actual.length){ cerrar(); continue; }   /* que lo intente en una página limpia */
-        hueco.appendChild(pendiente);              /* no entra ni sola: se deja igual */
+        if(actual.length){ cerrar(true); continue; }   /* que lo intente en una página limpia */
+
+        /* No entra ni en una página vacía. Si tiene renglones propios
+           —una lista, un recuadro— se parte por ahí. */
+        if(pendiente.children.length >= 2){
+          var cuantos = cuantosHijosEntran(pendiente, hueco, alto);
+          if(cuantos >= 1 && cuantos < pendiente.children.length){
+            var arriba = recortarHijos(pendiente.cloneNode(true), 0, cuantos);
+            var abajo  = recortarHijos(pendiente.cloneNode(true), cuantos,
+                                       pendiente.children.length);
+            abajo.className = (abajo.className ? abajo.className + " " : "") + "lb-sigue";
+            if(abajo.tagName === "OL")
+              abajo.setAttribute("start", (parseInt(pendiente.getAttribute("start") || 1, 10)) + cuantos);
+            hueco.appendChild(arriba);
+            actual.push(arriba);
+            cerrar(false);
+            pendiente = abajo;
+            continue;
+          }
+        }
+        hueco.appendChild(pendiente);              /* último recurso: se deja igual */
         actual.push(pendiente);
         pendiente = null;
       }
     });
-    cerrar();
-
-    /* un subtítulo solo al pie queda huérfano: se va con su texto */
-    for(var i = 0; i < paginas.length - 1; i++){
-      var ult = paginas[i][paginas[i].length - 1];
-      if(ult && /^H[234]$/.test(ult.tagName) && paginas[i].length > 1){
-        paginas[i].pop();
-        paginas[i + 1].unshift(ult);
-      }
-    }
+    cerrar(false);
 
     hojasCaja.removeChild(molde);
     PAGINAS = paginas;
