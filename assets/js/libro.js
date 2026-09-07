@@ -189,11 +189,28 @@ function armarLibro(origen){
   function sePuedePartir(el){
     return el.tagName === "P" && !el.querySelector("img,svg,table,math");
   }
+  function esTitulo(el){ return /^H[234]$/.test(el.tagName); }
   function recortarHijos(el, desde, hasta){
     var hijos = Array.prototype.slice.call(el.children), i;
     for(i = hijos.length - 1; i >= 0; i--)
       if(i < desde || i >= hasta) el.removeChild(hijos[i]);
     return el;
+  }
+  /* Cuántas palabras del primer renglón entran, con el contenedor puesto.
+     Hace falta cuando un solo renglón de la lista es más alto que la
+     página: partir por renglones no alcanza y el texto quedaba cortado. */
+  function cuantasEntranEnElPrimero(el, total, hueco, alto){
+    var lo = 1, hi = total - 1, mejor = 0;
+    while(lo <= hi){
+      var mid = (lo + hi) >> 1;
+      var prueba = recortarHijos(el.cloneNode(true), 0, 1);
+      recortar(prueba.children[0], 0, mid);
+      hueco.appendChild(prueba);
+      var entra = hueco.scrollHeight <= alto;
+      hueco.removeChild(prueba);
+      if(entra){ mejor = mid; lo = mid + 1; } else { hi = mid - 1; }
+    }
+    return mejor;
   }
   function cuantosHijosEntran(el, hueco, alto){
     var n = el.children.length, lo = 1, hi = n - 1, mejor = 0;
@@ -227,7 +244,7 @@ function armarLibro(origen){
       var colgado = null;
       if(arrastrarTitulo && actual.length > 1){
         var ult = actual[actual.length - 1];
-        if(/^H[234]$/.test(ult.tagName)) colgado = actual.pop();
+        if(esTitulo(ult)) colgado = actual.pop();
       }
       paginas.push(actual);
       actual = [];
@@ -260,12 +277,36 @@ function armarLibro(origen){
             continue;
           }
         }
-        if(actual.length){ cerrar(true); continue; }   /* que lo intente en una página limpia */
+        /* Si en la página no hay más que el subtítulo, abrir otra la dejaría
+           con el título solo y el texto recién en la de al lado. En ese caso
+           el bloque se parte acá mismo, aunque entrara entero en la
+           siguiente. */
+        var soloTitulos = actual.length > 0 && actual.every(esTitulo);
+        if(actual.length && !soloTitulos){ cerrar(true); continue; }
 
-        /* No entra ni en una página vacía. Si tiene renglones propios
-           —una lista, un recuadro— se parte por ahí. */
-        if(pendiente.children.length >= 2){
-          var cuantos = cuantosHijosEntran(pendiente, hueco, alto);
+        /* Si tiene renglones propios —una lista, un recuadro— se parte
+           por ahí. Y si ni el primer renglón entra, se lo parte por
+           palabras dejando el resto de los renglones para después. */
+        if(pendiente.children.length >= 1){
+          var cuantos = pendiente.children.length >= 2
+                      ? cuantosHijosEntran(pendiente, hueco, alto) : 0;
+          if(cuantos === 0 && !pendiente.querySelector("img,svg,table,math")){
+            var totalR = contarPalabras(pendiente.children[0]);
+            var corteR = totalR > 12 ? cuantasEntranEnElPrimero(pendiente, totalR, hueco, alto) : 0;
+            if(corteR > totalR - 6) corteR = totalR - 6;
+            if(corteR >= 6){
+              var cabezaR = recortarHijos(pendiente.cloneNode(true), 0, 1);
+              recortar(cabezaR.children[0], 0, corteR);
+              var colaR = pendiente.cloneNode(true);
+              recortar(colaR.children[0], corteR, totalR);
+              colaR.className = (colaR.className ? colaR.className + " " : "") + "lb-sigue";
+              hueco.appendChild(cabezaR);
+              actual.push(cabezaR);
+              cerrar(false);
+              pendiente = colaR;
+              continue;
+            }
+          }
           if(cuantos >= 1 && cuantos < pendiente.children.length){
             var arriba = recortarHijos(pendiente.cloneNode(true), 0, cuantos);
             var abajo  = recortarHijos(pendiente.cloneNode(true), cuantos,
@@ -280,6 +321,9 @@ function armarLibro(origen){
             continue;
           }
         }
+        /* no se pudo partir: la página del título solo es peor que nada,
+           pero cortar el texto lo es más */
+        if(actual.length){ cerrar(false); continue; }
         hueco.appendChild(pendiente);              /* último recurso: se deja igual */
         actual.push(pendiente);
         pendiente = null;
