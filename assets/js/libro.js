@@ -73,6 +73,7 @@ function armarLibro(origen){
   btSig.textContent = "Siguiente ›";
   btCorrido.textContent = "Ver como texto corrido";
   cuenta.textContent = "—";
+  btAnt.disabled = btSig.disabled = true;   /* hasta que el libro se arme */
   mando.appendChild(btAnt); mando.appendChild(cuenta);
   mando.appendChild(btSig); mando.appendChild(btCorrido);
 
@@ -405,6 +406,7 @@ function armarLibro(origen){
 
   function pintarMando(){
     var total = PAGINAS.length, texto;
+    if(!total){ cuenta.textContent = "—"; btAnt.disabled = btSig.disabled = true; return; }
     if(modoSola){
       texto = "Página " + Math.min(vueltas + 1, total) + " de " + total;
     }else{
@@ -658,6 +660,7 @@ function armarLibro(origen){
       r:desde
     };
     libro.classList.add("lb-agarrando");
+    escuchaVentana(true);
     try{ libro.setPointerCapture(ev.pointerId); }catch(e){}
     pintarVuelta(viva, arrastre.r, arrastre.mano);
     ev.preventDefault();
@@ -677,6 +680,7 @@ function armarLibro(origen){
     var a = arrastre;
     arrastre = null;
     ultimoSoltar = Date.now();
+    escuchaVentana(false);
     libro.classList.remove("lb-agarrando");
 
     /* un toque sin arrastrar pasa la hoja entera, como un clic de toda la vida */
@@ -699,11 +703,17 @@ function armarLibro(origen){
   libro.addEventListener("pointermove", cuidarAsomo);
   libro.addEventListener("pointerleave", bajarAsomo);
   libro.addEventListener("pointerdown", tomarHoja);
-  /* el seguimiento va en la ventana y no en el libro: si el cursor se va
-     afuera mientras se arrastra, la hoja lo sigue igual */
-  window.addEventListener("pointermove", moverHoja);
-  window.addEventListener("pointerup", soltarHoja);
-  window.addEventListener("pointercancel", soltarHoja);
+  /* El seguimiento va en la ventana y no en el libro, para que la hoja
+     siga al cursor aunque se vaya afuera. Pero se engancha recién al
+     agarrar y se suelta al terminar: dejarlo puesto hacía que cada
+     movimiento del ratón en toda la página pasara por acá, y esta
+     página tiene un banco de instrumentos con cables que se arrastran. */
+  function escuchaVentana(prender){
+    var f = prender ? "addEventListener" : "removeEventListener";
+    window[f]("pointermove", moverHoja);
+    window[f]("pointerup", soltarHoja);
+    window[f]("pointercancel", soltarHoja);
+  }
   /* El clic que viene detrás de soltar ya está atendido por el arrastre:
      sin esto, la hoja se pasaría dos veces. */
   libro.addEventListener("click", function(ev){
@@ -726,18 +736,18 @@ function armarLibro(origen){
     libro.style.display = alLibro ? "" : "none";
     btAnt.hidden = btSig.hidden = cuenta.hidden = !alLibro;
     btCorrido.textContent = alLibro ? "Ver como texto corrido" : "Volver al libro";
-    if(alLibro) rehacer();
+    if(alLibro){ construir(); rehacer(); }
   });
 
-  window.addEventListener("scroll", function(){ cajaLibro = null; }, true);
   window.addEventListener("resize", function(){
     if(window.innerWidth === anchoAntes) return;
     anchoAntes = window.innerWidth;
     clearTimeout(reloj);
-    reloj = setTimeout(rehacer, 220);
+    reloj = setTimeout(function(){ mirarSiSeVe(); rehacer(); }, 220);
   });
 
   function rehacer(){
+    if(!armado) return;
     if(libro.style.display === "none") return;   /* está mostrando el texto corrido */
     var pagina = modoSola ? vueltas : vueltas * 2;
     repartir();
@@ -746,8 +756,57 @@ function armarLibro(origen){
     armar();
   }
 
-  repartir();
-  armar();
+  /* ── El libro existe sólo cuando está a la vista ────────────────
+     Cada hoja lleva dos caras con transformación 3D y cara oculta, y el
+     navegador les da una capa de composición a cada una. Doce páginas
+     son dos docenas de capas vivas. En una página cualquiera eso no se
+     nota; en ésta, donde el banco de instrumentos redibuja los trazos
+     sesenta veces por segundo y los cables se arrastran con el ratón, la
+     página entera se ponería pesada. Así que el libro se arma cuando
+     asoma por la ventana y se desarma cuando se va lejos: mientras se
+     trabaja en el banco, no hay ni una hoja en el documento. */
+  var armado = false;
+
+  function construir(){
+    if(armado) return;
+    armado = true;
+    if(!PAGINAS.length) repartir();
+    armar();
+  }
+  function desarmar(){
+    if(!armado || animando || arrastre) return;
+    quitarAsomoYa();
+    hojasCaja.innerHTML = "";
+    sueloIzq.innerHTML = "";
+    HOJAS = [];
+    armado = false;
+  }
+
+  /* Se mira con la posición en pantalla y no con IntersectionObserver: el
+     observador no entrega nada mientras la pestaña está en segundo plano,
+     y ahí el libro no se armaría nunca. */
+  var relojVista = null;
+  function mirarSiSeVe(){
+    var c = libro.getBoundingClientRect();
+    if(c.bottom > -400 && c.top < window.innerHeight + 400) construir();
+    else desarmar();
+  }
+  function vigilar(){
+    cajaLibro = null;
+    if(relojVista) return;
+    relojVista = setTimeout(function(){ relojVista = null; mirarSiSeVe(); }, 150);
+  }
+  /* Los dos mecanismos a la vez, que ninguno es infalible: el observador
+     no entrega nada en una pestaña de fondo, y el scroll no se oye si la
+     página la mueve otra cosa. Con cualquiera de los dos alcanza. */
+  window.addEventListener("scroll", vigilar, {capture:true, passive:true});
+  if(window.IntersectionObserver){
+    new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting) construir(); else desarmar(); });
+    }, {rootMargin:"400px 0px"}).observe(libro);
+  }
+  mirarSiSeVe();
+
   /* La tipografía llega por la red y cambia el alto de los renglones:
      hay que repartir de nuevo cuando termina de cargar. */
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(rehacer);
