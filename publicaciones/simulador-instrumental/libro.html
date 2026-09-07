@@ -151,7 +151,9 @@
 .suelo a{font-size:13.5px;color:#e0c89a}
 
 /* zonas de clic */
-.zona{position:absolute;top:0;bottom:0;width:50%;z-index:500;cursor:pointer;background:none;border:0}
+.zona{position:absolute;top:0;bottom:0;width:50%;z-index:500;background:none;border:0;
+  cursor:grab;touch-action:none}
+.libro.agarrando .zona{cursor:grabbing}
 .zona.izq{left:0}
 .zona.der{left:50%}
 .zona:disabled{pointer-events:none}
@@ -172,6 +174,7 @@
 @media(max-width:820px){
   .libro{height:clamp(470px,76vh,740px);perspective:none}
   .lomo,.suelo{display:none}
+  .zona{cursor:pointer;touch-action:auto}
   .hoja{left:0;width:100%;transition:transform .5s ease,opacity .5s ease}
   .hoja.vuelta{transform:translateX(-12%);opacity:0}
   .cara{border-radius:4px}
@@ -399,6 +402,7 @@ var sombraDer = document.getElementById("sombraDer");
 var TIRAS  = 14;      /* en cuántas franjas se parte la hoja que gira */
 var CURVA  = 30;      /* cuánto se arquea el papel, en grados */
 var DURA   = 1050;    /* lo que tarda una vuelta */
+var INCLINA = 7;      /* cuánto se ladea la hoja agarrada de una punta */
 
 var PAGINAS = [];
 var HOJAS = [];
@@ -676,6 +680,7 @@ function ventana(clase, pagina, dx, ancho, sombras){
 function suave(t){
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
+function entre(v, a, b){ return v < a ? a : (v > b ? b : v); }
 
 /* El navegador no da cuadros de animación mientras la pestaña está en
    segundo plano. Con el reloj común de reserva, una vuelta empezada no
@@ -685,50 +690,61 @@ function proximoCuadro(fn){
   else requestAnimationFrame(fn);
 }
 
-function animarVuelta(viva, alDerecho, listo){
+/* ── Dónde queda la hoja para un grado de vuelta ───────────────────
+   r va de 0, la hoja quieta a la derecha, a 1, la hoja apoyada a la
+   izquierda. Lo usan igual la vuelta automática y el arrastre con el
+   ratón: el arrastre le pasa la posición del cursor y la animación la
+   va calculando sola. `mano` dice a qué altura se agarró la hoja, de
+   −1 arriba a +1 abajo, y de eso salen la inclinación y cuánto se comba
+   el papel: agarrada de una punta se dobla más que del medio. */
+function pintarVuelta(viva, r, mano){
+  var i;
+  var giro = -180 * r;
+  var comba = Math.sin(Math.PI * Math.pow(r, 0.85));
+  var arco = CURVA * (0.55 + 0.45 * Math.abs(mano)) * comba;
+  var porTira = arco / TIRAS;
+
+  viva.nodo.style.transform = "rotateZ(" + (mano * INCLINA * comba).toFixed(2) + "deg)";
+  viva.tiras[0].style.transform = "rotateY(" + (giro + porTira).toFixed(2) + "deg)";
+  for(i = 1; i < TIRAS; i++)
+    viva.tiras[i].style.transform = "rotateY(" + porTira.toFixed(3) + "deg)";
+
+  /* la franja de afuera se oscurece más: es la parte que se aleja de la
+     luz al combarse */
+  var base = 0.5 * comba;
+  for(i = 0; i < TIRAS; i++){
+    var f = base * (0.18 + 0.82 * (i / (TIRAS - 1)));
+    viva.sombras[i * 2].style.opacity = f;
+    viva.sombras[i * 2 + 1].style.opacity = f * 0.75;
+  }
+
+  /* y la sombra que la hoja levantada tira sobre la página de abajo */
+  var s = 0.85 * comba;
+  sombraDer.style.opacity = r < 0.5 ? s : 0;
+  sombraIzq.style.opacity = r >= 0.5 ? s : 0;
+}
+
+function limpiarSombras(){
+  sombraIzq.style.opacity = 0;
+  sombraDer.style.opacity = 0;
+}
+
+function animarHasta(viva, desde, hasta, mano, ms, listo){
   var t0 = null;
   function cuadro(){
     var ahora = (window.performance ? performance.now() : Date.now());
     if(t0 === null) t0 = ahora;
-    var p = Math.min(1, (ahora - t0) / DURA);
-    var q = alDerecho ? p : 1 - p;          /* de ida o de vuelta */
-    var giro = -180 * suave(q);
-    /* El arco: el borde de afuera va atrasado respecto del lomo, y el
-       atraso es máximo en la mitad del recorrido. Repartido entre las
-       tiras, el papel queda combado. */
-    var arco = CURVA * Math.sin(Math.PI * Math.pow(q, 0.85));
-    var porTira = arco / TIRAS;
-
-    viva.tiras[0].style.transform = "rotateY(" + (giro + porTira) + "deg)";
-    for(var i = 1; i < TIRAS; i++)
-      viva.tiras[i].style.transform = "rotateY(" + porTira + "deg)";
-
-    /* la franja de afuera se oscurece más: es la parte que se aleja de
-       la luz al combarse */
-    var base = 0.5 * Math.sin(Math.PI * q);
-    for(i = 0; i < TIRAS; i++){
-      var f = base * (0.18 + 0.82 * (i / (TIRAS - 1)));
-      viva.sombras[i * 2].style.opacity = f;
-      viva.sombras[i * 2 + 1].style.opacity = f * 0.75;
-    }
-
-    /* y la sombra que tira sobre la página de abajo */
-    var s = 0.85 * Math.sin(Math.PI * q);
-    sombraDer.style.opacity = q < 0.5 ? s : 0;
-    sombraIzq.style.opacity = q >= 0.5 ? s : 0;
-
-    if(p < 1){ proximoCuadro(cuadro); }
-    else{
-      sombraIzq.style.opacity = 0;
-      sombraDer.style.opacity = 0;
-      listo();
-    }
+    var p = ms <= 0 ? 1 : Math.min(1, (ahora - t0) / ms);
+    pintarVuelta(viva, desde + (hasta - desde) * suave(p), mano);
+    if(p < 1) proximoCuadro(cuadro);
+    else{ limpiarSombras(); listo(); }
   }
   proximoCuadro(cuadro);
 }
 
+/* ── Pasar una hoja de un saque ────────────────────────────────────  */
 function pasar(d){
-  if(animando) return;
+  if(animando || arrastre) return;
   var n = HOJAS.length, tope = modoSola ? n - 1 : n;
   if(d > 0 && vueltas >= tope) return;
   if(d < 0 && vueltas <= 0) return;
@@ -745,24 +761,99 @@ function pasar(d){
     return;
   }
 
-  var ancho = hoja.getBoundingClientRect().width;
+  var viva = construirViva(i, hoja.getBoundingClientRect().width);
+  libro.appendChild(viva.nodo);
+  hoja.style.visibility = "hidden";
+  animarHasta(viva, d > 0 ? 0 : 1, d > 0 ? 1 : 0, 0, DURA, function(){
+    libro.removeChild(viva.nodo);
+    vueltas += d;
+    ordenar();
+    hoja.style.visibility = "";
+    pintarMando();
+    animando = false;
+  });
+}
+
+/* ── Pasar la hoja con la mano ─────────────────────────────────────
+   Se agarra la hoja donde caiga el cursor y desde ahí sigue al ratón:
+   la distancia al lomo, medida en anchos de página, es el grado de
+   vuelta. Al soltar, si pasó del medio se completa sola y si no vuelve
+   a su lugar, que es lo que hace una hoja de papel. */
+var arrastre = null, ultimoSoltar = 0;
+
+function tomarHoja(ev){
+  if(modoSola || animando || arrastre) return;
+  if(ev.button !== undefined && ev.button !== 0) return;
+
+  var caja = libro.getBoundingClientRect();
+  var lomoX = caja.left + caja.width / 2;
+  var ancho = caja.width / 2;
+  var adelante = ev.clientX >= lomoX;
+  var tope = HOJAS.length;
+  if(adelante && vueltas >= tope) return;
+  if(!adelante && vueltas <= 0) return;
+
+  var i = adelante ? vueltas : vueltas - 1;
+  var hoja = HOJAS[i];
   var viva = construirViva(i, ancho);
   libro.appendChild(viva.nodo);
   hoja.style.visibility = "hidden";
 
-  /* el estado final se deja puesto ya: al terminar sólo hay que destapar
-     la hoja quieta y no hay ningún salto */
-  vueltas += d;
-  ordenar();
-  hoja.style.visibility = "hidden";
-  pintarMando();
+  arrastre = {
+    viva:viva, hoja:hoja, adelante:adelante, lomoX:lomoX, ancho:ancho,
+    x0:ev.clientX, corrido:0,
+    mano:entre((ev.clientY - (caja.top + caja.height / 2)) / (caja.height / 2), -1, 1),
+    r:adelante ? 0 : 1
+  };
+  libro.classList.add("agarrando");
+  try{ libro.setPointerCapture(ev.pointerId); }catch(e){}
+  pintarVuelta(viva, arrastre.r, arrastre.mano);
+  ev.preventDefault();
+}
 
-  animarVuelta(viva, d > 0, function(){
-    libro.removeChild(viva.nodo);
-    hoja.style.visibility = "";
+function moverHoja(ev){
+  if(!arrastre) return;
+  arrastre.corrido = Math.max(arrastre.corrido, Math.abs(ev.clientX - arrastre.x0));
+  /* +1 en el borde de afuera derecho, 0 en el lomo, −1 en el izquierdo */
+  var u = (ev.clientX - arrastre.lomoX) / arrastre.ancho;
+  arrastre.r = entre((1 - u) / 2, 0, 1);
+  pintarVuelta(arrastre.viva, arrastre.r, arrastre.mano);
+}
+
+function soltarHoja(){
+  if(!arrastre) return;
+  var a = arrastre;
+  arrastre = null;
+  ultimoSoltar = Date.now();
+  libro.classList.remove("agarrando");
+
+  /* un toque sin arrastrar pasa la hoja entera, como un clic de toda la vida */
+  var apenasUnClic = a.corrido < 6;
+  var pasa = apenasUnClic ? true : (a.adelante ? a.r >= 0.42 : a.r <= 0.58);
+  var destino = a.adelante ? (pasa ? 1 : 0) : (pasa ? 0 : 1);
+  var falta = Math.abs(destino - a.r);
+  var ms = Math.max(240, DURA * falta * 0.95);
+
+  animando = true;
+  animarHasta(a.viva, a.r, destino, a.mano, ms, function(){
+    libro.removeChild(a.viva.nodo);
+    if(pasa){ vueltas += a.adelante ? 1 : -1; ordenar(); pintarMando(); }
+    a.hoja.style.visibility = "";
     animando = false;
   });
 }
+
+libro.addEventListener("pointerdown", tomarHoja);
+/* el seguimiento va en la ventana y no en el libro: si el cursor se va
+   afuera mientras se arrastra, la hoja lo sigue igual y no queda pegada */
+window.addEventListener("pointermove", moverHoja);
+window.addEventListener("pointerup", soltarHoja);
+window.addEventListener("pointercancel", soltarHoja);
+/* El clic que viene detrás de soltar ya está atendido por el arrastre:
+   sin esto, la hoja se pasaría dos veces. */
+libro.addEventListener("click", function(ev){
+  if(Date.now() - ultimoSoltar < 400){ ev.stopPropagation(); ev.preventDefault(); }
+}, true);
 
 zonaDer.addEventListener("click", function(){ pasar(1); });
 zonaIzq.addEventListener("click", function(){ pasar(-1); });
