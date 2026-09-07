@@ -1,0 +1,211 @@
+/* ══════════════════════════════════════════════════════════════════
+   catto.ar — Texto largo compuesto como un libro
+   ------------------------------------------------------------------
+   Convierte un bloque de texto corrido en un libro que se hojea: papel
+   blanco, composición al modo de LaTeX y vuelta de hoja que arquea el
+   papel. Lo maneja assets/js/libro.js, que trabaja sobre cualquier
+   elemento marcado con data-libro.
+
+   Todas las clases van con prefijo lb- para no cruzarse con las del
+   sitio, que usa nombres cortos como .cara o .box en otras cosas.
+   ══════════════════════════════════════════════════════════════════ */
+
+.lb-caja{margin:26px 0 10px}
+.lb-caja[hidden]{display:none}
+
+/* ---- el mueble ----
+   El libro apoyado: la tapa oscura asoma apenas por los cuatro lados y
+   el lomo hunde el centro. Todo lo demás es papel.
+
+   Proporción de libro: cada página es vez y media más alta que ancha,
+   así que el pliego abierto mide 1,4 de ancho por 1 de alto. El alto
+   manda y el ancho sale de él; al revés, en una pantalla ancha el libro
+   quedaba más ancho que largo, como un folleto. */
+.lb-libro{
+  --lb-alto:min(72vh,780px);
+  position:relative;margin:0 auto;user-select:none;
+  width:min(100%, calc(var(--lb-alto) * 1.4));
+  aspect-ratio:1.4 / 1;
+  perspective:2800px;perspective-origin:50% 40%;
+}
+.lb-tapa{
+  position:absolute;inset:-9px -11px;border-radius:8px;
+  background:linear-gradient(180deg,#2a2018,#1b1510);
+  box-shadow:0 30px 70px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.lb-lomo{
+  position:absolute;top:0;bottom:0;left:50%;width:52px;margin-left:-26px;
+  background:linear-gradient(90deg,rgba(0,0,0,0) 0%,rgba(60,42,26,.30) 34%,
+             rgba(35,24,14,.55) 50%,rgba(60,42,26,.30) 66%,rgba(0,0,0,0) 100%);
+  z-index:400;pointer-events:none;
+}
+.lb-hojas{position:absolute;inset:0;transform-style:preserve-3d}
+
+/* ---- las hojas quietas ----
+   Mientras nadie pasa una página son dos caras planas. La hoja que se
+   está dando vuelta se arma aparte, en tiras, y se descarta al terminar:
+   tener todas las hojas en tiras sería copiar el texto cien veces. */
+.lb-hoja{
+  position:absolute;top:0;bottom:0;left:50%;width:50%;
+  transform-origin:left center;transform-style:preserve-3d;
+}
+.lb-hoja.lb-vuelta{transform:rotateY(-180deg)}
+.lb-cara{
+  position:absolute;inset:0;backface-visibility:hidden;overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 0% 50%, rgba(0,0,0,.055) 0%, rgba(0,0,0,0) 38%),
+    linear-gradient(#fdfcf8,#f7f4ec);
+}
+.lb-cara.lb-frente{box-shadow:inset 15px 0 26px -18px rgba(70,52,30,.75)}
+.lb-cara.lb-dorso{transform:rotateY(180deg);box-shadow:inset -15px 0 26px -18px rgba(70,52,30,.75)}
+
+/* ---- la caja de texto, al modo de LaTeX ---- */
+.lb-hueco{
+  position:absolute;inset:0;padding:44px 52px 46px;overflow:hidden;
+  font-family:"Computer Modern Serif","Latin Modern Roman",Georgia,"Times New Roman",serif;
+  font-size:16.5px;line-height:1.46;color:#14161a;
+  text-align:justify;hyphens:auto;-webkit-hyphens:auto;
+  /* este Computer Modern de la red trae mal los glifos de ligadura:
+     "fila" salía dibujada como "4la". Sin ligaduras, las letras salen bien. */
+  font-variant-ligatures:none;font-feature-settings:"liga" 0,"clig" 0,"dlig" 0;
+}
+.lb-hueco > *:first-child{margin-top:0}
+.lb-hueco p{margin:0;text-indent:1.5em}
+/* en composición clásica, el primer párrafo de una sección no lleva sangría */
+.lb-hueco h2 + p, .lb-hueco h3 + p, .lb-hueco h4 + p,
+.lb-hueco .lb-titulo + p, .lb-hueco .form + p, .lb-hueco .box + p{text-indent:0}
+.lb-hueco p.lb-sigue{text-indent:0}   /* viene de la página anterior */
+.lb-hueco h2, .lb-hueco h3, .lb-hueco h4{
+  font-weight:700;text-indent:0;text-align:left;color:#0c0e12;line-height:1.25;
+  margin:1.15em 0 .35em;
+}
+.lb-hueco h2{font-size:19px}
+.lb-hueco h3{font-size:17.5px}
+.lb-hueco h4{font-size:16px}
+.lb-hueco .lb-num{margin-right:.5em}
+.lb-hueco b, .lb-hueco strong{font-weight:700;color:#000}
+.lb-hueco i, .lb-hueco em{font-style:italic}
+.lb-hueco a{color:#1f4f8f;text-decoration:none;border-bottom:1px solid rgba(31,79,143,.35)}
+.lb-hueco ul, .lb-hueco ol{list-style:none;padding-left:1.6em;margin:.55em 0}
+.lb-hueco li{margin:.28em 0;position:relative;text-indent:0}
+.lb-hueco ul > li::before{content:"•";position:absolute;left:-1em;color:#444}
+.lb-hueco ol{counter-reset:lbli}
+.lb-hueco ol > li::before{counter-increment:lbli;content:counter(lbli) ".";
+  position:absolute;left:-1.4em;color:#444;font-size:.92em}
+
+/* ---- lo que venía recuadrado sigue recuadrado ----
+   En el sitio, las fórmulas y los avisos van en una caja con filete de
+   color a la izquierda. En el papel del libro se conserva la caja: si el
+   original destacaba algo con un recuadro, acá también. */
+.lb-hueco .form, .lb-hueco .box{
+  display:block;text-indent:0;margin:.9em 0;padding:9px 14px;
+  background:#f2eee3;border:1px solid #d8d0be;border-left:3px solid #8a6a3a;
+  border-radius:5px;overflow-x:auto;
+}
+.lb-hueco .form{text-align:center;font-size:1.02em;line-height:1.4}
+.lb-hueco .form span{display:block;font-size:.8em;font-style:italic;color:#4a4f57;margin-top:.3em}
+.lb-hueco .box{text-align:justify}
+.lb-hueco .box > *:first-child{margin-top:0}
+.lb-hueco .box > *:last-child{margin-bottom:0}
+.lb-hueco .box p{text-indent:0}
+.lb-hueco .box .bt{font-weight:700;color:#000;margin-bottom:.3em;display:block}
+.lb-hueco figure{margin:.9em 0;text-align:center}
+.lb-hueco figcaption{font-size:.82em;font-style:italic;color:#4a4f57;margin-top:.35em;text-align:center}
+.lb-hueco table{width:100%;border-collapse:collapse;font-size:.92em;margin:.9em 0}
+.lb-hueco th, .lb-hueco td{border:1px solid #d8d0be;padding:4px 7px;text-align:left}
+.lb-hueco th{background:#f2eee3;font-weight:700}
+
+/* la portada del texto, con su filete */
+.lb-hueco .lb-titulo{text-align:center;text-indent:0;margin:0 0 1.6em}
+.lb-hueco .lb-titulo h2{font-size:25px;font-weight:700;margin:.2em 0 .35em;color:#000;text-align:center}
+.lb-hueco .lb-titulo .lb-filete{width:120px;height:1px;background:#2a2e35;margin:.7em auto}
+.lb-hueco .lb-titulo p{font-size:13.5px;font-style:italic;color:#4a4f57;text-indent:0;margin:0}
+
+.lb-folio{
+  position:absolute;left:0;right:0;bottom:16px;text-align:center;
+  font-family:"Computer Modern Serif",Georgia,serif;font-size:13px;color:#5a6068;
+}
+
+/* ---- la hoja que se está dando vuelta ----
+   Una cadena de tiras, cada una colgada de la anterior. Girando cada una
+   un poquito, la suma dibuja un arco: eso es lo que hace que se lea como
+   papel y no como un cartón que gira entero. */
+.lb-viva{
+  position:absolute;top:0;bottom:0;left:50%;width:50%;
+  transform-origin:left center;transform-style:preserve-3d;z-index:900;
+  pointer-events:none;
+}
+.lb-tira{
+  position:absolute;top:0;bottom:0;
+  transform-origin:left center;transform-style:preserve-3d;
+}
+.lb-ventana{
+  position:absolute;top:0;bottom:0;left:0;right:0;
+  overflow:hidden;backface-visibility:hidden;
+}
+.lb-ventana.lb-dorso{transform:rotateY(180deg)}
+.lb-ventana .lb-lamina{position:absolute;top:0;bottom:0}
+.lb-ventana .lb-sombra{position:absolute;inset:0;background:#241a10;opacity:0;pointer-events:none}
+/* la sombra que la hoja levantada tira sobre la página de abajo */
+.lb-sombraMesa{
+  position:absolute;top:0;bottom:0;width:50%;z-index:300;pointer-events:none;
+  background:linear-gradient(90deg,rgba(20,14,8,0) 0%,rgba(20,14,8,.55) 100%);
+  opacity:0;
+}
+.lb-sombraMesa.lb-izq{left:0}
+.lb-sombraMesa.lb-der{left:50%;background:linear-gradient(270deg,rgba(20,14,8,0) 0%,rgba(20,14,8,.55) 100%)}
+
+/* ---- lo que se ve debajo de las hojas ----
+   También es papel. A la izquierda vive la primera página, que no está
+   en ninguna hoja: así el libro arranca abierto y con texto de los dos
+   lados, en vez de abrir contra una guarda oscura. A la derecha queda la
+   guarda del final, papel en blanco como en cualquier libro. */
+.lb-suelo{
+  position:absolute;top:0;bottom:0;width:50%;z-index:0;overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 100% 50%, rgba(0,0,0,.055) 0%, rgba(0,0,0,0) 38%),
+    linear-gradient(#fdfcf8,#f7f4ec);
+}
+.lb-suelo.lb-izq{left:0;box-shadow:inset -15px 0 26px -18px rgba(70,52,30,.75)}
+.lb-suelo.lb-der{left:50%;box-shadow:inset 15px 0 26px -18px rgba(70,52,30,.75)}
+
+/* zonas de clic y de agarre */
+.lb-zona{position:absolute;top:0;bottom:0;width:50%;z-index:500;background:none;border:0;
+  cursor:grab;touch-action:none}
+.lb-zona.lb-izq{left:0}
+.lb-zona.lb-der{left:50%}
+.lb-zona:disabled{pointer-events:none}
+.lb-zona:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
+.lb-libro.lb-agarrando .lb-zona{cursor:grabbing}
+
+.lb-mando{display:flex;align-items:center;justify-content:center;gap:14px;
+  margin-top:22px;flex-wrap:wrap}
+.lb-mando button{
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  color:var(--txt);font:inherit;font-size:13.5px;padding:7px 14px;cursor:pointer;
+}
+.lb-mando button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.lb-mando button:disabled{opacity:.42;cursor:default}
+.lb-mando .lb-cuenta{font-size:12.5px;color:var(--muted);min-width:140px;text-align:center}
+/* El texto paginado no se puede buscar con Ctrl+F ni enlazar por dentro,
+   así que siempre queda a mano la versión corrida. */
+.lb-corrido{background:none!important;border:0!important;color:var(--accent)!important;
+  text-decoration:underline;padding:7px 4px!important;font-size:12.5px!important}
+
+/* En pantalla angosta no entra un pliego: va una página sola al ancho
+   completo y la hoja se corre de costado, que con una sola página se ve
+   mejor que media vuelta en el aire. */
+@media(max-width:820px){
+  .lb-libro{width:100%;aspect-ratio:auto;height:clamp(470px,76vh,740px);perspective:none}
+  .lb-lomo,.lb-suelo{display:none}
+  .lb-zona{cursor:pointer;touch-action:auto}
+  .lb-hoja{left:0;width:100%;transition:transform .5s ease,opacity .5s ease}
+  .lb-hoja.lb-vuelta{transform:translateX(-12%);opacity:0}
+  .lb-cara{border-radius:4px}
+  .lb-cara.lb-frente,.lb-cara.lb-dorso{box-shadow:none}
+  .lb-cara.lb-dorso{display:none}
+  .lb-hueco{padding:30px 26px 40px;font-size:16px;text-align:left}
+}
+@media(prefers-reduced-motion:reduce){
+  .lb-hoja{transition:none}
+}
