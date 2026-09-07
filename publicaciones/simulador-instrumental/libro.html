@@ -399,10 +399,10 @@ var zonaDer = document.getElementById("zonaDer");
 var sombraIzq = document.getElementById("sombraIzq");
 var sombraDer = document.getElementById("sombraDer");
 
-var TIRAS  = 14;      /* en cuántas franjas se parte la hoja que gira */
-var CURVA  = 30;      /* cuánto se arquea el papel, en grados */
+var TIRAS  = 16;      /* en cuántas franjas se parte la hoja que gira */
+var CURVA  = 62;      /* cuánto se pliega el papel, en grados */
+var CIERRE = 1.7;     /* cuánto se cierra el pliegue hacia el borde de afuera */
 var DURA   = 1050;    /* lo que tarda una vuelta */
-var INCLINA = 7;      /* cuánto se ladea la hoja agarrada de una punta */
 
 var PAGINAS = [];
 var HOJAS = [];
@@ -641,7 +641,9 @@ function construirViva(indice, ancho){
   for(i = 0; i < TIRAS; i++){
     var tira = document.createElement("div");
     tira.className = "tira";
-    tira.style.width = w + "px";
+    /* cada franja va un pelo más ancha de lo que le toca: con el pliegue
+       cerrado, entre una y otra se abriría una costura de un píxel */
+    tira.style.width = (w + 0.8) + "px";
     tira.style.left = (i === 0 ? 0 : w) + "px";
 
     tira.appendChild(ventana("frente", indice * 2,     -i * w, ancho, sombras));
@@ -651,7 +653,23 @@ function construirViva(indice, ancho){
     padre = tira;
     tiras.push(tira);
   }
-  return {nodo:viva, tiras:tiras, sombras:sombras};
+
+  /* Cuánto del pliegue total le toca a cada franja, y cuánto lleva
+     doblado el papel al llegar a ella. Lo segundo es para la sombra: se
+     oscurece lo que ya se dobló, no la franja por estar más afuera. */
+  var pesos = [], suma = 0;
+  for(i = 0; i < TIRAS; i++){
+    var t = (i + 1) / TIRAS;
+    var w = Math.pow(t, CIERRE);
+    pesos.push(w); suma += w;
+  }
+  var reparto = [], acumulado = [], corrido = 0;
+  for(i = 0; i < TIRAS; i++){
+    reparto.push(pesos[i] / suma);
+    corrido += reparto[i];
+    acumulado.push(corrido);
+  }
+  return {nodo:viva, tiras:tiras, sombras:sombras, reparto:reparto, acumulado:acumulado};
 }
 
 function ventana(clase, pagina, dx, ancho, sombras){
@@ -700,20 +718,22 @@ function proximoCuadro(fn){
 function pintarVuelta(viva, r, mano){
   var i;
   var giro = -180 * r;
-  var comba = Math.sin(Math.PI * Math.pow(r, 0.85));
-  var arco = CURVA * (0.55 + 0.45 * Math.abs(mano)) * comba;
-  var porTira = arco / TIRAS;
+  var comba = Math.sin(Math.PI * Math.pow(r, 0.72));
+  var arco = CURVA * (0.72 + 0.28 * Math.abs(mano)) * comba;
 
-  viva.nodo.style.transform = "rotateZ(" + (mano * INCLINA * comba).toFixed(2) + "deg)";
-  viva.tiras[0].style.transform = "rotateY(" + (giro + porTira).toFixed(2) + "deg)";
+  /* El pliegue no se reparte parejo. Junto al lomo el papel está casi
+     plano, porque ahí lo sujeta la encuadernación, y se va cerrando
+     hacia el borde suelto, que es donde una hoja de verdad se enrosca.
+     La hoja no se ladea: girarla entera la despegaba del libro. */
+  viva.tiras[0].style.transform = "rotateY(" + (giro + arco * viva.reparto[0]).toFixed(2) + "deg)";
   for(i = 1; i < TIRAS; i++)
-    viva.tiras[i].style.transform = "rotateY(" + porTira.toFixed(3) + "deg)";
+    viva.tiras[i].style.transform = "rotateY(" + (arco * viva.reparto[i]).toFixed(3) + "deg)";
 
   /* la franja de afuera se oscurece más: es la parte que se aleja de la
      luz al combarse */
-  var base = 0.5 * comba;
+  var base = 0.56 * comba;
   for(i = 0; i < TIRAS; i++){
-    var f = base * (0.18 + 0.82 * (i / (TIRAS - 1)));
+    var f = base * (0.14 + 0.86 * viva.acumulado[i]);
     viva.sombras[i * 2].style.opacity = f;
     viva.sombras[i * 2 + 1].style.opacity = f * 0.75;
   }
