@@ -110,6 +110,15 @@
     background:var(--panel2);border:1px solid var(--line);color:var(--soft)}
   ol.pract li.ok{color:#dbe6dd}
   ol.pract li.ok::before{content:"✓";background:rgba(63,185,80,.16);border-color:var(--ok);color:var(--ok)}
+  .caja select.selPract{width:100%;margin:0 0 10px;padding:7px 9px;font:inherit;font-size:13px;
+    background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:9px}
+  .caja select.selPract:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .caja p.pract-int{margin:0 0 8px;font-size:13px;color:var(--muted)}
+  .caja p.pract-fin{margin:10px 0 0;font-size:12.5px;color:var(--soft)}
+  .caja p.pract-fin.listo{color:var(--ok)}
+  .practDeNuevo{margin-top:8px;background:none;border:0;padding:0;font:inherit;font-size:12px;
+    color:var(--accent);cursor:pointer;text-decoration:underline}
+  .practDeNuevo[hidden]{display:none}
 
   .texto{max-width:80ch}
   .texto p{font-size:14.5px;color:#cdd6df}
@@ -212,14 +221,18 @@
     </div>
     <div class="caja">
       <h3>Práctica guiada</h3>
-      <ol class="pract" id="pract">
-        <li data-p="dbl">Armá la <b>DBL-PS</b>: moduladora al <b>X</b>, portadora al <b>Y</b>, y la <b>W</b> a un canal del osciloscopio A.</li>
-        <li data-p="am">Convertila en <b>AM</b>: sumale la portadora y llevá la <b>S</b> al otro canal.</li>
-        <li data-p="ae">Enchufá el <b>analizador</b> a la AM y ajustá el centro para ver las rayas.</li>
-        <li data-p="rbw">Bajá el <b>ancho de banda de resolución</b> hasta que las tres rayas se separen.</li>
-        <li data-p="bls">Sacá la <b>banda lateral superior</b> con el pasa-altos y llevala al osciloscopio B.</li>
-        <li data-p="bli">Sacá la <b>inferior</b> con el pasa-bajos y llevala al otro canal del B.</li>
-      </ol>
+      <select class="selPract" id="selPract" aria-label="Elegir la práctica">
+        <option value="lectura">1 · Traer una señal y medirla</option>
+        <option value="cero">2 · El cero, la continua y el acoplamiento</option>
+        <option value="dos">3 · Dos señales en la misma pantalla</option>
+        <option value="formas">4 · Las formas de onda del generador</option>
+        <option value="xy">5 · Modo X-Y y las figuras de Lissajous</option>
+        <option value="mod">6 · Modulación: DBL-PS, AM y banda lateral</option>
+      </select>
+      <p class="pract-int" id="practInt"></p>
+      <ol class="pract" id="pract"></ol>
+      <p class="pract-fin" id="practFin"></p>
+      <button class="practDeNuevo" id="practDeNuevo" type="button" title="Borra las marcas y deja el banco como al principio">Empezar de nuevo</button>
     </div>
   </div>
 </section>
@@ -2352,36 +2365,256 @@ function textoEspectro(){
     quees + '</p>' + ancho + resto + sep;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   Las prácticas guiadas
+   ──────────────────────────────────────────────────────────────────
+   Cada paso trae una condición que se mira contra el estado del banco
+   en cada refresco. No hay botón de "corregir": el paso se marca solo
+   cuando el equipo quedó como pide la consigna, que es lo que pasa
+   frente al instrumento de verdad. Las cinco primeras son el manejo
+   básico de un osciloscopio y un generador; la última es la de
+   modulación, que necesita toda la mesa.
+   ══════════════════════════════════════════════════════════════════ */
 function esSalidaGen(j){ return j === "gen1.out" || j === "gen2.out"; }
 function algunCanal(o, jack){
   return fuenteDe(o, "ch1") === jack || fuenteDe(o, "ch2") === jack;
 }
-function revisarPractica(){
-  var x = FUENTE["mul.x"], y = FUENTE["mul.y"];
-  var hayMul = esSalidaGen(x) && esSalidaGen(y) && x !== y;
-  var dbl = hayMul && algunCanal("a", "mul.w");
-  var a = FUENTE["sum.a"], b = FUENTE["sum.b"], am = false, port = null;
-  if(a === "mul.w" || b === "mul.w"){
-    port = (a === "mul.w") ? b : a;
-    am = hayMul && esSalidaGen(port) && (port === x || port === y) && algunCanal("a", "sum.s");
-  }
-  var fmod = 0, n;
-  for(n = 1; n <= 2; n++) if(GEN[n].pot) fmod = fmod ? Math.min(fmod, frecGen(n)) : frecGen(n);
-  var ok = {
-    dbl: dbl,
-    am: am,
-    ae: FUENTE["ae.in"] === "sum.s" && ESPECTRO.length > 0 &&
-        centroAE() > iniAE() && ESPECTRO.some(function(L){
-          return L.f > iniAE() && L.f < finAE() && L.A > 0.05;
-        }),
-    rbw: rbwAE() <= fmod / 2 && fmod > 0,
-    bls: FUENTE["hpf.in"] === "mul.w" && algunCanal("b", "hpf.out"),
-    bli: FUENTE["lpf.in"] === "mul.w" && algunCanal("b", "lpf.out")
-  };
-  var lis = elPract.querySelectorAll("li"), i;
-  for(i = 0; i < lis.length; i++)
-    lis[i].classList.toggle("ok", !!ok[lis[i].getAttribute("data-p")]);
+
+/* La medida que ya calculó el refresco, y sólo si ese canal es el que está
+   en pantalla: así las prácticas no vuelven a recorrer la onda entera cada
+   vez que se mueve una perilla. */
+function medidaPract(o, ch){
+  return canalVivo(o) === ch ? (medidaCache[o] || null) : null;
 }
+function divAlto(o, ch){
+  var m = medidaPract(o, ch);
+  return m ? m.pp / vdivDe(o, ch) : 0;
+}
+function ciclosEnPantalla(o, ch){
+  var m = medidaPract(o, ch);
+  return (m && m.P > 0) ? (10 * TDIV[OSC[o].t]) / m.P : 0;
+}
+function razonGens(){
+  var f1 = frecGen(1);
+  return f1 > 0 ? frecGen(2) / f1 : 0;
+}
+function divGenEn(n, ch){ return ampGen(n) / vdivDe("a", ch); }
+function corridoEnDiv(){ return Math.abs(offGen(1)) / vdivDe("a", "ch1"); }
+function gen1EnCh1(){ return FUENTE["oscA.ch1"] === "gen1.out"; }
+
+/* ---- la de modulación, que era la única que había ---- */
+function hayProducto(){
+  var x = FUENTE["mul.x"], y = FUENTE["mul.y"];
+  return esSalidaGen(x) && esSalidaGen(y) && x !== y;
+}
+function hayAm(){
+  if(!hayProducto()) return false;
+  var a = FUENTE["sum.a"], b = FUENTE["sum.b"];
+  if(a !== "mul.w" && b !== "mul.w") return false;
+  var port = (a === "mul.w") ? b : a;
+  return esSalidaGen(port) && (port === FUENTE["mul.x"] || port === FUENTE["mul.y"]) &&
+         algunCanal("a", "sum.s");
+}
+function frecModuladora(){
+  var f = 0, n;
+  for(n = 1; n <= 2; n++) if(GEN[n].pot) f = f ? Math.min(f, frecGen(n)) : frecGen(n);
+  return f;
+}
+
+var PRACTICAS = [
+{ id:"lectura", titulo:"Traer una señal y medirla",
+  intro:"Lo primero que se hace frente a un osciloscopio: traer la señal, encuadrarla, y recién " +
+        "entonces leerla.",
+  fin:"Con la onda encuadrada, las divisiones y las dos llaves dan la amplitud y el período sin " +
+      "ningún otro instrumento. El recuadro de la izquierda hace esa misma cuenta.",
+  pasos:[
+   {t:'Enchufá la <b>salida del generador 1</b> en el <b>canal 1</b> del osciloscopio A.',
+    ok:function(){ return gen1EnCh1(); }},
+   {t:'Llevá el generador a <b>5 kHz</b>: el dial en 0,5 y el multiplicador en <b>×10k</b>.',
+    ok:function(){ return Math.abs(frecGen(1) - 5000) < 60; }},
+   {t:'Subí la <b>amplitud</b> hasta dejarla entre <b>8 y 12 Vpp</b>.',
+    ok:function(){ return GEN[1].salida && ampGen(1) >= 7.8 && ampGen(1) <= 12.2; }},
+   {t:'Mové <b>VOLTS/DIV</b> hasta que la onda ocupe entre <b>4 y 6 divisiones</b> de alto.',
+    ok:function(){ var d = divAlto("a", "ch1"); return d >= 4 && d <= 6; }},
+   {t:'Mové <b>TIME/DIV</b> hasta que entren entre <b>2 y 4 ciclos</b> en la pantalla.',
+    ok:function(){ var c = ciclosEnPantalla("a", "ch1"); return c >= 2 && c <= 4; }},
+   {t:'Dejá la imagen quieta: el <b>nivel de disparo</b> tiene que caer dentro de la onda.',
+    ok:function(){ return gen1EnCh1() && disparoCache.a !== null; }}
+  ]},
+
+{ id:"cero", titulo:"El cero, la continua y el acoplamiento",
+  intro:"El osciloscopio mide contra un cero que uno elige. La llave de acoplamiento y la " +
+        "posición vertical son las que lo fijan.",
+  fin:"En CA el instrumento le resta la continua a la señal antes de dibujarla. Sirve para ver " +
+      "una ondulación chica montada sobre una tensión grande, y engaña si lo que se busca es " +
+      "justamente el valor medio.",
+  pasos:[
+   {t:'Con el generador 1 en el canal 1, poné el acoplamiento en <b>⏚</b> y centrá la traza con ' +
+      'la <b>posición vertical</b>: ésa es la línea de <b>cero volts</b>.',
+    ok:function(){ return gen1EnCh1() && OSC.a.ac1 === "GND" && Math.abs(OSC.a.pos1) < 0.3; }},
+   {t:'Volvé a <b>CC</b> y subí el <b>OFFSET</b> del generador hasta correr la onda <b>2 ' +
+      'divisiones</b> o más.',
+    ok:function(){ return gen1EnCh1() && OSC.a.ac1 === "CC" && corridoEnDiv() >= 1.8; }},
+   {t:'Mirá <b>V medio</b> en el recuadro de la izquierda: vale lo que corriste. Ahora pasá el ' +
+      'acoplamiento a <b>CA</b> y la onda vuelve al cero.',
+    ok:function(){ return OSC.a.ac1 === "CA" && corridoEnDiv() >= 1.8; }},
+   {t:'Volvé a <b>CC</b> y bajá el offset hasta <b>cero</b>: así queda el instrumento para medir ' +
+      'tensiones continuas.',
+    ok:function(){ return OSC.a.ac1 === "CC" && Math.abs(offGen(1)) < 0.4; }}
+  ]},
+
+{ id:"dos", titulo:"Dos señales en la misma pantalla",
+  intro:"El segundo canal sirve para comparar. Lo que decide si la imagen queda quieta es de " +
+        "cuál de los dos se toma el disparo.",
+  fin:"El disparo se toma de la señal más lenta, o de la que manda en el circuito. Tomándolo de " +
+      "la rápida, la lenta se pasea por la pantalla porque cada barrido la agarra en otro punto.",
+  pasos:[
+   {t:'Dejá el generador 1 en el canal 1 y enchufá el <b>generador 2</b> en el <b>canal 2</b>.',
+    ok:function(){ return gen1EnCh1() && FUENTE["oscA.ch2"] === "gen2.out"; }},
+   {t:'Poné la llave de modo en <b>DUAL</b> para ver los dos trazos a la vez.',
+    ok:function(){ return OSC.a.modo === "DUAL"; }},
+   {t:'Con los dos canales en la <b>misma sensibilidad</b>, bajá la amplitud del generador 2 a ' +
+      'la <b>mitad</b> de la del 1: en pantalla tiene que ocupar la mitad de divisiones.',
+    ok:function(){
+      return OSC.a.v1 === OSC.a.v2 && ampGen(1) > 0 &&
+             Math.abs(ampGen(2) / ampGen(1) - 0.5) < 0.06;
+    }},
+   {t:'Poné el generador 2 al <b>doble</b> de frecuencia que el 1: entran el doble de ciclos en ' +
+      'el mismo ancho.',
+    ok:function(){ var r = razonGens(); return r > 1.96 && r < 2.04; }},
+   {t:'Tomá el <b>disparo del CH1</b>, la señal lenta, y comprobá que las dos quedan quietas.',
+    ok:function(){ return OSC.a.trigFuente === "ch1" && disparoCache.a !== null; }}
+  ]},
+
+{ id:"formas", titulo:"Las formas de onda del generador",
+  intro:"Las tres funciones del generador y los dos controles que las deforman: la simetría y el " +
+        "atenuador.",
+  fin:"La simetría corre el vértice de la triangular hasta dejar el diente de sierra que barre " +
+      "la pantalla de un televisor. Sobre la cuadrada, ese mismo control es el ciclo de trabajo.",
+  pasos:[
+   {t:'Con el generador 1 en el canal 1, pasá la función a <b>cuadrada</b>.',
+    ok:function(){ return gen1EnCh1() && GEN[1].func === "cuad"; }},
+   {t:'Mové la <b>simetría</b> y mirá el <b>ciclo de trabajo</b>: el tiempo en alto deja de ser ' +
+      'la mitad.',
+    ok:function(){ return GEN[1].func === "cuad" && (GEN[1].sim < 0.3 || GEN[1].sim > 0.7); }},
+   {t:'Pasá a <b>triangular</b> y llevá la simetría a un extremo: queda un <b>diente de ' +
+      'sierra</b>.',
+    ok:function(){ return GEN[1].func === "tri" && (GEN[1].sim < 0.12 || GEN[1].sim > 0.88); }},
+   {t:'Volvé a <b>seno</b> y apretá el atenuador de <b>−20 dB</b>: la misma onda, diez veces más chica.',
+    ok:function(){ return GEN[1].func === "seno" && GEN[1].aten; }},
+   {t:'Compensá con <b>VOLTS/DIV</b> hasta volver a tener <b>3 divisiones</b> de alto o más.',
+    ok:function(){ return GEN[1].aten && divAlto("a", "ch1") >= 3; }}
+  ]},
+
+{ id:"xy", titulo:"Modo X-Y y las figuras de Lissajous",
+  intro:"En X-Y no hay base de tiempo: el canal 1 mueve el haz a lo ancho y el canal 2 a lo " +
+        "alto. La figura que sale delata la relación entre las dos frecuencias.",
+  fin:"Contando cuántas veces toca la figura un borde horizontal y cuántas uno vertical sale la " +
+      "relación de frecuencias. Así se medía una frecuencia desconocida contra un patrón, antes " +
+      "de que los frecuencímetros fueran baratos.",
+  pasos:[
+   {t:'Generador 1 al <b>canal 1</b> y generador 2 al <b>canal 2</b> del osciloscopio A.',
+    ok:function(){ return gen1EnCh1() && FUENTE["oscA.ch2"] === "gen2.out"; }},
+   {t:'Poné los dos generadores en la <b>misma frecuencia</b>.',
+    ok:function(){ var r = razonGens(); return r > 0.99 && r < 1.01; }},
+   {t:'Pasá la llave de modo a <b>X-Y</b>. Con las dos ondas en fase la figura es una <b>recta ' +
+      'inclinada</b>.',
+    ok:function(){ var r = razonGens(); return OSC.a.modo === "XY" && r > 0.99 && r < 1.01; }},
+   {t:'Igualá las dos sensibilidades para que la recta quede a <b>45°</b>: cada canal tiene que ' +
+      'ocupar lo mismo.',
+    ok:function(){
+      var d1 = divGenEn(1, "ch1"), d2 = divGenEn(2, "ch2");
+      return OSC.a.modo === "XY" && d1 >= 2 && d1 <= 7 && Math.abs(d1 - d2) <= 0.7;
+    }},
+   {t:'Poné el generador 2 al <b>doble</b> de frecuencia: el eje vertical hace dos ciclos ' +
+      'por cada uno del horizontal y aparece un <b>ocho parado</b>.',
+    ok:function(){ var r = razonGens(); return OSC.a.modo === "XY" && r > 1.96 && r < 2.04; }}
+  ]},
+
+{ id:"mod", titulo:"Modulación: DBL-PS, AM y banda lateral",
+  intro:"La práctica larga, la que usa toda la mesa: el multiplicador, el sumador, los dos " +
+        "filtros y el analizador de espectro.",
+  fin:"Las dos bandas laterales llevan la misma información y la portadora no lleva ninguna. " +
+      "Ése es todo el argumento de la banda lateral única.",
+  pasos:[
+   {t:'Armá la <b>DBL-PS</b>: moduladora al <b>X</b>, portadora al <b>Y</b>, y la <b>W</b> a un ' +
+      'canal del osciloscopio A.',
+    ok:function(){ return hayProducto() && algunCanal("a", "mul.w"); }},
+   {t:'Convertila en <b>AM</b>: sumale la portadora y llevá la <b>S</b> al otro canal.',
+    ok:function(){ return hayAm(); }},
+   {t:'Enchufá el <b>analizador</b> a la AM y ajustá el centro para ver las rayas.',
+    ok:function(){
+      return FUENTE["ae.in"] === "sum.s" && ESPECTRO.length > 0 && centroAE() > iniAE() &&
+        ESPECTRO.some(function(L){ return L.f > iniAE() && L.f < finAE() && L.A > 0.05; });
+    }},
+   {t:'Bajá el <b>ancho de banda de resolución</b> hasta que las tres rayas se separen.',
+    ok:function(){ var f = frecModuladora(); return f > 0 && rbwAE() <= f / 2; }},
+   {t:'Sacá la <b>banda lateral superior</b> con el pasa-altos y llevala al osciloscopio B.',
+    ok:function(){ return FUENTE["hpf.in"] === "mul.w" && algunCanal("b", "hpf.out"); }},
+   {t:'Sacá la <b>inferior</b> con el pasa-bajos y llevala al otro canal del B.',
+    ok:function(){ return FUENTE["lpf.in"] === "mul.w" && algunCanal("b", "lpf.out"); }}
+  ]}
+];
+
+var elPractInt = document.getElementById("practInt");
+var elPractFin = document.getElementById("practFin");
+var selPract = document.getElementById("selPract");
+var btDeNuevo = document.getElementById("practDeNuevo");
+var practActual = 0;
+
+/* Lo hecho queda hecho. Varios pasos son estados que se excluyen entre sí:
+   el acoplamiento no puede estar a la vez en ⏚, en CC y en CA. Si la marca
+   siguiera sólo el estado de ahora, esa práctica nunca llegaría a completarse.
+   Cada una se acuerda de sus pasos hasta que se la empieza de nuevo. */
+var PROGRESO = {};
+function logrados(id){
+  if(!PROGRESO[id]) PROGRESO[id] = [];
+  return PROGRESO[id];
+}
+
+function pintarPractica(){
+  var p = PRACTICAS[practActual], h = "", i;
+  elPractInt.textContent = p.intro;
+  for(i = 0; i < p.pasos.length; i++) h += "<li>" + p.pasos[i].t + "</li>";
+  elPract.innerHTML = h;
+  revisarPractica();
+}
+function revisarPractica(){
+  if(!elPract) return;
+  var p = PRACTICAS[practActual], hecho = logrados(p.id);
+  var lis = elPract.querySelectorAll("li"), i, cuantos = 0;
+  for(i = 0; i < lis.length && i < p.pasos.length; i++){
+    /* un paso se mira recién cuando el anterior ya está: la práctica es
+       guiada, y varios estados de arranque cumplen de casualidad una consigna
+       del final */
+    if(!hecho[i] && (i === 0 || hecho[i - 1])){
+      try{ if(p.pasos[i].ok()) hecho[i] = true; }catch(e){}
+    }
+    if(hecho[i]) cuantos++;
+    lis[i].classList.toggle("ok", !!hecho[i]);
+  }
+  btDeNuevo.hidden = (cuantos === 0);
+  if(cuantos === p.pasos.length){
+    elPractFin.className = "pract-fin listo";
+    elPractFin.innerHTML = "<b>Completa.</b> " + p.fin;
+  }else{
+    elPractFin.className = "pract-fin";
+    elPractFin.textContent = cuantos + " de " + p.pasos.length + " pasos hechos.";
+  }
+}
+/* Borrar las marcas y dejar la mesa como estaba: si el banco se queda
+   armado, las consignas se vuelven a cumplir solas y el botón no hace nada
+   visible. */
+btDeNuevo.addEventListener("click", function(){
+  PROGRESO[PRACTICAS[practActual].id] = [];
+  reset(); cablesIniciales(); armarTodo();
+  revisarPractica();
+});
+selPract.addEventListener("change", function(){
+  var i;
+  for(i = 0; i < PRACTICAS.length; i++) if(PRACTICAS[i].id === selPract.value) practActual = i;
+  pintarPractica();
+});
 
 /* ══════════════════════════════════════════════════════════════════
    Armado, ejemplos y arranque
@@ -2512,6 +2745,7 @@ armarTodo();
 cablesIniciales();
 pintarCables();
 refrescarYa();
+pintarPractica();
 
 document.getElementById("ayudas").addEventListener("change", function(ev){
   ayudasOn = ev.target.checked;
