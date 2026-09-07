@@ -138,17 +138,19 @@
 .sombraMesa.izq{left:0}
 .sombraMesa.der{left:50%;background:linear-gradient(270deg,rgba(20,14,8,0) 0%,rgba(20,14,8,.55) 100%)}
 
-/* ---- guardas: lo que se ve debajo de las hojas ---- */
+/* ---- lo que se ve debajo de las hojas ----
+   También es papel. A la izquierda vive la primera página, que no está en
+   ninguna hoja: así el libro arranca abierto y con texto de los dos
+   lados, en vez de abrir contra una guarda oscura. A la derecha queda la
+   guarda del final, papel en blanco como en cualquier libro. */
 .suelo{
-  position:absolute;top:0;bottom:0;width:50%;z-index:0;display:grid;place-items:center;
-  text-align:center;padding:30px;
-  background:linear-gradient(180deg,#241b13,#191209);
+  position:absolute;top:0;bottom:0;width:50%;z-index:0;overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 100% 50%, rgba(0,0,0,.055) 0%, rgba(0,0,0,0) 38%),
+    linear-gradient(#fdfcf8,#f7f4ec);
 }
-.suelo.izq{left:0}
-.suelo.der{left:50%}
-.suelo p{margin:0;font-size:13.5px;color:#9b8a72}
-.suelo .raya{width:54px;height:1px;background:#7a6650;margin:13px auto}
-.suelo a{font-size:13.5px;color:#e0c89a}
+.suelo.izq{left:0;box-shadow:inset -15px 0 26px -18px rgba(70,52,30,.75)}
+.suelo.der{left:50%;box-shadow:inset 15px 0 26px -18px rgba(70,52,30,.75)}
 
 /* zonas de clic */
 .zona{position:absolute;top:0;bottom:0;width:50%;z-index:500;background:none;border:0;
@@ -207,14 +209,8 @@
 
   <div class="libro" id="libro">
     <div class="tapa"></div>
-    <div class="suelo izq"></div>
-    <div class="suelo der">
-      <div>
-        <p>Fin del texto.</p>
-        <div class="raya"></div>
-        <a href="/publicaciones/simulador-instrumental">Volver al banco →</a>
-      </div>
-    </div>
+    <div class="suelo izq" id="sueloIzq"></div>
+    <div class="suelo der"></div>
     <div class="hojas" id="hojas"></div>
     <div class="sombraMesa izq" id="sombraIzq"></div>
     <div class="sombraMesa der" id="sombraDer"></div>
@@ -397,6 +393,7 @@ var btSig   = document.getElementById("btSig");
 var zonaIzq = document.getElementById("zonaIzq");
 var zonaDer = document.getElementById("zonaDer");
 var sombraIzq = document.getElementById("sombraIzq");
+var sueloIzq  = document.getElementById("sueloIzq");
 var sombraDer = document.getElementById("sombraDer");
 
 var TIRAS  = 16;      /* en cuántas franjas se parte la hoja que gira */
@@ -580,22 +577,36 @@ function armarCara(clase, indice){
 }
 
 function armar(){
+  quitarAsomoYa();
   hojas.innerHTML = "";
   HOJAS = [];
   modoSola = unaSola();
   /* Con el pliego de dos páginas, cada hoja lleva dos caras. Con una sola
      página a la vista no hay dorso posible, así que va una hoja por
      página: de la otra manera las pares no se verían nunca. */
-  var n = modoSola ? PAGINAS.length : Math.ceil(PAGINAS.length / 2), k;
+  /* La primera página no está en ninguna hoja: queda fija a la izquierda
+     y el libro abre mostrando la 1 y la 2. Las hojas se reparten de la 2
+     en adelante, cada una con su frente y su dorso. */
+  var n = modoSola ? PAGINAS.length : Math.ceil((PAGINAS.length - 1) / 2), k;
   for(k = 0; k < n; k++){
     var hoja = document.createElement("div");
     hoja.className = "hoja";
-    hoja.appendChild(armarCara("frente", modoSola ? k : k * 2));
-    if(!modoSola) hoja.appendChild(armarCara("dorso", k * 2 + 1));
+    hoja.appendChild(armarCara("frente", modoSola ? k : k * 2 + 1));
+    if(!modoSola) hoja.appendChild(armarCara("dorso", k * 2 + 2));
     hojas.appendChild(hoja);
     HOJAS.push(hoja);
   }
-  vueltas = Math.min(vueltas, modoSola ? n - 1 : n);
+
+  sueloIzq.innerHTML = "";
+  if(!modoSola && PAGINAS.length){
+    sueloIzq.appendChild(huecoDe(0));
+    var folio = document.createElement("div");
+    folio.className = "folio";
+    folio.textContent = "1";
+    sueloIzq.appendChild(folio);
+  }
+
+  vueltas = Math.min(vueltas, topeVueltas());
   ordenar();
   pintarMando();
 }
@@ -610,19 +621,26 @@ function ordenar(){
   }
 }
 
+/* Hasta dónde se puede pasar. Si el dorso de la última hoja no tiene
+   página —pasa cuando el texto termina en cara impar— esa vuelta no
+   lleva a ninguna parte: dejaría una hoja en blanco a la izquierda. */
+function topeVueltas(){
+  var n = HOJAS.length;
+  if(modoSola) return n - 1;
+  return (2 * n <= PAGINAS.length - 1) ? n : n - 1;
+}
+
 function pintarMando(){
   var total = PAGINAS.length, texto;
   if(modoSola){
     texto = "Página " + Math.min(vueltas + 1, total) + " de " + total;
   }else{
-    var izq = vueltas * 2, der = izq + 1;
-    if(vueltas === 0) texto = "Página 1 de " + total;
-    else if(der <= total) texto = "Páginas " + izq + " y " + Math.min(izq + 1, total) + " de " + total;
+    var izq = vueltas * 2 + 1, der = izq + 1;   /* folios, no índices */
+    if(der <= total) texto = "Páginas " + izq + " y " + der + " de " + total;
     else texto = "Página " + Math.min(izq, total) + " de " + total;
   }
   cuenta.textContent = texto;
-  var tope = modoSola ? HOJAS.length - 1 : HOJAS.length;
-  var hayAnt = vueltas > 0, haySig = vueltas < tope;
+  var hayAnt = vueltas > 0, haySig = vueltas < topeVueltas();
   btAnt.disabled = zonaIzq.disabled = !hayAnt;
   btSig.disabled = zonaDer.disabled = !haySig;
 }
@@ -772,8 +790,8 @@ function animarHasta(viva, desde, hasta, mano, ms, listo){
 /* ── Pasar una hoja de un saque ────────────────────────────────────  */
 function pasar(d){
   if(animando || arrastre) return;
-  var n = HOJAS.length, tope = modoSola ? n - 1 : n;
-  if(d > 0 && vueltas >= tope) return;
+  var n = HOJAS.length;
+  if(d > 0 && vueltas >= topeVueltas()) return;
   if(d < 0 && vueltas <= 0) return;
   animando = true;
   var i = d > 0 ? vueltas : vueltas - 1;
@@ -816,21 +834,29 @@ function tomarHoja(ev){
   var lomoX = caja.left + caja.width / 2;
   var ancho = caja.width / 2;
   var adelante = ev.clientX >= lomoX;
-  var tope = HOJAS.length;
-  if(adelante && vueltas >= tope) return;
+  if(adelante && vueltas >= topeVueltas()) return;
   if(!adelante && vueltas <= 0) return;
 
   var i = adelante ? vueltas : vueltas - 1;
   var hoja = HOJAS[i];
-  var viva = construirViva(i, ancho, adelante ? 1 : -1);
-  libro.appendChild(viva.nodo);
-  hoja.style.visibility = "hidden";
+  var viva, desde;
+  /* Si la esquina ya estaba asomada, se sigue con esa misma hoja: así el
+     papel no pega un salto entre el asomo y el arrastre. */
+  if(asomo && asomo.adelante === adelante){
+    viva = asomo.viva; desde = asomo.r; asomo = null;
+  }else{
+    quitarAsomoYa();
+    viva = construirViva(i, ancho, adelante ? 1 : -1);
+    libro.appendChild(viva.nodo);
+    hoja.style.visibility = "hidden";
+    desde = adelante ? 0 : 1;
+  }
 
   arrastre = {
     viva:viva, hoja:hoja, adelante:adelante, lomoX:lomoX, ancho:ancho,
     x0:ev.clientX, corrido:0,
     mano:entre((ev.clientY - (caja.top + caja.height / 2)) / (caja.height / 2), -1, 1),
-    r:adelante ? 0 : 1
+    r:desde
   };
   libro.classList.add("agarrando");
   try{ libro.setPointerCapture(ev.pointerId); }catch(e){}
@@ -870,6 +896,75 @@ function soltarHoja(){
   });
 }
 
+/* ── La esquina que se levanta sola ────────────────────────
+   Al acercar el cursor al borde suelto, la hoja se despega un poco y
+   queda esperando que tiren de ella. Cuanto más cerca del borde, más se
+   levanta; y agarrada por una punta se comba más que por el medio, que
+   es lo mismo que hace el arrastre. */
+var ZONA_ASOMO = 130;
+var asomo = null, retirada = null, cajaLibro = null;
+
+function medirLibro(){ cajaLibro = libro.getBoundingClientRect(); }
+window.addEventListener("scroll", function(){ cajaLibro = null; }, true);
+
+function quitarAsomoYa(){
+  if(retirada){
+    if(retirada.viva.nodo.parentNode) libro.removeChild(retirada.viva.nodo);
+    retirada.hoja.style.visibility = "";
+    retirada = null;
+  }
+  if(!asomo) return;
+  if(asomo.viva.nodo.parentNode) libro.removeChild(asomo.viva.nodo);
+  asomo.hoja.style.visibility = "";
+  asomo = null;
+}
+
+function bajarAsomo(){
+  if(!asomo) return;
+  var a = asomo;
+  asomo = null;
+  retirada = a;
+  animarHasta(a.viva, a.r, a.base, a.mano, 260, function(){
+    if(retirada !== a) return;          /* ya lo levantó otro */
+    if(a.viva.nodo.parentNode) libro.removeChild(a.viva.nodo);
+    a.hoja.style.visibility = "";
+    retirada = null;
+  });
+}
+
+function cuidarAsomo(ev){
+  if(modoSola || animando || arrastre){ return; }
+  if(!cajaLibro) medirLibro();
+  var caja = cajaLibro;
+  var lomoX = caja.left + caja.width / 2, ancho = caja.width / 2;
+  var adelante = ev.clientX >= lomoX;
+  var dist = adelante ? (caja.right - ev.clientX) : (ev.clientX - caja.left);
+  var hay = adelante ? (vueltas < topeVueltas()) : (vueltas > 0);
+  var dentro = ev.clientY >= caja.top && ev.clientY <= caja.bottom;
+
+  if(!hay || !dentro || dist > ZONA_ASOMO || dist < 0){ bajarAsomo(); return; }
+
+  if(!asomo || asomo.adelante !== adelante){
+    quitarAsomoYa();
+    var i = adelante ? vueltas : vueltas - 1;
+    var hoja = HOJAS[i];
+    if(!hoja) return;
+    var viva = construirViva(i, ancho, adelante ? 1 : -1);
+    libro.appendChild(viva.nodo);
+    hoja.style.visibility = "hidden";
+    asomo = {viva:viva, hoja:hoja, adelante:adelante, base:adelante ? 0 : 1, r:adelante ? 0 : 1, mano:0};
+  }
+  var cerca = 1 - dist / ZONA_ASOMO;
+  var levanta = 0.012 + 0.085 * cerca * cerca;
+  asomo.mano = entre((ev.clientY - (caja.top + caja.height / 2)) / (caja.height / 2), -1, 1);
+  asomo.r = asomo.adelante ? levanta : 1 - levanta;
+  pintarVuelta(asomo.viva, asomo.r, asomo.mano);
+}
+
+libro.addEventListener("pointerenter", medirLibro);
+libro.addEventListener("pointermove", cuidarAsomo);
+libro.addEventListener("pointerleave", bajarAsomo);
+
 libro.addEventListener("pointerdown", tomarHoja);
 /* el seguimiento va en la ventana y no en el libro: si el cursor se va
    afuera mientras se arrastra, la hoja lo sigue igual y no queda pegada */
@@ -896,6 +991,7 @@ function rehacer(){
   var pagina = modoSola ? vueltas : vueltas * 2;
   repartir();
   vueltas = unaSola() ? pagina : Math.floor(pagina / 2);
+  cajaLibro = null;
   armar();
 }
 window.addEventListener("resize", function(){
