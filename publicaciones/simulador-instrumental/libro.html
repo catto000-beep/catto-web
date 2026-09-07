@@ -632,7 +632,7 @@ function pintarMando(){
    ventana recortada. La del dorso va espejada y con el desplazamiento
    contado desde el otro borde, que es donde cae esa misma franja cuando
    la hoja queda del lado izquierdo. */
-function construirViva(indice, ancho){
+function construirViva(indice, ancho, sentido){
   var viva = document.createElement("div");
   viva.className = "viva";
   var w = ancho / TIRAS;
@@ -669,7 +669,8 @@ function construirViva(indice, ancho){
     corrido += reparto[i];
     acumulado.push(corrido);
   }
-  return {nodo:viva, tiras:tiras, sombras:sombras, reparto:reparto, acumulado:acumulado};
+  return {nodo:viva, tiras:tiras, sombras:sombras, reparto:reparto, acumulado:acumulado,
+          sentido:sentido};
 }
 
 function ventana(clase, pagina, dx, ancho, sombras){
@@ -719,12 +720,18 @@ function pintarVuelta(viva, r, mano){
   var i;
   var giro = -180 * r;
   var comba = Math.sin(Math.PI * Math.pow(r, 0.72));
-  var arco = CURVA * (0.72 + 0.28 * Math.abs(mano)) * comba;
+  /* El pliegue va con el signo del sentido de marcha. La hoja arrastra
+     su borde suelto: yendo hacia adelante el borde suelto es el derecho
+     y el papel se comba hacia un lado; volviendo, el borde suelto pasa a
+     ser el izquierdo y el pliegue se da vuelta, igual que en un libro de
+     papel. Antes iba siempre para el mismo lado y el retroceso quedaba
+     al revés de lo que hace la mano. */
+  var arco = viva.sentido * CURVA * (0.72 + 0.28 * Math.abs(mano)) * comba;
 
-  /* El pliegue no se reparte parejo. Junto al lomo el papel está casi
-     plano, porque ahí lo sujeta la encuadernación, y se va cerrando
-     hacia el borde suelto, que es donde una hoja de verdad se enrosca.
-     La hoja no se ladea: girarla entera la despegaba del libro. */
+  /* Y no se reparte parejo: junto al lomo el papel queda casi plano,
+     porque ahí lo sujeta la encuadernación, y se va cerrando hacia el
+     borde suelto, que es donde una hoja de verdad se enrosca. La hoja no
+     se ladea: girarla entera la despegaba del libro. */
   viva.tiras[0].style.transform = "rotateY(" + (giro + arco * viva.reparto[0]).toFixed(2) + "deg)";
   for(i = 1; i < TIRAS; i++)
     viva.tiras[i].style.transform = "rotateY(" + (arco * viva.reparto[i]).toFixed(3) + "deg)";
@@ -781,7 +788,7 @@ function pasar(d){
     return;
   }
 
-  var viva = construirViva(i, hoja.getBoundingClientRect().width);
+  var viva = construirViva(i, hoja.getBoundingClientRect().width, d > 0 ? 1 : -1);
   libro.appendChild(viva.nodo);
   hoja.style.visibility = "hidden";
   animarHasta(viva, d > 0 ? 0 : 1, d > 0 ? 1 : 0, 0, DURA, function(){
@@ -815,7 +822,7 @@ function tomarHoja(ev){
 
   var i = adelante ? vueltas : vueltas - 1;
   var hoja = HOJAS[i];
-  var viva = construirViva(i, ancho);
+  var viva = construirViva(i, ancho, adelante ? 1 : -1);
   libro.appendChild(viva.nodo);
   hoja.style.visibility = "hidden";
 
