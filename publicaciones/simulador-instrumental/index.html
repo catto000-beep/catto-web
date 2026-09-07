@@ -1673,13 +1673,21 @@ var COLORES = [{jac:"#16181c", luz:"#5c636d"}, {jac:"#5e1418", luz:"#b0555a"},
                {jac:"#3d1a30", luz:"#9a5a86"}, {jac:"#1d3a3a", luz:"#4f9a9a"}];
 var proximoColor = 0;
 
-/* misma idea que en las perillas: la matriz se toma al agarrar el cable */
+/* La matriz que lleva de píxeles de pantalla a coordenadas del banco.
+   Pedirla obliga al navegador a recalcular el diseño de toda la página, y
+   con las pantallas de los osciloscopios redibujándose sin parar eso cuesta
+   varios milisegundos. Antes se pedía en cada agarre y el tirón se sentía
+   justo al apretar. Ahora se guarda y sólo se tira cuando deja de valer:
+   al mover la página, al cambiar el tamaño o al rehacer el banco. */
 var invBanco = null, ptoBanco = null;
 function tomarMatriz(){
   var m = svgCab.getScreenCTM();
   invBanco = m ? m.inverse() : null;
   ptoBanco = svgCab.createSVGPoint();
 }
+function olvidarMatriz(){ invBanco = null; }
+window.addEventListener("scroll", olvidarMatriz, {passive:true});
+window.addEventListener("resize", olvidarMatriz);
 function ptBanco(ev){
   if(!invBanco || !ptoBanco) tomarMatriz();
   if(!invBanco) return {x:0, y:0};
@@ -1712,22 +1720,21 @@ function nuevoCable(jackA, extremoB){
 }
 function tomarJack(id, ev){
   ev.preventDefault(); ev.stopPropagation();
-  tomarMatriz();
-  var p = ptBanco(ev), cab = cableEn(id, null), extremo;
+  var p = ptBanco(ev), cab = cableEn(id, null), extremo, nuevo = false;
   if(cab && TIPO[id] === "e"){
     extremo = cab.a.jack === id ? "a" : "b";
     cab[extremo] = {x:p.x, y:p.y};
   }else{
     cab = nuevoCable(id, {x:p.x, y:p.y});
     extremo = "b";
+    nuevo = true;
   }
   arrastreCable = {cable:cab, extremo:extremo};
   try{ mesa.setPointerCapture(ev.pointerId); }catch(e){}
-  pintarCables();
+  if(nuevo) pintarCable(cab); else moverCable(cab);
 }
 function tomarPunta(cab, extremo, ev){
   ev.preventDefault(); ev.stopPropagation();
-  tomarMatriz();
   var p = ptBanco(ev);
   if(cab[extremo].jack) cab[extremo] = {x:p.x, y:p.y};
   arrastreCable = {cable:cab, extremo:extremo};
@@ -1845,29 +1852,34 @@ function moverCable(c){
   c.dom.pb.setAttribute("transform", r.tb);
 }
 
-/* Rehace todos los cables. Se llama sólo cuando cambia el conjunto: al
-   enchufar, al desenchufar o al armar un ejemplo. Mientras se arrastra una
-   punta no se pasa por acá. */
+/* Dibuja un cable. Se usa suelto al enchufar uno nuevo: rehacer los dieciséis
+   de la mesa para agregar uno era casi cuatrocientos elementos, y ese trabajo
+   caía justo en el apretón con el que arranca el arrastre. */
+function pintarCable(c){
+  var g = E(svgCab, "g", {});
+  c.dom = {
+    g: g,
+    sombra: E(g, "path", {fill:"none", stroke:"#000", "stroke-opacity":".45",
+                          "stroke-width":11, "stroke-linecap":"round",
+                          transform:"translate(0,3)"}),
+    funda:  E(g, "path", {fill:"none", stroke:c.color.jac, "stroke-width":9,
+                          "stroke-linecap":"round"}),
+    brillo: E(g, "path", {fill:"none", stroke:c.color.luz, "stroke-opacity":".55",
+                          "stroke-width":2.4, "stroke-linecap":"round",
+                          transform:"translate(-1.5,-1.7)"}),
+    pa: enchufe(g, c, "a"),
+    pb: enchufe(g, c, "b")
+  };
+  moverCable(c);
+  return c;
+}
+
+/* Rehace todos. Se llama cuando cambia el conjunto entero: al soltar, al
+   armar un ejemplo o al vaciar la mesa. Mientras se arrastra una punta no se
+   pasa por acá. */
 function pintarCables(){
   while(svgCab.firstChild) svgCab.removeChild(svgCab.firstChild);
-  for(var i = 0; i < CABLES.length; i++){
-    var c = CABLES[i];
-    var g = E(svgCab, "g", {});
-    c.dom = {
-      g: g,
-      sombra: E(g, "path", {fill:"none", stroke:"#000", "stroke-opacity":".45",
-                            "stroke-width":11, "stroke-linecap":"round",
-                            transform:"translate(0,3)"}),
-      funda:  E(g, "path", {fill:"none", stroke:c.color.jac, "stroke-width":9,
-                            "stroke-linecap":"round"}),
-      brillo: E(g, "path", {fill:"none", stroke:c.color.luz, "stroke-opacity":".55",
-                            "stroke-width":2.4, "stroke-linecap":"round",
-                            transform:"translate(-1.5,-1.7)"}),
-      pa: enchufe(g, c, "a"),
-      pb: enchufe(g, c, "b")
-    };
-    moverCable(c);
-  }
+  for(var i = 0; i < CABLES.length; i++) pintarCable(CABLES[i]);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -2647,6 +2659,7 @@ function armarTodo(){
   armarGenerador(1);
   armarGenerador(2);
   filtroFoco = SVGS.oscA.querySelector("#fFosforo feGaussianBlur");
+  olvidarMatriz();
   pintarCables();
   refrescarYa();
 }
@@ -2768,9 +2781,16 @@ function bucle(ahora){
   ultimo = ahora;
   if(filtroFoco)
     filtroFoco.setAttribute("stdDeviation", (0.7 + Math.abs(OSC.a.foco - 0.42) * 9).toFixed(2));
-  dibujarOsc("a", dt);
-  dibujarOsc("b", dt);
-  dibujarAnalizador();
+  /* Dibujar las dos pantallas cuesta hasta veinte mil evaluaciones de la
+     señal por cuadro, y eso es todo el presupuesto. Mientras se arrastra
+     un cable no hace falta: la punta está en el aire, la red es la misma
+     y los trazos no cambian. Se refrescan una de cada seis, para que no
+     parezcan apagadas, y el resto del cuadro se lo lleva el cable. */
+  if(!arrastreCable || (cuadro % 6) === 0){
+    dibujarOsc("a", dt);
+    dibujarOsc("b", dt);
+    dibujarAnalizador();
+  }
   cuadro++;
   /* los textos se rehacen como mucho diez veces por segundo, y sólo si algo
      cambió; el resto del tiempo el cuadro se va entero en dibujar */
