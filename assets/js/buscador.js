@@ -9,8 +9,9 @@
    así la portada sigue abriendo liviana. Está partido en cinco archivos:
    buscador-datos.js es el núcleo (unos 40 kB comprimido) y alcanza para
    que aparezcan resultados enseguida; buscador-datos-4/5/6/7.js traen las
-   secciones de cada año y llegan detrás. Se regeneran con el script del
-   scratchpad partir_indice.py.
+   secciones de cada año y buscador-datos-ing.js las páginas de Ingeniería,
+   y llegan detrás. Los de los años se regeneran con partir_indice.py y el
+   de Ingeniería con indice_ing.py.
    ============================================================ */
 (function () {
   "use strict";
@@ -25,7 +26,8 @@
     "/assets/js/buscador-datos-4.js",
     "/assets/js/buscador-datos-5.js",
     "/assets/js/buscador-datos-6.js",
-    "/assets/js/buscador-datos-7.js"
+    "/assets/js/buscador-datos-7.js",
+    "/assets/js/buscador-datos-ing.js"
   ];
   var TOPE = 10;          /* resultados que se muestran */
   var ANCHO = 150;        /* largo del pedacito de texto de cada resultado */
