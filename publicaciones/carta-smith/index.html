@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La carta de Smith · catto.ar</title>
+<meta name="description" content="Cómo se lee y cómo se usa la carta de Smith: impedancia normalizada, coeficiente de reflexión, ROE, recorrido por la línea de transmisión, admitancias y adaptación con stub. Interactivo, para Medios de Enlace.">
+<link rel="canonical" href="https://catto.ar/publicaciones/carta-smith">
+<meta name="theme-color" content="#0d1117">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Catto">
+<meta property="og:title" content="La carta de Smith · catto.ar">
+<meta property="og:description" content="Leer una impedancia, sacar Γ y la ROE, recorrer la línea hacia el generador y adaptar con un stub, todo sobre la carta y en vivo.">
+<meta property="og:url" content="https://catto.ar/publicaciones/carta-smith">
+<meta property="og:image" content="https://catto.ar/assets/img/chancho-volador.png">
+<meta property="og:locale" content="es_AR">
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3140;
+  --txt:#e6edf3; --muted:#9aa7b4; --soft:#7d8a99;
+  --accent:#58a6ff; --accent2:#1f6feb;
+  --ok:#3fb950; --warn:#d29922; --hot:#f85149;
+  --r:#58a6ff; --ind:#a371f7; --cap:#e8883a; --y:#39c5bb; --pto:#f2cc60;
+  --r14:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:radial-gradient(1200px 600px at 80% -10%, #1b2740 0%, var(--bg) 55%);
+  background-attachment:fixed;
+  color:var(--txt);font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;
+}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+
+header.top{padding:22px 0 16px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(31,111,235,.10),transparent)}
+header.top h1{margin:0;font-size:24px;letter-spacing:.2px}
+header.top .sub{color:var(--muted);font-size:13.5px;margin:5px 0 0;max-width:780px}
+header.top .quien{color:var(--soft);font-size:12.5px;margin:8px 0 0}
+
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:14px 0 4px}
+nav.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--muted);
+  border-radius:10px;padding:8px 13px;font-size:13.5px;cursor:pointer;font-family:inherit}
+nav.tabs button:hover{color:var(--txt)}
+nav.tabs button.on{background:var(--accent2);border-color:var(--accent);color:#fff}
+
+.view{display:none}
+.view.on{display:block}
+.grid{display:grid;grid-template-columns:1fr 330px;gap:16px;align-items:start;margin-top:6px}
+.grid > *{min-width:0}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:14px}
+.panel + .panel{margin-top:12px}
+.panel h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:var(--soft)}
+.panel p{margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+.panel p:last-child{margin-bottom:0}
+.panel p b{color:var(--txt)}
+.side{display:flex;flex-direction:column;gap:12px}
+.side .panel + .panel{margin-top:0}
+
+/* La carta es cuadrada y no crece más allá de lo que se lee cómodo */
+.carta{display:block;width:100%;max-width:620px;aspect-ratio:1 / 1;margin:4px auto 0;
+  border-radius:10px;background:#0b0f16;border:1px solid var(--line);touch-action:none}
+.lienzo{display:block;width:100%;height:var(--h,170px);margin-top:4px;
+  border-radius:10px;background:#0b0f16;border:1px solid var(--line)}
+
+/* controles */
+.ctrl{margin-bottom:12px}
+.ctrl:last-child{margin-bottom:0}
+.ctrl label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  font-size:12px;color:var(--soft);margin-bottom:5px}
+.ctrl label b{color:var(--txt);font-size:13.5px;font-variant-numeric:tabular-nums;font-weight:700}
+input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+button.b{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:7px 11px;font-size:13px;cursor:pointer;font-family:inherit}
+button.b:hover{border-color:var(--accent);color:var(--accent)}
+button.b.pri{background:var(--accent2);border-color:var(--accent);color:#fff}
+button.b:disabled{opacity:.4;cursor:default}
+button.b.ind{border-color:rgba(163,113,247,.5)} button.b.cap{border-color:rgba(232,136,58,.5)}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex-wrap:wrap}
+.seg button{background:var(--panel2);border:0;border-right:1px solid var(--line);color:var(--muted);
+  padding:7px 11px;font-size:13px;cursor:pointer;font-family:inherit;flex:1}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent2);color:#fff}
+.chk{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);cursor:pointer;margin-top:8px}
+.chk input{accent-color:var(--accent);cursor:pointer}
+
+/* lecturas */
+.datos{display:grid;grid-template-columns:1fr auto;gap:8px 10px;font-size:13.5px;align-items:center}
+.datos span{color:var(--muted)}
+.datos b{color:var(--txt);font-variant-numeric:tabular-nums;text-align:right}
+.datos b.r{color:var(--r)} .datos b.ind{color:var(--ind)} .datos b.cap{color:var(--cap)}
+.datos b.ok{color:var(--ok)} .datos b.pto{color:var(--pto)} .datos b.y{color:var(--y)}
+.datos hr{grid-column:1/-1;border:0;border-top:1px solid var(--line);margin:2px 0}
+.datos span math{font-size:1.12em}
+
+/* Ecuaciones en MathML, igual que en el resto de las publicaciones: el
+   navegador las compone con su fuente matemática, sin bibliotecas. */
+.eq{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;
+  font-size:14px;color:var(--txt);text-align:center;margin:9px 0;overflow-x:auto}
+.eq math{font-size:1.22em}
+.eq small{display:block;font-family:"Segoe UI",system-ui,sans-serif;font-size:11.5px;
+  color:var(--soft);margin-top:7px;white-space:normal}
+.eq-fila{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 22px}
+math{color:inherit}
+.nota{background:linear-gradient(135deg,rgba(31,111,235,.12),rgba(63,185,80,.07));
+  border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:13px;color:var(--muted);margin-top:10px}
+.nota b{color:var(--txt)}
+.nota.ojo{background:linear-gradient(135deg,rgba(210,153,34,.14),rgba(248,81,73,.06))}
+.nota.bien{background:linear-gradient(135deg,rgba(63,185,80,.18),rgba(63,185,80,.05))}
+.leyenda{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:12px;color:var(--muted);margin-top:9px}
+.leyenda i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.leyenda i.p{width:9px;height:9px;border-radius:50%}
+
+/* pasos de la adaptación */
+.pasos{display:flex;gap:6px;margin:2px 0 10px}
+.pasos span{flex:1;height:5px;border-radius:3px;background:var(--line)}
+.pasos span.on{background:var(--accent)}
+.explica{font-size:13.5px;color:var(--muted);min-height:96px}
+.explica b{color:var(--txt)}
+.explica h4{margin:0 0 6px;font-size:14.5px;color:var(--txt)}
+.acciones{font-size:12.5px;color:var(--muted);margin:6px 0 0;padding-left:18px}
+.acciones li{margin:2px 0}
+.esq{display:block;width:100%;height:auto;margin-top:6px}
+
+/* ejercicios */
+.ej{background:var(--panel);border:1px solid var(--line);border-radius:var(--r14);padding:14px;margin-bottom:12px}
+.ej .enun{font-size:14px;color:var(--txt);margin-bottom:10px}
+.ej .fila{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ej input.tx{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:8px 11px;font-size:14px;font-family:inherit;width:110px}
+.ej .fb{font-size:13px;margin-top:8px;min-height:19px;color:var(--muted)}
+.ej .fb.ok{color:var(--ok)} .ej .fb.mal{color:var(--warn)}
+.ej .unidad{color:var(--soft);font-size:13px}
+.ej .carta{max-width:340px;margin:0 0 10px}
+
+footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color:var(--soft);font-size:12.5px}
+</style>
+</head>
+<body>
+<div id="cattoBack" style="position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;background:rgba(13,17,23,.92);border-bottom:1px solid #2a3140;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font:600 14px 'Segoe UI',system-ui,sans-serif"><a href="/" style="display:inline-flex;align-items:center;gap:8px;color:#e6edf3;text-decoration:none"><span style="width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#1f6feb,#a371f7);font-size:15px">🐷</span>Catto</a><a href="/" style="margin-left:auto;color:#9aa7b4;font-weight:400;font-size:13px;text-decoration:none">← Volver al inicio</a></div>
+
+<header class="top">
+  <div class="wrap">
+    <h1>🧭 La carta de Smith</h1>
+    <p class="sub">Una sola hoja para leer impedancias, sacar el coeficiente de reflexión y la ROE,
+       ver qué le hace a una carga un tramo de línea y diseñar la adaptación, sin resolver
+       una ecuación compleja por paso.</p>
+    <p class="quien">Medios de Enlace · Ingeniería Electrónica · En el programa figura como «el ábaco de Smith y su uso». Línea sin pérdidas.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs" id="tabs"></nav>
+
+  <!-- ============ 1 · CÓMO SE ARMA ============ -->
+  <section class="view on" id="v-arma">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3>El plano de Γ con una grilla de impedancias encima</h3>
+          <p>La carta es el <b>círculo de radio 1 del coeficiente de reflexión Γ</b>. Cada punto adentro
+             es una carga posible. Encima se dibuja la grilla que dice qué impedancia corresponde a ese Γ:
+             <b>círculos de resistencia constante</b> y <b>arcos de reactancia constante</b>.
+             Pasá el cursor por la carta: se resaltan el círculo y el arco que se cruzan en ese punto.
+             Con un clic lo dejás fijo.</p>
+          <canvas class="carta" id="cv1"></canvas>
+          <div class="leyenda">
+            <span><i style="background:var(--r)"></i>resistencia constante r</span>
+            <span><i style="background:var(--ind)"></i>reactancia inductiva (+jx)</span>
+            <span><i style="background:var(--cap)"></i>reactancia capacitiva (−jx)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Las tres ecuaciones que sostienen la carta</h3>
+          <div class="eq">
+            <span class="eq-fila">
+              <math><mi>z</mi><mo>=</mo><mfrac><mi>Z</mi><msub><mi>Z</mi><mn>0</mn></msub></mfrac><mo>=</mo><mi>r</mi><mo>+</mo><mi>j</mi><mi>x</mi></math>
+              <math><mi>Γ</mi><mo>=</mo><mfrac><mrow><mi>z</mi><mo>−</mo><mn>1</mn></mrow><mrow><mi>z</mi><mo>+</mo><mn>1</mn></mrow></mfrac></math>
+              <math><mi>z</mi><mo>=</mo><mfrac><mrow><mn>1</mn><mo>+</mo><mi>Γ</mi></mrow><mrow><mn>1</mn><mo>−</mo><mi>Γ</mi></mrow></mfrac></math>
+            </span>
+            <small>La impedancia se divide por la impedancia característica de la línea: así la misma carta
+              sirve para un coaxil de 50 Ω, uno de 75 Ω o una línea abierta de 300 Ω.</small>
+          </div>
+          <p>Todos los círculos de <b>r</b> pasan por el extremo derecho y tienen el centro sobre el eje
+             horizontal. Los arcos de <b>x</b> también salen del extremo derecho: arriba del eje la carga es
+             inductiva, abajo es capacitiva, y sobre el eje es puramente resistiva.</p>
+          <div class="eq">
+            <span class="eq-fila">
+              <math><mtext>círculo de </mtext><mi>r</mi><mo>:</mo><mspace width="0.3em"></mspace><mtext>centro </mtext><mrow><mo>(</mo><mfrac><mi>r</mi><mrow><mn>1</mn><mo>+</mo><mi>r</mi></mrow></mfrac><mo>,</mo><mn>0</mn><mo>)</mo></mrow><mo>,</mo><mspace width="0.3em"></mspace><mtext>radio </mtext><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><mi>r</mi></mrow></mfrac></math>
+              <math><mtext>arco de </mtext><mi>x</mi><mo>:</mo><mspace width="0.3em"></mspace><mtext>centro </mtext><mrow><mo>(</mo><mn>1</mn><mo>,</mo><mfrac><mn>1</mn><mi>x</mi></mfrac><mo>)</mo></mrow><mo>,</mo><mspace width="0.3em"></mspace><mtext>radio </mtext><mfrac><mn>1</mn><mrow><mo>|</mo><mi>x</mi><mo>|</mo></mrow></mfrac></math>
+            </span>
+            <small>Salen de reemplazar z = r + jx en la fórmula de Γ y separar parte real e imaginaria.</small>
+          </div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Lectura del punto</h3>
+          <div class="datos">
+            <span>Resistencia normalizada r</span><b class="r" id="a_r">—</b>
+            <span>Reactancia normalizada x</span><b id="a_x">—</b>
+            <hr>
+            <span>Coeficiente de reflexión Γ</span><b id="a_g">—</b>
+            <span>ROE</span><b id="a_roe">—</b>
+            <hr>
+            <span>Con Z<sub>0</sub> = 50 Ω, la carga es</span><b class="pto" id="a_Z">—</b>
+          </div>
+          <p id="a_tipo" style="margin-top:10px"></p>
+        </div>
+        <div class="panel">
+          <h3>Tres lugares para ubicarse</h3>
+          <p><b>Izquierda:</b> cortocircuito, z = 0 y Γ = −1.<br>
+             <b>Centro:</b> carga adaptada, z = 1 y Γ = 0. No hay onda reflejada.<br>
+             <b>Derecha:</b> circuito abierto, z = ∞ y Γ = +1.</p>
+          <p>El borde del círculo es |Γ| = 1: cargas sin resistencia, que devuelven toda la potencia.
+             Cuanto más cerca del centro, mejor adaptada está la carga.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 2 · UBICAR UNA CARGA ============ -->
+  <section class="view" id="v-carga">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3>Una carga sobre la carta</h3>
+          <p>Elegí la impedancia de carga y la línea. El punto queda donde se cruzan su círculo de r y su
+             arco de x. La <b>distancia al centro es |Γ|</b> y el ángulo es la fase de la onda reflejada.
+             El círculo punteado es el de |Γ| constante: ahí vive la carga vista desde cualquier punto de la línea.</p>
+          <canvas class="carta" id="cv2"></canvas>
+          <div class="leyenda">
+            <span><i class="p" style="background:var(--pto)"></i>carga z<sub>L</sub></span>
+            <span><i style="background:var(--ok)"></i>círculo de |Γ| constante (ROE)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Lo que se lee de ese punto</h3>
+          <div class="eq">
+            <span class="eq-fila">
+              <math><mi>ROE</mi><mo>=</mo><mfrac><mrow><mn>1</mn><mo>+</mo><mo>|</mo><mi>Γ</mi><mo>|</mo></mrow><mrow><mn>1</mn><mo>−</mo><mo>|</mo><mi>Γ</mi><mo>|</mo></mrow></mfrac></math>
+              <math><msub><mi>P</mi><mtext>ret</mtext></msub><mo>=</mo><mo>−</mo><mn>20</mn><mspace width="0.15em"></mspace><msub><mi>log</mi><mn>10</mn></msub><mo>|</mo><mi>Γ</mi><mo>|</mo><mspace width="0.2em"></mspace><mtext>dB</mtext></math>
+              <math><mfrac><msub><mi>P</mi><mtext>refl</mtext></msub><msub><mi>P</mi><mtext>inc</mtext></msub></mfrac><mo>=</mo><msup><mrow><mo>|</mo><mi>Γ</mi><mo>|</mo></mrow><mn>2</mn></msup></math>
+            </span>
+            <small>ROE es la relación de onda estacionaria (en inglés, VSWR). P<sub>ret</sub> es la pérdida de retorno.</small>
+          </div>
+          <p>Un atajo que la carta regala: <b>el círculo de |Γ| corta el eje horizontal, a la derecha del
+             centro, justo en r = ROE</b>. Ahí Γ es real y positivo, y la fórmula de z da exactamente la
+             de la ROE. Se lee sin hacer cuentas.</p>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Carga</h3>
+          <div class="ctrl">
+            <label><span>Impedancia característica Z<sub>0</sub></span></label>
+            <div class="seg" id="c_z0">
+              <button data-v="50" class="on">50 Ω</button><button data-v="75">75 Ω</button><button data-v="300">300 Ω</button>
+            </div>
+          </div>
+          <div class="ctrl">
+            <label><span>Resistencia R<sub>L</sub></span> <b id="c_Rt">100 Ω</b></label>
+            <input type="range" id="c_R" min="0" max="1000" step="1">
+          </div>
+          <div class="ctrl">
+            <label><span>Reactancia X<sub>L</sub></span> <b id="c_Xt">+50 Ω</b></label>
+            <input type="range" id="c_X" min="-1000" max="1000" step="1">
+          </div>
+          <p style="font-size:12px;margin:0 0 8px">Las dos escalas son logarítmicas, para llegar tanto a 2 Ω como a 5 kΩ.</p>
+          <div class="btns" id="c_pre">
+            <button class="b" data-p="adap">Adaptada</button>
+            <button class="b" data-p="corto">Cortocircuito</button>
+            <button class="b" data-p="abierto">Circuito abierto</button>
+            <button class="b" data-p="dipolo">Dipolo λ/2</button>
+            <button class="b" data-p="corta">Antena corta</button>
+            <button class="b" data-p="rc">Carga RC</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Resultados</h3>
+          <div class="datos">
+            <span>z<sub>L</sub> = Z<sub>L</sub> / Z<sub>0</sub></span><b class="pto" id="c_z">—</b>
+            <span>|Γ|</span><b id="c_gm">—</b>
+            <span>Fase de Γ</span><b id="c_gf">—</b>
+            <hr>
+            <span>ROE</span><b class="ok" id="c_roe">—</b>
+            <span>Pérdida de retorno</span><b id="c_rl">—</b>
+            <span>Potencia reflejada</span><b id="c_pr">—</b>
+          </div>
+          <p id="c_tipo" style="margin-top:10px"></p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 3 · RECORRER LA LÍNEA ============ -->
+  <section class="view" id="v-linea">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3>Alejarse de la carga es girar</h3>
+          <p>En una línea sin pérdidas, a medida que uno se aleja de la carga hacia el generador,
+             <b>|Γ| no cambia: sólo cambia su fase</b>. El punto gira sobre su círculo en <b>sentido horario</b>
+             y da una vuelta completa cada <b>media longitud de onda</b>. La escala del borde mide ese
+             recorrido en longitudes de onda.</p>
+          <canvas class="carta" id="cv3"></canvas>
+          <div class="leyenda">
+            <span><i class="p" style="background:var(--pto)"></i>carga z<sub>L</sub></span>
+            <span><i class="p" style="background:var(--accent)"></i>impedancia vista a la distancia d</span>
+            <span><i style="background:var(--accent)"></i>recorrido hacia el generador</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Tensión a lo largo de la línea</h3>
+          <p>La onda incidente y la reflejada se suman: donde llegan en fase hay un máximo de tensión y
+             donde llegan en contrafase, un mínimo. El cociente entre los dos es la ROE.</p>
+          <canvas class="lienzo" id="cvOnda" style="--h:170px"></canvas>
+        </div>
+        <div class="panel">
+          <h3>Las cuentas que la carta ahorra</h3>
+          <div class="eq">
+            <span class="eq-fila">
+              <math><mi>Γ</mi><mo stretchy="false">(</mo><mi>d</mi><mo stretchy="false">)</mo><mo>=</mo><msub><mi>Γ</mi><mi>L</mi></msub><mspace width="0.1em"></mspace><msup><mi>e</mi><mrow><mo>−</mo><mi>j</mi><mn>2</mn><mi>β</mi><mi>d</mi></mrow></msup></math>
+              <math><mi>β</mi><mo>=</mo><mfrac><mrow><mn>2</mn><mi>π</mi></mrow><mi>λ</mi></mfrac></math>
+            </span>
+            <small>Multiplicar por e<sup>−j2βd</sup> es girar el punto un ángulo 2βd hacia la derecha del reloj: 720° por cada longitud de onda.</small>
+          </div>
+          <div class="eq">
+            <math display="block"><msub><mi>Z</mi><mtext>ent</mtext></msub><mo>=</mo><msub><mi>Z</mi><mn>0</mn></msub><mfrac><mrow><msub><mi>Z</mi><mi>L</mi></msub><mo>+</mo><mi>j</mi><msub><mi>Z</mi><mn>0</mn></msub><mi>tan</mi><mo stretchy="false">(</mo><mi>β</mi><mi>d</mi><mo stretchy="false">)</mo></mrow><mrow><msub><mi>Z</mi><mn>0</mn></msub><mo>+</mo><mi>j</mi><msub><mi>Z</mi><mi>L</mi></msub><mi>tan</mi><mo stretchy="false">(</mo><mi>β</mi><mi>d</mi><mo stretchy="false">)</mo></mrow></mfrac></math>
+            <small>La misma respuesta, sin carta: la impedancia de entrada de una línea de largo d cargada con Z<sub>L</sub>.</small>
+          </div>
+          <div class="nota"><b>Dos largos que conviene reconocer.</b> Con <b>λ/2</b> el punto da la vuelta
+            entera y vuelve a la carga: la línea «no está». Con <b>λ/4</b> el punto queda en el lado opuesto
+            y la impedancia se invierte, <math><msub><mi>Z</mi><mtext>ent</mtext></msub><mo>=</mo><msubsup><mi>Z</mi><mn>0</mn><mn>2</mn></msubsup><mo>/</mo><msub><mi>Z</mi><mi>L</mi></msub></math>: es el
+            transformador de cuarto de onda.</div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Carga y línea</h3>
+          <p style="font-size:12.5px">Z<sub>0</sub> = 50 Ω</p>
+          <div class="ctrl">
+            <label><span>Resistencia R<sub>L</sub></span> <b id="l_Rt">—</b></label>
+            <input type="range" id="l_R" min="0" max="1000" step="1">
+          </div>
+          <div class="ctrl">
+            <label><span>Reactancia X<sub>L</sub></span> <b id="l_Xt">—</b></label>
+            <input type="range" id="l_X" min="-1000" max="1000" step="1">
+          </div>
+          <div class="ctrl">
+            <label><span>Distancia a la carga d</span> <b id="l_dt">0 λ</b></label>
+            <input type="range" id="l_d" min="0" max="500" step="1" value="0">
+          </div>
+          <div class="btns">
+            <button class="b pri" id="l_play">▶ Recorrer</button>
+            <button class="b" data-d="125">λ/8</button>
+            <button class="b" data-d="250">λ/4</button>
+            <button class="b" data-d="500">λ/2</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Vista desde la distancia d</h3>
+          <div class="datos">
+            <span>z<sub>L</sub></span><b class="pto" id="l_zl">—</b>
+            <span>z<sub>ent</sub></span><b style="color:var(--accent)" id="l_zi">—</b>
+            <span>Z<sub>ent</sub></span><b id="l_Zi">—</b>
+            <hr>
+            <span>Γ en la carga</span><b id="l_gl">—</b>
+            <span>Γ a la distancia d</span><b id="l_gd">—</b>
+            <span>ROE (no cambia)</span><b class="ok" id="l_roe">—</b>
+            <hr>
+            <span>Escala del borde: carga</span><b id="l_wl">—</b>
+            <span>Escala del borde: punto</span><b id="l_wd">—</b>
+          </div>
+          <p style="margin-top:10px;font-size:12.5px">La diferencia entre las dos lecturas del borde es el largo de línea recorrido.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 4 · ADMITANCIAS Y MOVIMIENTOS ============ -->
+  <section class="view" id="v-mover">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3>Mover la carga hasta el centro</h3>
+          <p>Cada componente que se agrega mueve el punto por un camino fijo. Un elemento
+             <b>en serie</b> suma reactancia: el punto corre sobre su <b>círculo de r constante</b>. Un elemento
+             <b>en paralelo</b> suma susceptancia: corre sobre su <b>círculo de conductancia g constante</b>, que
+             es el de la grilla de admitancias. Un tramo de línea lo hace girar alrededor del centro.
+             <b>Probá llevar el punto al centro</b>, que es la carga adaptada.</p>
+          <canvas class="carta" id="cv4"></canvas>
+          <div class="leyenda">
+            <span><i class="p" style="background:var(--pto)"></i>impedancia z</span>
+            <span><i class="p" style="background:var(--y)"></i>admitancia y = 1/z</span>
+            <span><i style="background:var(--ind)"></i>bobina</span>
+            <span><i style="background:var(--cap)"></i>capacitor</span>
+            <span><i style="background:var(--soft)"></i>tramo de línea</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Impedancia y admitancia en la misma hoja</h3>
+          <div class="eq">
+            <span class="eq-fila">
+              <math><mi>y</mi><mo>=</mo><mfrac><mn>1</mn><mi>z</mi></mfrac><mo>=</mo><mi>g</mi><mo>+</mo><mi>j</mi><mi>b</mi></math>
+              <math><msub><mi>Γ</mi><mi>y</mi></msub><mo>=</mo><mo>−</mo><msub><mi>Γ</mi><mi>z</mi></msub></math>
+            </span>
+            <small>La admitancia de un punto está en el <b>lugar diametralmente opuesto</b>, a la misma distancia del centro.
+              Por eso la grilla de admitancias es la de impedancias dada vuelta.</small>
+          </div>
+          <p>Para elementos en serie conviene pensar en impedancias, porque se suman; para elementos en
+             paralelo, en admitancias, por la misma razón. La carta permite pasar de una a otra con sólo
+             cruzar al otro lado del centro. Ojo con los signos: una bobina suma <b>+jx</b> en serie pero
+             resta susceptancia, <b>−jb</b>, en paralelo; con el capacitor es al revés.</p>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Agregar componentes</h3>
+          <div class="ctrl">
+            <label><span>Tamaño de cada paso</span></label>
+            <div class="seg" id="m_paso">
+              <button data-v="0.05">0,05</button><button data-v="0.1" class="on">0,1</button><button data-v="0.25">0,25</button>
+            </div>
+          </div>
+          <div class="btns" style="margin-bottom:8px">
+            <button class="b ind" data-m="sL">Bobina en serie</button>
+            <button class="b cap" data-m="sC">Capacitor en serie</button>
+            <button class="b ind" data-m="pL">Bobina en paralelo</button>
+            <button class="b cap" data-m="pC">Capacitor en paralelo</button>
+            <button class="b" data-m="lin">Tramo de línea λ/40</button>
+          </div>
+          <div class="btns">
+            <button class="b" id="m_undo">↶ Deshacer</button>
+            <button class="b" id="m_nueva">Nueva carga</button>
+          </div>
+          <label class="chk"><input type="checkbox" id="m_gy" checked> Mostrar la grilla de admitancias</label>
+        </div>
+        <div class="panel">
+          <h3>Dónde está el punto</h3>
+          <div class="datos">
+            <span>Carga de partida z<sub>L</sub></span><b id="m_zl">—</b>
+            <hr>
+            <span>z actual</span><b class="pto" id="m_z">—</b>
+            <span>y actual</span><b class="y" id="m_y">—</b>
+            <span>|Γ|</span><b id="m_g">—</b>
+            <span>ROE</span><b class="ok" id="m_roe">—</b>
+          </div>
+          <div id="m_msg"></div>
+          <ol class="acciones" id="m_acc"></ol>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 5 · ADAPTACIÓN CON STUB ============ -->
+  <section class="view" id="v-stub">
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h3>Adaptación con un stub en paralelo</h3>
+          <p>El método clásico para adaptar una carga con la misma línea: se busca, alejándose de la carga,
+             el punto donde la <b>conductancia vale exactamente 1</b>, y ahí se conecta en paralelo un tramo de
+             línea en cortocircuito, el <b>stub</b>, cuyo largo se elige para anular la susceptancia que sobra.
+             Seguí los pasos.</p>
+          <canvas class="carta" id="cv5"></canvas>
+          <div class="leyenda">
+            <span><i class="p" style="background:var(--pto)"></i>carga</span>
+            <span><i style="background:var(--ok)"></i>círculo g = 1</span>
+            <span><i style="background:var(--accent)"></i>recorrido por la línea (d)</span>
+            <span><i style="background:var(--hot)"></i>stub (l)</span>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>El circuito que resulta</h3>
+          <svg class="esq" id="s_esq" viewBox="0 0 560 170" aria-label="Esquema de la adaptación con stub"></svg>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Carga a adaptar · Z<sub>0</sub> = 50 Ω</h3>
+          <div class="ctrl">
+            <label><span>Resistencia R<sub>L</sub></span> <b id="s_Rt">—</b></label>
+            <input type="range" id="s_R" min="0" max="1000" step="1">
+          </div>
+          <div class="ctrl">
+            <label><span>Reactancia X<sub>L</sub></span> <b id="s_Xt">—</b></label>
+            <input type="range" id="s_X" min="-1000" max="1000" step="1">
+          </div>
+          <div class="ctrl">
+            <label><span>Hay dos soluciones</span></label>
+            <div class="seg" id="s_sol">
+              <button data-v="0" class="on">Primera (d más corta)</button><button data-v="1">Segunda</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="pasos" id="s_pasos"><span></span><span></span><span></span><span></span><span></span></div>
+          <div class="explica" id="s_txt"></div>
+          <div class="btns" style="margin-top:10px">
+            <button class="b" id="s_ant">◀ Anterior</button>
+            <button class="b pri" id="s_sig">Siguiente ▶</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 6 · EJERCICIOS ============ -->
+  <section class="view" id="v-ej">
+    <div class="grid">
+      <div id="ejs"></div>
+      <aside class="side">
+        <div class="panel">
+          <h3>Cómo se corrigen</h3>
+          <p>Cada respuesta se acepta con un margen chico, el que da leer la carta a ojo con cuidado.
+             Los números usan coma decimal; también se acepta el punto.</p>
+          <div class="btns"><button class="b pri" id="e_nuevos">Otros ejercicios</button></div>
+        </div>
+        <div class="panel">
+          <h3>Para tener a mano</h3>
+          <div class="eq"><math><mi>Γ</mi><mo>=</mo><mfrac><mrow><mi>z</mi><mo>−</mo><mn>1</mn></mrow><mrow><mi>z</mi><mo>+</mo><mn>1</mn></mrow></mfrac></math></div>
+          <div class="eq"><math><mi>ROE</mi><mo>=</mo><mfrac><mrow><mn>1</mn><mo>+</mo><mo>|</mo><mi>Γ</mi><mo>|</mo></mrow><mrow><mn>1</mn><mo>−</mo><mo>|</mo><mi>Γ</mi><mo>|</mo></mrow></mfrac></math></div>
+          <div class="eq"><math><msub><mi>Z</mi><mtext>ent</mtext></msub><mo>=</mo><mfrac><msubsup><mi>Z</mi><mn>0</mn><mn>2</mn></msubsup><msub><mi>Z</mi><mi>L</mi></msub></mfrac><mspace width="0.4em"></mspace><mtext>(cuarto de onda)</mtext></math></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <footer class="pie">
+    Publicación de <a href="/">catto.ar</a> · Medios de Enlace, Ingeniería Electrónica · Todos los
+    dibujos se calculan en vivo con las fórmulas que están a la vista. Se supone una línea sin pérdidas.
+  </footer>
+</div>
+
+<script>
+/* ============================================================================
+   LA CARTA DE SMITH — catto.ar
+   Un solo archivo, sin dependencias. La carta se dibuja en canvas a partir de
+   las mismas fórmulas que se muestran: los círculos de r y los arcos de x salen
+   de reemplazar z = r + jx en Γ = (z − 1)/(z + 1).
+
+   Convenios: z es la impedancia normalizada (Z/Z0). "Hacia el generador" es
+   girar Γ en sentido horario, Γ(d) = ΓL·e^(−j4πd/λ). Todo se hace con Γ; la
+   impedancia se calcula recién para mostrarla.
+   ========================================================================== */
+(function(){
+"use strict";
+
+var TAU = Math.PI*2, RAD = Math.PI/180;
+var COL = { r:"#58a6ff", ind:"#a371f7", cap:"#e8883a", y:"#39c5bb", pto:"#f2cc60",
+            ok:"#3fb950", hot:"#f85149", acc:"#58a6ff", txt:"#e6edf3", soft:"#9aa7b4", eje:"#7d8a99" };
+
+/* ---------------------------------------------------------------- útiles --- */
+function $(id){ return document.getElementById(id); }
+function num(x, d){
+  if(!isFinite(x)) return "∞";
+  if(d === undefined) d = 2;
+  var s = x.toFixed(d);
+  if(/^-0[.,]?0*$/.test(s)) s = s.slice(1);
+  return s.replace(".", ",").replace("-", "−");
+}
+function ohm(x){
+  if(!isFinite(x)) return "∞ Ω";
+  var a = Math.abs(x);
+  var s = a >= 1000 ? num(x/1000, 2) + " kΩ" : num(x, a < 10 ? 1 : 0) + " Ω";
+  return s;
+}
+function conSigno(s, x){ return (x >= 0 ? "+" : "") + s; }
+
+/* ------------------------------------------------------ números complejos --- */
+function cx(re, im){ return { re:re, im:im || 0 }; }
+function csum(a, b){ return cx(a.re + b.re, a.im + b.im); }
+function cres(a, b){ return cx(a.re - b.re, a.im - b.im); }
+function cmul(a, b){ return cx(a.re*b.re - a.im*b.im, a.re*b.im + a.im*b.re); }
+function cdiv(a, b){
+  var d = b.re*b.re + b.im*b.im;
+  if(d < 1e-300) return cx(Infinity, 0);
+  return cx((a.re*b.re + a.im*b.im)/d, (a.im*b.re - a.re*b.im)/d);
+}
+function cabs(a){ return Math.hypot(a.re, a.im); }
+function carg(a){ return Math.atan2(a.im, a.re); }
+function cpol(m, t){ return cx(m*Math.cos(t), m*Math.sin(t)); }
+function cneg(a){ return cx(-a.re, -a.im); }
+var UNO = cx(1, 0);
+
+function gDeZ(z){
+  if(!isFinite(z.re) || !isFinite(z.im)) return cx(1, 0);
+  return cdiv(cres(z, UNO), csum(z, UNO));
+}
+function zDeG(g){
+  var z = cdiv(csum(UNO, g), cres(UNO, g));
+  return z;
+}
+/* alejarse d longitudes de onda hacia el generador */
+function hacia(g, d){ return cmul(g, cpol(1, -4*Math.PI*d)); }
+function roe(m){ return m >= 0.99999 ? Infinity : (1 + m)/(1 - m); }
+
+/* z escrita como se escribe a mano: 0,50 + j1,20 */
+function fz(z, d){
+  if(!isFinite(z.re) || !isFinite(z.im) || Math.abs(z.re) > 1e6 || Math.abs(z.im) > 1e6) return "∞";
+  if(d === undefined) d = 2;
+  var im = z.im, s = num(z.re, d);
+  var sig = im < 0 && Math.abs(im) >= Math.pow(10, -d)/2 ? " − j" : " + j";
+  return s + sig + num(Math.abs(im), d);
+}
+function fZ(z){
+  if(!isFinite(z.re) || !isFinite(z.im) || Math.abs(z.re) > 1e7 || Math.abs(z.im) > 1e7) return "∞";
+  var im = z.im;
+  return ohm(z.re).replace(" Ω", "") + (im < 0 ? " − j" : " + j") + ohm(Math.abs(im));
+}
+function fgPolar(g){
+  return num(cabs(g), 3) + " ∠ " + num(carg(g)/RAD, 1) + "°";
+}
+/* la lectura de la escala del borde, en longitudes de onda hacia el generador */
+function wtg(g){
+  var t = (Math.PI - carg(g))/(4*Math.PI);
+  t = t - Math.floor(t/0.5)*0.5;
+  return t;
+}
+
+/* ------------------------------------------------------------- lienzos --- */
+function Lienzo(id, margen){
+  var cv = $(id);
+  var o = { cv:cv, c:cv.getContext("2d"), w:0, h:0, margen:margen || 26, G:null };
+  o.ajustar = function(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return false;
+    var d = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width*d) || cv.height !== Math.round(r.height*d)){
+      cv.width = Math.round(r.width*d); cv.height = Math.round(r.height*d);
+    }
+    o.c.setTransform(d, 0, 0, d, 0, 0);
+    o.w = r.width; o.h = r.height;
+    o.c.clearRect(0, 0, o.w, o.h);
+    var s = Math.min(o.w, o.h);
+    o.G = { cx:o.w/2, cy:o.h/2, R:s/2 - o.margen };
+    /* mientras la página se acomoda el lienzo puede medir casi nada */
+    return o.G.R > 20 || o.cv.classList.contains("lienzo");
+  };
+  /* del mouse al plano de Γ */
+  o.gamma = function(ev){
+    var r = cv.getBoundingClientRect();
+    if(!o.G) return null;
+    return cx((ev.clientX - r.left - o.G.cx)/o.G.R, -(ev.clientY - r.top - o.G.cy)/o.G.R);
+  };
+  return o;
+}
+function P(G, g){ return { x:G.cx + g.re*G.R, y:G.cy - g.im*G.R }; }
+
+function texto(c, s, x, y, col, tam, alin, base){
+  c.fillStyle = col || COL.soft;
+  c.font = (tam || 11) + "px 'Segoe UI',system-ui,sans-serif";
+  c.textAlign = alin || "left";
+  c.textBaseline = base || "middle";
+  c.fillText(s, x, y);
+}
+function textoFondo(c, s, x, y, col, tam, alin){
+  tam = tam || 11;
+  c.font = tam + "px 'Segoe UI',system-ui,sans-serif";
+  var an = c.measureText(s).width;
+  var x0 = alin === "center" ? x - an/2 : (alin === "right" ? x - an : x);
+  c.fillStyle = "rgba(11,15,22,.86)";
+  c.fillRect(x0 - 4, y - tam/2 - 3, an + 8, tam + 6);
+  texto(c, s, x0, y, col, tam, "left");
+}
+function rgba(hex, a){
+  var n = parseInt(hex.slice(1), 16);
+  return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")";
+}
+
+/* ------------------------------------------------------------ la carta --- */
+var R_MAY = [0.2, 0.5, 1, 2, 5], R_FIN = [0.1, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.5, 3, 4, 10, 20];
+var X_MAY = [0.2, 0.5, 1, 2, 5], X_FIN = [0.1, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 1.5, 3, 4, 10, 20];
+
+function circulo(c, G, u, v, rad){
+  c.beginPath();
+  c.arc(G.cx + u*G.R, G.cy - v*G.R, Math.abs(rad)*G.R, 0, TAU);
+  c.stroke();
+}
+function recortar(c, G){
+  c.beginPath(); c.arc(G.cx, G.cy, G.R, 0, TAU); c.clip();
+}
+/* círculo de r (o de g) constante; s = −1 lo espeja para la grilla de admitancias */
+function trazoR(c, G, r, s){ circulo(c, G, s*r/(1 + r), 0, 1/(1 + r)); }
+function trazoX(c, G, x, s){ circulo(c, G, s*1, s/x, 1/x); }
+
+/* op: espejo (grilla de admitancias), comoY (la grilla común leída como g y b),
+   alfa, guiones, etiquetas, hitos */
+function grilla(c, G, op){
+  op = op || {};
+  var s = op.espejo ? -1 : 1, a = op.alfa === undefined ? 1 : op.alfa, i;
+  if(!op.espejo){
+    c.fillStyle = "#0f1622";
+    c.beginPath(); c.arc(G.cx, G.cy, G.R, 0, TAU); c.fill();
+  }
+  var cR = op.espejo ? COL.y : COL.r;
+  var cArr = op.espejo ? COL.y : (op.comoY ? COL.cap : COL.ind);
+  var cAba = op.espejo ? COL.y : (op.comoY ? COL.ind : COL.cap);
+
+  c.save();
+  recortar(c, G);
+  if(op.guiones) c.setLineDash([3, 4]);
+  function capa(lista, grosor, alfa){
+    c.lineWidth = grosor;
+    c.strokeStyle = rgba(cR, alfa*a);
+    lista.forEach(function(r){ trazoR(c, G, r, s); });
+    lista.forEach(function(x){
+      c.strokeStyle = rgba(s > 0 ? cArr : cAba, alfa*a); trazoX(c, G, x, s);
+      c.strokeStyle = rgba(s > 0 ? cAba : cArr, alfa*a); trazoX(c, G, -x, s);
+    });
+  }
+  capa(R_FIN, 0.6, 0.16);
+  capa(R_MAY, 1, 0.45);
+  c.setLineDash([]);
+  c.strokeStyle = "rgba(154,167,180," + 0.5*a + ")";
+  c.lineWidth = 1;
+  c.beginPath(); c.moveTo(G.cx - G.R, G.cy); c.lineTo(G.cx + G.R, G.cy); c.stroke();
+  c.restore();
+
+  if(!op.espejo){
+    c.strokeStyle = "#7d8a99"; c.lineWidth = 1.4;
+    c.beginPath(); c.arc(G.cx, G.cy, G.R, 0, TAU); c.stroke();
+  }
+  if(op.etiquetas === false) return;
+  var tam = G.R < 170 ? 9 : 10;
+  R_MAY.forEach(function(r){
+    var u = s*(r - 1)/(r + 1);
+    texto(c, num(r, r < 1 ? 1 : 0), G.cx + u*G.R + 3, G.cy - 7, rgba(cR, 0.95), tam);
+  });
+  X_MAY.forEach(function(x){
+    [1, -1].forEach(function(sg){
+      var p = gDeZ(cx(0, sg*x)); p = cx(s*p.re, s*p.im);
+      var q = P(G, cx(p.re*0.9, p.im*0.9));
+      var arriba = p.im > 0;
+      var nom = (sg > 0 ? "+j" : "−j") + num(x, x < 1 ? 1 : 0);
+      texto(c, nom, q.x, q.y, rgba(arriba ? cArr : cAba, 0.95), tam, "center");
+    });
+  });
+  if(op.hitos){
+    [[-1, "cortocircuito", "left"], [0, "adaptada", "center"], [1, "abierto", "right"]].forEach(function(h){
+      var q = P(G, cx(h[0], 0));
+      c.fillStyle = COL.txt;
+      c.beginPath(); c.arc(q.x, q.y, 3.2, 0, TAU); c.fill();
+      texto(c, h[1], q.x + (h[2] === "left" ? 6 : h[2] === "right" ? -6 : 0), q.y + 12, COL.soft, tam, h[2]);
+    });
+  }
+}
+
+/* la escala del borde, en longitudes de onda hacia el generador */
+function escala(c, G){
+  var k, tam = G.R < 170 ? 8.5 : 9.5;
+  c.strokeStyle = "#4a5568"; c.lineWidth = 1;
+  for(k = 0; k < 50; k++){
+    var t = Math.PI - 4*Math.PI*(k/100);
+    var largo = k % 5 === 0 ? 7 : 3.5;
+    var co = Math.cos(t), se = -Math.sin(t);
+    c.beginPath();
+    c.moveTo(G.cx + co*(G.R + 2), G.cy + se*(G.R + 2));
+    c.lineTo(G.cx + co*(G.R + 2 + largo), G.cy + se*(G.R + 2 + largo));
+    c.stroke();
+    if(k % 5 === 0)
+      texto(c, num(k/100, 2), G.cx + co*(G.R + 17), G.cy + se*(G.R + 17), "#8b98a8", tam, "center");
+  }
+  texto(c, "λ hacia el generador ↻", 8, 12, "#8b98a8", tam + 0.5);
+}
+
+function punto(c, G, g, col, rad, nombre, lado){
+  var q = P(G, g);
+  c.fillStyle = col;
+  c.strokeStyle = "#0b0f16"; c.lineWidth = 2;
+  c.beginPath(); c.arc(q.x, q.y, rad || 5.5, 0, TAU); c.fill(); c.stroke();
+  if(nombre){
+    var dx = lado === "izq" ? -9 : 9;
+    textoFondo(c, nombre, q.x + dx, q.y - 12, col, 11.5, lado === "izq" ? "right" : "left");
+  }
+}
+/* arco sobre el círculo de |Γ| constante, girando en sentido horario */
+function arcoHorario(c, G, g, giro, col, ancho){
+  var m = cabs(g), a0 = carg(g);
+  if(m < 1e-4 || giro <= 0) return;
+  c.strokeStyle = col; c.lineWidth = ancho || 3; c.lineCap = "round";
+  c.beginPath();
+  /* en pantalla el eje y va para abajo: horario en Γ es antihorario para arc() */
+  c.arc(G.cx, G.cy, m*G.R, -a0, -a0 + giro, false);
+  c.stroke();
+  c.lineCap = "butt";
+}
+function flecha(c, x0, y0, x1, y1, col, ancho){
+  var an = Math.atan2(y1 - y0, x1 - x0), L = 9;
+  c.strokeStyle = col; c.fillStyle = col; c.lineWidth = ancho || 2;
+  c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1 - Math.cos(an)*L*0.6, y1 - Math.sin(an)*L*0.6); c.stroke();
+  c.beginPath(); c.moveTo(x1, y1);
+  c.lineTo(x1 - L*Math.cos(an - 0.4), y1 - L*Math.sin(an - 0.4));
+  c.lineTo(x1 - L*Math.cos(an + 0.4), y1 - L*Math.sin(an + 0.4));
+  c.closePath(); c.fill();
+}
+function circuloROE(c, G, m, col){
+  c.strokeStyle = col || rgba(COL.ok, 0.8); c.lineWidth = 1.4; c.setLineDash([5, 4]);
+  c.beginPath(); c.arc(G.cx, G.cy, m*G.R, 0, TAU); c.stroke();
+  c.setLineDash([]);
+}
+
+/* ---------------------------------------------- escalas logarítmicas --- */
+/* 0 … 1000 → 0 … 9 999 Ω, con más recorrido en los valores chicos */
+function rDeS(s){ s = Math.abs(s); return s <= 0 ? 0 : Math.pow(10, 4*s/1000) - 1; }
+function sDeR(r){ return 1000*Math.log(Math.abs(r) + 1)/Math.LN10/4; }
+function xDeS(s){ return (s < 0 ? -1 : 1)*rDeS(s); }
+function sDeX(x){ return (x < 0 ? -1 : 1)*sDeR(x); }
+function redondeo(v){ var a = Math.abs(v); return a < 10 ? Math.round(v*10)/10 : Math.round(v); }
+
+/* describe la carga en una línea */
+function tipoCarga(z){
+  if(!isFinite(z.re)) return "Circuito abierto: toda la onda vuelve en fase.";
+  var m = cabs(gDeZ(z));
+  if(m < 0.02) return "Carga <b>adaptada</b>: no hay onda reflejada.";
+  if(z.re < 1e-4 && Math.abs(z.im) < 1e-4) return "Cortocircuito: toda la onda vuelve con la fase invertida.";
+  if(z.re < 1e-4) return "Reactancia pura, sobre el borde: |Γ| = 1, toda la potencia vuelve.";
+  if(Math.abs(z.im) < 0.02) return "Carga <b>resistiva</b>: el punto está sobre el eje horizontal.";
+  return z.im > 0 ? "Carga <b>inductiva</b>: el punto está en la mitad de arriba."
+                  : "Carga <b>capacitiva</b>: el punto está en la mitad de abajo.";
+}
+
+/* ======================================================= 1 · CÓMO SE ARMA */
+var L1 = Lienzo("cv1", 22);
+var A = { fijo:gDeZ(cx(1, 1)), sobre:null };
+
+function pintarArma(){
+  if(!L1.ajustar()) return;
+  var c = L1.c, G = L1.G;
+  grilla(c, G, { hitos:true });
+  var g = A.sobre || A.fijo;
+  var z = zDeG(g);
+  /* el círculo y el arco que pasan por el punto */
+  c.save(); recortar(c, G);
+  c.lineWidth = 2.6;
+  if(isFinite(z.re) && z.re >= 0){
+    c.strokeStyle = COL.r; trazoR(c, G, z.re, 1);
+  }
+  if(isFinite(z.im) && Math.abs(z.im) > 0.003){
+    c.strokeStyle = z.im > 0 ? COL.ind : COL.cap; trazoX(c, G, z.im, 1);
+  } else {
+    c.strokeStyle = COL.txt; c.beginPath(); c.moveTo(G.cx - G.R, G.cy); c.lineTo(G.cx + G.R, G.cy); c.stroke();
+  }
+  c.restore();
+  var q = P(G, g);
+  c.strokeStyle = "rgba(242,204,96,.55)"; c.lineWidth = 1.2; c.setLineDash([4, 4]);
+  c.beginPath(); c.moveTo(G.cx, G.cy); c.lineTo(q.x, q.y); c.stroke(); c.setLineDash([]);
+  punto(c, G, g, COL.pto, 6);
+
+  $("a_r").textContent = num(z.re, 2);
+  var ax = $("a_x");
+  ax.textContent = (z.im >= 0 ? "+j" : "−j") + num(Math.abs(z.im), 2);
+  ax.className = Math.abs(z.im) < 0.005 ? "" : (z.im > 0 ? "ind" : "cap");
+  $("a_g").textContent = fgPolar(g);
+  $("a_roe").textContent = num(roe(cabs(g)), 2);
+  $("a_Z").textContent = fZ(cx(z.re*50, z.im*50));
+  $("a_tipo").innerHTML = tipoCarga(z);
+}
+function adentro(g){ return g && cabs(g) <= 1; }
+L1.cv.addEventListener("pointermove", function(ev){
+  var g = L1.gamma(ev);
+  A.sobre = adentro(g) ? g : null;
+  sucio = true;
+});
+L1.cv.addEventListener("pointerleave", function(){ A.sobre = null; sucio = true; });
+L1.cv.addEventListener("pointerdown", function(ev){
+  var g = L1.gamma(ev);
+  if(adentro(g)){ A.fijo = g; A.sobre = ev.pointerType === "mouse" ? g : null; sucio = true; }
+});
+
+/* ===================================================== 2 · UBICAR UNA CARGA */
+var L2 = Lienzo("cv2", 22);
+var CG = { Z0:50, R:100, X:50, abierto:false };
+
+function zCarga(o){ return o.abierto ? cx(Infinity, 0) : cx(o.R/o.Z0, o.X/o.Z0); }
+function pintarCarga(){
+  if(!L2.ajustar()) return;
+  var c = L2.c, G = L2.G;
+  grilla(c, G);
+  var z = zCarga(CG), g = gDeZ(z), m = cabs(g), q = P(G, g);
+  if(m > 0.01 && m < 0.999){
+    circuloROE(c, G, m);
+    /* donde el círculo corta el eje a la derecha, r = ROE */
+    var qr = P(G, cx(m, 0));
+    c.fillStyle = COL.ok; c.beginPath(); c.arc(qr.x, qr.y, 4, 0, TAU); c.fill();
+    textoFondo(c, "r = ROE = " + num(roe(m), 2), qr.x + 2, qr.y + 16, COL.ok, 11, m > 0.6 ? "right" : "left");
+  }
+  if(m > 0.01){
+    flecha(c, G.cx, G.cy, q.x, q.y, "rgba(242,204,96,.75)", 1.6);
+    /* el ángulo de Γ, medido desde el eje de la derecha */
+    var an = carg(g);
+    c.strokeStyle = "rgba(242,204,96,.6)"; c.lineWidth = 1.2;
+    c.beginPath(); c.arc(G.cx, G.cy, Math.min(28, m*G.R*0.5), 0, -an, an > 0); c.stroke();
+  }
+  punto(c, G, g, COL.pto, 6.5, "zL");
+
+  $("c_z").textContent = fz(z);
+  $("c_gm").textContent = num(m, 3);
+  $("c_gf").textContent = num(carg(g)/RAD, 1) + "°";
+  var s = roe(m);
+  $("c_roe").textContent = isFinite(s) ? num(s, 2) : "∞";
+  $("c_rl").textContent = m < 1e-6 ? "∞" : num(-20*Math.log(m)/Math.LN10, 1) + " dB";
+  $("c_pr").textContent = num(100*m*m, 1) + " %";
+  $("c_tipo").innerHTML = tipoCarga(z);
+}
+function textoRX(o, idR, idX){
+  $(idR).textContent = o.abierto ? "∞" : ohm(o.R);
+  $(idX).textContent = o.abierto ? "—" : conSigno(ohm(o.X), o.X);
+}
+function ponerSliders(o, idR, idX){
+  $(idR).value = sDeR(o.R); $(idX).value = sDeX(o.X);
+}
+/* los dos deslizadores logarítmicos de R y X, compartidos por tres solapas */
+function ligarRX(o, idR, idX, idRt, idXt, alCambiar){
+  ponerSliders(o, idR, idX); textoRX(o, idRt, idXt);
+  $(idR).addEventListener("input", function(){
+    o.R = redondeo(rDeS(+this.value)); o.abierto = false; textoRX(o, idRt, idXt); alCambiar();
+  });
+  $(idX).addEventListener("input", function(){
+    o.X = redondeo(xDeS(+this.value)); o.abierto = false; textoRX(o, idRt, idXt); alCambiar();
+  });
+}
+ligarRX(CG, "c_R", "c_X", "c_Rt", "c_Xt", function(){ sucio = true; });
+$("c_z0").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-v]"); if(!b) return;
+  [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+  CG.Z0 = +b.dataset.v; sucio = true;
+});
+var PRESETS = {
+  adap:    function(){ return [CG.Z0, 0]; },
+  corto:   function(){ return [0, 0]; },
+  dipolo:  function(){ return [73, 42.5]; },
+  corta:   function(){ return [12, -180]; },
+  rc:      function(){ return [30, -40]; }
+};
+$("c_pre").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-p]"); if(!b) return;
+  if(b.dataset.p === "abierto"){ CG.abierto = true; }
+  else { var v = PRESETS[b.dataset.p](); CG.R = v[0]; CG.X = v[1]; CG.abierto = false; }
+  if(!CG.abierto) ponerSliders(CG, "c_R", "c_X");
+  else { $("c_R").value = 1000; $("c_X").value = 0; }
+  textoRX(CG, "c_Rt", "c_Xt");
+  sucio = true;
+});
+
+/* ===================================================== 3 · RECORRER LA LÍNEA */
+var L3 = Lienzo("cv3", 40), LO = Lienzo("cvOnda");
+var LN = { Z0:50, R:100, X:-50, abierto:false, d:0, corre:false };
+
+function pintarLinea(){
+  if(!L3.ajustar()) return;
+  var c = L3.c, G = L3.G;
+  grilla(c, G);
+  escala(c, G);
+  var zL = zCarga(LN), gL = gDeZ(zL), m = cabs(gL);
+  var gd = hacia(gL, LN.d), zi = zDeG(gd);
+  if(m > 0.01) circuloROE(c, G, m, "rgba(63,185,80,.45)");
+  /* las lecturas del borde: rayo desde el centro por cada punto */
+  function rayo(g, col){
+    if(cabs(g) < 1e-3) return;
+    var a = carg(g), q = P(G, cx(Math.cos(a)*1.0, Math.sin(a)*1.0));
+    c.strokeStyle = col; c.lineWidth = 1; c.setLineDash([2, 4]);
+    c.beginPath(); c.moveTo(G.cx, G.cy); c.lineTo(q.x, q.y); c.stroke(); c.setLineDash([]);
+  }
+  rayo(gL, "rgba(242,204,96,.6)");
+  rayo(gd, "rgba(88,166,255,.7)");
+  /* vueltas enteras: si pasó de media onda, el arco ya es un círculo completo */
+  var giro = 4*Math.PI*LN.d;
+  if(giro >= TAU - 1e-6) arcoHorario(c, G, gL, TAU - 1e-4, COL.acc, 3);
+  else arcoHorario(c, G, gL, giro, COL.acc, 3);
+  punto(c, G, gL, COL.pto, 6, "zL", "izq");
+  if(LN.d > 0.0005) punto(c, G, gd, COL.acc, 6, "z(d)");
+
+  $("l_zl").textContent = fz(zL);
+  $("l_zi").textContent = fz(zi);
+  $("l_Zi").textContent = fZ(cx(zi.re*LN.Z0, zi.im*LN.Z0));
+  $("l_gl").textContent = fgPolar(gL);
+  $("l_gd").textContent = fgPolar(gd);
+  $("l_roe").textContent = num(roe(m), 2);
+  $("l_wl").textContent = m < 1e-3 ? "—" : num(wtg(gL), 3) + " λ";
+  $("l_wd").textContent = m < 1e-3 ? "—" : num(wtg(gd), 3) + " λ";
+  $("l_dt").textContent = num(LN.d, 3) + " λ";
+  pintarOnda(gL, m);
+}
+function pintarOnda(gL, m){
+  if(!LO.ajustar()) return;
+  var c = LO.c, w = LO.w, h = LO.h;
+  var izq = 40, der = w - 58, arr = 18, aba = h - 28;
+  var vmax = 2;
+  function X(d){ return der - (d/0.5)*(der - izq); }
+  function Y(v){ return aba - (v/vmax)*(aba - arr); }
+  c.strokeStyle = "#222a36"; c.lineWidth = 1;
+  for(var k = 0; k <= 10; k++){ c.beginPath(); c.moveTo(X(k*0.05), arr); c.lineTo(X(k*0.05), aba); c.stroke(); }
+  c.strokeStyle = COL.eje;
+  c.beginPath(); c.moveTo(izq, aba); c.lineTo(der, aba); c.stroke();
+  for(k = 0; k <= 10; k += 2) texto(c, num(k*0.05, 2) + " λ", X(k*0.05), aba + 13, COL.soft, 10, "center");
+  texto(c, "carga", der + 8, aba - 8, COL.pto, 11);
+  texto(c, "← hacia el generador", izq, 9, COL.soft, 10.5);
+  /* 1 ± |Γ|, los extremos de la envolvente */
+  [1 + m, 1 - m].forEach(function(v, i){
+    c.strokeStyle = rgba(COL.ok, 0.6); c.setLineDash([4, 4]);
+    c.beginPath(); c.moveTo(izq, Y(v)); c.lineTo(der, Y(v)); c.stroke(); c.setLineDash([]);
+    texto(c, (i ? "V mín " : "V máx ") + num(v, 2), der + 6, Y(v) + (i ? 7 : -7), COL.ok, 10);
+  });
+  texto(c, "|V|", 8, Y(1), COL.soft, 11);
+  c.strokeStyle = COL.acc; c.lineWidth = 2.2;
+  c.beginPath();
+  for(var i = 0; i <= 300; i++){
+    var d = 0.5*i/300;
+    var v = cabs(csum(UNO, hacia(gL, d)));
+    if(i) c.lineTo(X(d), Y(v)); else c.moveTo(X(d), Y(v));
+  }
+  c.stroke();
+  var dd = Math.min(LN.d, 0.5);
+  var vv = cabs(csum(UNO, hacia(gL, LN.d)));
+  c.strokeStyle = "rgba(88,166,255,.5)"; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(X(dd), arr); c.lineTo(X(dd), aba); c.stroke();
+  c.fillStyle = COL.acc; c.beginPath(); c.arc(X(dd), Y(vv), 4.5, 0, TAU); c.fill();
+}
+ligarRX(LN, "l_R", "l_X", "l_Rt", "l_Xt", function(){ sucio = true; });
+$("l_d").addEventListener("input", function(){ LN.d = +this.value/1000; LN.corre = false; botonPlay(); sucio = true; });
+$("l_play").addEventListener("click", function(){
+  if(!LN.corre && LN.d >= 0.4995) LN.d = 0;
+  LN.corre = !LN.corre; botonPlay();
+});
+[].forEach.call(document.querySelectorAll("#v-linea button[data-d]"), function(b){
+  b.addEventListener("click", function(){
+    LN.d = +b.dataset.d/1000; LN.corre = false; $("l_d").value = b.dataset.d; botonPlay(); sucio = true;
+  });
+});
+function botonPlay(){ $("l_play").textContent = LN.corre ? "⏸ Pausa" : "▶ Recorrer"; }
+
+/* ============================================ 4 · ADMITANCIAS Y MOVIMIENTOS */
+var L4 = Lienzo("cv4", 22);
+var MV = { paso:0.1, zL:null, z:null, tray:[], hist:[], acc:[] };
+var NOMBRE = {
+  sL:"Bobina en serie", sC:"Capacitor en serie", pL:"Bobina en paralelo", pC:"Capacitor en paralelo", lin:"Tramo de línea"
+};
+
+function nuevaCarga(){
+  var z;
+  do {
+    z = cx(0.2 + Math.random()*2.6, (Math.random()*2 - 1)*2);
+  } while(cabs(gDeZ(z)) < 0.35);
+  z = cx(Math.round(z.re*20)/20, Math.round(z.im*20)/20);
+  MV.zL = z; MV.z = z; MV.tray = []; MV.hist = []; MV.acc = [];
+  sucio = true; datosMover();
+}
+function mover(tipo){
+  var z0 = MV.z, h = MV.paso, pts = [gDeZ(z0)], n = 24, zf = z0, i;
+  var y0 = cdiv(UNO, z0);
+  if((tipo === "pL" || tipo === "pC") && !isFinite(y0.re)) return;
+  for(i = 1; i <= n; i++){
+    var f = i/n;
+    if(tipo === "sL") zf = csum(z0, cx(0, h*f));
+    else if(tipo === "sC") zf = csum(z0, cx(0, -h*f));
+    else if(tipo === "pC") zf = cdiv(UNO, csum(y0, cx(0, h*f)));
+    else if(tipo === "pL") zf = cdiv(UNO, csum(y0, cx(0, -h*f)));
+    else zf = zDeG(hacia(gDeZ(z0), 0.025*f));
+    pts.push(gDeZ(zf));
+  }
+  MV.hist.push({ z:z0, n:MV.tray.length, acc:JSON.stringify(MV.acc) });
+  MV.tray.push({ pts:pts, tipo:tipo });
+  MV.z = zf;
+  var cuanto = tipo === "lin" ? 0.025 : h;
+  var ult = MV.acc[MV.acc.length - 1];
+  if(ult && ult.tipo === tipo) ult.v += cuanto;
+  else MV.acc.push({ tipo:tipo, v:cuanto });
+  sucio = true; datosMover();
+}
+function deshacer(){
+  var h = MV.hist.pop(); if(!h) return;
+  MV.z = h.z; MV.tray.length = h.n; MV.acc = JSON.parse(h.acc);
+  sucio = true; datosMover();
+}
+function datosMover(){
+  var z = MV.z, y = cdiv(UNO, z), g = gDeZ(z), m = cabs(g);
+  $("m_zl").textContent = fz(MV.zL);
+  $("m_z").textContent = fz(z);
+  $("m_y").textContent = fz(y);
+  $("m_g").textContent = num(m, 3);
+  $("m_roe").textContent = num(roe(m), 2);
+  $("m_undo").disabled = !MV.hist.length;
+  var msg = "";
+  if(m < 0.05 && MV.acc.length)
+    msg = '<div class="nota bien"><b>Adaptado.</b> |Γ| = ' + num(m, 3) + " y ROE = " + num(roe(m), 2) +
+          ". La red de la lista, puesta entre la línea y la carga, la adapta.</div>";
+  else if(!MV.acc.length)
+    msg = '<p style="margin-top:10px;font-size:12.5px">Una pista: primero llevá el punto, en serie o con un tramo de línea, hasta el círculo que pasa por el centro de la grilla de admitancias (g = 1). Después, un elemento en paralelo lo baja por ese círculo hasta el centro.</p>';
+  $("m_msg").innerHTML = msg;
+  $("m_acc").innerHTML = MV.acc.map(function(a){
+    var t = NOMBRE[a.tipo] + ": ";
+    if(a.tipo === "lin") return "<li>" + t + num(a.v, 3) + " λ</li>";
+    var serie = a.tipo[0] === "s", pos = a.tipo === "sL" || a.tipo === "pC";
+    var v = (pos ? "+" : "−") + "j" + num(a.v, 2);
+    var real = serie ? " (" + (pos ? "+" : "−") + "j" + num(a.v*50, 1) + " Ω con 50 Ω)"
+                     : " (" + (pos ? "+" : "−") + "j" + num(a.v/50*1000, 1) + " mS con 50 Ω)";
+    return "<li>" + t + (serie ? "x = " : "b = ") + v + real + "</li>";
+  }).join("");
+}
+function pintarMover(){
+  if(!L4.ajustar()) return;
+  var c = L4.c, G = L4.G;
+  grilla(c, G);
+  if($("m_gy").checked){
+    grilla(c, G, { espejo:true, alfa:0.75, guiones:true, etiquetas:false });
+    /* el círculo g = 1 es el que más se usa: se marca más fuerte */
+    c.save(); recortar(c, G);
+    c.strokeStyle = rgba(COL.y, 0.8); c.lineWidth = 1.6; c.setLineDash([6, 4]);
+    trazoR(c, G, 1, -1); c.restore(); c.setLineDash([]);
+  }
+  /* meta: un anillito en el centro */
+  c.strokeStyle = rgba(COL.ok, 0.7); c.lineWidth = 1.2; c.setLineDash([3, 3]);
+  c.beginPath(); c.arc(G.cx, G.cy, 0.05*G.R, 0, TAU); c.stroke(); c.setLineDash([]);
+  MV.tray.forEach(function(t){
+    var col = t.tipo === "lin" ? COL.soft : (t.tipo === "sL" || t.tipo === "pL" ? COL.ind : COL.cap);
+    c.strokeStyle = col; c.lineWidth = 2.6; c.lineCap = "round";
+    if(t.tipo[0] === "p") c.setLineDash([7, 4]);
+    c.beginPath();
+    t.pts.forEach(function(g, i){ var q = P(G, g); if(i) c.lineTo(q.x, q.y); else c.moveTo(q.x, q.y); });
+    c.stroke(); c.setLineDash([]); c.lineCap = "butt";
+  });
+  var g = gDeZ(MV.z), gy = cneg(g);
+  if(cabs(g) > 0.02){
+    var a = P(G, g), b = P(G, gy);
+    c.strokeStyle = "rgba(57,197,187,.45)"; c.lineWidth = 1; c.setLineDash([3, 4]);
+    c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke(); c.setLineDash([]);
+    punto(c, G, gy, COL.y, 5, "y", "izq");
+  }
+  if(MV.tray.length) punto(c, G, gDeZ(MV.zL), "rgba(242,204,96,.45)", 4);
+  punto(c, G, g, COL.pto, 6.5, "z");
+}
+[].forEach.call(document.querySelectorAll("#v-mover button[data-m]"), function(b){
+  b.addEventListener("click", function(){ mover(b.dataset.m); });
+});
+$("m_paso").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-v]"); if(!b) return;
+  [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+  MV.paso = +b.dataset.v;
+});
+$("m_undo").addEventListener("click", deshacer);
+$("m_nueva").addEventListener("click", nuevaCarga);
+$("m_gy").addEventListener("change", function(){ sucio = true; });
+
+/* ================================================ 5 · ADAPTACIÓN CON STUB */
+var L5 = Lienzo("cv5", 40);
+var ST = { Z0:50, R:100, X:50, abierto:false, sol:0, paso:1, t0:0 };
+var DURA = 1300;
+
+/* Todo el diseño sale de acá. La carta se usa como carta de admitancias:
+   el punto de la admitancia es −Γ y se lee con la grilla común. */
+function disenio(){
+  var zL = zCarga(ST), gL = gDeZ(zL), m = cabs(gL);
+  var o = { zL:zL, gL:gL, m:m, gy:cneg(gL), yL:cdiv(UNO, zL) };
+  if(m < 0.01){ o.caso = "adaptada"; return o; }
+  if(m > 0.995){ o.caso = "reactiva"; return o; }
+  o.caso = "ok";
+  var a0 = carg(o.gy);
+  var tA = Math.atan2(m*Math.sqrt(1 - m*m), m*m);
+  var sols = [tA, -tA].map(function(t){
+    var giro = a0 - t;
+    giro = giro - Math.floor(giro/TAU)*TAU;
+    var d = giro/(4*Math.PI);
+    var gd = cpol(m, t);
+    var y = zDeG(gd);
+    var b = y.im;
+    var bl = Math.atan2(1, b);            /* cot(βl) = b */
+    var l = bl/TAU;
+    return { d:d, giro:giro, gd:gd, y:y, b:b, l:l };
+  });
+  sols.sort(function(p, q){ return p.d - q.d; });
+  o.s = sols[ST.sol];
+  return o;
+}
+function suave(t){ return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2; }
+function avance(){
+  var p = (performance.now() - ST.t0)/DURA;
+  return p >= 1 ? 1 : suave(Math.max(0, p));
+}
+function pintarStub(){
+  if(!L5.ajustar()) return;
+  var c = L5.c, G = L5.G, o = disenio(), k = ST.paso, p = avance();
+  var comoY = k >= 2;
+  grilla(c, G, { comoY:comoY });
+  escala(c, G);
+  if(comoY) textoFondo(c, "leída como carta de admitancias: g y b", G.cx, G.cy + G.R + 30, COL.y, 11, "center");
+
+  if(o.caso !== "ok"){
+    punto(c, G, o.gL, COL.pto, 6.5, "zL");
+    textoStub(o); return;
+  }
+  /* paso 1: la carga */
+  if(k === 1){ punto(c, G, o.gL, COL.pto, 6.5, "zL"); textoStub(o); return; }
+  punto(c, G, o.gL, "rgba(242,204,96,.4)", 4.5, "zL");
+  /* paso 2: al otro lado del centro */
+  var p2 = k === 2 ? p : 1;
+  arcoHorario(c, G, o.gL, Math.PI*p2, "rgba(57,197,187,.55)", 1.6);
+  var gy = cmul(o.gL, cpol(1, -Math.PI*p2));
+  if(k === 2){ punto(c, G, gy, COL.y, 6.5, "yL"); textoStub(o); return; }
+  /* paso 3: hacia el generador hasta g = 1 */
+  c.save(); recortar(c, G);
+  c.strokeStyle = COL.ok; c.lineWidth = 2.4; trazoR(c, G, 1, 1);
+  c.restore();
+  punto(c, G, o.gy, "rgba(57,197,187,.6)", 4.5, "yL", "izq");
+  var p3 = k === 3 ? p : 1;
+  arcoHorario(c, G, o.gy, o.s.giro*p3, COL.acc, 3.2);
+  var g3 = cmul(o.gy, cpol(1, -o.s.giro*p3));
+  if(k === 3){ punto(c, G, g3, COL.acc, 6.5, "y(d)"); textoStub(o); return; }
+  /* paso 4: el stub arranca en el cortocircuito (y = ∞, a la derecha) y gira */
+  var p4 = k === 4 ? p : 1;
+  arcoHorario(c, G, cx(0.985, 0), 4*Math.PI*o.s.l*p4, COL.hot, 4);
+  var gs = cpol(1, -4*Math.PI*o.s.l*p4);
+  punto(c, G, cx(1, 0), COL.hot, 4.5, "corto", "izq");
+  punto(c, G, gs, COL.hot, 5.5, "stub");
+  /* y el punto de la línea baja por g = 1 hasta el centro */
+  var yb = cx(1, o.s.b*(1 - p4));
+  var g4 = gDeZ(yb);
+  c.strokeStyle = COL.ok; c.lineWidth = 3; c.setLineDash([6, 4]);
+  c.beginPath();
+  for(var i = 0; i <= 40; i++){
+    var q = P(G, gDeZ(cx(1, o.s.b*(1 - p4*i/40))));
+    if(i) c.lineTo(q.x, q.y); else c.moveTo(q.x, q.y);
+  }
+  c.stroke(); c.setLineDash([]);
+  punto(c, G, o.s.gd, "rgba(88,166,255,.6)", 4.5, "y(d)");
+  if(k === 5 || p4 >= 1){
+    c.strokeStyle = COL.ok; c.lineWidth = 2;
+    c.beginPath(); c.arc(G.cx, G.cy, 11, 0, TAU); c.stroke();
+  }
+  punto(c, G, g4, k === 5 ? COL.ok : COL.acc, 6.5);
+  textoStub(o);
+}
+var TXT_PASO = [
+  function(o){ return "<h4>1 · Ubicar la carga</h4>Se normaliza: z<sub>L</sub> = Z<sub>L</sub>/Z<sub>0</sub> = <b>" + fz(o.zL) +
+    "</b>. El stub va en paralelo, y en paralelo se suman admitancias, así que conviene trabajar con ellas."; },
+  function(o){ return "<h4>2 · Pasar a admitancia</h4>La admitancia está del otro lado del centro, sobre el mismo círculo: y<sub>L</sub> = 1/z<sub>L</sub> = <b>" +
+    fz(o.yL) + "</b>. Desde acá la grilla se lee como <b>g + jb</b>: arriba la susceptancia es capacitiva."; },
+  function(o){ return "<h4>3 · Avanzar hasta g = 1</h4>Alejándose de la carga el punto gira en sentido horario hasta cortar el círculo <b>g = 1</b>. Pasa a <b>d = " +
+    num(o.s.d, 3) + " λ</b> de la carga, donde y = <b>" + fz(o.s.y) + "</b>. La conductancia ya es la de la línea: sobra la susceptancia."; },
+  function(o){ var b = -o.s.b; return "<h4>4 · Anular la susceptancia con el stub</h4>Hace falta sumar <b>" + (b >= 0 ? "+j" : "−j") + num(Math.abs(b), 2) +
+    "</b>. Un stub en cortocircuito arranca en y = ∞, a la derecha, y gira por el borde: con <b>l = " + num(o.s.l, 3) +
+    " λ</b> llega justo a esa susceptancia. En paralelo con la línea, el punto baja por g = 1 hasta el centro."; },
+  function(o){ return "<h4>5 · Resultado</h4>Stub en cortocircuito de <b>l = " + num(o.s.l, 3) + " λ</b>, conectado en paralelo a <b>d = " +
+    num(o.s.d, 3) + " λ</b> de la carga. Desde ese punto hacia el generador la línea ve y = 1: <b>ROE = 1</b>, sin onda reflejada." +
+    "<br><span style='font-size:12.5px'>A 145 MHz, en un coaxil con factor de velocidad 0,66, λ = " + num(0.66*300/145*100, 1) +
+    " cm: d = " + num(o.s.d*0.66*300/145*100, 1) + " cm y l = " + num(o.s.l*0.66*300/145*100, 1) + " cm.</span>"; }
+];
+function textoStub(o){
+  var html;
+  if(o.caso === "adaptada") html = "<h4>No hace falta adaptar</h4>La carga ya es igual a Z<sub>0</sub>: el punto está en el centro.";
+  else if(o.caso === "reactiva") html = "<h4>No se puede adaptar</h4>Una carga sin resistencia está sobre el borde, |Γ| = 1: no hay stub que la lleve al centro, porque toda la potencia vuelve. Subí R<sub>L</sub>.";
+  else html = TXT_PASO[ST.paso - 1](o);
+  if($("s_txt").innerHTML !== html) $("s_txt").innerHTML = html;
+  [].forEach.call($("s_pasos").children, function(s, i){ s.classList.toggle("on", i < ST.paso); });
+  $("s_ant").disabled = ST.paso <= 1 || o.caso !== "ok";
+  $("s_sig").disabled = ST.paso >= 5 || o.caso !== "ok";
+  esquema(o);
+}
+/* el esquema con la línea, el stub y la carga */
+function esquema(o){
+  var ok = o.caso === "ok";
+  var d = ok ? num(o.s.d, 3) + " λ" : "—", l = ok ? num(o.s.l, 3) + " λ" : "—";
+  var sv =
+    '<g font-family="Segoe UI,system-ui,sans-serif" font-size="13" fill="#9aa7b4">' +
+    '<circle cx="42" cy="60" r="18" fill="none" stroke="#9aa7b4" stroke-width="1.6"/>' +
+    '<path d="M31 60 q5.5 -9 11 0 t11 0" fill="none" stroke="#9aa7b4" stroke-width="1.6"/>' +
+    '<text x="42" y="97" text-anchor="middle">generador</text>' +
+    '<line x1="60" y1="50" x2="470" y2="50" stroke="#58a6ff" stroke-width="2"/>' +
+    '<line x1="60" y1="70" x2="470" y2="70" stroke="#58a6ff" stroke-width="2"/>' +
+    '<text x="150" y="40" text-anchor="middle">Z₀ = 50 Ω</text>' +
+    '<rect x="470" y="42" width="54" height="36" rx="4" fill="rgba(242,204,96,.12)" stroke="#f2cc60" stroke-width="1.6"/>' +
+    '<text x="497" y="64" text-anchor="middle" fill="#f2cc60">Z<tspan baseline-shift="sub" font-size="10">L</tspan></text>' +
+    '<text x="497" y="97" text-anchor="middle" fill="#f2cc60">' + fZ(cx(ST.R, ST.X)) + '</text>' +
+    (ok ?
+    '<line x1="290" y1="70" x2="290" y2="148" stroke="#f85149" stroke-width="2"/>' +
+    '<line x1="310" y1="70" x2="310" y2="148" stroke="#f85149" stroke-width="2"/>' +
+    '<line x1="290" y1="148" x2="310" y2="148" stroke="#f85149" stroke-width="3.5"/>' +
+    '<text x="322" y="118" fill="#f85149">stub, l = ' + l + '</text>' +
+    '<text x="322" y="137" font-size="11.5">en cortocircuito</text>' +
+    '<line x1="300" y1="22" x2="470" y2="22" stroke="#9aa7b4" stroke-width="1"/>' +
+    '<line x1="300" y1="16" x2="300" y2="28" stroke="#9aa7b4"/><line x1="470" y1="16" x2="470" y2="28" stroke="#9aa7b4"/>' +
+    '<text x="385" y="15" text-anchor="middle" fill="#58a6ff">d = ' + d + '</text>' +
+    '<text x="200" y="100" text-anchor="middle" fill="#3fb950">ROE = 1 de acá hacia el generador</text>'
+    : '<text x="290" y="120" text-anchor="middle">sin stub</text>') +
+    '</g>';
+  var el = $("s_esq");
+  if(el.getAttribute("data-k") !== sv){ el.innerHTML = sv; el.setAttribute("data-k", sv); }
+}
+ligarRX(ST, "s_R", "s_X", "s_Rt", "s_Xt", function(){ ST.t0 = 0; sucio = true; });
+$("s_sol").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-v]"); if(!b) return;
+  [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+  ST.sol = +b.dataset.v; ST.t0 = 0; sucio = true;
+});
+$("s_sig").addEventListener("click", function(){ if(ST.paso < 5){ ST.paso++; ST.t0 = performance.now(); } });
+$("s_ant").addEventListener("click", function(){ if(ST.paso > 1){ ST.paso--; ST.t0 = 0; sucio = true; } });
+
+/* ============================================================ 6 · EJERCICIOS */
+var EJ = [];
+function leerNum(s){ s = String(s).trim().replace(",", ".").replace("−", "-"); return s === "" ? NaN : parseFloat(s); }
+function azar(a, b, paso){ return Math.round((a + Math.random()*(b - a))/paso)*paso; }
+function elegir(v){ return v[Math.floor(Math.random()*v.length)]; }
+
+function nuevosEjercicios(){
+  EJ = [];
+  /* 1 · ROE de una carga */
+  var R1 = azar(10, 200, 5), X1 = azar(-120, 120, 5);
+  var g1 = cabs(gDeZ(cx(R1/50, X1/50)));
+  EJ.push({ enun:"Una línea de 50 Ω termina en Z<sub>L</sub> = " + fZ(cx(R1, X1)) + ". ¿Cuál es la ROE?",
+    campos:[{ un:"", ok:roe(g1), tol:0.03 }],
+    sol:"z<sub>L</sub> = " + fz(cx(R1/50, X1/50)) + ", |Γ| = " + num(g1, 3) + " y ROE = (1 + |Γ|)/(1 − |Γ|) = " + num(roe(g1), 2) + "." });
+  /* 2 · Transformador de cuarto de onda */
+  var Z0 = elegir([50, 75, 100]), RL = elegir([25, 30, 150, 200, 300]);
+  EJ.push({ enun:"Un tramo de λ/4 de línea de " + Z0 + " Ω está cargado con un resistor de " + RL + " Ω. ¿Qué impedancia se ve a la entrada?",
+    campos:[{ un:"Ω", ok:Z0*Z0/RL, tol:0.02 }],
+    sol:"Con λ/4 el punto cruza al lado opuesto de la carta: Z<sub>ent</sub> = Z<sub>0</sub>²/Z<sub>L</sub> = " + Z0 + "²/" + RL + " = " + num(Z0*Z0/RL, 1) + " Ω." });
+  /* 3 · Leer un punto de la carta */
+  var r3 = elegir([0.2, 0.5, 1, 2]), x3 = elegir([0.2, 0.5, 1, 2])*elegir([1, -1]);
+  EJ.push({ enun:"¿Qué impedancia normalizada marca el punto amarillo? Leé el círculo de r y el arco de x que pasan por él.",
+    carta:gDeZ(cx(r3, x3)),
+    campos:[{ un:"r =", pre:true, ok:r3, tol:0.06 }, { un:"x =", pre:true, ok:x3, tol:0.06 }],
+    sol:"z = " + fz(cx(r3, x3)) + ". Está en la mitad " + (x3 > 0 ? "de arriba: es inductiva." : "de abajo: es capacitiva.") });
+  /* 4 · Largo de un stub */
+  var b4 = elegir([0.5, 1, 1.5, 2, -0.5, -1, -1.5]);
+  var l4 = Math.atan2(1, b4)/TAU;   /* cot(βl) = b */
+  EJ.push({ enun:"En el punto donde se conecta el stub la admitancia vale y = 1 " + (b4 >= 0 ? "+ j" : "− j") + num(Math.abs(b4), 1) +
+    ". ¿Qué largo, en longitudes de onda, debe tener un stub en cortocircuito para adaptar?",
+    campos:[{ un:"λ", ok:l4, tol:0.006, abs:true }],
+    sol:"El stub tiene que aportar b = " + (b4 >= 0 ? "−j" : "+j") + num(Math.abs(b4), 1) + ". Un stub en cortocircuito da y = −j·cot(βl): cot(βl) = " +
+      num(b4, 1) + ", y l = " + num(l4, 3) + " λ. En la carta: desde el extremo derecho, girar por el borde hasta b = " + (b4 >= 0 ? "−" : "+") + num(Math.abs(b4), 1) + "." });
+  armarEjercicios();
+}
+function armarEjercicios(){
+  $("ejs").innerHTML = EJ.map(function(e, i){
+    return '<div class="ej"><div class="enun"><b>' + (i + 1) + ".</b> " + e.enun + "</div>" +
+      (e.carta ? '<canvas class="carta" id="ejc' + i + '"></canvas>' : "") +
+      '<div class="fila">' + e.campos.map(function(f, j){
+        return (f.pre ? '<span class="unidad">' + f.un + "</span>" : "") +
+          '<input class="tx" id="ej' + i + "_" + j + '" inputmode="decimal" autocomplete="off">' +
+          (f.pre ? "" : '<span class="unidad">' + f.un + "</span>");
+      }).join("") +
+      '<button class="b pri" data-c="' + i + '">Comprobar</button><button class="b" data-s="' + i + '">Ver solución</button></div>' +
+      '<div class="fb" id="ejfb' + i + '"></div></div>';
+  }).join("");
+  pintarEjercicios();
+}
+function pintarEjercicios(){
+  EJ.forEach(function(e, i){
+    if(!e.carta) return;
+    var L = Lienzo("ejc" + i, 14);
+    if(!L.ajustar()) return;
+    grilla(L.c, L.G);
+    punto(L.c, L.G, e.carta, COL.pto, 6);
+  });
+}
+$("ejs").addEventListener("click", function(ev){
+  var b = ev.target.closest("button"); if(!b) return;
+  var i, e, fb;
+  if(b.dataset.c !== undefined){
+    i = +b.dataset.c; e = EJ[i]; fb = $("ejfb" + i);
+    var bien = e.campos.every(function(f, j){
+      var v = leerNum($("ej" + i + "_" + j).value);
+      if(!isFinite(v)) return false;
+      return f.abs ? Math.abs(v - f.ok) <= f.tol || Math.abs(v - f.ok - 0.5) <= f.tol || Math.abs(v - f.ok + 0.5) <= f.tol
+                   : Math.abs(v - f.ok) <= f.tol*Math.max(1, Math.abs(f.ok));
+    });
+    fb.className = "fb " + (bien ? "ok" : "mal");
+    fb.innerHTML = bien ? "Correcto." : "Todavía no. Revisá la cuenta o mirá la solución.";
+  } else if(b.dataset.s !== undefined){
+    i = +b.dataset.s; fb = $("ejfb" + i);
+    fb.className = "fb"; fb.innerHTML = EJ[i].sol;
+  }
+});
+$("e_nuevos").addEventListener("click", nuevosEjercicios);
+
+/* ================================================================= solapas */
+var TABS = [["arma","① Cómo se arma"],["carga","② Ubicar una carga"],["linea","③ Recorrer la línea"],
+            ["mover","④ Admitancias y movimientos"],["stub","⑤ Adaptación con stub"],["ej","✏️ Ejercicios"]];
+var tab = "arma", sucio = true;
+
+function verTab(t){
+  tab = t;
+  $("tabs").innerHTML = TABS.map(function(x){
+    return '<button data-t="' + x[0] + '"' + (x[0] === t ? ' class="on"' : "") + ">" + x[1] + "</button>";
+  }).join("");
+  TABS.forEach(function(x){ $("v-" + x[0]).className = "view" + (x[0] === t ? " on" : ""); });
+  sucio = true;
+  dibujar();
+}
+$("tabs").addEventListener("click", function(ev){
+  var b = ev.target.closest("button[data-t]");
+  if(b) verTab(b.dataset.t);
+});
+
+function dibujar(){
+  if(tab === "arma") pintarArma();
+  else if(tab === "carga") pintarCarga();
+  else if(tab === "linea") pintarLinea();
+  else if(tab === "mover") pintarMover();
+  else if(tab === "stub") pintarStub();
+  else if(tab === "ej") pintarEjercicios();
+}
+
+var ultimo = 0;
+function cuadro(ts){
+  var dt = ultimo ? Math.min((ts - ultimo)/1000, 0.05) : 0;
+  ultimo = ts;
+  if(tab === "linea" && LN.corre){
+    LN.d += dt*0.06;
+    if(LN.d >= 0.5){ LN.d = 0.5; LN.corre = false; botonPlay(); }
+    $("l_d").value = Math.round(LN.d*1000);
+    sucio = true;
+  }
+  var animando = tab === "stub" && ST.t0 && performance.now() - ST.t0 < DURA + 50;
+  if(sucio || animando){ sucio = false; dibujar(); }
+  requestAnimationFrame(cuadro);
+}
+window.addEventListener("resize", function(){ sucio = true; dibujar(); });
+
+/* ---------------------------------------------------------------- arranque */
+nuevaCarga();
+nuevosEjercicios();
+verTab("arma");
+requestAnimationFrame(cuadro);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
