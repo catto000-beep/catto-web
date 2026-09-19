@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistemas de numeración y aritmética binaria · Informática I · Catto</title>
+<meta name="description" content="Sistemas posicionales, binario, octal y hexadecimal, conversiones, aritmetica binaria, complemento a dos, acarreo y desborde, punto fijo y flotante IEEE 754, BCD y ASCII. Contenido de Informatica I, primer nivel de Ingenieria Electronica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-numeracion">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=1">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática I</a>
+    <span class="anio">1<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática I</span> · 120 h · Contenido 2 de 6</div>
+    <h1>Sistemas de numeraci&oacute;n y aritm&eacute;tica binaria</h1>
+    <p class="lead">Adentro de la maquina todo son bits. Lo que cambia es como se los lee: el mismo byte puede ser un numero sin signo, uno negativo, un caracter o una instruccion.</p>
+    <div class="chips">
+      <span class="chip hi">Binario</span>
+      <span class="chip">Hexadecimal</span>
+      <span class="chip">Complemento a dos</span>
+      <span class="chip">Desborde</span>
+      <span class="chip">IEEE 754</span>
+    </div>
+    <hr class="rule">
+
+    <section id="posicional">
+      <h2><span class="n">01</span>Un número no es su escritura</h2>
+      <p>Trece ovejas son trece ovejas, se escriban <code>13</code>, <code>XIII</code>, <code>1101</code> o
+      <code>D</code>. El número es la cantidad; lo que cambia es el sistema con que se anota. Los sistemas que
+      usa la computación son <b>posicionales</b>: cada dígito pesa según el lugar que ocupa, y el peso de cada
+      lugar es una potencia de la <b>base</b> <i>b</i>.</p>
+      <div class="form">
+        <math display="block"><mi>N</mi><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mo>−</mo><mi>m</mi></mrow><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></munderover><msub><mi>d</mi><mi>i</mi></msub><mo>·</mo><msup><mi>b</mi><mi>i</mi></msup><mspace width="1.4em"></mspace><mn>0</mn><mo>≤</mo><msub><mi>d</mi><mi>i</mi></msub><mo>&lt;</mo><mi>b</mi></math>
+        <span class="cap">n dígitos enteros y m fraccionarios. Con b = 10 es la cuenta de todos los días; con b = 2, la de la máquina.</span>
+      </div>
+      <p>Por ejemplo, 1101,1<sub>2</sub> = 1·2<sup>3</sup> + 1·2<sup>2</sup> + 0·2<sup>1</sup> + 1·2<sup>0</sup> + 1·2<sup>−1</sup> = 8 + 4 + 1 + 0,5 = 13,5.</p>
+
+      <div class="box key">
+        <div class="bt">Por qué binario</div>
+        <p>Un circuito que sólo tiene que distinguir dos estados, conduce o no conduce, es barato, rápido y muy
+        inmune al ruido: una tensión de 4,3 V en lugar de 5 V sigue siendo un «1» sin discusión. Distinguir diez
+        niveles en un mismo cable sería mucho más frágil. La base 2 no es una elección matemática sino eléctrica.</p>
+      </div>
+
+      <p>Los programadores leen binario agrupado. El <b>hexadecimal</b> (base 16, dígitos 0–9 y A–F) resume
+      cuatro bits en un dígito y el <b>octal</b> (base 8) resume tres. <code>1001 1100</code> se lee <code>9C</code>
+      de un vistazo; por eso los volcados de memoria y las direcciones se escriben en hexadecimal.</p>
+    </section>
+
+    <section id="bits">
+      <h2><span class="n">02</span>Un byte, muchas lecturas</h2>
+      <p>Los mismos ocho bits significan cosas distintas según quién los lea. Tocá los bits: el patrón es uno solo,
+      y las interpretaciones cambian a la vez. El bit de la izquierda (b7) es el de mayor peso.</p>
+      <div class="lw" id="byte">
+        <div class="lt">Laboratorio · el mismo byte, seis significados</div>
+        <p class="ls">Clic en cada bit para cambiarlo. En complemento a dos, el bit 7 pesa −128.</p>
+        <div class="bits" id="byBits" style="margin-bottom:24px"></div>
+        <div class="fila">
+          <button id="byNot">Invertir todos (~)</button><button id="byNeg">Cambiar de signo (−x)</button>
+          <button id="byShl">Desplazar a la izquierda (&lt;&lt; 1)</button><button id="byShr">Desplazar a la derecha (&gt;&gt; 1)</button>
+          <button id="by0">Poner en cero</button>
+        </div>
+        <div class="tw" style="margin:10px 0 0"><table class="tab" id="byTab"></table></div>
+        <div class="nota" id="byNota"></div>
+      </div>
+      <p>La lectura no está en los bits: está en el programa. En C la decide el <b>tipo</b> de la variable, y
+      convertir de un tipo a otro muchas veces no toca ni un bit, sólo cambia la lectura.</p>
+    </section>
+
+    <section id="conversiones">
+      <h2><span class="n">03</span>Cómo se convierte entre bases</h2>
+      <h3>De decimal a otra base: divisiones sucesivas</h3>
+      <p>Se divide por la base y se guarda el resto; el cociente se vuelve a dividir, hasta llegar a cero. Los
+      restos, leídos <b>de abajo hacia arriba</b>, son los dígitos.</p>
+      <div class="box ejem"><div class="bt">156 a binario</div>
+        <p>156 ÷ 2 = 78 resto <b>0</b> · 78 ÷ 2 = 39 resto <b>0</b> · 39 ÷ 2 = 19 resto <b>1</b> ·
+        19 ÷ 2 = 9 resto <b>1</b> · 9 ÷ 2 = 4 resto <b>1</b> · 4 ÷ 2 = 2 resto <b>0</b> ·
+        2 ÷ 2 = 1 resto <b>0</b> · 1 ÷ 2 = 0 resto <b>1</b>.</p>
+        <p>De abajo hacia arriba: 156 = <b>1001 1100<sub>2</sub></b> = <b>9C<sub>16</sub></b> = <b>234<sub>8</sub></b>.
+        Comprobación: 128 + 16 + 8 + 4 = 156.</p></div>
+      <h3>La parte fraccionaria: multiplicaciones sucesivas</h3>
+      <p>Se multiplica por la base; la parte entera que aparece es el dígito siguiente y se sigue con lo que queda
+      después de la coma.</p>
+      <div class="box ejem"><div class="bt">0,625 y 0,1 a binario</div>
+        <p>0,625 · 2 = <b>1</b>,25 → 0,25 · 2 = <b>0</b>,5 → 0,5 · 2 = <b>1</b>,0. Termina: 0,625 = 0,101<sub>2</sub>.</p>
+        <p>0,1 · 2 = <b>0</b>,2 → <b>0</b>,4 → <b>0</b>,8 → <b>1</b>,6 → <b>1</b>,2 → <b>0</b>,4 → … y el 0,4 vuelve a
+        aparecer. 0,1 = 0,0<span style="text-decoration:overline">0011</span><sub>2</sub>, periódico.</p></div>
+      <div class="box ojo"><div class="bt">0,1 + 0,2 no da 0,3</div>
+        <p>Una fracción tiene desarrollo finito en base 2 sólo si su denominador es una potencia de 2. El 0,1
+        decimal no lo es, así que en la máquina se guarda redondeado. Por eso en casi cualquier lenguaje
+        <code>0.1 + 0.2 == 0.3</code> es falso. Nunca se comparan números reales con <code>==</code>: se compara
+        la diferencia contra una tolerancia.</p></div>
+      <h3>Entre binario, octal y hexadecimal: agrupar</h3>
+      <p>Como 16 = 2<sup>4</sup> y 8 = 2<sup>3</sup>, no hace falta pasar por decimal: se agrupan los bits de a
+      cuatro o de a tres desde la coma y se reemplaza cada grupo. <code>1011 0110 1111</code> = <code>B6F</code>;
+      <code>101 101 101 111</code> = <code>5557</code>.</p>
+    </section>
+
+    <section id="aritmetica">
+      <h2><span class="n">04</span>Aritmética binaria</h2>
+      <p>Se hace igual que en decimal, con tablas mucho más cortas. En la suma, 1 + 1 = 10: se escribe 0 y se
+      lleva 1. La multiplicación se reduce a <b>desplazar y sumar</b>, porque cada dígito del multiplicador es 0
+      o 1: o no se suma nada o se suma el multiplicando corrido.</p>
+      <pre class="code"><code>    1011   (11)           1011
+  + 0110   ( 6)         ×  101
+  ------                ------
+   10001   (17)           1011    ← 1011 · 1
+                         0000     ← 1011 · 0, corrido 1
+                        1011      ← 1011 · 1, corrido 2
+                        ------
+                        110111    (55 = 11 · 5)</code></pre>
+      <p>Correr un número <i>k</i> lugares a la izquierda lo multiplica por 2<sup>k</sup>; a la derecha lo divide
+      por 2<sup>k</sup> descartando el resto. Los compiladores reemplazan <code>x * 8</code> por
+      <code>x &lt;&lt; 3</code> cuando les conviene. Los sumadores que hacen esto en hardware están en
+      <a class="ref" href="/publicaciones/mapa-electronica/temas/logica-combinacional">lógica combinacional</a>.</p>
+    </section>
+
+    <section id="signo">
+      <h2><span class="n">05</span>Números negativos: complemento a dos</h2>
+      <p>La máquina no tiene un lugar para el signo menos: todo son bits. Hubo tres soluciones, y ganó la que
+      permite usar <b>el mismo sumador</b> para números con y sin signo.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Representación</th><th class="c">−5 en 8 bits</th><th class="c">Rango con 8 bits</th><th>Problema</th></tr></thead>
+        <tbody>
+          <tr><td>Signo y magnitud</td><td class="c"><code>1000 0101</code></td><td class="c">−127 … +127</td><td>Dos ceros (+0 y −0) y un circuito de suma distinto para cada combinación de signos</td></tr>
+          <tr><td>Complemento a uno</td><td class="c"><code>1111 1010</code></td><td class="c">−127 … +127</td><td>También tiene dos ceros; la suma necesita sumar el acarreo final</td></tr>
+          <tr><td><b>Complemento a dos</b></td><td class="c"><code>1111 1011</code></td><td class="c">−128 … +127</td><td>Ninguno: un solo cero y la suma común funciona</td></tr>
+        </tbody>
+      </table></div>
+      <p>En complemento a dos el bit de mayor peso vale <b>negativo</b>. Con <i>n</i> bits:</p>
+      <div class="form">
+        <math display="block"><mi>N</mi><mo>=</mo><mo>−</mo><msub><mi>d</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>·</mo><msup><mn>2</mn><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msup><mo>+</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>n</mi><mo>−</mo><mn>2</mn></mrow></munderover><msub><mi>d</mi><mi>i</mi></msub><mo>·</mo><msup><mn>2</mn><mi>i</mi></msup>
+          <mspace width="1.4em"></mspace><mo>−</mo><msup><mn>2</mn><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msup><mo>≤</mo><mi>N</mi><mo>≤</mo><msup><mn>2</mn><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msup><mo>−</mo><mn>1</mn></math>
+        <span class="cap">Para cambiar de signo: invertir todos los bits y sumar 1. −x = ~x + 1.</span>
+      </div>
+      <p>Una manera de verlo sin fórmulas: los números de 8 bits forman un <b>reloj de 256 posiciones</b>. Restar 5
+      es lo mismo que avanzar 251, porque 251 + 5 = 256 da la vuelta y vuelve a cero. En complemento a dos, a la
+      posición 251 (<code>1111 1011</code>) se la llama −5. Por eso el sumador no necesita saber si hay signo: la
+      cuenta en el reloj es la misma.</p>
+      <div class="box ojo"><div class="bt">Extensión de signo</div>
+        <p>Al pasar un número con signo a más bits se copia el bit de signo hacia la izquierda: −5 en 16 bits es
+        <code>1111 1111 1111 1011</code>, no <code>0000 0000 1111 1011</code> (que es +251).</p></div>
+    </section>
+
+    <section id="desborde">
+      <h2><span class="n">06</span>Acarreo y desborde: las banderas</h2>
+      <p>El resultado de una suma de 8 bits siempre cabe en 8 bits más un acarreo. Lo que puede fallar es la
+      <b>interpretación</b>, y la ALU avisa con banderas, sin saber cuál de las dos lecturas le interesa al programa:</p>
+      <ul>
+        <li><b>C (acarreo):</b> el resultado <b>sin signo</b> no entró. 200 + 100 = 300 &gt; 255.</li>
+        <li><b>V (desborde):</b> el resultado <b>con signo</b> no entró. Pasa sólo al sumar dos números del mismo
+        signo y obtener uno del signo contrario: 100 + 100 da −56.</li>
+        <li><b>N (negativo)</b> copia el bit 7 y <b>Z (cero)</b> indica si el resultado es 0.</li>
+      </ul>
+      <div class="lw" id="alu">
+        <div class="lt">Laboratorio · una ALU de 8 bits</div>
+        <p class="ls">Escribí los operandos en decimal (−128 a 255). La ALU los guarda como 8 bits y calcula las banderas.</p>
+        <div class="fila">
+          <label>A = <input type="number" id="aluA" value="100" style="width:80px"></label>
+          <select id="aluOp"><option value="+">A + B</option><option value="-">A − B</option></select>
+          <label>B = <input type="number" id="aluB" value="100" style="width:80px"></label>
+        </div>
+        <div class="tw" style="margin:10px 0 0"><table class="tab" id="aluTab"></table></div>
+        <div class="nota" id="aluNota"></div>
+      </div>
+    </section>
+
+    <section id="reales">
+      <h2><span class="n">07</span>Números reales: punto fijo y punto flotante</h2>
+      <p>En <b>punto fijo</b> se decide de antemano cuántos bits van después de la coma. En formato Q8.8, por
+      ejemplo, un entero de 16 bits representa el número dividido por 256. Es rápido, usa sólo la ALU entera y
+      es lo habitual en microcontroladores sin unidad de punto flotante; a cambio, el rango es chico.</p>
+      <p>El <b>punto flotante</b> hace lo mismo que la notación científica: guarda signo, exponente y mantisa. El
+      estándar <b>IEEE 754</b> de precisión simple usa 32 bits:</p>
+      <div class="form">
+        <math display="block"><mi>x</mi><mo>=</mo><msup><mrow><mo>(</mo><mo>−</mo><mn>1</mn><mo>)</mo></mrow><mi>s</mi></msup><mo>·</mo><mn>1</mn><mo>,</mo><mi>f</mi><mo>·</mo><msup><mn>2</mn><mrow><mi>e</mi><mo>−</mo><mn>127</mn></mrow></msup></math>
+        <span class="cap">1 bit de signo s · 8 bits de exponente e con sesgo 127 · 23 bits de fracción f. El «1,» no se guarda: está implícito.</span>
+      </div>
+      <div class="box ejem"><div class="bt">−6,25 en IEEE 754 simple</div>
+        <p>6,25 = 110,01<sub>2</sub> = 1,1001<sub>2</sub> · 2<sup>2</sup>. Signo 1; exponente 2 + 127 = 129 =
+        <code>1000 0001</code>; fracción <code>1001 0000 …</code>.</p>
+        <p><code>1 10000001 10010000000000000000000</code> = <b><code>0xC0C80000</code></b>.</p></div>
+      <p>Con 24 bits de mantisa la precisión relativa es 2<sup>−23</sup> ≈ 1,2·10<sup>−7</sup>: unas siete cifras
+      decimales. Sumar 1 a 100 000 000 en <code>float</code> no cambia nada, porque el 1 cae por debajo de la última
+      cifra que se guarda. Para cálculos de ingeniería se usa <code>double</code>, de 64 bits y unas 16 cifras.</p>
+    </section>
+
+    <section id="codigos">
+      <h2><span class="n">08</span>Códigos: cuando los bits no son cantidades</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Código</th><th>Qué representa</th><th>Ejemplo</th></tr></thead>
+        <tbody>
+          <tr><td><b>BCD</b></td><td>Cada dígito decimal en 4 bits. Lo usan los relojes, los displays y los instrumentos</td><td>59 = <code>0101 1001</code></td></tr>
+          <tr><td><b>ASCII</b></td><td>Caracteres en 7 bits: letras, dígitos, signos y controles</td><td>'A' = 65 = <code>0x41</code>; '0' = 48</td></tr>
+          <tr><td><b>UTF-8</b></td><td>Todo Unicode en 1 a 4 bytes; los primeros 128 coinciden con ASCII</td><td>'ñ' = <code>0xC3 0xB1</code></td></tr>
+          <tr><td><b>Gray</b></td><td>Números consecutivos difieren en un solo bit. Evita lecturas falsas en encoders</td><td>3 = <code>010</code>, 4 = <code>110</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>El dígito '7' no es el número 7: vale 55. Para convertir un carácter dígito en su valor se resta
+      <code>'0'</code>. Los códigos que usan los conversores están en
+      <a class="ref" href="/publicaciones/mapa-electronica/temas/conversores-ad-da">conversores A/D y D/A</a>.</p>
+      <a class="pub" href="/publicaciones/logica-digital">
+        <span class="ic">🔢</span>
+        <span><span class="pn">Curso interactivo de lógica digital</span>
+        <span class="pd">La primera pestaña es un conversor de binario con los pesos de cada bit a la vista; las
+        siguientes llevan esos bits a compuertas, mapas de Karnaugh y flip-flops.</span></span>
+        <span class="go">›</span>
+      </a>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Práctica 1 · Ver los bits en C</div>
+        <p>Escribir una función <code>void binario(uint8_t x)</code> que imprima los 8 bits con
+        <code>(x &gt;&gt; i) &amp; 1</code>. Imprimir con ella 5, −5 guardado en un <code>int8_t</code>, y 251.
+        Explicar por qué los dos últimos coinciden.</p></div>
+      <div class="box lab"><div class="bt">Práctica 2 · El desborde existe</div>
+        <p>Declarar <code>uint8_t a = 200, b = 100;</code> y guardar <code>a + b</code> en un <code>uint8_t</code>.
+        Predecir el resultado antes de imprimirlo (44). Repetir con <code>int8_t</code> y 100 + 100.</p></div>
+      <div class="box lab"><div class="bt">Práctica 3 · El float tiene cifras contadas</div>
+        <p>Sumar 0.1f diez veces en un <code>float</code> y comparar con 1.0f con <code>==</code>. Imprimir con
+        <code>%.10f</code>. Repetir con <code>double</code> y proponer una comparación correcta con tolerancia.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Leer los restos de arriba hacia abajo</b> en las divisiones sucesivas: da el número espejado.</li>
+        <li><b>Agrupar los bits desde la izquierda</b> para pasar a hexadecimal. Se agrupa desde la coma.</li>
+        <li><b>Olvidar el «+1»</b> del complemento a dos, que es el complemento a uno.</li>
+        <li><b>Confundir acarreo con desborde.</b> Uno interesa sin signo y el otro con signo.</li>
+        <li><b>Rellenar con ceros</b> un número negativo al agrandarlo, en lugar de extender el signo.</li>
+        <li><b>Comparar reales con ==</b>.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">11</span>Autoevaluación</h2>
+      <details class="q"><summary>Pasar 45 a binario, octal y hexadecimal.</summary>
+        <div class="a"><p>45 = 10 1101<sub>2</sub> = 55<sub>8</sub> = 2D<sub>16</sub>.</p></div></details>
+      <details class="q"><summary>¿Qué valor tiene <code>1110 0110</code> sin signo y en complemento a dos?</summary>
+        <div class="a"><p>Sin signo, 230. En complemento a dos, 230 − 256 = −26.</p></div></details>
+      <details class="q"><summary>¿Cuál es el rango de un entero de 16 bits en complemento a dos?</summary>
+        <div class="a"><p>De −32 768 a +32 767.</p></div></details>
+      <details class="q"><summary>Al sumar <code>0111 0000</code> + <code>0101 0000</code>, ¿qué banderas se encienden?</summary>
+        <div class="a"><p>112 + 80 = 192 = <code>1100 0000</code>. C = 0 (sin signo entra), V = 1 (dos positivos dieron
+        un negativo: −64), N = 1, Z = 0.</p></div></details>
+      <details class="q"><summary>¿Por qué el 0,5 se guarda exacto en un float y el 0,2 no?</summary>
+        <div class="a"><p>0,5 = 2<sup>−1</sup> tiene desarrollo binario finito. 0,2 = 1/5 tiene un 5 en el
+        denominador, que no es potencia de 2, y su desarrollo binario es periódico.</p></div></details>
+      <details class="q"><summary>¿Qué número representa <code>0x41200000</code> en IEEE 754 simple?</summary>
+        <div class="a"><p>Signo 0; exponente <code>1000 0010</code> = 130 → 2<sup>3</sup>; fracción <code>0100…</code>
+        = 0,25. x = 1,25 · 8 = <b>10</b>.</p></div></details>
+      <details class="q"><summary>¿Cómo se obtiene el valor numérico del carácter '8'?</summary>
+        <div class="a"><p>Restándole '0': '8' − '0' = 56 − 48 = 8.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">12</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Thomas L. Floyd.</span> <span class="ti">Fundamentos de sistemas digitales</span>.
+          <span class="ed">9.ª ed., Pearson Prentice Hall, 2006.</span>
+          <span class="pq">El capítulo 2 cubre sistemas de numeración, complemento a dos, BCD y códigos con muchísimos ejercicios.</span></li>
+        <li><span class="au">M. Morris Mano.</span> <span class="ti">Diseño digital</span>.
+          <span class="ed">3.ª ed., Pearson Educación, 2003.</span>
+          <span class="pq">Más formal: bases, complementos y códigos binarios como punto de partida del diseño lógico.</span></li>
+        <li><span class="au">Randal E. Bryant y David R. O'Hallaron.</span> <span class="ti">Computer Systems: A Programmer's
+          Perspective</span>. <span class="ed">3.ª ed., Pearson, 2016 (en inglés).</span>
+          <span class="pq">El capítulo 2 es la mejor explicación de cómo representa C enteros y flotantes, con sus trampas.</span></li>
+        <li><span class="au">David Goldberg.</span> <span class="ti">What Every Computer Scientist Should Know About
+          Floating-Point Arithmetic</span>. <span class="ed">ACM Computing Surveys, 23(1), 1991 (en inglés).</span>
+          <span class="pq">El artículo clásico sobre por qué el punto flotante se porta como se porta.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/sistema-computacional">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Estructura de un sistema computacional</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/algoritmos">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Resoluci&oacute;n de problemas y representaci&oacute;n de algoritmos</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Sistemas de numeración y aritmética binaria»</b> de <b>Informática I</b> (primer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  function b8(v){ var s = (v & 255).toString(2).padStart(8, "0"); return s.slice(0, 4) + " " + s.slice(4); }
+  function hx(v){ return (v & 255).toString(16).toUpperCase().padStart(2, "0"); }
+  function s8(v){ v &= 255; return v >= 128 ? v - 256 : v; }
+  /* el menos tipografico, para que se lea igual que en el texto */
+  function ms(n){ return String(n).replace("-", "−"); }
+
+  /* ---- el mismo byte, seis lecturas ---- */
+  var x = 0x9C, nota = "";
+  function ascii(v){
+    if(v < 32) return "carácter de control";
+    if(v === 32) return "espacio";
+    if(v === 127) return "DEL (control)";
+    if(v > 127) return "fuera de ASCII (en UTF-8 es parte de un carácter de varios bytes)";
+    return "'" + String.fromCharCode(v) + "'";
+  }
+  function pintarByte(){
+    var h = "";
+    for(var i = 7; i >= 0; i--){
+      var u = (x >> i) & 1;
+      h += '<button class="bit' + (u ? " uno" : "") + (i === 7 ? " signo" : "") + '" data-i="' + i + '">' + u +
+           "<small>" + (i === 7 ? "−128/128" : (1 << i)) + "</small></button>";
+      if(i === 4) h += '<span class="bits-sep"></span>';
+    }
+    $("byBits").innerHTML = h;
+    var hi = x >> 4, lo = x & 15;
+    var bcd = hi < 10 && lo < 10 ? String(hi) + String(lo) : "no es BCD válido: un nibble vale más de 9";
+    $("byTab").innerHTML =
+      "<tbody><tr><td>Sin signo (<code>uint8_t</code>)</td><td><b>" + x + "</b></td></tr>" +
+      "<tr><td>Complemento a dos (<code>int8_t</code>)</td><td><b>" + ms(s8(x)) + "</b></td></tr>" +
+      "<tr><td>Hexadecimal</td><td><b><code>0x" + hx(x) + "</code></b></td></tr>" +
+      "<tr><td>Octal</td><td><b><code>0" + x.toString(8) + "</code></b></td></tr>" +
+      "<tr><td>BCD empaquetado</td><td><b>" + bcd + "</b></td></tr>" +
+      "<tr><td>Carácter ASCII</td><td><b>" + ascii(x) + "</b></td></tr></tbody>";
+    $("byNota").innerHTML = nota;
+  }
+  $("byBits").addEventListener("click", function(ev){
+    var b = ev.target.closest(".bit"); if(!b) return;
+    x ^= 1 << (+b.dataset.i); nota = ""; pintarByte();
+  });
+  $("byNot").onclick = function(){ var a = x; x = (~x) & 255; nota = "~" + b8(a) + " = " + b8(x) + ". Invertir es el complemento a uno: sin signo da 255 − " + a + " = " + x + "."; pintarByte(); };
+  $("byNeg").onclick = function(){
+    var a = x; x = (-x) & 255;
+    nota = "−x = ~x + 1: " + b8((~a) & 255) + " + 1 = " + b8(x) + ". Con signo, " + ms(s8(a)) + " pasa a " + ms(s8(x)) +
+      (a === 128 ? ". Ojo: −(−128) no entra en 8 bits y vuelve a dar −128." : a === 0 ? ": el cero es su propio opuesto." : ".");
+    pintarByte();
+  };
+  $("byShl").onclick = function(){ var a = x; x = (x << 1) & 255; nota = "Corrido a la izquierda: " + a + " × 2 = " + (a * 2) + (a * 2 > 255 ? ", que no entra: se pierde el bit que sale y queda " + x + "." : "."); pintarByte(); };
+  $("byShr").onclick = function(){ var a = x; x = x >> 1; nota = "Corrido lógico a la derecha: " + a + " ÷ 2 = " + x + ", descartando el resto" + (a & 1 ? " (se perdió un 1)." : "."); pintarByte(); };
+  $("by0").onclick = function(){ x = 0; nota = ""; pintarByte(); };
+  pintarByte();
+
+  /* ---- ALU de 8 bits ---- */
+  function leer(id){ var v = parseInt($(id).value, 10); if(isNaN(v)) v = 0; return Math.max(-128, Math.min(255, v)); }
+  function alu(){
+    var a = leer("aluA") & 255, b = leer("aluB") & 255, resta = $("aluOp").value === "-";
+    var bb = resta ? ((~b) & 255) : b, cin = resta ? 1 : 0;
+    var t = a + bb + cin, r = t & 255;
+    var C = t > 255 ? 1 : 0;
+    var V = ((a ^ r) & (bb ^ r) & 128) ? 1 : 0;
+    var N = r >> 7, Z = r === 0 ? 1 : 0;
+    var ue = resta ? a - b : a + b, se = resta ? s8(a) - s8(b) : s8(a) + s8(b);
+    function fila(n, v, s){ return "<tr><td>" + n + "</td><td><code>" + v + "</code></td><td>" + s + "</td></tr>"; }
+    $("aluTab").innerHTML = "<thead><tr><th></th><th>Bits</th><th>Lecturas: sin signo · con signo</th></tr></thead><tbody>" +
+      fila("A", b8(a), a + " · " + ms(s8(a))) +
+      fila("B", b8(b), b + " · " + ms(s8(b))) +
+      (resta ? fila("~B + 1", b8(bb) + " + 1", "la resta es sumar el opuesto") : "") +
+      fila("<b>Resultado</b>", b8(r), "<b>" + r + " · " + ms(s8(r)) + "</b>") +
+      "<tr><td>Banderas</td><td colspan='2'><code>C=" + C + "  V=" + V + "  N=" + N + "  Z=" + Z + "</code></td></tr></tbody>";
+    var sinSigno = resta ? (a < b ? "sin signo " + a + " − " + b + " es negativo y no se puede representar (en la resta, C = 0 indica préstamo)"
+                                  : "sin signo el resultado " + ue + " es correcto")
+                         : (C ? "sin signo " + a + " + " + b + " = " + ue + " no entra en 8 bits: C = 1 lo avisa"
+                              : "sin signo el resultado " + ue + " es correcto");
+    var conSigno = V ? "con signo " + ms(s8(a)) + (resta ? " − " : " + ") + ms(s8(b)) + " = " + ms(se) + " no entra en −128…127: V = 1 lo avisa y lo que queda (" + ms(s8(r)) + ") es basura"
+                     : "con signo el resultado " + ms(se) + " es correcto";
+    $("aluNota").innerHTML = "La ALU hizo una sola cuenta. Leída " + sinSigno + "; leída " + conSigno + ".";
+  }
+  ["aluA", "aluB", "aluOp"].forEach(function(id){ $(id).addEventListener("input", alu); });
+  alu();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>

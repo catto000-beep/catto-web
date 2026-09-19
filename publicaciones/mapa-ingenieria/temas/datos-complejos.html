@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contenedores de datos complejos · Informática I · Catto</title>
+<meta name="description" content="Arreglos y matrices y el calculo de direcciones, cadenas, punteros y aritmetica de punteros, estructuras y relleno de alineacion, memoria dinamica, listas enlazadas y archivos. Contenido de Informatica I, primer nivel de Ingenieria Electronica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/datos-complejos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=1">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática I</a>
+    <span class="anio">1<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática I</span> · 120 h · Contenido 5 de 6</div>
+    <h1>Contenedores de datos complejos</h1>
+    <p class="lead">La memoria es una fila de bytes numerados. Arreglos, matrices, estructuras y listas son maneras distintas de acomodar datos en esa fila y de saber donde quedo cada uno.</p>
+    <div class="chips">
+      <span class="chip hi">Arreglos</span>
+      <span class="chip">Punteros</span>
+      <span class="chip">Estructuras</span>
+      <span class="chip">Memoria din&aacute;mica</span>
+      <span class="chip">Archivos</span>
+    </div>
+    <hr class="rule">
+
+    <section id="agrupar">
+      <h2><span class="n">01</span>Por qué agrupar datos</h2>
+      <p>Guardar las 1000 muestras de un osciloscopio en mil variables sueltas es imposible de manejar. Guardar
+      una medición en tres variables sueltas —tensión, corriente e instante— obliga a pasarlas siempre juntas y
+      a no mezclarlas nunca. Los <b>contenedores de datos</b> resuelven las dos cosas: el <b>arreglo</b> agrupa
+      muchos datos del mismo tipo y la <b>estructura</b> agrupa datos distintos que describen una misma cosa.</p>
+      <div class="box key"><div class="bt">Una sola idea detrás de todo el tema</div>
+        <p>La memoria es una fila de bytes numerados. Un arreglo, una matriz, una estructura o una lista son
+        maneras de <b>ubicar datos en esa fila</b> y de calcular dónde está cada uno. Quien sabe hacer esa cuenta
+        entiende los punteros, sabe por qué C no controla los índices y sabe cuánto ocupa cada cosa.</p></div>
+    </section>
+
+    <section id="arreglos">
+      <h2><span class="n">02</span>Arreglos: datos en fila</h2>
+      <p>Un arreglo ocupa posiciones <b>contiguas</b>. Si empieza en la dirección <i>base</i> y cada elemento ocupa
+      <code>sizeof(T)</code> bytes, el elemento <i>i</i> está en:</p>
+      <div class="form">
+        <math display="block"><mtext>dir</mtext><mo stretchy="false">(</mo><mi>v</mi><mo stretchy="false">[</mo><mi>i</mi><mo stretchy="false">]</mo><mo stretchy="false">)</mo><mo>=</mo><mtext>base</mtext><mo>+</mo><mi>i</mi><mo>·</mo><mtext>sizeof</mtext><mo stretchy="false">(</mo><mi>T</mi><mo stretchy="false">)</mo></math>
+        <span class="cap">Por eso el primer índice es 0: el primer elemento está a distancia cero de la base.</span>
+      </div>
+      <p>La cuenta es una multiplicación y una suma, sin importar el tamaño del arreglo: acceder a
+      <code>v[999]</code> tarda lo mismo que acceder a <code>v[0]</code>. Y C <b>no verifica</b> que el índice esté
+      dentro del arreglo: <code>v[10]</code> en un arreglo de 10 elementos calcula la dirección y lee o escribe
+      lo que haya ahí, que es otra variable.</p>
+      <p>Las <b>matrices</b> se guardan también en fila, <b>fila por fila</b> (orden por filas). Para una matriz de
+      <i>F</i> × <i>C</i>:</p>
+      <div class="form">
+        <math display="block"><mtext>dir</mtext><mo stretchy="false">(</mo><mi>m</mi><mo stretchy="false">[</mo><mi>i</mi><mo stretchy="false">]</mo><mo stretchy="false">[</mo><mi>j</mi><mo stretchy="false">]</mo><mo stretchy="false">)</mo><mo>=</mo><mtext>base</mtext><mo>+</mo><mo stretchy="false">(</mo><mi>i</mi><mo>·</mo><mi>C</mi><mo>+</mo><mi>j</mi><mo stretchy="false">)</mo><mo>·</mo><mtext>sizeof</mtext><mo stretchy="false">(</mo><mi>T</mi><mo stretchy="false">)</mo></math>
+        <span class="cap">Recorrer por filas lee bytes vecinos; recorrer por columnas salta de a C elementos. Con la caché, la diferencia se nota.</span>
+      </div>
+
+      <div class="lw" id="mem">
+        <div class="lt">Laboratorio · dónde queda cada dato</div>
+        <div class="fila">
+          <select id="mmModo">
+            <option value="v">Arreglo: T v[8]</option>
+            <option value="m">Matriz: T m[3][4]</option>
+            <option value="s">Estructura con relleno</option>
+          </select>
+          <select id="mmTipo">
+            <option value="1">char (1 byte)</option><option value="2">int16_t (2 bytes)</option>
+            <option value="4" selected>int32_t o float (4 bytes)</option><option value="8">double (8 bytes)</option>
+          </select>
+          <label id="mmLi">i = <input type="number" id="mmI" value="2" min="0" style="width:58px"></label>
+          <label id="mmLj">j = <input type="number" id="mmJ" value="1" min="0" style="width:58px"></label>
+          <button id="mmOrden" class="on" style="display:none">Campos en el orden declarado</button>
+        </div>
+        <div id="mmMapa" style="display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:8px"></div>
+        <div class="nota" id="mmNota"></div>
+      </div>
+    </section>
+
+    <section id="cadenas">
+      <h2><span class="n">03</span>Cadenas de caracteres</h2>
+      <p>C no tiene un tipo cadena: una cadena es un arreglo de <code>char</code> que termina con el carácter nulo
+      <code>'\0'</code> (valor 0). Todas las funciones de <code>&lt;string.h&gt;</code> recorren hasta encontrarlo;
+      por eso <code>char s[6]</code> alcanza para <code>"Hola!"</code> pero no para <code>"Hola!!"</code>.</p>
+      <pre class="code"><code><span class="c-ty">char</span> s[<span class="c-num">8</span>] = <span class="c-str">"R1=4k7"</span>;   <span class="c-com">// 'R' '1' '=' '4' 'k' '7' '\0' y un byte libre</span>
+<span class="c-fn">strlen</span>(s);                  <span class="c-com">// 6: no cuenta el '\0'</span>
+<span class="c-kw">sizeof</span>(s);                  <span class="c-com">// 8: el arreglo entero</span>
+<span class="c-fn">strcpy</span>(s, <span class="c-str">"R10=100k"</span>);     <span class="c-com">// ¡9 bytes en 8! desborda</span>
+<span class="c-fn">snprintf</span>(s, <span class="c-kw">sizeof</span> s, <span class="c-str">"%s"</span>, <span class="c-str">"R10=100k"</span>);  <span class="c-com">// copia 7 y cierra con '\0'</span></code></pre>
+      <div class="box peligro"><div class="bt">El desborde de búfer</div>
+        <p>Escribir más allá del final de un arreglo pisa lo que esté al lado. Es el error de seguridad más explotado
+        de la historia de la informática. Nunca usar <code>gets</code>; preferir las funciones que reciben el tamaño
+        del destino (<code>fgets</code>, <code>snprintf</code>).</p></div>
+    </section>
+
+    <section id="punteros">
+      <h2><span class="n">04</span>Punteros: variables que guardan direcciones</h2>
+      <p>Un puntero es una variable cuyo contenido es una dirección de memoria. Dos operadores lo manejan todo:
+      <code>&amp;x</code> da la dirección de <code>x</code> y <code>*p</code> da lo que hay en la dirección guardada
+      en <code>p</code>.</p>
+      <pre class="code"><code><span class="c-ty">int</span> x = <span class="c-num">10</span>;
+<span class="c-ty">int</span> *p = &amp;x;     <span class="c-com">// p guarda la dirección de x</span>
+*p = <span class="c-num">25</span>;          <span class="c-com">// escribe en x: ahora x vale 25</span>
+<span class="c-ty">int</span> v[<span class="c-num">4</span>] = {<span class="c-num">3</span>, <span class="c-num">1</span>, <span class="c-num">4</span>, <span class="c-num">1</span>};
+<span class="c-ty">int</span> *q = v;        <span class="c-com">// el nombre del arreglo es la dirección de v[0]</span>
+*(q + <span class="c-num">2</span>) == v[<span class="c-num">2</span>]    <span class="c-com">// verdadero: v[i] se define como *(v + i)</span></code></pre>
+      <p>La <b>aritmética de punteros</b> cuenta en elementos, no en bytes: <code>q + 2</code> avanza
+      2 · <code>sizeof(int)</code> bytes. Es exactamente la fórmula de la sección 2, y por eso en C los arreglos y
+      los punteros se usan casi indistintamente. Un puntero que no apunta a nada se iguala a <code>NULL</code>, y
+      antes de usar <code>*p</code> hay que estar seguro de que <code>p</code> apunta a algo válido.</p>
+      <div class="box ojo"><div class="bt">Un arreglo que se pasa a una función pierde su tamaño</div>
+        <p>Al pasar <code>v</code> a una función se pasa sólo la dirección de <code>v[0]</code>. Adentro,
+        <code>sizeof(v)</code> da el tamaño de un puntero, no el del arreglo. Por eso las funciones que reciben
+        arreglos reciben también la cantidad de elementos: <code>double paralelo(const double r[], int n)</code>.</p></div>
+    </section>
+
+    <section id="estructuras">
+      <h2><span class="n">05</span>Estructuras: datos distintos que van juntos</h2>
+      <pre class="code"><code><span class="c-kw">typedef struct</span> {
+    <span class="c-ty">float</span>    tension;    <span class="c-com">// V</span>
+    <span class="c-ty">float</span>    corriente;  <span class="c-com">// A</span>
+    <span class="c-ty">uint32_t</span> instante;   <span class="c-com">// ms desde el arranque</span>
+} <span class="c-ty">Medicion</span>;
+
+<span class="c-ty">Medicion</span> m = { <span class="c-num">4.98f</span>, <span class="c-num">0.021f</span>, <span class="c-num">1500</span> };
+<span class="c-ty">Medicion</span> tabla[<span class="c-num">100</span>];         <span class="c-com">// arreglo de estructuras</span>
+tabla[<span class="c-num">3</span>].tension = <span class="c-num">5.01f</span>;
+<span class="c-ty">Medicion</span> *pm = &amp;tabla[<span class="c-num">3</span>];
+pm-&gt;corriente = <span class="c-num">0.02f</span>;        <span class="c-com">// -&gt; es (*pm).corriente</span></code></pre>
+      <p>Una estructura se puede copiar con <code>=</code>, pasar a una función y devolver. Como se pasa por valor,
+      con estructuras grandes conviene pasar un puntero, y <code>const</code> si la función no la modifica.</p>
+      <p>Hay un detalle que sorprende: el <b>relleno</b>. Muchos procesadores leen un dato de 4 bytes más rápido, o
+      sólo pueden leerlo, si su dirección es múltiplo de 4. El compilador agrega bytes vacíos entre campos para
+      alinearlos. <code>struct { char a; int32_t b; }</code> ocupa 8 bytes, no 5. En el laboratorio de arriba, la
+      opción <b>Estructura con relleno</b> lo muestra, y muestra también que ordenar los campos de mayor a menor
+      reduce el desperdicio.</p>
+      <div class="g2">
+        <div class="box"><div class="bt">union</div><p>Todos los campos comparten la misma memoria: ocupa lo que el
+        campo más grande. Sirve para ver los mismos bytes de dos maneras o para ahorrar memoria cuando sólo uno de
+        los campos tiene sentido a la vez.</p></div>
+        <div class="box"><div class="bt">enum</div><p>Da nombres a valores enteros:
+        <code>enum estado { APAGADO, ENCENDIDO, FALLA };</code>. Hace legible una máquina de estados.</p></div>
+      </div>
+    </section>
+
+    <section id="dinamica">
+      <h2><span class="n">06</span>Memoria dinámica</h2>
+      <p>Las variables locales viven en la <b>pila</b> y tienen tamaño fijo, decidido al compilar. Cuando la cantidad
+      de datos se conoce recién al ejecutar, se pide memoria al <b>montículo</b> (<i>heap</i>):</p>
+      <pre class="code"><code><span class="c-ty">int</span> n;
+<span class="c-fn">scanf</span>(<span class="c-str">"%d"</span>, &amp;n);
+<span class="c-ty">double</span> *muestras = <span class="c-fn">malloc</span>(n * <span class="c-kw">sizeof</span> *muestras);
+<span class="c-kw">if</span> (muestras == NULL) { <span class="c-com">/* no hubo memoria: avisar y salir */</span> }
+...                                 <span class="c-com">// se usa como un arreglo: muestras[i]</span>
+<span class="c-fn">free</span>(muestras);                     <span class="c-com">// devolverla cuando ya no hace falta</span>
+muestras = NULL;</code></pre>
+      <p>Lo que se pide con <code>malloc</code> vive hasta que se libera con <code>free</code>, aunque la función
+      que lo pidió haya terminado. Olvidarse de liberar es una <b>fuga de memoria</b>; usar la memoria después de
+      liberarla, un error que puede no manifestarse durante semanas. En microcontroladores chicos se evita la
+      memoria dinámica: con pocos KiB la fragmentación la vuelve impredecible.</p>
+    </section>
+
+    <section id="enlazadas">
+      <h2><span class="n">07</span>Estructuras enlazadas</h2>
+      <p>Un arreglo no puede crecer ni insertar en el medio sin correr todo lo que sigue. Una <b>lista enlazada</b>
+      guarda cada dato en un nodo aparte, pedido con <code>malloc</code>, y cada nodo tiene un puntero al siguiente:</p>
+      <pre class="code"><code><span class="c-kw">typedef struct</span> nodo {
+    <span class="c-ty">int</span> valor;
+    <span class="c-kw">struct</span> nodo *sig;       <span class="c-com">// NULL en el último</span>
+} <span class="c-ty">Nodo</span>;
+
+<span class="c-com">/* insertar al principio: O(1), no se mueve ningún otro dato */</span>
+<span class="c-ty">Nodo</span> *<span class="c-fn">insertar</span>(<span class="c-ty">Nodo</span> *cabeza, <span class="c-ty">int</span> v)
+{
+    <span class="c-ty">Nodo</span> *n = <span class="c-fn">malloc</span>(<span class="c-kw">sizeof</span> *n);
+    <span class="c-kw">if</span> (!n) <span class="c-kw">return</span> cabeza;
+    n-&gt;valor = v;
+    n-&gt;sig = cabeza;
+    <span class="c-kw">return</span> n;
+}</code></pre>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operación</th><th class="c">Arreglo</th><th class="c">Lista enlazada</th></tr></thead>
+        <tbody>
+          <tr><td>Acceder al elemento i</td><td class="c">inmediato, O(1)</td><td class="c">recorrer, O(n)</td></tr>
+          <tr><td>Insertar al principio</td><td class="c">correr todo, O(n)</td><td class="c">inmediato, O(1)</td></tr>
+          <tr><td>Crecer</td><td class="c">hay que realocar</td><td class="c">un nodo más</td></tr>
+          <tr><td>Memoria extra</td><td class="c">ninguna</td><td class="c">un puntero por dato</td></tr>
+        </tbody>
+      </table></div>
+      <p>Pilas, colas, árboles y grafos se construyen con la misma idea. No hay estructura mejor en general: se
+      elige según qué operación se hace más seguido.</p>
+    </section>
+
+    <section id="archivos">
+      <h2><span class="n">08</span>Archivos: el contenedor que sobrevive al programa</h2>
+      <p>Todo lo anterior desaparece al terminar el programa. Para guardar datos se usan archivos, a través de un
+      puntero a <code>FILE</code>:</p>
+      <pre class="code"><code><span class="c-ty">FILE</span> *f = <span class="c-fn">fopen</span>(<span class="c-str">"mediciones.csv"</span>, <span class="c-str">"w"</span>);
+<span class="c-kw">if</span> (f == NULL) { <span class="c-fn">perror</span>(<span class="c-str">"mediciones.csv"</span>); <span class="c-kw">return</span> <span class="c-num">1</span>; }
+<span class="c-kw">for</span> (<span class="c-ty">int</span> i = <span class="c-num">0</span>; i &lt; n; i++)
+    <span class="c-fn">fprintf</span>(f, <span class="c-str">"%u;%.3f;%.4f\n"</span>, tabla[i].instante, tabla[i].tension, tabla[i].corriente);
+<span class="c-fn">fclose</span>(f);</code></pre>
+      <p>Un archivo de <b>texto</b> como ese se abre con cualquier planilla de cálculo. Uno <b>binario</b>, escrito
+      con <code>fwrite(tabla, sizeof(Medicion), n, f)</code>, ocupa menos y se lee más rápido, pero depende del
+      tamaño de los tipos, del relleno y del orden de los bytes de la máquina que lo escribió.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Práctica 1 · Imprimir direcciones</div>
+        <p>Declarar <code>int v[5]</code> e imprimir <code>&amp;v[i]</code> con <code>%p</code> para cada i. Verificar
+        que la diferencia entre direcciones consecutivas es <code>sizeof(int)</code>. Repetir con <code>double</code>
+        y con un arreglo de <code>Medicion</code>.</p></div>
+      <div class="box lab"><div class="bt">Práctica 2 · El relleno se mide</div>
+        <p>Imprimir <code>sizeof</code> de <code>struct {char a; int b; char c;}</code> y de
+        <code>struct {int b; char a; char c;}</code>. Explicar la diferencia con <code>offsetof</code> de
+        <code>&lt;stddef.h&gt;</code>.</p></div>
+      <div class="box lab"><div class="bt">Práctica 3 · Un registrador de datos</div>
+        <p>Leer mediciones de tensión y corriente hasta que el usuario ingrese un valor negativo, guardarlas en un
+        arreglo dinámico que crece con <code>realloc</code>, calcular la potencia de cada una y guardarlas en un CSV.
+        Abrirlo en una planilla y graficar.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Recorrer con <code>i &lt;= n</code></b> un arreglo de n elementos: el último índice válido es n − 1.</li>
+        <li><b>Olvidar el lugar del <code>'\0'</code></b> al dimensionar una cadena.</li>
+        <li><b>Comparar cadenas con <code>==</code></b>: compara direcciones. Se usa <code>strcmp</code>, que devuelve 0 si son iguales.</li>
+        <li><b>Usar un puntero sin inicializar</b> o después de <code>free</code>.</li>
+        <li><b>Calcular el tamaño de un arreglo con sizeof dentro de una función</b> que lo recibió como parámetro.</li>
+        <li><b>Suponer que sizeof de una estructura es la suma de sus campos.</b></li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">11</span>Autoevaluación</h2>
+      <details class="q"><summary>Un arreglo <code>double d[10]</code> empieza en la dirección 0x1000. ¿Dónde está <code>d[7]</code>?</summary>
+        <div class="a"><p>0x1000 + 7 · 8 = 0x1000 + 56 = 0x1038.</p></div></details>
+      <details class="q"><summary>En <code>int m[3][4]</code> con base 0x2000 y enteros de 4 bytes, ¿dónde está <code>m[2][1]</code>?</summary>
+        <div class="a"><p>0x2000 + (2 · 4 + 1) · 4 = 0x2000 + 36 = 0x2024.</p></div></details>
+      <details class="q"><summary>¿Qué diferencia hay entre <code>sizeof(s)</code> y <code>strlen(s)</code> para <code>char s[20] = "abc"</code>?</summary>
+        <div class="a"><p>sizeof da 20, el tamaño del arreglo; strlen da 3, los caracteres antes del '\0'.</p></div></details>
+      <details class="q"><summary>Si <code>p</code> apunta a un <code>int32_t</code> en 0x100, ¿a dónde apunta <code>p + 3</code>?</summary>
+        <div class="a"><p>A 0x10C: avanza 3 elementos de 4 bytes.</p></div></details>
+      <details class="q"><summary>¿Cuánto ocupa <code>struct { char a; double d; char c; }</code> en una PC de 64 bits?</summary>
+        <div class="a"><p>24 bytes: a en 0, 7 de relleno, d en 8, c en 16 y 7 más de relleno para que un arreglo de
+        estas estructuras mantenga d alineado. Ordenando d, a, c ocupa 16.</p></div></details>
+      <details class="q"><summary>¿Cuándo conviene una lista enlazada en lugar de un arreglo?</summary>
+        <div class="a"><p>Cuando se inserta y se quita mucho en posiciones arbitrarias y casi nunca se accede por índice.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">12</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Brian W. Kernighan y Dennis M. Ritchie.</span> <span class="ti">El lenguaje de programación C</span>.
+          <span class="ed">2.ª ed., Prentice Hall Hispanoamericana, 1991.</span>
+          <span class="pq">Los capítulos 5 (apuntadores y arreglos) y 6 (estructuras) siguen siendo la mejor explicación breve.</span></li>
+        <li><span class="au">Luis Joyanes Aguilar e Ignacio Zahonero Martínez.</span> <span class="ti">Programación en C.
+          Metodología, algoritmos y estructura de datos</span>. <span class="ed">2.ª ed., McGraw-Hill, 2005.</span>
+          <span class="pq">Listas, pilas, colas y archivos implementados en C, en castellano.</span></li>
+        <li><span class="au">Niklaus Wirth.</span> <span class="ti">Algoritmos + estructuras de datos = programas</span>.
+          <span class="ed">Ediciones del Castillo, 1980.</span>
+          <span class="pq">La elección de la estructura de datos como parte del diseño del algoritmo.</span></li>
+        <li><span class="au">Robert Sedgewick.</span> <span class="ti">Algorithms in C</span>.
+          <span class="ed">3.ª ed., Addison-Wesley, 1998 (en inglés).</span>
+          <span class="pq">Estructuras de datos y algoritmos implementados en C, con análisis de costo.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/programacion-estructurada">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Lenguaje de programaci&oacute;n estructurada</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/bajo-nivel">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Uso del lenguaje en aplicaciones de bajo nivel</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Contenedores de datos complejos»</b> de <b>Informática I</b> (primer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<script>
+/* Mapa de memoria byte a byte: arreglo, matriz y estructura con relleno. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var BASE = 0x1000, ordenado = false;
+  var COLS = ["rgba(88,166,255,.16)", "rgba(163,113,247,.16)", "rgba(63,185,80,.14)", "rgba(210,153,34,.15)"];
+  var TIPO = { 1:"char", 2:"int16_t", 4:"int32_t", 8:"double" };
+  function hx(n){ return "0x" + n.toString(16).toUpperCase(); }
+
+  function celda(off, txt, fondo, borde, titulo){
+    return '<div title="' + (titulo || "") + '" style="border:1px solid ' + (borde || "var(--line)") + ";background:" + fondo +
+      ';border-radius:6px;padding:4px 2px;text-align:center;font:11px Consolas,monospace;min-width:0;overflow:hidden">' +
+      '<div style="color:var(--soft);font-size:9.5px">+' + off + "</div><div style=\"color:var(--txt);white-space:nowrap\">" + (txt || "&nbsp;") + "</div></div>";
+  }
+  function pintar(){
+    var modo = $("mmModo").value, T = +$("mmTipo").value, h = "", nota = "";
+    $("mmTipo").style.display = modo === "s" ? "none" : "";
+    $("mmLi").style.display = modo === "s" ? "none" : "";
+    $("mmLj").style.display = modo === "m" ? "" : "none";
+    $("mmOrden").style.display = modo === "s" ? "" : "none";
+    if(modo === "v" || modo === "m"){
+      var n = modo === "v" ? 8 : 12, C = 4;
+      var i = Math.max(0, parseInt($("mmI").value, 10) || 0), j = Math.max(0, parseInt($("mmJ").value, 10) || 0);
+      if(modo === "v" && i > 8) i = 8;
+      if(modo === "m"){ if(i > 2) i = 2; if(j > 3) j = 3; }
+      $("mmI").value = i; $("mmJ").value = j;
+      var k = modo === "v" ? i : i * C + j;
+      var extra = modo === "v" ? 1 : 0;
+      for(var e = 0; e < n + extra; e++){
+        for(var b = 0; b < T; b++){
+          var off = e * T + b, fuera = e >= n;
+          var nom = modo === "v" ? "v[" + e + "]" : "m[" + Math.floor(e / C) + "][" + (e % C) + "]";
+          var sel = e === k;
+          h += celda(off, b === 0 ? (fuera ? "otra var." : nom) : "",
+            sel ? (fuera ? "rgba(248,81,73,.3)" : "rgba(88,166,255,.45)") : (fuera ? "rgba(248,81,73,.08)" : COLS[e % 2]),
+            sel ? (fuera ? "#f85149" : "#58a6ff") : "", hx(BASE + off));
+        }
+      }
+      var dir = BASE + k * T;
+      if(modo === "v"){
+        nota = "dir(v[" + i + "]) = " + hx(BASE) + " + " + i + " · " + T + " = <b>" + hx(dir) + "</b>. El arreglo de " + n + " " + TIPO[T] +
+          " ocupa " + (n * T) + " bytes.";
+        if(i === 8) nota += ' <b style="color:#f85149">v[8] no existe:</b> C hace la misma cuenta y cae en la variable que está al lado. No da error.';
+      } else {
+        nota = "dir(m[" + i + "][" + j + "]) = " + hx(BASE) + " + (" + i + " · 4 + " + j + ") · " + T + " = " + hx(BASE) + " + " + (k * T) +
+          " = <b>" + hx(dir) + "</b>. Las filas van una detrás de la otra: m[1][0] está justo después de m[0][3].";
+      }
+    } else {
+      var campos = ordenado ? [["d", 8], ["b", 4], ["a", 1], ["c", 1]] : [["a", 1], ["b", 4], ["c", 1], ["d", 8]];
+      var TIP = { a:"char", b:"int32_t", c:"char", d:"double" };
+      var off2 = 0, lay = [], maxal = 0, rel = 0;
+      campos.forEach(function(c){
+        var al = c[1]; maxal = Math.max(maxal, al);
+        while(off2 % al){ lay.push(null); off2++; rel++; }
+        for(var q = 0; q < c[1]; q++) lay.push({ c:c[0], p:q });
+        off2 += c[1];
+      });
+      while(off2 % maxal){ lay.push(null); off2++; rel++; }
+      var ci = {}; campos.forEach(function(c, x){ ci[c[0]] = x; });
+      lay.forEach(function(x, o){
+        h += x ? celda(o, x.p === 0 ? TIP[x.c] + " " + x.c : "", COLS[ci[x.c] % 4], "", "")
+               : celda(o, "relleno", "repeating-linear-gradient(45deg,#1c2230 0 4px,#0f1520 4px 8px)", "#3a4456", "byte de relleno");
+      });
+      nota = "<code>struct { " + campos.map(function(c){ return TIP[c[0]] + " " + c[0] + ";"; }).join(" ") + " }</code>: " +
+        "los datos suman 14 bytes, pero <b>sizeof = " + off2 + "</b>, con " + rel + " bytes de relleno. " +
+        (ordenado ? "Ordenando de mayor a menor alineación, el relleno queda sólo al final."
+                  : "Cada campo empieza en un múltiplo de su tamaño, y el total es múltiplo del mayor (8) para que un arreglo de estas estructuras también quede alineado.");
+      $("mmOrden").textContent = ordenado ? "Volver al orden original" : "Ordenar los campos de mayor a menor";
+    }
+    $("mmMapa").innerHTML = h;
+    $("mmNota").innerHTML = nota;
+  }
+  ["mmModo", "mmTipo", "mmI", "mmJ"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  $("mmOrden").onclick = function(){ ordenado = !ordenado; pintar(); };
+  pintar();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
