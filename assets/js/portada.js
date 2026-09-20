@@ -1,25 +1,31 @@
 /* ============================================================
-   catto.ar — Portada: los cuatro años de la tecnicatura
+   catto.ar — Portada: el desglose de las dos carreras
 
-   Las cuatro columnas y los 95 enlaces vienen escritos en el HTML: no los
+   Son dos: los cuatro años de la tecnicatura y los seis niveles de la
+   ingeniería. Las columnas y los enlaces vienen escritos en el HTML: no los
    arma este archivo. Eso importa por dos motivos. Un buscador que no ejecuta
-   javascript igual encuentra las 88 páginas de tema —antes no las veía
+   javascript igual encuentra las páginas de tema —antes no las veía
    ninguna— y quien tenga el javascript apagado ve la lista completa.
 
    Acá solo se le agrega comportamiento a lo que ya está:
    1) Abrir y cerrar cada materia.
-   2) El buscador del encabezado, que filtra los 95 ejes en vivo.
+   2) El buscador del encabezado, que filtra las dos carreras en vivo.
    3) La tira de "segui donde ibas", si hay una pagina de tema visitada.
 
-   El HTML lo genera scratchpad/generar-anios.js a partir de
-   assets/js/tecnicatura.js, que es la misma fuente que usa el mapa: si se
-   agrega un eje alla, se vuelve a correr el generador y aparece aca.
+   El HTML de la tecnicatura lo genera scratchpad/generar-anios.js a partir
+   de assets/js/tecnicatura.js, y el de la ingeniería lo rehace
+   _src-publicaciones/ingenieria/motor.py en cada corrida, entre los
+   marcadores <!-- ingenieria:niveles -->.
    ============================================================ */
 (function () {
   "use strict";
 
-  var grid = document.getElementById("gridAnios");
-  if (!grid) return;
+  /* Dos desgloses: los cuatro años de la tecnicatura y los seis niveles de
+     la ingeniería. El comportamiento es el mismo para los dos. */
+  var grids = ["gridAnios", "gridNiveles"]
+    .map(function (id) { return document.getElementById(id); })
+    .filter(Boolean);
+  if (!grids.length) return;
 
   /* Para buscar sin que importen tildes ni mayusculas. Cada eje trae en su
      data-b el texto ya normalizado: titulo, descripcion, temas transversales,
@@ -31,6 +37,7 @@
   /* ---------------------------------------------------------- las materias */
   var filas = [];
 
+  grids.forEach(function (grid) {
   [].forEach.call(grid.querySelectorAll(".m-item"), function (li) {
     var boton = li.querySelector(".m-fila");
     var lista = li.querySelector(".m-ejes");
@@ -47,7 +54,9 @@
       boton.setAttribute("aria-expanded", abierto ? "true" : "false");
     });
 
-    filas.push({ li: li, boton: boton, cuenta: cuenta, ejes: ejes, total: ejes.length });
+    filas.push({ li: li, boton: boton, cuenta: cuenta, ejes: ejes, total: ejes.length,
+                 etiqueta: cuenta ? cuenta.textContent : "" });
+  });
   });
 
   function abrir(f, si) {
@@ -84,7 +93,8 @@
 
       if (!pal.length) {
         f.li.hidden = false;
-        f.cuenta.textContent = String(f.total);
+        /* vuelve a su etiqueta original: en ingeniería dice «6 de 8» */
+        f.cuenta.textContent = f.etiqueta || String(f.total);
         abrir(f, false);
         return;
       }
@@ -95,19 +105,28 @@
       hallados += visibles;
     });
 
-    /* una columna sin nada adentro no tiene por que ocupar lugar */
-    [].forEach.call(grid.children, function (col) {
-      var quedan = [].filter.call(col.querySelectorAll(".m-item"), function (li) {
-        return !li.hidden;
-      }).length;
-      col.hidden = !!pal.length && quedan === 0;
+    /* una columna sin nada adentro no tiene por que ocupar lugar, y una
+       sección entera sin resultados tampoco */
+    grids.forEach(function (grid) {
+      var vivas = 0;
+      [].forEach.call(grid.children, function (col) {
+        var quedan = [].filter.call(col.querySelectorAll(".m-item"), function (li) {
+          return !li.hidden;
+        }).length;
+        col.hidden = !!pal.length && quedan === 0;
+        if (!col.hidden) vivas++;
+      });
+      /* si no hubo un solo resultado en ninguna de las dos carreras, la
+         sección se queda: adentro vive el aviso de «no encontré nada» */
+      var seccion = grid.closest ? grid.closest("section.block") : null;
+      if (seccion) seccion.hidden = !!pal.length && vivas === 0 && hallados > 0;
     });
 
     if (limpiar) limpiar.hidden = !pal.length;
     if (vacio) vacio.hidden = !(pal.length && hallados === 0);
     if (marcador) {
       marcador.textContent = !pal.length ? ""
-        : hallados === 1 ? "1 eje temático" : hallados + " ejes temáticos";
+        : hallados === 1 ? "1 tema" : hallados + " temas";
     }
   }
 
