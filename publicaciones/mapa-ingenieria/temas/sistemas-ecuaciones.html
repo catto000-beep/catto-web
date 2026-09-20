@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistemas de ecuaciones lineales · Álgebra y Geometría Analítica · Catto</title>
+<meta name="description" content="Sistemas lineales: forma matricial, teorema de Rouché-Frobenius, eliminación de Gauss-Jordan paso a paso, interpretación geométrica, sistemas homogéneos, pivoteo y mal condicionamiento, y el análisis de mallas de un circuito resuelto de punta a punta. Contenido de Álgebra y Geometría Analítica, primer nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-ecuaciones">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=1">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Álgebra y Geometría Analítica</a>
+    <span class="anio">1<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Álgebra y Geometría Analítica</span> · 120 h · Contenido 3 de 9</div>
+    <h1>Sistemas de ecuaciones lineales</h1>
+    <p class="lead">Resolver un circuito de tres mallas, ajustar una curva de calibración o simular una red entera son el mismo problema: A·x = b. Lo que cambia es el tamaño.</p>
+    <div class="chips">
+      <span class="chip hi">Gauss-Jordan</span>
+      <span class="chip">Rouché-Frobenius</span>
+      <span class="chip">Sistemas homogéneos</span>
+      <span class="chip">Pivoteo</span>
+      <span class="chip">Análisis de mallas</span>
+    </div>
+    <hr class="rule">
+
+    <section id="de-donde">
+      <h2><span class="n">01</span>De dónde salen los sistemas lineales</h2>
+      <p>Casi todo problema de ingeniería termina, en algún punto, en un sistema de ecuaciones lineales. Las
+      leyes de Kirchhoff aplicadas a un circuito de n mallas dan n ecuaciones con n corrientes incógnitas. Un
+      reticulado, un balance de materia, el ajuste por cuadrados mínimos de una curva de calibración y la
+      simulación de cualquier circuito en SPICE son, por debajo, lo mismo: <b>A·x = b</b>.</p>
+      <div class="form">
+        <math display="block"><mtable columnalign="left">
+          <mtr><mtd><mrow><msub><mi>a</mi><mn>11</mn></msub><msub><mi>x</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>12</mn></msub><msub><mi>x</mi><mn>2</mn></msub><mo>+</mo><mo>⋯</mo><mo>+</mo><msub><mi>a</mi><mrow><mn>1</mn><mi>n</mi></mrow></msub><msub><mi>x</mi><mi>n</mi></msub><mo>=</mo><msub><mi>b</mi><mn>1</mn></msub></mrow></mtd></mtr>
+          <mtr><mtd><mrow><msub><mi>a</mi><mn>21</mn></msub><msub><mi>x</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>22</mn></msub><msub><mi>x</mi><mn>2</mn></msub><mo>+</mo><mo>⋯</mo><mo>+</mo><msub><mi>a</mi><mrow><mn>2</mn><mi>n</mi></mrow></msub><msub><mi>x</mi><mi>n</mi></msub><mo>=</mo><msub><mi>b</mi><mn>2</mn></msub></mrow></mtd></mtr>
+          <mtr><mtd><mrow><mo>⋮</mo></mrow></mtd></mtr>
+          <mtr><mtd><mrow><msub><mi>a</mi><mrow><mi>m</mi><mn>1</mn></mrow></msub><msub><mi>x</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mrow><mi>m</mi><mn>2</mn></mrow></msub><msub><mi>x</mi><mn>2</mn></msub><mo>+</mo><mo>⋯</mo><mo>+</mo><msub><mi>a</mi><mrow><mi>m</mi><mi>n</mi></mrow></msub><msub><mi>x</mi><mi>n</mi></msub><mo>=</mo><msub><mi>b</mi><mi>m</mi></msub></mrow></mtd></mtr>
+        </mtable></math>
+        <span class="cap">Lineal quiere decir que las incógnitas aparecen elevadas a la primera potencia, sin productos entre ellas y sin funciones. Nada de x², sen(x) ni x·y.</span>
+      </div>
+      <p>Todo el sistema se guarda en la <b>matriz ampliada</b> [A | b]: los coeficientes y, separada por una
+      raya, la columna de términos independientes. Trabajar con ella es trabajar con el sistema.</p>
+    </section>
+
+    <section id="rouche">
+      <h2><span class="n">02</span>Tres finales posibles, y cómo saber cuál antes de resolver</h2>
+      <div class="g3">
+        <div class="box key"><div class="bt">Compatible determinado</div><p>Una única solución. En dos incógnitas,
+        dos rectas que se cortan en un punto.</p></div>
+        <div class="box key"><div class="bt">Compatible indeterminado</div><p>Infinitas soluciones, con uno o más
+        parámetros libres. Dos rectas coincidentes.</p></div>
+        <div class="box key"><div class="bt">Incompatible</div><p>Ninguna solución: las ecuaciones se contradicen.
+        Dos rectas paralelas distintas.</p></div>
+      </div>
+      <p>El <b>teorema de Rouché-Frobenius</b> decide cuál es el caso comparando el rango de A con el de la
+      matriz ampliada:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Condición</th><th>Sistema</th><th>Soluciones</th></tr></thead>
+        <tbody>
+          <tr><td>rg(A) = rg(A|b) = n</td><td>Compatible determinado</td><td class="c">Una</td></tr>
+          <tr><td>rg(A) = rg(A|b) &lt; n</td><td>Compatible indeterminado</td><td class="c">Infinitas, con n − rg parámetros libres</td></tr>
+          <tr><td>rg(A) &lt; rg(A|b)</td><td>Incompatible</td><td class="c">Ninguna</td></tr>
+        </tbody>
+      </table></div>
+      <p>Traducido: si al escalonar aparece una fila de ceros en A pero con término independiente distinto de
+      cero —del tipo «0 = 5»— el sistema no tiene solución. Si la fila queda de ceros completa, esa ecuación era
+      redundante y sobran incógnitas: hay infinitas soluciones.</p>
+    </section>
+
+    <section id="gauss">
+      <h2><span class="n">03</span>El método de Gauss, paso a paso</h2>
+      <p>La idea es simplísima: las <b>operaciones elementales de fila</b> —intercambiar dos, multiplicar una por
+      un número distinto de cero, sumarle a una un múltiplo de otra— no cambian el conjunto de soluciones. Se
+      aplican hasta que el sistema quede triangular (Gauss) o hasta que cada incógnita quede sola (Gauss-Jordan).</p>
+      <div class="lw" id="gj">
+        <div class="lt">Laboratorio · eliminación de Gauss-Jordan</div>
+        <p class="ls">Editá los coeficientes y la columna de la derecha. Cada paso muestra la operación que se hizo y cómo queda la matriz ampliada.</p>
+        <div id="gjM"></div>
+        <div class="fila">
+          <button class="pri" id="gjPaso">Siguiente paso</button>
+          <button id="gjTodo">Resolver</button>
+          <button id="gjReset">Reiniciar</button>
+          <select id="gjEj">
+            <option value="malla">Ejemplo: circuito de 3 mallas</option>
+            <option value="unica">Solución única</option>
+            <option value="infinitas">Infinitas soluciones</option>
+            <option value="ninguna">Sin solución</option>
+          </select>
+        </div>
+        <div class="nota" id="gjNota"></div>
+      </div>
+      <div class="box ojo"><div class="bt">El pivote no puede ser cero</div>
+        <p>Si al llegar a una columna el elemento de la diagonal es cero, hay que intercambiar esa fila con otra
+        de más abajo que no lo tenga. En una computadora se hace siempre algo más fuerte, el <b>pivoteo
+        parcial</b>: se elige como pivote el elemento de mayor valor absoluto de la columna, aunque el de la
+        diagonal no sea nulo, porque dividir por números chicos amplifica el error de redondeo.</p></div>
+    </section>
+
+    <section id="geometria">
+      <h2><span class="n">04</span>Qué se está haciendo, geométricamente</h2>
+      <p>Cada ecuación con dos incógnitas es una recta del plano; con tres, un plano del espacio. Resolver el
+      sistema es buscar los puntos que pertenecen a todas a la vez.</p>
+      <figure>
+        <svg viewBox="0 0 640 210" role="img" aria-label="Tres casos de un sistema de dos ecuaciones con dos incognitas: rectas que se cortan, paralelas y coincidentes">
+          <g font-family="Segoe UI,system-ui,sans-serif" font-size="12" fill="#9aa7b4">
+            <g transform="translate(10,10)">
+              <rect width="180" height="150" rx="10" fill="#0f1622" stroke="#2a3140"/>
+              <line x1="20" y1="120" x2="160" y2="30" stroke="#58a6ff" stroke-width="2"/>
+              <line x1="20" y1="40" x2="160" y2="120" stroke="#a371f7" stroke-width="2"/>
+              <circle cx="96" cy="76" r="5" fill="#f2cc60"/>
+              <text x="90" y="145" text-anchor="middle" fill="#e6edf3">Se cortan</text>
+              <text x="90" y="163" text-anchor="middle">una solución</text>
+            </g>
+            <g transform="translate(230,10)">
+              <rect width="180" height="150" rx="10" fill="#0f1622" stroke="#2a3140"/>
+              <line x1="20" y1="110" x2="160" y2="40" stroke="#58a6ff" stroke-width="2"/>
+              <line x1="20" y1="140" x2="160" y2="70" stroke="#a371f7" stroke-width="2"/>
+              <text x="90" y="145" text-anchor="middle" fill="#e6edf3">Paralelas</text>
+              <text x="90" y="163" text-anchor="middle">ninguna solución</text>
+            </g>
+            <g transform="translate(450,10)">
+              <rect width="180" height="150" rx="10" fill="#0f1622" stroke="#2a3140"/>
+              <line x1="20" y1="120" x2="160" y2="40" stroke="#58a6ff" stroke-width="5"/>
+              <line x1="20" y1="120" x2="160" y2="40" stroke="#a371f7" stroke-width="2" stroke-dasharray="7 6"/>
+              <text x="90" y="145" text-anchor="middle" fill="#e6edf3">Coincidentes</text>
+              <text x="90" y="163" text-anchor="middle">infinitas soluciones</text>
+            </g>
+          </g>
+        </svg>
+        <figcaption><b>Figura 1.</b> Los tres casos con dos ecuaciones y dos incógnitas. Con tres incógnitas, las
+        rectas pasan a ser planos: la solución única es el punto donde se cruzan los tres, y las infinitas
+        soluciones pueden ser una recta común o un plano entero.</figcaption>
+      </figure>
+    </section>
+
+    <section id="homogeneos">
+      <h2><span class="n">05</span>Sistemas homogéneos</h2>
+      <p>Si todos los términos independientes son cero, A·x = 0, el sistema es <b>homogéneo</b>. Nunca es
+      incompatible: x = 0 siempre lo cumple, y a esa se la llama <b>solución trivial</b>. La pregunta
+      interesante es si hay otras.</p>
+      <div class="box key"><div class="bt">La condición que abre la puerta a los autovalores</div>
+        <p>Un sistema homogéneo de n ecuaciones con n incógnitas tiene soluciones distintas de la trivial
+        <b>si y sólo si det(A) = 0</b>. Exactamente eso se plantea al buscar autovalores: se fuerza
+        det(A − λI) = 0 para que el sistema (A − λI)·v = 0 tenga soluciones no triviales, que son los
+        autovectores. Se ve en
+        <a class="ref" href="/publicaciones/mapa-ingenieria/temas/autovalores-autovectores">autovalores y autovectores</a>.</p></div>
+      <p>En un circuito, el sistema homogéneo corresponde a apagar todas las fuentes: si además existe una
+      solución no nula, el circuito puede sostener corrientes por sí mismo, que es lo que ocurre en un
+      oscilador ideal o en un circuito LC sin pérdidas.</p>
+    </section>
+
+    <section id="numerico">
+      <h2><span class="n">06</span>Cuando la computadora resuelve</h2>
+      <p>Un simulador de circuitos resuelve sistemas de miles de ecuaciones, muchas veces por análisis, y no usa
+      Cramer ni la inversa. Usa <b>factorización LU</b>, que es la eliminación de Gauss guardada en forma de dos
+      matrices triangulares, y aprovecha que la matriz es <b>rala</b>: casi todos sus elementos son cero, porque
+      cada nodo se conecta con unos pocos.</p>
+      <div class="box ojo"><div class="bt">Mal condicionamiento</div>
+        <p>Un sistema puede tener solución única y aun así ser peligroso. Si dos ecuaciones son casi paralelas,
+        un cambio mínimo en un dato mueve la solución muchísimo: el sistema está <b>mal condicionado</b>. Por
+        ejemplo, con x + y = 2 y x + 1,001y = 2,001 la solución es (1; 1); si el segundo término independiente
+        pasa a 2,002, la solución salta a (0; 2). En un circuito eso aparece, por ejemplo, con resistencias que
+        difieren en muchos órdenes de magnitud, y es motivo de que una simulación no converja.</p></div>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">07</span>Un circuito, de punta a punta</h2>
+      <p>Tres mallas, fuentes de 12 V y 6 V, resistores de 4, 2, 6, 3 y 5 Ω. Las ecuaciones de Kirchhoff, con
+      las corrientes de malla en sentido horario, quedan:</p>
+      <div class="form">
+        <math display="block">
+          <mrow><mo>[</mo><mtable>
+            <mtr><mtd><mn>6</mn></mtd><mtd><mo>−</mo><mn>2</mn></mtd><mtd><mn>0</mn></mtd></mtr>
+            <mtr><mtd><mo>−</mo><mn>2</mn></mtd><mtd><mn>11</mn></mtd><mtd><mo>−</mo><mn>3</mn></mtd></mtr>
+            <mtr><mtd><mn>0</mn></mtd><mtd><mo>−</mo><mn>3</mn></mtd><mtd><mn>8</mn></mtd></mtr>
+          </mtable><mo>]</mo></mrow>
+          <mrow><mo>[</mo><mtable><mtr><mtd><msub><mi>I</mi><mn>1</mn></msub></mtd></mtr><mtr><mtd><msub><mi>I</mi><mn>2</mn></msub></mtd></mtr><mtr><mtd><msub><mi>I</mi><mn>3</mn></msub></mtd></mtr></mtable><mo>]</mo></mrow>
+          <mo>=</mo>
+          <mrow><mo>[</mo><mtable><mtr><mtd><mn>12</mn></mtd></mtr><mtr><mtd><mn>0</mn></mtd></mtr><mtr><mtd><mo>−</mo><mn>6</mn></mtd></mtr></mtable><mo>]</mo></mrow>
+        </math>
+        <span class="cap">En la diagonal, la suma de las resistencias de cada malla; fuera de ella, la resistencia compartida con signo menos. La matriz vuelve a salir simétrica.</span>
+      </div>
+      <p>Ese es el ejemplo que trae cargado el laboratorio de la sección 3. Resolviéndolo se obtiene
+      I₁ ≈ 2,06 A, I₂ ≈ 0,19 A e I₃ ≈ −0,68 A (exactamente 456/221, 42/221 y −150/221). El signo negativo de I₃ no es un error: significa que esa
+      corriente circula al revés del sentido que se eligió al plantear, y eso es información, no un problema.</p>
+      <p>El mismo planteo, con impedancias complejas en lugar de resistencias, resuelve circuitos en régimen
+      senoidal permanente; ahí los números son complejos pero el método es idéntico. Ese paso se ve en
+      <a class="ref" href="/publicaciones/ca-vectorial">el estudio vectorial de la corriente alterna</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">08</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Práctica 1 · Del circuito al sistema y de vuelta</div>
+        <p>Armar un circuito de tres mallas, plantear el sistema, resolverlo con el laboratorio de arriba y
+        verificar las tres corrientes midiendo en una simulación. Comprobar que la suma de potencias entregadas
+        por las fuentes iguala a la suma de las disipadas por los resistores.</p></div>
+      <div class="box lab"><div class="bt">Práctica 2 · Fabricar los tres casos</div>
+        <p>Escribir un sistema de 3 × 3 compatible determinado. Modificar una sola fila para volverlo
+        indeterminado, y después para volverlo incompatible. Justificar cada caso con los rangos.</p></div>
+      <div class="box lab"><div class="bt">Práctica 3 · Ver el mal condicionamiento</div>
+        <p>Resolver [[1, 1], [1, 1.001]]·x = [2, 2.001] y después cambiar el segundo dato a 2.002. Comparar las
+        soluciones y calcular el determinante: muy chico frente a los coeficientes. Es la señal de alarma.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">09</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Operar entre columnas.</b> Las operaciones elementales son <b>de filas</b>: cada fila es una ecuación. Mezclar columnas mezcla incógnitas.</li>
+        <li><b>Olvidar el término independiente</b> al aplicar una operación: la fila incluye la columna de la derecha.</li>
+        <li><b>Dividir por un pivote nulo</b> en lugar de intercambiar filas.</li>
+        <li><b>Confundir «0 = 0» con «0 = 5»:</b> la primera indica ecuación redundante, la segunda, sistema incompatible.</li>
+        <li><b>Dar una sola solución cuando hay infinitas:</b> si sobran incógnitas, la respuesta se expresa con parámetros.</li>
+        <li><b>Interpretar mal un signo negativo</b> en una corriente: indica el sentido real, no un error de cuentas.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">10</span>Autoevaluación</h2>
+      <details class="q"><summary>Un sistema de 4 ecuaciones con 4 incógnitas tiene rg(A) = 3 y rg(A|b) = 3. ¿Qué se puede decir?</summary>
+        <div class="a"><p>Es compatible indeterminado, con 4 − 3 = 1 parámetro libre: infinitas soluciones que forman una recta.</p></div></details>
+      <details class="q"><summary>Al escalonar queda la fila 0 0 0 | 7. ¿Qué significa?</summary>
+        <div class="a"><p>Que el sistema es incompatible: esa fila dice 0 = 7.</p></div></details>
+      <details class="q"><summary>¿Por qué un sistema homogéneo nunca es incompatible?</summary>
+        <div class="a"><p>Porque x = 0 siempre lo satisface: los rangos de A y de la ampliada coinciden necesariamente.</p></div></details>
+      <details class="q"><summary>Resolver 2x + y = 5, x − y = 1.</summary>
+        <div class="a"><p>Sumando: 3x = 6, x = 2, y = 1. Verificación: 2·2 + 1 = 5 ✔ y 2 − 1 = 1 ✔.</p></div></details>
+      <details class="q"><summary>¿Qué ventaja tiene Gauss sobre Cramer para 20 incógnitas?</summary>
+        <div class="a"><p>El costo: Gauss es del orden de n³ operaciones y Cramer exige calcular 21 determinantes, que por
+        cofactores crece como n!. Con n = 20 la diferencia es entre instantáneo e imposible.</p></div></details>
+      <details class="q"><summary>¿Para qué sirve el pivoteo parcial si el pivote no es cero?</summary>
+        <div class="a"><p>Para no dividir por números muy chicos, que amplifican el error de redondeo de la máquina.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">11</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Stanley I. Grossman.</span> <span class="ti">Álgebra lineal</span>.
+          <span class="ed">6.ª ed., McGraw-Hill, 2008.</span>
+          <span class="pq">Sistemas, rango y Rouché-Frobenius con ejemplos aplicados a redes eléctricas.</span></li>
+        <li><span class="au">David C. Lay.</span> <span class="ti">Álgebra lineal y sus aplicaciones</span>.
+          <span class="ed">5.ª ed., Pearson, 2016.</span>
+          <span class="pq">Arranca el libro por los sistemas y la forma escalonada reducida: el orden más natural para esta materia.</span></li>
+        <li><span class="au">Richard L. Burden y J. Douglas Faires.</span> <span class="ti">Análisis numérico</span>.
+          <span class="ed">9.ª ed., Cengage Learning, 2011.</span>
+          <span class="pq">Para el lado numérico: pivoteo, factorización LU, número de condición y errores de redondeo.</span></li>
+        <li><span class="au">Charles K. Alexander y Matthew N. O. Sadiku.</span> <span class="ti">Fundamentos de circuitos eléctricos</span>.
+          <span class="ed">5.ª ed., McGraw-Hill, 2013.</span>
+          <span class="pq">De dónde salen estos sistemas: análisis de mallas y de nodos, con decenas de circuitos resueltos.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/determinantes">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Determinantes</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/vectores-r2-r3">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Vectores en R² y en R³</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Sistemas de ecuaciones lineales»</b> de <b>Álgebra y Geometría Analítica</b> (primer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<script>
+/* Gauss-Jordan paso a paso sobre la matriz ampliada de un sistema de 3x3. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var EJ = {
+    malla:   [[6,-2,0,12],[-2,11,-3,0],[0,-3,8,-6]],
+    unica:   [[2,1,-1,8],[-3,-1,2,-11],[-2,1,2,-3]],
+    infinitas:[[1,2,-1,3],[2,4,-2,6],[1,1,1,4]],
+    ninguna: [[1,2,-1,3],[2,4,-2,7],[1,1,1,4]]
+  };
+  var orig, pasos, k;
+
+  function n(x){
+    if(Math.abs(x) < 1e-9) x = 0;
+    var s = (Math.round(x * 1000) / 1000).toString();
+    return s.replace(".", ",").replace("-", "−");
+  }
+  function copia(M){ return M.map(function(f){ return f.slice(); }); }
+
+  function generar(M0){
+    var M = copia(M0), P = [{ M:copia(M), t:"Matriz ampliada del sistema. Se busca llegar a la forma escalonada reducida: unos en la diagonal y ceros en el resto." }];
+    var fila = 0;
+    for(var col = 0; col < 3 && fila < 3; col++){
+      /* pivoteo parcial: la fila con el mayor valor absoluto en esta columna */
+      var mejor = fila;
+      for(var i = fila + 1; i < 3; i++) if(Math.abs(M[i][col]) > Math.abs(M[mejor][col])) mejor = i;
+      if(Math.abs(M[mejor][col]) < 1e-9) continue;          /* columna sin pivote */
+      if(mejor !== fila){
+        var t = M[fila]; M[fila] = M[mejor]; M[mejor] = t;
+        P.push({ M:copia(M), t:"F" + (fila + 1) + " ↔ F" + (mejor + 1) + ": se sube la fila con el pivote de mayor valor absoluto (pivoteo parcial)." });
+      }
+      var p = M[fila][col];
+      if(Math.abs(p - 1) > 1e-9){
+        M[fila] = M[fila].map(function(v){ return v / p; });
+        P.push({ M:copia(M), t:"F" + (fila + 1) + " ← F" + (fila + 1) + " ÷ " + n(p) + ": el pivote pasa a valer 1." });
+      }
+      for(var r = 0; r < 3; r++){
+        if(r === fila || Math.abs(M[r][col]) < 1e-9) continue;
+        var f = M[r][col];
+        M[r] = M[r].map(function(v, j){ return v - f * M[fila][j]; });
+        P.push({ M:copia(M), t:"F" + (r + 1) + " ← F" + (r + 1) + " " + (f > 0 ? "−" : "+") + " " + n(Math.abs(f)) +
+                 " · F" + (fila + 1) + ": se hace cero el elemento de la columna " + (col + 1) + "." });
+      }
+      fila++;
+    }
+    /* diagnostico */
+    var rgA = 0, rgAmp = 0, incompatible = false;
+    for(var r2 = 0; r2 < 3; r2++){
+      var hayA = M[r2].slice(0, 3).some(function(v){ return Math.abs(v) > 1e-9; });
+      var hayB = Math.abs(M[r2][3]) > 1e-9;
+      if(hayA) rgA++;
+      if(hayA || hayB) rgAmp++;
+      if(!hayA && hayB) incompatible = true;
+    }
+    var fin;
+    if(incompatible)
+      fin = '<b style="color:#f85149">Sistema incompatible.</b> Quedó una fila del tipo «0 = ' + n(M.find(function(f){ return !f.slice(0,3).some(function(v){ return Math.abs(v) > 1e-9; }); })[3]) +
+            '»: rg(A) = ' + rgA + " &lt; rg(A|b) = " + rgAmp + ". No hay solución.";
+    else if(rgA < 3)
+      fin = '<b style="color:#d29922">Sistema compatible indeterminado.</b> rg(A) = rg(A|b) = ' + rgA + " &lt; 3: hay " +
+            (3 - rgA) + (3 - rgA === 1 ? " incógnita libre" : " incógnitas libres") + " y, por lo tanto, infinitas soluciones.";
+    else
+      fin = '<b style="color:#3fb950">Sistema compatible determinado.</b> x = ' + n(M[0][3]) + ", y = " + n(M[1][3]) +
+            ", z = " + n(M[2][3]) + ". La matriz de la izquierda quedó igual a la identidad.";
+    P.push({ M:copia(M), t:fin, fin:true });
+    return P;
+  }
+
+  function editor(){
+    var h = '<div style="display:grid;gap:4px;grid-template-columns:repeat(3,56px) 14px 64px;align-items:center;margin-bottom:8px">';
+    orig.forEach(function(f, i){
+      for(var j = 0; j < 3; j++)
+        h += '<input type="number" data-i="' + i + '" data-j="' + j + '" value="' + f[j] +
+             '" style="width:100%;padding:5px 2px;text-align:center;font:13px Consolas,monospace">';
+      h += '<span style="text-align:center;color:var(--soft)">|</span>';
+      h += '<input type="number" data-i="' + i + '" data-j="3" value="' + f[3] +
+           '" style="width:100%;padding:5px 2px;text-align:center;font:13px Consolas,monospace;border-color:#3fb950">';
+    });
+    return h + "</div>";
+  }
+  function tabla(M, ant){
+    var h = '<div style="display:grid;gap:4px;grid-template-columns:repeat(3,58px) 14px 66px;margin-top:6px">';
+    M.forEach(function(f, i){
+      for(var j = 0; j < 4; j++){
+        if(j === 3) h += '<span style="text-align:center;color:var(--soft)">|</span>';
+        var cambio = ant && Math.abs(ant[i][j] - f[j]) > 1e-9;
+        h += '<span style="text-align:center;padding:4px 2px;border-radius:6px;font:13px Consolas,monospace;' +
+             (cambio ? "background:rgba(210,153,34,.22);color:#fff" : "color:var(--txt)") + '">' + n(f[j]) + "</span>";
+      }
+    });
+    return h + "</div>";
+  }
+  function pintar(){
+    var p = pasos[k];
+    $("gjM").innerHTML = editor() + '<div class="caja"><h5>Paso ' + (k + 1) + " de " + pasos.length + "</h5>" +
+      tabla(p.M, k > 0 ? pasos[k - 1].M : null) + "</div>";
+    $("gjNota").innerHTML = p.t;
+    $("gjPaso").disabled = $("gjTodo").disabled = k >= pasos.length - 1;
+  }
+  function arrancar(M){ orig = copia(M); pasos = generar(orig); k = 0; pintar(); }
+
+  document.addEventListener("input", function(ev){
+    var e = ev.target;
+    if(e.dataset && e.dataset.i !== undefined && e.closest("#gjM")){
+      orig[+e.dataset.i][+e.dataset.j] = parseFloat(e.value) || 0;
+      pasos = generar(orig); k = 0;
+      $("gjNota").innerHTML = pasos[0].t;
+      $("gjPaso").disabled = $("gjTodo").disabled = false;
+      var caja = $("gjM").querySelector(".caja");
+      caja.innerHTML = "<h5>Paso 1 de " + pasos.length + "</h5>" + tabla(pasos[0].M, null);
+    }
+  });
+  $("gjPaso").onclick = function(){ if(k < pasos.length - 1){ k++; pintar(); } };
+  $("gjTodo").onclick = function(){ k = pasos.length - 1; pintar(); };
+  $("gjReset").onclick = function(){ k = 0; pintar(); };
+  $("gjEj").onchange = function(){ arrancar(EJ[this.value]); };
+  arrancar(EJ.malla);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
