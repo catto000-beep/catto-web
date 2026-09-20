@@ -9,9 +9,12 @@
    así la portada sigue abriendo liviana. Está partido en cinco archivos:
    buscador-datos.js es el núcleo (unos 40 kB comprimido) y alcanza para
    que aparezcan resultados enseguida; buscador-datos-4/5/6/7.js traen las
-   secciones de cada año y buscador-datos-ing.js las páginas de Ingeniería,
-   y llegan detrás. Los de los años se regeneran con partir_indice.py y el
-   de Ingeniería con indice_ing.py.
+   secciones de cada año; buscador-datos-ing.js trae una entrada por página de
+   Ingeniería y buscador-datos-ing1…6.js las secciones de cada nivel. Todos
+   llegan detrás del núcleo. Los de los años se regeneran con partir_indice.py
+   y los de Ingeniería con _src-publicaciones/ingenieria/motor.py.
+   Un archivo que todavía no existe simplemente no suma nada: el buscador
+   sigue andando con lo que pudo bajar.
    ============================================================ */
 (function () {
   "use strict";
@@ -27,7 +30,13 @@
     "/assets/js/buscador-datos-5.js",
     "/assets/js/buscador-datos-6.js",
     "/assets/js/buscador-datos-7.js",
-    "/assets/js/buscador-datos-ing.js"
+    "/assets/js/buscador-datos-ing.js",
+    "/assets/js/buscador-datos-ing1.js",
+    "/assets/js/buscador-datos-ing2.js",
+    "/assets/js/buscador-datos-ing3.js",
+    "/assets/js/buscador-datos-ing4.js",
+    "/assets/js/buscador-datos-ing5.js",
+    "/assets/js/buscador-datos-ing6.js"
   ];
   var TOPE = 10;          /* resultados que se muestran */
   var ANCHO = 150;        /* largo del pedacito de texto de cada resultado */
