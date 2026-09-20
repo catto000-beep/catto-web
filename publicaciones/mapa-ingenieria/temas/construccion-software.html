@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Herramientas de construcción de software · Informática II · Catto</title>
+<meta name="description" content="Preprocesador, compilador, ensamblador y enlazador, archivos objeto y bibliotecas, make y sus reglas, control de versiones con git, y depuración con gdb, con laboratorio interactivo del proceso de compilación. Contenido de Informática II, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/construccion-software">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=2">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática II</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática II</span> · 120 h · Contenido 3 de 8</div>
+    <h1>Herramientas de construcción de software</h1>
+    <p class="lead">Entre el archivo de texto y el programa que corre hay cuatro etapas, y cada una tira sus propios errores. Saber cuál falló ahorra la mitad del tiempo de depuración.</p>
+    <div class="chips">
+      <span class="chip hi">Preprocesador</span>
+      <span class="chip">Compilador</span>
+      <span class="chip">Enlazador</span>
+      <span class="chip">make</span>
+      <span class="chip">git</span>
+    </div>
+    <hr class="rule">
+
+    <section id="etapas">
+      <h2><span class="n">01</span>Las cuatro etapas</h2>
+      <p>Escribir <code>gcc main.c -o programa</code> parece un solo paso, pero son cuatro programas
+      encadenados. Saber cuál falló es la mitad de la depuración:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Etapa</th><th>Entra</th><th>Sale</th><th>Error típico</th></tr></thead>
+        <tbody>
+          <tr><td>Preprocesador</td><td>.c</td><td>.i</td><td>No encuentra un encabezado</td></tr>
+          <tr><td>Compilador</td><td>.i</td><td>.s (ensamblador)</td><td>Error de sintaxis o de tipos</td></tr>
+          <tr><td>Ensamblador</td><td>.s</td><td>.o (objeto)</td><td>Rara vez falla</td></tr>
+          <tr><td>Enlazador</td><td>.o y bibliotecas</td><td>Ejecutable</td><td>Referencia indefinida</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">Cómo distinguir un error de compilación de uno de enlazado</div>
+        <p>El de compilación menciona <b>archivo y línea</b>: el compilador está leyendo tu código. El de
+        enlazado dice <code>undefined reference to 'algo'</code> y no señala ninguna línea: el código compiló
+        bien, pero falta el cuerpo de una función. Casi siempre es una biblioteca que no se agregó —el clásico
+        <code>-lm</code> para las funciones matemáticas— o un archivo que quedó fuera de la compilación.</p></div>
+      <div class="lw" id="co">
+        <div class="lt">Laboratorio · qué hace cada etapa</div>
+        <p class="ls">Recorré las cuatro etapas y mirá en qué se va convirtiendo el archivo, con el comando que ejecuta cada una.</p>
+        <div class="fila">
+          <label for="coP">Etapa <b id="coPv">1 de 4</b></label>
+          <input type="range" id="coP" min="0" max="3" step="1" value="0">
+        </div>
+        <canvas id="coLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:3.4/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="caja" id="coTexto" style="margin-top:10px;font-family:Consolas,'Cascadia Mono',monospace;font-size:12.5px;line-height:1.5;white-space:pre;overflow-x:auto"></div>
+        <div class="datos" id="coDatos" style="margin-top:8px"></div>
+        <div class="nota" id="coNota"></div>
+      </div>
+    </section>
+
+    <section id="modulos">
+      <h2><span class="n">02</span>Compilación separada y bibliotecas</h2>
+      <p>Cada <code>.c</code> se compila por separado en su <code>.o</code>, y el enlazador los junta. La
+      ventaja es concreta: si se toca un solo archivo, se recompila sólo ese.</p>
+      <div class="form">
+        <code>gcc -c main.c      →  main.o<br>
+        gcc -c sensor.c    →  sensor.o<br>
+        gcc main.o sensor.o -o programa -lm</code>
+      </div>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Tipo de biblioteca</th><th>Archivo</th><th>Cómo se usa</th></tr></thead>
+        <tbody>
+          <tr><td>Estática</td><td>.a en Linux, .lib en Windows</td><td>Se copia dentro del ejecutable al enlazar</td></tr>
+          <tr><td>Dinámica</td><td>.so en Linux, .dll en Windows</td><td>Se carga al ejecutar; se comparte entre programas</td></tr>
+        </tbody>
+      </table></div>
+      <p>La estática da un ejecutable autónomo y más grande; la dinámica, uno chico que depende de que la
+      biblioteca esté instalada. Para un equipo embebido casi siempre conviene la estática: menos sorpresas en
+      el campo.</p>
+    </section>
+
+    <section id="make">
+      <h2><span class="n">03</span>make</h2>
+      <p>Cuando hay más de tres archivos, recompilar a mano es inviable. <b>make</b> lee un archivo de reglas y
+      rehace sólo lo que quedó desactualizado, comparando fechas de modificación:</p>
+      <div class="form">
+        <code>CC = gcc<br>
+        CFLAGS = -Wall -Wextra -O2<br><br>
+        programa: main.o sensor.o<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;$(CC) main.o sensor.o -o programa -lm<br><br>
+        main.o: main.c sensor.h<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;$(CC) $(CFLAGS) -c main.c<br><br>
+        clean:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;rm -f *.o programa</code>
+      </div>
+      <p>Cada regla tiene un <b>objetivo</b>, sus <b>dependencias</b> y las <b>órdenes</b> para construirlo,
+      que van indentadas con un tabulador de verdad. Si <code>sensor.h</code> cambia, make sabe que
+      <code>main.o</code> quedó viejo y lo rehace; si no cambió nada, no hace nada.</p>
+      <div class="box ojo"><div class="bt">Banderas que conviene usar siempre</div>
+        <p><code>-Wall -Wextra</code> encienden las advertencias, y hay que leerlas: la mayoría de los errores
+        en tiempo de ejecución fueron antes una advertencia ignorada. <code>-g</code> agrega información para
+        el depurador, <code>-O2</code> optimiza, y <code>-std=c11</code> fija la versión del lenguaje para que
+        el programa se comporte igual en otra máquina.</p></div>
+    </section>
+
+    <section id="git">
+      <h2><span class="n">04</span>Control de versiones</h2>
+      <p>Un sistema de control de versiones guarda la historia del proyecto: qué cambió, cuándo y por qué. Con
+      <b>git</b>, el ciclo básico es corto:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Orden</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td><code>git init</code></td><td>Crea el repositorio</td></tr>
+          <tr><td><code>git status</code></td><td>Qué cambió desde el último commit</td></tr>
+          <tr><td><code>git add archivo</code></td><td>Marca lo que va a entrar en el próximo commit</td></tr>
+          <tr><td><code>git commit -m "…"</code></td><td>Guarda una versión con su explicación</td></tr>
+          <tr><td><code>git log</code></td><td>La historia</td></tr>
+          <tr><td><code>git diff</code></td><td>Las diferencias exactas, línea por línea</td></tr>
+          <tr><td><code>git checkout -b rama</code></td><td>Abre una línea de trabajo paralela</td></tr>
+        </tbody>
+      </table></div>
+      <p>Tres criterios que valen más que la lista de órdenes: <b>commits chicos</b> que hagan una sola cosa,
+      <b>mensajes que expliquen el porqué</b> y no el qué —el diff ya dice qué cambió—, y un
+      <code>.gitignore</code> que deje afuera lo generado: los <code>.o</code>, el ejecutable y los archivos
+      temporales no se versionan.</p>
+    </section>
+
+    <section id="depurar">
+      <h2><span class="n">05</span>Depurar</h2>
+      <ul>
+        <li><b>printf.</b> Rudimentario pero efectivo, sobre todo en sistemas embebidos donde no hay
+        depurador.</li>
+        <li><b>gdb.</b> Compilando con <code>-g</code>: <code>break</code> para poner un punto de parada,
+        <code>run</code>, <code>next</code> y <code>step</code> para avanzar, <code>print</code> para ver una
+        variable y <code>backtrace</code> para saber cómo se llegó hasta ahí. Con un programa que se cayó,
+        <code>backtrace</code> sobre el volcado de memoria suele resolver el caso en un minuto.</li>
+        <li><b>valgrind.</b> Detecta accesos fuera de rango, uso de memoria sin inicializar y pérdidas de
+        memoria. Un programa que parece andar bien puede estar lleno de errores que valgrind muestra.</li>
+        <li><b>Sanitizers.</b> <code>-fsanitize=address</code> instrumenta el programa para que aborte en el
+        momento exacto del acceso indebido, con la línea señalada.</li>
+      </ul>
+      <div class="box peligro"><div class="bt">El error que no se reproduce</div>
+        <p>Un programa que falla «a veces» casi siempre tiene memoria mal usada: un arreglo desbordado o un
+        puntero colgante. El síntoma aparece lejos de la causa, y por eso las herramientas de análisis valen
+        más que horas de lectura del código.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Ver cada etapa</div>
+        <p>Con un programa de diez líneas, correr <code>gcc -E</code>, <code>-S</code> y <code>-c</code> y
+        mirar los archivos intermedios. Contar cuántas líneas tiene el <code>.i</code> después de incluir
+        <code>stdio.h</code>.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Un Makefile propio</div>
+        <p>Armar un proyecto de tres archivos con su Makefile, con objetivos <code>all</code>,
+        <code>clean</code> y <code>debug</code>. Verificar que al tocar un solo <code>.c</code> se recompila
+        sólo ese.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Provocar y leer errores</div>
+        <p>Generar a propósito un error de cada etapa: un <code>#include</code> inexistente, un punto y coma
+        faltante y una función declarada pero no definida. Anotar qué dice exactamente cada mensaje y
+        aprender a reconocerlos.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Confundir error de compilación con error de enlazado.</b></li>
+        <li><b>Olvidar <code>-lm</code></b> al usar funciones matemáticas.</li>
+        <li><b>Indentar las órdenes de un Makefile con espacios</b> en lugar de un tabulador.</li>
+        <li><b>Ignorar las advertencias</b> del compilador.</li>
+        <li><b>Versionar archivos generados</b> —objetos, ejecutables, carpetas de compilación— y ensuciar la
+        historia.</li>
+        <li><b>Depurar un binario compilado sin <code>-g</code></b> y no ver ni nombres de variables.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué hace exactamente el preprocesador?</summary>
+        <div class="a"><p>Manipula texto: pega los archivos incluidos, reemplaza las macros y resuelve la
+        compilación condicional. No entiende C.</p></div></details>
+      <details class="q"><summary>Aparece <code>undefined reference to 'sqrt'</code>. ¿Qué etapa falló?</summary>
+        <div class="a"><p>El <b>enlazado</b>. Falta agregar <code>-lm</code>: el prototipo estaba en
+        <code>math.h</code>, pero el cuerpo de la función está en la biblioteca matemática.</p></div></details>
+      <details class="q"><summary>¿Para qué sirven los guardas <code>#ifndef</code> en un encabezado?</summary>
+        <div class="a"><p>Para que el contenido no se incluya dos veces en la misma unidad de compilación, lo
+        que provocaría definiciones duplicadas.</p></div></details>
+      <details class="q"><summary>¿Cómo sabe make qué recompilar?</summary>
+        <div class="a"><p>Comparando fechas de modificación: si una dependencia es más nueva que el objetivo,
+        rehace ese objetivo.</p></div></details>
+      <details class="q"><summary>¿Qué diferencia hay entre una biblioteca estática y una dinámica?</summary>
+        <div class="a"><p>La estática se copia dentro del ejecutable al enlazar; la dinámica se carga al
+        ejecutar y se comparte entre programas.</p></div></details>
+      <details class="q"><summary>¿Qué conviene poner en un mensaje de commit?</summary>
+        <div class="a"><p>El <b>porqué</b> del cambio. El qué ya lo muestra el diff.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Brian W. Kernighan y Rob Pike.</span> <span class="ti">The Practice of Programming</span>.
+          <span class="ed">Addison-Wesley, 1999.</span>
+          <span class="pq">Depuración, pruebas y herramientas, con el criterio de dos autores que escribieron Unix.</span></li>
+        <li><span class="au">Scott Chacon y Ben Straub.</span> <span class="ti">Pro Git</span>.
+          <span class="ed">2.ª ed., Apress, 2014. Disponible en línea y en castellano.</span>
+          <span class="pq">El libro de git, de lo básico al flujo de trabajo en equipo.</span></li>
+        <li><span class="au">John Graham-Cumming.</span> <span class="ti">The GNU Make Book</span>.
+          <span class="ed">No Starch Press, 2015.</span>
+          <span class="pq">Para cuando el Makefile crece y empieza a tener lógica propia.</span></li>
+        <li><span class="au">Randal E. Bryant y David R. O'Hallaron.</span> <span class="ti">Computer Systems: A Programmer's Perspective</span>.
+          <span class="ed">3.ª ed., Pearson, 2015.</span>
+          <span class="pq">El capítulo 7 explica el enlazado con un detalle que no está en ningún otro lado.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Estructuras dinámicas de datos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Herramientas de construcción de software»</b> de <b>Informática II</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<script>
+/* Las cuatro etapas de la construccion de un ejecutable: la cadena de
+   archivos se dibuja arriba y debajo se muestra en que se convirtio el
+   codigo en cada paso, con el comando que lo hace. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("coLienzo"), ctx = cv.getContext("2d");
+  var ARCH = ["main.c", "main.i", "main.s", "main.o", "programa"];
+  var E = [
+    { n:"Preprocesador", cmd:"gcc -E main.c -o main.i", herr:"cpp",
+      txt:"/* main.c, lo que se escribio: */\n" +
+          "#include <stdio.h>\n#include <math.h>\n#define VALOR 2.0\n\n" +
+          "int main(void)\n{\n" +
+          "    printf(\"%f\\n\", sqrt(VALOR));\n" +
+          "    return 0;\n}\n\n" +
+          "/* main.i, lo que sale del preprocesador: */\n" +
+          "/* ... aqui quedaron pegadas ~700 lineas\n   de stdio.h y math.h ... */\n" +
+          "extern int printf(const char *, ...);\n" +
+          "extern double sqrt(double);\n\n" +
+          "int main(void)\n{\n" +
+          "    printf(\"%f\\n\", sqrt(2.0));   /* la macro ya fue reemplazada */\n" +
+          "    return 0;\n}",
+      d:[["Qué hace", "pega los #include y reemplaza las macros"],
+         ["Entiende C", "no: sólo manipula texto"],
+         ["Crece el archivo", "de 10 líneas a más de 700"]],
+      n2:"El preprocesador no sabe nada de C: copia el contenido de cada <code>#include</code> donde estaba la " +
+         "línea, reemplaza cada <code>#define</code> por su texto y resuelve los <code>#ifdef</code>. Por eso " +
+         "un error de macro produce mensajes desconcertantes: el compilador ve el texto <b>ya reemplazado</b>. " +
+         "Si falla, es porque no encontró un encabezado." },
+    { n:"Compilador", cmd:"gcc -S main.i -o main.s", herr:"cc1",
+      txt:"# main.s: el mismo programa, en ensamblador x86-64\n\n" +
+          "main:\n" +
+          "    push    rbp\n" +
+          "    mov     rbp, rsp\n" +
+          "    movsd   xmm0, QWORD PTR .LC0[rip]\n" +
+          "    call    sqrt\n" +
+          "    lea     rdi, .LC1[rip]\n" +
+          "    call    printf\n" +
+          "    mov     eax, 0\n" +
+          "    pop     rbp\n" +
+          "    ret",
+      d:[["Qué hace", "traduce a instrucciones del procesador"],
+         ["Verifica", "sintaxis, tipos y declaraciones"],
+         ["Optimiza", "sí, según -O0 a -O3"]],
+      n2:"Acá es donde aparecen los errores y las advertencias que mencionan archivo y línea. El compilador " +
+         "verifica tipos, resuelve llamadas y traduce a instrucciones del procesador: el mismo <code>.c</code> " +
+         "da un <code>.s</code> distinto para x86 que para ARM. <b>Las advertencias se leen:</b> casi todas " +
+         "señalan un error real que va a aparecer recién al ejecutar." },
+    { n:"Ensamblador", cmd:"gcc -c main.s -o main.o", herr:"as",
+      txt:"main.o: archivo objeto ELF de 64 bits\n\n" +
+          "Secciones:\n" +
+          "  .text    48 bytes   codigo maquina\n" +
+          "  .rodata  16 bytes   las constantes de texto\n" +
+          "  .data     0 bytes\n\n" +
+          "Simbolos:\n" +
+          "  00000000 T main        <- definido aqui\n" +
+          "           U printf      <- indefinido: lo resuelve el enlazador\n" +
+          "           U sqrt        <- indefinido",
+      d:[["Qué hace", "convierte el ensamblador a código máquina"],
+         ["Qué sale", "un archivo objeto, aún no ejecutable"],
+         ["Símbolos pendientes", "printf y sqrt quedan sin resolver"]],
+      n2:"El objeto ya es código máquina, pero todavía no se puede ejecutar: las llamadas a funciones de otros " +
+         "archivos quedan como <b>símbolos indefinidos</b>, marcados con U. Con <code>nm main.o</code> se " +
+         "puede ver esa tabla en cualquier momento, y es la mejor manera de entender un error de enlazado." },
+    { n:"Enlazador", cmd:"gcc main.o -o programa -lm", herr:"ld",
+      txt:"$ gcc main.o -o programa\n" +
+          "main.o: undefined reference to `sqrt'\n" +
+          "collect2: error: ld returned 1 exit status\n\n" +
+          "$ gcc main.o -o programa -lm      # con la biblioteca\n" +
+          "$ ./programa\n" +
+          "1.414214",
+      d:[["Qué hace", "junta objetos y bibliotecas"],
+         ["Resuelve", "los símbolos que quedaban indefinidos"],
+         ["Error típico", "undefined reference, sin número de línea"]],
+      n2:"El enlazador pega los objetos y busca en las bibliotecas el cuerpo de cada símbolo pendiente. " +
+         "<b>El error de esta etapa no menciona ninguna línea</b>, y esa es justamente la pista: el código " +
+         "estaba bien escrito, falta el cuerpo de una función. Acá la solución es agregar <code>-lm</code>, " +
+         "la biblioteca matemática, que no se enlaza sola." }
+  ];
+  function pintar(){
+    var k = +$("coP").value, e = E[k];
+    $("coPv").textContent = (k + 1) + " de 4";
+
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height;
+    ctx.clearRect(0, 0, W, H);
+
+    var mg = 8, n = ARCH.length;
+    var ancho = (W - 2 * mg) / (n + (n - 1) * 0.42);
+    var sep = ancho * 0.42, alto = Math.min(40, H * 0.4), y = H * 0.46 - alto / 2;
+    ARCH.forEach(function(a, i){
+      var x = mg + i * (ancho + sep);
+      var usado = i <= k + 1, act = i === k || i === k + 1;
+      ctx.strokeStyle = act ? "#58a6ff" : usado ? "rgba(88,166,255,.45)" : "rgba(107,116,132,.4)";
+      ctx.fillStyle = act ? "rgba(88,166,255,.16)" : "rgba(107,116,132,.06)";
+      ctx.lineWidth = act ? 2 : 1.3;
+      ctx.beginPath(); ctx.rect(x, y, ancho, alto); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = act ? "#e6edf3" : "#6b7484";
+      ctx.font = (act ? "600 " : "") + Math.min(12.5, ancho / 5.6) + "px Consolas, monospace";
+      var tw = ctx.measureText(a).width;
+      ctx.fillText(a, x + (ancho - tw) / 2, y + alto / 2 + 4.5);
+      /* flecha y nombre de la herramienta */
+      if(i < n - 1){
+        var xa = x + ancho, xb = x + ancho + sep, act2 = i === k;
+        ctx.strokeStyle = act2 ? "#7ee787" : "rgba(107,116,132,.4)";
+        ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth = act2 ? 2 : 1.2;
+        ctx.beginPath(); ctx.moveTo(xa + 2, y + alto / 2); ctx.lineTo(xb - 6, y + alto / 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(xb - 1, y + alto / 2);
+        ctx.lineTo(xb - 8, y + alto / 2 - 4); ctx.lineTo(xb - 8, y + alto / 2 + 4);
+        ctx.closePath(); ctx.fill();
+        if(act2){
+          ctx.font = "10px Consolas, monospace";
+          var t2 = E[i].herr, w2 = ctx.measureText(t2).width;
+          ctx.fillText(t2, xa + (sep - w2) / 2 + 2, y + alto / 2 - 9);
+        }
+      }
+    });
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText(e.n, mg + 2, 15);
+
+    $("coTexto").textContent = e.txt;
+    var html = "<span>Etapa</span><b>" + e.n + "</b>" +
+               "<span>Comando</span><b>" + e.cmd + "</b>";
+    e.d.forEach(function(f){ html += "<span>" + f[0] + "</span><b>" + f[1] + "</b>"; });
+    $("coDatos").innerHTML = html;
+    $("coNota").innerHTML = e.n2;
+  }
+  $("coP").addEventListener("input", pintar);
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>

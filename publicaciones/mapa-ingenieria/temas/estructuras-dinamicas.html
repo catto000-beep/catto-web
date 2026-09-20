@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estructuras dinámicas de datos · Informática II · Catto</title>
+<meta name="description" content="Listas enlazadas simples y dobles, pilas y colas, árboles binarios, y el criterio para elegir entre arreglo y lista, con laboratorio interactivo de inserción y eliminación de nodos. Contenido de Informática II, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=2">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática II</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática II</span> · 120 h · Contenido 2 de 8</div>
+    <h1>Estructuras dinámicas de datos</h1>
+    <p class="lead">Cuando no se sabe de antemano cuántos datos van a llegar, el arreglo estorba. La lista enlazada crece y se achica siguiendo punteros, y con ese mecanismo se construyen colas, pilas y árboles.</p>
+    <div class="chips">
+      <span class="chip hi">Lista enlazada</span>
+      <span class="chip">Nodos</span>
+      <span class="chip">Pila</span>
+      <span class="chip">Cola</span>
+      <span class="chip">Árbol binario</span>
+    </div>
+    <hr class="rule">
+
+    <section id="porque">
+      <h2><span class="n">01</span>Cuando el arreglo no alcanza</h2>
+      <p>Un arreglo es rápido y simple, pero tiene un tamaño fijo decidido antes de correr el programa. Si
+      llegan más datos de los previstos, se desborda; si llegan menos, se desperdicia memoria. Una
+      <b>estructura dinámica</b> crece y se achica durante la ejecución, reservando un nodo por dato.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operación</th><th>Arreglo</th><th>Lista enlazada</th></tr></thead>
+        <tbody>
+          <tr><td>Acceder al elemento i</td><td><b>O(1)</b>: cuenta directa</td><td>O(n): hay que recorrer</td></tr>
+          <tr><td>Insertar al principio</td><td>O(n): correr todo</td><td><b>O(1)</b>: cambiar dos punteros</td></tr>
+          <tr><td>Insertar al final</td><td>O(1) si hay lugar</td><td>O(n), u O(1) con puntero a la cola</td></tr>
+          <tr><td>Eliminar del medio</td><td>O(n): correr todo</td><td><b>O(1)</b> si ya se tiene el nodo anterior</td></tr>
+          <tr><td>Memoria por dato</td><td>Sólo el dato</td><td>El dato más un puntero</td></tr>
+          <tr><td>Localidad en caché</td><td><b>Excelente</b>: contiguo</td><td>Pobre: nodos dispersos</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box ojo"><div class="bt">Cuál conviene</div>
+        <p>No hay ganador: hay criterio. Si se conoce el tamaño y se accede por índice, arreglo. Si hay muchas
+        inserciones y eliminaciones en cualquier posición, lista. Y en la práctica, para pocos elementos el
+        arreglo suele ganar igual, porque la memoria contigua vuela en la caché del procesador.</p></div>
+    </section>
+
+    <section id="lista">
+      <h2><span class="n">02</span>La lista enlazada</h2>
+      <p>Cada nodo guarda el dato y la dirección del siguiente. El último apunta a NULL, y una variable externa
+      —la cabeza— guarda la dirección del primero:</p>
+      <div class="form">
+        <code>typedef struct nodo {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;int dato;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;struct nodo *sig;<br>
+        } Nodo;<br><br>
+        Nodo *cabeza = NULL;</code>
+      </div>
+      <p>La estructura se refiere a sí misma: por eso hace falta el nombre <code>struct nodo</code> dentro de su
+      propia definición. Insertar al principio son tres líneas:</p>
+      <div class="form">
+        <code>Nodo *n = malloc(sizeof(Nodo));<br>
+        n-&gt;dato = x;<br>
+        n-&gt;sig = cabeza;<br>
+        cabeza = n;</code>
+      </div>
+      <div class="box peligro"><div class="bt">El orden importa</div>
+        <p>Si se hace <code>cabeza = n</code> <b>antes</b> de <code>n-&gt;sig = cabeza</code>, el nodo apunta a
+        sí mismo y se pierde toda la lista. En estructuras enlazadas, el orden de las asignaciones de punteros
+        es el error más frecuente y el más difícil de ver leyendo.</p></div>
+      <div class="lw" id="ls">
+        <div class="lt">Laboratorio · lista enlazada</div>
+        <p class="ls">Insertá y eliminá nodos, y mirá cómo se reacomodan los punteros y cuántos pasos cuesta cada operación.</p>
+        <div class="fila">
+          <label for="lsV">Valor <b id="lsVv">25</b></label>
+          <input type="range" id="lsV" min="1" max="99" step="1" value="25">
+        </div>
+        <div class="fila">
+          <button id="lsIni" class="pri">Insertar al inicio</button>
+          <button id="lsFin">Insertar al final</button>
+          <button id="lsOrd">Insertar ordenado</button>
+        </div>
+        <div class="fila">
+          <button id="lsDelIni">Eliminar el primero</button>
+          <button id="lsDelVal">Eliminar ese valor</button>
+          <button id="lsBuscar">Buscar</button>
+          <button id="lsVaciar">Vaciar</button>
+        </div>
+        <canvas id="lsLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:1.9/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="lsDatos" style="margin-top:8px"></div>
+        <div class="nota" id="lsNota"></div>
+      </div>
+    </section>
+
+    <section id="variantes">
+      <h2><span class="n">03</span>Variantes y estructuras derivadas</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Estructura</th><th>Cómo es</th><th>Para qué sirve</th></tr></thead>
+        <tbody>
+          <tr><td>Lista doblemente enlazada</td><td>Cada nodo apunta al siguiente y al anterior</td><td>Recorrer en los dos sentidos, eliminar sin buscar el anterior</td></tr>
+          <tr><td>Lista circular</td><td>El último apunta al primero</td><td>Planificadores por turno rotativo, buffers</td></tr>
+          <tr><td>Pila (LIFO)</td><td>Se saca el último que entró</td><td>Llamadas a funciones, deshacer, evaluar expresiones</td></tr>
+          <tr><td>Cola (FIFO)</td><td>Se saca el primero que entró</td><td>Buffers de comunicación, colas de eventos</td></tr>
+          <tr><td>Cola circular</td><td>Arreglo fijo con índices que dan la vuelta</td><td>Buffers de UART en microcontroladores</td></tr>
+          <tr><td>Árbol binario de búsqueda</td><td>Cada nodo tiene dos hijos, ordenados</td><td>Búsqueda en O(log n) si está equilibrado</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">La pila que ya venías usando</div>
+        <p>Cada llamada a una función apila su marco —variables locales y dirección de retorno— y al volver lo
+        desapila. Por eso una recursión sin caso base termina en <i>stack overflow</i>: la estructura de datos
+        que se desborda es, literalmente, una pila.</p></div>
+    </section>
+
+    <section id="arboles">
+      <h2><span class="n">04</span>Árboles binarios</h2>
+      <p>En un árbol binario de búsqueda, todo lo menor que un nodo está en su subárbol izquierdo y todo lo
+      mayor, en el derecho. Buscar es bajar comparando, y si el árbol está equilibrado cada comparación
+      <b>descarta la mitad</b> de los datos restantes: 20 comparaciones alcanzan para un millón de elementos.</p>
+      <ul>
+        <li><b>Recorrido en orden</b> —izquierdo, nodo, derecho— devuelve los datos ordenados de menor a
+        mayor.</li>
+        <li><b>En preorden</b> —nodo, izquierdo, derecho— sirve para copiar la estructura.</li>
+        <li><b>En postorden</b> —izquierdo, derecho, nodo— para liberarla, porque destruye los hijos antes que
+        el padre.</li>
+      </ul>
+      <p>El problema es el desequilibrio: si los datos llegan ya ordenados, el árbol degenera en una lista y la
+      búsqueda vuelve a ser O(n). De ahí salen los árboles que se reequilibran solos, como los AVL y los
+      rojo-negro.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">05</span>Dónde se usan en un equipo</h2>
+      <ul>
+        <li><b>Buffer circular de UART.</b> La interrupción de recepción escribe en la cola y el programa
+        principal lee: es la estructura más usada en sistemas embebidos.</li>
+        <li><b>Cola de eventos.</b> Una interfaz gráfica, un sistema operativo de tiempo real y un firmware con
+        máquina de estados usan todos el mismo esquema productor-consumidor.</li>
+        <li><b>Lista de tareas de un planificador.</b> Ordenada por prioridad o por vencimiento.</li>
+        <li><b>Historial de muestras.</b> Una ventana deslizante para promediar o filtrar señales se implementa
+        con una cola circular.</li>
+        <li><b>Tabla de dispositivos.</b> El núcleo de un sistema operativo mantiene listas enlazadas de
+        procesos abiertos, archivos y controladores.</li>
+      </ul>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Lista enlazada completa</div>
+        <p>Implementar en C insertar al inicio, al final y ordenado, eliminar por valor, buscar, contar y
+        liberar toda la lista. Verificar con valgrind que no queda memoria perdida.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Buffer circular</div>
+        <p>Escribir una cola circular de tamaño fijo con índices de lectura y escritura, y usarla para recibir
+        datos de un puerto serie sin perder bytes mientras el programa hace otra cosa.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Comparar costos midiendo</div>
+        <p>Insertar cien mil elementos al principio de un arreglo y de una lista, y medir el tiempo de cada
+        uno. Repetir accediendo por índice. Contrastar los números con la tabla de la primera sección.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Perder la cabeza de la lista</b> al reasignar punteros en el orden equivocado.</li>
+        <li><b>Liberar un nodo antes de guardar su <code>sig</code></b>, y quedarse sin manera de llegar al
+        resto.</li>
+        <li><b>No contemplar la lista vacía</b> ni la eliminación del primer nodo, que son los dos casos
+        borde.</li>
+        <li><b>Olvidar poner NULL en el <code>sig</code> del último nodo.</b></li>
+        <li><b>Usar una lista donde convenía un arreglo</b>, sólo porque suena más sofisticado.</li>
+        <li><b>Recorrer con el mismo puntero que se usa para liberar</b>, sin una variable auxiliar.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuánto cuesta insertar al principio de una lista enlazada?</summary>
+        <div class="a"><p><b>O(1)</b>: reservar el nodo y cambiar dos punteros, sin importar cuántos elementos
+        haya.</p></div></details>
+      <details class="q"><summary>¿Por qué acceder al elemento 500 de una lista es lento?</summary>
+        <div class="a"><p>Porque hay que seguir 500 punteros: no se puede calcular la dirección, hay que
+        recorrer.</p></div></details>
+      <details class="q"><summary>¿Qué estructura conviene para el buffer de recepción de una UART?</summary>
+        <div class="a"><p>Una <b>cola circular</b> sobre un arreglo fijo: no necesita malloc, es de tamaño
+        conocido y la interrupción la puede usar con seguridad.</p></div></details>
+      <details class="q"><summary>¿Qué recorrido de un árbol binario de búsqueda devuelve los datos ordenados?</summary>
+        <div class="a"><p>El recorrido <b>en orden</b>: izquierdo, nodo, derecho.</p></div></details>
+      <details class="q"><summary>¿Qué pasa si se insertan datos ya ordenados en un árbol binario simple?</summary>
+        <div class="a"><p>Degenera en una lista: cada nodo tiene un solo hijo y la búsqueda pasa de O(log n) a
+        O(n).</p></div></details>
+      <details class="q"><summary>¿Por qué una recursión infinita termina en «stack overflow»?</summary>
+        <div class="a"><p>Porque cada llamada apila un marco con sus variables locales, y la pila del programa
+        tiene un tamaño limitado.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Thomas H. Cormen y otros.</span> <span class="ti">Introduction to Algorithms</span>.
+          <span class="ed">4.ª ed., MIT Press, 2022.</span>
+          <span class="pq">La referencia sobre estructuras de datos y su análisis de costos.</span></li>
+        <li><span class="au">Mark Allen Weiss.</span> <span class="ti">Estructuras de datos en C</span>.
+          <span class="ed">Addison-Wesley, 1995.</span>
+          <span class="pq">Implementaciones completas en C, al nivel exacto de la materia.</span></li>
+        <li><span class="au">Brian W. Kernighan y Dennis M. Ritchie.</span> <span class="ti">El lenguaje de programación C</span>.
+          <span class="ed">2.ª ed., Pearson, 1991.</span>
+          <span class="pq">El capítulo 6 arma una tabla de símbolos con estructuras enlazadas, como ejemplo integrador.</span></li>
+        <li><span class="au">Robert Sedgewick.</span> <span class="ti">Algorithms in C</span>.
+          <span class="ed">3.ª ed., Addison-Wesley, 1998.</span>
+          <span class="pq">Muy gráfico, con buenas explicaciones de árboles y su equilibrado.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/programacion-avanzada">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Programación avanzada en C</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/construccion-software">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Herramientas de construcción de software</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Estructuras dinámicas de datos»</b> de <b>Informática II</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<script>
+/* Lista enlazada: los nodos se dibujan con su direccion simulada y su puntero
+   al siguiente, y cada operacion informa cuantos pasos costo, que es lo que
+   despues se escribe como O(1) o O(n). */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("lsLienzo"), ctx = cv.getContext("2d");
+  var lista = [], proxDir = 0x8A10, ultima = "", pasos = 0, marcado = -1;
+
+  function nuevo(v){
+    var n = { v:v, dir:proxDir };
+    proxDir += 0x18;
+    return n;
+  }
+  function hex(d){ return "0x" + d.toString(16).toUpperCase(); }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height;
+    ctx.clearRect(0, 0, W, H);
+
+    var porFila = Math.max(2, Math.floor((W - 60) / 104));
+    var anchoN = 84, altoN = 42, sepX = 20, sepY = 46;
+    var filas = Math.ceil((lista.length + 1) / porFila);
+    var oy = Math.max(30, (H - (filas * (altoN + sepY) - sepY)) / 2);
+
+    /* la cabeza */
+    ctx.fillStyle = "#f2cc60"; ctx.font = "600 12px system-ui, sans-serif";
+    ctx.fillText("cabeza", 12, oy - 10);
+    ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 1.6;
+    ctx.strokeRect(12, oy, 46, altoN);
+    ctx.font = "11px Consolas, monospace"; ctx.fillStyle = "#f2cc60";
+    var txtC = lista.length ? hex(lista[0].dir) : "NULL";
+    ctx.fillText(txtC, 14, oy + altoN / 2 + 4);
+
+    function pos(i){
+      var f = Math.floor((i + 1) / porFila), c = (i + 1) % porFila;
+      return { x:12 + c * (anchoN + sepX), y:oy + f * (altoN + sepY) };
+    }
+    /* nodos */
+    lista.forEach(function(n, i){
+      var p = pos(i), act = i === marcado;
+      ctx.strokeStyle = act ? "#f2cc60" : "#58a6ff";
+      ctx.fillStyle = act ? "rgba(242,204,96,.16)" : "rgba(88,166,255,.10)";
+      ctx.lineWidth = act ? 2.2 : 1.6;
+      ctx.beginPath(); ctx.rect(p.x, p.y, anchoN, altoN); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(p.x + anchoN * 0.58, p.y); ctx.lineTo(p.x + anchoN * 0.58, p.y + altoN); ctx.stroke();
+      ctx.fillStyle = "#e6edf3"; ctx.font = "600 14px system-ui, sans-serif";
+      ctx.fillText(String(n.v), p.x + 12, p.y + altoN / 2 + 5);
+      ctx.fillStyle = "#6b7484"; ctx.font = "9.5px Consolas, monospace";
+      ctx.fillText(hex(n.dir), p.x + 2, p.y - 4);
+      var sig = i + 1 < lista.length ? "sig" : "NULL";
+      ctx.fillStyle = i + 1 < lista.length ? "#d2a8ff" : "#6b7484";
+      ctx.font = "10px Consolas, monospace";
+      ctx.fillText(sig, p.x + anchoN * 0.58 + 6, p.y + altoN / 2 + 4);
+      /* flecha al siguiente */
+      if(i + 1 < lista.length){
+        var q = pos(i + 1);
+        ctx.strokeStyle = "#d2a8ff"; ctx.fillStyle = "#d2a8ff"; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        if(q.y === p.y){
+          ctx.moveTo(p.x + anchoN, p.y + altoN / 2); ctx.lineTo(q.x - 5, q.y + altoN / 2);
+          ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(q.x, q.y + altoN / 2);
+          ctx.lineTo(q.x - 8, q.y + altoN / 2 - 4); ctx.lineTo(q.x - 8, q.y + altoN / 2 + 4);
+        } else {
+          ctx.moveTo(p.x + anchoN, p.y + altoN / 2);
+          ctx.lineTo(p.x + anchoN + 8, p.y + altoN / 2);
+          ctx.lineTo(p.x + anchoN + 8, p.y + altoN + 18);
+          ctx.lineTo(q.x + anchoN / 2, p.y + altoN + 18);
+          ctx.lineTo(q.x + anchoN / 2, q.y - 5);
+          ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(q.x + anchoN / 2, q.y);
+          ctx.lineTo(q.x + anchoN / 2 - 4, q.y - 8); ctx.lineTo(q.x + anchoN / 2 + 4, q.y - 8);
+        }
+        ctx.closePath(); ctx.fill();
+      }
+    });
+    /* flecha de la cabeza al primer nodo */
+    if(lista.length){
+      var p0 = pos(0);
+      ctx.strokeStyle = "#f2cc60"; ctx.fillStyle = "#f2cc60"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(58, oy + altoN / 2); ctx.lineTo(p0.x - 5, p0.y + altoN / 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(p0.x, p0.y + altoN / 2);
+      ctx.lineTo(p0.x - 8, p0.y + altoN / 2 - 4); ctx.lineTo(p0.x - 8, p0.y + altoN / 2 + 4);
+      ctx.closePath(); ctx.fill();
+    } else {
+      ctx.fillStyle = "#6b7484"; ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText("la lista está vacía: cabeza vale NULL", 72, oy + altoN / 2 + 4);
+    }
+
+    var mem = lista.length * 24;
+    $("lsDatos").innerHTML =
+      "<span>Nodos en la lista</span><b>" + lista.length + "</b>" +
+      "<span>Memoria del montículo</span><b>" + mem + " bytes (" + lista.length + " × 24)</b>" +
+      "<span>Última operación</span><b>" + (ultima || "—") + "</b>" +
+      "<span>Punteros recorridos</span><b>" + pasos + "</b>";
+  }
+  function nota(t){ $("lsNota").innerHTML = t; }
+
+  function valor(){ return +$("lsV").value; }
+  $("lsV").addEventListener("input", function(){ $("lsVv").textContent = valor(); });
+
+  $("lsIni").addEventListener("click", function(){
+    lista.unshift(nuevo(valor())); pasos = 0; marcado = 0;
+    ultima = "insertar al inicio";
+    nota("Tres asignaciones y listo: el nodo nuevo apunta a la antigua cabeza y la cabeza pasa a apuntarlo. " +
+         "<b>No se recorrió nada</b>, así que el costo es O(1) por más larga que sea la lista. Por eso una pila " +
+         "se implementa siempre insertando y sacando por el principio.");
+    pintar();
+  });
+  $("lsFin").addEventListener("click", function(){
+    pasos = lista.length; marcado = lista.length;
+    lista.push(nuevo(valor()));
+    ultima = "insertar al final";
+    nota("Para llegar al último nodo hubo que seguir <b>" + pasos + "</b> punteros: el costo es O(n). " +
+         "Si la estructura guardara también un puntero a la cola, sería O(1); ese es el truco que usa una cola.");
+    pintar();
+  });
+  $("lsOrd").addEventListener("click", function(){
+    var v = valor(), i = 0;
+    while(i < lista.length && lista[i].v < v) i++;
+    pasos = i; marcado = i;
+    lista.splice(i, 0, nuevo(v));
+    ultima = "insertar ordenado";
+    nota("Se recorrieron <b>" + pasos + "</b> nodos hasta encontrar el lugar, y ahí se enganchó el nodo nuevo " +
+         "cambiando dos punteros. En un arreglo habría habido que <b>correr</b> todos los elementos posteriores; " +
+         "acá no se movió ningún dato de lugar.");
+    pintar();
+  });
+  $("lsDelIni").addEventListener("click", function(){
+    if(!lista.length){ nota("La lista ya está vacía. Eliminar de una lista vacía es uno de los dos casos borde que hay que contemplar siempre."); return; }
+    var n = lista.shift(); pasos = 0; marcado = -1;
+    ultima = "eliminar el primero";
+    nota("Se guardó el <code>sig</code> en una variable auxiliar, se movió la cabeza y recién entonces se " +
+         "liberó el nodo " + hex(n.dir) + ". <b>Ese orden es obligatorio:</b> liberar primero dejaría la lista " +
+         "inalcanzable. Costo O(1).");
+    pintar();
+  });
+  $("lsDelVal").addEventListener("click", function(){
+    var v = valor(), i = lista.findIndex(function(n){ return n.v === v; });
+    if(i < 0){ pasos = lista.length; marcado = -1; ultima = "eliminar " + v;
+      nota("No hay ningún nodo con valor " + v + ". Se recorrió la lista entera —" + pasos + " punteros— para " +
+           "confirmarlo: en una lista no hay manera de saberlo sin buscar."); pintar(); return; }
+    pasos = i; lista.splice(i, 1); marcado = -1;
+    ultima = "eliminar " + v;
+    nota("El nodo estaba en la posición " + i + ". Buscarlo costó " + pasos + " pasos, pero <b>desengancharlo " +
+         "costó uno solo</b>: el anterior pasa a apuntar al siguiente. Esa asimetría es la que hace útil a la " +
+         "lista doblemente enlazada, donde no hace falta recordar el anterior.");
+    pintar();
+  });
+  $("lsBuscar").addEventListener("click", function(){
+    var v = valor(), i = lista.findIndex(function(n){ return n.v === v; });
+    pasos = i < 0 ? lista.length : i + 1; marcado = i;
+    ultima = "buscar " + v;
+    nota(i < 0 ? "No está. Hubo que recorrer los " + lista.length + " nodos para saberlo: la búsqueda en una " +
+                 "lista es O(n) y no hay atajo, porque los nodos no están ordenados en memoria."
+               : "Encontrado en la posición " + i + " tras seguir " + pasos + " punteros. En un arreglo " +
+                 "ordenado se podría buscar por bisección en O(log n), pero en una lista no: no se puede " +
+                 "saltar al elemento del medio sin recorrer.");
+    pintar();
+  });
+  $("lsVaciar").addEventListener("click", function(){
+    pasos = lista.length; marcado = -1; ultima = "vaciar";
+    nota("Se liberaron " + pasos + " nodos, uno por uno y siempre <b>guardando el siguiente antes de liberar " +
+         "el actual</b>. Olvidar ese detalle es la fuga de memoria más común con listas: se pierde el acceso al " +
+         "resto de la cadena.");
+    lista = [];
+    pintar();
+  });
+
+  window.addEventListener("resize", pintar);
+  /* arranca con tres nodos para que se vea algo */
+  [12, 25, 40].forEach(function(v){ lista.push(nuevo(v)); });
+  ultima = "lista inicial";
+  nota("Tres nodos enlazados. Cada uno guarda su dato y la dirección del siguiente; el último apunta a NULL. " +
+       "Probá las operaciones y mirá cuántos punteros hay que recorrer en cada una.");
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>

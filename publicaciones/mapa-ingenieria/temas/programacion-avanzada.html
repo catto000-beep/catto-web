@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programación avanzada en C · Informática II · Catto</title>
+<meta name="description" content="Punteros y direcciones, aritmética de punteros, arreglos y cadenas, paso por referencia, memoria dinámica con malloc y free, y modularización en varios archivos, con visualizador de memoria interactivo. Contenido de Informática II, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/programacion-avanzada">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=2">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática II</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática II</span> · 120 h · Contenido 1 de 8</div>
+    <h1>Programación avanzada en C</h1>
+    <p class="lead">En C se programa sabiendo dónde están las cosas. El puntero no es una rareza del lenguaje: es la dirección de memoria, y entenderlo es la diferencia entre pelearse con el compilador y manejar el hardware.</p>
+    <div class="chips">
+      <span class="chip hi">Punteros</span>
+      <span class="chip">Direcciones</span>
+      <span class="chip">Arreglos</span>
+      <span class="chip">malloc</span>
+      <span class="chip">Modularización</span>
+    </div>
+    <hr class="rule">
+
+    <section id="direcciones">
+      <h2><span class="n">01</span>Toda variable tiene una dirección</h2>
+      <p>Una variable es un nombre para un lugar de la memoria. Ese lugar tiene una <b>dirección</b>, y C
+      permite trabajar con ella directamente, algo que la mayoría de los lenguajes esconde.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operador</th><th>Se lee</th><th>Qué devuelve</th></tr></thead>
+        <tbody>
+          <tr><td><code>&amp;x</code></td><td>dirección de x</td><td>Dónde está guardada x</td></tr>
+          <tr><td><code>*p</code></td><td>contenido de p</td><td>El valor que hay en la dirección que guarda p</td></tr>
+          <tr><td><code>int *p;</code></td><td>p es puntero a int</td><td>Declara una variable que guarda direcciones</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">Un puntero es una variable más</div>
+        <p>Ocupa lugar en memoria, tiene su propia dirección y se le puede asignar un valor. Lo único especial
+        es que ese valor <b>es una dirección</b>, y que el tipo dice cuánto mide lo apuntado: eso es lo que hace
+        que <code>p++</code> avance 4 bytes en un <code>int*</code> y 1 byte en un <code>char*</code>.</p></div>
+      <div class="lw" id="pu">
+        <div class="lt">Laboratorio · la memoria, paso a paso</div>
+        <p class="ls">Recorré el programa con el deslizador y mirá qué pasa en la memoria en cada línea.</p>
+        <div class="fila">
+          <select id="puE">
+            <option value="arr">Arreglo y aritmética de punteros</option>
+            <option value="ref">Paso por referencia: intercambiar dos variables</option>
+            <option value="din">Memoria dinámica con malloc y free</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="puP">Paso <b id="puPv">0</b></label>
+          <input type="range" id="puP" min="0" max="7" step="1" value="0">
+        </div>
+        <div class="caja" id="puCod" style="margin:8px 0;font-family:Consolas,'Cascadia Mono',monospace;font-size:12.5px;line-height:1.55;white-space:pre;overflow-x:auto"></div>
+        <canvas id="puLienzo" style="display:block;width:100%;max-width:520px;aspect-ratio:1.25/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="puDatos" style="margin-top:8px"></div>
+        <div class="nota" id="puNota"></div>
+      </div>
+    </section>
+
+    <section id="arreglos">
+      <h2><span class="n">02</span>Arreglos, cadenas y punteros</h2>
+      <p>En C el nombre de un arreglo <b>es</b> la dirección de su primer elemento. Por eso estas cuatro
+      expresiones significan lo mismo:</p>
+      <div class="form">
+        <code>v[i] &nbsp;≡&nbsp; *(v + i) &nbsp;≡&nbsp; *(i + v) &nbsp;≡&nbsp; i[v]</code>
+      </div>
+      <p>La última es una curiosidad que conviene no usar, pero muestra hasta qué punto los corchetes son sólo
+      una notación cómoda para la aritmética de punteros.</p>
+      <div class="box peligro"><div class="bt">El arreglo no sabe cuánto mide</div>
+        <p>C <b>no verifica los límites</b>. Escribir en <code>v[10]</code> de un arreglo de 5 compila sin
+        protestar y pisa lo que haya al lado: otra variable, la dirección de retorno de la función, cualquier
+        cosa. Esa es la causa de la mitad de las fallas de seguridad de la historia del software, y por eso hay
+        que pasar siempre el tamaño junto con el puntero.</p></div>
+      <p>Una <b>cadena</b> es un arreglo de <code>char</code> terminado en el byte cero. Ese cero no es
+      decorativo: es lo único que le dice a <code>strlen</code> o a <code>printf</code> dónde termina el
+      texto.</p>
+    </section>
+
+    <section id="funciones">
+      <h2><span class="n">03</span>Pasar por valor y por referencia</h2>
+      <p>C pasa <b>siempre</b> los argumentos por valor: la función recibe una copia. Si hay que modificar algo
+      de quien llama, se le pasa su dirección:</p>
+      <div class="form">
+        <code>void duplicar(int *x) { *x = *x * 2; }<br>
+        …<br>
+        duplicar(&amp;a);   /* ahora a vale el doble */</code>
+      </div>
+      <p>Los arreglos parecen una excepción, pero no lo son: lo que se pasa es la dirección del primer
+      elemento, así que la función puede modificar el contenido. Por eso <code>void f(int v[])</code> y
+      <code>void f(int *v)</code> son exactamente lo mismo para el compilador.</p>
+      <div class="box ojo"><div class="bt">Punteros a función</div>
+        <p>También se puede guardar la dirección de una función y llamarla a través de ella. Con eso se arman
+        tablas de despacho, <i>callbacks</i> y máquinas de estados, y es el mecanismo que usan los vectores de
+        interrupción de un microcontrolador.</p></div>
+    </section>
+
+    <section id="dinamica">
+      <h2><span class="n">04</span>Memoria dinámica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Zona</th><th>Quién la maneja</th><th>Vive hasta</th></tr></thead>
+        <tbody>
+          <tr><td>Variables globales y estáticas</td><td>El compilador</td><td>Que termine el programa</td></tr>
+          <tr><td>Pila (variables locales)</td><td>Automático</td><td>Que retorne la función</td></tr>
+          <tr><td>Montículo (malloc)</td><td><b>El programador</b></td><td>Que alguien llame a free</td></tr>
+        </tbody>
+      </table></div>
+      <div class="form">
+        <code>int *v = malloc(n * sizeof(int));<br>
+        if (v == NULL) { /* no había memoria */ }<br>
+        …<br>
+        free(v);<br>
+        v = NULL;</code>
+      </div>
+      <p>Las tres reglas que evitan casi todos los problemas: <b>verificar siempre</b> que malloc no devolvió
+      NULL, <b>liberar exactamente una vez</b> lo que se reservó, y <b>poner el puntero en NULL</b> después de
+      liberarlo para que un uso posterior falle de inmediato en lugar de corromper memoria en silencio.</p>
+      <div class="box peligro"><div class="bt">Los cuatro errores clásicos</div>
+        <ul>
+          <li><b>Pérdida de memoria:</b> reservar y no liberar. El programa crece hasta que el sistema lo
+          mata.</li>
+          <li><b>Puntero colgante:</b> usar memoria ya liberada.</li>
+          <li><b>Doble liberación:</b> llamar dos veces a free con el mismo puntero.</li>
+          <li><b>Puntero no inicializado:</b> usar un puntero que nunca recibió una dirección válida.</li>
+        </ul>
+        <p>En un equipo embebido que corre meses sin reiniciarse, una pérdida de memoria de pocos bytes por hora
+        termina en una falla a las semanas. Por eso muchos proyectos embebidos directamente prohíben malloc
+        después del arranque.</p></div>
+    </section>
+
+    <section id="modular">
+      <h2><span class="n">05</span>Modularizar</h2>
+      <p>Un programa serio no vive en un solo archivo. El criterio es separar <b>interfaz</b> de
+      <b>implementación</b>:</p>
+      <ul>
+        <li><code>sensor.h</code>: qué se puede usar —prototipos, tipos y constantes—, protegido contra
+        inclusión múltiple con <code>#ifndef SENSOR_H</code>.</li>
+        <li><code>sensor.c</code>: cómo está hecho. Lo que no se declara en el encabezado se marca
+        <code>static</code> y queda privado del archivo.</li>
+        <li>Cada <code>.c</code> se compila por separado y el enlazador junta los objetos.</li>
+      </ul>
+      <p>Esa organización es la que permite reemplazar el módulo de un sensor por otro sin tocar el resto, y es
+      la base de las bibliotecas que se usan en
+      <a class="ref" href="/publicaciones/mapa-ingenieria/temas/construccion-software">la construcción del
+      software</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Ver las direcciones de verdad</div>
+        <p>Escribir un programa que imprima con <code>%p</code> las direcciones de una variable global, una
+        local, una reservada con malloc y una constante de texto. Ordenarlas y deducir el mapa de memoria del
+        proceso.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Implementar strlen y strcpy</div>
+        <p>Escribirlas usando sólo punteros, sin corchetes. Comparar con las de la biblioteca estándar y medir
+        tiempos con cadenas largas.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Cazar una pérdida de memoria</div>
+        <p>Compilar un programa con un malloc sin free y correrlo bajo <code>valgrind</code>. Interpretar el
+        informe, corregir y volver a verificar que no queda memoria perdida.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Confundir <code>*p</code> con <code>p</code>.</b> Uno es el contenido; el otro, la dirección.</li>
+        <li><b>Devolver la dirección de una variable local.</b> Al retornar la función, esa memoria ya no es
+        válida.</li>
+        <li><b>Olvidar el byte cero</b> al construir una cadena a mano.</li>
+        <li><b>Reservar con el tamaño equivocado:</b> <code>malloc(n)</code> en vez de
+        <code>malloc(n * sizeof(int))</code>.</li>
+        <li><b>Comparar cadenas con <code>==</code></b>, que compara direcciones y no contenido: hay que usar
+        <code>strcmp</code>.</li>
+        <li><b>Usar <code>sizeof</code> sobre un puntero</b> esperando el tamaño del arreglo: da el tamaño del
+        puntero.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>Si <code>int v[5]</code> empieza en 0x1000, ¿qué dirección es <code>v + 2</code>?</summary>
+        <div class="a"><p>0x1008: la aritmética de punteros avanza de a <code>sizeof(int)</code>, es decir
+        4 bytes por elemento.</p></div></details>
+      <details class="q"><summary>¿Qué diferencia hay entre <code>char s[] = "hola"</code> y <code>char *s = "hola"</code>?</summary>
+        <div class="a"><p>El primero es un arreglo de 5 bytes modificable, copia del texto. El segundo es un
+        puntero a una constante de sólo lectura: escribir en ella es comportamiento indefinido.</p></div></details>
+      <details class="q"><summary>¿Por qué <code>void f(int x)</code> no puede modificar la variable de quien la llama?</summary>
+        <div class="a"><p>Porque recibe una copia. Hay que pasar la dirección: <code>void f(int *x)</code>.</p></div></details>
+      <details class="q"><summary>¿Qué pasa si se llama dos veces a <code>free</code> con el mismo puntero?</summary>
+        <div class="a"><p>Comportamiento indefinido: en general corrompe las estructuras internas del
+        asignador. Poner el puntero en NULL después de liberarlo lo evita, porque <code>free(NULL)</code> es
+        seguro.</p></div></details>
+      <details class="q"><summary>¿Cuánto vale <code>sizeof(v)</code> dentro de <code>void f(int v[])</code>?</summary>
+        <div class="a"><p>El tamaño de un puntero —4 u 8 bytes—, no el del arreglo. El tamaño hay que pasarlo
+        como parámetro aparte.</p></div></details>
+      <details class="q"><summary>¿Para qué sirve declarar una función <code>static</code> en un archivo .c?</summary>
+        <div class="a"><p>Para que sea privada de ese archivo y no aparezca en el enlazado: evita choques de
+        nombres y aclara qué es interfaz y qué es implementación.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Brian W. Kernighan y Dennis M. Ritchie.</span> <span class="ti">El lenguaje de programación C</span>.
+          <span class="ed">2.ª ed., Pearson, 1991.</span>
+          <span class="pq">El capítulo 5, sobre punteros y arreglos, sigue siendo la mejor explicación escrita del tema.</span></li>
+        <li><span class="au">Randal E. Bryant y David R. O'Hallaron.</span> <span class="ti">Computer Systems: A Programmer's Perspective</span>.
+          <span class="ed">3.ª ed., Pearson, 2015.</span>
+          <span class="pq">Qué pasa realmente en la memoria cuando se ejecuta un programa en C.</span></li>
+        <li><span class="au">Peter van der Linden.</span> <span class="ti">Expert C Programming: Deep C Secrets</span>.
+          <span class="ed">Prentice Hall, 1994.</span>
+          <span class="pq">Las trampas del lenguaje explicadas con humor y con casos reales.</span></li>
+        <li><span class="au">Herbert Schildt.</span> <span class="ti">C: manual de referencia</span>.
+          <span class="ed">4.ª ed., McGraw-Hill, 2001.</span>
+          <span class="pq">Referencia rápida de biblioteca estándar, útil para tener al lado del teclado.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a class="ph" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">← Volver</div>
+        <div class="tt">Mapa de Temas de Ingeniería</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Estructuras dinámicas de datos</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Programación avanzada en C»</b> de <b>Informática II</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<script>
+/* Visualizador de memoria: recorre un programa en C paso a paso y dibuja las
+   celdas con su direccion, su valor y las flechas de los punteros. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("puLienzo"), ctx = cv.getContext("2d");
+  function hex(d){ return "0x" + d.toString(16).toUpperCase(); }
+
+  var E = {
+    arr: {
+      cod:["int v[4] = {10, 20, 30, 40};",
+           "int *p;",
+           "p = v;              /* o p = &v[0] */",
+           "p++;                /* avanza 4 bytes */",
+           "*p = 99;            /* escribe en v[1] */",
+           "p += 2;             /* salta a v[3] */",
+           "printf(\"%d\\n\", *p);   /* imprime 40 */"],
+      celdas:[ { nom:"v[0]", dir:0x1000, g:0 }, { nom:"v[1]", dir:0x1004, g:0 },
+               { nom:"v[2]", dir:0x1008, g:0 }, { nom:"v[3]", dir:0x100C, g:0 },
+               { nom:"p", dir:0x1010, g:0, ptr:true } ],
+      pasos:[
+        { v:[10, 20, 30, 40, null], n:"El arreglo se reserva en la pila: cuatro enteros consecutivos de 4 bytes cada uno, desde 0x1000. Los valores iniciales quedan escritos en esas celdas." },
+        { v:[10, 20, 30, 40, "?"], n:"El puntero es una variable más y ocupa su propio lugar, pero todavía no fue inicializado: contiene basura. Usarlo ahora sería un error grave." },
+        { v:[10, 20, 30, 40, 0x1000], n:"El nombre del arreglo <b>es</b> la dirección de su primer elemento, así que p = v guarda 0x1000. Desde ahora *p vale 10." },
+        { v:[10, 20, 30, 40, 0x1004], n:"p++ no suma 1: suma <b>sizeof(int)</b>, o sea 4 bytes, porque p es puntero a int. Ahora apunta a v[1]." },
+        { v:[10, 99, 30, 40, 0x1004], n:"*p = 99 escribe en la celda apuntada. El arreglo cambió sin nombrar a v: eso es exactamente lo que hace una función que recibe un puntero." },
+        { v:[10, 99, 30, 40, 0x100C], n:"p += 2 avanza dos elementos, es decir 8 bytes. Llegó a v[3]. Si sumara uno más, apuntaría fuera del arreglo y C no diría nada." },
+        { v:[10, 99, 30, 40, 0x100C], n:"*p vale 40. Fijate que todo el recorrido se hizo sin escribir un solo corchete: v[i] y *(v + i) son la misma cosa." }
+      ]
+    },
+    ref: {
+      cod:["int a = 5, b = 8;",
+           "int *pa = &a, *pb = &b;",
+           "int t = *pa;        /* copia el valor */",
+           "*pa = *pb;",
+           "*pb = t;",
+           "/* a y b quedaron intercambiadas */"],
+      celdas:[ { nom:"a", dir:0x2000, g:0 }, { nom:"b", dir:0x2004, g:0 },
+               { nom:"t", dir:0x2008, g:0 },
+               { nom:"pa", dir:0x200C, g:0, ptr:true }, { nom:"pb", dir:0x2010, g:0, ptr:true } ],
+      pasos:[
+        { v:[5, 8, null, null, null], n:"Dos variables comunes, una al lado de la otra en la pila." },
+        { v:[5, 8, "?", 0x2000, 0x2004], n:"Cada puntero guarda la dirección de su variable. &a es 0x2000 y &b es 0x2004." },
+        { v:[5, 8, 5, 0x2000, 0x2004], n:"t se lleva una copia del valor apuntado por pa. Es una copia: cambiar t después no tocaría a." },
+        { v:[8, 8, 5, 0x2000, 0x2004], n:"*pa = *pb escribe en a el valor de b. Las dos valen 8: si no se hubiera guardado t, el valor original se habría perdido." },
+        { v:[8, 5, 5, 0x2000, 0x2004], n:"*pb = t completa el intercambio. Esta es exactamente la función swap que se escribe con punteros, y la razón por la que C necesita el &." },
+        { v:[8, 5, 5, 0x2000, 0x2004], n:"Quedaron intercambiadas. Sin punteros no habría manera: una función que recibiera a y b por valor sólo intercambiaría sus copias." }
+      ]
+    },
+    din: {
+      cod:["int *v = malloc(3 * sizeof(int));",
+           "if (v == NULL) return 1;",
+           "v[0] = 7;",
+           "v[1] = 14;",
+           "v[2] = 21;",
+           "free(v);",
+           "v = NULL;"],
+      celdas:[ { nom:"v", dir:0x3000, g:0, ptr:true },
+               { nom:"[0]", dir:0x7A00, g:1 }, { nom:"[1]", dir:0x7A04, g:1 },
+               { nom:"[2]", dir:0x7A08, g:1 } ],
+      pasos:[
+        { v:[0x7A00, "?", "?", "?"], n:"malloc reserva 12 bytes en el <b>montículo</b>, lejos de la pila, y devuelve su dirección. El contenido es basura: malloc no inicializa nada.", libre:false },
+        { v:[0x7A00, "?", "?", "?"], n:"La verificación no es opcional: si no hubiera memoria, malloc devolvería NULL y el primer uso rompería el programa.", libre:false },
+        { v:[0x7A00, 7, "?", "?"], n:"v[0] es azúcar sintáctico de *(v + 0). El bloque del montículo se usa igual que un arreglo.", libre:false },
+        { v:[0x7A00, 7, 14, "?"], n:"Segundo elemento escrito. El bloque sigue siendo de 12 bytes: escribir en v[3] pisaría datos internos del asignador.", libre:false },
+        { v:[0x7A00, 7, 14, 21], n:"El bloque quedó completo. A diferencia de una variable local, esta memoria sobrevive al retorno de la función: vive hasta que alguien la libere.", libre:false },
+        { v:[0x7A00, "—", "—", "—"], n:"free devuelve el bloque al sistema. <b>Ojo:</b> v sigue guardando 0x7A00, pero esa memoria ya no es del programa. Usarla ahora es un <b>puntero colgante</b>.", libre:true },
+        { v:[0, "—", "—", "—"], n:"Poner v en NULL es la línea que evita el error anterior: un uso posterior falla de inmediato y visible, en lugar de corromper memoria en silencio.", libre:true }
+      ]
+    }
+  };
+
+  function pintar(){
+    var e = E[$("puE").value], s = $("puP");
+    if(s.dataset.rol !== $("puE").value){
+      s.max = e.pasos.length - 1; s.value = 0; s.dataset.rol = $("puE").value;
+    }
+    var k = Math.min(+s.value, e.pasos.length - 1);
+    $("puPv").textContent = (k + 1) + " de " + e.pasos.length;
+    var p = e.pasos[k];
+
+    /* codigo con la linea actual resaltada */
+    var html = "";
+    e.cod.forEach(function(l, i){
+      var act = i === k;
+      html += '<div style="padding:1px 6px;border-radius:4px;' +
+              (act ? 'background:rgba(88,166,255,.16);color:var(--txt)' : 'color:var(--muted)') + '">' +
+              (act ? "▶ " : "&nbsp;&nbsp;") + l.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</div>";
+    });
+    $("puCod").innerHTML = html;
+
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height;
+    ctx.clearRect(0, 0, W, H);
+
+    var grupos = [[], []];
+    e.celdas.forEach(function(c, i){ grupos[c.g || 0].push({ c:c, i:i }); });
+    var hayDos = grupos[1].length > 0;
+    var anchoCol = hayDos ? W * 0.42 : W * 0.6;
+    var colX = hayDos ? [W * 0.06, W * 0.54] : [(W - anchoCol) / 2];
+    var altoC = Math.min(34, (H - 54) / Math.max(grupos[0].length, grupos[1].length));
+    var pos = {};
+
+    grupos.forEach(function(g, gi){
+      if(!g.length) return;
+      var x = colX[gi], y0 = 34;
+      ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+      ctx.fillText(gi === 0 ? "pila" : "montículo", x, 20);
+      g.forEach(function(o, j){
+        var y = y0 + j * (altoC + 4), val = p.v[o.i];
+        var liberado = p.libre && o.c.g === 1;
+        ctx.strokeStyle = liberado ? "rgba(107,116,132,.45)" :
+                          o.c.ptr ? "#d2a8ff" : "#58a6ff";
+        ctx.fillStyle = liberado ? "rgba(107,116,132,.08)" :
+                        o.c.ptr ? "rgba(210,168,255,.12)" : "rgba(88,166,255,.10)";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.rect(x, y, anchoCol, altoC); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.font = "10px Consolas, monospace";
+        ctx.fillText(hex(o.c.dir), x + 6, y + altoC / 2 + 3.5);
+        ctx.fillStyle = liberado ? "#6b7484" : "#e6edf3"; ctx.font = "600 12px system-ui, sans-serif";
+        ctx.fillText(o.c.nom, x + 64, y + altoC / 2 + 4);
+        var txt = val === null ? "" : (typeof val === "number" && o.c.ptr) ? (val === 0 ? "NULL" : hex(val)) : String(val);
+        ctx.fillStyle = liberado ? "#6b7484" : (o.c.ptr ? "#d2a8ff" : "#7ee787");
+        ctx.font = "600 12.5px Consolas, monospace";
+        ctx.fillText(txt, x + anchoCol - 12 - ctx.measureText(txt).width, y + altoC / 2 + 4.5);
+        pos[o.c.dir] = { x:x, y:y + altoC / 2, w:anchoCol };
+      });
+    });
+
+    /* flechas de los punteros */
+    e.celdas.forEach(function(c, i){
+      if(!c.ptr) return;
+      var val = p.v[i];
+      if(typeof val !== "number" || val === 0 || !pos[val]) return;
+      var desde = pos[c.dir], hasta = pos[val];
+      if(!desde) return;
+      ctx.strokeStyle = "#d2a8ff"; ctx.fillStyle = "#d2a8ff"; ctx.lineWidth = 1.6;
+      var x1 = desde.x + desde.w, y1 = desde.y, x2 = hasta.x + hasta.w, y2 = hasta.y;
+      var salida = Math.max(x1, x2) + 16;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(salida, y1); ctx.lineTo(salida, y2); ctx.lineTo(x2 + 4, y2);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 + 8, y2 - 4); ctx.lineTo(x2 + 8, y2 + 4); ctx.closePath(); ctx.fill();
+    });
+
+    /* panel */
+    var filas = "";
+    e.celdas.forEach(function(c, i){
+      var val = p.v[i];
+      if(val === null) return;
+      var txt = (typeof val === "number" && c.ptr) ? (val === 0 ? "NULL" : hex(val)) : String(val);
+      filas += "<span>" + c.nom + " · " + hex(c.dir) + "</span><b>" + txt + "</b>";
+    });
+    /* que apunta cada puntero */
+    var extra = "";
+    e.celdas.forEach(function(c, i){
+      if(!c.ptr) return;
+      var val = p.v[i];
+      if(typeof val !== "number" || val === 0) return;
+      var destino = e.celdas.filter(function(d){ return d.dir === val; })[0];
+      if(destino){
+        var vd = p.v[e.celdas.indexOf(destino)];
+        extra += "<span>*" + c.nom + "</span><b>" + (vd === null ? "—" : vd) + " (en " + destino.nom + ")</b>";
+      }
+    });
+    $("puDatos").innerHTML = filas + (extra ? "<hr>" + extra : "");
+    $("puNota").innerHTML = p.n;
+  }
+  ["puE","puP"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
