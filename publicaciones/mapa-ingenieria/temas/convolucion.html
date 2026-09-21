@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convolución · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="La integral de convolución deducida de la linealidad y la invarianza, el método gráfico de los cuatro pasos, las propiedades y su lectura en un circuito, y la versión discreta, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/convolucion">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 21 de 34</div>
+    <h1>Convolución</h1>
+    <p class="lead">Reflejar, correr, multiplicar y medir el área. Con esos cuatro pasos, y conociendo la respuesta al impulso, se calcula la salida de un sistema LTI para cualquier entrada.</p>
+    <div class="chips">
+      <span class="chip hi">Convolución</span>
+      <span class="chip">Respuesta al impulso</span>
+      <span class="chip">Cascada</span>
+      <span class="chip">Duración</span>
+      <span class="chip">Convolución discreta</span>
+    </div>
+    <hr class="rule">
+
+    <section id="deduccion">
+      <h2><span class="n">01</span>Por qué la integral es así</h2>
+      <p>La convolución no es una definición caída del cielo: sale de aplicar linealidad e invarianza a la
+      descomposición de una señal en impulsos. El razonamiento ya se esbozó al hablar de
+      <a class="ref" href="/publicaciones/mapa-ingenieria/temas/sistemas-lti">sistemas LTI</a> y conviene
+      tenerlo completo:</p>
+      <div class="form">
+        \[ x(t) = \int x(\tau)\,\delta(t-\tau)\,d\tau
+           \;\xrightarrow{\ \text{invarianza}\ }\;
+           \delta(t-\tau) \to h(t-\tau)
+           \;\xrightarrow{\ \text{linealidad}\ }\;
+           y(t) = \int x(\tau)\,h(t-\tau)\,d\tau \]
+      </div>
+      <p>Cada instante de la entrada dispara una copia de \( h \), escalada por el valor que tenía la entrada
+      en ese instante y corrida hasta ahí. La salida es la superposición de todas esas copias. Así se lee la
+      integral:</p>
+      <div class="form">
+        \[ y(t) = x(t) * h(t) = \int_{-\infty}^{\infty} x(\tau)\,h(t - \tau)\,d\tau
+           \qquad\qquad
+           y[n] = \sum_{k=-\infty}^{\infty} x[k]\,h[n-k] \]
+      </div>
+      <p>El \( h(t-\tau) \) contiene las dos transformaciones que ya se estudiaron: el signo menos de
+      \( \tau \) es una <b>reflexión</b> y el \( t \) es un <b>desplazamiento</b>. Por eso el procedimiento
+      gráfico es siempre el mismo: reflejar, correr, multiplicar y medir el área.</p>
+    </section>
+
+    <section id="lab">
+      <h2><span class="n">02</span>Reflejar, correr, multiplicar, medir</h2>
+      <p>La integral se calcula, para cada valor de \( t \), en cuatro pasos. El laboratorio los muestra los
+      cuatro a la vez: arriba la señal fija y la reflejada que se desliza, con el producto sombreado; abajo, el
+      área de ese sombreado dibujada punto por punto, que es la salida.</p>
+      <div class="lw" id="cv">
+        <div class="lt">Laboratorio · la convolución, paso a paso</div>
+        <p class="ls">Arriba, \( x(\tau) \) en azul y \( h(t-\tau) \) en naranja, reflejada y corrida hasta el instante que elijas. El área verde es el producto de las dos. Abajo, esa área en función de \( t \): la salida.</p>
+        <div class="fila">
+          <select id="cvF">
+            <option value="pp">pulso * pulso · da un triángulo</option>
+            <option value="pd">pulso * pulso más ancho · da un trapecio</option>
+            <option value="pe">pulso * e^(−t)u(t) · un RC</option>
+            <option value="ee">escalón * e^(−t)u(t) · respuesta al escalón</option>
+            <option value="pr">pulso * RLC subamortiguado</option>
+            <option value="pi">pulso * impulso corrido · sólo desplaza</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="cvT">t = <b id="cvTv">1,0</b></label>
+          <input type="range" id="cvT" min="-2" max="8" step="0.05" value="1">
+        </div>
+        <canvas id="cvLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.5/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="cvDatos" style="margin-top:8px"></div>
+        <div class="nota" id="cvNota"></div>
+      </div>
+    </section>
+
+    <section id="propiedades">
+      <h2><span class="n">03</span>Propiedades, y lo que significan en un circuito</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Propiedad</th><th>Expresión</th><th>Qué dice del circuito</th></tr></thead>
+        <tbody>
+          <tr><td>Conmutativa</td><td>\( x * h = h * x \)</td>
+              <td>Da lo mismo cuál se refleja</td></tr>
+          <tr><td>Asociativa</td><td>\( (x * h_1) * h_2 = x * (h_1 * h_2) \)</td>
+              <td>Dos etapas en cascada equivalen a una con \( h_1 * h_2 \)</td></tr>
+          <tr><td>Distributiva</td><td>\( x * (h_1 + h_2) = x*h_1 + x*h_2 \)</td>
+              <td>Dos ramas en paralelo suman sus respuestas</td></tr>
+          <tr><td>Elemento neutro</td><td>\( x * \delta = x \)</td>
+              <td>Un cable ideal tiene \( h = \delta \)</td></tr>
+          <tr><td>Desplazamiento</td><td>\( x * \delta(t-t_0) = x(t-t_0) \)</td>
+              <td>Una línea de retardo</td></tr>
+          <tr><td>Duración</td><td>\( T_y = T_x + T_h \)</td>
+              <td>La salida dura más que la entrada: el sistema «ensancha»</td></tr>
+          <tr><td>Área</td><td>\( A_y = A_x \cdot A_h \)</td>
+              <td>La ganancia en continua multiplica el área</td></tr>
+        </tbody>
+      </table></div>
+      <p>La fila de la duración explica algo que se ve en cualquier osciloscopio: un pulso angosto que
+      atraviesa un circuito lento sale más ancho de lo que entró. Y la del área es la versión temporal de la
+      ganancia en continua, porque \( A_h = \int h(t)dt = H(0) \).</p>
+      <div class="box key"><div class="bt">La cascada, y por qué conviene Fourier</div>
+        <p>La propiedad asociativa dice que dos filtros en cascada equivalen a uno solo cuya respuesta al
+        impulso es \( h_1 * h_2 \). Calcular esa convolución a mano es tedioso. Lo que viene después en la
+        materia es el atajo: <b>en el dominio de la frecuencia la convolución se convierte en un
+        producto</b>, \( H(j\omega) = H_1(j\omega)H_2(j\omega) \), y poner etapas en cascada pasa a ser
+        multiplicar números. Toda la conveniencia de Fourier y de Laplace nace de acá.</p></div>
+    </section>
+
+    <section id="discreta">
+      <h2><span class="n">04</span>La versión discreta, que es una cuenta</h2>
+      <p>En tiempo discreto no hay integral sino una suma, y eso la vuelve directamente programable:</p>
+      <div class="form">
+        \[ y[n] = \sum_{k} x[k]\,h[n-k] \]
+      </div>
+      <p>Con \( x \) de \( N \) muestras y \( h \) de \( M \), la salida tiene \( N + M - 1 \) muestras, que
+      es la versión discreta de la regla de las duraciones. El cálculo requiere del orden de \( N\cdot M \)
+      multiplicaciones, y ahí aparece el motivo de fondo por el que existe la FFT: pasar a frecuencia, hacer
+      un producto punto a punto y volver cuesta del orden de \( N\log N \), que para bloques grandes es
+      muchísimo menos.</p>
+      <div class="box ojo"><div class="bt">Es la misma cuenta que multiplicar a mano</div>
+        <p>Multiplicar dos polinomios es convolucionar sus coeficientes. Y multiplicar dos números enteros a
+        la manera de la escuela primaria —producto por producto, corriendo un lugar y sumando las columnas— es
+        exactamente el mismo algoritmo. La convolución discreta es una operación que cualquiera viene
+        haciendo desde que aprendió a multiplicar.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · El triángulo, a mano</div>
+        <p>Convolucionar dos pulsos rectangulares de amplitud 1 y ancho 2, planteando los tramos por
+        separado. Verificar que el resultado es un triángulo de base 4 y altura 2, y que se cumplen las reglas
+        de la duración y del área.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · El ensanchamiento, medido</div>
+        <p>Inyectar en un RC de \( \tau = 100 \) μs pulsos de 10, 100 y 1000 μs. Medir el ancho de la salida
+        a media altura y comparar con la regla \( T_y = T_x + T_h \).</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Convolución discreta programada</div>
+        <p>Programar la suma de convolución para dos secuencias de 8 muestras y verificar el resultado contra
+        el producto de los polinomios correspondientes. Contar las multiplicaciones que hizo falta
+        hacer.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Olvidar reflejar.</b> Es \( h(t-\tau) \), no \( h(\tau - t) \): el signo menos delante de
+        \( \tau \) es la reflexión.</li>
+        <li><b>Integrar en \( t \) en vez de en \( \tau \).</b> La variable de integración es \( \tau \);
+        \( t \) es un parámetro fijo en cada paso.</li>
+        <li><b>Equivocar los límites.</b> Hay que mirar dónde se superponen las dos señales, y eso cambia
+        según el tramo.</li>
+        <li><b>Confundir convolución con producto.</b> El producto punto a punto es otra operación, y
+        justamente es lo que la convolución <i>no</i> es.</li>
+        <li><b>Esperar que la salida dure lo mismo que la entrada.</b> Dura la suma de las dos
+        duraciones.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuáles son los cuatro pasos del método gráfico?</summary>
+        <div class="a"><p>Reflejar \( h \), correrla hasta \( t \), multiplicar por \( x \) y medir el área del
+        producto.</p></div></details>
+      <details class="q"><summary>¿Cuánto dura la convolución de un pulso de 3 ms con uno de 5 ms?</summary>
+        <div class="a"><p>8 ms: las duraciones se suman.</p></div></details>
+      <details class="q"><summary>¿Qué da \( x(t) * \delta(t - 2) \)?</summary>
+        <div class="a"><p>\( x(t-2) \). Convolucionar con un impulso corrido sólo
+        desplaza.</p></div></details>
+      <details class="q"><summary>¿Qué representa \( h_1 * h_2 \)?</summary>
+        <div class="a"><p>La respuesta al impulso de las dos etapas en cascada.</p></div></details>
+      <details class="q"><summary>¿Cuántas muestras tiene la convolución de dos secuencias de 8 y 5?</summary>
+        <div class="a"><p>12, que es \( 8 + 5 - 1 \).</p></div></details>
+      <details class="q"><summary>¿Por qué se prefiere trabajar en frecuencia?</summary>
+        <div class="a"><p>Porque la convolución se convierte en un producto, y poner etapas en cascada pasa a
+        ser multiplicar.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim y Alan S. Willsky.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1998.</span>
+          <span class="pq">El capítulo 2 entero, con la convolución desarrollada gráficamente tramo por tramo.</span></li>
+        <li><span class="au">Ronald N. Bracewell.</span> <span class="ti">The Fourier Transform and Its Applications</span>.
+          <span class="ed">3.ª ed., McGraw-Hill, 1999.</span>
+          <span class="pq">La convolución tratada con una intuición gráfica difícil de encontrar en otro lado.</span></li>
+        <li><span class="au">John G. Proakis y Dimitris G. Manolakis.</span> <span class="ti">Tratamiento digital de señales</span>.
+          <span class="ed">4.ª ed., Pearson, 2007.</span>
+          <span class="pq">La convolución discreta, su costo computacional y las técnicas por bloques.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/impulso-escalon">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Impulso y escalón unitarios</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/senales-periodicas">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Señales periódicas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Convolución»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* La convolucion, paso a paso. Arriba x(tau) y h(t-tau) reflejada y corrida,
+   con el producto sombreado; abajo, el area de ese sombreado en funcion de t,
+   que es la salida. El deslizador mueve t, asi que se puede parar en cualquier
+   punto y leer el numero. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("cvLienzo"), ctx = cv.getContext("2d");
+  var TA = -3, TB = 9;
+
+  function pulso(a, b){ return function(t){ return (t >= a && t <= b) ? 1 : 0; }; }
+
+  var F = {
+    pp: { n:"pulso * pulso",
+          x:pulso(0, 2), h:pulso(0, 2), lim:[0, 2],
+          t:"El caso de manual. Dos pulsos iguales dan un triángulo de base 4 —la suma de las dos " +
+            "duraciones— y altura 2, que es el área del solapamiento máximo." },
+    pd: { n:"pulso * pulso más ancho",
+          x:pulso(0, 1.2), h:pulso(0, 3.5), lim:[0, 3.5],
+          t:"Con anchos distintos el resultado es un trapecio: sube mientras entra, se mantiene mientras el " +
+            "pulso angosto está adentro del ancho, y baja mientras sale." },
+    pe: { n:"pulso * e^(−t)u(t)",
+          x:pulso(0, 2), h:function(t){ return t < 0 ? 0 : Math.exp(-t); }, lim:[0, 6],
+          t:"Un pulso a la entrada de un RC. Mientras el pulso está, el capacitor carga; cuando se va, " +
+            "descarga con la misma constante de tiempo." },
+    ee: { n:"escalón * e^(−t)u(t)", infinita:true,
+          x:function(t){ return t >= 0 ? 1 : 0; }, h:function(t){ return t < 0 ? 0 : Math.exp(-t); },
+          lim:[0, 6],
+          t:"La respuesta al escalón de un RC: 1 − e^(−t). Fijate que el área sombreada crece hasta " +
+            "estabilizarse cuando la exponencial entra entera." },
+    pr: { n:"pulso * RLC subamortiguado",
+          x:pulso(0, 1.5),
+          h:function(t){ return t < 0 ? 0 : 2 * Math.exp(-0.6 * t) * Math.sin(3 * t); }, lim:[0, 7],
+          t:"Acá h cambia de signo, así que el área a veces suma y a veces resta: la salida oscila " +
+            "alrededor de cero mientras se apaga." },
+    pi: { n:"pulso * impulso corrido",
+          x:pulso(0, 2),
+          h:function(t){ var D = 0.06; return Math.abs(t - 2) <= D / 2 ? 1 / D : 0; }, lim:[1.9, 2.1],
+          t:"El impulso aproximado por un pulso muy angosto de área uno. El resultado es el pulso de " +
+            "entrada tal cual, corrido dos unidades: convolucionar con un impulso sólo desplaza." }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 3;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5e-4) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+
+  function conv(d, t){
+    var N = 1400, a = d.lim[0], b = d.lim[1], h = (b - a) / N, s = 0, i;
+    for(i = 0; i < N; i++){
+      var u = a + h * (i + 0.5);
+      s += d.x(t - u) * d.h(u) * h;
+    }
+    return s;
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var d = F[$("cvF").value], t = parseFloat($("cvT").value);
+    $("cvTv").textContent = n(t, 2);
+
+    var x0 = 26, x1 = Wd - 12;
+    var yA = Hd * 0.33, altoA = Hd * 0.2;
+    var yB = Hd - 26, altoB = Hd * 0.3;
+    function X(u){ return x0 + (u - TA) / (TB - TA) * (x1 - x0); }
+
+    /* escalas: h puede ser mucho mas alta que x */
+    var mxA = 1, i2;
+    for(i2 = 0; i2 <= 400; i2++){
+      var u2 = TA + (TB - TA) * i2 / 400;
+      mxA = Math.max(mxA, Math.abs(d.x(u2)), Math.min(4, Math.abs(d.h(t - u2))));
+    }
+    function YA(v){ return yA - v / mxA * altoA; }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* el producto, sombreado */
+    var NS = 500, ancho = (x1 - x0) / NS;
+    ctx.fillStyle = "rgba(126,231,135,.3)";
+    for(i = 0; i < NS; i++){
+      var u = TA + (TB - TA) * (i + 0.5) / NS;
+      var pv = d.x(u) * d.h(t - u);
+      if(Math.abs(pv) < 1e-9) continue;
+      var alt = pv / mxA * altoA;
+      ctx.fillRect(X(u) - ancho / 2, alt > 0 ? yA - alt : yA, ancho + 0.6, Math.abs(alt));
+    }
+
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yA); ctx.lineTo(x1, yA);
+    ctx.moveTo(x0, yB); ctx.lineTo(x1, yB);
+    ctx.stroke();
+
+    function curva(f, base, Y, col, gr, N2){
+      ctx.strokeStyle = col; ctx.lineWidth = gr; ctx.beginPath();
+      var ant = null;
+      for(i = 0; i <= N2; i++){
+        var u3 = TA + (TB - TA) * i / N2;
+        var v = f(u3);
+        var q = { x:X(u3), y:Math.max(base - altoA * 1.35, Math.min(base + altoA * 1.35, Y(v))) };
+        if(ant !== null && Math.abs(v - ant) > mxA * 0.5) ctx.moveTo(q.x, q.y);
+        else if(i === 0) ctx.moveTo(q.x, q.y);
+        else ctx.lineTo(q.x, q.y);
+        ant = v;
+      }
+      ctx.stroke();
+    }
+    curva(d.x, yA, YA, "#58a6ff", 2.2, 1200);
+    curva(function(u){ return d.h(t - u); }, yA, YA, "#ff9f6b", 2.2, 1200);
+
+    ctx.fillStyle = "#58a6ff"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("x(τ)", x0, Math.max(10, yA - altoA * 1.4));
+    ctx.fillStyle = "#ff9f6b"; ctx.fillText("h(t − τ)", x0 + 32, Math.max(10, yA - altoA * 1.4));
+    ctx.fillStyle = "#7ee787"; ctx.fillText("su producto", x0 + 82, Math.max(10, yA - altoA * 1.4));
+
+    /* abajo: la salida */
+    var vals = [], mxB = 1e-9;
+    for(i = 0; i <= 260; i++){
+      var tt = -2 + (8 - (-2)) * i / 260;
+      var v2 = conv(d, tt);
+      vals.push([tt, v2]);
+      mxB = Math.max(mxB, Math.abs(v2));
+    }
+    function YB(v){ return yB - v / mxB * altoB; }
+    ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    vals.forEach(function(e, k){
+      var q = { x:X(e[0]), y:YB(e[1]) };
+      if(k === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+    });
+    ctx.stroke();
+    var y0 = conv(d, t);
+    ctx.strokeStyle = "rgba(242,204,96,.7)"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(X(t), yA - altoA * 1.4); ctx.lineTo(X(t), yB + 6);
+    ctx.stroke();
+    ctx.fillStyle = "#f2cc60";
+    ctx.beginPath(); ctx.arc(X(t), YB(y0), 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("y(t) = área verde", x0, yB - altoB - 6);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    for(i = -2; i <= 8; i += 2) ctx.fillText(i + "", X(i) - 3, yB + 13);
+
+    /* duraciones y areas, para contrastar con las reglas */
+    var Ax = 0, Ah = 0, hh = (TB - TA) / 2000;
+    for(i = 0; i < 2000; i++){
+      var uu = TA + hh * (i + 0.5);
+      Ax += d.x(uu) * hh; Ah += d.h(uu) * hh;
+    }
+
+    $("cvDatos").innerHTML =
+      "<span>Convolución</span><b>" + d.n + "</b>" +
+      '<hr><span style="color:#f2cc60">En t = ' + n(t, 2) + "</span><b>y(t) = " + n(y0) + "</b>" +
+      (d.infinita
+        ? "<span>Área de x</span><b>infinita: el escalón no se apaga</b>" +
+          "<span>Por eso la regla del área</span><b>no aplica acá</b>"
+        : "<span>Área de x   ·   área de h</span><b>" + n(Ax, 2) + "   ·   " + n(Ah, 2) + "</b>" +
+          "<span>Área de la salida   ·   debe ser el producto</span><b>" +
+            n(vals.reduce(function(a2, e){ return a2 + e[1] * (10 / 260); }, 0), 2) +
+            "   ·   " + n(Ax * Ah, 2) + "</b>");
+
+    $("cvNota").innerHTML = d.t + " Mové el deslizador y mirá cómo la naranja barre a la azul: donde se " +
+      "superponen aparece el sombreado verde, y su área es el punto amarillo de abajo.";
+  }
+
+  ["cvF", "cvT"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
