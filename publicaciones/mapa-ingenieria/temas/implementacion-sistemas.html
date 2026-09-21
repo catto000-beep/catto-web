@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elementos de los sistemas e implementación · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="Los tres elementos con los que se arma cualquier sistema LTI, los diagramas de bloques, las formas directa I y II, la cascada de biquads y por qué se usa, y la comparación entre FIR e IIR, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/implementacion-sistemas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 29 de 34</div>
+    <h1>Elementos de los sistemas e implementación</h1>
+    <p class="lead">Sumador, ganancia y memoria: con esas tres piezas se arma cualquier sistema. Cómo se las acomoda no es indiferente, y de ahí sale que ningún filtro digital de orden alto se implemente en forma directa.</p>
+    <div class="chips">
+      <span class="chip hi">Diagrama de bloques</span>
+      <span class="chip">Forma directa</span>
+      <span class="chip">Biquad</span>
+      <span class="chip">FIR</span>
+      <span class="chip">IIR</span>
+    </div>
+    <hr class="rule">
+
+    <section id="tres">
+      <h2><span class="n">01</span>Tres piezas y nada más</h2>
+      <p>Cualquier sistema LTI, por complicado que sea, se arma con tres elementos. No hay un cuarto:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Elemento</th><th>Qué hace</th><th>En continuo</th><th>En discreto</th></tr></thead>
+        <tbody>
+          <tr><td><b>Sumador</b></td><td>\( y = x_1 + x_2 \)</td><td>Un nodo, o un amplificador sumador</td><td>Una suma</td></tr>
+          <tr><td><b>Ganancia</b></td><td>\( y = a\,x \)</td><td>Un divisor resistivo, una etapa</td><td>Una multiplicación</td></tr>
+          <tr><td><b>Memoria</b></td><td>Guarda el pasado</td><td>Un integrador: capacitor o bobina</td><td>Un retardo \( z^{-1} \): un registro</td></tr>
+        </tbody>
+      </table></div>
+      <p>La fila de la memoria es la importante. Sin ella, un sistema sólo puede responder al valor presente
+      —sería estático— y no habría ni filtros ni dinámica. En un circuito analógico esa memoria es la energía
+      guardada en un capacitor; en un procesador, una posición de memoria que guarda la muestra anterior.</p>
+      <div class="form">
+        \[ y[n] = \sum_{k=0}^{M} b_k\,x[n-k] \;-\; \sum_{k=1}^{N} a_k\,y[n-k] \]
+        <span class="cap">Cada \( x[n-k] \) y cada \( y[n-k] \) es un retardo; cada \( b_k \) y cada \( a_k \), una ganancia; y los signos de suma, sumadores. La ecuación <b>es</b> el diagrama.</span>
+      </div>
+    </section>
+
+    <section id="lab">
+      <h2><span class="n">02</span>Del diagrama al filtro</h2>
+      <p>La misma función de transferencia se puede armar de varias maneras, y no dan lo mismo en cantidad de
+      componentes ni en comportamiento numérico. El laboratorio dibuja la estructura, cuenta las piezas y
+      muestra qué filtro resulta.</p>
+      <div class="lw" id="im">
+        <div class="lt">Laboratorio · el diagrama de bloques, pieza por pieza</div>
+        <p class="ls">Elegí la estructura y mirá el diagrama: los cuadrados son retardos, los triángulos ganancias y los círculos sumadores. Abajo, la respuesta al impulso y el módulo que resultan.</p>
+        <div class="fila">
+          <select id="imE">
+            <option value="d2">forma directa II · la más usada</option>
+            <option value="d1">forma directa I</option>
+            <option value="fir">FIR · sólo ceros</option>
+          </select>
+          <select id="imP">
+            <option value="pb">pasabajos</option>
+            <option value="pa">pasaaltos</option>
+            <option value="bp">pasabanda</option>
+            <option value="res">resonador de Q alto</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="imW">Frecuencia = <b id="imWv">0,15</b> · fs</label>
+          <input type="range" id="imW" min="0.02" max="0.45" step="0.005" value="0.15">
+        </div>
+        <canvas id="imLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.4/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="imDatos" style="margin-top:8px"></div>
+        <div class="nota" id="imNota"></div>
+      </div>
+    </section>
+
+    <section id="estructuras">
+      <h2><span class="n">03</span>Las estructuras, y por qué hay más de una</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Estructura</th><th>Retardos</th><th>Ventaja</th><th>Problema</th></tr></thead>
+        <tbody>
+          <tr><td>Directa I</td><td>\( M + N \)</td><td>Sale directo de la ecuación</td><td>Usa el doble de memoria</td></tr>
+          <tr><td>Directa II</td><td>\( \max(M,N) \)</td><td><b>La mínima cantidad de retardos</b></td><td>Sensible a la cuantización si el orden es alto</td></tr>
+          <tr><td>Cascada</td><td>Igual que la II</td><td><b>Robusta</b>: cada sección tiene sus propios polos</td><td>Hay que factorizar y ordenar las secciones</td></tr>
+          <tr><td>Paralelo</td><td>Igual</td><td>Los errores no se acumulan entre ramas</td><td>Requiere fracciones simples</td></tr>
+        </tbody>
+      </table></div>
+      <p>La forma directa II se llama también <b>canónica</b> porque usa la menor cantidad posible de
+      elementos de memoria, y es la que implementan casi todas las bibliotecas. Su problema aparece con
+      órdenes altos.</p>
+      <div class="box key"><div class="bt">Por qué en la práctica se usa cascada</div>
+        <p>Los coeficientes de un filtro real se guardan con una cantidad finita de bits. En forma directa,
+        los coeficientes del denominador son los del polinomio completo, y redondearlos <b>mueve todas las
+        raíces a la vez</b>: en un filtro de orden ocho, un error mínimo en un coeficiente puede empujar un
+        polo fuera del círculo unitario y volverlo inestable.</p>
+        <p>En <b>cascada</b>, en cambio, el filtro se arma con secciones de segundo orden, cada una con sus
+        dos polos. Redondear los coeficientes de una sección mueve sólo esos dos, y poco. Por eso ningún
+        filtro digital de orden alto se implementa en forma directa: se factoriza en secciones de segundo
+        orden, que en la jerga se llaman <i>biquads</i>.</p>
+      </div>
+    </section>
+
+    <section id="firiir">
+      <h2><span class="n">04</span>FIR e IIR</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>FIR</th><th>IIR</th></tr></thead>
+        <tbody>
+          <tr><td>Realimentación</td><td>No tiene: \( a_k = 0 \)</td><td>Sí</td></tr>
+          <tr><td>Respuesta al impulso</td><td>Finita: se apaga sola</td><td>Infinita</td></tr>
+          <tr><td>Estabilidad</td><td><b>Siempre estable</b></td><td>Hay que verificar los polos</td></tr>
+          <tr><td>Fase lineal</td><td>Se consigue con coeficientes simétricos</td><td>No, salvo que se agregue un pasatodo</td></tr>
+          <tr><td>Orden para la misma selectividad</td><td>Alto: decenas o cientos</td><td><b>Bajo</b>: unos pocos</td></tr>
+          <tr><td>Equivalente analógico</td><td>No tiene</td><td>Se parece a un RLC</td></tr>
+        </tbody>
+      </table></div>
+      <p>El compromiso es directo: un FIR es más seguro y puede tener fase lineal, pero necesita muchos más
+      coeficientes; un IIR consigue lo mismo con orden bajo, a cambio de vigilar la estabilidad y de no poder
+      tener fase lineal. Para audio en tiempo real, donde la latencia importa, suele ganar el IIR; para
+      procesamiento por bloques donde la fase importa, el FIR.</p>
+      <div class="box ojo"><div class="bt">La memoria también cuesta</div>
+        <p>Un FIR de 200 coeficientes necesita guardar 200 muestras pasadas y hacer 200 multiplicaciones por
+        cada muestra de salida. Un IIR de orden 4 que haga algo parecido necesita 4. En un microcontrolador
+        chico esa diferencia decide si el filtro entra o no, y es la razón de que los filtros de
+        instrumentación embebida sean casi siempre biquads en cascada.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Dibujar y contar</div>
+        <p>Para \( H(z) = \dfrac{1 + 2z^{-1} + z^{-2}}{1 - 0{,}5z^{-1} + 0{,}3z^{-2}} \), dibujar las formas
+        directa I y II, y contar retardos, multiplicadores y sumadores de cada una.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Programar un biquad</div>
+        <p>Programar una sección de segundo orden en forma directa II en un microcontrolador, medir cuántos
+        ciclos tarda por muestra y calcular la frecuencia de muestreo máxima que soporta.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Romper un filtro con la cuantización</div>
+        <p>Diseñar un pasabajos IIR de orden 8, redondear sus coeficientes a 8 bits en forma directa y calcular
+        dónde quedan los polos. Repetir factorizando en cuatro biquads y comparar cuánto se movieron en cada
+        caso.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Implementar un orden alto en forma directa.</b> La cuantización de los coeficientes puede
+        volverlo inestable.</li>
+        <li><b>Olvidar el signo de la realimentación.</b> Los \( a_k \) entran restando en la ecuación en
+        diferencias.</li>
+        <li><b>Confundir orden con cantidad de coeficientes.</b> Un FIR de orden \( M \) tiene \( M+1 \)
+        coeficientes.</li>
+        <li><b>Esperar fase lineal de un IIR.</b> No la tiene, salvo que se agregue un pasatodo que la
+        corrija.</li>
+        <li><b>No inicializar los registros de retardo.</b> Al arrancar, un filtro con basura adentro entrega
+        un transitorio que puede durar mucho.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuáles son los tres elementos de un sistema LTI?</summary>
+        <div class="a"><p>Sumador, ganancia y memoria: un integrador en continuo, un retardo en
+        discreto.</p></div></details>
+      <details class="q"><summary>¿Por qué la forma directa II se llama canónica?</summary>
+        <div class="a"><p>Porque usa la menor cantidad posible de elementos de memoria:
+        \( \max(M,N) \).</p></div></details>
+      <details class="q"><summary>¿Por qué los filtros de orden alto se implementan en cascada?</summary>
+        <div class="a"><p>Porque redondear los coeficientes en forma directa mueve todas las raíces a la vez;
+        en cascada cada sección tiene sus propios polos y el error queda acotado.</p></div></details>
+      <details class="q"><summary>¿Qué es un biquad?</summary>
+        <div class="a"><p>Una sección de segundo orden. Los filtros de orden alto se arman encadenando
+        varias.</p></div></details>
+      <details class="q"><summary>¿Por qué un FIR es siempre estable?</summary>
+        <div class="a"><p>Porque no tiene realimentación: su respuesta al impulso tiene una cantidad finita de
+        términos.</p></div></details>
+      <details class="q"><summary>¿Cuándo conviene un IIR?</summary>
+        <div class="a"><p>Cuando hace falta selectividad con pocos recursos y la fase no es crítica. Consigue
+        con orden 4 lo que un FIR necesitaría decenas de coeficientes.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">John G. Proakis y Dimitris G. Manolakis.</span> <span class="ti">Tratamiento digital de señales</span>.
+          <span class="ed">4.ª ed., Pearson, 2007.</span>
+          <span class="pq">Todas las estructuras con sus diagramas, y el análisis de los efectos de la aritmética finita.</span></li>
+        <li><span class="au">Alan V. Oppenheim y Ronald W. Schafer.</span> <span class="ti">Tratamiento de señales en tiempo discreto</span>.
+          <span class="ed">3.ª ed., Prentice Hall, 2011.</span>
+          <span class="pq">El capítulo de estructuras y el de efectos de cuantización de coeficientes.</span></li>
+        <li><span class="au">Richard G. Lyons.</span> <span class="ti">Understanding Digital Signal Processing</span>.
+          <span class="ed">3.ª ed., Prentice Hall, 2010.</span>
+          <span class="pq">El más claro para implementar de verdad: biquads, escalado y errores de redondeo.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/representacion-sistemas">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Representación de señales y sistemas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Elementos de los sistemas e implementación»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* El diagrama de bloques, dibujado a partir de los coeficientes, y el filtro
+   que resulta. Los cuadrados son retardos, los triangulos ganancias y los
+   circulos sumadores: se cuentan las piezas de cada estructura para que el
+   ahorro de la forma directa II se vea con numeros. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("imLienzo"), ctx = cv.getContext("2d");
+
+  /* secciones de segundo orden, normalizadas a fs = 1 */
+  function disenar(tipo, f){
+    var w = 2 * Math.PI * f, Q = tipo === "res" ? 12 : 0.707;
+    var al = Math.sin(w) / (2 * Q), co = Math.cos(w);
+    var a0 = 1 + al, b;
+    if(tipo === "pa") b = [(1 + co) / 2, -(1 + co), (1 + co) / 2];
+    else if(tipo === "bp" || tipo === "res") b = [al, 0, -al];
+    else b = [(1 - co) / 2, 1 - co, (1 - co) / 2];
+    return { b:[b[0] / a0, b[1] / a0, b[2] / a0],
+             a:[1, -2 * co / a0, (1 - al) / a0] };
+  }
+
+  function n(v, d){
+    if(d === undefined) d = 3;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5e-4) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+
+  /* --------------------------------------------- piezas del diagrama */
+  function retardo(x, y){
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 1.6;
+    ctx.strokeRect(x - 13, y - 10, 26, 20);
+    ctx.fillStyle = "#58a6ff"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("z⁻¹", x - 9, y + 4);
+  }
+  function ganancia(x, y, txt, der){
+    ctx.strokeStyle = "#7ee787"; ctx.fillStyle = "rgba(126,231,135,.12)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if(der){ ctx.moveTo(x - 9, y - 8); ctx.lineTo(x + 11, y); ctx.lineTo(x - 9, y + 8); }
+    else { ctx.moveTo(x + 9, y - 8); ctx.lineTo(x - 11, y); ctx.lineTo(x + 9, y + 8); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#7ee787"; ctx.font = "600 9px system-ui, sans-serif";
+    ctx.fillText(txt, x - 10, y - 12);
+  }
+  function sumador(x, y){
+    ctx.strokeStyle = "#f2cc60"; ctx.fillStyle = "#0b0f16"; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#f2cc60"; ctx.font = "600 12px system-ui, sans-serif";
+    ctx.fillText("+", x - 4, y + 4);
+  }
+  function linea(x1, y1, x2, y2){
+    ctx.strokeStyle = "rgba(139,147,163,.65)"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var est = $("imE").value, tipo = $("imP").value, f = parseFloat($("imW").value);
+    $("imWv").textContent = n(f, 3);
+
+    var C = disenar(tipo, f);
+    var esFIR = est === "fir";
+    var b = C.b, a = esFIR ? [1, 0, 0] : C.a;
+
+    /* respuesta al impulso */
+    var NH = 64, h = [], y1 = 0, y2 = 0, x1 = 0, x2 = 0;
+    for(i = 0; i < NH; i++){
+      var xn = i === 0 ? 1 : 0;
+      var yn = b[0] * xn + b[1] * x1 + b[2] * x2 - a[1] * y1 - a[2] * y2;
+      h.push(yn);
+      x2 = x1; x1 = xn; y2 = y1; y1 = yn;
+    }
+    /* |H| sobre el circulo unitario */
+    var NF = 220, mags = [];
+    for(k = 0; k < NF; k++){
+      var w = Math.PI * k / (NF - 1);
+      var nr = 0, ni = 0, dr = 0, di = 0;
+      for(i = 0; i < 3; i++){
+        nr += b[i] * Math.cos(-w * i); ni += b[i] * Math.sin(-w * i);
+        dr += a[i] * Math.cos(-w * i); di += a[i] * Math.sin(-w * i);
+      }
+      var m = Math.hypot(dr, di);
+      mags.push(m < 1e-12 ? 0 : Math.hypot(nr, ni) / m);
+    }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* ----------------------------------- arriba: el diagrama de bloques */
+    var yc = Hd * 0.2, sep = Hd * 0.13;
+    var xIn = 24, xS1 = Wd * 0.26, xN = Wd * 0.5, xS2 = Wd * 0.76, xOut = Wd - 20;
+    ctx.fillStyle = "#8b93a3"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("x[n]", xIn - 6, yc - 12);
+    ctx.fillText("y[n]", xOut - 26, yc - 12);
+
+    if(est === "d2"){
+      /* Directa II: una sola cadena de retardos en el medio, compartida. A la
+         izquierda vuelve la realimentacion; a la derecha salen los ceros. */
+      linea(xIn, yc, xS1 - 8, yc);
+      sumador(xS1, yc);
+      linea(xS1 + 8, yc, xS2 - 8, yc);          /* el nodo central, w[n] */
+      sumador(xS2, yc);
+      linea(xS2 + 8, yc, xOut, yc);
+      ganancia((xS1 + xS2) / 2, yc - 22, "b₀", true);
+      linea(xN, yc, xN, yc - 22);
+      linea(xN, yc - 22, (xS1 + xS2) / 2 - 11, yc - 22);
+      linea((xS1 + xS2) / 2 + 11, yc - 22, xS2, yc - 22);
+      linea(xS2, yc - 22, xS2, yc - 8);
+      /* los dos retardos, uno debajo del otro */
+      linea(xN, yc, xN, yc + sep - 10);
+      retardo(xN, yc + sep);
+      linea(xN, yc + sep + 10, xN, yc + sep * 2 - 10);
+      retardo(xN, yc + sep * 2);
+      [[yc + sep, "−a₁", "b₁"], [yc + sep * 2, "−a₂", "b₂"]].forEach(function(e){
+        /* a la izquierda: realimentacion hacia el primer sumador */
+        linea(xN - 13, e[0], xS1 + 30, e[0]);
+        ganancia(xS1 + 19, e[0], e[1], false);
+        linea(xS1 + 8, e[0], xS1, e[0]);
+        linea(xS1, e[0], xS1, yc + 8);
+        /* a la derecha: los ceros hacia el segundo sumador */
+        linea(xN + 13, e[0], xS2 - 30, e[0]);
+        ganancia(xS2 - 19, e[0], e[2], true);
+        linea(xS2 - 8, e[0], xS2, e[0]);
+        linea(xS2, e[0], xS2, yc + 8);
+      });
+    } else if(est === "d1"){
+      /* Directa I: dos cadenas separadas, la de la entrada y la de la salida */
+      linea(xIn, yc, xS1 - 8, yc);
+      sumador(xS1, yc);
+      linea(xS1 + 8, yc, xS2 - 8, yc);
+      sumador(xS2, yc);
+      linea(xS2 + 8, yc, xOut, yc);
+      var xE = xIn + 36;
+      ganancia(xS1 - 40, yc - 22, "b₀", true);
+      linea(xE, yc, xE, yc - 22);
+      linea(xE, yc - 22, xS1 - 51, yc - 22);
+      linea(xS1 - 29, yc - 22, xS1, yc - 22);
+      linea(xS1, yc - 22, xS1, yc - 8);
+      linea(xE, yc, xE, yc + sep - 10);
+      retardo(xE, yc + sep);
+      linea(xE, yc + sep + 10, xE, yc + sep * 2 - 10);
+      retardo(xE, yc + sep * 2);
+      [[yc + sep, "b₁"], [yc + sep * 2, "b₂"]].forEach(function(e){
+        linea(xE + 13, e[0], xS1 - 51, e[0]);
+        ganancia(xS1 - 40, e[0], e[1], true);
+        linea(xS1 - 29, e[0], xS1, e[0]);
+        linea(xS1, e[0], xS1, yc + 8);
+      });
+      var xY = xS2 + 26;
+      linea(xY, yc, xY, yc + sep - 10);
+      retardo(xY, yc + sep);
+      linea(xY, yc + sep + 10, xY, yc + sep * 2 - 10);
+      retardo(xY, yc + sep * 2);
+      [[yc + sep, "−a₁"], [yc + sep * 2, "−a₂"]].forEach(function(e){
+        linea(xY - 13, e[0], xS2 + 11, e[0]);
+        ganancia(xS2, e[0], e[1], false);
+        linea(xS2 - 11, e[0], xS2 - 20, e[0]);
+        linea(xS2 - 20, e[0], xS2 - 20, yc);
+        linea(xS2 - 20, yc, xS2 - 8, yc);
+      });
+    } else {
+      /* FIR: una cadena y nada mas; sin realimentacion no hay lazo */
+      var xF = xIn + 30;
+      linea(xIn, yc, xN + 40, yc);
+      retardo(xF + 60, yc);
+      retardo(xF + 150, yc);
+      sumador(xS2, yc + sep * 2);
+      linea(xS2 + 8, yc + sep * 2, xOut, yc + sep * 2);
+      ctx.fillStyle = "#8b93a3"; ctx.font = "600 10px system-ui, sans-serif";
+      ctx.fillText("y[n]", xOut - 26, yc + sep * 2 - 12);
+      [[xF, "b₀"], [xF + 100, "b₁"], [xF + 190, "b₂"]].forEach(function(e){
+        linea(e[0], yc, e[0], yc + sep - 8);
+        ganancia(e[0], yc + sep, e[1], true);
+        linea(e[0], yc + sep + 8, e[0], yc + sep * 2);
+        linea(e[0], yc + sep * 2, xS2 - 8, yc + sep * 2);
+      });
+    }
+
+    /* ------------------------- abajo: respuesta al impulso y modulo */
+    var yh = Hd * 0.72, altoH = Hd * 0.13;
+    var xh0 = 26, xh1 = Wd * 0.46;
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(xh0, yh); ctx.lineTo(xh1, yh); ctx.stroke();
+    var mxh = 1e-9;
+    h.forEach(function(v){ mxh = Math.max(mxh, Math.abs(v)); });
+    for(i = 0; i < NH; i++){
+      var xx = xh0 + i / (NH - 1) * (xh1 - xh0);
+      ctx.strokeStyle = "rgba(242,204,96,.85)"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(xx, yh); ctx.lineTo(xx, yh - h[i] / mxh * altoH); ctx.stroke();
+    }
+    ctx.fillStyle = "#f2cc60"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("h[n]", xh0, yh - altoH - 8);
+
+    var xm0 = Wd * 0.56, xm1 = Wd - 14, ym = Hd - 26, altoM = Hd * 0.26;
+    ctx.strokeStyle = "#2a3140";
+    ctx.beginPath();
+    ctx.moveTo(xm0, ym - altoM); ctx.lineTo(xm0, ym); ctx.lineTo(xm1, ym); ctx.stroke();
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    var mxm = 1e-9;
+    mags.forEach(function(v){ mxm = Math.max(mxm, v); });
+    for(k = 0; k < NF; k++){
+      var q = { x:xm0 + k / (NF - 1) * (xm1 - xm0), y:ym - mags[k] / mxm * altoM };
+      if(k === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(248,81,73,.5)"; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(xm0 + f * 2 * (xm1 - xm0), ym - altoM);
+    ctx.lineTo(xm0 + f * 2 * (xm1 - xm0), ym); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#58a6ff"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("|H| hasta fs/2", xm0, ym - altoM - 8);
+
+    /* ------------------------------------------------ conteo de piezas */
+    var piezas = { d2:{ r:2, g:5, s:2 }, d1:{ r:4, g:5, s:2 }, fir:{ r:2, g:3, s:1 } };
+    var p = piezas[est];
+    var nombre = { d2:"forma directa II", d1:"forma directa I", fir:"FIR de 3 coeficientes" }[est];
+    /* estabilidad: los polos dentro del circulo */
+    var estable = esFIR || (Math.abs(a[2]) < 1 && Math.abs(a[1]) < 1 + a[2]);
+
+    $("imDatos").innerHTML =
+      "<span>Estructura</span><b>" + nombre + "</b>" +
+      '<hr><span style="color:#58a6ff">Retardos</span><b>' + p.r + "</b>" +
+      '<span style="color:#7ee787">Multiplicadores</span><b>' + p.g + "</b>" +
+      '<span style="color:#f2cc60">Sumadores</span><b>' + p.s + "</b>" +
+      "<hr><span>Coeficientes b</span><b>" + b.map(function(v){ return n(v); }).join("   ·   ") + "</b>" +
+      "<span>Coeficientes a</span><b>" +
+        (esFIR ? "ninguno: no hay realimentación" : a.slice(1).map(function(v){ return n(v); }).join("   ·   ")) +
+        "</b>" +
+      "<span>¿Estable?</span><b>" + (estable ? "sí" : "no") +
+        (esFIR ? "   ·   un FIR siempre lo es" : "") + "</b>";
+
+    var txt;
+    if(est === "d2")
+      txt = "La forma directa II comparte los retardos entre las dos ramas: con dos alcanza, contra los " +
+            "cuatro de la directa I. Por eso se la llama canónica y es la que implementan casi todas las " +
+            "bibliotecas.";
+    else if(est === "d1")
+      txt = "Acá hay dos cadenas de retardos separadas, una para la entrada y otra para la salida: cuatro " +
+            "en total. Sale directo de la ecuación en diferencias, pero gasta el doble de memoria.";
+    else
+      txt = "Sin realimentación no hay coeficientes a, y la respuesta al impulso se apaga sola después de " +
+            "tres muestras. Es incondicionalmente estable, pero con tres coeficientes la selectividad es " +
+            "pobre: para igualar al IIR de al lado harían falta decenas.";
+    if(tipo === "res" && !esFIR)
+      txt += " Con Q = 12 los polos quedan muy cerca del círculo unitario: mirá cuántas muestras tarda " +
+             "h[n] en apagarse. Ahí es donde la cuantización de los coeficientes se vuelve peligrosa.";
+    $("imNota").innerHTML = txt;
+  }
+
+  ["imE", "imP", "imW"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>

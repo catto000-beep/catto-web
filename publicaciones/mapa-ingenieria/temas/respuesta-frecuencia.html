@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Respuesta en frecuencia · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="La respuesta en frecuencia como multiplicación de espectros, el trazado de Bode por asíntotas, el retardo de grupo y la deformación por fase no lineal, y los sistemas de fase mínima, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 27 de 34</div>
+    <h1>Respuesta en frecuencia</h1>
+    <p class="lead">Un sistema LTI no mezcla frecuencias: cada armónico sale escalado y desfasado, sin enterarse de los demás. Pero mirar sólo el módulo no alcanza, y un pasatodo lo demuestra.</p>
+    <div class="chips">
+      <span class="chip hi">Bode</span>
+      <span class="chip">Asíntotas</span>
+      <span class="chip">Retardo de grupo</span>
+      <span class="chip">Fase mínima</span>
+      <span class="chip">Margen de fase</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que">
+      <h2><span class="n">01</span>Lo que el sistema le hace a cada frecuencia</h2>
+      <p>Si una exponencial compleja entra a un sistema LTI y sale multiplicada por \( H(s) \), entonces
+      evaluando sobre el eje imaginario se obtiene lo que le pasa a cada frecuencia real:</p>
+      <div class="form">
+        \[ Y(j\omega) = H(j\omega)\,X(j\omega) \]
+        <span class="cap">El espectro de la salida es el de la entrada, multiplicado frecuencia por frecuencia. La convolución del tiempo se volvió un producto.</span>
+      </div>
+      <p>Eso significa que un sistema LTI <b>no mezcla frecuencias</b>: cada armónica de la entrada sale
+      escalada por \( |H| \) y corrida por \( \angle H \), sin enterarse de las demás. Analizar un circuito se
+      reduce a leer dos curvas.</p>
+      <div class="lw" id="rf">
+        <div class="lt">Laboratorio · el filtro, armónico por armónico</div>
+        <p class="ls">Arriba la entrada y la salida en el tiempo. Abajo, el espectro de la entrada en gris, la respuesta del filtro en amarillo y lo que queda a la salida en verde.</p>
+        <div class="fila">
+          <select id="rfF">
+            <option value="pb">pasabajos de segundo orden</option>
+            <option value="pa">pasaaltos de segundo orden</option>
+            <option value="bp">pasabanda</option>
+            <option value="notch">notch</option>
+            <option value="pt">pasatodo · módulo plano</option>
+          </select>
+          <select id="rfS">
+            <option value="cua">entrada: cuadrada</option>
+            <option value="tri">entrada: triangular</option>
+            <option value="pul">entrada: tren de pulsos</option>
+            <option value="dos">entrada: dos tonos</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="rfW">Frecuencia de corte = <b id="rfWv">3,0</b> armónicos</label>
+          <input type="range" id="rfW" min="0.7" max="12" step="0.1" value="3">
+        </div>
+        <div class="fila">
+          <label for="rfQ">Q = <b id="rfQv">0,71</b></label>
+          <input type="range" id="rfQ" min="0.5" max="10" step="0.05" value="0.707">
+        </div>
+        <canvas id="rfLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.4/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="rfDatos" style="margin-top:8px"></div>
+        <div class="nota" id="rfNota"></div>
+      </div>
+    </section>
+
+    <section id="bode">
+      <h2><span class="n">02</span>Por qué se dibuja en decibeles y en escala logarítmica</h2>
+      <p>El diagrama de Bode no es una convención caprichosa. Tomando logaritmo de un producto de factores,
+      la multiplicación se vuelve suma:</p>
+      <div class="form">
+        \[ 20\log|H| = 20\log|K| + \sum_i 20\log|j\omega - z_i| - \sum_k 20\log|j\omega - p_k| \]
+        <span class="cap">Cada polo y cada cero aporta su propia curva, y el total es la suma. Por eso se puede trazar a mano, sumando asíntotas.</span>
+      </div>
+      <p>Y con el eje de frecuencias en escala logarítmica, esas asíntotas son <b>rectas</b>: cada polo simple
+      aporta −20 dB por década a partir de su frecuencia, cada cero +20. Con dos reglas se dibuja el Bode de
+      cualquier sistema:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Elemento</th><th>Módulo</th><th>Fase</th></tr></thead>
+        <tbody>
+          <tr><td>Polo simple en \( \omega_p \)</td><td>−20 dB/déc desde \( \omega_p \); −3 dB en \( \omega_p \)</td><td>0 a −90°, con −45° en \( \omega_p \)</td></tr>
+          <tr><td>Cero simple en \( \omega_z \)</td><td>+20 dB/déc desde \( \omega_z \)</td><td>0 a +90°</td></tr>
+          <tr><td>Polo en el origen</td><td>−20 dB/déc desde siempre</td><td>−90° constante</td></tr>
+          <tr><td>Par de polos con \( Q \)</td><td>−40 dB/déc, con un pico de \( 20\log Q \) si \( Q \gt 0{,}707 \)</td><td>0 a −180°</td></tr>
+        </tbody>
+      </table></div>
+      <p>La transición de fase de un polo simple no es abrupta: arranca una década antes de \( \omega_p \) y
+      termina una década después. Por eso, al compensar un lazo realimentado, un polo que parece lejano igual
+      afecta el margen de fase.</p>
+    </section>
+
+    <section id="fase">
+      <h2><span class="n">03</span>La fase también deforma</h2>
+      <p>Es fácil quedarse sólo con el módulo. Pero si los armónicos de una señal llegan con retardos
+      distintos, la forma de onda se deforma aunque sus amplitudes se hayan respetado. Lo que mide eso es el
+      <b>retardo de grupo</b>:</p>
+      <div class="form">
+        \[ \tau_g(\omega) = -\frac{d\,\angle H(j\omega)}{d\omega} \]
+        <span class="cap">Si la fase es una recta, el retardo de grupo es constante y todos los armónicos se demoran lo mismo: la señal sale igual, sólo que más tarde.</span>
+      </div>
+      <p>El caso extremo está en el laboratorio: un <b>pasatodo</b> tiene módulo exactamente plano —no atenúa
+      ninguna frecuencia— y aun así deforma la señal, porque su fase no es lineal. Es la demostración de que
+      mirar sólo el módulo no alcanza.</p>
+      <div class="box key"><div class="bt">Dónde importa y dónde no</div>
+        <p>El oído es bastante insensible a la fase, así que en audio se tolera. En <b>video</b> y en
+        <b>transmisión de datos</b>, no: un retardo de grupo desparejo corre unos armónicos respecto de otros,
+        ensancha los pulsos y hace que un símbolo se meta en el lugar del siguiente. Eso se llama interferencia
+        entre símbolos, y es la razón de que en comunicaciones se usen filtros de fase lineal aunque cuesten
+        más orden.</p></div>
+    </section>
+
+    <section id="minima">
+      <h2><span class="n">04</span>Fase mínima</h2>
+      <p>Un sistema es de <b>fase mínima</b> si todos sus polos y todos sus ceros están en el semiplano
+      izquierdo. La propiedad que lo hace interesante es ésta: entre todos los sistemas con el mismo módulo,
+      el de fase mínima es el que tiene <b>menos desfasaje</b> y el menor retardo de grupo.</p>
+      <p>Y trae una consecuencia muy práctica: en un sistema de fase mínima, el módulo determina la fase. Con
+      sólo medir la curva de amplitud se puede deducir el desfasaje, que es lo que permite estimar el margen
+      de fase de un lazo a partir de la pendiente del Bode. La regla que sale de ahí —cruzar por cero con
+      −20 dB/década— es el criterio de diseño de cualquier realimentación.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Pendiente al cruzar 0 dB</th><th>Fase aproximada</th><th>Margen</th><th>Comportamiento</th></tr></thead>
+        <tbody>
+          <tr><td>−20 dB/déc</td><td>−90°</td><td>90°</td><td>Estable y sin sobrepico</td></tr>
+          <tr><td>−30 dB/déc</td><td>−135°</td><td>45°</td><td>Aceptable, con algo de sobrepico</td></tr>
+          <tr><td>−40 dB/déc</td><td>−180°</td><td>0°</td><td>En el límite: oscila</td></tr>
+        </tbody>
+      </table></div>
+      <p>Un cero en el semiplano derecho rompe todo esto: aporta el módulo de un cero pero la fase de un polo,
+      así que empeora el margen sin dar nada a cambio. Es lo que complica la compensación de los convertidores
+      elevadores.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Bode a mano y medido</div>
+        <p>Trazar por asíntotas el Bode de \( H(s) = \dfrac{100}{(1+s/10)(1+s/1000)} \) y después medirlo con
+        el generador y el osciloscopio en diez frecuencias. Comparar los dos en el mismo papel.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · El pasatodo deforma</div>
+        <p>Armar un pasatodo de primer orden, inyectar una onda cuadrada y comparar entrada y salida en el
+        osciloscopio. Verificar con el analizador que el módulo es plano, y explicar por qué la forma cambió
+        igual.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Margen de fase</div>
+        <p>Medir el Bode de lazo abierto de un amplificador realimentado, encontrar la frecuencia de cruce por
+        0 dB y leer la fase ahí. Contrastar el margen obtenido con el sobrepico que muestra la respuesta al
+        escalón.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Mirar sólo el módulo.</b> La fase deforma, y un pasatodo lo demuestra.</li>
+        <li><b>Creer que un polo lejano no afecta la fase.</b> Su transición empieza una década
+        antes.</li>
+        <li><b>Confundir retardo de fase con retardo de grupo.</b> El segundo es la derivada de la fase y es
+        el que dice si la forma se conserva.</li>
+        <li><b>Dar por fase mínima a un sistema con ceros a la derecha.</b> Ahí el módulo ya no determina la
+        fase.</li>
+        <li><b>Diseñar un lazo que cruce 0 dB con −40 dB/década.</b> El margen de fase queda en
+        cero.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué relación hay entre los espectros de entrada y salida?</summary>
+        <div class="a"><p>\( Y = H\,X \): se multiplican frecuencia por frecuencia. Un sistema LTI no mezcla
+        frecuencias.</p></div></details>
+      <details class="q"><summary>¿Por qué el Bode usa decibeles y escala logarítmica?</summary>
+        <div class="a"><p>Porque así el producto de factores se vuelve suma y las asíntotas quedan rectas, lo
+        que permite trazarlo a mano.</p></div></details>
+      <details class="q"><summary>¿Cuánto aporta un polo simple en su propia frecuencia?</summary>
+        <div class="a"><p>−3 dB de módulo y −45° de fase.</p></div></details>
+      <details class="q"><summary>¿Qué es el retardo de grupo?</summary>
+        <div class="a"><p>Menos la derivada de la fase respecto de la frecuencia. Si es constante, la forma de
+        la señal se conserva.</p></div></details>
+      <details class="q"><summary>¿Cómo puede deformar un filtro de módulo plano?</summary>
+        <div class="a"><p>Con fase no lineal: los armónicos llegan corridos unos respecto de otros. Es lo que
+        hace un pasatodo.</p></div></details>
+      <details class="q"><summary>¿Con qué pendiente conviene cruzar 0 dB?</summary>
+        <div class="a"><p>Con −20 dB/década, que deja unos 90° de margen de fase.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Katsuhiko Ogata.</span> <span class="ti">Ingeniería de control moderna</span>.
+          <span class="ed">5.ª ed., Pearson, 2010.</span>
+          <span class="pq">El trazado de Bode por asíntotas y los márgenes de fase y ganancia, con ejemplos completos.</span></li>
+        <li><span class="au">Adel S. Sedra y Kenneth C. Smith.</span> <span class="ti">Circuitos microelectrónicos</span>.
+          <span class="ed">7.ª ed., Oxford University Press, 2016.</span>
+          <span class="pq">Respuesta en frecuencia de amplificadores y compensación de lazos realimentados.</span></li>
+        <li><span class="au">Alan V. Oppenheim y Alan S. Willsky.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1998.</span>
+          <span class="pq">Retardo de grupo, fase lineal y sistemas de fase mínima, con su relación módulo-fase.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/parseval">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Relación de Parseval</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/representacion-sistemas">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Representación de señales y sistemas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Respuesta en frecuencia»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* El filtro, armonico por armonico. Se descompone la entrada en su serie de
+   Fourier, se multiplica cada armonico por H(jw) y se vuelve a sumar: eso es
+   Y = H*X hecho a mano. Abajo quedan los tres espectros superpuestos, asi se
+   ve de donde sale cada raya de la salida. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("rfLienzo"), ctx = cv.getContext("2d");
+  var NC = 30, NINT = 4000;
+
+  var S = {
+    cua: { n:"cuadrada", f:function(u){ return u < 0.5 ? 1 : -1; } },
+    tri: { n:"triangular",
+           f:function(u){ return u < 0.25 ? 4 * u : (u < 0.75 ? 2 - 4 * u : 4 * u - 4); } },
+    pul: { n:"tren de pulsos", f:function(u){ return u < 0.2 ? 1 - 0.2 : -0.2; } },
+    dos: { n:"dos tonos",
+           f:function(u){ return Math.cos(2 * Math.PI * u) + 0.7 * Math.cos(2 * Math.PI * 7 * u); } }
+  };
+
+  /* H(jw) normalizada: w viene en unidades de armonico y w0 es el corte */
+  var F = {
+    pb:    { n:"pasabajos", hQ:true,
+             H:function(w, w0, Q){ var x = w / w0;
+               return div([1, 0], [1 - x * x, x / Q]); },
+             t:"El pasabajos deja pasar los primeros armónicos y borra los de arriba. Con una cuadrada se " +
+               "ve enseguida: la salida se redondea porque le faltan los armónicos altos, que son los que " +
+               "arman los flancos." },
+    pa:    { n:"pasaaltos", hQ:true,
+             H:function(w, w0, Q){ var x = w / w0;
+               return div([-x * x, 0], [1 - x * x, x / Q]); },
+             t:"Al revés: borra la continua y los armónicos bajos, y deja sólo los flancos. La salida " +
+               "queda con picos donde la entrada cambiaba rápido." },
+    bp:    { n:"pasabanda", hQ:true,
+             H:function(w, w0, Q){ var x = w / w0;
+               return div([0, x / Q], [1 - x * x, x / Q]); },
+             t:"Se queda con una banda angosta. Subí el Q y mirá cómo la salida termina siendo una " +
+               "senoidal: el filtro extrajo un solo armónico de toda la señal." },
+    notch: { n:"notch", hQ:true,
+             H:function(w, w0, Q){ var x = w / w0;
+               return div([1 - x * x, 0], [1 - x * x, x / Q]); },
+             t:"Saca una frecuencia y deja el resto. Es lo que se usa para eliminar los 50 Hz de la línea " +
+               "sin tocar la señal." },
+    pt:    { n:"pasatodo", hQ:false,
+             H:function(w, w0){ var x = w / w0;
+               return div([1, -x], [1, x]); },
+             t:"Acá está la demostración de que el módulo no alcanza: la curva amarilla es <b>plana</b>, " +
+               "el filtro no atenuó ningún armónico, y sin embargo la salida salió deformada. La culpa es " +
+               "de la fase, que corre unos armónicos respecto de otros." }
+  };
+
+  function div(a, b){
+    var m = b[0] * b[0] + b[1] * b[1];
+    if(m < 1e-14) return [0, 0];
+    return [(a[0] * b[0] + a[1] * b[1]) / m, (a[1] * b[0] - a[0] * b[1]) / m];
+  }
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+
+  var cacheK = null, cacheC = null;
+  function coef(s, clave){
+    if(cacheK === clave) return cacheC;
+    var a = [], b = [], a0 = 0, i, k;
+    for(i = 0; i < NINT; i++) a0 += s.f((i + 0.5) / NINT) / NINT;
+    for(k = 1; k <= NC; k++){
+      var sa = 0, sb = 0;
+      for(i = 0; i < NINT; i++){
+        var u = (i + 0.5) / NINT, w = 2 * Math.PI * k * u, v = s.f(u);
+        sa += v * Math.cos(w); sb += v * Math.sin(w);
+      }
+      a.push(2 * sa / NINT); b.push(2 * sb / NINT);
+    }
+    cacheK = clave; cacheC = { a0:a0, a:a, b:b };
+    return cacheC;
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var d = F[$("rfF").value], sen = S[$("rfS").value];
+    var w0 = parseFloat($("rfW").value), Q = parseFloat($("rfQ").value);
+    $("rfWv").textContent = n(w0, 1);
+    $("rfQv").textContent = n(Q, 3);
+    $("rfQ").disabled = !d.hQ;
+
+    var C = coef(sen, $("rfS").value);
+
+    /* cada armonico, multiplicado por H */
+    var Hm = [], Hf = [], ain = [], aout = [];
+    for(k = 1; k <= NC; k++){
+      var h = d.H(k, w0, Q);
+      Hm.push(Math.hypot(h[0], h[1]));
+      Hf.push(Math.atan2(h[1], h[0]));
+      var A = Math.hypot(C.a[k - 1], C.b[k - 1]);
+      ain.push(A);
+      aout.push(A * Hm[k - 1]);
+    }
+    var h0 = d.H(1e-6, w0, Q), g0 = Math.hypot(h0[0], h0[1]);
+
+    function ent(u){
+      var s = C.a0, w;
+      for(k = 1; k <= NC; k++){
+        w = 2 * Math.PI * k * u;
+        s += C.a[k - 1] * Math.cos(w) + C.b[k - 1] * Math.sin(w);
+      }
+      return s;
+    }
+    function sal(u){
+      var s = C.a0 * g0, w;
+      for(k = 1; k <= NC; k++){
+        w = 2 * Math.PI * k * u + Hf[k - 1];
+        s += Hm[k - 1] * (C.a[k - 1] * Math.cos(w) + C.b[k - 1] * Math.sin(w));
+      }
+      return s;
+    }
+
+    var x0 = 26, x1 = Wd - 12;
+    var yT = Hd * 0.22, altoT = Hd * 0.16;
+    var yB = Hd - 24, altoB = Hd * 0.4;
+    function XT(u){ return x0 + u / 2 * (x1 - x0); }
+    function XB(k2){ return x0 + (k2 - 0.5) / NC * (x1 - x0); }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yT); ctx.lineTo(x1, yT);
+    ctx.moveTo(x0, yB - altoB); ctx.lineTo(x0, yB); ctx.lineTo(x1, yB);
+    ctx.stroke();
+
+    /* arriba: entrada y salida */
+    var mxT = 0.3;
+    for(i = 0; i <= 200; i++){
+      var u2 = 2 * i / 200;
+      mxT = Math.max(mxT, Math.abs(ent(u2 - Math.floor(u2))), Math.abs(sal(u2 - Math.floor(u2))));
+    }
+    [[ent, "rgba(107,116,132,.75)", 1.5], [sal, "#7ee787", 2.3]].forEach(function(e){
+      ctx.strokeStyle = e[1]; ctx.lineWidth = e[2];
+      ctx.beginPath();
+      for(i = 0; i <= 700; i++){
+        var u3 = 2 * i / 700;
+        var q = { x:XT(u3), y:yT - e[0](u3 - Math.floor(u3)) / mxT * altoT };
+        if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+      }
+      ctx.stroke();
+    });
+    ctx.fillStyle = "#6b7484"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("entrada", x0, 13);
+    ctx.fillStyle = "#7ee787"; ctx.fillText("salida", x0 + 48, 13);
+
+    /* abajo: los tres espectros */
+    var mxA = 1e-9;
+    for(k = 0; k < NC; k++) mxA = Math.max(mxA, ain[k]);
+    var anchoB = (x1 - x0) / NC;
+    for(k = 0; k < NC; k++){
+      var hi = ain[k] / mxA * altoB;
+      ctx.fillStyle = "rgba(107,116,132,.4)";
+      ctx.fillRect(XB(k + 1) - anchoB * 0.34, yB - hi, anchoB * 0.68, hi);
+      var ho = aout[k] / mxA * altoB;
+      ctx.fillStyle = "#7ee787";
+      ctx.fillRect(XB(k + 1) - anchoB * 0.22, yB - ho, anchoB * 0.44, ho);
+    }
+    /* la respuesta del filtro, en su propia escala hasta 1 */
+    ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(i = 0; i <= 500; i++){
+      var wk = 0.2 + (NC - 0.2) * i / 500;
+      var hh = d.H(wk, w0, Q);
+      var m = Math.min(1.6, Math.hypot(hh[0], hh[1]));
+      var q2 = { x:XB(wk + 0.5), y:yB - m / 1.6 * altoB };
+      if(i === 0) ctx.moveTo(q2.x, q2.y); else ctx.lineTo(q2.x, q2.y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(248,81,73,.55)"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(XB(w0 + 0.5), yB - altoB); ctx.lineTo(XB(w0 + 0.5), yB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#f2cc60"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("|H| del filtro", x0, yB - altoB - 6);
+    ctx.fillStyle = "#6b7484"; ctx.fillText("espectro de entrada", x0 + 78, yB - altoB - 6);
+    ctx.fillStyle = "#7ee787"; ctx.fillText("y de salida", x0 + 196, yB - altoB - 6);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    for(k = 5; k <= NC; k += 5) ctx.fillText(k + "", XB(k) - 4, yB + 12);
+    ctx.fillText("armónico", x1 - 44, yB + 12);
+
+    /* cuanta potencia sobrevivio, y cuanto se deformo */
+    var Pin = 0, Pout = 0;
+    for(k = 0; k < NC; k++){ Pin += ain[k] * ain[k] / 2; Pout += aout[k] * aout[k] / 2; }
+    var plano = true, mn = 1e9, mx = 0;
+    for(k = 0; k < NC; k++){ mn = Math.min(mn, Hm[k]); mx = Math.max(mx, Hm[k]); }
+    plano = (mx - mn) < 0.02;
+    /* diferencia de forma entre entrada y salida, ya normalizadas */
+    var dif = 0, ne = 0, ns = 0;
+    for(i = 0; i < 400; i++){
+      var u4 = (i + 0.5) / 400, e1 = ent(u4), s1 = sal(u4);
+      ne += e1 * e1; ns += s1 * s1;
+    }
+    ne = Math.sqrt(ne / 400); ns = Math.sqrt(ns / 400);
+    for(i = 0; i < 400; i++){
+      var u5 = (i + 0.5) / 400;
+      var dd = ent(u5) / (ne || 1) - sal(u5) / (ns || 1);
+      dif = Math.max(dif, Math.abs(dd));
+    }
+
+    $("rfDatos").innerHTML =
+      "<span>Filtro   ·   entrada</span><b>" + d.n + "   ·   " + sen.n + "</b>" +
+      '<hr><span style="color:#f2cc60">|H| entre el armónico 1 y el ' + NC + "</span><b>" +
+        n(mn, 3) + " a " + n(mx, 3) + (plano ? "   ·   <b>plano</b>" : "") + "</b>" +
+      '<span style="color:#7ee787">Potencia que sobrevivió</span><b>' +
+        n(Pin > 0 ? Pout / Pin * 100 : 0, 1) + " %</b>" +
+      "<hr><span>Deformación de la forma de onda</span><b>" + n(dif, 3) +
+        (dif < 0.02 ? "   ·   sale igual" : "   ·   cambió de forma") + "</b>";
+
+    var txt = d.t;
+    if(plano && dif > 0.05)
+      txt += " Fijate los dos números de abajo: el módulo no cambió nada y la forma sí. Eso es lo que " +
+             "mide el retardo de grupo.";
+    $("rfNota").innerHTML = txt;
+  }
+
+  ["rfF", "rfS", "rfW", "rfQ"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
