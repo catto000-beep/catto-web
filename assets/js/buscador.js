@@ -89,8 +89,19 @@
       pidiendo = false;
       preparar(window.CATTO_INDICE || []);
       luego();
-      for (var k = 1; k < DATOS.length; k++) { bajar(DATOS[k], refrescar); }
     });
+  }
+
+  /* Las partes de secciones pesan, juntas, más de un megabyte y medio: el
+     núcleo son 130 kB y alcanza para que aparezcan resultados. Por eso el
+     resto se baja recién cuando alguien escribe de verdad, y no por abrir el
+     buscador o tocar el campo sin buscar nada. */
+  var restoPedido = false;
+
+  function traerResto() {
+    if (restoPedido) return;
+    restoPedido = true;
+    for (var k = 1; k < DATOS.length; k++) { bajar(DATOS[k], refrescar); }
   }
 
   /* ---- búsqueda ----
@@ -290,6 +301,7 @@
     if (q === ultima) return;
     ultima = q;
     if (!q.trim()) { abrir(false); el.lista.textContent = ""; return; }
+    if (q.trim().length >= 2) traerResto();
     traer(function () { if (el.input.value === q) pintar(q); });
   }
 
