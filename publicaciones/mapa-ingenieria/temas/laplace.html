@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformada de Laplace · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="La transformada de Laplace, la región de convergencia y por qué sin ella la transformada está incompleta, la versión unilateral con condiciones iniciales, las impedancias generalizadas y los teoremas de valor inicial y final, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/laplace">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 33 de 34</div>
+    <h1>Transformada de Laplace</h1>
+    <p class="lead">Fourier deja afuera todo lo que crece. Laplace agrega un factor de convergencia y con él entran el escalón, los sistemas inestables y las condiciones iniciales. El precio es que hay que decir siempre dónde converge.</p>
+    <div class="chips">
+      <span class="chip hi">Laplace</span>
+      <span class="chip">Región de convergencia</span>
+      <span class="chip">Unilateral</span>
+      <span class="chip">Impedancias</span>
+      <span class="chip">Valor final</span>
+    </div>
+    <hr class="rule">
+
+    <section id="porque">
+      <h2><span class="n">01</span>Para qué, si ya está Fourier</h2>
+      <p>La transformada de Fourier necesita que la señal sea absolutamente integrable, y eso deja afuera a
+      cosas tan comunes como el escalón o una exponencial creciente. La solución de Laplace es multiplicar por
+      un factor de convergencia \( e^{-\sigma t} \) antes de transformar:</p>
+      <div class="form">
+        \[ X(s) = \int_{-\infty}^{\infty} x(t)\,e^{-st}\,dt, \qquad s = \sigma + j\omega \]
+        <span class="cap">Con \( \sigma = 0 \) queda exactamente la transformada de Fourier. Laplace la contiene como caso particular.</span>
+      </div>
+      <p>Ese \( \sigma \) es el que hace el trabajo: si la señal crece, se elige un \( \sigma \) lo bastante
+      grande para que el producto decaiga y la integral converja. La contrapartida es que ahora hay que decir
+      <b>para qué valores de \( \sigma \) converge</b>, y eso es la región de convergencia.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Lo que agrega Laplace</th><th>Por qué importa</th></tr></thead>
+        <tbody>
+          <tr><td>Transforma señales que crecen</td><td>Permite analizar sistemas inestables</td></tr>
+          <tr><td>Maneja condiciones iniciales</td><td>Un capacitor cargado entra en la cuenta</td></tr>
+          <tr><td>Convierte la ecuación diferencial en algebraica</td><td>Resolver circuitos es despejar</td></tr>
+          <tr><td>Da polos y ceros</td><td>Toda la lectura de estabilidad y respuesta</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="roc">
+      <h2><span class="n">02</span>La región de convergencia, que no es un detalle</h2>
+      <p>Acá está lo que más cuesta de Laplace y lo que más se saltea: <b>\( X(s) \) sola no determina la
+      señal</b>. Hace falta además la región de convergencia, y con la misma expresión algebraica y distintas
+      regiones se obtienen señales completamente distintas.</p>
+      <div class="lw" id="lp">
+        <div class="lt">Laboratorio · la misma X(s), tres señales</div>
+        <p class="ls">A la izquierda el plano \( s \) con los polos y la región de convergencia sombreada; a la derecha, la señal en el tiempo que le corresponde. Cambiá la región y mirá cómo cambia la señal sin que se mueva un solo polo.</p>
+        <div class="fila">
+          <select id="lpF">
+            <option value="dos">X(s) = 1 / ((s+1)(s−2))</option>
+            <option value="uno">X(s) = 1 / (s+1)</option>
+            <option value="ines">X(s) = 1 / (s−1)</option>
+          </select>
+          <select id="lpR">
+            <option value="der">región a la derecha de todos los polos</option>
+            <option value="med">la franja del medio</option>
+            <option value="izq">región a la izquierda de todos</option>
+          </select>
+        </div>
+        <canvas id="lpLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.8/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="lpDatos" style="margin-top:8px"></div>
+        <div class="nota" id="lpNota"></div>
+      </div>
+      <p>Las tres reglas que resumen todo esto conviene tenerlas juntas:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Si la región…</th><th>Entonces la señal…</th></tr></thead>
+        <tbody>
+          <tr><td>Está a la derecha de todos los polos</td><td>Es <b>causal</b>: vale cero antes de \( t = 0 \)</td></tr>
+          <tr><td>Está a la izquierda de todos</td><td>Es anticausal: vale cero después de \( t = 0 \)</td></tr>
+          <tr><td>Es una franja entre polos</td><td>Es bilateral: se extiende hacia los dos lados</td></tr>
+          <tr><td><b>Contiene el eje \( j\omega \)</b></td><td>Tiene transformada de Fourier, y el sistema es <b>estable</b></td></tr>
+        </tbody>
+      </table></div>
+      <p>La última fila es la conexión entre las dos transformadas, y también el criterio de estabilidad:
+      un sistema causal es estable si y sólo si todos sus polos están a la izquierda del eje imaginario,
+      porque sólo así la región causal —que arranca en el polo más a la derecha— alcanza a cubrirlo.</p>
+    </section>
+
+    <section id="unilateral">
+      <h2><span class="n">03</span>La unilateral, que es la que se usa en circuitos</h2>
+      <p>Para problemas con condiciones iniciales se usa la versión que integra desde cero:</p>
+      <div class="form">
+        \[ X(s) = \int_{0^{-}}^{\infty} x(t)\,e^{-st}\,dt \]
+      </div>
+      <p>Su gracia está en cómo transforma la derivada, porque ahí entra el pasado del circuito:</p>
+      <div class="form">
+        \[ \mathcal{L}\left\{\frac{dx}{dt}\right\} = s\,X(s) - x(0^{-}),
+           \qquad
+           \mathcal{L}\left\{\int_{0}^{t} x\,d\tau\right\} = \frac{X(s)}{s} \]
+        <span class="cap">El \( x(0^-) \) es la condición inicial. Por eso un capacitor cargado o una bobina con corriente aparecen en la cuenta sin agregar nada a mano.</span>
+      </div>
+      <p>Con eso, un circuito se resuelve como si fuera resistivo, usando <b>impedancias generalizadas</b>:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Elemento</th><th>Impedancia</th><th>La condición inicial aparece como</th></tr></thead>
+        <tbody>
+          <tr><td>Resistor</td><td>\( R \)</td><td>No tiene</td></tr>
+          <tr><td>Capacitor</td><td>\( 1/(sC) \)</td><td>Una fuente de tensión \( v_C(0)/s \) en serie</td></tr>
+          <tr><td>Bobina</td><td>\( sL \)</td><td>Una fuente de tensión \( L\,i_L(0) \) en serie</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">Los teoremas del valor inicial y final</div>
+        <p>Dos atajos que evitan antitransformar cuando sólo interesan los extremos:
+        \( x(0^+) = \lim_{s\to\infty} sX(s) \) y \( x(\infty) = \lim_{s\to 0} sX(s) \). El segundo tiene una
+        condición que se olvida seguido: <b>vale sólo si el sistema es estable</b>. Aplicado a algo que
+        oscila o que crece, da un número que no significa nada.</p>
+      </div>
+    </section>
+
+    <section id="antitransformar">
+      <h2><span class="n">04</span>Volver al tiempo</h2>
+      <p>Para funciones racionales, que es lo que sale de cualquier circuito, el camino es fracciones simples:
+      se factorea el denominador, se separa en términos de un polo cada uno, y cada término se antitransforma
+      con la tabla. Y ya se vio que <a class="ref"
+      href="/publicaciones/mapa-ingenieria/temas/residuos">los coeficientes de esas fracciones son los
+      residuos</a>, de modo que las dos técnicas son la misma.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>\( X(s) \)</th><th>\( x(t) \) para \( t \ge 0 \)</th></tr></thead>
+        <tbody>
+          <tr><td>\( 1/s \)</td><td>\( 1 \), el escalón</td></tr>
+          <tr><td>\( 1/s^2 \)</td><td>\( t \), la rampa</td></tr>
+          <tr><td>\( 1/(s+a) \)</td><td>\( e^{-at} \)</td></tr>
+          <tr><td>\( 1/(s+a)^2 \)</td><td>\( t\,e^{-at} \)</td></tr>
+          <tr><td>\( \omega/(s^2+\omega^2) \)</td><td>\( \operatorname{sen}\omega t \)</td></tr>
+          <tr><td>\( \dfrac{\omega}{(s+a)^2+\omega^2} \)</td><td>\( e^{-at}\operatorname{sen}\omega t \)</td></tr>
+          <tr><td>\( e^{-sT}X(s) \)</td><td>\( x(t-T) \), la señal retrasada</td></tr>
+        </tbody>
+      </table></div>
+      <p>La cuarta fila explica de dónde sale el \( t\,e^{-at} \) de un polo doble, y la última es la que
+      permite manejar retardos: un \( e^{-sT} \) en la transferencia es un tiempo muerto, y es lo que vuelve
+      no racional a un sistema con retardo de transporte.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Resolver un RLC con condiciones iniciales</div>
+        <p>Plantear un RLC serie con el capacitor cargado a 5 V, escribir el circuito transformado con las
+        fuentes de condiciones iniciales, despejar \( V_C(s) \) y antitransformar. Comparar con la medición en
+        el osciloscopio.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Valor inicial y final</div>
+        <p>Para \( V(s) = \dfrac{10(s+2)}{s(s^2+3s+2)} \), aplicar los dos teoremas y después antitransformar
+        para verificar. Repetir con un denominador que tenga un polo en el semiplano derecho y explicar por qué
+        el teorema del valor final falla.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · La región importa</div>
+        <p>Para \( X(s) = \dfrac{1}{(s+1)(s-2)} \), escribir las tres señales posibles según la región de
+        convergencia y decidir cuál de las tres tiene transformada de Fourier.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Dar \( X(s) \) sin la región de convergencia.</b> La expresión sola no determina la
+        señal.</li>
+        <li><b>Olvidar la condición inicial</b> al transformar una derivada en la versión
+        unilateral.</li>
+        <li><b>Aplicar el teorema del valor final a un sistema inestable.</b> Devuelve un número sin
+        sentido.</li>
+        <li><b>Confundir un polo con un cero del denominador transformado.</b> Conviene factorear
+        siempre.</li>
+        <li><b>Creer que Fourier y Laplace son cosas distintas.</b> Fourier es Laplace sobre el eje
+        imaginario, cuando ese eje está dentro de la región.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué agrega Laplace respecto de Fourier?</summary>
+        <div class="a"><p>El factor \( e^{-\sigma t} \), que permite transformar señales que crecen y manejar
+        condiciones iniciales.</p></div></details>
+      <details class="q"><summary>¿Por qué hace falta la región de convergencia?</summary>
+        <div class="a"><p>Porque la misma \( X(s) \) con distintas regiones corresponde a señales
+        distintas.</p></div></details>
+      <details class="q"><summary>¿Cuándo existe la transformada de Fourier?</summary>
+        <div class="a"><p>Cuando la región de convergencia contiene el eje imaginario. Eso equivale, para un
+        sistema causal, a que sea estable.</p></div></details>
+      <details class="q"><summary>¿Cómo entra un capacitor cargado en la cuenta?</summary>
+        <div class="a"><p>Como una impedancia \( 1/(sC) \) en serie con una fuente
+        \( v_C(0)/s \).</p></div></details>
+      <details class="q"><summary>¿Qué da \( \mathcal{L}^{-1}\{1/(s+a)^2\} \)?</summary>
+        <div class="a"><p>\( t\,e^{-at} \). Ése es el término que aporta un polo doble.</p></div></details>
+      <details class="q"><summary>¿Qué representa un \( e^{-sT} \) en una transferencia?</summary>
+        <div class="a"><p>Un retardo puro de \( T \) segundos. No es racional, y por eso se lo aproxima con
+        Padé.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim y Alan S. Willsky.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1998.</span>
+          <span class="pq">El capítulo 9, con el tratamiento cuidadoso de la región de convergencia que la mayoría omite.</span></li>
+        <li><span class="au">Charles K. Alexander y Matthew N. O. Sadiku.</span> <span class="ti">Fundamentos de circuitos eléctricos</span>.
+          <span class="ed">7.ª ed., McGraw-Hill, 2022.</span>
+          <span class="pq">Laplace aplicado a circuitos, con las fuentes de condiciones iniciales y muchos ejemplos.</span></li>
+        <li><span class="au">Katsuhiko Ogata.</span> <span class="ti">Ingeniería de control moderna</span>.
+          <span class="ed">5.ª ed., Pearson, 2010.</span>
+          <span class="pq">La tabla de transformadas y los teoremas de valor inicial y final, con sus condiciones de validez.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/convolucion-modulacion">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Teoremas de convolución y modulación</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/transformada-z">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Transformada Z y nociones de filtrado</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Transformada de Laplace»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* La misma X(s), tres senales. A la izquierda el plano s con los polos y la
+   region de convergencia sombreada; a la derecha, la senal que corresponde a
+   esa region. Los polos no se mueven: lo unico que cambia es la region, y la
+   senal es otra. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("lpLienzo"), ctx = cv.getContext("2d");
+  var R = 3.6, TM = 3;
+
+  var F = {
+    dos:  { n:"1 / ((s+1)(s−2))", polos:[-1, 2],
+            /* fracciones simples: −1/3 en s=−1 y +1/3 en s=2 */
+            res:[-1 / 3, 1 / 3],
+            regiones:{
+              der:{ n:"Re(s) > 2", a:2, b:99, causal:[true, true],
+                    t:"A la derecha de los dos polos: señal causal. Pero uno de los polos está en el " +
+                      "semiplano derecho, así que la exponencial crece y el sistema es inestable." },
+              med:{ n:"−1 < Re(s) < 2", a:-1, b:2, causal:[true, false],
+                    t:"La franja del medio contiene el eje imaginario: <b>ésta es la única de las tres que " +
+                      "tiene transformada de Fourier</b>, y la única estable. A cambio, no es causal: la " +
+                      "señal existe antes de t = 0." },
+              izq:{ n:"Re(s) < −1", a:-99, b:-1, causal:[false, false],
+                    t:"A la izquierda de los dos: señal anticausal, que vale cero para t positivo. Es " +
+                      "matemáticamente válida y físicamente inútil, pero aparece al analizar sistemas " +
+                      "hacia atrás en el tiempo." }
+            } },
+    uno:  { n:"1 / (s+1)", polos:[-1], res:[1],
+            regiones:{
+              der:{ n:"Re(s) > −1", a:-1, b:99, causal:[true],
+                    t:"La exponencial decreciente de siempre. La región contiene el eje imaginario, así " +
+                      "que existe Fourier y el sistema es estable." },
+              med:{ n:"Re(s) > −1", a:-1, b:99, causal:[true],
+                    t:"Con un solo polo hay nada más que dos regiones posibles: a un lado o al otro." },
+              izq:{ n:"Re(s) < −1", a:-99, b:-1, causal:[false],
+                    t:"La misma expresión, leída hacia atrás: una exponencial creciente que vive en el " +
+                      "pasado. No contiene el eje imaginario, así que no tiene Fourier." }
+            } },
+    ines: { n:"1 / (s−1)", polos:[1], res:[1],
+            regiones:{
+              der:{ n:"Re(s) > 1", a:1, b:99, causal:[true],
+                    t:"Causal pero con el polo a la derecha: la señal crece sin límite. La región no " +
+                      "alcanza el eje imaginario, y por eso no hay Fourier ni estabilidad." },
+              med:{ n:"Re(s) > 1", a:1, b:99, causal:[true],
+                    t:"Con un solo polo sólo hay dos regiones." },
+              izq:{ n:"Re(s) < 1", a:-99, b:1, causal:[false],
+                    t:"Anticausal, y acá sí la región contiene el eje imaginario: esta versión tiene " +
+                      "transformada de Fourier. Un polo a la derecha no impide la estabilidad si la señal " +
+                      "es anticausal." }
+            } }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var d = F[$("lpF").value], reg = d.regiones[$("lpR").value];
+
+    /* la senal: cada polo aporta su exponencial, causal o anticausal segun
+       de que lado quedo la region */
+    function x(t){
+      var v = 0;
+      for(k = 0; k < d.polos.length; k++){
+        var p = d.polos[k], A = d.res[k];
+        if(reg.causal[k]){ if(t >= 0) v += A * Math.exp(p * t); }
+        else { if(t < 0) v -= A * Math.exp(p * t); }
+      }
+      return v;
+    }
+
+    var mitad = Wd * 0.44;
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* ------------------------------------------- izquierda: el plano s */
+    var cs = { x:mitad * 0.5, y:Hd / 2 };
+    var es = Math.min(mitad, Hd) / (2 * R) * 0.82;
+    function XS(v){ return cs.x + v * es; }
+    var xa = Math.max(10, XS(reg.a)), xb = Math.min(mitad - 10, XS(reg.b));
+    ctx.fillStyle = "rgba(126,231,135,.13)";
+    ctx.fillRect(xa, 10, Math.max(0, xb - xa), Hd - 20);
+    ctx.strokeStyle = "rgba(126,231,135,.45)"; ctx.lineWidth = 1.4;
+    [xa, xb].forEach(function(xx){
+      if(xx > 11 && xx < mitad - 11){
+        ctx.beginPath(); ctx.moveTo(xx, 10); ctx.lineTo(xx, Hd - 10); ctx.stroke();
+      }
+    });
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(10, cs.y); ctx.lineTo(mitad - 10, cs.y); ctx.stroke();
+    /* el eje imaginario, destacado: si esta adentro de la region hay Fourier */
+    var dentro = reg.a < 0 && reg.b > 0;
+    ctx.strokeStyle = dentro ? "#f2cc60" : "rgba(242,204,96,.3)";
+    ctx.lineWidth = dentro ? 2.4 : 1.4;
+    ctx.beginPath(); ctx.moveTo(cs.x, 12); ctx.lineTo(cs.x, Hd - 12); ctx.stroke();
+    d.polos.forEach(function(p){
+      var q = XS(p);
+      ctx.strokeStyle = "#f85149"; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(q - 7, cs.y - 7); ctx.lineTo(q + 7, cs.y + 7);
+      ctx.moveTo(q + 7, cs.y - 7); ctx.lineTo(q - 7, cs.y + 7);
+      ctx.stroke();
+      ctx.fillStyle = "#f85149"; ctx.font = "600 10px system-ui, sans-serif";
+      ctx.fillText(n(p, 0), q - 4, cs.y + 22);
+    });
+    ctx.fillStyle = "#7ee787"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("la región", 12, 15);
+    ctx.fillStyle = dentro ? "#f2cc60" : "#6b7484";
+    ctx.fillText("eje jω", cs.x + 5, Hd - 14);
+
+    /* ---------------------------------------------- derecha: la senal */
+    var x0 = mitad + 30, x1 = Wd - 12, yc = Hd / 2, alto = Hd * 0.33;
+    function XT(t){ return x0 + (t + TM) / (2 * TM) * (x1 - x0); }
+    var mx = 0.3;
+    for(i = 0; i <= 400; i++) mx = Math.max(mx, Math.abs(x(-TM + 2 * TM * i / 400)));
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yc); ctx.lineTo(x1, yc);
+    ctx.moveTo(XT(0), yc - alto * 1.2); ctx.lineTo(XT(0), yc + alto * 1.2);
+    ctx.stroke();
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    var ant = null;
+    for(i = 0; i <= 900; i++){
+      var t = -TM + 2 * TM * i / 900, v = x(t);
+      var q2 = { x:XT(t), y:Math.max(yc - alto * 1.15, Math.min(yc + alto * 1.15, yc - v / mx * alto)) };
+      if(ant !== null && Math.abs(v - ant) > mx * 0.5) ctx.moveTo(q2.x, q2.y);
+      else if(i === 0) ctx.moveTo(q2.x, q2.y);
+      else ctx.lineTo(q2.x, q2.y);
+      ant = v;
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#58a6ff"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("x(t)", x0, 15);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("0", XT(0) - 3, yc + alto * 1.2 + 12);
+    ctx.fillText("t →", x1 - 20, yc + alto * 1.2 + 12);
+
+    /* tipo de senal */
+    var todosCausales = reg.causal.every(function(c){ return c; });
+    var ningunoCausal = reg.causal.every(function(c){ return !c; });
+    var tipo = todosCausales ? "causal" : (ningunoCausal ? "anticausal" : "bilateral");
+    /* crece si algun termino activo tiene exponente que no decae hacia su lado */
+    var crece = false;
+    for(k = 0; k < d.polos.length; k++){
+      if(reg.causal[k] && d.polos[k] > 0) crece = true;
+      if(!reg.causal[k] && d.polos[k] < 0) crece = true;
+    }
+
+    $("lpDatos").innerHTML =
+      "<span>X(s)</span><b>" + d.n + "</b>" +
+      '<span style="color:#f85149">Polos</span><b>' +
+        d.polos.map(function(p){ return "s = " + n(p, 0); }).join("   ·   ") + "</b>" +
+      '<hr><span style="color:#7ee787">Región de convergencia</span><b>' + reg.n + "</b>" +
+      "<span>Tipo de señal</span><b>" + tipo + (crece ? "   ·   crece sin límite" : "   ·   se apaga") +
+        "</b>" +
+      '<hr><span style="color:#f2cc60">¿Contiene el eje jω?</span><b>' +
+        (dentro ? "sí" : "no") + "</b>" +
+      "<span>¿Tiene Fourier?   ·   ¿es estable?</span><b>" +
+        (dentro ? "sí a las dos" : "no a las dos") + "</b>";
+
+    $("lpNota").innerHTML = reg.t + " Fijate que los polos <b>no se movieron</b>: la expresión algebraica " +
+      "es la misma en los tres casos. Lo único que cambia es la región, y con ella la señal. Por eso una " +
+      "transformada de Laplace sin su región de convergencia está incompleta.";
+  }
+
+  ["lpF", "lpR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
