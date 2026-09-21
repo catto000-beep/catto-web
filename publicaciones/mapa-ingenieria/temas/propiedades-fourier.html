@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Propiedades de la transformada · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="Las propiedades de la transformada de Fourier —linealidad, desplazamiento, escalamiento, modulación, derivación y convolución— con su lectura en los dos dominios, el compromiso entre duración y ancho de banda, y la dualidad, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/propiedades-fourier">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 24 de 34</div>
+    <h1>Propiedades de la transformada</h1>
+    <p class="lead">Cada propiedad dice qué le pasa al espectro cuando se toca la señal. Con ellas se resuelven problemas sin volver a integrar nunca, y sale la regla del tiempo de subida que se usa todos los días en el laboratorio.</p>
+    <div class="chips">
+      <span class="chip hi">Propiedades</span>
+      <span class="chip">Desplazamiento</span>
+      <span class="chip">Escalamiento</span>
+      <span class="chip">Modulación</span>
+      <span class="chip">Dualidad</span>
+    </div>
+    <hr class="rule">
+
+    <section id="tabla">
+      <h2><span class="n">01</span>La tabla que hay que saber leer</h2>
+      <p>Las propiedades de la transformada no son curiosidades para memorizar: cada una dice qué le pasa al
+      espectro cuando se toca la señal, y al revés. Son las que permiten resolver problemas sin volver a
+      integrar nunca.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>En el tiempo</th><th>En la frecuencia</th><th>Qué significa</th></tr></thead>
+        <tbody>
+          <tr><td>\( a\,x(t) + b\,y(t) \)</td><td>\( a\,X(j\omega) + b\,Y(j\omega) \)</td>
+              <td>Linealidad: todo se puede descomponer</td></tr>
+          <tr><td>\( x(t - t_0) \)</td><td>\( X(j\omega)\,e^{-j\omega t_0} \)</td>
+              <td><b>El módulo no cambia</b>; sólo se agrega fase lineal</td></tr>
+          <tr><td>\( x(t)\,e^{j\omega_0 t} \)</td><td>\( X\big(j(\omega - \omega_0)\big) \)</td>
+              <td>Modulación: el espectro se corre. Es la radio</td></tr>
+          <tr><td>\( x(at) \)</td><td>\( \dfrac{1}{|a|}X\!\left(\dfrac{j\omega}{a}\right) \)</td>
+              <td>Comprimir en el tiempo <b>ensancha</b> en frecuencia</td></tr>
+          <tr><td>\( \dfrac{dx}{dt} \)</td><td>\( j\omega\,X(j\omega) \)</td>
+              <td>Derivar realza lo agudo, con +90° de fase</td></tr>
+          <tr><td>\( \displaystyle\int_{-\infty}^{t} x\,d\tau \)</td>
+              <td>\( \dfrac{X(j\omega)}{j\omega} + \pi X(0)\delta(\omega) \)</td>
+              <td>Integrar atenúa lo agudo</td></tr>
+          <tr><td>\( x(t) * h(t) \)</td><td>\( X(j\omega)\,H(j\omega) \)</td>
+              <td><b>La convolución se vuelve producto</b></td></tr>
+          <tr><td>\( x(t)\,h(t) \)</td><td>\( \dfrac{1}{2\pi}X * H \)</td>
+              <td>Multiplicar en el tiempo convoluciona espectros</td></tr>
+          <tr><td>\( x^{*}(t) \)</td><td>\( X^{*}(-j\omega) \)</td>
+              <td>De ahí la simetría hermítica de las señales reales</td></tr>
+        </tbody>
+      </table></div>
+      <p>Las dos filas en negrita son las que más se usan. La del desplazamiento explica por qué un retardo no
+      se oye: el oído percibe el módulo del espectro, no la fase. Y la de la convolución es la que convierte
+      todo el análisis de circuitos en multiplicar números.</p>
+    </section>
+
+    <section id="lab">
+      <h2><span class="n">02</span>Ver las dos caras a la vez</h2>
+      <p>La manera de que estas propiedades dejen de ser una tabla es mirar los dos dominios al mismo tiempo
+      mientras se toca la señal. El laboratorio hace eso: a la izquierda \( x(t) \), a la derecha su módulo y
+      su fase, y arriba la señal original en gris para comparar.</p>
+      <div class="lw" id="pf">
+        <div class="lt">Laboratorio · una operación, dos dominios</div>
+        <p class="ls">Elegí la operación y movés su parámetro. Mirá cuál de los dos gráficos de la derecha cambia y cuál se queda igual.</p>
+        <div class="fila">
+          <select id="pfF">
+            <option value="nada">sin tocar nada</option>
+            <option value="desp">desplazar en el tiempo</option>
+            <option value="esc">escalar en el tiempo</option>
+            <option value="mod">modular · multiplicar por un coseno</option>
+            <option value="der">derivar</option>
+            <option value="int">integrar</option>
+            <option value="sum">sumarle una senoidal</option>
+          </select>
+          <select id="pfS">
+            <option value="pulso">señal: pulso</option>
+            <option value="gauss">señal: campana</option>
+            <option value="expo">señal: exponencial decreciente</option>
+            <option value="dos">señal: dos tonos</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="pfP">Parámetro = <b id="pfPv">1,0</b></label>
+          <input type="range" id="pfP" min="-2" max="2" step="0.05" value="1">
+        </div>
+        <canvas id="pfLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.5/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="pfDatos" style="margin-top:8px"></div>
+        <div class="nota" id="pfNota"></div>
+      </div>
+    </section>
+
+    <section id="escalamiento">
+      <h2><span class="n">03</span>El compromiso que no se puede esquivar</h2>
+      <p>La propiedad del escalamiento tiene una consecuencia que aparece en todos lados. Si
+      \( x(at) \) tiene espectro \( X(j\omega/a)/|a| \), entonces <b>acortar una señal la vuelve más ancha en
+      frecuencia</b>, y en la misma proporción. El producto entre duración y ancho de banda es una
+      constante:</p>
+      <div class="form">
+        \[ \Delta t \cdot \Delta f \ge \text{constante} \]
+        <span class="cap">No hay manera de tener una señal corta y angosta a la vez. Es el mismo principio que en física se conoce como relación de incertidumbre.</span>
+      </div>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Situación</th><th>Consecuencia</th></tr></thead>
+        <tbody>
+          <tr><td>Un pulso de 1 μs</td><td>Ocupa del orden de 1 MHz de ancho de banda</td></tr>
+          <tr><td>Un canal de radio angosto</td><td>No puede transmitir pulsos rápidos</td></tr>
+          <tr><td>Duplicar la velocidad de un enlace</td><td>Requiere el doble de ancho de banda</td></tr>
+          <tr><td>Un osciloscopio de 100 MHz</td><td>No puede mostrar un flanco de menos de 3,5 ns</td></tr>
+        </tbody>
+      </table></div>
+      <p>La última fila es la regla práctica más usada del laboratorio: el tiempo de subida de un instrumento
+      y su ancho de banda cumplen \( t_r \approx 0{,}35/B \). Si el flanco que se quiere medir es más rápido
+      que eso, lo que se ve en la pantalla es el osciloscopio, no la señal.</p>
+    </section>
+
+    <section id="modulacion">
+      <h2><span class="n">04</span>Modulación: correr el espectro</h2>
+      <p>Multiplicar por una exponencial compleja desplaza el espectro entero. Con un coseno real, que son dos
+      exponenciales, el espectro se parte en dos copias:</p>
+      <div class="form">
+        \[ x(t)\cos(\omega_0 t) \;\longleftrightarrow\;
+           \tfrac12 X\big(j(\omega - \omega_0)\big) + \tfrac12 X\big(j(\omega + \omega_0)\big) \]
+        <span class="cap">Dos réplicas a media amplitud, una a cada lado de la portadora. Eso es exactamente la modulación de amplitud.</span>
+      </div>
+      <p>De acá salen las <b>bandas laterales</b>: si la señal moduladora llega hasta 5 kHz, la señal modulada
+      ocupa 10 kHz alrededor de la portadora. Y explica algo que ya se había anticipado al hablar de sistemas
+      LTI: para correr una señal en frecuencia hace falta un multiplicador, porque un sistema LTI no puede
+      hacerlo.</p>
+      <div class="box key"><div class="bt">Dualidad: todo se puede leer al revés</div>
+        <p>La transformada y su inversa se parecen tanto que cada propiedad tiene su pareja. Si un pulso
+        rectangular en el tiempo da un sinc en frecuencia, entonces un sinc en el tiempo da un pulso
+        rectangular en frecuencia —el filtro ideal—. Y si desplazar en el tiempo agrega fase lineal,
+        desplazar en frecuencia multiplica por una exponencial en el tiempo. Aprendida una propiedad, se
+        obtiene la otra gratis.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · El retardo no cambia el módulo</div>
+        <p>Capturar un pulso y el mismo pulso retrasado 1 ms, y comparar las dos transformadas con la FFT del
+        osciloscopio. Verificar que el módulo es idéntico y que la fase difiere en una recta de pendiente
+        \( -t_0 \).</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Medir el tiempo de subida del instrumento</div>
+        <p>Inyectar un flanco mucho más rápido que el ancho de banda del osciloscopio y medir el tiempo de
+        subida que muestra. Comparar con \( 0{,}35/B \) y concluir cuál de los dos se está
+        midiendo.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Las bandas laterales</div>
+        <p>Modular una portadora de 1 MHz con un tono de 10 kHz y observar el espectro. Identificar la
+        portadora y las dos bandas laterales, y verificar que están a media amplitud.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Creer que un retardo cambia el espectro.</b> Cambia la fase, no el módulo.</li>
+        <li><b>Confundir el sentido del escalamiento.</b> Comprimir en el tiempo ensancha en
+        frecuencia.</li>
+        <li><b>Olvidar el \( 1/|a| \)</b> del escalamiento: el área del espectro tiene que
+        conservarse.</li>
+        <li><b>Mezclar convolución con multiplicación.</b> Convolución en un dominio es producto en el
+        otro.</li>
+        <li><b>Pedir una señal corta y de banda angosta.</b> No existe; el producto está
+        acotado.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué le hace un retardo al espectro?</summary>
+        <div class="a"><p>Multiplica por \( e^{-j\omega t_0} \): agrega fase lineal y deja el módulo
+        intacto.</p></div></details>
+      <details class="q"><summary>Si se comprime una señal a la mitad, ¿qué pasa con su ancho de banda?</summary>
+        <div class="a"><p>Se duplica, y la amplitud del espectro se reduce a la mitad.</p></div></details>
+      <details class="q"><summary>¿Qué ancho ocupa una señal de 5 kHz modulada en amplitud?</summary>
+        <div class="a"><p>10 kHz: dos bandas laterales de 5 kHz cada una, alrededor de la
+        portadora.</p></div></details>
+      <details class="q"><summary>¿Cuál es el tiempo de subida mínimo de un osciloscopio de 100 MHz?</summary>
+        <div class="a"><p>\( 0{,}35/100\text{ MHz} = 3{,}5 \) ns. Un flanco más rápido se ve
+        deformado.</p></div></details>
+      <details class="q"><summary>¿En qué se convierte la convolución al pasar a frecuencia?</summary>
+        <div class="a"><p>En un producto. Por eso poner filtros en cascada es multiplicar
+        respuestas.</p></div></details>
+      <details class="q"><summary>¿Qué dice la dualidad?</summary>
+        <div class="a"><p>Que cada propiedad tiene su pareja intercambiando los dominios: un pulso da un sinc,
+        y un sinc da un pulso.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim y Alan S. Willsky.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1998.</span>
+          <span class="pq">El capítulo 4, con la tabla completa de propiedades y sus demostraciones.</span></li>
+        <li><span class="au">Ronald N. Bracewell.</span> <span class="ti">The Fourier Transform and Its Applications</span>.
+          <span class="ed">3.ª ed., McGraw-Hill, 1999.</span>
+          <span class="pq">Cada propiedad ilustrada con el par de gráficos correspondiente. Insuperable para la intuición.</span></li>
+        <li><span class="au">Leon W. Couch.</span> <span class="ti">Sistemas de comunicación digitales y analógicos</span>.
+          <span class="ed">7.ª ed., Pearson, 2008.</span>
+          <span class="pq">La modulación como aplicación directa del desplazamiento en frecuencia.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/series-fourier">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Series e integrales de Fourier</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/espectros">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Espectros</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Propiedades de la transformada»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Una operacion, dos dominios. A la izquierda la senal, a la derecha el modulo
+   y la fase de su transformada, calculada con una DFT directa. La senal
+   original queda en gris para comparar: asi se ve de un golpe cual de los dos
+   graficos cambio y cual se quedo igual. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pfLienzo"), ctx = cv.getContext("2d");
+  var N = 256, TM = 8;                 /* muestras y ventana temporal en segundos */
+  var KMAX = 40;                       /* cuantas frecuencias se dibujan */
+
+  var S = {
+    pulso: { n:"pulso", f:function(t){ return (t >= -0.6 && t <= 0.6) ? 1 : 0; } },
+    gauss: { n:"campana", f:function(t){ return Math.exp(-t * t / 0.35); } },
+    expo:  { n:"exponencial", f:function(t){ return t < 0 ? 0 : Math.exp(-1.6 * t); } },
+    dos:   { n:"dos tonos", f:function(t){
+               return Math.exp(-t * t / 6) * (Math.cos(2 * Math.PI * 1.2 * t) +
+                                              0.6 * Math.cos(2 * Math.PI * 3.1 * t)); } }
+  };
+
+  var OP = {
+    nada: { n:"sin tocar nada", min:-2, max:2, def:1, usa:false,
+            g:function(f){ return f; },
+            t:"La señal y su espectro, sin operaciones. Cambiá la señal del segundo selector para " +
+              "comparar formas." },
+    desp: { n:"desplazar t₀", min:-2.5, max:2.5, def:1, usa:true,
+            g:function(f, p){ return function(t){ return f(t - p); }; },
+            t:"Lo importante está en lo que <b>no</b> cambia: el módulo del espectro queda idéntico. Lo " +
+              "único que se mueve es la fase, que se inclina en proporción al retardo. Por eso un retardo " +
+              "no se escucha." },
+    esc:  { n:"escalar por a", min:0.3, max:3, def:1, usa:true,
+            g:function(f, p){ return function(t){ return f(p * t); }; },
+            t:"El compromiso de siempre: al comprimir la señal en el tiempo, el espectro se <b>ensancha</b> " +
+              "en la misma proporción. No hay forma de tener las dos cosas angostas a la vez." },
+    mod:  { n:"modular a f₀", min:0.5, max:6, def:3, usa:true,
+            g:function(f, p){ return function(t){ return f(t) * Math.cos(2 * Math.PI * p * t); }; },
+            t:"El espectro se parte en dos copias a media amplitud, una a cada lado de la portadora. Eso es " +
+              "la modulación de amplitud, y las dos copias son las bandas laterales." },
+    der:  { n:"derivar", min:-2, max:2, def:1, usa:false,
+            /* el paso tiene que ser el del muestreo: con uno mucho mas chico,
+               sobre una senal con flancos la diferencia da cero casi siempre */
+            g:function(f){ var h = TM / N;
+              return function(t){ return (f(t + h) - f(t - h)) / (2 * h) / 8; }; },
+            t:"Derivar multiplica el espectro por jω: realza las frecuencias altas y agrega 90° de fase. " +
+              "Un capacitor hace exactamente esto." },
+    int:  { n:"integrar", min:-2, max:2, def:1, usa:false,
+            g:function(f){
+              return function(t){
+                var s = 0, M = 400, a = -TM / 2, h = (t - a) / M, i;
+                if (h <= 0) return 0;
+                for(i = 0; i < M; i++) s += f(a + h * (i + 0.5)) * h;
+                return s;
+              }; },
+            t:"Integrar divide por jω: atenua lo agudo y suaviza. Es lo que hace un pasabajos con un " +
+              "capacitor a la salida." },
+    sum:  { n:"sumar un tono de f₀", min:0.5, max:8, def:4, usa:true,
+            g:function(f, p){ return function(t){ return f(t) + 0.45 * Math.cos(2 * Math.PI * p * t); }; },
+            t:"Por linealidad, sumar una senoidal agrega una raya en su frecuencia sin tocar el resto del " +
+              "espectro. Cada parte viaja por su lado." }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+
+  /* DFT directa: con 256 muestras y 40 frecuencias alcanza y sobra */
+  function dft(muestras){
+    var re = [], im = [], k, i;
+    for(k = 0; k <= KMAX; k++){
+      var sr = 0, si = 0;
+      for(i = 0; i < N; i++){
+        var w = 2 * Math.PI * k * i / N;
+        sr += muestras[i] * Math.cos(w);
+        si -= muestras[i] * Math.sin(w);
+      }
+      re.push(sr / N); im.push(si / N);
+    }
+    return { re:re, im:im };
+  }
+
+  function muestrear(f){
+    var m = [], i;
+    for(i = 0; i < N; i++) m.push(f(-TM / 2 + TM * i / N));
+    return m;
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var op = OP[$("pfF").value], sen = S[$("pfS").value];
+    var sl = $("pfP");
+    if(+sl.min !== op.min || +sl.max !== op.max){
+      sl.min = op.min; sl.max = op.max; sl.value = op.def;
+      sl.step = (op.max - op.min) / 100;
+    }
+    sl.disabled = !op.usa;
+    var p = parseFloat(sl.value);
+    $("pfPv").textContent = op.usa ? n(p, 2) : "—";
+
+    var base = sen.f, mod = op.g(base, p);
+    var mBase = muestrear(base), mMod = muestrear(mod);
+    var Fb = dft(mBase), Fm = dft(mMod);
+
+    var mitad = Wd / 2;
+    var x0 = 22, x1 = mitad - 14;
+    var yT = Hd * 0.5, altoT = Hd * 0.32;
+    var xa = mitad + 34, xb = Wd - 10;
+    var yA0 = 24, yA1 = Hd * 0.48, yB0 = Hd * 0.58, yB1 = Hd - 22;
+
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* ---------------------------------------------- izquierda: el tiempo */
+    var mxT = 0.5;
+    for(i = 0; i < N; i++) mxT = Math.max(mxT, Math.abs(mMod[i]), Math.abs(mBase[i]));
+    function XT(i2){ return x0 + i2 / (N - 1) * (x1 - x0); }
+    function YT(v){ return yT - v / mxT * altoT; }
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, yT); ctx.lineTo(x1, yT); ctx.stroke();
+    ctx.strokeStyle = "rgba(107,116,132,.45)"; ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    for(i = 0; i < N; i++){ var q = { x:XT(i), y:YT(mBase[i]) };
+      if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y); }
+    ctx.stroke();
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for(i = 0; i < N; i++){ var q2 = { x:XT(i), y:YT(mMod[i]) };
+      if(i === 0) ctx.moveTo(q2.x, q2.y); else ctx.lineTo(q2.x, q2.y); }
+    ctx.stroke();
+    ctx.fillStyle = "#8b93a3"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("x(t)", x0, 14);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("−" + (TM / 2), x0, yT + altoT + 14);
+    ctx.fillText("+" + (TM / 2), x1 - 14, yT + altoT + 14);
+
+    /* ------------------------------------------ derecha: modulo y fase */
+    var mxF = 1e-9;
+    for(k = 0; k <= KMAX; k++) mxF = Math.max(mxF, Math.hypot(Fm.re[k], Fm.im[k]),
+                                                   Math.hypot(Fb.re[k], Fb.im[k]));
+    function XF(k2){ return xa + k2 / KMAX * (xb - xa); }
+    function YM(v){ return yA1 - v / mxF * (yA1 - yA0); }
+    function YP(f){ return (yB0 + yB1) / 2 - f / 180 * ((yB1 - yB0) / 2); }
+
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(xa, yA0); ctx.lineTo(xa, yA1); ctx.lineTo(xb, yA1);
+    ctx.moveTo(xa, yB0); ctx.lineTo(xa, yB1); ctx.lineTo(xb, yB1);
+    ctx.moveTo(xa, (yB0 + yB1) / 2); ctx.lineTo(xb, (yB0 + yB1) / 2);
+    ctx.stroke();
+
+    /* el modulo de la original, tenue */
+    ctx.fillStyle = "rgba(107,116,132,.35)";
+    var anchoB = (xb - xa) / (KMAX + 1);
+    for(k = 0; k <= KMAX; k++){
+      var hb = Math.hypot(Fb.re[k], Fb.im[k]) / mxF * (yA1 - yA0);
+      ctx.fillRect(XF(k) - anchoB * 0.32, yA1 - hb, anchoB * 0.64, hb);
+    }
+    ctx.fillStyle = "#7ee787";
+    for(k = 0; k <= KMAX; k++){
+      var hm = Math.hypot(Fm.re[k], Fm.im[k]) / mxF * (yA1 - yA0);
+      ctx.fillRect(XF(k) - anchoB * 0.22, yA1 - hm, anchoB * 0.44, hm);
+    }
+    /* la fase, sólo donde hay algo que medir */
+    ctx.fillStyle = "#d2a8ff";
+    for(k = 1; k <= KMAX; k++){
+      var mm = Math.hypot(Fm.re[k], Fm.im[k]);
+      if(mm < mxF * 0.02) continue;
+      var fa = Math.atan2(Fm.im[k], Fm.re[k]) * 180 / Math.PI;
+      ctx.beginPath(); ctx.arc(XF(k), YP(fa), 2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = "#7ee787"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("|X(jω)|", mitad + 4, yA0 - 8);
+    ctx.fillStyle = "#d2a8ff"; ctx.fillText("fase", mitad + 4, yB0 - 4);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("+180°", mitad + 2, YP(180) + 8);
+    ctx.fillText("−180°", mitad + 2, YP(-180) - 2);
+    ctx.fillText("ω →", xb - 20, yB1 + 12);
+
+    /* --------------------------------------------------- los numeros */
+    /* cuanto cambio cada cosa respecto de la original */
+    var dm = 0, dfmax = 0, ancho = 0, anchoB2 = 0;
+    for(k = 0; k <= KMAX; k++){
+      var a = Math.hypot(Fb.re[k], Fb.im[k]), b = Math.hypot(Fm.re[k], Fm.im[k]);
+      dm = Math.max(dm, Math.abs(a - b));
+      if(b > mxF * 0.1) ancho = k;
+      if(a > mxF * 0.1) anchoB2 = k;
+      if(a > mxF * 0.05 && b > mxF * 0.05){
+        var d1 = Math.atan2(Fb.im[k], Fb.re[k]), d2 = Math.atan2(Fm.im[k], Fm.re[k]);
+        var dd = Math.abs((d2 - d1) * 180 / Math.PI) % 360;
+        dfmax = Math.max(dfmax, Math.min(dd, 360 - dd));
+      }
+    }
+    var igualMod = dm < mxF * 0.02;
+
+    $("pfDatos").innerHTML =
+      "<span>Operación</span><b>" + op.n + (op.usa ? " = " + n(p, 2) : "") +
+        "   ·   sobre " + sen.n + "</b>" +
+      '<hr><span style="color:#7ee787">¿Cambió el módulo del espectro?</span><b>' +
+        (igualMod ? "no, es el mismo" : "sí") + "</b>" +
+      '<span style="color:#d2a8ff">Máximo cambio de fase</span><b>' + n(dfmax, 0) + "°</b>" +
+      "<hr><span>Ancho del espectro   ·   antes y ahora</span><b>" +
+        anchoB2 + "   →   " + ancho + " rayas</b>";
+
+    var txt = op.t;
+    if($("pfF").value === "desp")
+      txt += " Acá el máximo cambio de fase llega a " + n(dfmax, 0) + "° y el módulo no se movió.";
+    if($("pfF").value === "esc" && anchoB2 > 0)
+      txt += " El espectro pasó de " + anchoB2 + " a " + ancho + " rayas de ancho, mientras la señal " +
+             (p > 1 ? "se acortó" : "se estiró") + " en el tiempo.";
+    $("pfNota").innerHTML = txt;
+  }
+
+  ["pfF", "pfS", "pfP"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
