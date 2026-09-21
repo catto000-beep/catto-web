@@ -98,8 +98,44 @@
     'Africa/Nairobi': 'KE', 'Africa/Casablanca': 'MA', 'Africa/Algiers': 'DZ',
     'Africa/Tunis': 'TN',
     'Australia/Sydney': 'AU', 'Australia/Melbourne': 'AU', 'Australia/Brisbane': 'AU',
-    'Australia/Perth': 'AU', 'Australia/Adelaide': 'AU',
-    'Pacific/Auckland': 'NZ'
+    'Australia/Perth': 'AU', 'Australia/Adelaide': 'AU', 'Australia/Hobart': 'AU',
+    'Australia/Darwin': 'AU',
+    'Pacific/Auckland': 'NZ',
+    /* Segunda tanda: las zonas que faltaban de países con gente. La lista IANA
+       tiene 418 entradas, pero muchas son alias históricos o islas sin
+       habitantes; éstas son las que pueden aparecer de verdad. */
+    'America/Santarem': 'BR', 'America/Araguaina': 'BR', 'America/Maceio': 'BR',
+    'America/Campo_Grande': 'BR', 'America/Noronha': 'BR', 'America/Boa_Vista': 'BR',
+    'America/Rio_Branco': 'BR', 'America/Eirunepe': 'BR', 'America/Santa_Isabel': 'MX',
+    'America/Bahia_Banderas': 'MX', 'America/Matamoros': 'MX', 'America/Ojinaga': 'MX',
+    'America/Salta': 'AR', 'America/Tucuman': 'AR', 'America/San_Juan': 'AR',
+    'America/San_Luis': 'AR', 'America/La_Rioja': 'AR', 'America/Ushuaia': 'AR',
+    'America/Montreal': 'CA', 'America/Moncton': 'CA', 'America/Whitehorse': 'CA',
+    'America/Yellowknife': 'CA', 'America/Iqaluit': 'CA',
+    'America/Belize': 'BZ', 'America/Barbados': 'BB', 'America/Jamaica': 'JM',
+    'America/Nassau': 'BS', 'America/Port_of_Spain': 'TT', 'America/Curacao': 'CW',
+    'America/Aruba': 'AW', 'America/Martinique': 'MQ', 'America/Guadeloupe': 'GP',
+    'America/Cayenne': 'GF', 'America/Nuuk': 'GL', 'America/Godthab': 'GL',
+    'America/Punta_Arenas': 'CL',
+    'Europe/Luxembourg': 'LU', 'Europe/Malta': 'MT', 'Europe/Monaco': 'MC',
+    'Europe/Andorra': 'AD', 'Europe/Tirane': 'AL', 'Europe/Skopje': 'MK',
+    'Europe/Sarajevo': 'BA', 'Europe/Podgorica': 'ME', 'Europe/Chisinau': 'MD',
+    'Europe/Minsk': 'BY', 'Atlantic/Reykjavik': 'IS', 'Europe/Nicosia': 'CY',
+    'Asia/Kathmandu': 'NP', 'Asia/Colombo': 'LK', 'Asia/Kuala_Lumpur': 'MY',
+    'Asia/Yangon': 'MM', 'Asia/Baku': 'AZ', 'Asia/Tbilisi': 'GE',
+    'Asia/Yerevan': 'AM', 'Asia/Tashkent': 'UZ', 'Asia/Almaty': 'KZ',
+    'Asia/Tehran': 'IR', 'Asia/Baghdad': 'IQ', 'Asia/Amman': 'JO',
+    'Asia/Beirut': 'LB', 'Asia/Damascus': 'SY', 'Asia/Kuwait': 'KW',
+    'Asia/Qatar': 'QA', 'Asia/Bahrain': 'BH', 'Asia/Muscat': 'OM',
+    'Asia/Kabul': 'AF', 'Asia/Ulaanbaatar': 'MN', 'Asia/Phnom_Penh': 'KH',
+    'Asia/Vientiane': 'LA', 'Asia/Macau': 'MO', 'Asia/Brunei': 'BN',
+    'Africa/Accra': 'GH', 'Africa/Abidjan': 'CI', 'Africa/Dakar': 'SN',
+    'Africa/Addis_Ababa': 'ET', 'Africa/Kampala': 'UG', 'Africa/Dar_es_Salaam': 'TZ',
+    'Africa/Luanda': 'AO', 'Africa/Maputo': 'MZ', 'Africa/Harare': 'ZW',
+    'Africa/Lusaka': 'ZM', 'Africa/Kinshasa': 'CD', 'Africa/Khartoum': 'SD',
+    'Africa/Tripoli': 'LY', 'Africa/Bamako': 'ML', 'Africa/Douala': 'CM',
+    'Pacific/Fiji': 'FJ', 'Pacific/Guam': 'GU', 'Pacific/Port_Moresby': 'PG',
+    'Indian/Maldives': 'MV', 'Indian/Mauritius': 'MU'
   };
 
   var NOMBRES = {
@@ -126,6 +162,10 @@
       var t = z.split('/');
       if (t.length > 2 && ZONAS[t[0] + '/' + t[1]]) return ZONAS[t[0] + '/' + t[1]];
     }
+    /* Respaldo por idioma, pero sólo si trae el país explícito. A propósito no
+       se recorre navigator.languages: un navegador argentino puede listar
+       "es-ES" más abajo, y eso daría España. Antes que un dato inventado,
+       ninguno: los que queden sin identificar se muestran como tales. */
     var l = (navigator.language || '').split('-');
     if (l.length > 1 && /^[A-Za-z]{2}$/.test(l[l.length - 1])) {
       return l[l.length - 1].toUpperCase();
@@ -223,19 +263,23 @@
     }
   }
 
-  /* Los países presentes, del más numeroso al menos. Los que no se
-     pudieron determinar quedan afuera de la lista pero siguen contando
-     en el total. */
+  /* Los países presentes, del más numeroso al menos, y aparte cuántos no se
+     pudieron ubicar. Ésos se muestran igual, con un signo de pregunta: si no
+     aparecieran, el desglose no sumaría el total y quedaría la duda de dónde
+     está el que falta. Se quedan sin país los que tienen una zona horaria
+     fuera de la tabla y un idioma sin país, y también quien todavía tenga en
+     caché una versión del script anterior a esta función. */
   function porPais() {
-    var cuenta = Object.create(null), k;
+    var cuenta = Object.create(null), sinDato = 0, k;
     for (k in presentes) {
       var p = presentes[k].p;
       if (p) cuenta[p] = (cuenta[p] || 0) + 1;
+      else sinDato++;
     }
     var lista = [];
     for (k in cuenta) lista.push([k, cuenta[k]]);
     lista.sort(function (a, b) { return b[1] - a[1] || (a[0] < b[0] ? -1 : 1); });
-    return lista;
+    return { lista: lista, sinDato: sinDato };
   }
 
   function pintar() {
@@ -250,7 +294,8 @@
         medirBanderas(pais);
         pais.classList.toggle('codigo', !hayBanderas);
       }
-      var lista = porPais(), partes = [], detalle = [], i, sobran = 0;
+      var res = porPais(), lista = res.lista;
+      var partes = [], detalle = [], i, sobran = 0;
       for (i = 0; i < lista.length; i++) {
         if (i < TOPE) {
           partes.push('<span class="online-pais-uno"><i>' + marca(lista[i][0]) +
@@ -261,6 +306,11 @@
         detalle.push(lista[i][1] + ' de ' + nombre(lista[i][0]));
       }
       if (sobran) partes.push('<span class="online-pais-uno">+' + sobran + '</span>');
+      if (res.sinDato) {
+        partes.push('<span class="online-pais-uno sindato"><i>?</i><b>' +
+                    res.sinDato + '</b></span>');
+        detalle.push(res.sinDato + ' sin ubicar');
+      }
       if (pais) {
         pais.innerHTML = partes.join('');
         pais.classList.toggle('hay', partes.length > 0);
