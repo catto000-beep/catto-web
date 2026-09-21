@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformaciones de la variable independiente · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="Desplazamiento, reflexión y escalamiento del eje del tiempo, el orden correcto en x(at+b), el método de los puntos notables, y el diezmado y la interpolación en tiempo discreto, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/transformaciones-variable">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 14 de 34</div>
+    <h1>Transformaciones de la variable independiente</h1>
+    <p class="lead">Tres operaciones y nada más: correr, espejar y estirar. El problema aparece cuando se combinan, porque el desplazamiento de x(at+b) no es b sino b/a, y ahí se equivoca todo el mundo alguna vez.</p>
+    <div class="chips">
+      <span class="chip hi">Desplazamiento</span>
+      <span class="chip">Reflexión</span>
+      <span class="chip">Escalamiento</span>
+      <span class="chip">Puntos notables</span>
+      <span class="chip">Diezmado</span>
+    </div>
+    <hr class="rule">
+
+    <section id="tres">
+      <h2><span class="n">01</span>Tres operaciones y nada más</h2>
+      <p>Todo lo que se le puede hacer al eje del tiempo de una señal se arma con tres movimientos:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operación</th><th>Expresión</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td>Desplazamiento</td><td>\( x(t - t_0) \)</td>
+              <td>Con \( t_0 \gt 0 \) corre hacia la <b>derecha</b>: es un retardo</td></tr>
+          <tr><td>Reflexión</td><td>\( x(-t) \)</td>
+              <td>Espeja respecto del eje vertical: el futuro pasa a ser pasado</td></tr>
+          <tr><td>Escalamiento</td><td>\( x(at) \)</td>
+              <td>Con \( |a| \gt 1 \) <b>comprime</b>; con \( |a| \lt 1 \), expande</td></tr>
+        </tbody>
+      </table></div>
+      <p>Las dos primeras filas traen su propia trampa de signos. Que \( x(t - t_0) \) corra hacia la derecha
+      parece al revés, pero se entiende pensando en dónde ocurre ahora lo que antes ocurría en cero: hace
+      falta \( t = t_0 \) para que el argumento valga cero. Y en el escalamiento pasa lo mismo:
+      multiplicar el argumento por 2 <b>acorta</b> la señal a la mitad, porque el argumento llega antes a
+      cada valor.</p>
+    </section>
+
+    <section id="combinada">
+      <h2><span class="n">02</span>La combinada, que es donde todos se equivocan</h2>
+      <p>Cuando aparecen juntas, \( y(t) = x(at + b) \), el orden importa y el desplazamiento <b>no</b> es
+      \( b \). Sacando \( a \) de factor común queda a la vista:</p>
+      <div class="form">
+        \[ x(at + b) = x\!\left(a\left(t + \frac{b}{a}\right)\right) \]
+        <span class="cap">Primero se desplaza \( b/a \) —no \( b \)— y después se escala por \( a \). Confundir los dos es el error más repetido de la materia.</span>
+      </div>
+      <p>Hay un método que no falla nunca y que evita tener que recordar el orden: <b>seguir los puntos
+      notables</b>. Si la señal original tiene un quiebre, un salto o un pico en \( t = t_1 \), ese mismo
+      rasgo aparece en la transformada donde el argumento valga \( t_1 \):</p>
+      <div class="form">
+        \[ a\,t + b = t_1 \;\Longrightarrow\; t = \frac{t_1 - b}{a} \]
+      </div>
+      <p>Con dos o tres puntos notables mapeados ya queda determinada toda la señal, sin discusiones de orden
+      ni de signos. Es lo que hace el laboratorio: muestra a dónde va a parar cada quiebre.</p>
+      <div class="lw" id="tv">
+        <div class="lt">Laboratorio · a dónde va a parar cada punto</div>
+        <p class="ls">Arriba la señal original con sus tres puntos notables; abajo, \( x(at+b) \) con los mismos puntos mapeados. Movés \( a \) y \( b \) y mirás qué le pasa a cada uno.</p>
+        <div class="fila">
+          <label for="tvA">a = <b id="tvAv">1,0</b></label>
+          <input type="range" id="tvA" min="-3" max="3" step="0.1" value="1">
+        </div>
+        <div class="fila">
+          <label for="tvB">b = <b id="tvBv">0,0</b></label>
+          <input type="range" id="tvB" min="-3" max="3" step="0.1" value="0">
+        </div>
+        <div class="fila">
+          <label class="chk"><input type="checkbox" id="tvP"> Ver el paso intermedio</label>
+        </div>
+        <canvas id="tvLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="tvDatos" style="margin-top:8px"></div>
+        <div class="nota" id="tvNota"></div>
+      </div>
+    </section>
+
+    <section id="discreto">
+      <h2><span class="n">03</span>En tiempo discreto, el escalamiento es otra cosa</h2>
+      <p>El desplazamiento y la reflexión funcionan igual: \( x[n - n_0] \) y \( x[-n] \) no tienen
+      sorpresas, salvo que \( n_0 \) debe ser entero. El escalamiento, en cambio, cambia de naturaleza.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operación</th><th>Nombre</th><th>Qué pasa</th></tr></thead>
+        <tbody>
+          <tr><td>\( x[Mn] \), \( M \) entero</td><td><b>Diezmado</b></td>
+              <td>Se descartan muestras. <b>Se pierde información</b>: no se puede deshacer</td></tr>
+          <tr><td>\( x[n/L] \), \( L \) entero</td><td><b>Interpolación</b></td>
+              <td>Aparecen huecos que hay que rellenar: no está definida si \( n/L \) no es entero</td></tr>
+        </tbody>
+      </table></div>
+      <p>La diferencia con el caso continuo es de fondo. Comprimir una señal continua es reversible: se la
+      expande de vuelta y queda igual. Diezmar una secuencia <b>tira muestras al tacho</b>, y salvo que la
+      señal estuviera sobremuestreada, lo que se perdió no vuelve. Por eso en procesamiento digital el
+      diezmado siempre va precedido de un filtro antialias, y la interpolación seguida de uno de
+      reconstrucción.</p>
+      <div class="box key"><div class="bt">Cambiar la frecuencia de muestreo</div>
+        <p>Pasar de 48 kHz a 44,1 kHz —de audio profesional a disco compacto— es multiplicar por 147/160. Se
+        hace interpolando por 147 y diezmando por 160, con un filtro en el medio. Toda la maquinaria de
+        conversión de frecuencia de muestreo es esta transformación, aplicada con cuidado.</p></div>
+    </section>
+
+    <section id="usos">
+      <h2><span class="n">04</span>Dónde aparece cada una</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Transformación</th><th>En un circuito o sistema</th></tr></thead>
+        <tbody>
+          <tr><td>\( x(t - t_0) \)</td><td>Una línea de retardo, un eco, la propagación por un cable</td></tr>
+          <tr><td>\( x(t) + \alpha\,x(t - t_0) \)</td><td>Un eco simple, y también la interferencia por multitrayecto</td></tr>
+          <tr><td>\( x(-t) \)</td><td>La convolución y la correlación, donde una señal se refleja antes de deslizarse</td></tr>
+          <tr><td>\( x(at) \)</td><td>Cambiar la velocidad de reproducción, o el corrimiento Doppler</td></tr>
+          <tr><td>\( x[Mn] \)</td><td>Bajar la frecuencia de muestreo de un flujo digital</td></tr>
+        </tbody>
+      </table></div>
+      <p>La tercera fila es la que más se va a usar de acá en adelante. La
+      convolución se define con
+      \( h(t - \tau) \), que es una reflexión seguida de un desplazamiento, y entender bien esas dos
+      operaciones es lo que hace que la integral de convolución deje de ser una fórmula opaca.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Los puntos notables, a mano</div>
+        <p>Dada una señal con quiebres en \( t = 0 \), \( 1 \) y \( 1{,}5 \), dibujar \( x(2t + 3) \),
+        \( x(-t + 1) \) y \( x(-2t - 1) \) mapeando cada quiebre con \( t = (t_1 - b)/a \). Verificar los tres
+        con el laboratorio.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · El eco</div>
+        <p>Armar con dos amplificadores operacionales y una línea de retardo digital un sistema
+        \( y(t) = x(t) + 0{,}5\,x(t - 20\text{ ms}) \). Observar el efecto sobre un tren de pulsos y sobre una
+        senoidal, y explicar por qué en frecuencia aparecen nulos periódicos.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Diezmar sin filtrar</div>
+        <p>Muestrear una senoidal de 3 kHz a 40 kHz y después quedarse con una de cada ocho muestras.
+        Comparar con lo que se obtiene filtrando antes a 2,5 kHz. Explicar la diferencia.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Desplazar \( b \) en lugar de \( b/a \).</b> El error más frecuente de todos. Los puntos
+        notables lo evitan.</li>
+        <li><b>Invertir el sentido del desplazamiento.</b> \( x(t - t_0) \) con \( t_0 \) positivo va hacia la
+        derecha.</li>
+        <li><b>Creer que \( x(2t) \) estira la señal.</b> La comprime: llega antes a cada valor.</li>
+        <li><b>Hacer las operaciones en cualquier orden.</b> Escalar y después desplazar no da lo mismo que al
+        revés, salvo que se corrija el desplazamiento.</li>
+        <li><b>Diezmar sin filtrar primero.</b> Lo que se pierde no vuelve, y encima aparece
+        aliasing.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Para qué lado corre \( x(t - 3) \)?</summary>
+        <div class="a"><p>Hacia la derecha: es un retardo de 3 unidades.</p></div></details>
+      <details class="q"><summary>Si \( x(t) \) tiene un quiebre en \( t = 2 \), ¿dónde lo tiene \( x(2t + 1) \)?</summary>
+        <div class="a"><p>Donde \( 2t + 1 = 2 \), es decir en \( t = 0{,}5 \).</p></div></details>
+      <details class="q"><summary>¿Cuál es el desplazamiento efectivo en \( x(3t + 6) \)?</summary>
+        <div class="a"><p>\( b/a = 2 \) hacia la izquierda, no 6. Después se comprime por 3.</p></div></details>
+      <details class="q"><summary>¿Qué le hace \( x(-2t) \) a la señal?</summary>
+        <div class="a"><p>La refleja y la comprime a la mitad. El signo hace la reflexión; el módulo, el
+        escalamiento.</p></div></details>
+      <details class="q"><summary>¿Por qué diezmar no es reversible?</summary>
+        <div class="a"><p>Porque se descartan muestras. Salvo que la señal estuviera sobremuestreada, la
+        información que había entre las que quedan se perdió.</p></div></details>
+      <details class="q"><summary>¿Qué transformaciones hay adentro de una convolución?</summary>
+        <div class="a"><p>Una reflexión y un desplazamiento: \( h(t - \tau) \) es \( h \) espejada y corrida
+        hasta \( t \).</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim y Alan S. Willsky.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1998.</span>
+          <span class="pq">La sección 1.2, con los ejemplos gráficos que son la referencia de este contenido.</span></li>
+        <li><span class="au">John G. Proakis y Dimitris G. Manolakis.</span> <span class="ti">Tratamiento digital de señales</span>.
+          <span class="ed">4.ª ed., Pearson, 2007.</span>
+          <span class="pq">Diezmado, interpolación y conversión de frecuencia de muestreo, con los filtros que hacen falta.</span></li>
+        <li><span class="au">Simon Haykin y Barry Van Veen.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">Limusa Wiley, 2001.</span>
+          <span class="pq">Buen tratamiento del orden de las operaciones, con los dos caminos resueltos en paralelo.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/senales-continuas-discretas">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Señales de tiempo continuo y discreto</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Transformaciones de la variable independiente»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* A donde va a parar cada punto. Arriba x(t); abajo x(at+b), con los tres
+   puntos notables mapeados por t = (t1 - b)/a. El paso intermedio muestra el
+   desplazamiento de b/a antes de escalar, que es el orden correcto. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("tvLienzo"), ctx = cv.getContext("2d");
+  var T = 4, NOTABLES = [0, 1, 1.5];
+
+  /* la senal base: sube despacio, baja rapido, para que la reflexion se note */
+  function x(t){
+    if(t < 0 || t >= 1.5) return 0;
+    if(t < 1) return t;
+    return 3 - 2 * t;
+  }
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+
+  function expr(a, b){
+    /* "x(−2t + 1)" en vez de "x(−2,0t + 1,0)", y sin el "+ 0" si b es cero */
+    var sa = Math.abs(Math.abs(a) - 1) < 0.05 ? (a < 0 ? "−t" : "t") : n(a, 1) + "t";
+    if(Math.abs(b) < 0.05) return "x(" + sa + ")";
+    return "x(" + sa + (b > 0 ? " + " : " − ") + n(Math.abs(b), 1) + ")";
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var a = parseFloat($("tvA").value), b = parseFloat($("tvB").value);
+    if(Math.abs(a) < 0.1) a = a < 0 ? -0.1 : 0.1;
+    var verP = $("tvP").checked;
+    $("tvAv").textContent = n(a, 1);
+    $("tvBv").textContent = n(b, 1);
+
+    var x0 = 26, x1 = Wd - 12;
+    var yA = Hd * 0.27, yB = Hd * 0.76, alto = Hd * 0.19;
+    function X(t){ return x0 + (t + T) / (2 * T) * (x1 - x0); }
+    function Y(v, base){ return base - v * alto; }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    function ejes(base, rot){
+      ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x0, base); ctx.lineTo(x1, base); ctx.stroke();
+      ctx.strokeStyle = "rgba(42,49,64,.75)";
+      for(i = -4; i <= 4; i++){
+        if(i === 0) continue;
+        ctx.beginPath(); ctx.moveTo(X(i), base - 4); ctx.lineTo(X(i), base + 4); ctx.stroke();
+      }
+      ctx.strokeStyle = "#2a3140";
+      ctx.beginPath(); ctx.moveTo(X(0), base - alto * 1.25); ctx.lineTo(X(0), base + 10); ctx.stroke();
+      ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+      ctx.fillText("−2", X(-2) - 6, base + 14);
+      ctx.fillText("2", X(2) - 3, base + 14);
+      ctx.fillText("t", x1 - 8, base + 14);
+      ctx.fillStyle = "#8b93a3"; ctx.font = "600 11px system-ui, sans-serif";
+      ctx.fillText(rot, x0, Math.max(11, base - alto * 1.25 - 4));
+    }
+    ejes(yA, "x(t)");
+    ejes(yB, "y(t) = " + expr(a, b));
+
+    function curva(f, base, col, gr){
+      ctx.strokeStyle = col; ctx.lineWidth = gr; ctx.beginPath();
+      for(i = 0; i <= 700; i++){
+        var t = -T + i / 700 * 2 * T;
+        var q = { x:X(t), y:Y(f(t), base) };
+        if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+      }
+      ctx.stroke();
+    }
+    /* arriba: la original */
+    curva(x, yA, "#58a6ff", 2.2);
+    /* abajo: la original en fantasma, el paso intermedio y el resultado */
+    curva(x, yB, "rgba(88,166,255,.22)", 1.4);
+    if(verP) curva(function(t){ return x(t + b / a); }, yB, "rgba(242,204,96,.65)", 1.6);
+    curva(function(t){ return x(a * t + b); }, yB, "#7ee787", 2.4);
+
+    /* los puntos notables y su mapeo */
+    var col = ["#f85149", "#ff9f6b", "#d2a8ff"];
+    NOTABLES.forEach(function(t1, k){
+      var dest = (t1 - b) / a;
+      var qa = { x:X(t1), y:Y(x(t1), yA) };
+      ctx.fillStyle = col[k];
+      ctx.beginPath(); ctx.arc(qa.x, qa.y, 4, 0, Math.PI * 2); ctx.fill();
+      if(dest >= -T && dest <= T){
+        var qb = { x:X(dest), y:Y(x(t1), yB) };
+        ctx.beginPath(); ctx.arc(qb.x, qb.y, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = col[k]; ctx.lineWidth = 1; ctx.globalAlpha = 0.45;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(qa.x, qa.y + 6); ctx.lineTo(qb.x, qb.y - 6); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+      }
+    });
+
+    /* los numeros */
+    var desp = -b / a;
+    var mapa = NOTABLES.map(function(t1){
+      return n(t1, 1) + " → " + n((t1 - b) / a, 2);
+    }).join("   ·   ");
+    $("tvDatos").innerHTML =
+      "<span>Transformación</span><b>y(t) = " + expr(a, b) + "</b>" +
+      "<hr><span>Desplazamiento, que es b/a</span><b>" + n(Math.abs(desp), 2) + " hacia la " +
+        (desp >= 0 ? "derecha" : "izquierda") + (Math.abs(b) > 0.05 ? "   ·   no b = " + n(b, 1) : "") + "</b>" +
+      "<span>Escalamiento</span><b>" + (Math.abs(a) > 1 ? "comprime" : Math.abs(a) < 1 ? "expande" : "no cambia") +
+        " por " + n(Math.abs(a), 2) + "</b>" +
+      "<span>¿Hay reflexión?</span><b>" + (a < 0 ? "sí, a es negativo" : "no") + "</b>" +
+      '<hr><span style="color:#f85149">Los puntos notables</span><b>' + mapa + "</b>";
+
+    var txt = "Cada quiebre va a parar a t = (t₁ − b)/a. ";
+    if(Math.abs(b) > 0.05)
+      txt += "Fijate que el corrimiento vale <b>" + n(Math.abs(desp), 2) + "</b> y no " + n(Math.abs(b), 1) +
+             ": ahí está la trampa. ";
+    if(a < 0) txt += "Con a negativo la señal además se da vuelta, y el orden de los tres puntos se invierte. ";
+    if(Math.abs(a) > 1) txt += "Con |a| mayor que uno la señal dura menos: se comprime. ";
+    else if(Math.abs(a) < 1) txt += "Con |a| menor que uno la señal se estira. ";
+    txt += verP ? "La curva amarilla es el paso intermedio: la señal ya desplazada, todavía sin escalar."
+                : "Activá el paso intermedio para ver el desplazamiento por separado.";
+    $("tvNota").innerHTML = txt;
+  }
+
+  ["tvA", "tvB", "tvP"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
