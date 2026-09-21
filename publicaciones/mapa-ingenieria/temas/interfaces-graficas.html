@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interfaces gráficas de usuario · Informática II · Catto</title>
+<meta name="description" content="Programación orientada a eventos, bucle de eventos, widgets y contenedores, separación entre interfaz y lógica, y criterios de diseño de una interfaz de instrumentación. Contenido de Informática II, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/interfaces-graficas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática II</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática II</span> · 120 h · Contenido 5 de 8</div>
+    <h1>Interfaces gráficas de usuario</h1>
+    <p class="lead">Una interfaz gráfica invierte el control: el programa ya no manda, espera. Ese cambio de mentalidad —del programa secuencial al bucle de eventos— es lo que hay que entender primero.</p>
+    <div class="chips">
+      <span class="chip hi">Eventos</span>
+      <span class="chip">Widgets</span>
+      <span class="chip">Bucle de eventos</span>
+      <span class="chip">Callbacks</span>
+      <span class="chip">Diseño</span>
+    </div>
+    <hr class="rule">
+
+    <section id="inversion">
+      <h2><span class="n">01</span>El programa deja de mandar</h2>
+      <p>Un programa de consola manda: pide un dato, calcula, imprime, termina. Una interfaz gráfica invierte
+      esa relación. El programa arranca, dibuja la ventana y se queda <b>esperando</b>; quien decide qué pasa
+      es el usuario.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Programa secuencial</th><th>Programa orientado a eventos</th></tr></thead>
+        <tbody>
+          <tr><td>El código controla el orden</td><td>El usuario controla el orden</td></tr>
+          <tr><td><code>scanf</code> bloquea hasta que haya dato</td><td>Nadie bloquea: se avisa cuando hay algo</td></tr>
+          <tr><td>Empieza y termina</td><td>Vive en un bucle hasta que se cierra la ventana</td></tr>
+          <tr><td>Una sola línea de ejecución</td><td>Muchos manejadores, cada uno cortito</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">El bucle de eventos</div>
+        <p>Debajo de toda interfaz gráfica hay el mismo bucle, tenga el nombre que tenga:</p>
+        <div class="form">
+          <code>mientras la ventana esté abierta:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;evento = sacar_de_la_cola()   # espera si no hay<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;manejador = buscar_quien_lo_atiende(evento)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;manejador(evento)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;redibujar_lo_que_cambió()</code>
+        </div>
+        <p>El sistema operativo va depositando en esa <b>cola</b> cada clic, cada tecla y cada movimiento del
+        mouse. El programa los saca de a uno y llama al manejador que corresponda.</p></div>
+      <div class="lw" id="ev">
+        <div class="lt">Laboratorio · el bucle de eventos, en cámara lenta</div>
+        <p class="ls">Usá los controles de abajo: cada acción encola un evento. Procesalos de a uno y mirá qué manejador se ejecuta.</p>
+        <div class="fila">
+          <button id="evBoton" class="pri">Pulsar el botón</button>
+          <label class="chk"><input type="checkbox" id="evCasilla"> Casilla</label>
+          <select id="evSel"><option>Opción A</option><option>Opción B</option><option>Opción C</option></select>
+        </div>
+        <div class="fila">
+          <label for="evSlider">Deslizador <b id="evSliderV">50</b></label>
+          <input type="range" id="evSlider" min="0" max="100" step="1" value="50">
+        </div>
+        <div class="fila">
+          <button id="evPaso">Procesar el próximo evento</button>
+          <label class="chk"><input type="checkbox" id="evAuto"> Bucle automático</label>
+        </div>
+        <canvas id="evLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:1.8/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="evDatos" style="margin-top:8px"></div>
+        <div class="nota" id="evNota"></div>
+      </div>
+    </section>
+
+    <section id="widgets">
+      <h2><span class="n">02</span>Widgets y contenedores</h2>
+      <p>Una interfaz se arma con <b>widgets</b> —los controles— metidos dentro de <b>contenedores</b> que
+      deciden cómo se acomodan. El árbol de contenedores es lo que hace que la ventana se adapte al
+      redimensionarse, en lugar de quedar con todo en coordenadas fijas.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Widget</th><th>Para qué</th><th>Evento que genera</th></tr></thead>
+        <tbody>
+          <tr><td>Botón</td><td>Disparar una acción</td><td>clic</td></tr>
+          <tr><td>Campo de texto</td><td>Escribir un valor</td><td>cambio, tecla, foco</td></tr>
+          <tr><td>Casilla y opción</td><td>Elegir entre alternativas</td><td>cambio de estado</td></tr>
+          <tr><td>Deslizador</td><td>Un valor continuo</td><td>cambio, muchas veces por segundo</td></tr>
+          <tr><td>Lista y tabla</td><td>Mostrar y elegir registros</td><td>selección</td></tr>
+          <tr><td>Lienzo</td><td>Dibujar libremente</td><td>redibujado, mouse</td></tr>
+        </tbody>
+      </table></div>
+      <p>Para acomodarlos hay dos criterios: <b>posiciones absolutas</b> —rápido de hacer, se rompe en cuanto
+      cambia el tamaño o el tipo de letra— y <b>gestores de disposición</b> por filas, columnas o grilla, que es
+      lo que conviene siempre.</p>
+    </section>
+
+    <section id="separar">
+      <h2><span class="n">03</span>Separar la interfaz de la lógica</h2>
+      <p>La regla que más problemas evita: <b>el manejador de un botón no hace el trabajo</b>, sólo llama a
+      quien lo hace. Si el cálculo, la medición o el acceso al equipo están escritos dentro del manejador,
+      no se pueden probar sin abrir la ventana, ni reutilizar desde un script.</p>
+      <div class="form">
+        <code>def al_pulsar_medir():          # manejador: tres líneas<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;v = instrumento.medir_tension()   # la lógica, aparte<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;etiqueta.config(text=f"{v:.3f} V")<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;grafico.agregar(v)</code>
+      </div>
+      <p>Ese es el fondo de los patrones que se estudian con nombre propio —modelo-vista-controlador y sus
+      variantes—: el <b>modelo</b> tiene los datos y las reglas, la <b>vista</b> los muestra y el
+      <b>controlador</b> traduce los eventos en llamadas al modelo.</p>
+      <div class="box peligro"><div class="bt">Nunca bloquear el bucle</div>
+        <p>Si un manejador tarda dos segundos, la ventana queda congelada dos segundos: no redibuja, no
+        responde y el sistema la marca como «no responde». Todo lo que demore —leer un puerto, descargar,
+        calcular mucho— va en <b>otro hilo</b>, y cuando termina avisa a la interfaz. La regla es estricta:
+        <b>sólo el hilo de la interfaz puede tocar los widgets</b>; los demás le mandan el resultado con una
+        cola o con el mecanismo que provea la biblioteca.</p></div>
+    </section>
+
+    <section id="instrumentacion">
+      <h2><span class="n">04</span>Una interfaz de instrumentación</h2>
+      <p>En electrónica, la interfaz casi siempre acompaña a un equipo: un banco de medición, un control de
+      proceso, un registrador. Lo que se espera de ella:</p>
+      <ul>
+        <li><b>Estado visible.</b> Conectado o no, en qué puerto, desde cuándo.</li>
+        <li><b>Lectura continua sin trabar.</b> Un hilo lee el instrumento; la interfaz se refresca cada 100 o
+        200 ms, no a 60 cuadros por segundo.</li>
+        <li><b>Unidades y cifras significativas.</b> Mostrar 3,7 V, no 3,700000001.</li>
+        <li><b>Registro y exportación.</b> Guardar la serie en CSV es lo primero que va a pedir quien la use.</li>
+        <li><b>Errores a la vista.</b> Si se desconectó el equipo, decirlo, no dejar el último valor
+        congelado.</li>
+        <li><b>Confirmación de lo peligroso.</b> Una salida de potencia no se enciende con un clic
+        distraído.</li>
+      </ul>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Entorno</th><th>Lenguaje</th><th>Dónde encaja</th></tr></thead>
+        <tbody>
+          <tr><td>Tkinter</td><td>Python</td><td>Viene con Python; ideal para empezar y para herramientas internas</td></tr>
+          <tr><td>Qt (PyQt / Qt en C++)</td><td>Python o C++</td><td>Aplicaciones grandes, multiplataforma, con gráficos</td></tr>
+          <tr><td>Dear ImGui</td><td>C++</td><td>Paneles de depuración y herramientas de laboratorio</td></tr>
+          <tr><td>Interfaz web local</td><td>Cualquiera + navegador</td><td>El equipo sirve una página; se usa desde cualquier máquina</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Registrar los eventos</div>
+        <p>Armar una ventana con un botón, un campo y un deslizador, y hacer que cada manejador imprima en
+        consola qué evento llegó. Mover el deslizador y contar cuántos eventos genera un solo arrastre.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Congelar la ventana a propósito</div>
+        <p>Poner un <code>sleep(3)</code> dentro del manejador de un botón y comprobar que la interfaz queda
+        muerta. Después mover ese trabajo a un hilo y verificar que la ventana sigue viva.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Panel para el microcontrolador</div>
+        <p>Con el protocolo de la página anterior, hacer una interfaz que encienda y apague una salida, fije un
+        PWM con un deslizador y muestre la lectura del sensor en un gráfico que avanza.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Hacer el trabajo pesado en el manejador</b> y congelar la ventana.</li>
+        <li><b>Tocar widgets desde otro hilo.</b> Es la causa de los cuelgues más difíciles de reproducir.</li>
+        <li><b>Mezclar la lógica con la interfaz</b> y quedarse sin manera de probar nada.</li>
+        <li><b>Posicionar todo en coordenadas absolutas</b> y que se rompa al cambiar el tamaño.</li>
+        <li><b>Redibujar el gráfico entero a 60 cuadros por segundo</b> cuando el dato cambia diez veces por
+        segundo.</li>
+        <li><b>No informar el error</b> y dejar el último valor en pantalla como si fuera actual.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué es el bucle de eventos?</summary>
+        <div class="a"><p>El ciclo que saca eventos de la cola, llama al manejador que corresponde y redibuja.
+        Toda interfaz gráfica tiene uno.</p></div></details>
+      <details class="q"><summary>¿Por qué se congela una ventana?</summary>
+        <div class="a"><p>Porque un manejador está tardando y el bucle no puede seguir procesando eventos ni
+        redibujando.</p></div></details>
+      <details class="q"><summary>¿Puede un hilo de trabajo actualizar una etiqueta directamente?</summary>
+        <div class="a"><p>No: sólo el hilo de la interfaz puede tocar los widgets. El hilo de trabajo le manda
+        el resultado por una cola o por el mecanismo que dé la biblioteca.</p></div></details>
+      <details class="q"><summary>¿Cuántos eventos genera arrastrar un deslizador?</summary>
+        <div class="a"><p>Muchos, uno por cada cambio de valor. Por eso el manejador de un deslizador tiene que
+        ser barato, o hay que espaciar el trabajo real.</p></div></details>
+      <details class="q"><summary>¿Qué ventaja tiene un gestor de disposición sobre las coordenadas fijas?</summary>
+        <div class="a"><p>Que la ventana se adapta al cambiar de tamaño, de resolución o de tipo de letra sin
+        que se superpongan los controles.</p></div></details>
+      <details class="q"><summary>¿Qué separa el patrón modelo-vista-controlador?</summary>
+        <div class="a"><p>Los datos y las reglas (modelo), lo que se muestra (vista) y la traducción de eventos
+        en acciones (controlador). Permite probar la lógica sin abrir la ventana.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Mark Summerfield.</span> <span class="ti">Rapid GUI Programming with Python and Qt</span>.
+          <span class="ed">Prentice Hall, 2007.</span>
+          <span class="pq">Eventos, hilos y diseño de interfaces con criterio de aplicación real.</span></li>
+        <li><span class="au">Documentación oficial de Python.</span> <span class="ti">tkinter — Interface to Tcl/Tk</span>.
+          <span class="ed">Python Software Foundation.</span>
+          <span class="pq">La biblioteca que ya viene instalada: suficiente para la mayoría de las herramientas de laboratorio.</span></li>
+        <li><span class="au">Jakob Nielsen.</span> <span class="ti">Usability Engineering</span>.
+          <span class="ed">Morgan Kaufmann, 1993.</span>
+          <span class="pq">Las heurísticas clásicas: visibilidad del estado, prevención de errores, control del usuario.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/control-perifericos">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Control de periféricos y comunicación</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/calculo-numerico">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Cálculo numérico aplicado</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Interfaces gráficas de usuario»</b> de <b>Informática II</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* El bucle de eventos en camara lenta: cada accion del usuario encola un
+   evento y el bucle los saca de a uno, muestra que manejador se ejecuta y
+   redibuja. Con el bucle detenido se ve la cola crecer, que es justamente lo
+   que pasa cuando un manejador tarda de mas. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("evLienzo"), ctx = cv.getContext("2d");
+  var cola = [], ultimo = null, contador = 0, procesados = 0, reloj = null;
+  var estado = { casilla:false, slider:50, opcion:"Opción A", pulsos:0 };
+
+  function encolar(tipo, widget, detalle, color){
+    contador++;
+    cola.push({ n:contador, tipo:tipo, widget:widget, detalle:detalle, color:color, t:Date.now() });
+    if(cola.length > 40) cola.shift();
+    pintar();
+  }
+  function procesar(){
+    if(!cola.length){ pintar(); return; }
+    var e = cola.shift();
+    procesados++;
+    /* el manejador: cortito, como debe ser */
+    if(e.widget === "botón") estado.pulsos++;
+    if(e.widget === "casilla") estado.casilla = e.valor;
+    if(e.widget === "deslizador") estado.slider = e.valor;
+    if(e.widget === "selector") estado.opcion = e.valor;
+    ultimo = e;
+    pintar();
+  }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    ctx.clearRect(0, 0, W, H);
+
+    var mg = 12, colW = (W - 3 * mg) / 2;
+    /* ---- la cola, a la izquierda ---- */
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("cola de eventos (" + cola.length + " esperando)", mg, 16);
+    var altoF = 22, visibles = Math.min(cola.length, Math.floor((H - 38) / altoF));
+    for(i = 0; i < visibles; i++){
+      var e = cola[i], y = 26 + i * altoF;
+      ctx.strokeStyle = e.color; ctx.fillStyle = e.color.replace("rgb", "rgba").replace(")", ",.12)");
+      ctx.lineWidth = i === 0 ? 2 : 1.2;
+      ctx.beginPath(); ctx.rect(mg, y, colW, altoF - 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#e6edf3"; ctx.font = "11.5px system-ui, sans-serif";
+      ctx.fillText("#" + e.n + "  " + e.tipo + " · " + e.widget, mg + 7, y + 13);
+    }
+    if(!cola.length){
+      ctx.fillStyle = "#6b7484"; ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText("vacía: el bucle espera", mg + 4, 44);
+    }
+    if(cola.length > visibles){
+      ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+      ctx.fillText("… y " + (cola.length - visibles) + " más", mg + 4, 26 + visibles * altoF + 12);
+    }
+
+    /* ---- el manejador, a la derecha ---- */
+    var x2 = mg * 2 + colW;
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("manejador en ejecución", x2, 16);
+    ctx.strokeStyle = ultimo ? ultimo.color : "#2a3140"; ctx.lineWidth = 1.6;
+    ctx.fillStyle = ultimo ? ultimo.color.replace("rgb", "rgba").replace(")", ",.10)") : "rgba(107,116,132,.05)";
+    ctx.beginPath(); ctx.rect(x2, 26, colW, 74); ctx.fill(); ctx.stroke();
+    if(ultimo){
+      ctx.fillStyle = "#e6edf3"; ctx.font = "600 12.5px Consolas, monospace";
+      ctx.fillText("al_" + ultimo.tipo + "_" + ultimo.widget.replace(/[^a-z]/g, "") + "()", x2 + 8, 46);
+      ctx.fillStyle = "#6b7484"; ctx.font = "11.5px system-ui, sans-serif";
+      ctx.fillText("evento #" + ultimo.n, x2 + 8, 66);
+      ctx.fillText(ultimo.detalle, x2 + 8, 84);
+    } else {
+      ctx.fillStyle = "#6b7484"; ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText("nada todavía", x2 + 8, 62);
+    }
+    /* el estado que mantiene la aplicacion */
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("estado de la aplicación", x2, 122);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.rect(x2, 132, colW, Math.max(30, H - 146)); ctx.stroke();
+    ctx.fillStyle = "#e6edf3"; ctx.font = "11.5px Consolas, monospace";
+    [["pulsos", estado.pulsos], ["casilla", estado.casilla ? "sí" : "no"],
+     ["deslizador", estado.slider], ["opción", estado.opcion]].forEach(function(p, k){
+      if(148 + k * 17 < H - 4) ctx.fillText(p[0] + ": " + p[1], x2 + 8, 148 + k * 17);
+    });
+
+    $("evDatos").innerHTML =
+      "<span>Eventos generados</span><b>" + contador + "</b>" +
+      "<span>Procesados</span><b>" + procesados + "</b>" +
+      "<span>En la cola</span><b>" + cola.length + "</b>" +
+      "<span>Bucle</span><b>" + ($("evAuto").checked ? "andando" : "detenido") + "</b>";
+
+    var txt;
+    if(!$("evAuto").checked && cola.length > 3)
+      txt = "Con el bucle detenido, la cola <b>crece</b>: el sistema sigue depositando eventos y nadie los " +
+            "atiende. Eso es exactamente lo que se ve cuando una ventana «no responde»: no es que se perdieron " +
+            "los clics, es que están esperando a que el manejador anterior termine.";
+    else if(cola.length)
+      txt = "Hay " + cola.length + (cola.length === 1 ? " evento esperando" : " eventos esperando") +
+            ". El bucle saca el primero, busca quién lo atiende, ejecuta ese manejador y vuelve a empezar. " +
+            "Los manejadores son cortos justamente para que la cola no se acumule.";
+    else if(ultimo)
+      txt = "La cola quedó vacía y el bucle espera. Fijate que el <b>estado</b> de la aplicación lo cambia el " +
+            "manejador, no el widget: el control sólo avisa qué pasó, y el programa decide qué hacer con eso.";
+    else
+      txt = "Tocá los controles de arriba: cada acción deposita un evento en la cola. Después procesalos de a " +
+            "uno con el botón, o prendé el bucle automático para verlo andar solo.";
+    $("evNota").innerHTML = txt;
+  }
+
+  /* --- los controles generan eventos, no ejecutan nada --- */
+  $("evBoton").addEventListener("click", function(){
+    encolar("clic", "botón", "el usuario pulsó el botón", "rgb(88,166,255)");
+  });
+  $("evCasilla").addEventListener("change", function(){
+    var e = { valor:this.checked };
+    encolar("cambio", "casilla", "ahora vale " + (this.checked ? "sí" : "no"), "rgb(126,231,135)");
+    cola[cola.length - 1].valor = e.valor;
+  });
+  $("evSel").addEventListener("change", function(){
+    encolar("cambio", "selector", "eligió " + this.value, "rgb(210,168,255)");
+    cola[cola.length - 1].valor = this.value;
+  });
+  $("evSlider").addEventListener("input", function(){
+    $("evSliderV").textContent = this.value;
+    encolar("cambio", "deslizador", "movido a " + this.value, "rgb(242,204,96)");
+    cola[cola.length - 1].valor = +this.value;
+  });
+  $("evPaso").addEventListener("click", procesar);
+  $("evAuto").addEventListener("change", function(){
+    if(reloj){ clearInterval(reloj); reloj = null; }
+    if(this.checked) reloj = setInterval(procesar, 420);
+    pintar();
+  });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>

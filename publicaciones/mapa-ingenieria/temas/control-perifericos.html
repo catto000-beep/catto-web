@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de periféricos y comunicación · Informática II · Catto</title>
+<meta name="description" content="Comunicación serie desde la computadora, protocolos de trama, puertos y buffers, lectura de sensores y control de actuadores desde un programa, con laboratorio interactivo de protocolo. Contenido de Informática II, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/control-perifericos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática II</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática II</span> · 120 h · Contenido 4 de 8</div>
+    <h1>Control de periféricos y comunicación</h1>
+    <p class="lead">El programa deja de ser un ejercicio cuando enciende un LED real. Del otro lado del cable hay un microcontrolador esperando bytes, y hay que ponerse de acuerdo en qué significa cada uno.</p>
+    <div class="chips">
+      <span class="chip hi">Puerto serie</span>
+      <span class="chip">Tramas</span>
+      <span class="chip">Checksum</span>
+      <span class="chip">Buffers</span>
+      <span class="chip">Protocolo</span>
+    </div>
+    <hr class="rule">
+
+    <section id="puerto">
+      <h2><span class="n">01</span>Del programa al mundo físico</h2>
+      <p>Un programa que sólo imprime en pantalla no necesita saber nada del hardware. Apenas hay que encender
+      un LED o leer un sensor, aparecen tres preguntas: por dónde salen los datos, con qué velocidad y qué
+      significa cada byte.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Interfaz</th><th>Velocidad típica</th><th>Dónde se usa</th></tr></thead>
+        <tbody>
+          <tr><td>Serie asincrónica (UART/USB-serie)</td><td>9600 a 921 600 baudios</td><td>Lo más común entre PC y microcontrolador</td></tr>
+          <tr><td>I²C</td><td>100 kHz a 1 MHz</td><td>Sensores y periféricos dentro de una placa</td></tr>
+          <tr><td>SPI</td><td>1 a 50 MHz</td><td>Memorias, pantallas, conversores rápidos</td></tr>
+          <tr><td>USB nativo</td><td>12 a 480 Mbit/s</td><td>Instrumentos y adquisición de datos</td></tr>
+          <tr><td>Ethernet / TCP-IP</td><td>10 a 1000 Mbit/s</td><td>Equipos en red, industria</td></tr>
+        </tbody>
+      </table></div>
+      <p>En la computadora, el puerto serie se abre como si fuera un archivo: se configura, se escribe y se lee.
+      En Python con <code>pyserial</code> son tres líneas; en C, con <code>termios</code> en Linux o
+      <code>CreateFile</code> en Windows, unas cuantas más, pero la idea es la misma.</p>
+      <div class="form">
+        <code>import serial<br>
+        p = serial.Serial("COM3", 115200, timeout=0.2)<br>
+        p.write(b"\xAA\x02\x01\x64\x67")<br>
+        respuesta = p.read(5)</code>
+      </div>
+    </section>
+
+    <section id="parametros">
+      <h2><span class="n">02</span>Los parámetros que hay que acordar</h2>
+      <p>Las dos puntas tienen que estar configuradas igual o no se entienden. Con 8N1 —ocho bits de datos, sin
+      paridad, un bit de parada— cada byte viaja en <b>diez</b> bits:</p>
+      <div class="form">
+        \[ t_{byte} = \frac{10}{\text{baudios}} \quad\Longrightarrow\quad
+           \text{caudal máximo} = \frac{\text{baudios}}{10} \ \text{bytes/s} \]
+        <span class="cap">A 115 200 baudios son 11 520 bytes por segundo, y cada byte tarda 87 µs.</span>
+      </div>
+      <ul>
+        <li><b>Velocidad</b> en baudios: 9600, 19 200, 38 400, 57 600, 115 200…</li>
+        <li><b>Bits de datos</b>, casi siempre 8.</li>
+        <li><b>Paridad</b>: ninguna, par o impar. Detecta un bit cambiado, no dos.</li>
+        <li><b>Bits de parada</b>: 1 o 2.</li>
+        <li><b>Control de flujo</b>: por hardware (RTS/CTS) o ninguno.</li>
+      </ul>
+      <div class="box peligro"><div class="bt">Niveles eléctricos</div>
+        <p>El UART de un microcontrolador trabaja a <b>3,3 o 5 V</b>; un puerto RS-232 de verdad usa ±12 V con
+        la lógica invertida. Conectarlos directamente quema el microcontrolador. Entre medio va un adaptador
+        —un MAX232 o un conversor USB-serie— y, si las tensiones difieren, un adaptador de nivel.</p></div>
+    </section>
+
+    <section id="trama">
+      <h2><span class="n">03</span>Inventar un protocolo</h2>
+      <p>El puerto transporta bytes sueltos; el significado lo pone el protocolo. Un esquema mínimo que funciona
+      en la práctica tiene cuatro partes:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Campo</th><th>Para qué</th></tr></thead>
+        <tbody>
+          <tr><td>Byte de arranque</td><td>Marca dónde empieza la trama, para poder resincronizar</td></tr>
+          <tr><td>Comando y longitud</td><td>Qué se pide y cuántos bytes de datos vienen</td></tr>
+          <tr><td>Datos</td><td>El contenido</td></tr>
+          <tr><td>Verificación</td><td>Detecta si algo llegó mal: suma, XOR o CRC</td></tr>
+        </tbody>
+      </table></div>
+      <div class="lw" id="tr">
+        <div class="lt">Laboratorio · armar y verificar una trama</div>
+        <p class="ls">Cambiá el comando y el dato, elegí el método de verificación y probá corromper un byte para ver si el receptor se da cuenta.</p>
+        <div class="fila">
+          <select id="trC">
+            <option value="1">0x01 · encender salida</option>
+            <option value="2">0x02 · apagar salida</option>
+            <option value="3">0x03 · leer sensor</option>
+            <option value="4">0x04 · fijar PWM</option>
+          </select>
+          <select id="trV">
+            <option value="suma">Verificación por suma</option>
+            <option value="xor">Verificación por XOR</option>
+            <option value="crc">CRC-8 (polinomio 0x07)</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="trD">Dato <b id="trDv">100</b></label>
+          <input type="range" id="trD" min="0" max="255" step="1" value="100">
+        </div>
+        <div class="fila">
+          <label for="trE">Corromper el byte n.º <b id="trEv">ninguno</b></label>
+          <input type="range" id="trE" min="0" max="6" step="1" value="0">
+        </div>
+        <canvas id="trLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:2.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="trDatos" style="margin-top:8px"></div>
+        <div class="nota" id="trNota"></div>
+      </div>
+    </section>
+
+    <section id="verificacion">
+      <h2><span class="n">04</span>Suma, XOR y CRC</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Método</th><th>Cómo se calcula</th><th>Qué detecta</th></tr></thead>
+        <tbody>
+          <tr><td>Suma de verificación</td><td>\( \sum b_i \bmod 256 \)</td><td>Un byte cambiado; no el orden</td></tr>
+          <tr><td>XOR</td><td>\( b_1 \oplus b_2 \oplus \cdots \oplus b_n \)</td><td>Un bit cambiado por columna; falla con dos</td></tr>
+          <tr><td>CRC-8</td><td>División binaria por un polinomio</td><td>Todas las ráfagas de hasta 8 bits</td></tr>
+          <tr><td>CRC-16 / CRC-32</td><td>Igual, con polinomio más largo</td><td>Lo que se usa en Modbus, USB y Ethernet</td></tr>
+        </tbody>
+      </table></div>
+      <p>La suma es la más fácil de escribir y la más débil: si dos bytes cambian de forma compensada, no se
+      entera. El CRC es una división de polinomios en aritmética binaria y detecta prácticamente cualquier error
+      de transmisión real; por eso lo usan todos los protocolos serios. Se implementa con una tabla de 256
+      entradas y es rapidísimo, incluso en un microcontrolador chico.</p>
+    </section>
+
+    <section id="bloqueo">
+      <h2><span class="n">05</span>Esperar sin trabarse</h2>
+      <p>El error más común al comunicarse con un equipo es quedarse esperando para siempre. Hay tres
+      estrategias, y conviene conocer las tres:</p>
+      <ul>
+        <li><b>Lectura con tiempo de espera.</b> <code>timeout</code> en el puerto: si el equipo no contesta en
+        200 ms, la lectura vuelve vacía y el programa decide qué hacer. Es lo mínimo indispensable.</li>
+        <li><b>Hilo dedicado.</b> Un hilo lee el puerto y deposita las tramas en una
+        <a class="ref" href="/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">cola</a>; el programa
+        principal la consume cuando puede. Es el esquema productor-consumidor.</li>
+        <li><b>Entrada-salida asincrónica.</b> El sistema avisa cuando hay datos, sin que nadie espere.</li>
+      </ul>
+      <div class="box ojo"><div class="bt">Del otro lado del cable</div>
+        <p>El microcontrolador tiene el mismo problema al revés: si atiende el puerto dentro del bucle
+        principal, pierde bytes mientras hace otra cosa. Por eso la recepción se hace en la <b>interrupción</b>
+        del UART, que guarda cada byte en un buffer circular, y el programa principal procesa la trama cuando
+        está completa.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Eco y medición de tiempos</div>
+        <p>Programar el microcontrolador para que devuelva cada byte que recibe. Desde la computadora, medir el
+        tiempo de ida y vuelta a 9600 y a 115 200 baudios, y comparar con 10 bits por byte.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Protocolo propio</div>
+        <p>Definir e implementar el protocolo de esta página en las dos puntas: encender y apagar una salida,
+        fijar un PWM y leer un canal analógico. Documentar la trama en una tabla.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Provocar errores</div>
+        <p>Desconectar el cable a mitad de una transmisión, o bajar la velocidad de un lado. Verificar que el
+        receptor descarta las tramas mal formadas y vuelve a sincronizar con el byte de arranque, en lugar de
+        colgarse.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Velocidades distintas en cada punta.</b> Llegan bytes, pero con basura.</li>
+        <li><b>Leer sin tiempo de espera</b> y dejar el programa colgado para siempre.</li>
+        <li><b>Suponer que una lectura devuelve la trama entera.</b> Puede volver partida: hay que acumular
+        hasta tener la longitud declarada.</li>
+        <li><b>Conectar 5 V a una entrada de 3,3 V.</b></li>
+        <li><b>Olvidar la masa común</b> entre los dos equipos.</li>
+        <li><b>Confiar en que el canal es perfecto</b> y no verificar nada.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuántos bytes por segundo entran a 115 200 baudios en 8N1?</summary>
+        <div class="a"><p>Cada byte ocupa 10 bits, así que <b>11 520 bytes/s</b>, unos 87 µs por byte.</p></div></details>
+      <details class="q"><summary>¿Para qué sirve el byte de arranque de una trama?</summary>
+        <div class="a"><p>Para poder resincronizar: si se perdió un byte, el receptor descarta hasta encontrar
+        el siguiente arranque en lugar de interpretar basura.</p></div></details>
+      <details class="q"><summary>¿Por qué el CRC es mejor que la suma?</summary>
+        <div class="a"><p>Porque detecta ráfagas de errores y combinaciones que la suma no ve, como dos bytes
+        que cambian de forma compensada.</p></div></details>
+      <details class="q"><summary>¿Dónde conviene recibir los bytes en el microcontrolador?</summary>
+        <div class="a"><p>En la interrupción del UART, guardándolos en un buffer circular. En el bucle
+        principal se perderían mientras el programa hace otra cosa.</p></div></details>
+      <details class="q"><summary>¿Qué pasa si se conectan un UART de 3,3 V y un puerto RS-232?</summary>
+        <div class="a"><p>El RS-232 usa ±12 V con lógica invertida: quema la entrada. Hace falta un adaptador
+        como el MAX232.</p></div></details>
+      <details class="q"><summary>Una lectura devolvió 3 bytes de una trama de 6. ¿Qué hay que hacer?</summary>
+        <div class="a"><p>Acumularlos y seguir leyendo hasta completar la longitud declarada, o descartar por
+        tiempo de espera. La lectura serie no garantiza entregar la trama entera de una vez.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Jan Axelson.</span> <span class="ti">Serial Port Complete</span>.
+          <span class="ed">2.ª ed., Lakeview Research, 2007.</span>
+          <span class="pq">Todo sobre puertos serie, USB-serie y su programación en la PC.</span></li>
+        <li><span class="au">Michael Barr y Anthony Massa.</span> <span class="ti">Programming Embedded Systems in C and C++</span>.
+          <span class="ed">2.ª ed., O'Reilly, 2006.</span>
+          <span class="pq">El lado del microcontrolador: interrupciones, buffers y controladores de periféricos.</span></li>
+        <li><span class="au">Documentación de pyserial.</span> <span class="ti">pySerial Documentation</span>.
+          <span class="ed">Versión actual.</span>
+          <span class="pq">La biblioteca estándar para hablar con un puerto serie desde Python.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/construccion-software">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Herramientas de construcción de software</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/interfaces-graficas">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Interfaces gráficas de usuario</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Control de periféricos y comunicación»</b> de <b>Informática II</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Armado de una trama serie: cabecera, comando, longitud, dato y verificacion.
+   Se dibuja byte por byte y se puede corromper uno para ver si el receptor lo
+   detecta con el metodo elegido. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("trLienzo"), ctx = cv.getContext("2d");
+  var CMD = { 1:"encender salida", 2:"apagar salida", 3:"leer sensor", 4:"fijar PWM" };
+  var ARRANQUE = 0xAA;
+
+  function hex(b){ return "0x" + (b < 16 ? "0" : "") + b.toString(16).toUpperCase(); }
+  function bin(b){
+    var s = b.toString(2);
+    while(s.length < 8) s = "0" + s;
+    return s;
+  }
+  function crc8(bytes){
+    var crc = 0x00, i, j;
+    for(i = 0; i < bytes.length; i++){
+      crc ^= bytes[i];
+      for(j = 0; j < 8; j++)
+        crc = (crc & 0x80) ? ((crc << 1) ^ 0x07) & 0xFF : (crc << 1) & 0xFF;
+    }
+    return crc;
+  }
+  function verificar(bytes, modo){
+    var i, v = 0;
+    if(modo === "suma"){
+      for(i = 0; i < bytes.length; i++) v = (v + bytes[i]) & 0xFF;
+      return v;
+    }
+    if(modo === "xor"){
+      for(i = 0; i < bytes.length; i++) v ^= bytes[i];
+      return v;
+    }
+    return crc8(bytes);
+  }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    var cmd = +$("trC").value, dato = +$("trD").value, modo = $("trV").value;
+    var cual = +$("trE").value;
+    $("trDv").textContent = dato;
+
+    /* la trama tal como la arma el emisor */
+    var cuerpo = [ARRANQUE, cmd, 1, dato];
+    var ver = verificar(cuerpo, modo);
+    var trama = cuerpo.concat([ver]);
+    var NOM = ["arranque", "comando", "longitud", "dato", "verificación"];
+    var compensado = cual === 6;
+    $("trEv").textContent = cual === 0 ? "ninguno"
+                          : compensado ? "dos bytes que se compensan"
+                          : cual + " (" + NOM[cual - 1] + ")";
+
+    /* lo que llega: con un bit dado vuelta si se pidio corromper. El caso 6
+       cambia dos bytes de forma que la suma total no varie, que es el agujero
+       clasico de la suma de verificacion */
+    var recibida = trama.slice();
+    if(compensado){
+      recibida[1] = (recibida[1] + 1) & 0xFF;
+      recibida[3] = (recibida[3] - 1 + 256) & 0xFF;
+    } else if(cual > 0){
+      recibida[cual - 1] = recibida[cual - 1] ^ 0x20;
+    }
+
+    var okArranque = recibida[0] === ARRANQUE;
+    var recalculada = verificar(recibida.slice(0, 4), modo);
+    var okVer = recalculada === recibida[4];
+    var detectado = cual > 0 && (!okArranque || !okVer);
+
+    ctx.clearRect(0, 0, W, H);
+    var mg = 10, n = trama.length;
+    var ancho = (W - 2 * mg) / n - 6, alto = Math.min(52, H * 0.42);
+    var y = H * 0.3;
+    for(i = 0; i < n; i++){
+      var x = mg + i * (ancho + 6);
+      var malo = compensado ? (i === 1 || i === 3) : (cual === i + 1);
+      ctx.strokeStyle = malo ? "#f85149" : (i === 4 ? "#f2cc60" : "#58a6ff");
+      ctx.fillStyle = malo ? "rgba(248,81,73,.16)" :
+                      (i === 4 ? "rgba(242,204,96,.12)" : "rgba(88,166,255,.10)");
+      ctx.lineWidth = malo ? 2.2 : 1.6;
+      ctx.beginPath(); ctx.rect(x, y, ancho, alto); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+      var et = NOM[i], we = ctx.measureText(et).width;
+      ctx.fillText(et, x + Math.max(0, (ancho - we) / 2), y - 7);
+      ctx.fillStyle = malo ? "#f85149" : "#e6edf3";
+      ctx.font = "600 14px Consolas, monospace";
+      var t = hex(recibida[i]), wt = ctx.measureText(t).width;
+      ctx.fillText(t, x + (ancho - wt) / 2, y + alto / 2 + 2);
+      ctx.fillStyle = "#6b7484"; ctx.font = "9.5px Consolas, monospace";
+      var b = bin(recibida[i]), wb = ctx.measureText(b).width;
+      if(wb < ancho) ctx.fillText(b, x + (ancho - wb) / 2, y + alto - 7);
+    }
+    /* el resultado de la verificacion, debajo */
+    ctx.font = "12px system-ui, sans-serif";
+    ctx.fillStyle = cual === 0 ? "#7ee787" : (detectado ? "#f2cc60" : "#f85149");
+    var msg = cual === 0 ? "✓ trama íntegra: el receptor la acepta"
+            : detectado ? "⚠ el receptor detecta el error y descarta la trama"
+                        : "✗ el error pasa desapercibido: el receptor acepta un dato falso";
+    ctx.fillText(msg, mg, y + alto + 26);
+
+    $("trDatos").innerHTML =
+      "<span>Trama enviada</span><b>" + trama.map(hex).join(" ") + "</b>" +
+      "<span>Trama recibida</span><b>" + recibida.map(hex).join(" ") + "</b>" +
+      "<hr><span>Comando</span><b>" + hex(cmd) + " · " + CMD[cmd] + "</b>" +
+      "<span>Verificación enviada</span><b>" + hex(ver) + "</b>" +
+      "<span>Verificación recalculada</span><b>" + hex(recalculada) + "</b>" +
+      "<span>Resultado</span><b style=\"color:" +
+        (cual === 0 ? "#7ee787" : detectado ? "#f2cc60" : "#f85149") + "\">" +
+        (cual === 0 ? "aceptada" : detectado ? "rechazada, como corresponde" : "aceptada con datos falsos") +
+      "</b>";
+
+    var txt = "La trama son cinco bytes: arranque, comando, longitud, dato y verificación. ";
+    if(modo === "suma")
+      txt += "La <b>suma</b> de los cuatro primeros, truncada a 8 bits, da " + hex(ver) + ". ";
+    else if(modo === "xor")
+      txt += "El <b>XOR</b> de los cuatro primeros da " + hex(ver) + ": cada columna de bits queda con " +
+             "paridad par. ";
+    else
+      txt += "El <b>CRC-8</b> trata los bytes como un polinomio y lo divide por x⁸+x²+x+1; el resto es " +
+             hex(ver) + ". ";
+    if(cual === 0)
+      txt += "Movete el último deslizador para dar vuelta un bit de alguno de los bytes y ver si el método " +
+             "elegido lo detecta. La última posición prueba el caso interesante: dos bytes que cambian " +
+             "compensándose.";
+    else if(compensado && !detectado)
+      txt += "Acá está la debilidad de la <b>suma</b>: el comando subió uno y el dato bajó uno, así que el " +
+             "total no cambió y el error <b>pasa desapercibido</b>. El receptor acepta un comando distinto " +
+             "del que se envió —apagar en lugar de encender— y no tiene manera de saberlo. Probá el mismo " +
+             "caso con <b>XOR</b> o con <b>CRC-8</b>: los dos lo detectan.";
+    else if(compensado)
+      txt += "Dos bytes cambiaron compensándose: uno subió y el otro bajó. La <b>suma</b> no ve ese error, " +
+             "porque el total le da igual, pero este método sí, porque no suma: el XOR trabaja bit a bit y el " +
+             "CRC divide, y en los dos casos importa también en qué posición está cada byte.";
+    else if(!okArranque)
+      txt += "Se corrompió el <b>byte de arranque</b>: el receptor ni siquiera reconoce el comienzo de la " +
+             "trama, la descarta y se queda esperando el próximo 0xAA. Es justamente para eso que está.";
+    else if(detectado)
+      txt += "El byte " + cual + " llegó cambiado, la verificación recalculada da " + hex(recalculada) +
+             " y no coincide con la que venía, " + hex(recibida[4]) + ": <b>el receptor lo detecta</b> y " +
+             "descarta la trama. Lo correcto es pedir que se repita.";
+    else
+      txt += "Acá el error <b>no se detecta</b>: el método elegido no alcanza para este caso y el receptor " +
+             "acepta un dato equivocado como si fuera bueno. Probá el mismo error con CRC-8.";
+    $("trNota").innerHTML = txt;
+  }
+  ["trC","trV","trD","trE"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
