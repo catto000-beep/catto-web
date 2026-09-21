@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aliasing · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="El aliasing como consecuencia del solapamiento de réplicas, la fórmula de la frecuencia aparente, el mapa de plegado, dónde se lo ve en la práctica y el papel del filtro antialias y del sobremuestreo, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/aliasing">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 31 de 34</div>
+    <h1>Aliasing</h1>
+    <p class="lead">Una frecuencia alta que se disfraza de una baja. El problema no es que se distorsione: es que después no hay manera de darse cuenta, porque las muestras son exactamente las mismas.</p>
+    <div class="chips">
+      <span class="chip hi">Aliasing</span>
+      <span class="chip">Plegado</span>
+      <span class="chip">Antialias</span>
+      <span class="chip">Sobremuestreo</span>
+      <span class="chip">Sigma-delta</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que">
+      <h2><span class="n">01</span>Una frecuencia que se disfraza de otra</h2>
+      <p>Cuando la frecuencia de muestreo no alcanza, las réplicas del espectro se meten en la banda útil y
+      una señal alta aparece en el lugar de una baja. Se la llama <b>alias</b>, y la frecuencia con la que se
+      presenta sale de una cuenta simple:</p>
+      <div class="form">
+        \[ f_{\text{alias}} = \big|\,f - k\,f_s\,\big|,
+           \qquad k \text{ el entero que deja el resultado entre } 0 \text{ y } f_s/2 \]
+        <span class="cap">La frecuencia se «pliega» dentro de la banda, como si el eje se doblara en \( f_s/2 \) y en cada múltiplo de \( f_s \).</span>
+      </div>
+      <p>El problema no es que la señal se distorsione: es que <b>no hay manera de darse cuenta después</b>.
+      Una vez muestreada, la señal alias es indistinguible de una señal real de esa frecuencia baja. No existe
+      procesamiento posterior que la separe, porque las muestras son exactamente las mismas.</p>
+      <div class="lw" id="al">
+        <div class="lt">Laboratorio · la senoidal impostora</div>
+        <p class="ls">Una senoidal muestreada a \( f_s \) fija. Subí su frecuencia más allá de \( f_s/2 \) y mirá cómo las mismas muestras se explican con otra senoidal mucho más lenta.</p>
+        <div class="fila">
+          <label class="chk"><input type="checkbox" id="alA" checked> Ver la senoidal alias</label>
+          <label class="chk"><input type="checkbox" id="alM"> Ver el mapa de plegado</label>
+        </div>
+        <div class="fila">
+          <label for="alF">Frecuencia de la señal = <b id="alFv">3,0</b> Hz   ·   fs = 10 Hz</label>
+          <input type="range" id="alF" min="0.2" max="28" step="0.1" value="3">
+        </div>
+        <canvas id="alLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="alDatos" style="margin-top:8px"></div>
+        <div class="nota" id="alNota"></div>
+      </div>
+    </section>
+
+    <section id="donde">
+      <h2><span class="n">02</span>Dónde se lo ve sin buscarlo</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Situación</th><th>Qué se observa</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr><td>Las ruedas de un carro en el cine</td><td>Giran al revés o quedan quietas</td><td>24 cuadros por segundo muestrean el giro de los rayos</td></tr>
+          <tr><td>Una camisa a rayas en televisión</td><td>Aparecen bandas de colores que no existen</td><td>La trama espacial supera la resolución del sensor</td></tr>
+          <tr><td>Un osciloscopio con base de tiempo lenta</td><td>Una senoidal rápida se ve lenta y con amplitud que late</td><td>La velocidad de muestreo cayó por debajo del doble</td></tr>
+          <tr><td>Una imagen achicada sin filtrar</td><td>Texturas con patrones raros, el efecto <i>moiré</i></td><td>Diezmar sin filtro antialias previo</td></tr>
+          <tr><td>Luz estroboscópica sobre un motor</td><td>El eje parece detenido</td><td>Es aliasing aprovechado a propósito</td></tr>
+        </tbody>
+      </table></div>
+      <p>La última fila conviene retenerla: el aliasing no es sólo un defecto. Un estroboscopio y un
+      osciloscopio de muestreo secuencial lo usan <b>a propósito</b> para observar señales mucho más rápidas
+      que su electrónica, muestreando a una frecuencia apenas distinta de la de la señal para que el alias
+      caiga en una banda cómoda de medir.</p>
+    </section>
+
+    <section id="filtro">
+      <h2><span class="n">03</span>El filtro antialias no es opcional</h2>
+      <p>El teorema del muestreo pide que la señal sea de banda limitada, y ninguna señal real lo es: siempre
+      hay ruido y componentes altas. Por eso <b>antes</b> del conversor va un pasabajos analógico, y tiene que
+      ser analógico: una vez muestreado, el daño ya está hecho.</p>
+      <div class="form">
+        \[ \text{atenuación necesaria en } f_s - f_{\text{útil}} \;\ge\; \text{rango dinámico del conversor} \]
+        <span class="cap">De poco sirve un conversor de 16 bits —96 dB— si a la frecuencia que se va a plegar sobre la banda útil el filtro atenúa sólo 30 dB.</span>
+      </div>
+      <p>Ahí aparece la tensión de siempre: cuanto más cerca esté la banda útil de \( f_s/2 \), más abrupto
+      tiene que ser el filtro, y un filtro abrupto es de orden alto, caro y con retardo de grupo feo.</p>
+      <div class="box key"><div class="bt">El sobremuestreo, que resuelve el problema por el otro lado</div>
+        <p>La salida elegante es muestrear <b>mucho</b> más rápido de lo necesario. Si la banda útil es de
+        20 kHz y se muestrea a 5 MHz, lo que se pliega sobre la banda está a más de 4,9 MHz, y un filtro
+        analógico de primer orden ya lo atenúa de sobra. Después se diezma digitalmente, donde el filtro sí
+        puede ser abrupto y de fase lineal sin costo analógico.</p>
+        <p>Ésa es la idea de los conversores <b>sigma-delta</b>, que muestrean a decenas de megahertz con un
+        solo bit y hacen todo el trabajo fino en el dominio digital. Por eso un códec de audio moderno necesita
+        apenas un RC a la entrada donde los conversores de los años ochenta llevaban filtros de octavo
+        orden.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Plegar a mano</div>
+        <p>Con \( f_s = 8 \) kHz, calcular con qué frecuencia aparecen señales de 3, 5, 9, 11 y 16 kHz.
+        Verificar que 3 y 5 kHz caen en el mismo lugar, y explicar por qué no se pueden
+        distinguir.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Provocarlo</div>
+        <p>Muestrear con un microcontrolador a 1 kS/s una senoidal de 1,1 kHz y graficar las muestras.
+        Comprobar que se ve una senoidal de 100 Hz, y que subiendo a 1,2 kHz se ve una de 200 Hz.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Medir la atenuación necesaria</div>
+        <p>Para un conversor de 12 bits con banda útil de 10 kHz y \( f_s = 48 \) kHz, determinar en qué
+        frecuencia empieza el plegado y cuánta atenuación hace falta ahí. Elegir el orden del filtro
+        antialias.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Creer que se puede filtrar después.</b> Una vez muestreado, el alias es indistinguible de una
+        señal legítima.</li>
+        <li><b>Poner el filtro antialias en el dominio digital.</b> Tiene que ser analógico, antes del
+        conversor.</li>
+        <li><b>Olvidar el ruido de banda ancha.</b> Aunque la señal útil sea lenta, el ruido se pliega
+        igual.</li>
+        <li><b>Confiar en que el conversor «filtra algo».</b> Un sample-and-hold no es un filtro
+        antialias.</li>
+        <li><b>Diezmar sin filtrar.</b> Bajar la frecuencia de muestreo también genera aliasing, y ahí sí el
+        filtro puede ser digital.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">06</span>Autoevaluación</h2>
+      <details class="q"><summary>Con \( f_s = 8 \) kHz, ¿cómo aparece una señal de 9 kHz?</summary>
+        <div class="a"><p>Como 1 kHz: \( |9 - 8| = 1 \).</p></div></details>
+      <details class="q"><summary>¿Y una de 11 kHz?</summary>
+        <div class="a"><p>Como 3 kHz: \( |11 - 8| = 3 \). Se confunde con una señal real de 3
+        kHz.</p></div></details>
+      <details class="q"><summary>¿Por qué el filtro antialias tiene que ser analógico?</summary>
+        <div class="a"><p>Porque el plegado ocurre en el momento de muestrear. Después ya no hay nada que
+        separar.</p></div></details>
+      <details class="q"><summary>¿Por qué las ruedas del carro giran al revés en el cine?</summary>
+        <div class="a"><p>Porque 24 cuadros por segundo muestrean el giro de los rayos, y el alias puede quedar
+        negativo: aparenta girar hacia atrás.</p></div></details>
+      <details class="q"><summary>¿Qué ventaja da el sobremuestreo?</summary>
+        <div class="a"><p>Aleja la banda de plegado, así el filtro analógico puede ser mucho más simple y el
+        trabajo fino se hace en digital.</p></div></details>
+      <details class="q"><summary>¿El aliasing sirve para algo?</summary>
+        <div class="a"><p>Sí: el estroboscopio y el osciloscopio de muestreo secuencial lo usan a propósito
+        para observar señales más rápidas que su propia electrónica.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">07</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim y Alan S. Willsky.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1998.</span>
+          <span class="pq">El aliasing deducido del solapamiento de réplicas, con los ejemplos gráficos.</span></li>
+        <li><span class="au">Walt Kester (ed.).</span> <span class="ti">Data Conversion Handbook</span>.
+          <span class="ed">Analog Devices / Newnes, 2005.</span>
+          <span class="pq">Diseño real del filtro antialias, sobremuestreo y arquitecturas sigma-delta.</span></li>
+        <li><span class="au">Richard G. Lyons.</span> <span class="ti">Understanding Digital Signal Processing</span>.
+          <span class="ed">3.ª ed., Prentice Hall, 2010.</span>
+          <span class="pq">El plegado explicado con figuras que se entienden a la primera, y el muestreo pasabanda.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/muestreo-shannon">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Teorema del muestreo</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/convolucion-modulacion">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Teoremas de convolución y modulación</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Aliasing»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* La senoidal impostora. Se muestrea a fs fija una senoidal cuya frecuencia se
+   mueve; cuando pasa fs/2, las mismas muestras quedan explicadas por otra
+   senoidal mucho mas lenta. El mapa de plegado muestra de donde sale la
+   frecuencia aparente. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("alLienzo"), ctx = cv.getContext("2d");
+  var FS = 10, TM = 1.4, FMAX = 28;
+
+  function alias(f){
+    /* la frecuencia con la que aparece, plegada dentro de 0..fs/2, y su signo:
+       si el alias sale del tramo descendente, la fase queda invertida */
+    var r = f % FS;
+    if(r > FS / 2) return { f:FS - r, invierte:true };
+    return { f:r, invierte:false };
+  }
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var f = parseFloat($("alF").value), verA = $("alA").checked, verM = $("alM").checked;
+    $("alFv").textContent = n(f, 1);
+    var A = alias(f);
+
+    var x0 = 26, x1 = Wd - 12;
+    var yc = verM ? Hd * 0.3 : Hd * 0.45, alto = Hd * 0.2;
+    function XT(t){ return x0 + t / TM * (x1 - x0); }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, yc); ctx.lineTo(x1, yc); ctx.stroke();
+
+    /* la senoidal verdadera */
+    ctx.strokeStyle = "rgba(107,116,132,.75)"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for(i = 0; i <= 1600; i++){
+      var t = TM * i / 1600;
+      var q = { x:XT(t), y:yc - Math.cos(2 * Math.PI * f * t) * alto };
+      if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+    }
+    ctx.stroke();
+
+    /* la senoidal alias: pasa exactamente por las mismas muestras */
+    if(verA && A.f > 0.01){
+      ctx.strokeStyle = "#f85149"; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      for(i = 0; i <= 900; i++){
+        var t2 = TM * i / 900;
+        var v = Math.cos(2 * Math.PI * A.f * t2 * (A.invierte ? -1 : 1));
+        var q2 = { x:XT(t2), y:yc - v * alto };
+        if(i === 0) ctx.moveTo(q2.x, q2.y); else ctx.lineTo(q2.x, q2.y);
+      }
+      ctx.stroke();
+    }
+
+    /* las muestras */
+    var T = 1 / FS, err = 0;
+    for(i = 0; i * T <= TM; i++){
+      var tm = i * T, vm = Math.cos(2 * Math.PI * f * tm);
+      var va = Math.cos(2 * Math.PI * A.f * tm * (A.invierte ? -1 : 1));
+      err = Math.max(err, Math.abs(vm - va));
+      ctx.strokeStyle = "rgba(242,204,96,.6)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(XT(tm), yc); ctx.lineTo(XT(tm), yc - vm * alto); ctx.stroke();
+      ctx.fillStyle = "#f2cc60";
+      ctx.beginPath(); ctx.arc(XT(tm), yc - vm * alto, 3.4, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = "#6b7484"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("la señal de verdad", x0, yc - alto * 1.5);
+    ctx.fillStyle = "#f2cc60"; ctx.fillText("las muestras", x0 + 104, yc - alto * 1.5);
+    if(verA){ ctx.fillStyle = "#f85149"; ctx.fillText("lo que se ve", x0 + 184, yc - alto * 1.5); }
+
+    /* el mapa de plegado: frecuencia real contra frecuencia aparente */
+    if(verM){
+      var ym = Hd - 26, altoM = Hd * 0.26, xm0 = x0, xm1 = x1;
+      function XM(ff){ return xm0 + ff / FMAX * (xm1 - xm0); }
+      function YM(ff){ return ym - ff / (FS / 2) * altoM; }
+      ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xm0, ym - altoM); ctx.lineTo(xm0, ym); ctx.lineTo(xm1, ym); ctx.stroke();
+      /* las lineas de fs/2 y sus multiplos */
+      ctx.strokeStyle = "rgba(42,49,64,.9)";
+      for(i = 1; XM(i * FS / 2) < xm1; i++){
+        ctx.beginPath(); ctx.moveTo(XM(i * FS / 2), ym - altoM); ctx.lineTo(XM(i * FS / 2), ym); ctx.stroke();
+      }
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(i = 0; i <= 600; i++){
+        var ff = FMAX * i / 600;
+        var q3 = { x:XM(ff), y:YM(alias(ff).f) };
+        if(i === 0) ctx.moveTo(q3.x, q3.y); else ctx.lineTo(q3.x, q3.y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#f85149";
+      ctx.beginPath(); ctx.arc(XM(f), YM(A.f), 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#7ee787"; ctx.font = "600 10px system-ui, sans-serif";
+      ctx.fillText("frecuencia aparente según la real", xm0, ym - altoM - 6);
+      ctx.fillStyle = "#6b7484"; ctx.font = "9px system-ui, sans-serif";
+      ctx.fillText("fs/2", XM(FS / 2) - 8, ym + 11);
+      ctx.fillText("fs", XM(FS) - 4, ym + 11);
+      ctx.fillText("2fs", XM(2 * FS) - 6, ym + 11);
+      ctx.fillText(FMAX + " Hz", xm1 - 26, ym + 11);
+    }
+
+    var ok = f < FS / 2;
+    $("alDatos").innerHTML =
+      "<span>Frecuencia de la señal   ·   fs</span><b>" + n(f, 1) + " Hz   ·   " + FS + " Hz</b>" +
+      '<hr><span style="color:#f85149">Con qué frecuencia aparece</span><b>' + n(A.f, 2) + " Hz" +
+        (A.invierte ? "   ·   con la fase invertida" : "") + "</b>" +
+      "<span>La cuenta</span><b>" +
+        (ok ? "no hace falta: está por debajo de fs/2"
+            : "|" + n(f, 1) + " − " + Math.round(f / FS) + "·" + FS + "| = " + n(A.f, 2) + " Hz") + "</b>" +
+      "<span>Máxima diferencia entre las dos en las muestras</span><b>" + n(err, 6) + "</b>" +
+      "<hr><span>¿Se puede recuperar?</span><b>" +
+        (ok ? "sí, cumple el teorema" : "<b>no</b>: las muestras no alcanzan para distinguirlas") + "</b>";
+
+    var txt;
+    if(ok)
+      txt = "Por debajo de fs/2 la reconstrucción es única: no hay otra senoidal de esa banda que pase " +
+            "por estas muestras. Subí la frecuencia por encima de 5 Hz y aparece la impostora.";
+    else
+      txt = "Mirá el último número: la diferencia entre las dos senoidales <b>en los instantes de " +
+            "muestreo</b> es cero. No es que se parezcan: dan exactamente lo mismo. Por eso ningún " +
+            "procesamiento posterior puede separarlas, y por eso el filtro antialias tiene que estar antes " +
+            "del conversor.";
+    if(A.invierte)
+      txt += " Acá el alias además sale con la fase dada vuelta: es lo que hace que las ruedas del carro " +
+             "parezcan girar al revés.";
+    $("alNota").innerHTML = txt;
+  }
+
+  ["alF", "alA", "alM"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>

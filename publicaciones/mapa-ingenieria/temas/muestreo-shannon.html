@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teorema del muestreo · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="El teorema del muestreo, las réplicas que el muestreo genera en el espectro, la reconstrucción por interpolación sinc, la caída del retenedor de orden cero y los márgenes que se usan en la práctica, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/muestreo-shannon">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 30 de 34</div>
+    <h1>Teorema del muestreo</h1>
+    <p class="lead">Quedarse con el valor cada T segundos y tirar el resto parece perder información para siempre. Y sin embargo, si la señal tiene banda limitada y se muestrea rápido, las muestras contienen todo.</p>
+    <div class="chips">
+      <span class="chip hi">Nyquist</span>
+      <span class="chip">Réplicas</span>
+      <span class="chip">Interpolación sinc</span>
+      <span class="chip">Retenedor</span>
+      <span class="chip">Filtro antialias</span>
+    </div>
+    <hr class="rule">
+
+    <section id="enunciado">
+      <h2><span class="n">01</span>El enunciado, y por qué no es obvio</h2>
+      <p>Muestrear es quedarse con el valor de una señal cada \( T \) segundos y tirar todo lo que pasaba en
+      el medio. Parece que se pierde información para siempre, y sin embargo:</p>
+      <div class="form">
+        \[ f_s \gt 2\,f_{\text{máx}} \;\Longrightarrow\; x(t) \text{ se puede recuperar exactamente} \]
+        <span class="cap">Si la señal tiene ancho de banda limitado y se muestrea a más del doble de su frecuencia más alta, las muestras contienen <b>toda</b> la información. Nada se perdió.</span>
+      </div>
+      <p>Ese es el teorema del muestreo, y es la razón de que exista el audio digital, la telefonía celular y
+      cualquier instrumento con conversor A/D. La frecuencia \( 2f_{\text{máx}} \) se llama <b>frecuencia de
+      Nyquist</b>, y el enunciado se atribuye a Nyquist, Shannon, Kotelnikov y Whittaker según el país donde
+      se lo estudie.</p>
+    </section>
+
+    <section id="replicas">
+      <h2><span class="n">02</span>Qué le hace el muestreo al espectro</h2>
+      <p>Muestrear idealmente es multiplicar la señal por un tren de impulsos separados \( T \). Y por el
+      teorema de la modulación, multiplicar en el tiempo es <b>convolucionar en frecuencia</b>. Como la
+      transformada de un tren de impulsos es otro tren de impulsos, el resultado es:</p>
+      <div class="form">
+        \[ X_s(j\omega) = \frac{1}{T}\sum_{k=-\infty}^{\infty} X\big(j(\omega - k\omega_s)\big) \]
+        <span class="cap">El espectro original, <b>repetido</b> cada \( \omega_s \). Muestrear no destruye el espectro: lo clona infinitas veces.</span>
+      </div>
+      <p>Ahí está todo el teorema, y se ve mejor de lo que se demuestra. Si las réplicas no se tocan, la
+      original sigue intacta en el medio y alcanza con un filtro pasabajos para recuperarla. Si se solapan, se
+      suman y ya no hay filtro que las separe: eso es el aliasing.</p>
+      <div class="lw" id="ms">
+        <div class="lt">Laboratorio · las réplicas del espectro</div>
+        <p class="ls">Arriba, el espectro de la señal y sus réplicas cada \( f_s \). Abajo, la señal original y la reconstruida a partir de las muestras. Bajá la frecuencia de muestreo hasta que las réplicas se toquen.</p>
+        <div class="fila">
+          <select id="msS">
+            <option value="tres">señal con tres tonos</option>
+            <option value="banda">señal de banda ancha</option>
+            <option value="uno">un solo tono</option>
+          </select>
+          <label class="chk"><input type="checkbox" id="msR" checked> Ver la reconstrucción</label>
+        </div>
+        <div class="fila">
+          <label for="msF">Frecuencia de muestreo = <b id="msFv">10,0</b> Hz</label>
+          <input type="range" id="msF" min="3" max="22" step="0.1" value="10">
+        </div>
+        <canvas id="msLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.5/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="msDatos" style="margin-top:8px"></div>
+        <div class="nota" id="msNota"></div>
+      </div>
+    </section>
+
+    <section id="reconstruccion">
+      <h2><span class="n">03</span>Cómo se recupera la señal</h2>
+      <p>Si las réplicas no se solapan, se filtra con un pasabajos ideal de corte \( f_s/2 \) y queda la
+      original. En el tiempo, ese filtro es un sinc, y la reconstrucción tiene la forma de una interpolación:</p>
+      <div class="form">
+        \[ x(t) = \sum_{n=-\infty}^{\infty} x[n]\,
+           \frac{\operatorname{sen}\big(\pi(t - nT)/T\big)}{\pi(t - nT)/T} \]
+        <span class="cap">Cada muestra se reemplaza por un sinc centrado en ella, y se suman todos. El sinc vale 1 en su propia muestra y 0 en todas las demás, así que la suma pasa exactamente por los puntos medidos.</span>
+      </div>
+      <p>Esa fórmula es exacta pero irrealizable: el sinc se extiende hasta el infinito en los dos sentidos, y
+      ya se vio que ese filtro <a class="ref"
+      href="/publicaciones/mapa-ingenieria/temas/estabilidad">no es causal ni BIBO estable</a>. En la práctica
+      un conversor D/A hace otra cosa: mantiene cada muestra hasta la siguiente.</p>
+      <div class="box key"><div class="bt">El escalonado del D/A, y por qué hay que corregirlo</div>
+        <p>Mantener el valor entre muestras equivale a convolucionar con un pulso rectangular de ancho
+        \( T \), cuyo espectro es un sinc. Eso atenúa las frecuencias altas de la banda útil: en el borde,
+        \( f_s/2 \), la caída vale \( 2/\pi \), o sea <b>−3,92 dB</b>. Por eso los conversores de audio llevan
+        un filtro de compensación —que en las hojas de datos figura como <i>sinc correction</i>— y por eso
+        conviene sobremuestrear: si la banda útil ocupa sólo una fracción de \( f_s/2 \), la caída del sinc en
+        esa zona es despreciable.</p></div>
+    </section>
+
+    <section id="practica">
+      <h2><span class="n">04</span>Los números de la práctica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Aplicación</th><th>Banda útil</th><th>\( f_s \)</th><th>Margen</th></tr></thead>
+        <tbody>
+          <tr><td>Telefonía</td><td>3,4 kHz</td><td>8 kHz</td><td>1,18 veces Nyquist</td></tr>
+          <tr><td>Disco compacto</td><td>20 kHz</td><td>44,1 kHz</td><td>1,10 veces</td></tr>
+          <tr><td>Audio profesional</td><td>20 kHz</td><td>48 o 96 kHz</td><td>1,2 o 2,4 veces</td></tr>
+          <tr><td>Osciloscopio digital</td><td>100 MHz</td><td>1 GS/s o más</td><td>5 veces o más</td></tr>
+        </tbody>
+      </table></div>
+      <p>Ninguna trabaja justo en el límite, y por dos razones. La primera es que el filtro antialias real no
+      corta vertical: necesita una banda de transición entre la frecuencia útil y \( f_s/2 \), y esa banda es
+      el margen. La segunda es la fila del osciloscopio: para <b>ver</b> una forma de onda no alcanza con
+      poder reconstruirla en teoría; hacen falta muchas muestras por período para que el dibujo sea
+      reconocible.</p>
+      <p>La telefonía muestra el caso más ajustado: con 8 kHz de muestreo y 3,4 kHz de banda, quedan apenas
+      600 Hz para que el filtro pase de dejar pasar a atenuar del todo. Por eso los filtros de los canales
+      telefónicos son de orden alto.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Encontrar el límite</div>
+        <p>Muestrear con un conversor A/D una senoidal de 1 kHz a 10, 4, 2,5 y 1,8 kS/s, reconstruir con el
+        D/A y observar la salida. Identificar a partir de qué frecuencia deja de parecerse a la
+        original.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Medir la caída del sinc</div>
+        <p>Barrer la frecuencia de una senoidal entre continua y \( f_s/2 \) manteniendo la amplitud de
+        entrada, y medir la amplitud de la salida del D/A. Comparar la curva medida con
+        \( \operatorname{sinc}(f/f_s) \) y verificar los −3,92 dB en el borde.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · El filtro antialias</div>
+        <p>Diseñar el filtro antialias para un sistema con banda útil de 4 kHz y \( f_s = 10 \) kHz.
+        Determinar qué orden hace falta para atenuar 60 dB en 5 kHz partiendo de 0 dB en 4 kHz.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Usar \( f_s = 2f_{\text{máx}} \) exacto.</b> El teorema pide <i>mayor</i> que el doble; en el
+        límite justo una senoidal puede caer siempre en sus cruces por cero.</li>
+        <li><b>Olvidar el filtro antialias.</b> El teorema exige que la señal sea de banda limitada, y eso no
+        pasa solo: hay que forzarlo.</li>
+        <li><b>Confundir la frecuencia de Nyquist con \( f_s/2 \).</b> La de Nyquist es
+        \( 2f_{\text{máx}} \); \( f_s/2 \) es el límite de la banda representable.</li>
+        <li><b>Creer que el D/A reconstruye exactamente.</b> El escalonado atenúa; hay que
+        compensarlo.</li>
+        <li><b>Muestrear justo al doble porque «el teorema lo permite».</b> Sin margen, el filtro antialias es
+        irrealizable.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué le hace el muestreo al espectro?</summary>
+        <div class="a"><p>Lo repite cada \( f_s \). Si las réplicas no se solapan, la original sigue
+        entera.</p></div></details>
+      <details class="q"><summary>¿Qué condición pide el teorema?</summary>
+        <div class="a"><p>Que la señal sea de banda limitada y que \( f_s \) sea mayor que el doble de su
+        frecuencia máxima.</p></div></details>
+      <details class="q"><summary>¿Cuál es el interpolador exacto?</summary>
+        <div class="a"><p>El sinc: cada muestra se reemplaza por un sinc centrado en ella y se suman
+        todos.</p></div></details>
+      <details class="q"><summary>¿Por qué no se usa el sinc en la práctica?</summary>
+        <div class="a"><p>Porque se extiende infinitamente hacia los dos lados: no es causal ni BIBO
+        estable.</p></div></details>
+      <details class="q"><summary>¿Cuánto atenúa el escalonado del D/A en \( f_s/2 \)?</summary>
+        <div class="a"><p>\( 2/\pi \), o sea −3,92 dB. Por eso los conversores llevan compensación de
+        sinc.</p></div></details>
+      <details class="q"><summary>¿Por qué el CD usa 44,1 kHz y no 40?</summary>
+        <div class="a"><p>Para dejar margen al filtro antialias entre los 20 kHz útiles y los 22,05 kHz de
+        \( f_s/2 \).</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim y Alan S. Willsky.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1998.</span>
+          <span class="pq">El capítulo 7 completo: muestreo, réplicas, reconstrucción y el retenedor de orden cero.</span></li>
+        <li><span class="au">Walt Kester (ed.).</span> <span class="ti">Data Conversion Handbook</span>.
+          <span class="ed">Analog Devices / Newnes, 2005.</span>
+          <span class="pq">El muestreo desde el lado del conversor real: jitter, apertura y compensación de sinc.</span></li>
+        <li><span class="au">John G. Proakis y Dimitris G. Manolakis.</span> <span class="ti">Tratamiento digital de señales</span>.
+          <span class="ed">4.ª ed., Pearson, 2007.</span>
+          <span class="pq">Muestreo y reconstrucción con el detalle matemático y los criterios de diseño del filtro.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/implementacion-sistemas">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Elementos de los sistemas e implementación</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/aliasing">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Aliasing</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Teorema del muestreo»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Las replicas del espectro. Arriba, el espectro de la senal repetido cada fs,
+   con la banda de fs/2 marcada; abajo, la original y la reconstruida a partir
+   de las muestras por interpolacion sinc. Cuando las replicas se tocan, la
+   reconstruccion se despega y ya no hay filtro que la salve. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("msLienzo"), ctx = cv.getContext("2d");
+  var TM = 2;                      /* segundos de senal que se dibujan */
+
+  var S = {
+    tres:  { n:"tres tonos", fmax:4,
+             comp:[[1.2, 1], [2.6, 0.7], [4, 0.45]],
+             t:"Tres tonos, el más alto en 4 Hz. Hace falta muestrear por encima de 8 Hz; por debajo, la " +
+               "réplica del tono de 4 Hz se mete en la banda útil." },
+    banda: { n:"banda ancha", fmax:7,
+             comp:[[1, 1], [2.5, 0.8], [4, 0.6], [5.5, 0.45], [7, 0.3]],
+             t:"Una señal que llega hasta 7 Hz. Necesita más de 14 Hz de muestreo, y con el deslizador casi " +
+               "en el tope apenas alcanza: así de exigente es una señal de banda ancha." },
+    uno:   { n:"un tono", fmax:3,
+             comp:[[3, 1]],
+             t:"Un solo tono de 3 Hz. Con más de 6 Hz se reconstruye perfecto; por debajo aparece en otra " +
+               "frecuencia y la reconstrucción es una senoidal distinta." }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var s = S[$("msS").value], fs = parseFloat($("msF").value), verR = $("msR").checked;
+    $("msFv").textContent = n(fs, 1);
+
+    function x(t){
+      var v = 0;
+      s.comp.forEach(function(c){ v += c[1] * Math.cos(2 * Math.PI * c[0] * t + c[0]); });
+      return v;
+    }
+    /* las muestras y la reconstruccion por sinc */
+    var T = 1 / fs, N = Math.floor(TM / T) + 1, mues = [];
+    for(i = 0; i < N; i++) mues.push(x(i * T));
+    function recon(t){
+      /* el indice va declarado adentro: si tomara el i del ambito de pintar,
+         al volver lo dejaria en N y el bucle que llama nunca terminaria */
+      var sum = 0, j;
+      for(j = 0; j < N; j++){
+        var a = Math.PI * (t - j * T) / T;
+        sum += mues[j] * (Math.abs(a) < 1e-9 ? 1 : Math.sin(a) / a);
+      }
+      return sum;
+    }
+
+    var x0 = 26, x1 = Wd - 12;
+    var yE = Hd * 0.3, altoE = Hd * 0.2;
+    var yT = Hd - 30, altoT = Hd * 0.18;
+    var FMAX = 26;
+    function XF(f){ return x0 + f / FMAX * (x1 - x0); }
+    function XT(t){ return x0 + t / TM * (x1 - x0); }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* la banda util, sombreada */
+    ctx.fillStyle = "rgba(88,166,255,.07)";
+    ctx.fillRect(x0, yE - altoE * 1.15, XF(fs / 2) - x0, altoE * 1.3);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yE); ctx.lineTo(x1, yE);
+    ctx.moveTo(x0, yT); ctx.lineTo(x1, yT);
+    ctx.stroke();
+
+    /* las replicas: la original en k=0 y las copias cada fs */
+    var solapa = false;
+    for(k = 0; k * fs - s.fmax < FMAX; k++){
+      s.comp.forEach(function(c){
+        [-1, 1].forEach(function(sg){
+          var f = k * fs + sg * c[0];
+          if(f < 0 || f > FMAX) return;
+          var esOrig = (k === 0 && sg > 0);
+          var h = c[1] / 1.1 * altoE;
+          ctx.strokeStyle = esOrig ? "#58a6ff" : "rgba(242,204,96,.65)";
+          ctx.lineWidth = esOrig ? 2.4 : 1.6;
+          ctx.beginPath(); ctx.moveTo(XF(f), yE); ctx.lineTo(XF(f), yE - h); ctx.stroke();
+          if(!esOrig && f < fs / 2) solapa = true;
+        });
+      });
+    }
+    /* el filtro reconstructor, hasta fs/2 */
+    ctx.strokeStyle = "rgba(126,231,135,.8)"; ctx.lineWidth = 1.6; ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x0, yE - altoE * 1.1); ctx.lineTo(XF(fs / 2), yE - altoE * 1.1);
+    ctx.lineTo(XF(fs / 2), yE); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#58a6ff"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("espectro", x0, yE - altoE * 1.3);
+    ctx.fillStyle = "#f2cc60"; ctx.fillText("sus réplicas cada fs", x0 + 56, yE - altoE * 1.3);
+    ctx.fillStyle = "#7ee787"; ctx.fillText("el filtro", x0 + 176, yE - altoE * 1.3);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("fs/2", XF(fs / 2) - 8, yE + 12);
+    ctx.fillText("fs", XF(fs) - 4, yE + 12);
+    ctx.fillText("Hz", x1 - 16, yE + 12);
+
+    /* abajo: original y reconstruida */
+    ctx.strokeStyle = "rgba(107,116,132,.7)"; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    for(i = 0; i <= 700; i++){
+      var t = TM * i / 700;
+      var q = { x:XT(t), y:yT - x(t) / 2.4 * altoT };
+      if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+    }
+    ctx.stroke();
+    if(verR){
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(i = 0; i <= 700; i++){
+        var t2 = TM * i / 700;
+        var q2 = { x:XT(t2),
+                   y:Math.max(yT - altoT * 1.6, Math.min(yT + altoT * 1.6, yT - recon(t2) / 2.4 * altoT)) };
+        if(i === 0) ctx.moveTo(q2.x, q2.y); else ctx.lineTo(q2.x, q2.y);
+      }
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#f2cc60";
+    for(i = 0; i < N && i * T <= TM; i++){
+      ctx.beginPath(); ctx.arc(XT(i * T), yT - mues[i] / 2.4 * altoT, 2.6, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = "#6b7484"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("original", x0, yT - altoT * 1.7);
+    ctx.fillStyle = "#f2cc60"; ctx.fillText("muestras", x0 + 48, yT - altoT * 1.7);
+    if(verR){ ctx.fillStyle = "#7ee787"; ctx.fillText("reconstruida", x0 + 110, yT - altoT * 1.7); }
+
+    /* el error de reconstruccion, medido lejos de los bordes */
+    var err = 0, pot = 0;
+    for(i = 0; i <= 300; i++){
+      var t3 = TM * 0.25 + TM * 0.5 * i / 300;
+      var d1 = x(t3), d2 = recon(t3);
+      err = Math.max(err, Math.abs(d1 - d2)); pot = Math.max(pot, Math.abs(d1));
+    }
+
+    $("msDatos").innerHTML =
+      "<span>Señal</span><b>" + s.n + "   ·   llega hasta " + n(s.fmax, 1) + " Hz</b>" +
+      "<hr><span>Frecuencia de muestreo</span><b>" + n(fs, 1) + " Hz   ·   " +
+        n(fs / (2 * s.fmax), 2) + " veces Nyquist</b>" +
+      "<span>Hace falta más de</span><b>" + n(2 * s.fmax, 1) + " Hz</b>" +
+      '<hr><span style="color:#f2cc60">¿Se meten réplicas en la banda útil?</span><b>' +
+        (solapa ? "<b>sí</b>: hay aliasing" : "no") + "</b>" +
+      '<span style="color:#7ee787">Error de la reconstrucción</span><b>' +
+        n(pot > 0 ? err / pot * 100 : 0, 1) + " %</b>";
+
+    var txt = s.t;
+    if(solapa)
+      txt += " <b>Ahora las réplicas invadieron la banda útil</b>: las rayas amarillas se metieron dentro " +
+             "de la zona azul, y ahí ya no hay filtro que las separe de las originales. La reconstrucción " +
+             "de abajo se despegó.";
+    else
+      txt += " Las réplicas quedan afuera de la banda útil, así que el filtro las corta y la " +
+             "reconstrucción cae sobre la original. Las diferencias en los extremos son de borde: ahí " +
+             "faltan las muestras de afuera del gráfico.";
+    $("msNota").innerHTML = txt;
+  }
+
+  ["msS", "msF", "msR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
