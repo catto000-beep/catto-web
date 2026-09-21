@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probabilidad · Probabilidad y Estadística · Catto</title>
+<meta name="description" content="Espacio muestral y axiomas, probabilidad condicional e independencia, teorema de la probabilidad total y teorema de Bayes, aplicados al control de calidad y al diagnóstico de fallas, con laboratorio interactivo sobre ensayos con falsos positivos. Contenido de Probabilidad y Estadística, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/probabilidad">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Probabilidad y Estadística</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Probabilidad y Estadística</span> · 72 h · Contenido 2 de 6</div>
+    <h1>Probabilidad</h1>
+    <p class="lead">Un ensayo que acierta el 99 % de las veces, aplicado a un lote con 1 % de piezas falladas, da una pieza buena por cada pieza mala entre las que marca como defectuosas. No es un error del ensayo: es Bayes.</p>
+    <div class="chips">
+      <span class="chip hi">Espacio muestral</span>
+      <span class="chip">Condicional</span>
+      <span class="chip">Independencia</span>
+      <span class="chip">Bayes</span>
+      <span class="chip">Falsos positivos</span>
+    </div>
+    <hr class="rule">
+
+    <section id="axiomas">
+      <h2><span class="n">01</span>Tres axiomas y nada más</h2>
+      <p>Toda la teoría se levanta sobre tres reglas. Un <b>experimento aleatorio</b> tiene un conjunto de
+      resultados posibles —el espacio muestral \( S \)—, y a cada subconjunto de ese espacio, llamado
+      <b>suceso</b>, se le asigna un número entre 0 y 1:</p>
+      <div class="form">
+        \[ 0 \le P(A) \le 1 \qquad P(S) = 1 \qquad
+           P(A\cup B) = P(A) + P(B) \ \text{ si son excluyentes} \]
+        <span class="cap">De los tres sale todo lo demás por deducción, incluida la regla general \( P(A\cup B) = P(A)+P(B)-P(A\cap B) \): al sumar por separado, la intersección se cuenta dos veces y hay que restarla una.</span>
+      </div>
+      <div class="form">
+        \[ P(A\mid B) = \frac{P(A\cap B)}{P(B)} \qquad\qquad
+           A \perp B \iff P(A\cap B) = P(A)\,P(B) \]
+        <span class="cap">La probabilidad <b>condicional</b> reduce el espacio muestral a los casos en que ocurrió \( B \). Dos sucesos son <b>independientes</b> cuando saber que uno ocurrió no cambia la probabilidad del otro.</span>
+      </div>
+      <div class="box ojo"><div class="bt">Independiente no es lo mismo que excluyente</div>
+        <p>Se confunden todo el tiempo y son casi opuestos. Dos sucesos <b>excluyentes</b> no pueden ocurrir
+        juntos, así que saber que ocurrió uno te dice con certeza que el otro no: eso es máxima dependencia.
+        Dos sucesos <b>independientes</b>, en cambio, pueden ocurrir juntos, y justamente la probabilidad de
+        que ocurran ambos es el producto de las dos.</p></div>
+    </section>
+
+    <section id="confiabilidad">
+      <h2><span class="n">02</span>Independencia y confiabilidad</h2>
+      <p>La aplicación más directa en ingeniería es calcular si un sistema funciona a partir de si funcionan
+      sus partes. Con componentes que fallan de manera independiente:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Configuración</th><th>Funciona si</th><th>Confiabilidad</th></tr></thead>
+        <tbody>
+          <tr><td><b>Serie</b></td><td>Funcionan <b>todos</b></td><td>\( R = R_1 R_2 \cdots R_n \)</td></tr>
+          <tr><td><b>Paralelo</b></td><td>Funciona <b>al menos uno</b></td><td>\( R = 1 - (1-R_1)\cdots(1-R_n) \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>La primera fila es implacable: cien componentes en serie con 99,9 % de confiabilidad cada uno dan un
+      sistema con 90,5 %. Por eso un equipo con muchas piezas necesita que cada una sea mucho mejor que el
+      conjunto. Y la segunda es el fundamento de la <b>redundancia</b>: dos unidades en paralelo con 95 %
+      cada una dan 99,75 %.</p>
+      <div class="box peligro"><div class="bt">La independencia casi nunca es cierta del todo</div>
+        <p>La redundancia funciona mientras las fallas sean independientes, y muchas veces no lo son: dos
+        fuentes redundantes alimentadas por la misma línea caen juntas si se corta esa línea, y dos placas
+        idénticas comparten el mismo defecto de diseño. Eso se llama <b>falla de causa común</b>, y es la
+        razón por la que en sistemas críticos se exige redundancia <b>diversa</b>: no dos veces lo mismo,
+        sino dos soluciones distintas.</p></div>
+    </section>
+
+    <section id="bayes">
+      <h2><span class="n">03</span>El teorema de Bayes</h2>
+      <p>El teorema permite dar vuelta una probabilidad condicional: pasar de «cuán seguido el ensayo da
+      positivo cuando la pieza está fallada» a lo que uno realmente quiere saber, «cuán seguido la pieza está
+      fallada cuando el ensayo dio positivo».</p>
+      <div class="form">
+        \[ P(A\mid B) = \frac{P(B\mid A)\,P(A)}{P(B)}
+           \qquad\qquad
+           P(B) = P(B\mid A)P(A) + P(B\mid \bar{A})P(\bar{A}) \]
+        <span class="cap">La segunda es el <b>teorema de la probabilidad total</b>: el denominador se arma sumando todas las maneras de llegar a \( B \). Es lo que hace que el resultado dependa de cuán frecuente sea \( A \) de entrada.</span>
+      </div>
+      <div class="lw" id="ba">
+        <div class="lt">Laboratorio · un ensayo con falsos positivos</div>
+        <p class="ls">Un ensayo de control de calidad con su sensibilidad y su especificidad, aplicado a un lote. Movés la proporción de piezas falladas y mirá qué pasa con la confianza en un resultado positivo.</p>
+        <div class="fila">
+          <label for="baP">Piezas realmente falladas = <b id="baPv">1 %</b></label>
+          <input type="range" id="baP" min="0" max="1000" step="1" value="333">
+        </div>
+        <div class="fila">
+          <label for="baS">Sensibilidad · detecta una fallada = <b id="baSv">99 %</b></label>
+          <input type="range" id="baS" min="500" max="999" step="1" value="990">
+        </div>
+        <div class="fila">
+          <label for="baE">Especificidad · aprueba una buena = <b id="baEv">99 %</b></label>
+          <input type="range" id="baE" min="500" max="999" step="1" value="990">
+        </div>
+        <canvas id="baLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.5/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="baDatos" style="margin-top:8px"></div>
+        <div class="nota" id="baNota"></div>
+      </div>
+      <div class="box key"><div class="bt">El resultado que desconcierta a todo el mundo</div>
+        <p>Un ensayo que acierta el 99 % de las veces, aplicado a un lote con 1 % de piezas falladas,
+        produce tantos falsos positivos como positivos verdaderos: de cada dos piezas que marca como malas,
+        una está bien. El ensayo no está mal hecho. Lo que ocurre es que las piezas buenas son <b>noventa y
+        nueve veces más numerosas</b>, así que su 1 % de error aporta tantos casos como el 99 % de acierto
+        sobre un grupo minúsculo. La conclusión práctica es que <b>en poblaciones donde el defecto es raro,
+        todo positivo hay que confirmarlo</b>.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Frecuencia y probabilidad</div>
+        <p>Tirar un dado doscientas veces registrando resultados, y graficar la frecuencia relativa de cada
+        cara contra el número de tiradas. Observar cómo se acerca a 1/6 y estimar cuántas tiradas hacen
+        falta para estar dentro del 1 %.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Confiabilidad de una cadena</div>
+        <p>Calcular la confiabilidad de un equipo con veinte componentes en serie, cada uno con 99,5 %.
+        Agregar redundancia en el componente más débil y recalcular. Discutir cuánto costaría mejorar cada
+        uno en lugar de duplicar uno.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Armar la tabla de Bayes</div>
+        <p>Sobre un lote imaginario de diez mil piezas con 2 % de falladas y un ensayo de 95 % de
+        sensibilidad y 90 % de especificidad, armar la tabla de los cuatro casos posibles y calcular el
+        valor predictivo positivo contando piezas, sin usar la fórmula.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Confundir \( P(A\mid B) \) con \( P(B\mid A) \).</b> Es el error que hace Bayes
+        necesario.</li>
+        <li><b>Tomar independiente por excluyente.</b> Son casi opuestos.</li>
+        <li><b>Multiplicar probabilidades de sucesos dependientes.</b> El producto vale solo si son
+        independientes.</li>
+        <li><b>Ignorar la proporción de base.</b> Sin saber cuán frecuente es el defecto, un positivo no
+        significa nada.</li>
+        <li><b>Suponer que la redundancia siempre multiplica la confiabilidad.</b> No, si hay falla de
+        causa común.</li>
+        <li><b>Creer que después de muchas caras «toca» ceca.</b> La moneda no tiene
+        memoria.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">06</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuándo son independientes dos sucesos?</summary>
+        <div class="a"><p>Cuando \( P(A\cap B) = P(A)P(B) \): saber que ocurrió uno no cambia la
+        probabilidad del otro.</p></div></details>
+      <details class="q"><summary>¿Cuál es la confiabilidad de cien componentes en serie al 99,9 %?</summary>
+        <div class="a"><p>\( 0{,}999^{100} = 90{,}5\ \% \). En serie, la confiabilidad del conjunto es
+        siempre peor que la de la peor parte.</p></div></details>
+      <details class="q"><summary>¿Para qué sirve el teorema de Bayes?</summary>
+        <div class="a"><p>Para invertir una condicional: pasar de la probabilidad del resultado dado el
+        estado, a la del estado dado el resultado.</p></div></details>
+      <details class="q"><summary>¿Por qué un ensayo del 99 % da tantos falsos positivos?</summary>
+        <div class="a"><p>Porque si las piezas buenas son noventa y nueve veces más numerosas, su 1 % de
+        error aporta tantos casos como el 99 % de acierto sobre las pocas falladas.</p></div></details>
+      <details class="q"><summary>¿Qué es una falla de causa común?</summary>
+        <div class="a"><p>Una que tumba a la vez a las unidades redundantes, como una alimentación
+        compartida o un defecto de diseño repetido.</p></div></details>
+      <details class="q"><summary>¿Qué confiabilidad dan dos unidades al 95 % en paralelo?</summary>
+        <div class="a"><p>99,75 %: falla el sistema solo si fallan las dos, y \( 0{,}05^2 = 0{,}0025 \).</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">07</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Douglas C. Montgomery y George C. Runger.</span>
+          <span class="ti">Probabilidad y estadística aplicadas a la ingeniería</span>.
+          <span class="ed">7.ª ed., Wiley, 2018.</span>
+          <span class="pq">El capítulo 2 completo: axiomas, condicional, independencia y Bayes con problemas de ingeniería.</span></li>
+        <li><span class="au">Sheldon Ross.</span>
+          <span class="ti">Introducción a la probabilidad y estadística para ingenieros</span>.
+          <span class="ed">5.ª ed., Elsevier, 2018.</span>
+          <span class="pq">Un tratamiento más formal, con buenos ejercicios de probabilidad total y sucesos compuestos.</span></li>
+        <li><span class="au">Patrick D. T. O'Connor y Andre Kleyner.</span>
+          <span class="ti">Practical Reliability Engineering</span>.
+          <span class="ed">5.ª ed., Wiley, 2012.</span>
+          <span class="pq">Confiabilidad de sistemas, redundancia y fallas de causa común aplicados a equipos reales.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/estadistica-descriptiva">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Estadística descriptiva</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/distribuciones">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Variables aleatorias y distribuciones</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Probabilidad»</b> de <b>Probabilidad y Estadística</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Bayes sobre un ensayo de control de calidad. El dibujo es un cuadro de
+   diez mil piezas: cada una es un punto, y se pintan los cuatro casos
+   posibles. Contando puntos sale el mismo resultado que con la formula, y esa
+   es justamente la idea: el valor predictivo positivo se entiende mucho mejor
+   contando piezas que despejando condicionales.
+
+   El caso que la pagina quiere mostrar es prevalencia 1 % con ensayo 99/99:
+   ahi los verdaderos positivos y los falsos positivos son casi iguales. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("baLienzo"), ctx = cv.getContext("2d");
+  var TOT = 10000;
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+  function pc(v){
+    if(v >= 0.1) return n(v * 100, 2) + " %";
+    if(v >= 0.001) return n(v * 100, 3) + " %";
+    return n(v * 100, 4) + " %";
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, j;
+    /* prevalencia de 0,01 % a 50 %, en escala logaritmica */
+    var prev = Math.pow(10, -4 + 3.7 * parseFloat($("baP").value) / 1000);
+    var sens = parseFloat($("baS").value) / 1000;
+    var espe = parseFloat($("baE").value) / 1000;
+
+    /* los cuatro casos, sobre diez mil piezas */
+    var falladas = TOT * prev, buenas = TOT - falladas;
+    var VP = falladas * sens;            /* fallada y el ensayo la detecta */
+    var FN = falladas * (1 - sens);      /* fallada y el ensayo la deja pasar */
+    var VN = buenas * espe;              /* buena y el ensayo la aprueba */
+    var FP = buenas * (1 - espe);        /* buena y el ensayo la rechaza */
+    var positivos = VP + FP;
+    var vpp = positivos > 0 ? VP / positivos : 0;     /* valor predictivo positivo */
+    var vpn = (VN + FN) > 0 ? VN / (VN + FN) : 0;
+
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* el cuadro de piezas: 100 x 100 celdas */
+    var lado = Math.min(Wd * 0.48, Hd - 46);
+    var gx = 14, gy = 30, cel = lado / 100;
+    /* se ordenan por categoria para que los bloques se vean: primero las
+       falladas detectadas, despues las falladas que pasaron, los falsos
+       positivos y por ultimo las buenas aprobadas */
+    var cats = [
+      { c:"#f85149", k:Math.round(VP), n:"fallada, detectada" },
+      { c:"#bf6fff", k:Math.round(FN), n:"fallada, <b>se escapó</b>" },
+      { c:"#f2cc60", k:Math.round(FP), n:"buena, <b>rechazada de más</b>" },
+      { c:"rgba(126,231,135,.35)", k:0, n:"buena, aprobada" }
+    ];
+    cats[3].k = TOT - cats[0].k - cats[1].k - cats[2].k;
+    var idx = 0;
+    cats.forEach(function(q){
+      var p;
+      for(p = 0; p < q.k; p++){
+        var fx = idx % 100, fy = Math.floor(idx / 100);
+        ctx.fillStyle = q.c;
+        ctx.fillRect(gx + fx * cel, gy + fy * cel, Math.max(cel - 0.3, 0.6),
+                     Math.max(cel - 0.3, 0.6));
+        idx++;
+      }
+    });
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.strokeRect(gx, gy, lado, lado);
+    ctx.fillStyle = "#8b93a3"; ctx.font = "600 9px system-ui, sans-serif";
+    ctx.fillText("diez mil piezas, una por cuadradito", gx, 20);
+
+    /* la referencia y la barra de los positivos, a la derecha */
+    var rx = gx + lado + 18, rw = Wd - rx - 12;
+    var ry = 30;
+    cats.forEach(function(q, k){
+      ctx.fillStyle = q.c;
+      ctx.fillRect(rx, ry + k * 17, 10, 10);
+      ctx.fillStyle = "#8b93a3"; ctx.font = "9px system-ui, sans-serif";
+      /* el rotulo va sin las marcas de negrita, que aca no se interpretan */
+      ctx.fillText(q.n.replace(/<\/?b>/g, "") + ": " + n(q.k, 0), rx + 15, ry + k * 17 + 9);
+    });
+
+    /* de lo que el ensayo marca como malo, cuanto realmente lo es */
+    var by = ry + 4 * 17 + 18, bh = 26;
+    ctx.fillStyle = "#cdd5e0"; ctx.font = "600 9px system-ui, sans-serif";
+    ctx.fillText("de todo lo que el ensayo rechaza:", rx, by - 6);
+    var anchoVP = positivos > 0 ? rw * vpp : 0;
+    ctx.fillStyle = "#f85149";
+    ctx.fillRect(rx, by, anchoVP, bh);
+    ctx.fillStyle = "#f2cc60";
+    ctx.fillRect(rx + anchoVP, by, rw - anchoVP, bh);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.strokeRect(rx, by, rw, bh);
+    ctx.fillStyle = "#0b0f16"; ctx.font = "600 10px system-ui, sans-serif";
+    if(anchoVP > 34) ctx.fillText(n(vpp * 100, 0) + " %", rx + 5, by + 17);
+    if(rw - anchoVP > 34) ctx.fillText(n((1 - vpp) * 100, 0) + " %", rx + anchoVP + 5, by + 17);
+    ctx.fillStyle = "#8b93a3"; ctx.font = "9px system-ui, sans-serif";
+    ctx.fillText("rojo: estaba mal   ·   amarillo: estaba bien", rx, by + bh + 12);
+
+    /* --------------------------------------------------------- los datos */
+    $("baPv").textContent = pc(prev) + "   ·   " + n(falladas, 0) + " de " + TOT;
+    $("baSv").textContent = n(sens * 100, 1) + " %";
+    $("baEv").textContent = n(espe * 100, 1) + " %";
+
+    $("baDatos").innerHTML =
+      "<span>Sobre " + TOT + " piezas</span><b>" + n(falladas, 0) + " falladas   ·   " +
+        n(buenas, 0) + " buenas</b>" +
+      '<hr><span style="color:#f85149">Falladas que el ensayo detecta</span><b>' + n(VP, 0) +
+        "   ·   son los positivos verdaderos</b>" +
+      '<span style="color:#f2cc60">Buenas que el ensayo rechaza</span><b>' + n(FP, 0) +
+        "   ·   son los <b>falsos positivos</b></b>" +
+      '<span style="color:#bf6fff">Falladas que el ensayo deja pasar</span><b>' + n(FN, 0) +
+        "   ·   son los falsos negativos</b>" +
+      "<hr><span>El ensayo rechaza en total</span><b>" + n(positivos, 0) + " piezas</b>" +
+      '<span style="color:#7ee787">De las rechazadas, están realmente falladas</span><b>' +
+        n(vpp * 100, 1) + " %   ·   valor predictivo positivo</b>" +
+      "<span>De las aprobadas, están realmente bien</span><b>" + n(vpn * 100, 3) +
+        " %</b>" +
+      "<hr><span>Por cada pieza mala que rechaza, tira</span><b>" +
+        (VP > 0 ? n(FP / VP, 2) + (Math.abs(FP / VP - 1) < 0.005 ? " buena" : " buenas")
+                : "todas las que rechaza están bien") + "</b>";
+
+    var txt;
+    if(vpp < 0.55 && prev < 0.05)
+      txt = "<b>Este es el resultado que desconcierta.</b> El ensayo acierta " + n(sens * 100, 0) +
+            " % de las veces y sin embargo, de cada cien piezas que rechaza, solo " + n(vpp * 100, 0) +
+            " están realmente falladas. No está mal hecho: lo que pasa es que las piezas buenas " +
+            "son <b>" + n(buenas / Math.max(falladas, 1), 0) + " veces más numerosas</b>, así " +
+            "que su pequeño porcentaje de error aporta tantos casos como el acierto sobre un grupo " +
+            "minúsculo. Por eso, cuando el defecto es raro, todo positivo hay que confirmarlo.";
+    else if(prev > 0.2)
+      txt = "Con una proporción de falladas tan alta, el mismo ensayo se vuelve mucho más " +
+            "confiable: " + n(vpp * 100, 0) + " % de sus rechazos son correctos. <b>El ensayo no " +
+            "cambió</b>, cambió la población sobre la que se aplica. Bajá la " +
+            "prevalencia al 1 % y mirá cómo se derrumba.";
+    else if(espe > 0.995)
+      txt = "Fijate que subir la <b>especificidad</b> —la capacidad de aprobar lo que está bien— es " +
+            "lo que rescata al ensayo cuando el defecto es raro. Subir la sensibilidad casi no ayuda: el " +
+            "problema no está en las pocas piezas falladas sino en el enorme grupo de las buenas.";
+    else
+      txt = "Mové la proporción de falladas y seguí la barra de abajo a la derecha. El " +
+            "ensayo es siempre el mismo; lo que cambia la confianza en un resultado positivo es " +
+            "<b>cuán frecuente es el defecto de entrada</b>. Eso es exactamente lo que dice Bayes.";
+    $("baNota").innerHTML = txt;
+  }
+
+  ["baP", "baS", "baE"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
