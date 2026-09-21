@@ -136,26 +136,45 @@
   var PAIS = miPais();
 
   /* El emoji de bandera se arma con dos indicadores regionales. Windows no
-     los dibuja —muestra las dos letras sueltas— así que se mide si el
-     navegador los junta en un solo glifo. Si no puede, queda el código de
-     dos letras, que se entiende igual. */
-  var HAY_BANDERAS = (function () {
+     los dibuja —deja las dos letras sueltas— así que hay que medirlo, y con
+     la fuente real del elemento: midiéndolo en un canvas con sans-serif la
+     prueba da un falso positivo, porque ahí no está la tipografía que
+     efectivamente se usa. El truco es comparar el ancho de la bandera
+     entera contra el de un solo indicador: si el navegador los junta en un
+     glifo, dos no ocupan el doble que uno.
+     Cuando no hay soporte se muestra el código de dos letras con su propio
+     estilo, que queda más prolijo que el glifo de reemplazo del sistema. */
+  var hayBanderas = null;
+  var IND_A = String.fromCharCode(0xD83C, 0xDDE6);
+
+  function medirBanderas(refer) {
+    if (hayBanderas !== null) return hayBanderas;
+    hayBanderas = false;
     try {
-      var c = document.createElement('canvas').getContext('2d');
-      if (!c) return false;
-      c.font = '16px sans-serif';
-      var ar = c.measureText('🇦🇷').width;
-      var dos = c.measureText('AR').width;
-      return ar > 0 && ar < dos * 1.8;
-    } catch (e) { return false; }
-  })();
+      var f = getComputedStyle(refer).font;
+      if (!f) return false;
+      function ancho(txt) {
+        var s = document.createElement('span');
+        s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:' + f;
+        s.textContent = txt;
+        document.body.appendChild(s);
+        var w = s.getBoundingClientRect().width;
+        s.parentNode.removeChild(s);
+        return w;
+      }
+      var una = ancho(IND_A);
+      hayBanderas = una > 0 && ancho(bandera('AR')) < una * 1.5;
+    } catch (e) { hayBanderas = false; }
+    return hayBanderas;
+  }
 
   function bandera(cc) {
     if (!cc || cc.length !== 2) return '';
-    if (!HAY_BANDERAS) return cc;
     return String.fromCharCode(0xD83C, 0xDDE6 + cc.charCodeAt(0) - 65,
                                0xD83C, 0xDDE6 + cc.charCodeAt(1) - 65);
   }
+
+  function marca(cc) { return hayBanderas ? bandera(cc) : cc; }
 
   function nombre(cc) { return NOMBRES[cc] || cc; }
 
@@ -227,11 +246,15 @@
       clearTimeout(ocultar); ocultar = null;
       if (num) num.textContent = n;
 
+      if (pais) {
+        medirBanderas(pais);
+        pais.classList.toggle('codigo', !hayBanderas);
+      }
       var lista = porPais(), partes = [], detalle = [], i, sobran = 0;
       for (i = 0; i < lista.length; i++) {
         if (i < TOPE) {
-          partes.push('<span class="online-pais-uno">' + bandera(lista[i][0]) +
-                      '<b>' + lista[i][1] + '</b></span>');
+          partes.push('<span class="online-pais-uno"><i>' + marca(lista[i][0]) +
+                      '</i><b>' + lista[i][1] + '</b></span>');
         } else {
           sobran += lista[i][1];
         }
