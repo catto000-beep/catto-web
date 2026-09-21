@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introducción a un lenguaje avanzado · Informática II · Catto</title>
+<meta name="description" content="Objetos, clases y encapsulamiento, tipos abstractos de datos, manejo de excepciones, bibliotecas estándar y el paralelo entre C++ y Python para instrumentación y procesamiento de datos. Contenido de Informática II, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/lenguaje-avanzado">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática II</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática II</span> · 120 h · Contenido 7 de 8</div>
+    <h1>Introducción a un lenguaje avanzado</h1>
+    <p class="lead">Después de C, un lenguaje con objetos permite pensar en piezas que se arman entre sí. No es una moda: es la manera de que un proyecto de diez mil líneas siga siendo comprensible.</p>
+    <div class="chips">
+      <span class="chip hi">Objetos</span>
+      <span class="chip">Clases</span>
+      <span class="chip">Encapsulamiento</span>
+      <span class="chip">Excepciones</span>
+      <span class="chip">Bibliotecas</span>
+    </div>
+    <hr class="rule">
+
+    <section id="porque">
+      <h2><span class="n">01</span>Por qué no alcanza con funciones</h2>
+      <p>En C un programa crece como una lista de funciones que se pasan estructuras. Funciona hasta que el
+      proyecto llega a unas miles de líneas y aparecen tres problemas: cualquiera puede tocar cualquier campo,
+      el mismo dato se valida en veinte lugares, y agregar un caso obliga a buscar todos los
+      <code>if</code> desperdigados.</p>
+      <div class="box key"><div class="bt">Las tres ideas que resuelven eso</div>
+        <ul>
+          <li><b>Encapsulamiento.</b> Los datos y las operaciones que los tocan viven juntos, y desde afuera
+          sólo se ve lo que se decidió mostrar. Si el estado sólo se cambia por métodos, siempre es
+          válido.</li>
+          <li><b>Herencia.</b> Una clase parte de otra y agrega o cambia lo que necesita, sin repetir lo
+          común.</li>
+          <li><b>Polimorfismo.</b> Se llama al mismo método sobre objetos distintos y cada uno hace lo suyo.
+          Es lo que permite agregar un instrumento nuevo sin tocar el código que los usa.</li>
+        </ul></div>
+      <p>No es una moda ni una obligación: es una manera de que un proyecto de diez mil líneas siga siendo
+      comprensible. Para un firmware de doscientas líneas, C y una estructura siguen siendo la respuesta
+      correcta.</p>
+    </section>
+
+    <section id="clases">
+      <h2><span class="n">02</span>De la estructura a la clase</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>En C</th><th>En C++ o Python</th></tr></thead>
+        <tbody>
+          <tr><td><code>struct Canal</code> con sus campos</td><td>La clase, con los mismos campos privados</td></tr>
+          <tr><td><code>canal_init(&amp;c, ...)</code></td><td>El constructor</td></tr>
+          <tr><td><code>canal_leer(&amp;c)</code></td><td>Un método: el objeto es el primer parámetro implícito</td></tr>
+          <tr><td><code>canal_liberar(&amp;c)</code></td><td>El destructor, o el bloque <code>with</code></td></tr>
+          <tr><td>Un puntero a función en la estructura</td><td>Un método virtual</td></tr>
+        </tbody>
+      </table></div>
+      <div class="form">
+        <code>class Canal:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;def __init__(self, nombre, escala):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.nombre = nombre<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self._escala = escala      # el guion bajo dice «no me toques»<br><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;def leer(self):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return self._crudo() * self._escala</code>
+      </div>
+      <p>Ese <code>self</code> explícito de Python es el mismo <code>this</code> implícito de C++ y el mismo
+      puntero a la estructura que se pasaba a mano en C. Cambia la sintaxis, no el mecanismo.</p>
+      <div class="lw" id="po">
+        <div class="lt">Laboratorio · herencia y polimorfismo</div>
+        <p class="ls">El mismo código llama a <code>medir()</code> sobre objetos distintos. Elegí cuál es y mirá qué implementación se ejecuta.</p>
+        <div class="fila">
+          <select id="poO">
+            <option value="base">Instrumento (clase base)</option>
+            <option value="multi">Multímetro</option>
+            <option value="osc">Osciloscopio</option>
+            <option value="fuente">Fuente de alimentación</option>
+          </select>
+          <select id="poM">
+            <option value="medir">medir()</option>
+            <option value="describir">describir()</option>
+            <option value="conectar">conectar()</option>
+          </select>
+        </div>
+        <canvas id="poLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:1.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="poDatos" style="margin-top:8px"></div>
+        <div class="nota" id="poNota"></div>
+      </div>
+    </section>
+
+    <section id="polimorfismo">
+      <h2><span class="n">03</span>El despacho dinámico</h2>
+      <p>Cuando se llama a un método sobre un objeto, el lenguaje tiene que decidir <b>cuál</b> de las
+      implementaciones ejecutar. Si esa decisión se toma al compilar, es despacho estático; si se toma al
+      ejecutar, mirando el tipo real del objeto, es <b>dinámico</b>, y es lo que hace posible el
+      polimorfismo.</p>
+      <div class="form">
+        <code>for equipo in banco:          # multímetro, osciloscopio, fuente…<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;print(equipo.describir())&nbsp;&nbsp;# cada uno responde lo suyo</code>
+      </div>
+      <p>El bucle no sabe ni le importa qué hay adentro de la lista. Agregar un instrumento nuevo no obliga a
+      tocarlo: alcanza con que la clase nueva implemente los mismos métodos. Eso es lo que se gana.</p>
+      <div class="box ojo"><div class="bt">Cómo está hecho por dentro</div>
+        <p>En C++, cada clase con métodos virtuales tiene una <b>tabla de funciones virtuales</b>, y cada objeto
+        guarda un puntero a la tabla de su clase. Llamar a un método virtual es leer ese puntero, buscar la
+        entrada y saltar: dos indirecciones más que una llamada común. En Python es todavía más dinámico —se
+        busca el nombre en un diccionario— y por eso es más flexible y más lento.</p></div>
+    </section>
+
+    <section id="abstractos">
+      <h2><span class="n">04</span>Tipos abstractos y excepciones</h2>
+      <p>Un <b>tipo abstracto de datos</b> se define por lo que se puede hacer con él, no por cómo está hecho.
+      Una pila es «apilar, desapilar y ver el tope», sin importar si adentro hay un arreglo o una lista
+      enlazada. La biblioteca estándar es justamente eso: contenedores probados que ya no hay que escribir.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Necesidad</th><th>C++</th><th>Python</th></tr></thead>
+        <tbody>
+          <tr><td>Secuencia que crece</td><td><code>std::vector</code></td><td><code>list</code></td></tr>
+          <tr><td>Buscar por clave</td><td><code>std::map</code>, <code>unordered_map</code></td><td><code>dict</code></td></tr>
+          <tr><td>Sin repetidos</td><td><code>std::set</code></td><td><code>set</code></td></tr>
+          <tr><td>Cola de doble punta</td><td><code>std::deque</code></td><td><code>collections.deque</code></td></tr>
+          <tr><td>Memoria que se libera sola</td><td><code>unique_ptr</code>, <code>shared_ptr</code></td><td>Recolector de basura</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Excepciones</h3>
+      <p>En C, una función informa el error devolviendo un código que casi nadie verifica. Las excepciones
+      separan el camino normal del camino de error:</p>
+      <div class="form">
+        <code>try:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;v = instrumento.medir()<br>
+        except TimeoutError:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;registrar("el equipo no respondió")<br>
+        finally:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;instrumento.cerrar()      # esto corre pase lo que pase</code>
+      </div>
+      <p>Tres reglas: <b>atrapar sólo lo que se sabe manejar</b> —un <code>except</code> vacío esconde errores
+      de programación—, <b>liberar siempre</b> con <code>finally</code> o con <code>with</code>, y <b>no usar
+      excepciones para el flujo normal</b>, que son caras y confunden.</p>
+    </section>
+
+    <section id="cual">
+      <h2><span class="n">05</span>Cuál usar en electrónica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Trabajo</th><th>Herramienta razonable</th></tr></thead>
+        <tbody>
+          <tr><td>Firmware de microcontrolador chico</td><td>C, y C++ sin excepciones ni asignación dinámica</td></tr>
+          <tr><td>Firmware grande, con capas</td><td>C++ moderno: clases, plantillas, <code>constexpr</code></td></tr>
+          <tr><td>Herramienta de laboratorio, interfaz, análisis</td><td>Python, por lo rápido que se escribe</td></tr>
+          <tr><td>Procesar mediciones y graficar</td><td>Python con NumPy y Matplotlib</td></tr>
+          <tr><td>Lo que tiene que volar</td><td>C o C++, o la parte crítica en C llamada desde Python</td></tr>
+        </tbody>
+      </table></div>
+      <p>La combinación más útil para un electrónico es saber los dos: <b>C o C++ para el equipo</b> y
+      <b>Python para todo lo que lo rodea</b> —automatizar el banco, procesar las mediciones, armar el
+      informe—. No compiten: se usan en capas distintas del mismo proyecto.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · La misma cosa, dos veces</div>
+        <p>Implementar una pila en C con estructura y funciones, y en C++ o Python como clase. Comparar cuántas
+        formas hay de usarla mal en cada caso.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Un banco de instrumentos</div>
+        <p>Definir una clase base <code>Instrumento</code> con <code>conectar</code>, <code>medir</code> y
+        <code>describir</code>, y tres derivadas. Recorrer una lista mezclada llamando a los mismos métodos, y
+        después agregar una cuarta clase sin tocar el bucle.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Errores que no se pueden ignorar</div>
+        <p>Escribir una función que lea el puerto serie y lance excepción si el equipo no responde. Verificar
+        con <code>finally</code> que el puerto queda cerrado incluso cuando falla.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Hacer clases para todo.</b> Si no hay estado que cuidar, una función alcanza.</li>
+        <li><b>Herencia profunda.</b> Cuatro niveles son más difíciles de seguir que un poco de repetición.</li>
+        <li><b>Exponer todos los atributos</b> y perder la única garantía que daba el encapsulamiento.</li>
+        <li><b>Atrapar <code>Exception</code> y seguir</b> como si nada, ocultando errores reales.</li>
+        <li><b>Usar excepciones para el flujo normal</b>, como salir de un bucle.</li>
+        <li><b>Suponer que Python es lento en todo:</b> lo lento es el bucle escrito a mano; con NumPy el
+        cálculo corre en C.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué es el encapsulamiento y qué garantiza?</summary>
+        <div class="a"><p>Guardar juntos los datos y las operaciones, y exponer sólo lo necesario. Garantiza
+        que el estado sólo cambia por caminos validados.</p></div></details>
+      <details class="q"><summary>¿Qué permite el polimorfismo que sin él costaría mucho?</summary>
+        <div class="a"><p>Agregar un tipo nuevo sin tocar el código que lo usa: el bucle que recorre la lista
+        de instrumentos sigue igual.</p></div></details>
+      <details class="q"><summary>¿Cómo resuelve C++ una llamada a un método virtual?</summary>
+        <div class="a"><p>Por la tabla de funciones virtuales: el objeto guarda un puntero a la tabla de su
+        clase y la llamada salta a la entrada que corresponde, ya en ejecución.</p></div></details>
+      <details class="q"><summary>¿Por qué está mal <code>except: pass</code>?</summary>
+        <div class="a"><p>Porque atrapa todo, incluidos los errores de programación, y los esconde. Hay que
+        atrapar sólo las excepciones que se saben manejar.</p></div></details>
+      <details class="q"><summary>¿Qué hace <code>finally</code>?</summary>
+        <div class="a"><p>Ejecuta ese bloque haya o no excepción: es donde se cierra el puerto, el archivo o la
+        conexión.</p></div></details>
+      <details class="q"><summary>¿Conviene usar objetos en un microcontrolador de 2 kB de RAM?</summary>
+        <div class="a"><p>Clases simples sí; excepciones y asignación dinámica, no. La herramienta se elige por
+        el problema, no por costumbre.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Bjarne Stroustrup.</span> <span class="ti">A Tour of C++</span>.
+          <span class="ed">3.ª ed., Addison-Wesley, 2022.</span>
+          <span class="pq">El C++ moderno en doscientas páginas, escrito por su autor.</span></li>
+        <li><span class="au">Mark Lutz.</span> <span class="ti">Learning Python</span>.
+          <span class="ed">5.ª ed., O'Reilly, 2013.</span>
+          <span class="pq">Completo y cuidadoso con el modelo de objetos del lenguaje.</span></li>
+        <li><span class="au">Erich Gamma y otros.</span> <span class="ti">Design Patterns</span>.
+          <span class="ed">Addison-Wesley, 1994.</span>
+          <span class="pq">Los patrones clásicos. Conviene leerlo después de haber sufrido los problemas que resuelven.</span></li>
+        <li><span class="au">Robert C. Martin.</span> <span class="ti">Clean Code</span>.
+          <span class="ed">Prentice Hall, 2008.</span>
+          <span class="pq">Discutible en varias cosas, pero instala la pregunta correcta: si esto se entiende dentro de un año.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/calculo-numerico">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Cálculo numérico aplicado</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria/temas/sistemas-operativos">
+        <div class="dir">Contenido siguiente →</div>
+        <div class="tt">Fundamentos de sistemas operativos</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Introducción a un lenguaje avanzado»</b> de <b>Informática II</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Herencia y despacho dinamico: la jerarquia se dibuja y, al llamar a un
+   metodo, se resalta la cadena de busqueda hasta la implementacion que
+   realmente se ejecuta. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("poLienzo"), ctx = cv.getContext("2d");
+  /* cada clase: de quien hereda y que metodos define por su cuenta */
+  var C = {
+    base:   { n:"Instrumento", padre:null, nivel:0,
+              def:{ describir:'return f"{self.marca} en {self.puerto}"',
+                    conectar:'self.puerto.abrir()',
+                    medir:'raise NotImplementedError' },
+              t:"La clase base define lo común. <code>medir()</code> no tiene implementación posible acá: " +
+                "cada instrumento mide lo suyo. Por eso lanza una excepción, que es la manera de decir " +
+                "«esto lo tiene que escribir quien herede»." },
+    multi:  { n:"Multímetro", padre:"base", nivel:1,
+              def:{ medir:'return self._leer_dc() * self.escala',
+                    describir:'return "Multímetro " + super().describir()' },
+              t:"El multímetro <b>redefine</b> medir y describir. Fijate que en describir llama a " +
+                "<code>super()</code>: reusa lo de la clase base y le agrega lo suyo, en lugar de copiarlo." },
+    osc:    { n:"Osciloscopio", padre:"base", nivel:1,
+              def:{ medir:'return self._capturar(self.puntos)' },
+              t:"El osciloscopio sólo redefine medir. <code>describir()</code> y <code>conectar()</code> los " +
+                "hereda tal cual: no hay una línea repetida." },
+    fuente: { n:"Fuente", padre:"base", nivel:1,
+              def:{ medir:'return self.v_programada, self.i_limite',
+                    conectar:'super().conectar(); self.apagar_salida()' },
+              t:"La fuente redefine conectar para agregar una precaución: al conectarse, deja la salida " +
+                "apagada. Llama primero a <code>super().conectar()</code> y después agrega lo suyo." }
+  };
+  var METODOS = ["medir", "describir", "conectar"];
+
+  function cadena(clave){
+    /* de la clase al ancestro: el orden en que se busca el metodo */
+    var c = [], k = clave;
+    while(k){ c.push(k); k = C[k].padre; }
+    return c;
+  }
+  function resuelve(clave, metodo){
+    var cad = cadena(clave), i;
+    for(i = 0; i < cad.length; i++)
+      if(C[cad[i]].def[metodo] !== undefined) return cad[i];
+    return null;
+  }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    var obj = $("poO").value, met = $("poM").value;
+    var quien = resuelve(obj, met), cad = cadena(obj);
+
+    ctx.clearRect(0, 0, W, H);
+    /* la jerarquia: la base arriba y las derivadas abajo */
+    var derivadas = Object.keys(C).filter(function(k){ return C[k].padre; });
+    var wB = Math.min(150, W * 0.34), hB = 34;
+    var xBase = (W - wB) / 2, yBase = 16;
+    function caja(x, y, w, h, clave, activa, esMarcada){
+      ctx.strokeStyle = esMarcada ? "#7ee787" : activa ? "#58a6ff" : "rgba(107,116,132,.5)";
+      ctx.fillStyle = esMarcada ? "rgba(126,231,135,.16)" :
+                      activa ? "rgba(88,166,255,.12)" : "rgba(107,116,132,.06)";
+      ctx.lineWidth = esMarcada ? 2.4 : activa ? 1.8 : 1.2;
+      ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = activa || esMarcada ? "#e6edf3" : "#6b7484";
+      ctx.font = (esMarcada ? "600 " : "") + "12.5px system-ui, sans-serif";
+      var t = C[clave].n, wt = ctx.measureText(t).width;
+      ctx.fillText(t, x + (w - wt) / 2, y + 22);
+    }
+    caja(xBase, yBase, wB, hB, "base", cad.indexOf("base") >= 0, quien === "base");
+    var anchoD = Math.min(120, (W - 24) / derivadas.length - 8);
+    derivadas.forEach(function(k, j){
+      var x = 12 + j * ((W - 24) / derivadas.length) + ((W - 24) / derivadas.length - anchoD) / 2;
+      var y = yBase + hB + 34;
+      /* la linea de herencia */
+      ctx.strokeStyle = cad.indexOf(k) >= 0 ? "rgba(88,166,255,.7)" : "rgba(107,116,132,.35)";
+      ctx.lineWidth = cad.indexOf(k) >= 0 ? 1.8 : 1;
+      ctx.beginPath();
+      ctx.moveTo(x + anchoD / 2, y); ctx.lineTo(x + anchoD / 2, y - 16);
+      ctx.lineTo(xBase + wB / 2, y - 16); ctx.lineTo(xBase + wB / 2, yBase + hB);
+      ctx.stroke();
+      caja(x, y, anchoD, hB, k, cad.indexOf(k) >= 0, quien === k);
+      /* que metodos define cada una */
+      ctx.font = "10px system-ui, sans-serif";
+      METODOS.forEach(function(m, mi){
+        var tiene = C[k].def[m] !== undefined;
+        ctx.fillStyle = !tiene ? "rgba(107,116,132,.45)"
+                      : (m === met && quien === k) ? "#7ee787" : "rgba(230,237,243,.7)";
+        ctx.fillText((tiene ? "• " : "· ") + m, x + 6, y + hB + 15 + mi * 13);
+      });
+    });
+    /* los metodos de la base */
+    ctx.font = "10px system-ui, sans-serif";
+    METODOS.forEach(function(m, mi){
+      ctx.fillStyle = (m === met && quien === "base") ? "#7ee787" : "rgba(230,237,243,.6)";
+      ctx.fillText("• " + m, xBase + wB + 10, yBase + 12 + mi * 13);
+    });
+    /* el codigo que se ejecuta */
+    var yc = H - 54;
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("se ejecuta:", 12, yc - 6);
+    ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 1.4;
+    ctx.fillStyle = "rgba(126,231,135,.08)";
+    ctx.beginPath(); ctx.rect(12, yc, W - 24, 42); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#e6edf3"; ctx.font = "11.5px Consolas, monospace";
+    var linea = quien ? C[quien].n + "." + met + "(): " + C[quien].def[met] : "— no existe —";
+    if(ctx.measureText(linea).width > W - 40) ctx.font = "10px Consolas, monospace";
+    ctx.fillText(linea, 20, yc + 26);
+
+    $("poDatos").innerHTML =
+      "<span>Objeto</span><b>" + C[obj].n + "</b>" +
+      "<span>Llamada</span><b>objeto." + met + "()</b>" +
+      "<span>Cadena de búsqueda</span><b>" + cad.map(function(k){ return C[k].n; }).join(" → ") + "</b>" +
+      "<hr><span>Lo resuelve</span><b style=\"color:#7ee787\">" + (quien ? C[quien].n : "ninguna") + "</b>" +
+      "<span>¿Es heredado?</span><b>" + (quien === obj ? "no: lo define la propia clase" :
+        quien ? "sí, viene de " + C[quien].n : "—") + "</b>";
+
+    var txt = "";
+    if(quien === obj)
+      txt = "La clase <b>" + C[obj].n + "</b> define <code>" + met + "()</code> por su cuenta, así que la " +
+            "búsqueda termina en el primer escalón. ";
+    else if(quien)
+      txt = "<b>" + C[obj].n + "</b> no define <code>" + met + "()</code>, así que el lenguaje sube por la " +
+            "cadena de herencia y usa la de <b>" + C[quien].n + "</b>. Eso es <b>heredar</b>: no hay una " +
+            "línea repetida. ";
+    txt += C[obj].t + " <b>Lo importante:</b> quien escribe " +
+           "<code>for equipo in banco: equipo." + met + "()</code> no necesita saber nada de esto. Llama " +
+           "siempre igual y cada objeto responde lo suyo; eso es el despacho dinámico.";
+    $("poNota").innerHTML = txt;
+  }
+  ["poO","poM"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundamentos de sistemas operativos · Informática II · Catto</title>
+<meta name="description" content="Procesos e hilos, planificación, memoria virtual, sistema de archivos, llamadas al sistema, concurrencia y exclusión mutua, y qué cambia en un sistema operativo de tiempo real. Contenido de Informática II, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-operativos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Informática II</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Informática II</span> · 120 h · Contenido 8 de 8</div>
+    <h1>Fundamentos de sistemas operativos</h1>
+    <p class="lead">El sistema operativo es el que reparte el procesador, la memoria y los periféricos entre programas que se creen dueños de la máquina. Entender cómo lo hace explica casi todos los comportamientos raros de un programa.</p>
+    <div class="chips">
+      <span class="chip hi">Procesos</span>
+      <span class="chip">Hilos</span>
+      <span class="chip">Planificación</span>
+      <span class="chip">Memoria virtual</span>
+      <span class="chip">Tiempo real</span>
+    </div>
+    <hr class="rule">
+
+    <section id="reparte">
+      <h2><span class="n">01</span>El que reparte la máquina</h2>
+      <p>Un programa se escribe como si fuera dueño del procesador, de la memoria y de los periféricos. No lo
+      es: hay decenas corriendo a la vez. El sistema operativo mantiene esa ilusión y reparte lo que hay.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Recurso</th><th>Lo que ve el programa</th><th>Lo que hay de verdad</th></tr></thead>
+        <tbody>
+          <tr><td>Procesador</td><td>Uno para él solo</td><td>Unos pocos núcleos repartidos en tajadas de milisegundos</td></tr>
+          <tr><td>Memoria</td><td>Un espacio continuo desde la dirección cero</td><td>Páginas dispersas en RAM, y parte en disco</td></tr>
+          <tr><td>Disco</td><td>Archivos y carpetas</td><td>Bloques numerados en un dispositivo</td></tr>
+          <tr><td>Periféricos</td><td>Un archivo que se abre y se lee</td><td>Registros de hardware e interrupciones</td></tr>
+        </tbody>
+      </table></div>
+      <p>Para sostener esa ilusión el procesador tiene <b>dos modos</b>: el de usuario, donde corren los
+      programas y ciertas instrucciones están prohibidas, y el de núcleo, donde corre el sistema operativo. Se
+      pasa de uno al otro por una <b>llamada al sistema</b>, que es una interrupción deliberada. Cada
+      <code>open</code>, <code>read</code> o <code>write</code> cruza esa frontera, y por eso cuestan mucho más
+      que una función común.</p>
+    </section>
+
+    <section id="procesos">
+      <h2><span class="n">02</span>Procesos e hilos</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>Proceso</th><th>Hilo</th></tr></thead>
+        <tbody>
+          <tr><td>Memoria</td><td>La suya, aislada</td><td>Comparte la del proceso</td></tr>
+          <tr><td>Crear uno cuesta</td><td>Bastante</td><td>Poco</td></tr>
+          <tr><td>Si falla</td><td>Se muere él solo</td><td>Se lleva puesto todo el proceso</td></tr>
+          <tr><td>Comunicarse</td><td>Por tuberías, sockets, memoria compartida</td><td>Variables comunes, con cuidado</td></tr>
+        </tbody>
+      </table></div>
+      <p>Cada proceso pasa por unos pocos estados: <b>listo</b> cuando puede correr, <b>ejecutando</b> cuando
+      tiene el procesador, y <b>bloqueado</b> cuando espera algo —un dato del disco, un byte del puerto serie—.
+      Esa tercera es la clave: un proceso bloqueado no gasta procesador, y por eso una máquina puede tener
+      cientos de programas abiertos sin transpirar.</p>
+    </section>
+
+    <section id="planificacion">
+      <h2><span class="n">03</span>Planificación</h2>
+      <p>Cuando hay más procesos listos que núcleos, alguien decide quién sigue. Esa política es el
+      <b>planificador</b>, y de ella dependen dos números que se contradicen: el <b>tiempo de retorno</b>
+      —cuánto tarda un trabajo de punta a punta— y la <b>respuesta</b>, que es lo que percibe quien está
+      sentado frente a la máquina.</p>
+      <div class="form">
+        \[ t_{espera} = t_{comienzo} - t_{llegada} \qquad
+           t_{retorno} = t_{fin} - t_{llegada} \]
+      </div>
+      <div class="lw" id="so">
+        <div class="lt">Laboratorio · planificador de procesos</div>
+        <p class="ls">Los mismos cuatro procesos, repartidos con distintas políticas. Mirá el diagrama y comparé los promedios.</p>
+        <div class="fila">
+          <select id="soA">
+            <option value="fifo">FIFO · el que llegó primero</option>
+            <option value="sjf">El más corto primero</option>
+            <option value="rr">Round-Robin · por turnos</option>
+            <option value="prio">Por prioridad</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="soQ">Quantum del Round-Robin <b id="soQv">2</b></label>
+          <input type="range" id="soQ" min="1" max="6" step="1" value="2">
+        </div>
+        <canvas id="soLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:2.1/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="soDatos" style="margin-top:8px"></div>
+        <div class="nota" id="soNota"></div>
+      </div>
+      <div class="box ojo"><div class="bt">El cambio de contexto no es gratis</div>
+        <p>Cada vez que el planificador cambia de proceso hay que guardar todos los registros del que sale y
+        cargar los del que entra: unos microsegundos, más el costo invisible de que la caché quede llena de
+        datos ajenos. Con quantum muy chico la máquina se pasa el día cambiando de contexto en lugar de
+        trabajar; con quantum muy grande, se pierde la respuesta interactiva.</p></div>
+    </section>
+
+    <section id="memoria">
+      <h2><span class="n">04</span>Memoria virtual</h2>
+      <p>Cada proceso ve direcciones que no son las de la RAM. La unidad de gestión de memoria del procesador
+      traduce cada dirección virtual a una física consultando una tabla de páginas, y de ahí salen tres cosas
+      valiosas:</p>
+      <ul>
+        <li><b>Aislamiento.</b> Un proceso no puede tocar la memoria de otro, porque su tabla ni siquiera la
+        nombra. Esa es la razón de que un programa que se cuelga no arrastre a la máquina entera.</li>
+        <li><b>Memoria más grande que la RAM.</b> Las páginas que no se usan bajan al disco. Si el programa
+        vuelve a tocarlas, se produce un <b>fallo de página</b> y el sistema las trae de vuelta.</li>
+        <li><b>Compartir sin copiar.</b> Dos procesos que usan la misma biblioteca apuntan a las mismas páginas
+        físicas.</li>
+      </ul>
+      <div class="box peligro"><div class="bt">Cuando el disco se convierte en RAM</div>
+        <p>Si los programas piden más memoria activa de la que hay, el sistema pasa el tiempo subiendo y
+        bajando páginas: es la <b>hiperpaginación</b>. La máquina parece muerta pero el procesador está casi
+        ocioso; lo que está saturado es el disco. Se reconoce enseguida porque el indicador de actividad de
+        disco no para.</p></div>
+    </section>
+
+    <section id="concurrencia">
+      <h2><span class="n">05</span>Concurrencia</h2>
+      <p>Dos hilos que tocan la misma variable sin coordinarse producen el error más difícil de encontrar de
+      toda la programación. <code>contador++</code> no es una operación atómica: son tres —leer, sumar,
+      guardar— y entre ellas el planificador puede cambiar de hilo.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Herramienta</th><th>Para qué</th></tr></thead>
+        <tbody>
+          <tr><td>Exclusión mutua (mutex)</td><td>Que sólo un hilo por vez entre a la sección crítica</td></tr>
+          <tr><td>Semáforo</td><td>Contar recursos disponibles; sincronizar productor y consumidor</td></tr>
+          <tr><td>Variable de condición</td><td>Esperar a que algo pase, sin consumir procesador</td></tr>
+          <tr><td>Operaciones atómicas</td><td>Un contador compartido, sin bloquear</td></tr>
+          <tr><td>Cola entre hilos</td><td>La forma más segura: nadie comparte estado, se pasan mensajes</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box peligro"><div class="bt">Interbloqueo</div>
+        <p>Dos hilos, cada uno con un candado, esperando el del otro: ninguno avanza nunca. Hacen falta cuatro
+        condiciones a la vez, y basta romper una para evitarlo. La regla práctica es <b>tomar siempre los
+        candados en el mismo orden</b> en todo el programa.</p></div>
+    </section>
+
+    <section id="tiemporeal">
+      <h2><span class="n">06</span>Qué cambia en tiempo real</h2>
+      <p>Un sistema operativo común busca que todo ande rápido en promedio. Uno de <b>tiempo real</b> busca
+      algo distinto: que una respuesta ocurra <b>siempre</b> antes de un plazo. Un promedio excelente con un
+      caso peor impredecible no sirve para controlar un motor.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>Propósito general</th><th>Tiempo real</th></tr></thead>
+        <tbody>
+          <tr><td>Objetivo</td><td>Buen promedio</td><td>Caso peor acotado</td></tr>
+          <tr><td>Planificación</td><td>Equidad y respuesta</td><td>Por prioridad, con expropiación</td></tr>
+          <tr><td>Latencia de interrupción</td><td>Variable</td><td>Garantizada, de microsegundos</td></tr>
+          <tr><td>Ejemplos</td><td>Linux, Windows</td><td>FreeRTOS, Zephyr, QNX</td></tr>
+        </tbody>
+      </table></div>
+      <p>En un microcontrolador, un sistema como FreeRTOS aporta tareas con prioridad, colas y semáforos en
+      unos pocos kilobytes. La <b>inversión de prioridad</b> —una tarea de baja prioridad que retiene un
+      candado que necesita una de alta— es el problema clásico, y se resuelve con herencia de prioridad.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Mirar el sistema trabajar</div>
+        <p>Con <code>top</code> o el administrador de tareas, observar estados, memoria y uso de procesador.
+        Lanzar un bucle infinito y ver qué cambia; después uno que sólo espere entrada y comparar.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · La condición de carrera, en vivo</div>
+        <p>Dos hilos que incrementan un contador común un millón de veces cada uno. Verificar que el resultado
+        <b>no</b> es dos millones, y después arreglarlo con un mutex.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Dos tareas en FreeRTOS</div>
+        <p>Una tarea que parpadea un LED cada 500 ms y otra que lee el puerto serie, comunicadas por una cola.
+        Medir con un osciloscopio si el parpadeo se corre cuando llegan datos: eso es la latencia.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Creer que <code>contador++</code> es atómico.</b></li>
+        <li><b>Tomar candados en distinto orden</b> en partes distintas del programa: interbloqueo asegurado.</li>
+        <li><b>Esperar con un bucle vacío</b> en lugar de bloquearse: gasta un núcleo entero sin hacer nada.</li>
+        <li><b>Suponer que más hilos es más rápido.</b> Si el trabajo es de disco o de red, no lo es.</li>
+        <li><b>Confundir concurrencia con paralelismo.</b> Concurrente es que avanzan de a ratos; paralelo, que
+        corren a la vez en núcleos distintos.</li>
+        <li><b>Usar un sistema común donde hace falta uno de tiempo real</b>, y descubrirlo en el campo.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué diferencia hay entre un proceso y un hilo?</summary>
+        <div class="a"><p>El proceso tiene su memoria aislada; los hilos de un proceso la comparten. Crear un
+        hilo cuesta mucho menos, pero si uno rompe la memoria se lleva a todos.</p></div></details>
+      <details class="q"><summary>¿Por qué una llamada al sistema cuesta más que una función común?</summary>
+        <div class="a"><p>Porque cruza del modo usuario al modo núcleo: hay que cambiar de contexto, validar
+        parámetros y volver.</p></div></details>
+      <details class="q"><summary>¿Qué pasa con un quantum demasiado chico en Round-Robin?</summary>
+        <div class="a"><p>El sistema gasta más tiempo cambiando de contexto que ejecutando: el trabajo útil
+        baja aunque la respuesta parezca buena.</p></div></details>
+      <details class="q"><summary>¿Qué es un fallo de página?</summary>
+        <div class="a"><p>El acceso a una página que no está en RAM. El sistema la trae del disco y reanuda el
+        proceso, que no se entera de nada salvo por la demora.</p></div></details>
+      <details class="q"><summary>¿Cómo se evita un interbloqueo en la práctica?</summary>
+        <div class="a"><p>Tomando siempre los candados en el mismo orden en todo el programa, y usando tiempos
+        de espera al intentar tomarlos.</p></div></details>
+      <details class="q"><summary>¿Qué garantiza un sistema operativo de tiempo real que no garantiza Linux?</summary>
+        <div class="a"><p>Un <b>caso peor</b> acotado: la respuesta ocurre siempre antes del plazo, no sólo en
+        promedio.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Abraham Silberschatz, Peter Galvin y Greg Gagne.</span> <span class="ti">Fundamentos de sistemas operativos</span>.
+          <span class="ed">10.ª ed., Wiley, 2018.</span>
+          <span class="pq">El texto clásico de la materia: procesos, planificación, memoria y concurrencia.</span></li>
+        <li><span class="au">Remzi y Andrea Arpaci-Dusseau.</span> <span class="ti">Operating Systems: Three Easy Pieces</span>.
+          <span class="ed">Arpaci-Dusseau Books. Gratuito en línea.</span>
+          <span class="pq">Explica virtualización, concurrencia y persistencia mejor que ningún otro, y es libre.</span></li>
+        <li><span class="au">Andrew S. Tanenbaum.</span> <span class="ti">Sistemas operativos modernos</span>.
+          <span class="ed">4.ª ed., Pearson, 2014.</span>
+          <span class="pq">Riguroso y completo, con buenos capítulos de sistemas embebidos.</span></li>
+        <li><span class="au">Documentación de FreeRTOS.</span> <span class="ti">Mastering the FreeRTOS Real Time Kernel</span>.
+          <span class="ed">Real Time Engineers Ltd.</span>
+          <span class="pq">El tiempo real aplicado al microcontrolador, con ejemplos que se pueden correr.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/lenguaje-avanzado">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Introducción a un lenguaje avanzado</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Fin de la materia →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Fundamentos de sistemas operativos»</b> de <b>Informática II</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Planificador de procesos: los mismos cuatro procesos repartidos por cuatro
+   politicas, con su diagrama de Gantt y los promedios de espera y retorno
+   calculados de la simulacion, no escritos a mano. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("soLienzo"), ctx = cv.getContext("2d");
+  /* llegada, duracion, prioridad (1 es la mas alta) */
+  var P = [
+    { id:"P1", lleg:0, dur:7, pri:2, col:"#58a6ff" },
+    { id:"P2", lleg:2, dur:4, pri:1, col:"#7ee787" },
+    { id:"P3", lleg:4, dur:1, pri:3, col:"#f2cc60" },
+    { id:"P4", lleg:5, dur:4, pri:2, col:"#d2a8ff" }
+  ];
+  function n(x){ return (Math.round(x * 100) / 100).toString().replace(".", ","); }
+
+  function simular(alg, q){
+    var rest = {}, tramos = [], fin = {}, comienzo = {}, t = 0, i;
+    P.forEach(function(p){ rest[p.id] = p.dur; });
+    var pendientes = P.length;
+    var cola = [];            /* para round-robin */
+    var ultimo = null;
+    var tope = 200;
+    while(pendientes > 0 && tope-- > 0){
+      /* quienes ya llegaron y no terminaron */
+      var listos = P.filter(function(p){ return p.lleg <= t && rest[p.id] > 0; });
+      if(!listos.length){ t++; continue; }
+      var elegido;
+      if(alg === "fifo") elegido = listos.sort(function(a, b){ return a.lleg - b.lleg; })[0];
+      else if(alg === "sjf") elegido = listos.sort(function(a, b){
+        return rest[a.id] - rest[b.id] || a.lleg - b.lleg; })[0];
+      else if(alg === "prio") elegido = listos.sort(function(a, b){
+        return a.pri - b.pri || a.lleg - b.lleg; })[0];
+      else {
+        /* round robin: la cola se arma por orden de llegada y rota */
+        P.forEach(function(p){
+          if(p.lleg <= t && rest[p.id] > 0 && cola.indexOf(p.id) === -1 && p.id !== (ultimo && ultimo.id))
+            cola.push(p.id);
+        });
+        if(ultimo && rest[ultimo.id] > 0 && cola.indexOf(ultimo.id) === -1) cola.push(ultimo.id);
+        var sig = cola.shift();
+        elegido = P.filter(function(p){ return p.id === sig; })[0];
+        if(!elegido){ t++; continue; }
+      }
+      /* cuanto corre de corrido */
+      var corre;
+      if(alg === "rr") corre = Math.min(q, rest[elegido.id]);
+      else corre = rest[elegido.id];
+      if(comienzo[elegido.id] === undefined) comienzo[elegido.id] = t;
+      tramos.push({ id:elegido.id, ini:t, fin:t + corre, col:elegido.col });
+      rest[elegido.id] -= corre;
+      t += corre;
+      if(rest[elegido.id] === 0){ fin[elegido.id] = t; pendientes--; ultimo = null; }
+      else ultimo = elegido;
+    }
+    return { tramos:tramos, fin:fin, comienzo:comienzo, total:t };
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    var alg = $("soA").value, q = +$("soQ").value;
+    $("soQv").textContent = q;
+    var s = simular(alg, q);
+
+    ctx.clearRect(0, 0, W, H);
+    var mg = 34, esc = (W - mg - 14) / Math.max(s.total, 1);
+    var yG = 26, hG = Math.min(40, H * 0.26);
+    /* el diagrama de Gantt */
+    s.tramos.forEach(function(tr){
+      var x = mg + tr.ini * esc, w = (tr.fin - tr.ini) * esc;
+      ctx.fillStyle = tr.col.replace("#", "rgba(").length ? tr.col : tr.col;
+      ctx.globalAlpha = 0.22; ctx.fillStyle = tr.col;
+      ctx.fillRect(x, yG, w, hG); ctx.globalAlpha = 1;
+      ctx.strokeStyle = tr.col; ctx.lineWidth = 1.6;
+      ctx.strokeRect(x, yG, w, hG);
+      ctx.fillStyle = "#e6edf3"; ctx.font = "600 11.5px system-ui, sans-serif";
+      var wt = ctx.measureText(tr.id).width;
+      if(w > wt + 6) ctx.fillText(tr.id, x + (w - wt) / 2, yG + hG / 2 + 4);
+    });
+    /* la escala de tiempo */
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(mg, yG + hG); ctx.lineTo(mg + s.total * esc, yG + hG); ctx.stroke();
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    for(i = 0; i <= s.total; i++){
+      if(s.total > 20 && i % 2) continue;
+      ctx.beginPath(); ctx.moveTo(mg + i * esc, yG + hG); ctx.lineTo(mg + i * esc, yG + hG + 4); ctx.stroke();
+      var e = String(i), we = ctx.measureText(e).width;
+      ctx.fillText(e, mg + i * esc - we / 2, yG + hG + 15);
+    }
+    ctx.fillText("tiempo", mg, 16);
+
+    /* una fila por proceso con su llegada y su fin */
+    var y0 = yG + hG + 26, alto = Math.min(17, (H - y0 - 6) / P.length);
+    P.forEach(function(p, k){
+      var y = y0 + k * alto;
+      ctx.fillStyle = p.col; ctx.font = "11px system-ui, sans-serif";
+      ctx.fillText(p.id, 6, y + 10);
+      ctx.strokeStyle = "rgba(107,116,132,.35)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(mg + p.lleg * esc, y + 6); ctx.lineTo(mg + s.fin[p.id] * esc, y + 6); ctx.stroke();
+      /* llegada */
+      ctx.fillStyle = "rgba(230,237,243,.75)";
+      ctx.beginPath(); ctx.arc(mg + p.lleg * esc, y + 6, 3, 0, Math.PI * 2); ctx.fill();
+      /* fin */
+      ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(mg + s.fin[p.id] * esc, y + 6, 3.5, 0, Math.PI * 2); ctx.fill();
+    });
+
+    /* los numeros */
+    var esperas = 0, retornos = 0, respuestas = 0;
+    var filas = "";
+    P.forEach(function(p){
+      var ret = s.fin[p.id] - p.lleg, esp = ret - p.dur, resp = s.comienzo[p.id] - p.lleg;
+      esperas += esp; retornos += ret; respuestas += resp;
+      filas += '<span style="color:' + p.col + '">' + p.id + " · llega " + p.lleg + ", dura " + p.dur +
+               (alg === "prio" ? ", prioridad " + p.pri : "") + "</span><b>espera " + esp +
+               " · retorno " + ret + "</b>";
+    });
+    $("soDatos").innerHTML = filas +
+      "<hr><span>Espera media</span><b>" + n(esperas / P.length) + "</b>" +
+      "<span>Retorno medio</span><b>" + n(retornos / P.length) + "</b>" +
+      "<span>Primera respuesta media</span><b>" + n(respuestas / P.length) + "</b>" +
+      "<span>Cambios de contexto</span><b>" + Math.max(0, s.tramos.length - 1) + "</b>";
+
+    var txt;
+    if(alg === "fifo")
+      txt = "<b>FIFO</b> atiende por orden de llegada y no interrumpe a nadie. Es justo y simple, pero P1, que " +
+            "dura 7, hace esperar a todos los que llegaron después: es el <b>efecto convoy</b>, un trabajo " +
+            "largo adelante y una fila de cortos atrás.";
+    else if(alg === "sjf")
+      txt = "<b>El más corto primero</b> da la espera media mínima; no hay política que la mejore. El problema " +
+            "es doble: hay que saber de antemano cuánto va a durar cada trabajo —y no se sabe— y un proceso " +
+            "largo puede quedar postergado para siempre si siguen llegando cortos.";
+    else if(alg === "rr")
+      txt = "<b>Round-Robin</b> le da a cada uno un quantum de " + q + " y rota. La espera media empeora, pero " +
+            "la <b>primera respuesta</b> mejora muchísimo: ningún proceso queda sin atender. Por eso es la " +
+            "base de los sistemas interactivos. Subí y bajá el quantum: con uno chico hay más cambios de " +
+            "contexto —acá " + Math.max(0, s.tramos.length - 1) + "— y con uno grande se parece cada vez más a FIFO.";
+    else
+      txt = "<b>Por prioridad</b>: primero los más urgentes. Es lo que usa un sistema de tiempo real, donde " +
+            "la tarea que controla el motor no puede esperar a la que escribe el registro. El riesgo es la " +
+            "<b>inanición</b>: una tarea de prioridad baja puede no correr nunca si las altas no dejan hueco.";
+    txt += " Los números de abajo salen de simular la política, no están escritos a mano: cambiá de algoritmo " +
+           "y compará la espera media.";
+    $("soNota").innerHTML = txt;
+  }
+  ["soA","soQ"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
