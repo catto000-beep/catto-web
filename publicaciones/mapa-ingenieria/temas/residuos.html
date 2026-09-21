@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teorema de los residuos · Análisis de Señales y Sistemas · Catto</title>
+<meta name="description" content="El teorema de los residuos, las tres fórmulas para calcularlos, su relación con las fracciones simples y la antitransformada de Laplace como suma de residuos, con laboratorio interactivo. Contenido de Análisis de Señales y Sistemas, segundo nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/residuos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=4">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Análisis de Señales y Sistemas</a>
+    <span class="anio">2<sup>do</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Análisis de Señales y Sistemas</span> · 144 h · Contenido 11 de 34</div>
+    <h1>Teorema de los residuos</h1>
+    <p class="lead">Una integral sobre una curva entera queda reducida a sumar unos pocos números, uno por singularidad. Y esos números ya los conocían: son los coeficientes de la descomposición en fracciones simples.</p>
+    <div class="chips">
+      <span class="chip hi">Residuos</span>
+      <span class="chip">Laurent</span>
+      <span class="chip">Fracciones simples</span>
+      <span class="chip">Antitransformada</span>
+      <span class="chip">Bromwich</span>
+    </div>
+    <hr class="rule">
+
+    <section id="enunciado">
+      <h2><span class="n">01</span>Todo se reduce a un coeficiente</h2>
+      <p>Al integrar la serie de Laurent término a término sobre un contorno cerrado, todos los términos dan
+      cero salvo uno: el de \( 1/(z - z_0) \), que da \( 2\pi j \). Ese coeficiente, el \( b_1 \) del
+      desarrollo, es el <b>residuo</b>, y es lo único de la función que sobrevive a la integral.</p>
+      <div class="form">
+        \[ \oint_C f(z)\,dz = 2\pi j \sum_{k} \operatorname{Res}\big(f, z_k\big) \]
+        <span class="cap">La suma recorre las singularidades encerradas por \( C \), recorrido una vez en sentido antihorario.</span>
+      </div>
+      <p>Es un resultado de una economía notable: una integral sobre una curva entera queda reducida a sumar
+      unos pocos números, uno por cada singularidad de adentro. Lo demás —la forma del contorno, el
+      comportamiento de la función lejos de los polos— no interviene.</p>
+      <div class="box key"><div class="bt">Ya lo venían usando con otro nombre</div>
+        <p>Al descomponer una función racional en fracciones simples, los coeficientes que se obtienen
+        <b>son</b> los residuos. La expansión \( \frac{1}{(s+1)(s+2)} = \frac{1}{s+1} - \frac{1}{s+2} \) dice
+        que el residuo en \( -1 \) vale 1 y el de \( -2 \) vale \( -1 \). El método de residuos es la versión
+        general de una cuenta que ya hacían en Análisis.</p></div>
+    </section>
+
+    <section id="calcular">
+      <h2><span class="n">02</span>Las tres maneras de calcularlo</h2>
+      <p>No hace falta desarrollar la serie completa. Según el caso:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Caso</th><th>Fórmula</th></tr></thead>
+        <tbody>
+          <tr><td>Polo simple</td>
+              <td>\( \operatorname{Res} = \lim_{z \to z_0} (z - z_0)\,f(z) \)</td></tr>
+          <tr><td>Polo simple con \( f = g/h \)</td>
+              <td>\( \operatorname{Res} = \dfrac{g(z_0)}{h'(z_0)} \)</td></tr>
+          <tr><td>Polo de orden \( m \)</td>
+              <td>\( \operatorname{Res} = \dfrac{1}{(m-1)!}\lim_{z \to z_0}
+                  \dfrac{d^{\,m-1}}{dz^{\,m-1}}\Big[(z - z_0)^{m} f(z)\Big] \)</td></tr>
+          <tr><td>Singularidad esencial</td>
+              <td>No hay atajo: hay que desarrollar Laurent y leer \( b_1 \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>La segunda fila es la que más se usa en la práctica y conviene tenerla a mano: con
+      \( f(z) = 1/(z^3 - 1) \), el denominador tiene derivada \( 3z^2 \), así que el residuo en cada raíz
+      cúbica de la unidad vale \( 1/(3z_k^2) \). Y como \( z_k^3 = 1 \), eso se simplifica a \( z_k/3 \). Los
+      tres residuos suman cero, y por eso un contorno que los encierre a los tres da cero.</p>
+      <div class="box ojo"><div class="bt">Residuo cero no es lo mismo que no haber polo</div>
+        <p>\( 1/z^2 \) tiene un polo doble en el origen y residuo <b>cero</b>, porque en su desarrollo no hay
+        término en \( 1/z \). El polo está, pero no aporta nada a la integral. Confundir las dos cosas lleva a
+        conclusiones equivocadas sobre qué singularidades importan.</p></div>
+    </section>
+
+    <section id="lab">
+      <h2><span class="n">03</span>Cada polo aporta lo suyo</h2>
+      <div class="lw" id="rs">
+        <div class="lt">Laboratorio · la suma de los aportes</div>
+        <p class="ls">A la izquierda el contorno y los polos; a la derecha, los aportes \( 2\pi j \operatorname{Res} \) encadenados uno tras otro. El extremo de la cadena es el valor de la integral, y el punto amarillo es lo que da el cálculo numérico sobre el contorno. Tocá el lienzo para mover el centro.</p>
+        <div class="fila">
+          <select id="rsF">
+            <option value="dos">f(z) = 1/(z² − 1)</option>
+            <option value="cubo">f(z) = 1/(z³ − 1)</option>
+            <option value="imag">f(z) = 1/(z² + 1)</option>
+            <option value="dobl">f(z) = (z + 2)/(z²(z − 1))</option>
+            <option value="expo">f(z) = e^z/(z(z − 1))</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="rsR">Radio del contorno = <b id="rsRv">1,50</b></label>
+          <input type="range" id="rsR" min="0.2" max="2.2" step="0.01" value="1.5">
+        </div>
+        <canvas id="rsLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:2/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16;cursor:crosshair"></canvas>
+        <div class="datos" id="rsDatos" style="margin-top:8px"></div>
+        <div class="nota" id="rsNota"></div>
+      </div>
+    </section>
+
+    <section id="laplace">
+      <h2><span class="n">04</span>Para qué sirve de verdad: antitransformar</h2>
+      <p>La antitransformada de Laplace se define como una integral de línea sobre una recta vertical a la
+      derecha de todos los polos —la recta de Bromwich—:</p>
+      <div class="form">
+        \[ f(t) = \frac{1}{2\pi j}\int_{\sigma - j\infty}^{\sigma + j\infty} F(s)\,e^{st}\,ds \]
+      </div>
+      <p>Nadie la calcula así. Lo que se hace es cerrar el contorno con un semicírculo por la izquierda, que
+      por la cota ML aporta cero cuando el radio crece, y aplicar el teorema de los residuos al contorno
+      cerrado que quedó. El resultado es la fórmula que se usa siempre:</p>
+      <div class="form">
+        \[ f(t) = \sum_{k} \operatorname{Res}\Big[F(s)\,e^{st}\Big]_{s = p_k} \]
+        <span class="cap">La respuesta temporal es la suma de los aportes de los polos. Cada uno trae su propio \( e^{p_k t} \).</span>
+      </div>
+      <p>Con \( F(s) = \dfrac{1}{(s+1)(s+2)} \), el residuo en \( s = -1 \) vale \( e^{-t} \) y el de
+      \( s = -2 \) vale \( -e^{-2t} \), de modo que \( f(t) = e^{-t} - e^{-2t} \). Es la misma respuesta que da
+      la tabla, obtenida sin tabla.</p>
+      <p>Y acá se cierra el círculo que empezó con los
+      <a class="ref" href="/publicaciones/mapa-ingenieria/temas/polos-y-ceros">polos y ceros</a>: cada polo de
+      la función de transferencia aporta un término exponencial a la respuesta, y el residuo es precisamente
+      con cuánta amplitud lo hace. Un polo con residuo chico está ahí pero casi no se nota.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Los tres caminos al mismo número</div>
+        <p>Calcular \( \operatorname{Res}\big(1/(z^2+1),\, j\big) \) de las tres maneras: por el límite, por
+        \( g/h' \) y desarrollando en fracciones simples. Verificar que las tres dan \( -j/2 \).</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Antitransformar sin tabla</div>
+        <p>Para \( F(s) = \dfrac{s+3}{s(s+1)(s+2)} \), calcular los tres residuos de \( F(s)e^{st} \) y armar
+        \( f(t) \). Comprobar el valor inicial y el final con los teoremas correspondientes.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · El polo doble</div>
+        <p>Antitransformar \( F(s) = \dfrac{1}{(s+1)^2(s+2)} \) usando la fórmula del polo de orden 2.
+        Verificar que aparece un término \( t\,e^{-t} \) y contrastarlo con la respuesta medida de un RLC
+        críticamente amortiguado.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Sumar residuos de polos que quedaron afuera.</b> Sólo cuentan los encerrados por el
+        contorno.</li>
+        <li><b>Usar la fórmula del polo simple en uno múltiple.</b> El límite da infinito; hay que derivar
+        \( m-1 \) veces.</li>
+        <li><b>Olvidar el \( (m-1)! \)</b> en la fórmula del polo de orden \( m \).</li>
+        <li><b>Confundir residuo nulo con ausencia de polo.</b> \( 1/z^2 \) tiene polo y residuo
+        cero.</li>
+        <li><b>Antitransformar sin verificar que el semicírculo aporte cero.</b> Si el grado del numerador no
+        es menor que el del denominador, hay que separar primero la parte polinómica.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué es el residuo, en una línea?</summary>
+        <div class="a"><p>El coeficiente de \( 1/(z-z_0) \) en la serie de Laurent: el único término que
+        sobrevive al integrar sobre un contorno cerrado.</p></div></details>
+      <details class="q"><summary>¿Cuánto vale \( \operatorname{Res}(1/(z^2+1),\, j) \)?</summary>
+        <div class="a"><p>\( 1/(2j) = -j/2 \), usando \( g/h' \) con \( h' = 2z \).</p></div></details>
+      <details class="q"><summary>¿Cuánto da \( \oint dz/(z^3-1) \) sobre \( |z| = 2 \)?</summary>
+        <div class="a"><p>Cero: encierra los tres polos, y sus residuos \( z_k/3 \) suman cero porque las tres
+        raíces cúbicas de la unidad suman cero.</p></div></details>
+      <details class="q"><summary>¿Cómo se calcula el residuo en un polo de orden 2?</summary>
+        <div class="a"><p>Multiplicando por \( (z-z_0)^2 \), derivando una vez y tomando el límite. El
+        \( (m-1)! \) vale 1 en este caso.</p></div></details>
+      <details class="q"><summary>¿Qué relación hay entre residuos y fracciones simples?</summary>
+        <div class="a"><p>Son lo mismo: los coeficientes de la descomposición en fracciones simples son los
+        residuos en cada polo.</p></div></details>
+      <details class="q"><summary>¿Cómo se antitransforma con residuos?</summary>
+        <div class="a"><p>\( f(t) = \sum \operatorname{Res}[F(s)e^{st}] \) en los polos de \( F \). Cada polo
+        aporta su exponencial, con la amplitud que le da su residuo.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Ruel V. Churchill y James W. Brown.</span> <span class="ti">Variable compleja y aplicaciones</span>.
+          <span class="ed">7.ª ed., McGraw-Hill, 2004.</span>
+          <span class="pq">El teorema de los residuos con sus fórmulas de cálculo y el capítulo de transformadas integrales.</span></li>
+        <li><span class="au">Murray R. Spiegel.</span> <span class="ti">Variable compleja</span>.
+          <span class="ed">Serie Schaum, McGraw-Hill, 2011.</span>
+          <span class="pq">Residuos aplicados a decenas de integrales, ordenados por tipo de problema.</span></li>
+        <li><span class="au">Alan V. Oppenheim y Alan S. Willsky.</span> <span class="ti">Señales y sistemas</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1998.</span>
+          <span class="pq">La antitransformada de Laplace, con la relación entre residuos y fracciones simples.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/singularidades">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Singularidades</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Teorema de los residuos»</b> de <b>Análisis de Señales y Sistemas</b> (segundo nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* El teorema de los residuos, aporte por aporte. Los residuos se calculan
+   numericamente integrando sobre una circunferencia chiquita alrededor de cada
+   polo, y a la derecha se encadenan los vectores 2*pi*j*Res de los polos que
+   quedaron adentro. El extremo de la cadena tiene que caer sobre el valor que
+   da la integral calculada sobre el contorno grande. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("rsLienzo"), ctx = cv.getContext("2d");
+  var R = 2.6, C = { x:0, y:0 }, NC = 2400, NR = 900, RCHICO = 0.015;
+
+  function mul(a, b){ return [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]]; }
+  function div(a, b){
+    var m = b[0] * b[0] + b[1] * b[1];
+    if(m < 1e-300) return [NaN, NaN];
+    return [(a[0] * b[0] + a[1] * b[1]) / m, (a[1] * b[0] - a[0] * b[1]) / m];
+  }
+  function prod(ls){
+    var r = [1, 0], i;
+    for(i = 0; i < ls.length; i++) r = mul(r, ls[i]);
+    return r;
+  }
+
+  var C3 = Math.cos(2 * Math.PI / 3), S3 = Math.sin(2 * Math.PI / 3);
+
+  var F = {
+    dos:  { n:"1/(z² − 1)", pol:[[1, 0], [-1, 0]],
+            f:function(p){ return div([1, 0], prod([[p[0] - 1, p[1]], [p[0] + 1, p[1]]])); },
+            t:"Dos polos simples con residuos 1/2 y −1/2. Encerrando los dos, los aportes se cancelan y la " +
+              "cadena vuelve al origen." },
+    cubo: { n:"1/(z³ − 1)", pol:[[1, 0], [C3, S3], [C3, -S3]],
+            f:function(p){
+              var z = [p[0], p[1]], z3 = mul(z, mul(z, z));
+              return div([1, 0], [z3[0] - 1, z3[1]]);
+            },
+            t:"Las tres raíces cúbicas de la unidad, con residuos zₖ/3. Como las tres raíces suman cero, " +
+              "los tres aportes forman un triángulo cerrado: encerrándolas a todas da cero." },
+    imag: { n:"1/(z² + 1)", pol:[[0, 1], [0, -1]],
+            f:function(p){
+              var z2 = mul([p[0], p[1]], [p[0], p[1]]);
+              return div([1, 0], [z2[0] + 1, z2[1]]);
+            },
+            t:"Los polos están sobre el eje imaginario, con residuos −j/2 y +j/2. Es el integrando que " +
+              "aparece al calcular ∫dx/(1+x²) por residuos." },
+    dobl: { n:"(z + 2)/(z²(z − 1))", pol:[[0, 0], [1, 0]],
+            f:function(p){
+              var z = [p[0], p[1]];
+              return div([p[0] + 2, p[1]], prod([z, z, [p[0] - 1, p[1]]]));
+            },
+            t:"Un polo doble en el origen y uno simple en z = 1. El doble tiene residuo −3 y el simple, 3: " +
+              "otra vez se cancelan, pero por razones distintas." },
+    expo: { n:"e^z/(z(z − 1))", pol:[[0, 0], [1, 0]],
+            f:function(p){
+              var m = Math.exp(p[0]);
+              return div([m * Math.cos(p[1]), m * Math.sin(p[1])],
+                         prod([[p[0], p[1]], [p[0] - 1, p[1]]]));
+            },
+            t:"Residuos −1 y e. Es el tipo de integrando que aparece al antitransformar: cada polo trae su " +
+              "propia exponencial." }
+  };
+
+  function integrar(d, cen, rad, N){
+    var ac = [0, 0], i;
+    for(i = 0; i < N; i++){
+      var t0 = 2 * Math.PI * i / N, t1 = 2 * Math.PI * (i + 1) / N, tm = (t0 + t1) / 2;
+      var p0 = [cen[0] + rad * Math.cos(t0), cen[1] + rad * Math.sin(t0)];
+      var p1 = [cen[0] + rad * Math.cos(t1), cen[1] + rad * Math.sin(t1)];
+      var pm = [cen[0] + rad * Math.cos(tm), cen[1] + rad * Math.sin(tm)];
+      var v = d.f(pm);
+      if(!isFinite(v[0])) return null;
+      var tr = mul(v, [p1[0] - p0[0], p1[1] - p0[1]]);
+      ac = [ac[0] + tr[0], ac[1] + tr[1]];
+    }
+    return ac;
+  }
+
+  function n(x, d){
+    if(d === undefined) d = 3;
+    if(!isFinite(x)) return "—";
+    if(Math.abs(x) > 1e5) return "∞";
+    if(Math.abs(x) < 5e-4) x = 0;
+    return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+  function cpx(v, d){
+    if(!v || !isFinite(v[0])) return "—";
+    var im = n(Math.abs(v[1]), d);
+    return n(v[0], d) + (v[1] >= 0 || im === "0" ? " + j" : " − j") + im;
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var d = F[$("rsF").value], rad = parseFloat($("rsR").value);
+    $("rsRv").textContent = n(rad, 2);
+
+    /* el residuo de cada polo, por integral sobre una circunferencia chiquita */
+    var res = d.pol.map(function(p){
+      var v = integrar(d, p, RCHICO, NR);
+      if(!v) return null;
+      return div(v, [0, 2 * Math.PI]);       /* dividir por 2*pi*j */
+    });
+    var dentro = d.pol.map(function(p){ return Math.hypot(p[0] - C.x, p[1] - C.y) < rad; });
+    var cerca = d.pol.some(function(p){
+      return Math.abs(Math.hypot(p[0] - C.x, p[1] - C.y) - rad) < 0.06;
+    });
+
+    /* la cadena de aportes, y la integral sobre el contorno grande */
+    var cad = [[0, 0]], ac = [0, 0];
+    d.pol.forEach(function(p, k){
+      if(!dentro[k] || !res[k]) return;
+      var ap = mul([0, 2 * Math.PI], res[k]);
+      ac = [ac[0] + ap[0], ac[1] + ap[1]];
+      cad.push([ac[0], ac[1]]);
+    });
+    var total = cerca ? null : integrar(d, [C.x, C.y], rad, NC);
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    var mitad = Wd / 2;
+    var ez = Math.min(mitad, Hd) / (2 * R) * 0.88;
+    var mx = 0.6;
+    cad.forEach(function(p){ mx = Math.max(mx, Math.abs(p[0]), Math.abs(p[1])); });
+    if(total) mx = Math.max(mx, Math.abs(total[0]), Math.abs(total[1]));
+    var Rw = mx * 1.35;
+    var ew = Math.min(mitad, Hd) / (2 * Rw) * 0.88;
+    var c1 = { x:mitad / 2, y:Hd / 2 }, c2 = { x:mitad + mitad / 2, y:Hd / 2 };
+    function Az(p){ return { x:c1.x + p[0] * ez, y:c1.y - p[1] * ez }; }
+    function Aw(p){ return { x:c2.x + p[0] * ew, y:c2.y - p[1] * ew }; }
+
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(6, c1.y); ctx.lineTo(mitad - 6, c1.y); ctx.moveTo(c1.x, 8); ctx.lineTo(c1.x, Hd - 8);
+    ctx.moveTo(mitad + 6, c2.y); ctx.lineTo(Wd - 6, c2.y); ctx.moveTo(c2.x, 8); ctx.lineTo(c2.x, Hd - 8);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(107,116,132,.35)";
+    ctx.beginPath(); ctx.moveTo(mitad, 4); ctx.lineTo(mitad, Hd - 4); ctx.stroke();
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("plano z  ·  el contorno", 10, 16);
+    ctx.fillText("los aportes 2πj·Res, encadenados", mitad + 10, 16);
+
+    /* izquierda */
+    var qc = Az([C.x, C.y]);
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(qc.x, qc.y, rad * ez, 0, Math.PI * 2); ctx.stroke();
+    d.pol.forEach(function(p, k){
+      var q = Az(p);
+      ctx.strokeStyle = dentro[k] ? "#f85149" : "rgba(248,81,73,.35)";
+      ctx.lineWidth = dentro[k] ? 2.2 : 1.4;
+      ctx.beginPath();
+      ctx.moveTo(q.x - 7, q.y - 7); ctx.lineTo(q.x + 7, q.y + 7);
+      ctx.moveTo(q.x + 7, q.y - 7); ctx.lineTo(q.x - 7, q.y + 7);
+      ctx.stroke();
+      if(res[k]){
+        ctx.fillStyle = dentro[k] ? "#f85149" : "#6b7484";
+        ctx.font = "600 10px system-ui, sans-serif";
+        ctx.fillText(cpx(res[k], 2), q.x + 10, q.y - 8);
+      }
+    });
+
+    /* derecha: la cadena */
+    var col = ["#7ee787", "#ff9f6b", "#6bd5e1", "#d2a8ff", "#f2cc60"];
+    for(i = 1; i < cad.length; i++){
+      var a = Aw(cad[i - 1]), b = Aw(cad[i]);
+      ctx.strokeStyle = col[(i - 1) % col.length]; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      var an = Math.atan2(b.y - a.y, b.x - a.x);
+      ctx.fillStyle = col[(i - 1) % col.length];
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(b.x - 8 * Math.cos(an - 0.4), b.y - 8 * Math.sin(an - 0.4));
+      ctx.lineTo(b.x - 8 * Math.cos(an + 0.4), b.y - 8 * Math.sin(an + 0.4));
+      ctx.closePath(); ctx.fill();
+    }
+    if(total){
+      var qt = Aw(total);
+      ctx.fillStyle = "#f2cc60";
+      ctx.beginPath(); ctx.arc(qt.x, qt.y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.font = "600 11px system-ui, sans-serif";
+      ctx.fillText("la integral", qt.x + 9, qt.y - 7);
+    }
+    ctx.fillStyle = "rgba(107,116,132,.9)";
+    ctx.beginPath(); ctx.arc(c2.x, c2.y, 3, 0, Math.PI * 2); ctx.fill();
+
+    /* los numeros */
+    var html = "<span>Función</span><b>f(z) = " + d.n + "</b><hr>";
+    d.pol.forEach(function(p, k){
+      html += '<span style="color:' + (dentro[k] ? "#f85149" : "#6b7484") + '">Res en ' +
+              cpx(p, 2) + (dentro[k] ? "  ·  adentro" : "  ·  afuera") + "</span><b>" +
+              cpx(res[k]) + "</b>";
+    });
+    html += "<hr><span>2πj por la suma de los de adentro</span><b>" + cpx(ac) + "</b>" +
+            "<span>La integral, calculada sobre el contorno</span><b>" +
+              (total ? cpx(total) : "el contorno pasa sobre un polo") + "</b>";
+    $("rsDatos").innerHTML = html;
+
+    var txt = d.t;
+    var cuantos = dentro.filter(Boolean).length;
+    if(cuantos === 0)
+      txt += " Ahora el contorno no encierra ningún polo: por el teorema de Cauchy la integral vale cero, y " +
+             "la cadena no llega a empezar.";
+    if(cerca)
+      txt += " <b>El contorno está pasando sobre un polo</b>: ahí la integral no está definida. Movelo.";
+    txt += " Tocá el plano de la izquierda para mover el centro del contorno.";
+    $("rsNota").innerHTML = txt;
+  }
+
+  cv.addEventListener("click", function(ev){
+    var r = cv.getBoundingClientRect();
+    var mitad = r.width / 2, esc = Math.min(mitad, r.height) / (2 * R) * 0.88;
+    if(ev.clientX - r.left > mitad) return;
+    var x = (ev.clientX - r.left - mitad / 2) / esc, y = (r.height / 2 - (ev.clientY - r.top)) / esc;
+    C = { x:Math.max(-R, Math.min(R, x)), y:Math.max(-R, Math.min(R, y)) };
+    pintar();
+  });
+  ["rsF", "rsR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=1"></script>
+</body>
+</html>
