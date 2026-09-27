@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resolución sistemática de circuitos · Teoría de los Circuitos I · Catto</title>
+<meta name="description" content="Análisis de nodos y de mallas, la matriz de conductancias escrita por inspección, cuál de los dos métodos da menos ecuaciones, y el análisis nodal modificado que usa SPICE, con laboratorio interactivo de un puente de Wheatstone con una Pt100 resuelto por nodos. Contenido de Teoría de los Circuitos I, tercer nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/resolucion-sistematica">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=6">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Teoría de los Circuitos I</a>
+    <span class="anio">3<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Teoría de los Circuitos I</span> · 144 h · Contenido 9 de 13</div>
+    <h1>Resolución sistemática de circuitos</h1>
+    <p class="lead">Basta una resistencia en diagonal para que un circuito deje de reducirse en serie y paralelo. El método de nodos lo resuelve igual, y es exactamente lo que hace por dentro cualquier simulador de circuitos.</p>
+    <div class="chips">
+      <span class="chip hi">Nodos</span>
+      <span class="chip">Mallas</span>
+      <span class="chip">Matriz de conductancias</span>
+      <span class="chip">Puente de Wheatstone</span>
+      <span class="chip">SPICE</span>
+    </div>
+    <hr class="rule">
+
+    <section id="porque">
+      <h2><span class="n">01</span>Cuando serie y paralelo no alcanzan</h2>
+      <p>Mientras un circuito se deja reducir combinando resistencias en serie y en paralelo, alcanza con
+      eso. Pero basta un elemento que conecte dos ramas «en diagonal» para que no quede ningún par de
+      resistencias estrictamente en serie ni en paralelo. El ejemplo clásico es el <b>puente de
+      Wheatstone</b> con un detector entre sus dos puntos medios: cuatro nodos, seis ramas y ninguna
+      simplificación posible. Para esos casos hacen falta métodos <b>sistemáticos</b>, que plantean
+      directamente un sistema de ecuaciones lineales y funcionan siempre, sea cual sea la topología.</p>
+      <p>Hay dos, uno por cada ley de Kirchhoff: el análisis de <b>nodos</b>, que usa la ley de corrientes, y
+      el de <b>mallas</b>, que usa la de tensiones.</p>
+    </section>
+
+    <section id="nodos">
+      <h2><span class="n">02</span>Análisis de nodos</h2>
+      <p>Se elige un nodo de referencia —la masa— y las incógnitas son las tensiones de los \( N-1 \) nodos
+      restantes. En cada uno se escribe que la suma de corrientes que salen es cero, con cada corriente
+      expresada como diferencia de tensiones sobre una resistencia. El resultado se ordena solo en forma
+      matricial:</p>
+      <div class="form">
+        \[ \mathbf{G}\,\mathbf{V} = \mathbf{I} \]
+        <span class="cap">\( \mathbf{G} \) es la matriz de conductancias. Se arma «por inspección»: en la diagonal, la suma de las conductancias conectadas a cada nodo; fuera de la diagonal, menos la conductancia que une a los dos nodos. \( \mathbf{I} \) son las corrientes que las fuentes inyectan en cada nodo.</span>
+      </div>
+      <p>La matriz \( \mathbf{G} \) de un circuito de resistencias es simétrica, y esa regularidad es la que
+      permite escribirla sin plantear una sola ecuación a mano: se lee del esquema.</p>
+    </section>
+
+    <section id="mallas">
+      <h2><span class="n">03</span>Análisis de mallas</h2>
+      <p>El método dual: en un circuito plano se asigna una corriente a cada malla —cada «ventana» del
+      dibujo— y en cada una se escribe que la suma de tensiones alrededor es cero.</p>
+      <div class="form">
+        \[ \mathbf{R}\,\mathbf{I}_m = \mathbf{V} \]
+        <span class="cap">En la diagonal de \( \mathbf{R} \), la suma de las resistencias de cada malla; fuera de ella, menos la resistencia que comparten dos mallas. \( \mathbf{V} \) son las fuentes de tensión recorridas en cada malla.</span>
+      </div>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>Nodos</th><th>Mallas</th></tr></thead>
+        <tbody>
+          <tr><td>Ley que usa</td><td>Kirchhoff de corrientes</td><td>Kirchhoff de tensiones</td></tr>
+          <tr><td>Incógnitas</td><td>\( N-1 \) tensiones de nodo</td><td>\( B-N+1 \) corrientes de malla</td></tr>
+          <tr><td>En el puente de Wheatstone (N = 4, B = 6)</td><td><b>2</b> ecuaciones (la fuente fija un nodo)</td><td>3 ecuaciones</td></tr>
+          <tr><td>Fuentes que complican</td><td>Fuentes de tensión flotantes: supernodo</td><td>Fuentes de corriente compartidas: supermalla</td></tr>
+          <tr><td>Sirve para</td><td>Cualquier circuito</td><td>Solo circuitos planos</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="puente">
+      <h2><span class="n">04</span>Un puente de Wheatstone con una Pt100</h2>
+      <p>La Pt100 es un sensor de temperatura de platino: vale 100 Ω a 0 °C y, según la norma IEC 60751,
+      138,51 Ω a 100 °C. Puesta en un puente con otras tres resistencias de 100 Ω, a 0 °C el puente está
+      equilibrado y el detector no marca nada; cualquier cambio de temperatura lo desequilibra. Con la fuente
+      fijando el nodo superior y la masa el inferior, quedan dos incógnitas: las tensiones de los dos puntos
+      medios.</p>
+      <div class="form">
+        \[ \begin{bmatrix} G_{aa} & -G_d \\ -G_d & G_{bb} \end{bmatrix}
+           \begin{bmatrix} V_a \\ V_b \end{bmatrix} =
+           \begin{bmatrix} G_1 V_s \\ G_3 V_s \end{bmatrix} \]
+        <span class="cap">\( G_{aa} = G_1+G_2+G_d \) y \( G_{bb} = G_3+G_4+G_d \) son las sumas de las conductancias que tocan cada punto medio; \( G_d \) es la del detector que los une, y entra restando fuera de la diagonal.</span>
+      </div>
+      <div class="lw" id="wb">
+        <div class="lt">Laboratorio · el puente resuelto por nodos</div>
+        <p class="ls">R₁ = R₂ = R₃ = 100 Ω, R₄ es la Pt100 y la fuente es de 5 V. Movés la temperatura y
+        elegís el detector; el panel arma la matriz de conductancias, la resuelve y verifica la ley de
+        corrientes en cada nodo.</p>
+        <div class="fila">
+          <label for="wbT">Temperatura de la Pt100 = <b id="wbTv">25 °C</b></label>
+          <input type="range" id="wbT" min="0" max="200" step="1" value="25">
+        </div>
+        <div class="fila">
+          <select id="wbD">
+            <option value="1e9">detector: voltímetro ideal (resistencia infinita)</option>
+            <option value="1000" selected>detector: galvanómetro de 1 kΩ</option>
+            <option value="50">detector: galvanómetro de 50 Ω</option>
+          </select>
+        </div>
+        <canvas id="wbLienzo" style="display:block;width:100%;max-width:520px;aspect-ratio:1.5/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="wbDatos" style="margin-top:8px"></div>
+        <div class="nota" id="wbNota"></div>
+      </div>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">05</span>Dónde aparece en la electrónica</h2>
+      <p>Todo simulador de circuitos —SPICE y sus descendientes, LTspice, ngspice, el de cualquier
+      programa de diseño— resuelve exactamente este sistema. Usa una variante llamada <b>análisis nodal
+      modificado</b>, que agrega como incógnitas las corrientes de las fuentes de tensión para no tener que
+      pensar en supernodos, arma la matriz por inspección leyendo la lista de componentes y la resuelve. Con
+      componentes no lineales repite ese paso muchas veces, linealizando alrededor de cada punto; en el
+      dominio de la frecuencia lo hace con conductancias complejas.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Caso</th><th>Por qué se resuelve con nodos</th></tr></thead>
+        <tbody>
+          <tr><td>Puentes de sensores: Pt100, galgas extensiométricas, celdas de carga</td><td>El detector entre los puntos medios impide la reducción serie-paralelo</td></tr>
+          <tr><td>Redes de polarización de transistores</td><td>Varias fuentes y un nodo compartido entre base y emisor</td></tr>
+          <tr><td>Conversor D/A de escalera R-2R</td><td>Cada nodo de la escalera tiene la misma forma, y la matriz sale con un patrón regular</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Resolver a mano y verificar</div>
+        <p>Plantear por nodos el puente con la Pt100 a 100 °C y galvanómetro de 1 kΩ. Resolver el sistema de
+        2×2 con la regla de Cramer y comparar con el panel del laboratorio.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · El mismo puente por mallas</div>
+        <p>Plantear las tres ecuaciones de malla del mismo puente, resolverlas y verificar que la corriente
+        del detector coincide. Contar cuántas operaciones hicieron falta en cada método.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · El puente en SPICE</div>
+        <p>Cargar el puente en LTspice o ngspice, hacer un barrido de la resistencia de la Pt100 de 100 a
+        175 Ω y graficar la tensión del detector. Verificar que no es exactamente lineal.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Mezclar sentidos de corriente en un mismo nodo.</b> Conviene escribir siempre todas las
+        corrientes como «salientes»: el signo se ordena solo.</li>
+        <li><b>Olvidar el signo menos fuera de la diagonal.</b> La conductancia compartida entra restando.</li>
+        <li><b>Plantear mallas en un circuito no plano.</b> El método de mallas exige poder dibujar el
+        circuito sin cruces; el de nodos no.</li>
+        <li><b>Elegir el método con más ecuaciones.</b> Contar antes: \( N-1 \) contra \( B-N+1 \).</li>
+        <li><b>Suponer que el puente es lineal.</b> La tensión del detector no crece exactamente en
+        proporción a la variación de la resistencia, salvo para variaciones chicas.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Por qué un puente de Wheatstone con detector no se puede reducir
+        serie-paralelo?</summary>
+        <div class="a"><p>Porque el detector une los dos puntos medios y ningún par de resistencias queda
+        estrictamente en serie ni en paralelo.</p></div></details>
+      <details class="q"><summary>¿Cómo se arma la matriz de conductancias por inspección?</summary>
+        <div class="a"><p>Diagonal: suma de conductancias conectadas a cada nodo. Fuera de la diagonal: menos
+        la conductancia que une a los dos nodos.</p></div></details>
+      <details class="q"><summary>¿Cuántas ecuaciones da cada método en un circuito con N nodos y B
+        ramas?</summary>
+        <div class="a"><p>Nodos: \( N-1 \). Mallas: \( B-N+1 \).</p></div></details>
+      <details class="q"><summary>¿Cuándo está equilibrado el puente?</summary>
+        <div class="a"><p>Cuando \( R_1/R_2 = R_3/R_4 \): los dos puntos medios quedan a la misma tensión y
+        por el detector no circula corriente.</p></div></details>
+      <details class="q"><summary>¿Qué método usa SPICE?</summary>
+        <div class="a"><p>El análisis nodal modificado: nodos, más las corrientes de las fuentes de tensión
+        como incógnitas adicionales.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Charles K. Alexander y Matthew N. O. Sadiku.</span>
+          <span class="ti">Fundamentals of Electric Circuits</span>.
+          <span class="ed">7.ª ed., McGraw-Hill, 2021.</span>
+          <span class="pq">Los capítulos de análisis de nodos y mallas, con supernodos, supermallas y la escritura por inspección.</span></li>
+        <li><span class="au">Chung-Wen Ho, Albert E. Ruehli y Pierce A. Brennan.</span>
+          <span class="ti">The Modified Nodal Approach to Network Analysis</span>.
+          <span class="ed">IEEE Transactions on Circuits and Systems, vol. 22, 1975.</span>
+          <span class="pq">El artículo que definió el análisis nodal modificado que usan todos los simuladores.</span></li>
+        <li><span class="au">IEC 60751.</span>
+          <span class="ti">Industrial platinum resistance thermometers and platinum temperature sensors</span>.
+          <span class="ed">IEC, 2022.</span>
+          <span class="pq">La norma que fija la curva de resistencia de la Pt100 usada en el laboratorio.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/respuesta-transitoria">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Respuesta transitoria y residuos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Resolución sistemática de circuitos»</b> de <b>Teoría de los Circuitos I</b> (tercer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=2"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Puente de Wheatstone resuelto por nodos. R1 = R2 = R3 = 100 ohm,
+   R4 = Pt100 segun IEC 60751 (T >= 0): R = 100 (1 + A T + B T^2),
+   A = 3.9083e-3, B = -5.775e-7. Incognitas Va, Vb; sistema 2x2 por Cramer.
+   Se verifica la ley de corrientes en cada nodo con las tensiones halladas,
+   para que el panel muestre que la solucion cumple lo que se planteo. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("wbLienzo"), ctx = cv.getContext("2d");
+  var VS = 5, R1 = 100, R2 = 100, R3 = 100;
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace(".", ",").replace("-", "−");
+  }
+  function pt100(t){ return 100 * (1 + 3.9083e-3 * t - 5.775e-7 * t * t); }
+
+  function resistor(x1, y1, x2, y2, et, color){
+    var mx = (x1 + x2) / 2, my = (y1 + y2) / 2, ang = Math.atan2(y2 - y1, x2 - x1);
+    ctx.strokeStyle = "#8b93a3"; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.save(); ctx.translate(mx, my); ctx.rotate(ang);
+    ctx.fillStyle = "#0b0f16"; ctx.strokeStyle = color || "#cdd5e0";
+    ctx.fillRect(-16, -6, 32, 12); ctx.strokeRect(-16, -6, 32, 12);
+    ctx.restore();
+    ctx.fillStyle = color || "#cdd5e0"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText(et, mx + (x2 > x1 ? 10 : -38), my + (y2 > y1 ? -8 : 16));
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height;
+
+    var T = parseFloat($("wbT").value);
+    $("wbTv").textContent = T + " °C";
+    var R4 = pt100(T), Rd = parseFloat($("wbD").value);
+    var G1 = 1 / R1, G2 = 1 / R2, G3 = 1 / R3, G4 = 1 / R4, Gd = 1 / Rd;
+    var a11 = G1 + G2 + Gd, a12 = -Gd, a21 = -Gd, a22 = G3 + G4 + Gd;
+    var b1 = G1 * VS, b2 = G3 * VS;
+    var det = a11 * a22 - a12 * a21;
+    var Va = (b1 * a22 - a12 * b2) / det, Vb = (a11 * b2 - a21 * b1) / det;
+    var Id = (Va - Vb) / Rd;
+    var kclA = (Va - VS) / R1 + Va / R2 + (Va - Vb) / Rd;
+    var kclB = (Vb - VS) / R3 + Vb / R4 + (Vb - Va) / Rd;
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    var cx = Wd / 2, top = 26, bot = Hd - 26, cy = Hd / 2;
+    var ax = cx - Math.min(Wd * 0.3, 150), bx = cx + Math.min(Wd * 0.3, 150);
+    resistor(cx, top, ax, cy, "R₁");
+    resistor(ax, cy, cx, bot, "R₂");
+    resistor(cx, top, bx, cy, "R₃");
+    resistor(bx, cy, cx, bot, "Pt100", "#f2cc60");
+    /* detector */
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(ax, cy); ctx.lineTo(bx, cy); ctx.stroke();
+    ctx.fillStyle = "#0b0f16"; ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#58a6ff"; ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(Rd > 1e8 ? "V" : "G", cx, cy + 4);
+    /* nodos */
+    ctx.fillStyle = "#cdd5e0";
+    [[cx, top], [cx, bot], [ax, cy], [bx, cy]].forEach(function(p){ ctx.beginPath(); ctx.arc(p[0], p[1], 3.5, 0, Math.PI * 2); ctx.fill(); });
+    ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("+5 V", cx, top - 8); ctx.fillText("0 V", cx, bot + 16);
+    ctx.textAlign = "right"; ctx.fillStyle = "#7ee787"; ctx.fillText("a: " + n(Va, 4) + " V", ax - 6, cy - 8);
+    ctx.textAlign = "left"; ctx.fillText("b: " + n(Vb, 4) + " V", bx + 6, cy - 8);
+    ctx.textAlign = "center"; ctx.fillStyle = "#58a6ff";
+    ctx.fillText(Rd > 1e8 ? n((Va - Vb) * 1000, 2) + " mV" : n(Id * 1e6, 1) + " µA", cx, cy + 30);
+    ctx.textAlign = "left";
+
+    $("wbDatos").innerHTML =
+      "<span>Pt100 a " + T + " °C</span><b>" + n(R4, 3) + " Ω</b>" +
+      "<span>Matriz G (mS)</span><b>[ " + n(a11 * 1e3, 3) + "  " + n(a12 * 1e3, 3) + " ; " + n(a21 * 1e3, 3) + "  " + n(a22 * 1e3, 3) + " ]</b>" +
+      "<span>Vector I (mA)</span><b>[ " + n(b1 * 1e3, 2) + " ; " + n(b2 * 1e3, 2) + " ]</b>" +
+      "<hr><span>V_a · V_b</span><b>" + n(Va, 5) + " V · " + n(Vb, 5) + " V</b>" +
+      "<span>Tensión del detector V_a − V_b</span><b>" + n((Va - Vb) * 1000, 3) + " mV</b>" +
+      (Rd < 1e8 ? "<span>Corriente por el detector</span><b>" + n(Id * 1e6, 2) + " µA</b>" : "") +
+      "<hr><span>Ley de corrientes en a y en b</span><b>" + (Math.abs(kclA) < 1e-12 && Math.abs(kclB) < 1e-12 ? "se cumple (suma < 10⁻¹² A)" : "residuo " + kclA.toExponential(2)) + "</b>";
+
+    var nota;
+    if(T === 0) nota = "A 0 °C la Pt100 vale 100 Ω y el puente está equilibrado: R₁/R₂ = R₃/R₄, los puntos medios quedan a la misma tensión y el detector no marca nada.";
+    else nota = "La Pt100 subió a " + n(R4, 2) + " Ω, así que el divisor R₃-R₄ deja al punto b más arriba que al a: el detector ve " + n((Va - Vb) * 1000, 1) + " mV. " +
+      (Rd < 100 ? "Un galvanómetro de baja resistencia carga el puente y la tensión que se lee es menor que con un voltímetro ideal." :
+       "Ese desequilibrio, amplificado, es lo que mide un termómetro industrial.");
+    $("wbNota").innerHTML = nota;
+  }
+
+  $("wbT").addEventListener("input", pintar);
+  $("wbD").addEventListener("input", pintar);
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
