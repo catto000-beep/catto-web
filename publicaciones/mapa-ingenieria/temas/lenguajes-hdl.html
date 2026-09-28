@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lenguajes descriptores de hardware · Técnicas Digitales I · Catto</title>
+<meta name="description" content="Qué es describir hardware y por qué no es programar, VHDL y Verilog con el mismo contador en los dos, asignación bloqueante y no bloqueante, simulación contra síntesis, bancos de prueba y las diferencias con un lenguaje procedural, con laboratorio interactivo que ejecuta flanco a flanco el mismo código con los dos tipos de asignación. Contenido de Técnicas Digitales I, tercer nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/lenguajes-hdl">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=3">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Técnicas Digitales I</a>
+    <span class="anio">3<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Técnicas Digitales I</span> · 96 h · Contenido 3 de 4</div>
+    <h1>Lenguajes descriptores de hardware</h1>
+    <p class="lead">En Verilog, cambiar un «<=» por un «=» convierte un registro de desplazamiento en tres copias del mismo flip-flop. Un HDL no se ejecuta: describe un circuito donde todo pasa al mismo tiempo.</p>
+    <div class="chips">
+      <span class="chip hi">VHDL</span>
+      <span class="chip">Verilog</span>
+      <span class="chip">Concurrencia</span>
+      <span class="chip">Asignación no bloqueante</span>
+      <span class="chip">Síntesis</span>
+    </div>
+    <hr class="rule">
+
+    <section id="describir">
+      <h2><span class="n">01</span>Describir hardware, no programarlo</h2>
+      <p>Un lenguaje descriptor de hardware (HDL) se parece a un lenguaje de programación y no es uno. Un
+      programa en C es una lista de instrucciones que un procesador ejecuta de a una, en orden. Una
+      descripción en VHDL o Verilog es la descripción de un circuito: cada sentencia es un pedazo de
+      hardware que <b>existe y funciona al mismo tiempo que todos los demás</b>. No hay un «ahora se
+      ejecuta esta línea»; hay compuertas y flip-flops que reaccionan todos a la vez a sus entradas.</p>
+      <p>Ese cambio de mentalidad es la dificultad principal de esta unidad, y casi todos los errores de
+      quien aprende HDL vienen de escribir como si fuera C: esperar que las cosas pasen en orden, usar
+      variables como en un programa, o escribir un bucle esperando que se repita en el tiempo cuando en
+      realidad se va a desplegar en hardware copiado.</p>
+    </section>
+
+    <section id="lenguajes">
+      <h2><span class="n">02</span>VHDL y Verilog</h2>
+      <p>Dos lenguajes dominan el diseño digital desde los años ochenta, y cualquier herramienta de FPGA
+      acepta los dos:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>VHDL</th><th>Verilog / SystemVerilog</th></tr></thead>
+        <tbody>
+          <tr><td>Origen</td><td>Departamento de Defensa de EE. UU., 1983; norma IEEE 1076</td><td>Industria privada, 1984; norma IEEE 1364, hoy IEEE 1800</td></tr>
+          <tr><td>Estilo</td><td>Fuertemente tipado y verboso, derivado de Ada</td><td>Compacto, sintaxis parecida a C</td></tr>
+          <tr><td>Dónde se usa más</td><td>Europa, aeroespacial, defensa, muchas universidades</td><td>Industria de semiconductores de EE. UU. y Asia, verificación</td></tr>
+        </tbody>
+      </table></div>
+      <p>El mismo contador de cuatro bits con reset sincrónico, en los dos:</p>
+      <div class="g2">
+<pre class="code"><code><span class="c-kw">library</span> ieee;
+<span class="c-kw">use</span> ieee.std_logic_1164.<span class="c-kw">all</span>;
+<span class="c-kw">use</span> ieee.numeric_std.<span class="c-kw">all</span>;
+
+<span class="c-kw">entity</span> contador <span class="c-kw">is</span>
+  <span class="c-kw">port</span> (clk, rst : <span class="c-kw">in</span>  <span class="c-ty">std_logic</span>;
+        q        : <span class="c-kw">out</span> <span class="c-ty">unsigned</span>(<span class="c-num">3</span> <span class="c-kw">downto</span> <span class="c-num">0</span>));
+<span class="c-kw">end</span>;
+
+<span class="c-kw">architecture</span> rtl <span class="c-kw">of</span> contador <span class="c-kw">is</span>
+  <span class="c-kw">signal</span> c : <span class="c-ty">unsigned</span>(<span class="c-num">3</span> <span class="c-kw">downto</span> <span class="c-num">0</span>);
+<span class="c-kw">begin</span>
+  <span class="c-kw">process</span> (clk) <span class="c-kw">begin</span>
+    <span class="c-kw">if</span> <span class="c-fn">rising_edge</span>(clk) <span class="c-kw">then</span>
+      <span class="c-kw">if</span> rst = <span class="c-num">'1'</span> <span class="c-kw">then</span> c &lt;= (<span class="c-kw">others</span> =&gt; <span class="c-num">'0'</span>);
+      <span class="c-kw">else</span>             c &lt;= c + <span class="c-num">1</span>;
+      <span class="c-kw">end if</span>;
+    <span class="c-kw">end if</span>;
+  <span class="c-kw">end process</span>;
+  q &lt;= c;
+<span class="c-kw">end</span>;</code><span class="cap">VHDL</span></pre>
+<pre class="code"><code><span class="c-kw">module</span> contador (
+  <span class="c-kw">input</span>            clk, rst,
+  <span class="c-kw">output</span> <span class="c-ty">reg</span> [<span class="c-num">3</span>:<span class="c-num">0</span>] q
+);
+  <span class="c-kw">always</span> @(<span class="c-kw">posedge</span> clk)
+    <span class="c-kw">if</span> (rst) q &lt;= <span class="c-num">4'd0</span>;
+    <span class="c-kw">else</span>     q &lt;= q + <span class="c-num">4'd1</span>;
+<span class="c-kw">endmodule</span></code><span class="cap">Verilog</span></pre>
+      </div>
+      <p>Las dos describen exactamente el mismo circuito: cuatro flip-flops D, un sumador de cuatro bits que
+      suma uno y un multiplexor que elige entre la suma y cero según el reset. Ninguna de las dos «cuenta»
+      en el sentido de un programa: describen la conexión que, flanco a flanco, hace contar al hardware.</p>
+    </section>
+
+    <section id="asignaciones">
+      <h2><span class="n">03</span>Bloqueante y no bloqueante</h2>
+      <p>En Verilog hay dos maneras de asignar dentro de un bloque con reloj, y confundirlas produce
+      circuitos distintos de los que se querían:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Asignación</th><th>Semántica</th><th>Uso correcto</th></tr></thead>
+        <tbody>
+          <tr><td>No bloqueante <code>b &lt;= a;</code></td><td>Todos los lados derechos se leen <b>antes</b> del flanco y todos los izquierdos se actualizan juntos después: como flip-flops reales</td><td>Lógica secuencial, con reloj</td></tr>
+          <tr><td>Bloqueante <code>b = a;</code></td><td>Se ejecuta en orden: la línea siguiente ya ve el valor nuevo, como en C</td><td>Lógica combinacional</td></tr>
+        </tbody>
+      </table></div>
+      <div class="lw" id="hd">
+        <div class="lt">Laboratorio · el mismo código, dos circuitos</div>
+        <p class="ls">Elegís el ejemplo y el tipo de asignación, y avanzás de a un flanco de reloj. La tabla
+        muestra el valor de cada registro después de cada flanco, y la nota de abajo explica qué circuito
+        sintetizaría la herramienta.</p>
+        <div class="fila">
+          <select id="hdE">
+            <option value="des" selected>registro de desplazamiento a → b → c</option>
+            <option value="int">intercambio de dos registros a ↔ b</option>
+          </select>
+          <select id="hdA">
+            <option value="nb" selected>no bloqueante (&lt;=)</option>
+            <option value="b">bloqueante (=)</option>
+          </select>
+        </div>
+        <div class="fila">
+          <button type="button" id="hdF">flanco de reloj ↑</button>
+          <button type="button" id="hdR">reiniciar</button>
+        </div>
+        <pre class="codigo" id="hdCod"></pre>
+        <div id="hdTabla" style="overflow-x:auto;margin-top:8px"></div>
+        <div class="nota" id="hdNota"></div>
+      </div>
+    </section>
+
+    <section id="sintesis">
+      <h2><span class="n">04</span>Simulación y síntesis</h2>
+      <p>Un mismo archivo HDL tiene dos destinos. El <b>simulador</b> lo ejecuta para ver cómo se comporta
+      en el tiempo; el <b>sintetizador</b> lo traduce a compuertas y flip-flops reales. No todo lo que
+      simula se puede sintetizar:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Construcción</th><th>En simulación</th><th>En síntesis</th></tr></thead>
+        <tbody>
+          <tr><td>Retardos como <code>#10</code> o <code>after 10 ns</code></td><td>Se respetan</td><td>Se ignoran: el retardo lo pone el silicio</td></tr>
+          <tr><td>Leer y escribir archivos</td><td>Útil en los bancos de prueba</td><td>No existe</td></tr>
+          <tr><td><code>if</code> sin <code>else</code> en lógica combinacional</td><td>Mantiene el valor anterior</td><td>Genera un <b>latch</b> no deseado</td></tr>
+          <tr><td>Bucle <code>for</code> de 8 vueltas</td><td>Se repite ocho veces</td><td>Se <b>despliega</b>: ocho copias del hardware en paralelo</td></tr>
+        </tbody>
+      </table></div>
+      <p>Por eso todo diseño se verifica con un <b>banco de prueba</b> (<i>testbench</i>): un módulo que no se
+      sintetiza, que genera los estímulos, observa las salidas y compara con lo esperado. En la industria,
+      escribir la verificación lleva más trabajo que escribir el diseño.</p>
+    </section>
+
+    <section id="procedural">
+      <h2><span class="n">05</span>Diferencias con un lenguaje procedural</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>C, Python</th><th>VHDL, Verilog</th></tr></thead>
+        <tbody>
+          <tr><td>Ejecución</td><td>Secuencial, una instrucción por vez</td><td>Concurrente: todo funciona al mismo tiempo</td></tr>
+          <tr><td>El tiempo</td><td>Implícito, lo marca el procesador</td><td>Explícito: flancos de reloj y retardos</td></tr>
+          <tr><td>Lo que produce</td><td>Instrucciones para un procesador que ya existe</td><td>El circuito mismo</td></tr>
+          <tr><td>Un bucle</td><td>Repite en el tiempo</td><td>Replica en el espacio</td></tr>
+          <tr><td>Memoria dinámica, recursión</td><td>Naturales</td><td>Imposibles: el hardware no crece mientras funciona</td></tr>
+          <tr><td>Error típico</td><td>Una excepción en tiempo de ejecución</td><td>Un circuito que simula bien y en la placa hace otra cosa</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">06</span>Dónde aparece en la electrónica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Caso</th><th>El papel del HDL</th></tr></thead>
+        <tbody>
+          <tr><td>Diseño con FPGA</td><td>Todo el diseño se escribe en HDL y la herramienta lo sintetiza para el dispositivo</td></tr>
+          <tr><td>Circuitos integrados a medida (ASIC)</td><td>El mismo HDL, sintetizado sobre una biblioteca de celdas de una fábrica</td></tr>
+          <tr><td>Verificación de un procesador</td><td>SystemVerilog con bancos de prueba aleatorizados y aserciones</td></tr>
+          <tr><td>Síntesis de alto nivel (HLS)</td><td>Se escribe en C o C++ y una herramienta genera el HDL: útil para filtros y procesamiento de señales</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Simular el contador</div>
+        <p>Simular el contador de la sección 2 con un simulador libre (GHDL o Icarus Verilog) y un banco de
+        prueba que aplique reset y veinte flancos. Ver en GTKWave que vuelve a cero después de 15.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Provocar un latch</div>
+        <p>Escribir un multiplexor combinacional con un <code>if</code> sin <code>else</code>, sintetizarlo y
+        buscar en el informe la advertencia de latch inferido. Corregirlo y comparar.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Bloqueante contra no bloqueante</div>
+        <p>Sintetizar las dos versiones del registro de desplazamiento del laboratorio y comparar en el
+        visor de esquemáticos cuántos flip-flops genera cada una.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Pensar las sentencias como pasos en el tiempo.</b> Son partes de un circuito que funcionan a
+        la vez.</li>
+        <li><b>Usar asignación bloqueante en un bloque con reloj.</b> Colapsa registros y rompe
+        desplazamientos e intercambios.</li>
+        <li><b>Dejar un <code>if</code> sin <code>else</code> en lógica combinacional.</b> Genera un latch.</li>
+        <li><b>Esperar que <code>#10</code> produzca un retardo en la FPGA.</b> El sintetizador lo ignora.</li>
+        <li><b>No escribir banco de prueba.</b> Lo que no se simuló, falla en la placa.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué diferencia fundamental hay entre un programa en C y una descripción en
+        VHDL?</summary>
+        <div class="a"><p>El programa se ejecuta en orden sobre un procesador; la descripción define un
+        circuito cuyas partes funcionan todas al mismo tiempo.</p></div></details>
+      <details class="q"><summary>¿Qué hace <code>b &lt;= a; c &lt;= b;</code> en un bloque con reloj?</summary>
+        <div class="a"><p>Un registro de desplazamiento: en cada flanco, <code>c</code> toma el valor
+        anterior de <code>b</code> y <code>b</code> el de <code>a</code>.</p></div></details>
+      <details class="q"><summary>¿Y con asignaciones bloqueantes?</summary>
+        <div class="a"><p><code>c</code> ve el valor nuevo de <code>b</code>, que ya es <code>a</code>: los
+        dos registros toman <code>a</code> en el mismo flanco y el desplazamiento desaparece.</p></div></details>
+      <details class="q"><summary>¿Qué genera un <code>if</code> sin <code>else</code> en lógica
+        combinacional?</summary>
+        <div class="a"><p>Un latch, porque la salida tiene que recordar su valor cuando la condición no se
+        cumple.</p></div></details>
+      <details class="q"><summary>¿Qué es un banco de prueba?</summary>
+        <div class="a"><p>Un módulo que no se sintetiza, que aplica estímulos al diseño y verifica sus
+        salidas en simulación.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Pong P. Chu.</span>
+          <span class="ti">FPGA Prototyping by VHDL Examples</span>.
+          <span class="ed">2.ª ed., Wiley, 2017.</span>
+          <span class="pq">VHDL aprendido construyendo circuitos reales sobre una placa, con la síntesis siempre a la vista.</span></li>
+        <li><span class="au">Samir Palnitkar.</span>
+          <span class="ti">Verilog HDL: A Guide to Digital Design and Synthesis</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 2003.</span>
+          <span class="pq">El texto clásico de Verilog, con el capítulo de asignaciones bloqueantes y no bloqueantes.</span></li>
+        <li><span class="au">Clifford E. Cummings.</span>
+          <span class="ti">Nonblocking Assignments in Verilog Synthesis, Coding Styles That Kill!</span>.
+          <span class="ed">SNUG San José, 2000.</span>
+          <span class="pq">El artículo que fijó las reglas de estilo que hoy usa toda la industria.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/maquinas-estado">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Lógica secuencial: máquinas de estado y temporización</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Lenguajes descriptores de hardware»</b> de <b>Técnicas Digitales I</b> (tercer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=3"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Bloqueante contra no bloqueante, flanco a flanco.
+   Desplazamiento: a <= x; b <= a; c <= b;  (x es una entrada con una
+   secuencia fija). Con '=' cada linea ve el valor nuevo de la anterior y
+   los tres registros toman x en el mismo flanco.
+   Intercambio: a <= b; b <= a;  con '=' a toma b y despues b toma el a
+   nuevo, que ya es b: el valor original de a se pierde. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var X = [1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0];
+  var st, hist;
+
+  function codigo(){
+    var ej = $("hdE").value, op = $("hdA").value === "nb" ? "&lt;=" : "=";
+    var L = ej === "des"
+      ? ["always @(posedge clk) begin", "  a " + op + " x;", "  b " + op + " a;", "  c " + op + " b;", "end"]
+      : ["always @(posedge clk) begin", "  a " + op + " b;", "  b " + op + " a;", "end"];
+    $("hdCod").innerHTML = L.map(function(l, i){
+      return '<div><span class="ln">' + (i + 1) + "</span>" + l.replace(/(always|posedge|begin|end)/g, '<span style="color:#ff7b72">$1</span>') + "</div>";
+    }).join("");
+  }
+  function reinicio(){
+    st = $("hdE").value === "des" ? { k: 0, a: 0, b: 0, c: 0 } : { k: 0, a: 5, b: 9 };
+    hist = [JSON.parse(JSON.stringify(st))];
+    codigo(); pintar();
+  }
+  function flanco(){
+    var ej = $("hdE").value, nb = $("hdA").value === "nb", n = { k: st.k + 1 };
+    if(ej === "des"){
+      var x = X[st.k % X.length];
+      if(nb){ n.a = x; n.b = st.a; n.c = st.b; }
+      else { n.a = x; n.b = n.a; n.c = n.b; }
+      n.x = x;
+    } else {
+      if(nb){ n.a = st.b; n.b = st.a; }
+      else { n.a = st.b; n.b = n.a; }
+    }
+    st = n; hist.push(JSON.parse(JSON.stringify(st)));
+    pintar();
+  }
+  function pintar(){
+    var ej = $("hdE").value, nb = $("hdA").value === "nb";
+    var h = hist.slice(-12);
+    var filas = ej === "des" ? [["flanco", "k"], ["x (entrada)", "x"], ["a", "a"], ["b", "b"], ["c", "c"]]
+                             : [["flanco", "k"], ["a", "a"], ["b", "b"]];
+    var t = '<table class="traza">';
+    filas.forEach(function(f, fi){
+      t += '<tr><th style="text-align:left">' + f[0] + "</th>";
+      h.forEach(function(e, i){
+        var v = e[f[1]];
+        if(v === undefined) v = fi === 1 && ej === "des" ? "—" : "";
+        t += '<td' + (i === h.length - 1 && fi > 0 ? ' style="font-weight:700"' : "") + ">" + (f[1] === "k" ? (e.k === 0 ? "inicio" : e.k) : v) + "</td>";
+      });
+      t += "</tr>";
+    });
+    $("hdTabla").innerHTML = t + "</table>";
+
+    var nota;
+    if(ej === "des" && nb) nota = "Cada registro toma el valor que tenía el anterior <b>antes</b> del flanco: el bit de entrada avanza un lugar por flanco. Se sintetizan tres flip-flops en cadena, un registro de desplazamiento.";
+    else if(ej === "des") nota = "Con asignación bloqueante, <code>b</code> ya ve el <code>a</code> nuevo y <code>c</code> el <code>b</code> nuevo: los tres toman <code>x</code> en el mismo flanco. El desplazamiento desapareció: la herramienta sintetiza tres copias del mismo flip-flop (o una sola, si optimiza).";
+    else if(nb) nota = "Los dos lados derechos se leen antes del flanco y se escriben juntos: <code>a</code> y <code>b</code> se intercambian en cada flanco, sin variable auxiliar. Así funcionan los flip-flops de verdad.";
+    else nota = "Con <code>=</code>, <code>a</code> toma <code>b</code> y enseguida <code>b</code> toma el <code>a</code> nuevo, que ya es <code>b</code>: el valor original de <code>a</code> se perdió en el primer flanco. Es exactamente lo que pasaría en C sin variable auxiliar.";
+    $("hdNota").innerHTML = nota;
+  }
+  $("hdF").addEventListener("click", flanco);
+  $("hdR").addEventListener("click", reinicio);
+  $("hdE").addEventListener("input", reinicio);
+  $("hdA").addEventListener("input", reinicio);
+  reinicio();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
