@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transistor MOS: canal largo, canal corto y escalado · Dispositivos Electrónicos · Catto</title>
+<meta name="description" content="El capacitor MOS y la tensión umbral, el modelo cuadrático de canal largo, la pendiente subumbral y su límite de 60 mV por década, los efectos de canal corto con la saturación de velocidad y el DIBL, el escalado de Dennard y su final, y las tecnologías que siguieron, del silicio tensionado al FinFET y la compuerta envolvente, con laboratorio interactivo que compara los modelos de canal largo y corto. Contenido de Dispositivos Electrónicos, tercer nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/mosfet-escalado">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=3">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Dispositivos Electrónicos</a>
+    <span class="anio">3<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Dispositivos Electrónicos</span> · 120 h · Contenido 5 de 9</div>
+    <h1>Transistor MOS: canal largo, canal corto y escalado</h1>
+    <p class="lead">Con un canal de 30 nm, la fórmula de libro del MOS predice cinco veces más corriente de la que el transistor da. Y la alimentación de los procesadores no baja de 0,7 V por un límite de la termodinámica: 60 mV por década.</p>
+    <div class="chips">
+      <span class="chip hi">Tensión umbral</span>
+      <span class="chip">Canal corto</span>
+      <span class="chip">Saturación de velocidad</span>
+      <span class="chip">Escalado de Dennard</span>
+      <span class="chip">FinFET</span>
+    </div>
+    <hr class="rule">
+
+    <section id="capacitor">
+      <h2><span class="n">01</span>El capacitor MOS y la inversión</h2>
+      <p>El transistor MOS es un capacitor con un semiconductor como una de sus placas: una compuerta
+      conductora, un óxido delgadísimo y un sustrato de silicio tipo P. Una tensión positiva en la compuerta
+      primero empuja a los huecos lejos de la superficie (<b>agotamiento</b>) y, si sigue subiendo, atrae
+      tantos electrones que la superficie del silicio P pasa a comportarse como tipo N: es la
+      <b>inversión</b>. Esa capa de electrones, de pocos nanómetros de espesor, es el canal que une las
+      regiones N⁺ de fuente y drenador.</p>
+      <p>La tensión de compuerta a la que aparece la inversión es la <b>tensión umbral</b>:</p>
+      <div class="form">
+        \[ \begin{gathered} V_{th} = V_{FB} + 2\phi_F + \frac{\sqrt{2\, \varepsilon_s\, q\, N_A\, (2\phi_F)}}{C_{ox}} \\
+           C_{ox} = \frac{\varepsilon_{ox}}{t_{ox}} \qquad \phi_F = V_T \ln \frac{N_A}{n_i} \end{gathered} \]
+        <span class="cap">\( V_{FB} \) es la tensión de banda plana, que depende del material de la compuerta y de las cargas del óxido. Se escribe \( V_{th} \) para no confundirla con la tensión térmica \( V_T \).</span>
+      </div>
+      <p>Con un óxido de 2 nm, \( C_{ox} = 17{,}3 \) fF/µm²: casi toda la historia del MOS es la de hacer ese
+      capacitor cada vez más grande por unidad de área, porque la carga del canal, y con ella la corriente,
+      es proporcional a \( C_{ox} \).</p>
+    </section>
+
+    <section id="canal-largo">
+      <h2><span class="n">02</span>El modelo de canal largo</h2>
+      <p>Con una tensión de sobreexcitación \( V_{ov} = V_{GS} - V_{th} \), la carga del canal por unidad de
+      área es \( C_{ox} V_{ov} \), y los electrones derivan de fuente a drenador con la movilidad del canal.
+      Integrando a lo largo del canal sale el modelo cuadrático:</p>
+      <div class="form">
+        \[ \begin{gathered} I_D = \mu_n C_{ox} \frac{W}{L} \left( V_{ov} V_{DS} - \frac{V_{DS}^2}{2} \right) \qquad V_{DS} < V_{ov} \\
+           I_D = \frac{\mu_n C_{ox}}{2} \frac{W}{L}\, V_{ov}^2 \,(1 + \lambda V_{DS}) \qquad V_{DS} \geq V_{ov} \end{gathered} \]
+        <span class="cap">En saturación el canal se estrangula junto al drenador; \( \lambda \) modela cómo el punto de estrangulamiento se corre hacia la fuente al subir \( V_{DS} \).</span>
+      </div>
+      <p>Para pequeña señal, \( g_m = \sqrt{2\, \mu_n C_{ox} (W/L)\, I_D} = 2 I_D / V_{ov} \). Comparado con el
+      bipolar, \( g_m / I_D = 2/V_{ov} \) contra \( 1/V_T \): con \( V_{ov} = 0{,}2 \) V el MOS da 10 S/A y el
+      bipolar 38,7. Para la misma corriente, el MOS amplifica menos.</p>
+      <div class="box ojo"><div class="bt">Por debajo del umbral no es cero</div>
+        <p>Con \( V_{GS} < V_{th} \) la corriente no desaparece: cae exponencialmente, como en un bipolar,
+        \( I_D \propto e^{V_{GS}/(n V_T)} \). La <b>pendiente subumbral</b> \( S = n V_T \ln 10 \) no puede bajar
+        de 60 mV por década a temperatura ambiente. Para que un transistor apagado conduzca un millón de
+        veces menos que encendido hacen falta al menos 360 mV de umbral, y ese número es la razón por la
+        que la alimentación de los procesadores dejó de bajar cerca de 0,7 V.</p>
+      </div>
+    </section>
+
+    <section id="canal-corto">
+      <h2><span class="n">03</span>Canal corto</h2>
+      <p>Cuando la longitud del canal baja a centenas de nanómetros, el modelo cuadrático se equivoca por
+      varios motivos a la vez:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Efecto</th><th>Qué pasa</th></tr></thead>
+        <tbody>
+          <tr><td>Saturación de velocidad</td><td>El campo a lo largo del canal supera los \( 10^4 \) V/cm y los electrones dejan de acelerar: la corriente pasa a crecer con \( V_{ov} \) en lugar de \( V_{ov}^2 \), y deja de mejorar como \( 1/L \)</td></tr>
+          <tr><td>Reducción de la barrera por el drenador (DIBL)</td><td>El drenador, muy cerca de la fuente, baja la barrera del canal: el umbral cae al subir \( V_{DS} \) y la corriente de apagado sube</td></tr>
+          <tr><td>Caída del umbral con \( L \)</td><td>Parte de la carga de agotamiento bajo la compuerta la sostienen fuente y drenador, y la compuerta controla menos</td></tr>
+          <tr><td>Portadores calientes</td><td>Electrones con mucha energía se incrustan en el óxido y el transistor se degrada con el uso</td></tr>
+          <tr><td>Fuga por túnel en la compuerta</td><td>Con óxidos de menos de 2 nm los electrones lo atraviesan; se reemplazó el SiO₂ por óxido de hafnio, de constante dieléctrica mayor, que da la misma \( C_{ox} \) con más espesor</td></tr>
+        </tbody>
+      </table></div>
+      <p>La saturación de velocidad se incorpora al modelo con un campo crítico
+      \( E_c = 2 v_{sat} / \mu_n \): la corriente de saturación queda</p>
+      <div class="form">
+        \[ \begin{gathered} I_{D,sat} = \frac{W\, C_{ox}\, v_{sat}\, V_{ov}^2}{V_{ov} + E_c L} \\
+           V_{DS,sat} = \frac{V_{ov}\, E_c L}{V_{ov} + E_c L} \end{gathered} \]
+        <span class="cap">Si \( E_c L \gg V_{ov} \) vuelve el modelo cuadrático; si \( E_c L \ll V_{ov} \), la corriente es \( W C_{ox} v_{sat} V_{ov} \) y ya no depende de \( L \).</span>
+      </div>
+      <div class="lw" id="ms">
+        <div class="lt">Laboratorio · el mismo transistor, cada vez más corto</div>
+        <p class="ls">Un NMOS con óxido de 2 nm, movilidad de canal de 400 cm²/V·s, velocidad de saturación de
+        \( 10^7 \) cm/s y umbral de 0,4 V. Elegís el largo del canal y la tensión de compuerta; se grafica la
+        corriente por micrón de ancho según el modelo con saturación de velocidad (continua) y según el de
+        canal largo (punteada). El óxido se deja fijo para aislar el efecto del largo.</p>
+        <div class="fila"><label>Largo del canal \( L \) = <b id="msLv"></b></label><input type="range" id="msL" min="0" max="1" step="0.005" value="0.5"></div>
+        <div class="fila"><label>\( V_{GS} \) = <b id="msGv"></b></label><input type="range" id="msG" min="0.5" max="1.2" step="0.01" value="1"></div>
+        <canvas id="msLienzo" style="display:block;width:100%;max-width:620px;height:300px;margin:6px auto 0"></canvas>
+        <div class="datos" id="msDatos"></div>
+        <div class="nota" id="msNota"></div>
+      </div>
+    </section>
+
+    <section id="escalado">
+      <h2><span class="n">04</span>El escalado de Dennard y su final</h2>
+      <p>En 1974 Robert Dennard y sus colegas de IBM mostraron que si todas las dimensiones y todas las
+      tensiones de un MOS se dividen por un mismo factor \( \kappa \), y los dopajes se multiplican por él,
+      el transistor funciona igual y mejora en todo:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Magnitud</th><th>Escala como</th></tr></thead>
+        <tbody>
+          <tr><td>Dimensiones \( L, W, t_{ox} \) y tensiones</td><td>\( 1/\kappa \)</td></tr>
+          <tr><td>Dopaje</td><td>\( \kappa \)</td></tr>
+          <tr><td>Corriente por transistor</td><td>\( 1/\kappa \)</td></tr>
+          <tr><td>Retardo de una compuerta</td><td>\( 1/\kappa \)</td></tr>
+          <tr><td>Potencia por transistor</td><td>\( 1/\kappa^2 \)</td></tr>
+          <tr><td>Transistores por área</td><td>\( \kappa^2 \)</td></tr>
+          <tr><td>Potencia por área</td><td>Constante</td></tr>
+        </tbody>
+      </table></div>
+      <p>Esa última fila es la que sostuvo la ley de Moore durante treinta años: chips con el doble de
+      transistores, más rápidos, que calentaban lo mismo. Se rompió cerca de 2005, cuando la tensión umbral
+      no pudo seguir bajando por el límite de 60 mV por década y con ella se estancó la alimentación. Desde
+      entonces la potencia por área crece con cada generación, las frecuencias de reloj quedaron cerca de
+      3 a 5 GHz, y el aumento de rendimiento vino de poner más núcleos, no de hacerlos más rápidos.</p>
+    </section>
+
+    <section id="tecnologias">
+      <h2><span class="n">05</span>Las tecnologías que siguieron</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Tecnología</th><th>Introducción</th><th>Qué resuelve</th></tr></thead>
+        <tbody>
+          <tr><td>Silicio tensionado</td><td>Intel, 90 nm, 2003</td><td>Deforma la red del canal para subir la movilidad</td></tr>
+          <tr><td>Dieléctrico de alta constante y compuerta metálica</td><td>Intel, 45 nm, 2007</td><td>Más \( C_{ox} \) sin fuga por túnel</td></tr>
+          <tr><td>FinFET (tri-gate)</td><td>Intel, 22 nm, 2011</td><td>El canal es una aleta rodeada por la compuerta en tres lados: mejor control, menos DIBL</td></tr>
+          <tr><td>Compuerta envolvente (nanoláminas)</td><td>Samsung, 3 nm, 2022</td><td>La compuerta rodea al canal por completo</td></tr>
+        </tbody>
+      </table></div>
+      <p>Los nombres de los nodos («7 nm», «3 nm») dejaron de ser una medida física hace más de una década:
+      son etiquetas comerciales de la generación, y el largo real de compuerta es bastante mayor.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">06</span>Dónde aparece en la electrónica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Caso</th><th>Qué importa del MOS</th></tr></thead>
+        <tbody>
+          <tr><td>Procesadores y memorias</td><td>Densidad, corriente por micrón y corriente de apagado</td></tr>
+          <tr><td>Circuitos analógicos integrados</td><td>\( g_m/I_D \), ganancia intrínseca y apareamiento; se usan canales más largos que el mínimo</td></tr>
+          <tr><td>MOSFET de potencia</td><td>Estructuras verticales con resistencia de encendido de miliohms</td></tr>
+          <tr><td>Sensores de imagen CMOS</td><td>Un fotodiodo y cuatro transistores por píxel</td></tr>
+          <tr><td>Protección contra descargas electrostáticas</td><td>El óxido de nanómetros se perfora con pocos volts: por eso los pines tienen diodos de protección</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Umbral y parámetro de transconductancia</div>
+        <p>Con un MOSFET de señal (2N7000 o BS170), medir \( I_D \) en saturación para cinco valores de
+        \( V_{GS} \). Graficar \( \sqrt{I_D} \) contra \( V_{GS} \): la recta corta el eje en \( V_{th} \) y su
+        pendiente da el parámetro de transconductancia.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · La zona subumbral</div>
+        <p>Con el mismo transistor, medir corrientes entre 10 nA y 10 µA con \( V_{GS} \) por debajo del
+        umbral y obtener la pendiente en mV por década. Compararla con el límite de 60 mV.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Simular el canal corto</div>
+        <p>En un simulador con modelos BSIM de una tecnología de 180 nm, trazar \( I_D \) contra \( V_{GS} \) en
+        saturación para \( L \) de 180 nm y de 2 µm. Verificar cuál sigue una parábola y cuál una recta.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Usar el modelo cuadrático en un transistor de canal corto.</b> Sobreestima la corriente varias
+        veces.</li>
+        <li><b>Confundir \( V_{th} \) con \( V_T \).</b> Una es el umbral, de centenas de milivolts; la otra la
+        tensión térmica, 25,85 mV.</li>
+        <li><b>Creer que el transistor apagado no conduce.</b> La corriente subumbral es la mayor parte del
+        consumo en reposo de un chip moderno.</li>
+        <li><b>Leer el nombre del nodo como una longitud.</b> «3 nm» es una etiqueta comercial.</li>
+        <li><b>Tocar las compuertas sin protección.</b> Una descarga electrostática perfora el óxido.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué es la inversión en un capacitor MOS?</summary>
+        <div class="a"><p>La acumulación, bajo la compuerta, de tantos portadores minoritarios que la
+        superficie del sustrato cambia de tipo y forma un canal conductor.</p></div></details>
+      <details class="q"><summary>En canal largo, ¿cómo cambia la corriente de saturación al duplicar
+        \( V_{ov} \)? ¿Y con saturación de velocidad extrema?</summary>
+        <div class="a"><p>En canal largo se cuadruplica; con saturación de velocidad extrema, se duplica.</p></div></details>
+      <details class="q"><summary>¿Por qué la pendiente subumbral no puede ser menor que 60 mV por década a
+        300 K?</summary>
+        <div class="a"><p>Porque la corriente la llevan portadores que superan una barrera por agitación
+        térmica, con distribución de Boltzmann: \( V_T \ln 10 = 59{,}5 \) mV es el mínimo por década.</p></div></details>
+      <details class="q"><summary>Según Dennard, ¿qué pasa con la potencia por área al escalar?</summary>
+        <div class="a"><p>Se mantiene constante, porque la potencia de cada transistor baja como \( 1/\kappa^2 \) y
+        la cantidad por área sube como \( \kappa^2 \).</p></div></details>
+      <details class="q"><summary>¿Qué problema resolvió el dieléctrico de alta constante?</summary>
+        <div class="a"><p>La fuga por túnel de los óxidos muy delgados: da la misma capacidad por área con un
+        espesor físico mayor.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Yuan Taur y Tak H. Ning.</span>
+          <span class="ti">Fundamentals of Modern VLSI Devices</span>.
+          <span class="ed">2.ª ed., Cambridge University Press, 2009.</span>
+          <span class="pq">El libro de referencia sobre el MOS moderno: canal corto, escalado y sus límites.</span></li>
+        <li><span class="au">Chenming Calvin Hu.</span>
+          <span class="ti">Modern Semiconductor Devices for Integrated Circuits</span>.
+          <span class="ed">Pearson, 2010.</span>
+          <span class="pq">Escrito por uno de los autores del FinFET y del modelo BSIM, con la saturación de velocidad y el DIBL explicados con claridad.</span></li>
+        <li><span class="au">Robert H. Dennard y otros.</span>
+          <span class="ti">Design of Ion-Implanted MOSFET's with Very Small Physical Dimensions</span>.
+          <span class="ed">IEEE Journal of Solid-State Circuits, 1974.</span>
+          <span class="pq">El artículo original de las reglas de escalado.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/jfet">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">JFET: continua, señal y conmutación</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Transistor MOS: canal largo, canal corto y escalado»</b> de <b>Dispositivos Electrónicos</b> (tercer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=3"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* NMOS de canal largo contra canal corto, corriente por micron de ancho.
+   tox 2 nm -> Cox = 3,9 e0 / 2 nm = 1,727e-6 F/cm2; mu = 400 cm2/Vs;
+   vsat = 1e7 cm/s; Ec = 2 vsat / mu = 5e4 V/cm; Vth = 0,4 V.
+   Con saturacion de velocidad (a = Ec L):
+     triodo  ID/W = mu Cox/L (Vov VDS - VDS^2/2) / (1 + VDS/a)
+     VDsat = Vov a / (Vov + a),  IDsat/W = Cox vsat Vov^2 / (Vov + a)
+   Canal largo: lo mismo con a -> infinito (VDsat = Vov).
+   En saturacion las dos se multiplican por 1 + lambda (VDS - VDsat), con
+   lambda = min(0,25; 0,01 um / L) 1/V, igual para las dos.
+   A/cm -> uA/um: x100.
+   Control (Python): Vov 0,6 V, L 1 um -> 124,3 y 111,0 uA/um;
+   L 100 nm -> 1243 y 565; L 30 nm -> 4144 y 829, VDsat 0,120 V. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("msLienzo"), ctx = cv.getContext("2d");
+  var MU = 400, COX = 3.9 * 8.854e-14 / 2e-7, VSAT = 1e7, EC = 2 * VSAT / MU, VTH = 0.4, VMAX = 1.2;
+
+  function id(L, vov, vds, corto){
+    if(vov <= 0) return 0;
+    var a = corto ? EC * L : Infinity;
+    var vdsat = corto ? vov * a / (vov + a) : vov;
+    var lam = Math.min(0.25, 1e-6 / L);   /* 0,01 um = 1e-6 cm */
+    var i;
+    if(vds < vdsat) i = MU * COX / L * (vov * vds - vds * vds / 2) / (corto ? 1 + vds / a : 1);
+    else i = (corto ? COX * VSAT * vov * vov / (vov + a) : MU * COX / (2 * L) * vov * vov) * (1 + lam * (vds - vdsat));
+    return i * 100;   /* uA/um */
+  }
+  function coma(v, d){ return v.toFixed(d).replace(".", ","); }
+  function largo(L){ var nm = L * 1e7; return nm >= 1000 ? coma(nm / 1000, nm >= 10000 ? 0 : 2) + " µm" : coma(nm, 0) + " nm"; }
+  function ua(v){ return v >= 1000 ? coma(v / 1000, 2) + " mA/µm" : coma(v, v >= 100 ? 0 : 1) + " µA/µm"; }
+
+  function pintar(){
+    var L = 30e-7 * Math.pow(1e-3 / 30e-7, +$("msL").value), vgs = +$("msG").value, vov = vgs - VTH;
+    $("msLv").textContent = largo(L);
+    $("msGv").textContent = coma(vgs, 2) + " V";
+    var a = EC * L, vdsC = vov * a / (vov + a);
+    var iC = id(L, vov, VMAX, true), iL = id(L, vov, VMAX, false);
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 58, x1 = W - 14, y0 = 14, y1 = H - 30;
+      /* escala vertical redonda que abarque la curva de canal largo */
+      var tope = Math.max(iL, iC) * 1.1, paso = Math.pow(10, Math.floor(Math.log10(tope / 4)));
+      if(tope / paso > 10) paso *= 2.5; if(tope / paso > 10) paso *= 2;
+      var ymax = Math.ceil(tope / paso) * paso;
+      var X = function(v){ return x0 + v / VMAX * (x1 - x0); };
+      var Y = function(i){ return y1 - i / ymax * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      var k;
+      for(k = 0; k <= 12; k += 2){
+        var v = k / 10;
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(X(v), y0); ctx.lineTo(X(v), y1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; ctx.fillText(coma(v, 1) + " V", X(v), y1 + 14);
+      }
+      for(k = 0; k <= ymax + 1e-9; k += paso){
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(k)); ctx.lineTo(x1, Y(k)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(k >= 1000 ? coma(k / 1000, 1) + " mA" : Math.round(k) + " µA", x0 - 5, Y(k) + 3);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("tensión drenador-fuente", (x0 + x1) / 2, H - 3);
+
+      var curva = function(corto){
+        ctx.beginPath();
+        for(var j = 0; j <= 120; j++){
+          var vv = VMAX * j / 120, yy = Y(id(L, vov, vv, corto));
+          if(j) ctx.lineTo(X(vv), yy); else ctx.moveTo(X(vv), yy);
+        }
+        ctx.stroke();
+      };
+      ctx.strokeStyle = "rgba(210,168,255,.9)"; ctx.lineWidth = 1.8; ctx.setLineDash([6, 4]); curva(false); ctx.setLineDash([]);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.6; curva(true);
+      /* donde empieza la saturacion en cada modelo */
+      ctx.fillStyle = "#58a6ff"; ctx.beginPath(); ctx.arc(X(vdsC), Y(id(L, vov, vdsC, true)), 4.5, 0, Math.PI * 2); ctx.fill();
+      if(vov <= VMAX){ ctx.fillStyle = "#d2a8ff"; ctx.beginPath(); ctx.arc(X(vov), Y(id(L, vov, vov, false)), 4.5, 0, Math.PI * 2); ctx.fill(); }
+
+      ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(x0 + 1, y0 + 1, Math.min(230, x1 - x0 - 2), 56);
+      ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "left";
+      ctx.fillStyle = "#58a6ff"; ctx.fillText("con saturación de velocidad", x0 + 8, y0 + 16);
+      ctx.fillStyle = "#d2a8ff"; ctx.fillText("modelo de canal largo", x0 + 8, y0 + 32);
+      ctx.font = "10px system-ui, sans-serif"; ctx.fillStyle = "#9aa7b4"; ctx.fillText("corriente por µm de ancho", x0 + 8, y0 + 48);
+    }
+
+    var razon = iL / iC;
+    $("msDatos").innerHTML =
+      "<span>V<sub>ov</sub> = V<sub>GS</sub> − V<sub>th</sub></span><b>" + coma(vov, 2) + " V</b>" +
+      "<span>E<sub>c</sub> L</span><b>" + (a >= 10 ? coma(a, 0) : coma(a, 2)) + " V</b>" +
+      "<hr><span>corriente con V<sub>DS</sub> = 1,2 V, modelo con saturación</span><b>" + ua(iC) + "</b>" +
+      "<span>la misma, según canal largo</span><b>" + ua(iL) + "</b>" +
+      "<span>el canal largo sobreestima</span><b>" + coma(razon, 2) + " veces</b>" +
+      "<span>V<sub>DS,sat</sub>: con saturación / canal largo</span><b>" + coma(vdsC, 3) + " / " + coma(vov, 2) + " V</b>";
+
+    var nota;
+    if(razon < 1.15) nota = "Canal largo: E<sub>c</sub> L es mucho mayor que V<sub>ov</sub> y los dos modelos casi coinciden. Acá vale la parábola: la corriente crece con V<sub>ov</sub>² y como 1/L.";
+    else if(razon < 2) nota = "Zona de transición: la saturación de velocidad ya recorta la corriente un " + Math.round((1 - 1 / razon) * 100) + " % y la saturación empieza antes que en canal largo.";
+    else nota = "Canal corto: los electrones viajan casi todo el canal a la velocidad de saturación. La corriente queda cerca de W C<sub>ox</sub> v<sub>sat</sub> V<sub>ov</sub> = " + ua(COX * VSAT * vov * 100) + ", lineal en V<sub>ov</sub>, y acortar más el canal casi no la aumenta: el modelo de canal largo se equivoca " + coma(razon, 1) + " veces.";
+    $("msNota").innerHTML = nota;
+  }
+  ["msL", "msG"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
