@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memorias CMOS · Dispositivos Electrónicos · Catto</title>
+<meta name="description" content="SRAM, DRAM y flash comparadas por celda, la celda SRAM de seis transistores con su estabilidad de lectura y escritura, la celda DRAM con el reparto de carga, la lectura destructiva y el refresco, la flash con compuerta flotante, varios bits por celda y desgaste, y la organización del arreglo, con laboratorio interactivo del tiempo de retención de una celda DRAM. Contenido de Dispositivos Electrónicos, tercer nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/memorias-cmos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=3">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Dispositivos Electrónicos</a>
+    <span class="anio">3<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Dispositivos Electrónicos</span> · 120 h · Contenido 7 de 9</div>
+    <h1>Memorias CMOS</h1>
+    <p class="lead">Un bit de la memoria principal son unos 150 000 electrones en un capacitor que pierde. Si nadie los repone, en menos de un segundo el 1 se lee como 0.</p>
+    <div class="chips">
+      <span class="chip hi">SRAM</span>
+      <span class="chip">DRAM</span>
+      <span class="chip">Flash</span>
+      <span class="chip">Refresco</span>
+      <span class="chip">Reparto de carga</span>
+    </div>
+    <hr class="rule">
+
+    <section id="jerarquia">
+      <h2><span class="n">01</span>Tres maneras de guardar un bit</h2>
+      <p>Toda la memoria de una computadora actual está hecha con transistores MOS, pero de tres maneras muy
+      distintas, cada una con un compromiso diferente entre velocidad, densidad y permanencia:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>SRAM</th><th>DRAM</th><th>Flash</th></tr></thead>
+        <tbody>
+          <tr><td>Cómo guarda el bit</td><td>Dos inversores realimentados</td><td>Carga en un capacitor</td><td>Carga atrapada en la compuerta de un transistor</td></tr>
+          <tr><td>Transistores por bit</td><td>6</td><td>1 más un capacitor</td><td>1, y varios bits por transistor</td></tr>
+          <tr><td>Área de la celda</td><td>Unos 120 a 150 F²</td><td>6 a 8 F²</td><td>4 F² y menos, apilada en 3D</td></tr>
+          <tr><td>Al cortar la alimentación</td><td>Se pierde</td><td>Se pierde, y además hay que refrescarla</td><td>Se conserva por años</td></tr>
+          <tr><td>Acceso</td><td>Menos de un nanosegundo</td><td>Decenas de nanosegundos</td><td>Microsegundos para leer, más para escribir</td></tr>
+          <tr><td>Dónde está</td><td>Registros y cachés, dentro del procesador</td><td>La memoria principal</td><td>Discos de estado sólido, pendrives, memoria de programa</td></tr>
+        </tbody>
+      </table></div>
+      <p>\( F \) es la dimensión mínima de la tecnología: medir las celdas en \( F^2 \) permite compararlas
+      entre generaciones. La página de la tecnicatura sobre
+      <a href="/publicaciones/mapa-electronica/temas/memorias-dispositivos-programables">memorias y
+      dispositivos programables</a> presenta los tipos desde el uso; acá se mira la celda.</p>
+    </section>
+
+    <section id="sram">
+      <h2><span class="n">02</span>SRAM: dos inversores que se sostienen</h2>
+      <p>La celda SRAM de seis transistores son dos
+      <a href="/publicaciones/mapa-ingenieria/temas/inversor-cmos">inversores CMOS</a> conectados en anillo,
+      cada uno alimentando al otro, y dos transistores de acceso que conectan los dos nodos a un par de
+      líneas de bit cuando se activa la línea de palabra. El anillo tiene dos estados estables, y mientras
+      haya alimentación se sostiene solo, sin refresco.</p>
+      <p>El diseño de la celda es una puja entre leer y escribir con los mismos transistores:</p>
+      <ul>
+        <li><b>Estabilidad de lectura:</b> al leer, el nodo que guarda un 0 se conecta a una línea de bit
+        precargada en \( V_{DD} \) y sube un poco. Si sube demasiado, la celda se da vuelta sola. Por eso el NMOS
+        de abajo se hace más ancho que el de acceso, en una relación de 1,2 a 2.</li>
+        <li><b>Escritura:</b> para cambiar el estado, el transistor de acceso tiene que vencer al PMOS de arriba,
+        que se hace el más angosto de los tres.</li>
+      </ul>
+      <p>El <b>margen de ruido estático</b> de la celda se mide superponiendo las dos transferencias, una
+      reflejada: el gráfico que resulta se llama «mariposa», y el lado del mayor cuadrado que entra en sus
+      alas es el margen. Con cada generación la variación entre transistores lo achica, y hoy la SRAM es de
+      lo más difícil de escalar.</p>
+    </section>
+
+    <section id="dram">
+      <h2><span class="n">03</span>DRAM: un capacitor que pierde</h2>
+      <p>La celda DRAM es un transistor y un capacitor. El bit es la carga del capacitor: lleno a \( V_{DD} \) es
+      un 1, vacío es un 0. Para leer, la línea de bit se precarga a \( V_{DD}/2 \) y se abre el transistor: el
+      capacitor de la celda comparte su carga con la capacidad, mucho mayor, de la línea de bit, que se mueve
+      apenas:</p>
+      <div class="form">
+        \[ \Delta V = \left( V_{\text{celda}} - \frac{V_{DD}}{2} \right) \frac{C_s}{C_s + C_{BL}} \]
+        <span class="cap">Con \( C_s = 20 \) fF, \( C_{BL} = 80 \) fF y \( V_{DD} = 1{,}2 \) V, la línea se mueve ±120 mV. Un amplificador sensor la lleva a 0 o a \( V_{DD} \).</span>
+      </div>
+      <p>La lectura es <b>destructiva</b>: después de compartir la carga, la celda quedó en un valor intermedio,
+      y el amplificador sensor la reescribe en el mismo ciclo. Además, el capacitor pierde carga por las fugas
+      de la juntura y del transistor apagado. Cada celda se lee y se reescribe periódicamente, el
+      <b>refresco</b>: la norma JEDEC pide refrescar cada celda al menos cada 64 ms, y cada 32 ms por encima
+      de 85 °C, porque la fuga se duplica cada unos diez grados.</p>
+      <p>Una celda de 20 fF a 1,2 V guarda unos 150 000 electrones. Mantener esa capacidad mientras la celda
+      se achica obligó a construir capacitores con forma de cilindros altísimos, con dieléctricos de alta
+      constante.</p>
+      <div class="lw" id="dr">
+        <div class="lt">Laboratorio · cuánto tiempo recuerda una celda DRAM</div>
+        <p class="ls">Una celda escrita con un 1 que pierde carga por una fuga constante. Se grafica la señal
+        que la celda le entregaría a la línea de bit si se la leyera en cada instante; el amplificador sensor
+        necesita al menos 30 mV para decidir. Elegís la capacidad de la celda, la de la línea de bit y la
+        corriente de fuga.</p>
+        <div class="fila"><label>Capacidad de la celda \( C_s \) = <b id="drCv"></b></label><input type="range" id="drC" min="5" max="40" step="1" value="20"></div>
+        <div class="fila"><label>Capacidad de la línea de bit \( C_{BL} \) = <b id="drBv"></b></label><input type="range" id="drB" min="20" max="200" step="5" value="80"></div>
+        <div class="fila"><label>Corriente de fuga de la celda = <b id="drIv"></b></label><input type="range" id="drI" min="-16" max="-12" step="0.05" value="-14"></div>
+        <canvas id="drLienzo" style="display:block;width:100%;max-width:620px;height:280px;margin:6px auto 0"></canvas>
+        <div class="datos" id="drDatos"></div>
+        <div class="nota" id="drNota"></div>
+      </div>
+    </section>
+
+    <section id="flash">
+      <h2><span class="n">04</span>Flash: carga atrapada</h2>
+      <p>Una celda flash es un MOS con una segunda compuerta, <b>flotante</b>, aislada por completo dentro del
+      óxido (o, en las versiones actuales, una capa de nitruro que atrapa carga). Los electrones que se
+      logran meter ahí quedan presos por años, y su carga negativa sube la tensión umbral del transistor. Leer
+      es preguntar si el transistor conduce con una tensión de compuerta de referencia.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operación</th><th>Mecanismo</th></tr></thead>
+        <tbody>
+          <tr><td>Programar en NOR</td><td>Inyección de portadores calientes: electrones acelerados en el canal saltan la barrera del óxido</td></tr>
+          <tr><td>Programar y borrar en NAND</td><td>Efecto túnel de Fowler-Nordheim a través del óxido, con 15 a 20 V</td></tr>
+          <tr><td>Varios bits por celda</td><td>Se programan 4, 8 o 16 niveles de umbral para guardar 2, 3 o 4 bits (MLC, TLC, QLC)</td></tr>
+          <tr><td>Desgaste</td><td>Cada ciclo de escritura daña un poco el óxido: de unos 100 000 ciclos en celdas de un bit a pocos miles en las de cuatro</td></tr>
+        </tbody>
+      </table></div>
+      <p>Cuando la celda plana no pudo achicarse más, la flash NAND se hizo vertical: hoy se apilan más de
+      doscientas capas de celdas en el mismo chip. El controlador del disco reparte las escrituras, corrige
+      errores y reserva bloques de repuesto: sin él, una flash de muchos bits por celda no sería
+      confiable.</p>
+    </section>
+
+    <section id="organizacion">
+      <h2><span class="n">05</span>Cómo se organiza un arreglo</h2>
+      <p>Las celdas forman una matriz: un decodificador de filas activa una línea de palabra, todas las celdas
+      de esa fila vuelcan su contenido sobre sus líneas de bit, y los <b>amplificadores sensores</b> al pie de
+      cada columna detectan diferencias de decenas de milivolts. Un decodificador de columnas elige cuáles
+      de esos bits salen. Precargar, activar, detectar y reescribir es la secuencia de cada acceso, y sus
+      tiempos son los que aparecen en las hojas de datos de las memorias como latencias.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">06</span>Dónde aparece en la electrónica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Caso</th><th>La memoria y por qué</th></tr></thead>
+        <tbody>
+          <tr><td>Microcontrolador</td><td>Flash para el programa, SRAM para las variables</td></tr>
+          <tr><td>Computadora</td><td>SRAM en las cachés, DRAM en los módulos, flash NAND en el disco</td></tr>
+          <tr><td>FPGA</td><td>La configuración en celdas SRAM, que se pierde al apagar</td></tr>
+          <tr><td>Equipos que no pueden perder datos</td><td>Memorias no volátiles rápidas (FRAM, MRAM) que escriben como una SRAM</td></tr>
+          <tr><td>Cámaras y teléfonos</td><td>Flash NAND de varios bits por celda, con su controlador</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Una SRAM con dos inversores</div>
+        <p>Con dos inversores de un 74HC04 conectados en anillo, forzar el estado con una resistencia de 1 kΩ a
+        cada nodo y verificar que queda memorizado al retirarla. Medir la tensión mínima de alimentación a la
+        que el anillo todavía retiene el dato.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Una celda DRAM de laboratorio</div>
+        <p>Cargar un capacitor de 1 nF a través de un MOSFET de señal usado como llave, abrir la llave y medir
+        con un osciloscopio de alta impedancia cuánto tarda en perder la mitad de la tensión. Estimar la
+        corriente de fuga.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · La memoria de un microcontrolador</div>
+        <p>En un microcontrolador, leer el mapa de memoria de la hoja de datos, ubicar la flash y la SRAM, y
+        después de compilar un programa comparar cuánto ocupa de cada una.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Pensar que la DRAM es «RAM que no se borra» mientras hay alimentación.</b> Sin refresco se
+        pierde en fracciones de segundo.</li>
+        <li><b>Confundir no volátil con eterna.</b> La flash tiene un número finito de ciclos de escritura y la
+        retención baja con el desgaste y la temperatura.</li>
+        <li><b>Creer que leer una DRAM no la altera.</b> La lectura es destructiva y hay que reescribir.</li>
+        <li><b>Comparar memorias por capacidad sin mirar la latencia.</b> Una DRAM tarda cien veces más en
+        responder que una caché SRAM.</li>
+        <li><b>Escribir la flash del microcontrolador en un bucle.</b> Se gasta en horas.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Por qué la SRAM no necesita refresco y la DRAM sí?</summary>
+        <div class="a"><p>La SRAM guarda el dato en dos inversores realimentados que se sostienen mientras
+        haya alimentación; la DRAM lo guarda como carga en un capacitor que pierde por fugas.</p></div></details>
+      <details class="q"><summary>Con \( C_s = 25 \) fF, \( C_{BL} = 100 \) fF y \( V_{DD} = 1{,}1 \) V, ¿cuánto se
+        mueve la línea de bit al leer un 1?</summary>
+        <div class="a"><p>\( 0{,}55 \times 25/125 = 110 \) mV.</p></div></details>
+      <details class="q"><summary>¿Por qué el NMOS de abajo de una celda SRAM es más ancho que el de acceso?</summary>
+        <div class="a"><p>Para que al leer, el nodo que guarda un 0 suba poco y la celda no cambie de estado.</p></div></details>
+      <details class="q"><summary>¿Cuántos niveles de umbral necesita una celda TLC?</summary>
+        <div class="a"><p>Ocho, porque guarda tres bits.</p></div></details>
+      <details class="q"><summary>¿Por qué la DRAM se refresca más seguido a temperatura alta?</summary>
+        <div class="a"><p>Porque la corriente de fuga crece con la temperatura, y la celda pierde la carga
+        antes.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Bruce Jacob, Spencer W. Ng y David T. Wang.</span>
+          <span class="ti">Memory Systems: Cache, DRAM, Disk</span>.
+          <span class="ed">Morgan Kaufmann, 2008.</span>
+          <span class="pq">La referencia sobre cómo funcionan por dentro las memorias de una computadora, de la celda al sistema.</span></li>
+        <li><span class="au">Jan M. Rabaey, Anantha Chandrakasan y Borivoje Nikolić.</span>
+          <span class="ti">Digital Integrated Circuits: A Design Perspective</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 2003.</span>
+          <span class="pq">El capítulo de memorias: celdas, amplificadores sensores y organización del arreglo.</span></li>
+        <li><span class="au">Rino Micheloni, Luca Crippa y Alessia Marelli.</span>
+          <span class="ti">Inside NAND Flash Memories</span>.
+          <span class="ed">Springer, 2010.</span>
+          <span class="pq">La celda flash, sus mecanismos de programación y los problemas de confiabilidad.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/inversor-cmos">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Inversor CMOS</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Memorias CMOS»</b> de <b>Dispositivos Electrónicos</b> (tercer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=3"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Retencion de una celda DRAM con un 1 escrito.
+   VDD = 1,2 V; la celda pierde carga con una fuga constante I:
+     Vcelda(t) = VDD - I t / Cs
+   Senal al leer, con la linea precargada a VDD/2:
+     dV(t) = (Vcelda(t) - VDD/2) Cs / (Cs + CBL)
+   El sensor necesita 30 mV: la retencion es
+     t_ret = (Cs VDD/2 - 30 mV (Cs + CBL)) / I
+   Control: Cs 20 fF, CBL 80 fF, I 1 fA -> dV0 = 120 mV, t_ret = 9 s;
+   la fuga maxima para 64 ms es 140 fA. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("drLienzo"), ctx = cv.getContext("2d");
+  var VDD = 1.2, VS = 0.03, TREF = 0.064, Q = 1.602e-19;
+  var T0 = -3, T1 = 3;   /* eje de tiempo: 1 ms a 1000 s, logaritmico */
+
+  var SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+  function sup(e){ var s = String(e), o = ""; for(var i = 0; i < s.length; i++) o += s[i] === "-" ? "⁻" : SUP[+s[i]]; return o; }
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function tiempo(s){
+    if(s >= 100) return coma(s, 0) + " s";
+    if(s >= 1) return coma(s, 1) + " s";
+    if(s >= 1e-3) return coma(s * 1e3, s >= 0.01 ? 0 : 1) + " ms";
+    return coma(s * 1e6, 0) + " µs";
+  }
+  function corriente(i){
+    if(i >= 1e-12) return coma(i * 1e12, 2) + " pA";
+    return coma(i * 1e15, i >= 1e-14 ? 0 : 1) + " fA";
+  }
+
+  function pintar(){
+    var cs = +$("drC").value * 1e-15, cbl = +$("drB").value * 1e-15, il = Math.pow(10, +$("drI").value);
+    $("drCv").textContent = Math.round(cs * 1e15) + " fF";
+    $("drBv").textContent = Math.round(cbl * 1e15) + " fF";
+    $("drIv").textContent = corriente(il);
+    var k = cs / (cs + cbl), dv0 = VDD / 2 * k;
+    var dv = function(t){ return (VDD / 2 - il * t / cs) * k; };
+    var tret = (cs * VDD / 2 - VS * (cs + cbl)) / il;
+    var imax = (cs * VDD / 2 - VS * (cs + cbl)) / TREF;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 50, x1 = W - 14, y0 = 14, y1 = H - 30;
+      var ymax = Math.max(0.05, Math.ceil(dv0 * 1.15 * 20) / 20);
+      var X = function(t){ return x0 + (Math.log10(t) - T0) / (T1 - T0) * (x1 - x0); };
+      var Y = function(v){ return y1 - v / ymax * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      var e;
+      for(e = T0; e <= T1; e++){
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(X(Math.pow(10, e)), y0); ctx.lineTo(X(Math.pow(10, e)), y1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center";
+        ctx.fillText(e === -3 ? "1 ms" : e === 0 ? "1 s" : "10" + sup(e) + " s", X(Math.pow(10, e)), y1 + 14);
+      }
+      var paso = ymax > 0.2 ? 0.1 : 0.05;
+      for(var v = 0; v <= ymax + 1e-9; v += paso){
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(Math.round(v * 1000) + " mV", x0 - 5, Y(v) + 3);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("tiempo desde que se escribió la celda", (x0 + x1) / 2, H - 3);
+
+      /* umbral del amplificador sensor y periodo de refresco */
+      ctx.strokeStyle = "#f85149"; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(x0, Y(VS)); ctx.lineTo(x1, Y(VS)); ctx.stroke();
+      ctx.strokeStyle = "#f2cc60";
+      ctx.beginPath(); ctx.moveTo(X(TREF), y0); ctx.lineTo(X(TREF), y1); ctx.stroke(); ctx.setLineDash([]);
+
+      /* senal de la celda */
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2.6; ctx.beginPath();
+      var primero = true;
+      for(var j = 0; j <= 240; j++){
+        var t = Math.pow(10, T0 + (T1 - T0) * j / 240), s = dv(t);
+        if(s < 0){ ctx.lineTo(X(t), Y(0)); break; }
+        if(primero){ ctx.moveTo(X(t), Y(s)); primero = false; } else ctx.lineTo(X(t), Y(s));
+      }
+      ctx.stroke();
+      if(tret > 0 && tret >= Math.pow(10, T0) && tret <= Math.pow(10, T1)){
+        ctx.fillStyle = "#7ee787"; ctx.beginPath(); ctx.arc(X(tret), Y(VS), 5, 0, Math.PI * 2); ctx.fill();
+      }
+      /* rotulos al final, encima de la curva */
+      ctx.font = "600 10px system-ui, sans-serif";
+      /* el rotulo del umbral lleva fondo: la curva puede cruzarlo en cualquier punto */
+      var txt = "mínimo del sensor, 30 mV", wt = ctx.measureText(txt).width;
+      ctx.fillStyle = "rgba(24,44,35,.9)"; ctx.fillRect(x1 - wt - 12, Y(VS) + 3, wt + 10, 15);
+      ctx.fillStyle = "#f85149"; ctx.textAlign = "right"; ctx.fillText(txt, x1 - 6, Y(VS) + 14);
+      ctx.fillStyle = "#f2cc60"; ctx.textAlign = "left"; ctx.fillText("refresco 64 ms", X(TREF) + 5, y0 + 10);
+      ctx.textAlign = "left";
+    }
+
+    var d = "<span>señal al leer recién escrita</span><b>" + coma(dv0 * 1000, 0) + " mV</b>" +
+            "<span>electrones guardados en la celda</span><b>" + Math.round(cs * VDD / Q / 1000) + " mil</b>" +
+            "<span>la celda deja de leerse a los</span><b>" + (tret > 0 ? tiempo(tret) : "desde el principio") + "</b>" +
+            "<span>señal en el momento del refresco (64 ms)</span><b>" + (dv(TREF) > 0 ? coma(dv(TREF) * 1000, 0) + " mV" : "perdida") + "</b>" +
+            "<hr><span>fuga máxima que tolera un refresco de 64 ms</span><b>" + (imax > 0 ? corriente(imax) : "ninguna") + "</b>";
+    $("drDatos").innerHTML = d;
+
+    var nota;
+    if(tret <= 0) nota = "<b>La celda no se puede leer ni recién escrita:</b> la línea de bit es tan grande frente a la celda que la señal no llega a los 30 mV del sensor. Por eso las líneas de bit se cortan en tramos cortos y la celda no puede achicarse por debajo de cierta capacidad.";
+    else if(tret < TREF) nota = "<b>Dato perdido.</b> Con esta fuga la celda baja del mínimo del sensor a los " + tiempo(tret) + ", antes del refresco: el 1 se leería como 0. Es lo que pasa con las celdas más débiles de un chip, o con cualquier celda a temperatura alta, donde la fuga se duplica cada unos diez grados.";
+    else nota = "La celda llega al refresco con " + coma(dv(TREF) * 1000, 0) + " mV de señal y margen de sobra: retendría el dato " + tiempo(tret) + ". El refresco cada 64 ms tiene que servir para la celda con más fuga de los miles de millones del chip, no para la típica.";
+    $("drNota").innerHTML = nota;
+  }
+  ["drC", "drB", "drI"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
