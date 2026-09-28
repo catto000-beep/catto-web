@@ -163,6 +163,50 @@
 })();
 
 /* ============================================================
+   Cajas con varias ecuaciones: la fila de ecuaciones se alinea con
+   el principio y el final de la oracion de abajo (el epigrafe). Si
+   las ecuaciones no entran en ese ancho, quedan repartidas en todo el
+   recuadro; si no entran en un renglon, el CSS las apila.
+   ============================================================ */
+(function(){
+  var GAP = 24;
+  function ecuaciones(f){
+    return [].filter.call(f.children, function(c){
+      return c.matches('math[display="block"]') || (c.tagName === 'SPAN' && c.querySelector(':scope > .katex-display'));
+    });
+  }
+  function repartir(){
+    [].forEach.call(document.querySelectorAll('.doc .form'), function(f){
+      var eq = ecuaciones(f);
+      if(eq.length < 2) return;
+      f.classList.remove('eq-fila');
+      eq.forEach(function(e){ e.style.marginLeft = ''; e.style.marginRight = ''; });
+      var cs = getComputedStyle(f), pl = parseFloat(cs.paddingLeft), pr = parseFloat(cs.paddingRight);
+      var ancho = f.clientWidth - pl - pr, total = GAP * (eq.length - 1);
+      eq.forEach(function(e){ total += e.getBoundingClientRect().width; });
+      if(total > ancho) return;                       /* no entran en un renglon: las apila el CSS */
+      var cap = f.querySelector(':scope > .cap');
+      if(!cap) return;
+      var r = document.createRange(); r.selectNodeContents(cap);
+      var rs = [].slice.call(r.getClientRects()).filter(function(x){ return x.width > 0; });
+      if(!rs.length) return;
+      var base = f.getBoundingClientRect().left + pl;
+      var izq = Math.min.apply(null, rs.map(function(x){ return x.left; })) - base;
+      var der = Math.max.apply(null, rs.map(function(x){ return x.right; })) - base;
+      if(der - izq < total) return;                   /* la oracion es mas corta que las ecuaciones */
+      f.classList.add('eq-fila');
+      eq[0].style.marginLeft = Math.max(0, izq) + 'px';
+      eq[eq.length - 1].style.marginRight = Math.max(0, ancho - der) + 'px';
+    });
+  }
+  repartir();
+  window.addEventListener('load', repartir);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(repartir);
+  var t;
+  window.addEventListener('resize', function(){ clearTimeout(t); t = setTimeout(repartir, 150); });
+})();
+
+/* ============================================================
    Deja anotada la ultima pagina de tema leida, para la tira
    "segui donde ibas" de la portada. Se guarda solo en el navegador
    de quien lee: no sale del equipo.
