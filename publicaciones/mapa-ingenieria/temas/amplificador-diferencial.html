@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El amplificador diferencial · Electrónica Aplicada I · Catto</title>
+<meta name="description" content="El par diferencial bipolar y su transferencia en tangente hiperbólica, ganancia diferencial y de modo común, el rechazo de modo común y la fuente de cola, la distorsión de tercera armónica y la degeneración, el offset por desapareamiento y el par MOS, con laboratorio interactivo de la transferencia y su distorsión. Contenido de Electrónica Aplicada I, tercer nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/amplificador-diferencial">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=3">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica Aplicada I</a>
+    <span class="anio">3<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Aplicada I</span> · 120 h · Contenido 5 de 7</div>
+    <h1>El amplificador diferencial</h1>
+    <p class="lead">El par diferencial no se satura de golpe: reparte una corriente fija entre dos lados. Por ser simétrico no genera segunda armónica, y por tener cola de corriente ignora lo que llega igual a las dos entradas.</p>
+    <div class="chips">
+      <span class="chip hi">Par diferencial</span>
+      <span class="chip">Modo común</span>
+      <span class="chip">CMRR</span>
+      <span class="chip">Tercera armónica</span>
+      <span class="chip">Offset</span>
+    </div>
+    <hr class="rule">
+
+    <section id="par">
+      <h2><span class="n">01</span>El par diferencial</h2>
+      <p>Dos transistores iguales con los emisores unidos y alimentados por una fuente de corriente \( I_{EE} \)
+      forman el circuito más importante de la electrónica analógica. La fuente fija la suma de las dos
+      corrientes; lo único que la entrada puede hacer es <b>repartirla</b> entre los dos lados según la
+      diferencia de tensión entre las bases, \( v_{id} = v_{B1} - v_{B2} \). Con la relación exponencial de cada
+      transistor, el reparto es exacto:</p>
+      <div class="form">
+        \[ \begin{gathered} i_{C1} = \frac{I_{EE}}{1 + e^{-v_{id}/V_T}} \qquad i_{C2} = \frac{I_{EE}}{1 + e^{v_{id}/V_T}} \\
+           i_{C1} - i_{C2} = I_{EE} \tanh \frac{v_{id}}{2 V_T} \end{gathered} \]
+        <span class="cap">Si las dos bases suben juntas, el reparto no cambia: el par ignora la tensión común y responde solo a la diferencia.</span>
+      </div>
+      <p>Esa propiedad lo hace ideal como entrada de un amplificador operacional, de un comparador o de un
+      instrumento: amplifica la señal que interesa y rechaza el ruido o la continua que llegan iguales a las
+      dos entradas. Usa las <a href="/publicaciones/mapa-ingenieria/temas/fuentes-corriente">fuentes de
+      corriente y cargas activas</a> de la unidad anterior.</p>
+    </section>
+
+    <section id="debil">
+      <h2><span class="n">02</span>Señal débil: ganancia diferencial y de modo común</h2>
+      <p>Para \( v_{id} \) chica, la tangente hiperbólica es una recta y cada transistor tiene
+      \( g_m = I_{EE}/(2 V_T) \). Con resistencias de colector \( R_C \):</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Magnitud</th><th>Salida diferencial</th><th>Salida por un solo colector</th></tr></thead>
+        <tbody>
+          <tr><td>Ganancia diferencial \( A_d \)</td><td>\( g_m R_C \)</td><td>\( g_m R_C / 2 \)</td></tr>
+          <tr><td>Ganancia de modo común \( A_{cm} \)</td><td>Cero si todo es simétrico</td><td>\( \approx -R_C / (2 R_{EE}) \)</td></tr>
+          <tr><td>Resistencia de entrada diferencial</td><td colspan="2">\( 2\, r_\pi \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>\( R_{EE} \) es la resistencia de salida de la fuente de cola. El cociente entre ganancia diferencial y de
+      modo común es la <b>relación de rechazo de modo común</b>:</p>
+      <div class="form">
+        \[ CMRR = \left| \frac{A_d}{A_{cm}} \right| \approx g_m R_{EE} \quad \text{(salida simple)} \]
+        <span class="cap">Con una resistencia de cola de 10 kΩ y 1 mA, apenas 193 (46 dB). Con una fuente de corriente de 1 MΩ, 19 300 (86 dB): por eso la cola es siempre una fuente de corriente.</span>
+      </div>
+      <p>Con un espejo como carga activa, la salida por un solo colector recupera toda la ganancia diferencial:
+      \( A_d = g_m (r_{o2} \parallel r_{o4}) \), la estructura de entrada de casi todos los amplificadores
+      operacionales.</p>
+    </section>
+
+    <section id="fuerte">
+      <h2><span class="n">03</span>Señal fuerte: el par satura con gracia</h2>
+      <p>La tangente hiperbólica se aplana: con \( v_{id} = 2 V_T \approx 52 \) mV el par ya entrega el 76 % de su
+      corriente máxima, y con unos 100 mV prácticamente toda la corriente pasa por un solo lado. A diferencia
+      del emisor común, el par no se recorta de golpe ni se satura: se limita suavemente, siempre entre
+      \( \pm I_{EE} \).</p>
+      <p>Por ser una función impar, la tangente hiperbólica no genera armónicas pares: la segunda armónica del
+      emisor común desaparece y queda la <b>tercera</b>:</p>
+      <div class="form">
+        \[ \begin{gathered} HD_3 \approx \frac{1}{48} \left( \frac{\hat V}{V_T} \right)^2 \ HD_3 \approx \frac{1}{48} \left( \frac{\hat V}{V_T} \right)^2 \frac{1}{(1 + g_m R_E)^3} \quad \text{con degeneración} \end{gathered} \]
+        <span class="cap">Con 10 mV de pico, 0,31 %; con 50 mV, casi el 8 %. Una resistencia de emisor con \( g_m R_E \approx 2 \) la divide por unos 25.</span>
+      </div>
+      <div class="lw" id="pd">
+        <div class="lt">Laboratorio · la transferencia del par diferencial</div>
+        <p class="ls">La diferencia de corrientes de colector en función de la tensión diferencial de entrada,
+        calculada con la exponencial de cada transistor y una resistencia de emisor opcional. La franja marca
+        la excursión de la señal elegida; se calculan su ganancia y su distorsión.</p>
+        <div class="fila"><label>Corriente de cola \( I_{EE} \) = <b id="pdIv"></b></label><input type="range" id="pdI" min="0.1" max="4" step="0.1" value="1"></div>
+        <div class="fila"><label>Resistencia de emisor, por lado \( R_E \) = <b id="pdEv"></b></label><input type="range" id="pdE" min="0" max="1000" step="10" value="0"></div>
+        <div class="fila"><label>Amplitud diferencial (pico) = <b id="pdVv"></b></label><input type="range" id="pdV" min="0" max="2.5" step="0.01" value="1"></div>
+        <div class="fila"><label>Resistencia de la fuente de cola \( R_{EE} \) = <b id="pdRv"></b></label><input type="range" id="pdR" min="3" max="7" step="0.05" value="4"></div>
+        <canvas id="pdLienzo" style="display:block;width:100%;max-width:620px;height:270px;margin:6px auto 0"></canvas>
+        <div class="datos" id="pdDatos"></div>
+        <div class="nota" id="pdNota"></div>
+      </div>
+    </section>
+
+    <section id="offset">
+      <h2><span class="n">04</span>Desapareamiento y tensión de offset</h2>
+      <p>Si los dos transistores no son idénticos, con entrada nula las corrientes no se reparten por mitades y
+      la salida no es cero. La tensión diferencial que hay que aplicar para equilibrarlas es la <b>tensión de
+      offset</b>. Una diferencia del 1 % en la corriente de saturación de los transistores produce
+      \( V_T \ln 1{,}01 \approx 0{,}26 \) mV; una diferencia del 1 % en las resistencias de carga, otro tanto. Por
+      eso los pares se fabrican con los transistores juntos, en disposiciones simétricas, como se ve en la
+      unidad de diseño de circuitos integrados.</p>
+    </section>
+
+    <section id="mos">
+      <h2><span class="n">05</span>El par diferencial MOS</h2>
+      <p>Con transistores MOS la idea es la misma, pero la transferencia sigue la ley cuadrática en lugar de la
+      exponencial. El rango lineal ya no lo fija \( V_T \) sino la sobreexcitación: el par deja de repartir cuando
+      \( |v_{id}| \) llega a \( \sqrt{2}\, V_{ov} \), unos cientos de milivolts. Es más lineal y tiene corriente de
+      entrada nula, a costa de menos ganancia y más offset.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Trazar la transferencia</div>
+        <p>Con un par de transistores apareados, una fuente de cola de 1 mA y resistencias de 4,7 kΩ, barrer la
+        tensión diferencial de −150 a +150 mV y medir la diferencia de tensiones de colector. Ajustarla con una
+        tangente hiperbólica.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Rechazo de modo común</div>
+        <p>Aplicar la misma señal a las dos bases y medir la salida con una resistencia de cola de 10 kΩ y
+        después con una fuente de corriente. Calcular el rechazo en cada caso.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Medir el offset</div>
+        <p>Con las entradas a masa, medir la tensión de salida diferencial y referirla a la entrada. Comparar
+        transistores sueltos con un par apareado.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Usar una resistencia como cola.</b> El rechazo de modo común queda pobre.</li>
+        <li><b>Exceder el rango lineal.</b> Sin degeneración, más allá de unos 20 mV la distorsión crece
+        rápido.</li>
+        <li><b>Hacer el par con transistores de distintas partidas.</b> El offset crece.</li>
+        <li><b>Confundir salida diferencial con salida simple.</b> La ganancia es la mitad por un solo
+        colector con resistencias.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuánto vale \( g_m \) de cada transistor con \( I_{EE} = 2 \) mA?</summary>
+        <div class="a"><p>\( 1 \text{ mA} / 25{,}85 \text{ mV} \approx 38{,}7 \) mS.</p></div></details>
+      <details class="q"><summary>¿Por qué el par diferencial no produce segunda armónica?</summary>
+        <div class="a"><p>Porque su transferencia, una tangente hiperbólica, es una función impar.</p></div></details>
+      <details class="q"><summary>¿Qué CMRR se obtiene con \( g_m = 20 \) mS y una cola de 500 kΩ?</summary>
+        <div class="a"><p>\( 20 \times 10^{-3} \times 5 \times 10^5 = 10\,000 \), 80 dB.</p></div></details>
+      <details class="q"><summary>¿Qué fracción de \( I_{EE} \) se desvía con \( v_{id} = 2 V_T \)?</summary>
+        <div class="a"><p>\( \tanh 1 \approx 0{,}76 \): la diferencia de corrientes es el 76 % de \( I_{EE} \).</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Paul R. Gray, Paul J. Hurst, Stephen H. Lewis y Robert G. Meyer.</span>
+          <span class="ti">Analysis and Design of Analog Integrated Circuits</span>.
+          <span class="ed">5.ª ed., Wiley, 2009.</span>
+          <span class="pq">El par diferencial bipolar y MOS, con la transferencia de gran señal y el offset.</span></li>
+        <li><span class="au">Adel S. Sedra y Kenneth C. Smith.</span>
+          <span class="ti">Microelectronic Circuits</span>.
+          <span class="ed">7.ª ed., Oxford University Press, 2014.</span>
+          <span class="pq">El amplificador diferencial con carga activa, paso a paso.</span></li>
+        <li><span class="au">Barrie Gilbert.</span>
+          <span class="ti">A Precise Four-Quadrant Multiplier with Subnanosecond Response</span>.
+          <span class="ed">IEEE Journal of Solid-State Circuits, 1968.</span>
+          <span class="pq">El par diferencial llevado al extremo: el multiplicador que usa su tangente hiperbólica a propósito.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/fuentes-corriente">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Fuentes de corriente y cargas activas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«El amplificador diferencial»</b> de <b>Electrónica Aplicada I</b> (tercer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=3"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Par diferencial bipolar con degeneracion. Con i1 + i2 = IEE y una
+   resistencia RE por emisor:  vid = VT ln(i1/i2) + (i1 - i2) RE.
+   Se busca i1 por biseccion; la salida es dI = i1 - i2 (sin RE es
+   IEE tanh(vid/2VT)). Armonicas por DFT de un periodo (256 muestras).
+   gm = IEE/(2 VT); Gm = gm/(1 + gm RE); CMRR ~ Gm REE (salida simple).
+   Control (Python, 512 muestras): IEE 1 mA, RE 0: con 10 mV, Gm 19,16 mS
+   y HD3 0,309 % (formula 0,312 %); con 50 mV, HD3 6,33 %; con RE 100 y
+   50 mV, Gm 6,53 mS y HD3 0,32 %; HD2 nula en todos los casos. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pdLienzo"), ctx = cv.getContext("2d");
+  var VT = 0.02585, N = 256, VMAX = 0.25;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function ohm(r){ return r >= 1e6 ? coma(r / 1e6, r >= 1e7 ? 0 : 1) + " MΩ" : r >= 1e3 ? coma(r / 1e3, r >= 1e4 ? 0 : 1) + " kΩ" : coma(r, 0) + " Ω"; }
+  function mv(v){ return coma(v * 1000, v >= 0.1 ? 0 : 1) + " mV"; }
+  function pct(v){ return v >= 0.1 ? coma(v * 100, 1) + " %" : v >= 0.001 ? coma(v * 100, 2) + " %" : coma(v * 100, 3) + " %"; }
+
+  function dI(vid, iee, re){
+    var lo = iee * 1e-12, hi = iee * (1 - 1e-12);
+    for(var k = 0; k < 60; k++){
+      var m = (lo + hi) / 2;
+      if(VT * Math.log(m / (iee - m)) + (2 * m - iee) * re - vid < 0) lo = m; else hi = m;
+    }
+    return 2 * (lo + hi) / 2 - iee;
+  }
+
+  function pintar(){
+    var iee = +$("pdI").value * 1e-3, re = +$("pdE").value, vp = Math.pow(10, +$("pdV").value) * 1e-3, ree = Math.pow(10, +$("pdR").value);
+    $("pdIv").textContent = coma(iee * 1e3, 1) + " mA";
+    $("pdEv").textContent = re ? ohm(re) : "0";
+    $("pdVv").textContent = mv(vp);
+    $("pdRv").textContent = ohm(ree);
+    var gm = iee / (2 * VT), Gm = gm / (1 + gm * re);
+
+    /* armonicas de la salida con entrada senoidal */
+    var y = [], n, h;
+    for(n = 0; n < N; n++) y.push(dI(vp * Math.sin(2 * Math.PI * n / N), iee, re));
+    var H = [];
+    for(h = 0; h <= 7; h++){
+      var a = 0, b = 0;
+      for(n = 0; n < N; n++){ a += y[n] * Math.cos(2 * Math.PI * h * n / N); b -= y[n] * Math.sin(2 * Math.PI * h * n / N); }
+      H.push(Math.sqrt(a * a + b * b) * 2 / N);
+    }
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, Hh = r.height, x0 = 54, x1 = W - 14, y0 = 12, y1 = Hh - 30, ym = (y0 + y1) / 2;
+      var X = function(v){ return x0 + (v + VMAX) / (2 * VMAX) * (x1 - x0); };
+      var Y = function(f){ return ym - f * (y1 - y0) / 2 / 1.1; };   /* f = dI/IEE entre -1 y 1 */
+      ctx.clearRect(0, 0, W, Hh);
+      ctx.setLineDash([]); ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      var v, f;
+      for(v = -0.2; v <= 0.2001; v += 0.1){
+        ctx.strokeStyle = Math.abs(v) < 1e-9 ? "#3a4456" : "#2a3140"; ctx.beginPath(); ctx.moveTo(X(v), y0); ctx.lineTo(X(v), y1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; ctx.fillText(coma(Math.round(v * 1000), 0), X(v), y1 + 14);
+      }
+      for(f = -1; f <= 1.001; f += 0.5){
+        ctx.strokeStyle = Math.abs(f) < 1e-9 ? "#3a4456" : "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(f)); ctx.lineTo(x1, Y(f)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText({ "1": "+IEE", "0.5": "+IEE/2", "0": "0", "-0.5": "−IEE/2", "-1": "−IEE" }[String(Math.round(f * 2) / 2)], x0 - 4, Y(f) + 3);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("tensión diferencial de entrada (mV)", (x0 + x1) / 2, Hh - 3);
+      /* excursion de la senal */
+      ctx.fillStyle = "rgba(242,204,96,.12)";
+      ctx.fillRect(X(Math.max(-vp, -VMAX)), y0, X(Math.min(vp, VMAX)) - X(Math.max(-vp, -VMAX)), y1 - y0);
+      ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+      /* tangente en el origen */
+      ctx.strokeStyle = "rgba(210,168,255,.8)"; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(X(-VMAX), Y(-Gm * VMAX / iee)); ctx.lineTo(X(VMAX), Y(Gm * VMAX / iee)); ctx.stroke(); ctx.setLineDash([]);
+      /* sin degeneracion, de fondo */
+      if(re > 0){
+        ctx.strokeStyle = "rgba(160,172,186,.45)"; ctx.lineWidth = 1.4; ctx.beginPath();
+        for(var j = 0; j <= 200; j++){ v = -VMAX + 2 * VMAX * j / 200; var yy = Y(Math.tanh(v / (2 * VT))); if(j) ctx.lineTo(X(v), yy); else ctx.moveTo(X(v), yy); }
+        ctx.stroke();
+      }
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.6; ctx.beginPath();
+      for(j = 0; j <= 200; j++){ v = -VMAX + 2 * VMAX * j / 200; var yv = Y(dI(v, iee, re) / iee); if(j) ctx.lineTo(X(v), yv); else ctx.moveTo(X(v), yv); }
+      ctx.stroke(); ctx.restore();
+      /* leyenda corta arriba a la izquierda: en ese lado la curva esta abajo */
+      var lh = re > 0 ? 54 : 38;
+      ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(x0 + 2, y0 + 1, 96, lh);
+      ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "left";
+      ctx.fillStyle = "#58a6ff"; ctx.fillText("calculada", x0 + 8, y0 + 15);
+      ctx.fillStyle = "#d2a8ff"; ctx.fillText("señal débil", x0 + 8, y0 + 31);
+      if(re > 0){ ctx.fillStyle = "#9aa7b4"; ctx.fillText("sin RE", x0 + 8, y0 + 47); }
+      ctx.textAlign = "left";
+    }
+
+    var cmrr = Gm * ree;
+    $("pdDatos").innerHTML =
+      "<span>g<sub>m</sub> de cada transistor</span><b>" + coma(gm * 1e3, 2) + " mS</b>" +
+      "<span>transconductancia de señal débil G<sub>m</sub> = g<sub>m</sub>/(1 + g<sub>m</sub>R<sub>E</sub>)</span><b>" + coma(Gm * 1e3, 2) + " mS</b>" +
+      "<span>transconductancia real a esta amplitud</span><b>" + coma(H[1] / vp * 1e3, 2) + " mS</b>" +
+      "<hr><span>segunda armónica</span><b>" + pct(H[2] / H[1]) + "</b>" +
+      "<span>tercera armónica</span><b>" + pct(H[3] / H[1]) + "</b>" +
+      "<span>(V/V<sub>T</sub>)²/48(1 + g<sub>m</sub>R<sub>E</sub>)³</span><b>" + pct(Math.pow(vp / VT, 2) / 48 / Math.pow(1 + gm * re, 3)) + "</b>" +
+      "<hr><span>rechazo de modo común ≈ G<sub>m</sub>R<sub>EE</sub></span><b>" + coma(cmrr, 0) + " (" + coma(20 * Math.log10(cmrr), 0) + " dB)</b>";
+
+    var nota;
+    if(H[3] / H[1] > 0.05) nota = "La señal recorre la zona curva: el par ya limita y la tercera armónica supera el 5 %. Fijate que la segunda sigue siendo nula: la transferencia es simétrica, así que el par recorta los dos semiciclos por igual.";
+    else if(re > 0) nota = "La degeneración estira la zona lineal: la curva azul se parece a la recta durante mucho más que la gris, a costa de una transconductancia " + coma(1 + gm * re, 1) + " veces menor.";
+    else nota = "Con amplitudes chicas la tangente hiperbólica se confunde con su recta. La tercera armónica crece con el cuadrado de la amplitud: duplicar la entrada la cuadruplica.";
+    if(cmrr < 1000) nota += " El rechazo de modo común es pobre (" + coma(20 * Math.log10(cmrr), 0) + " dB): la cola necesita una resistencia mucho mayor, es decir, una fuente de corriente.";
+    $("pdNota").innerHTML = nota;
+  }
+  ["pdI", "pdE", "pdV", "pdR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
