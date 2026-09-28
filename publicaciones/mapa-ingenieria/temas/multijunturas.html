@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dispositivos multijuntura: tiristores e IGBT · Dispositivos Electrónicos · Catto</title>
+<meta name="description" content="La estructura PNPN del tiristor, el modelo de dos transistores y el enclavamiento, las formas de disparo y la corriente de mantenimiento, el control de fase, TRIAC, DIAC y GTO, el latch-up como tiristor parásito y el IGBT con su modulación de conductividad, con laboratorio interactivo de control de fase de una carga en 220 V. Contenido de Dispositivos Electrónicos, tercer nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/multijunturas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=3">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Dispositivos Electrónicos</a>
+    <span class="anio">3<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Dispositivos Electrónicos</span> · 120 h · Contenido 8 de 9</div>
+    <h1>Dispositivos multijuntura: tiristores e IGBT</h1>
+    <p class="lead">Un pulso de microsegundos en la compuerta y el tiristor queda conduciendo solo hasta el próximo cruce por cero. Es el mismo mecanismo que, sin que nadie lo quiera, funde un circuito CMOS en el latch-up.</p>
+    <div class="chips">
+      <span class="chip hi">Tiristor</span>
+      <span class="chip">TRIAC</span>
+      <span class="chip">Control de fase</span>
+      <span class="chip">IGBT</span>
+      <span class="chip">Enclavamiento</span>
+    </div>
+    <hr class="rule">
+
+    <section id="cuatro-capas">
+      <h2><span class="n">01</span>Cuatro capas, tres junturas</h2>
+      <p>Un <b>tiristor</b> (o SCR, rectificador controlado de silicio) es una estructura PNPN: ánodo P, una N
+      liviana y ancha que soporta la tensión, una P que lleva el terminal de <b>compuerta</b>, y un cátodo N.
+      Tiene tres junturas en serie, y con el ánodo positivo la del medio queda en inversa y bloquea. Hasta ahí
+      parece un diodo que no conduce en ningún sentido. La gracia está en que, una vez que empieza a
+      conducir, <b>se mantiene conduciendo solo</b>, aunque se retire la señal de compuerta.</p>
+      <p>Es un dispositivo de potencia: los hay de algunos amperes para controlar una lámpara y de varios
+      kilovolts y miles de amperes, hechos sobre una oblea entera de silicio, para las estaciones de
+      transmisión en corriente continua de alta tensión.</p>
+    </section>
+
+    <section id="dos-transistores">
+      <h2><span class="n">02</span>El modelo de dos transistores</h2>
+      <p>La estructura PNPN se puede cortar en dos transistores entrelazados: un PNP formado por las tres
+      primeras capas y un NPN por las tres últimas. El colector de cada uno alimenta la base del otro. Con
+      ganancias de base común \( \alpha_1 \) y \( \alpha_2 \), la corriente de ánodo queda</p>
+      <div class="form">
+        \[ I_A = \frac{\alpha_2\, I_G + I_{CBO1} + I_{CBO2}}{1 - (\alpha_1 + \alpha_2)} \]
+        <span class="cap">Las \( \alpha \) de los <a href="/publicaciones/mapa-ingenieria/temas/bjt-dispositivo">transistores bipolares</a> crecen con la corriente. Cuando su suma llega a 1, el denominador se anula y la corriente solo la limita el circuito externo.</span>
+      </div>
+      <p>Esa es la realimentación positiva: un pulso de compuerta hace conducir al NPN, su colector da base al
+      PNP, el PNP le devuelve más corriente de base al NPN, y en microsegundos los dos quedan saturados. Desde
+      ese momento la compuerta ya no manda. El tiristor se apaga solo cuando la corriente de ánodo baja de la
+      <b>corriente de mantenimiento</b> \( I_H \), lo que en corriente alterna ocurre sola en cada cruce por
+      cero.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Forma de disparo</th><th>Qué pasa</th></tr></thead>
+        <tbody>
+          <tr><td>Pulso de compuerta</td><td>La manera normal y controlada</td></tr>
+          <tr><td>Tensión de ruptura directa</td><td>La corriente de fuga crece hasta que \( \alpha_1 + \alpha_2 = 1 \)</td></tr>
+          <tr><td>\( dv/dt \) excesivo</td><td>La corriente que carga la capacidad de la juntura central actúa como corriente de compuerta: un disparo no deseado</td></tr>
+          <tr><td>Temperatura</td><td>Suben las fugas y las ganancias</td></tr>
+          <tr><td>Luz</td><td>Pares generados en la juntura central; los tiristores de las válvulas de alta tensión se disparan por fibra óptica</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="control-fase">
+      <h2><span class="n">03</span>Control de fase</h2>
+      <p>En una red de alterna, disparar el tiristor con un retardo \( \alpha \) respecto del cruce por cero
+      deja pasar solo la parte final de cada semiciclo. Variando el ángulo se regula la potencia entregada a
+      la carga sin disipar casi nada en el control. Con carga resistiva y control de onda completa:</p>
+      <div class="form">
+        \[ \begin{gathered} V_{ef} = V_m \sqrt{\frac{1}{2\pi} \left( \pi - \alpha + \frac{\sin 2\alpha}{2} \right)} \\
+           \frac{P}{P_{\max}} = \frac{1}{\pi} \left( \pi - \alpha + \frac{\sin 2\alpha}{2} \right) \end{gathered} \]
+        <span class="cap">Con un solo tiristor, que conduce en un semiciclo, la potencia es la mitad y aparece una componente continua \( \dfrac{V_m}{2\pi} (1 + \cos\alpha) \).</span>
+      </div>
+      <div class="lw" id="tf">
+        <div class="lt">Laboratorio · control de fase en 220 V</div>
+        <p class="ls">Una carga resistiva de 100 Ω en la red de 220 V y 50 Hz, controlada por un tiristor
+        (media onda) o por un TRIAC (onda completa). Elegís el ángulo de disparo: el gráfico muestra la red,
+        la tensión sobre la carga y los pulsos de compuerta en un ciclo.</p>
+        <div class="fila">
+          <select id="tfT">
+            <option value="triac" selected>TRIAC: conduce en los dos semiciclos</option>
+            <option value="scr">tiristor (SCR): solo en el semiciclo positivo</option>
+          </select>
+        </div>
+        <div class="fila"><label>Ángulo de disparo \( \alpha \) = <b id="tfAv"></b></label><input type="range" id="tfA" min="0" max="180" step="1" value="90"></div>
+        <canvas id="tfLienzo" style="display:block;width:100%;max-width:620px;height:260px;margin:6px auto 0"></canvas>
+        <div class="datos" id="tfDatos"></div>
+        <div class="nota" id="tfNota"></div>
+      </div>
+    </section>
+
+    <section id="familia">
+      <h2><span class="n">04</span>La familia de cuatro capas</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Dispositivo</th><th>Estructura</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>TRIAC</td><td>Dos tiristores en antiparalelo con una compuerta común</td><td>Dimmers, control de velocidad de motores universales, relés de estado sólido</td></tr>
+          <tr><td>DIAC</td><td>Dispara en los dos sentidos al superar unos 30 V, sin compuerta</td><td>Genera el pulso de disparo del TRIAC en un dimmer</td></tr>
+          <tr><td>GTO</td><td>Tiristor que se puede apagar con una corriente de compuerta negativa grande</td><td>Tracción eléctrica y grandes convertidores, hoy casi reemplazado</td></tr>
+          <tr><td>Optoacoplador con TRIAC</td><td>Un LED que dispara un TRIAC por luz, aislado</td><td>Maneja un TRIAC de potencia desde un microcontrolador</td></tr>
+        </tbody>
+      </table></div>
+      <p>Las mismas cuatro capas aparecen sin querer en los circuitos CMOS: el <b>latch-up</b> del
+      <a href="/publicaciones/mapa-ingenieria/temas/inversor-cmos">inversor CMOS</a> es un tiristor parásito
+      que se dispara y cortocircuita la alimentación, y el modelo de dos transistores explica por qué se evita
+      poniendo contactos de sustrato cerca de cada transistor: bajan las ganancias parásitas.</p>
+    </section>
+
+    <section id="igbt">
+      <h2><span class="n">05</span>El IGBT</h2>
+      <p>El transistor bipolar de compuerta aislada (IGBT) combina un MOSFET a la entrada con un bipolar PNP a
+      la salida: la compuerta se maneja con tensión, casi sin corriente, como un MOS, y la corriente principal
+      la conduce una estructura bipolar. Tiene también cuatro capas, pero está diseñado para que el tiristor
+      parásito <b>nunca</b> se dispare.</p>
+      <p>Su ventaja es la <b>modulación de conductividad</b>: al conducir, la capa P de colector inyecta huecos
+      en la región N liviana que soporta la tensión y la llena de portadores, bajando mucho su resistencia.
+      Un MOSFET de 1200 V tiene que tener esa región liviana y gruesa y conduce mal; el IGBT, con la misma
+      región inundada de portadores, cae apenas unos 1,5 a 2 V. El costo es la <b>corriente de cola</b> al
+      apagar, mientras se recombinan esos portadores, que limita la frecuencia a decenas de kilohertz.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>MOSFET de potencia</th><th>IGBT</th><th>Tiristor</th></tr></thead>
+        <tbody>
+          <tr><td>Control</td><td>Tensión</td><td>Tensión</td><td>Pulso de corriente; no se apaga por compuerta</td></tr>
+          <tr><td>Rango típico</td><td>Hasta unos cientos de volts</td><td>600 V a 6,5 kV</td><td>Hasta más de 8 kV</td></tr>
+          <tr><td>Frecuencia</td><td>Cientos de kilohertz</td><td>Hasta decenas de kilohertz</td><td>La de la red</td></tr>
+          <tr><td>Uso</td><td>Fuentes conmutadas</td><td>Inversores de motores, soldadoras, cocinas de inducción</td><td>Control de fase, transmisión en alta tensión</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box peligro"><div class="bt">Tensión de red</div>
+        <p>Las actividades con 220 V se hacen con transformador de aislación, con el circuito montado en
+        gabinete y bajo supervisión del docente. El osciloscopio no se conecta directamente a la red: se usan
+        puntas diferenciales.</p></div>
+      <div class="box lab"><div class="bt">Actividad 1 · El enclavamiento</div>
+        <p>Con un tiristor, una fuente de 12 V continua y una lámpara de 12 V, disparar con un pulsador en la
+        compuerta y verificar que la lámpara sigue encendida al soltarlo. Bajar la tensión hasta que se apague
+        y estimar la corriente de mantenimiento.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · El modelo de dos transistores</div>
+        <p>Armar un tiristor con un BC548 y un BC558 conectados según el modelo, y verificar que se enclava
+        igual que el integrado.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Un dimmer</div>
+        <p>Con un dimmer comercial de TRIAC y DIAC alimentado desde un transformador de aislación de baja
+        tensión, observar con el osciloscopio la tensión sobre la carga y medir el ángulo de disparo para tres
+        posiciones del potenciómetro.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Esperar que el tiristor se apague al retirar la compuerta.</b> Queda enclavado hasta que la
+        corriente baje de \( I_H \).</li>
+        <li><b>Usar un tiristor común en corriente continua sin prever cómo apagarlo.</b> En continua la
+        corriente nunca pasa por cero.</li>
+        <li><b>Olvidar la red amortiguadora.</b> Sin un RC en paralelo, el \( dv/dt \) de la red o de la carga
+        inductiva dispara al dispositivo sin querer.</li>
+        <li><b>Medir con el osciloscopio referido a tierra en la red.</b> La masa de la punta cortocircuita el
+        circuito.</li>
+        <li><b>Confundir el IGBT con un MOSFET grande.</b> Conduce con una caída casi fija, no con una
+        resistencia, y tiene corriente de cola al apagar.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Por qué el tiristor sigue conduciendo sin corriente de compuerta?</summary>
+        <div class="a"><p>Porque cada uno de los dos transistores del modelo le da corriente de base al otro;
+        con \( \alpha_1 + \alpha_2 = 1 \) la realimentación se sostiene sola.</p></div></details>
+      <details class="q"><summary>¿Cómo se apaga un tiristor en un circuito de alterna?</summary>
+        <div class="a"><p>Solo: en cada cruce por cero la corriente baja de la de mantenimiento.</p></div></details>
+      <details class="q"><summary>Con un TRIAC y \( \alpha = 90° \), ¿qué fracción de la potencia máxima recibe
+        una carga resistiva?</summary>
+        <div class="a"><p>La mitad: \( (\pi - \pi/2 + 0)/\pi = 0{,}5 \).</p></div></details>
+      <details class="q"><summary>¿Qué es la modulación de conductividad del IGBT?</summary>
+        <div class="a"><p>La inundación de la región de deriva con portadores inyectados por el colector P,
+        que baja su resistencia al conducir.</p></div></details>
+      <details class="q"><summary>¿Qué relación hay entre el tiristor y el latch-up?</summary>
+        <div class="a"><p>El latch-up es el disparo de un tiristor parásito formado por las regiones P y N de
+        un circuito CMOS.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">B. Jayant Baliga.</span>
+          <span class="ti">Fundamentals of Power Semiconductor Devices</span>.
+          <span class="ed">2.ª ed., Springer, 2019.</span>
+          <span class="pq">La referencia sobre tiristores, IGBT y MOSFET de potencia, escrita por el inventor del IGBT.</span></li>
+        <li><span class="au">Muhammad H. Rashid.</span>
+          <span class="ti">Power Electronics: Devices, Circuits, and Applications</span>.
+          <span class="ed">4.ª ed., Pearson, 2014.</span>
+          <span class="pq">El control de fase y los circuitos de disparo, con muchos ejemplos resueltos.</span></li>
+        <li><span class="au">Ned Mohan, Tore M. Undeland y William P. Robbins.</span>
+          <span class="ti">Power Electronics: Converters, Applications, and Design</span>.
+          <span class="ed">3.ª ed., Wiley, 2003.</span>
+          <span class="pq">Los dispositivos vistos desde el convertidor: qué exige cada aplicación.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/memorias-cmos">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Memorias CMOS</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Dispositivos multijuntura: tiristores e IGBT»</b> de <b>Dispositivos Electrónicos</b> (tercer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=3"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Control de fase con carga resistiva, red de 220 V eficaces y 50 Hz.
+   TRIAC (onda completa): Vef = Vm sqrt((pi - a + sin(2a)/2) / (2 pi))
+   SCR (media onda):      Vef = Vm sqrt((pi - a + sin(2a)/2) / (4 pi)),
+                          Vmedia = Vm (1 + cos a) / (2 pi)
+   P = Vef^2 / R, R = 100 ohm -> Pmax = 484 W.
+   Control: TRIAC 90 grados -> 155,6 V y 50 %; 60 grados -> 197,3 V (se
+   verifico ademas integrando numericamente); SCR 60 -> 139,5 V, 74,3 V
+   de continua. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("tfLienzo"), ctx = cv.getContext("2d");
+  var VEF = 220, VM = VEF * Math.SQRT2, R = 100;
+  function coma(v, d){ return v.toFixed(d).replace(".", ","); }
+
+  function pintar(){
+    var triac = $("tfT").value === "triac", gr = +$("tfA").value, a = gr * Math.PI / 180;
+    $("tfAv").textContent = gr + "° (" + coma(gr / 180 * 10, 1) + " ms después del cruce)";
+    var f = Math.max(0, Math.PI - a + Math.sin(2 * a) / 2);
+    var vef = VM * Math.sqrt(f / (triac ? 2 * Math.PI : 4 * Math.PI));
+    var vmed = triac ? 0 : VM * (1 + Math.cos(a)) / (2 * Math.PI);
+    var p = vef * vef / R, pmax = VEF * VEF / R;
+    var conduce = function(th){ var ph = th % (2 * Math.PI); return ph < Math.PI ? ph >= a : triac && ph - Math.PI >= a; };
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 44, x1 = W - 20, y0 = 12, y1 = H - 52, ym = (y0 + y1) / 2;
+      var X = function(th){ return x0 + th / (2 * Math.PI) * (x1 - x0); };
+      var Y = function(v){ return ym - v / (VM * 1.08) * (y1 - y0) / 2; };
+      ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      var k;
+      for(k = 0; k <= 4; k++){
+        var th = k * Math.PI / 2;
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(X(th), y0); ctx.lineTo(X(th), y1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; ctx.fillText(k * 5 + " ms", X(th), y1 + 14);
+      }
+      [-300, -150, 0, 150, 300].forEach(function(v){
+        ctx.strokeStyle = v === 0 ? "#3a4456" : "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText((v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " V", x0 - 5, Y(v) + 3);
+      });
+
+      /* tension sobre la carga, rellena */
+      ctx.fillStyle = "rgba(242,204,96,.28)"; ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 2.4;
+      var N = 360, j;
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+      for(j = 0; j <= N; j++){
+        var t = 2 * Math.PI * j / N;
+        ctx.lineTo(X(t), Y(conduce(t) ? VM * Math.sin(t) : 0));
+      }
+      ctx.lineTo(X(2 * Math.PI), Y(0)); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      for(j = 0; j <= N; j++){
+        var t2 = 2 * Math.PI * j / N, v2 = conduce(t2) ? VM * Math.sin(t2) : 0;
+        if(j) ctx.lineTo(X(t2), Y(v2)); else ctx.moveTo(X(t2), Y(v2));
+      }
+      ctx.stroke();
+      /* la red, punteada */
+      ctx.strokeStyle = "rgba(160,172,186,.6)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); ctx.beginPath();
+      for(j = 0; j <= N; j++){ var t3 = 2 * Math.PI * j / N; if(j) ctx.lineTo(X(t3), Y(VM * Math.sin(t3))); else ctx.moveTo(X(t3), Y(VM * Math.sin(t3))); }
+      ctx.stroke(); ctx.setLineDash([]);
+
+      /* pulsos de compuerta, abajo */
+      var yp = H - 17;
+      ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, yp); ctx.lineTo(x1, yp); ctx.stroke();
+      ctx.fillStyle = "#7ee787";
+      [a, triac ? Math.PI + a : null].forEach(function(th){
+        if(th === null || gr >= 180) return;
+        ctx.fillRect(X(th) - 2, yp - 9, 4, 9);
+      });
+      ctx.fillStyle = "#9aa7b4"; ctx.textAlign = "left"; ctx.font = "10px system-ui, sans-serif";
+      ctx.fillText("pulsos de compuerta", x0 + 4, yp + 13);
+      ctx.textAlign = "right"; ctx.fillStyle = "#f2cc60"; ctx.font = "600 11px system-ui, sans-serif";
+      ctx.fillText("tensión sobre la carga", x1 - 4, y0 + 12);
+      ctx.textAlign = "left";
+    }
+
+    var d = "<span>tensión eficaz sobre la carga</span><b>" + coma(vef, 1) + " V</b>" +
+            "<span>corriente eficaz</span><b>" + coma(vef / R, 2) + " A</b>" +
+            "<span>potencia en la carga</span><b>" + coma(p, 0) + " W de " + coma(pmax, 0) + " W</b>" +
+            "<span>fracción de la potencia máxima</span><b>" + coma(p / pmax * 100, 1) + " %</b>";
+    if(!triac) d += "<span>componente continua</span><b>" + coma(vmed, 1) + " V</b>";
+    $("tfDatos").innerHTML = d;
+
+    var nota;
+    if(gr >= 180) nota = "Con 180° el pulso llega cuando el semiciclo ya terminó: el dispositivo no conduce y la carga queda sin tensión.";
+    else if(!triac) nota = "Con un solo tiristor la carga recibe como máximo la mitad de la potencia, y la tensión tiene una componente continua de " + coma(vmed, 1) + " V: inadmisible para un transformador o un motor de alterna, que se saturarían. Por eso para controlar cargas de alterna se usa el TRIAC o dos tiristores en antiparalelo.";
+    else if(gr <= 30) nota = "Disparando cerca del cruce por cero la carga recibe casi toda la potencia: los primeros grados de cada semiciclo aportan poco porque la tensión todavía es chica.";
+    else nota = "La relación entre ángulo y potencia no es lineal: a 90° se entrega exactamente la mitad, entre 0° y 30° la potencia casi no cambia y entre 60° y 120° cae del 80 al 20 %. El encendido brusco a mitad del semiciclo produce armónicos e interferencia; por eso los dimmers llevan un filtro con una bobina.";
+    $("tfNota").innerHTML = nota;
+  }
+  ["tfT", "tfA"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
