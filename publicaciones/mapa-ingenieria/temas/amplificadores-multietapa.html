@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amplificadores multietapa · Electrónica Aplicada I · Catto</title>
+<meta name="description" content="Por qué se combinan etapas de entrada, ganancia y salida, la ganancia de una cascada con la carga entre etapas, los acoplamientos capacitivo, directo y por transformador, el Darlington y el cascodo con el efecto Miller, y la contracción del ancho de banda en cascada, con laboratorio interactivo de etapas idénticas en serie. Contenido de Electrónica Aplicada I, tercer nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/amplificadores-multietapa">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=3">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica Aplicada I</a>
+    <span class="anio">3<sup>er</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Aplicada I</span> · 120 h · Contenido 6 de 7</div>
+    <h1>Amplificadores multietapa</h1>
+    <p class="lead">Tres etapas iguales de 1 MHz no forman un amplificador de 1 MHz: la cascada corta a 510 kHz. Cada etapa agrega ganancia y se come ancho de banda.</p>
+    <div class="chips">
+      <span class="chip hi">Cascada</span>
+      <span class="chip">Efecto de carga</span>
+      <span class="chip">Cascodo</span>
+      <span class="chip">Efecto Miller</span>
+      <span class="chip">Ancho de banda</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que">
+      <h2><span class="n">01</span>Por qué más de una etapa</h2>
+      <p>Una sola etapa rara vez cumple todo lo que se pide de un amplificador: mucha ganancia, resistencia de
+      entrada alta para no cargar a la fuente y resistencia de salida baja para excitar la carga. Cada
+      configuración es buena en una cosa, así que se las combina en cascada, cada una haciendo lo suyo:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Etapa</th><th>Función</th><th>Configuración típica</th></tr></thead>
+        <tbody>
+          <tr><td>Entrada</td><td>No cargar a la fuente, rechazar el modo común, poco ruido</td><td>Par diferencial, seguidor, FET</td></tr>
+          <tr><td>Ganancia</td><td>Aportar casi toda la amplificación de tensión</td><td>Emisor o fuente común con carga activa</td></tr>
+          <tr><td>Salida</td><td>Entregar corriente a una carga baja</td><td>Seguidor de emisor, par complementario</td></tr>
+        </tbody>
+      </table></div>
+      <p>Es exactamente la estructura de un amplificador operacional integrado: un
+      <a href="/publicaciones/mapa-ingenieria/temas/amplificador-diferencial">par diferencial</a>, una etapa de
+      ganancia y una etapa de salida.</p>
+    </section>
+
+    <section id="ganancia">
+      <h2><span class="n">02</span>La ganancia de una cascada</h2>
+      <p>La ganancia total es el producto de las ganancias de cada etapa, pero medida con la carga real que le
+      pone la siguiente. Entre dos etapas se forma un divisor entre la resistencia de salida de una y la de
+      entrada de la otra:</p>
+      <div class="form">
+        \[ A_v = A_1 \frac{R_{in,2}}{R_{out,1} + R_{in,2}}\; A_2 \frac{R_{in,3}}{R_{out,2} + R_{in,3}}\; A_3 \cdots \]
+        <span class="cap">En decibeles, las ganancias se suman y las pérdidas por carga se restan.</span>
+      </div>
+      <p>El error típico es calcular cada etapa en vacío y multiplicar: una etapa de ganancia 100 con salida de
+      10 kΩ, cargada por una entrada de 10 kΩ, entrega solo 50. Un seguidor intercalado entre las dos
+      resuelve el problema, a costa de una etapa más.</p>
+    </section>
+
+    <section id="acoplamiento">
+      <h2><span class="n">03</span>Cómo se conectan las etapas</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Acoplamiento</th><th>Ventaja</th><th>Problema</th></tr></thead>
+        <tbody>
+          <tr><td>Capacitivo</td><td>Cada etapa se polariza por separado</td><td>No pasa la continua; cada capacitor agrega un corte en baja frecuencia</td></tr>
+          <tr><td>Directo</td><td>Amplifica desde la continua; no hay capacitores grandes: es lo único posible en un integrado</td><td>Los niveles de continua de una etapa fijan los de la siguiente, y la deriva se amplifica</td></tr>
+          <tr><td>Por transformador</td><td>Adapta impedancias y aísla</td><td>Pesado, caro y de banda limitada: hoy solo en radiofrecuencia y aislación</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="combinaciones">
+      <h2><span class="n">04</span>Combinaciones clásicas</h2>
+      <ul>
+        <li><b>Darlington:</b> dos transistores donde el emisor del primero alimenta la base del segundo. Se
+        comportan como uno solo con β de alrededor de \( \beta_1 \beta_2 \), unos 10 000, y el doble de tensión
+        base-emisor. Se usa en etapas de salida y en llaves de potencia.</li>
+        <li><b>Cascodo:</b> un emisor común seguido de una base común. La base común mantiene fija la tensión de
+        colector del primero, que casi no tiene ganancia de tensión y por lo tanto casi no sufre el
+        <b>efecto Miller</b>: la capacidad colector-base, que en un emisor común con ganancia 100 se ve
+        multiplicada por 101 desde la entrada, en el cascodo se multiplica apenas por 2. Resultado: el mismo
+        \( g_m R_C \) con mucho más ancho de banda.</li>
+        <li><b>Emisor común seguido de colector común:</b> ganancia de la primera y baja resistencia de salida
+        de la segunda.</li>
+      </ul>
+    </section>
+
+    <section id="ancho-banda">
+      <h2><span class="n">05</span>El ancho de banda se encoge</h2>
+      <p>Cada etapa tiene su corte de alta frecuencia. Al ponerlas en cascada, los cortes se multiplican y la
+      respuesta total cae antes que la de cada una. Para \( n \) etapas idénticas con un polo en \( f_H \):</p>
+      <div class="form">
+        \[ f_{H,\text{total}} = f_H \sqrt{2^{1/n} - 1} \qquad f_{L,\text{total}} = \frac{f_L}{\sqrt{2^{1/n} - 1}} \]
+        <span class="cap">Con dos etapas, el ancho de banda baja al 64 %; con tres, al 51 %; con cuatro, al 43,5 %. El corte de baja frecuencia sube en la misma proporción.</span>
+      </div>
+      <p>Por eso no conviene fabricar una ganancia enorme con muchas etapas idénticas: cada etapa agregada da
+      ganancia pero se come ancho de banda. El diseño equilibra el número de etapas, la ganancia de cada una y
+      su ancho de banda propio.</p>
+      <div class="lw" id="me">
+        <div class="lt">Laboratorio · etapas en cascada</div>
+        <p class="ls">\( n \) etapas iguales, cada una con una ganancia en vacío, un polo de alta frecuencia y una
+        pérdida por carga en cada unión (dada por el cociente entre la entrada de la etapa siguiente y la
+        salida de la anterior). El gráfico compara la respuesta de una sola etapa con la de la cascada.</p>
+        <div class="fila"><label>Número de etapas \( n \) = <b id="meNv"></b></label><input type="range" id="meN" min="1" max="6" step="1" value="3"></div>
+        <div class="fila"><label>Ganancia de cada etapa en vacío = <b id="meAv"></b></label><input type="range" id="meA" min="2" max="100" step="1" value="20"></div>
+        <div class="fila"><label>Polo de cada etapa \( f_H \) = <b id="meFv"></b></label><input type="range" id="meF" min="4" max="8" step="0.05" value="6"></div>
+        <div class="fila"><label>Cociente \( R_{in,\text{sig}} / R_{out} \) en cada unión = <b id="meRv"></b></label><input type="range" id="meR" min="0" max="2" step="0.05" value="1"></div>
+        <canvas id="meLienzo" style="display:block;width:100%;max-width:620px;height:270px;margin:6px auto 0"></canvas>
+        <div class="datos" id="meDatos"></div>
+        <div class="nota" id="meNota"></div>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Dos etapas y un seguidor</div>
+        <p>Armar dos emisores comunes acoplados por capacitor y medir la ganancia total. Intercalar un seguidor de
+        emisor entre ellos y comparar con el producto de las ganancias en vacío.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Medir el efecto Miller</div>
+        <p>Medir el corte de alta frecuencia de un emisor común con resistencia de fuente de 10 kΩ, y después el
+        de un cascodo con el mismo transistor de entrada y la misma carga.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Contracción del ancho de banda</div>
+        <p>Con dos etapas iguales, medir el ancho de banda de cada una y el de la cascada, y compararlo con el
+        64 % que predice la fórmula.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Multiplicar ganancias en vacío.</b> Hay que incluir la carga de cada etapa sobre la anterior.</li>
+        <li><b>Suponer que el ancho de banda total es el de una etapa.</b> Con varias etapas es menor.</li>
+        <li><b>Acoplar directo sin revisar los niveles de continua.</b> Una etapa puede quedar saturada por la
+        tensión de la anterior.</li>
+        <li><b>Olvidar el efecto Miller.</b> Una etapa de mucha ganancia multiplica su capacidad colector-base
+        vista desde la entrada.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>Una etapa de ganancia 50 con salida de 5 kΩ carga una entrada de 20 kΩ. ¿Cuánto
+        entrega?</summary>
+        <div class="a"><p>\( 50 \times 20/25 = 40 \).</p></div></details>
+      <details class="q"><summary>¿Qué ancho de banda tienen tres etapas iguales de 1 MHz cada una?</summary>
+        <div class="a"><p>\( 1 \text{ MHz} \times \sqrt{2^{1/3} - 1} \approx 510 \) kHz.</p></div></details>
+      <details class="q"><summary>¿Por qué el cascodo tiene más ancho de banda que el emisor común?</summary>
+        <div class="a"><p>Porque el transistor de entrada casi no tiene ganancia de tensión y su capacidad
+        colector-base no se multiplica por efecto Miller.</p></div></details>
+      <details class="q"><summary>¿Qué β aproximado tiene un Darlington de dos transistores de β = 80?</summary>
+        <div class="a"><p>Unos 6400.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Adel S. Sedra y Kenneth C. Smith.</span>
+          <span class="ti">Microelectronic Circuits</span>.
+          <span class="ed">7.ª ed., Oxford University Press, 2014.</span>
+          <span class="pq">Los amplificadores multietapa y la respuesta en frecuencia, con el efecto Miller y el cascodo.</span></li>
+        <li><span class="au">Paul R. Gray, Paul J. Hurst, Stephen H. Lewis y Robert G. Meyer.</span>
+          <span class="ti">Analysis and Design of Analog Integrated Circuits</span>.
+          <span class="ed">5.ª ed., Wiley, 2009.</span>
+          <span class="pq">Las etapas de salida y las combinaciones de transistores de un amplificador integrado.</span></li>
+        <li><span class="au">Jacob Millman y Arvin Grabel.</span>
+          <span class="ti">Microelectronics</span>.
+          <span class="ed">2.ª ed., McGraw-Hill, 1987.</span>
+          <span class="pq">El texto clásico de la cátedra, muy completo en amplificadores multietapa acoplados y su respuesta en frecuencia.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/amplificador-diferencial">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">El amplificador diferencial</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Amplificadores multietapa»</b> de <b>Electrónica Aplicada I</b> (tercer nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=3"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* n etapas identicas: ganancia en vacio A, un polo en fH, y en cada una de
+   las n - 1 uniones un divisor k = r / (1 + r), con r = Rin,sig / Rout.
+   |H(f)| = A^n k^(n-1) / (1 + (f/fH)^2)^(n/2).
+   Ancho de banda: fH sqrt(2^(1/n) - 1) (exacto para polos identicos).
+   Control: n = 3 -> 0,5098 fH (verificado tambien buscando numericamente
+   el punto de -3 dB); n = 2 -> 0,6436 fH. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("meLienzo"), ctx = cv.getContext("2d");
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function hz(f){
+    var u = f >= 1e9 ? [1e9, " GHz"] : f >= 1e6 ? [1e6, " MHz"] : f >= 1e3 ? [1e3, " kHz"] : [1, " Hz"], v = f / u[0];
+    var d = Math.abs(v - Math.round(v)) < 1e-6 || v >= 10 ? 0 : 2;
+    return coma(v, d) + u[1];
+  }
+  function miles(v){ return Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+
+  function pintar(){
+    var n = +$("meN").value, A = +$("meA").value, lf = +$("meF").value, fH = Math.pow(10, lf), rr = Math.pow(10, +$("meR").value);
+    $("meNv").textContent = n; $("meAv").textContent = A + " (" + coma(20 * Math.log10(A), 1) + " dB)";
+    $("meFv").textContent = hz(fH); $("meRv").textContent = coma(rr, rr >= 10 ? 0 : 1);
+    var k = rr / (1 + rr), G = Math.pow(A, n) * Math.pow(k, n - 1), bw = fH * Math.sqrt(Math.pow(2, 1 / n) - 1);
+    var db1 = function(f){ return 20 * Math.log10(A) - 10 * Math.log10(1 + (f / fH) * (f / fH)); };
+    var dbn = function(f){ return 20 * Math.log10(G) - 5 * n * Math.log10(1 + (f / fH) * (f / fH)); };
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 46, x1 = W - 22, y0 = 12, y1 = H - 30;
+      var F0 = lf - 3, F1 = lf + 2;
+      var top = Math.ceil((20 * Math.log10(G) + 5) / 20) * 20, bot = top - 120;
+      var X = function(f){ return x0 + (Math.log10(f) - F0) / (F1 - F0) * (x1 - x0); };
+      var Y = function(d){ return y0 + (top - d) / (top - bot) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H);
+      ctx.setLineDash([]); ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      for(var e = Math.ceil(F0); e <= F1; e++){
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(X(Math.pow(10, e)), y0); ctx.lineTo(X(Math.pow(10, e)), y1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center";
+        if(W > 480 || (e - Math.ceil(F0)) % 2 === 0) ctx.fillText(hz(Math.pow(10, e)), X(Math.pow(10, e)), y1 + 14);
+      }
+      for(var d = top; d >= bot; d -= 20){
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(d)); ctx.lineTo(x1, Y(d)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(coma(d, 0) + " dB", x0 - 5, Y(d) + 3);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("frecuencia", (x0 + x1) / 2, H - 3);
+      ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+      var traza = function(fn, col, w){
+        ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath();
+        for(var j = 0; j <= 240; j++){ var f = Math.pow(10, F0 + (F1 - F0) * j / 240), yy = Y(fn(f)); if(j) ctx.lineTo(X(f), yy); else ctx.moveTo(X(f), yy); }
+        ctx.stroke();
+      };
+      traza(db1, "rgba(160,172,186,.7)", 1.6);
+      traza(dbn, "#58a6ff", 2.6);
+      ctx.strokeStyle = "rgba(242,204,96,.7)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(X(bw), y0); ctx.lineTo(X(bw), y1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(X(fH), y0); ctx.lineTo(X(fH), y1); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#f2cc60"; ctx.beginPath(); ctx.arc(X(bw), Y(dbn(bw)), 5, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(x0 + 2, y1 - 40, 120, 38);
+      ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "left";
+      ctx.fillStyle = "#9aa7b4"; ctx.fillText("una etapa", x0 + 8, y1 - 26);
+      ctx.fillStyle = "#58a6ff"; ctx.fillText(n + (n === 1 ? " etapa" : " etapas"), x0 + 8, y1 - 10);
+    }
+
+    $("meDatos").innerHTML =
+      "<span>ganancia total en la banda</span><b>" + miles(G) + " (" + coma(20 * Math.log10(G), 1) + " dB)</b>" +
+      "<span>pérdida por carga, " + (n - 1) + (n === 2 ? " unión" : " uniones") + "</span><b>" + coma(-20 * (n - 1) * Math.log10(k), 1) + " dB</b>" +
+      "<span>ancho de banda de cada etapa</span><b>" + hz(fH) + "</b>" +
+      "<span>ancho de banda de la cascada, f<sub>H</sub>√(2<sup>1/n</sup> − 1)</span><b>" + hz(bw) + " (" + coma(bw / fH * 100, 1) + " %)</b>" +
+      "<span>producto ganancia por ancho de banda de la cascada</span><b>" + hz(G * bw) + "</b>";
+
+    var nota;
+    if(n === 1) nota = "Una sola etapa: el ancho de banda es el de su polo. Agregá etapas para ver cómo la ganancia crece y el ancho de banda se encoge.";
+    else if(k < 0.6) nota = "Las uniones pierden mucho: cada etapa carga a la anterior y se pierden " + coma(-20 * Math.log10(k), 1) + " dB por unión. Un seguidor entre etapas, o etapas de entrada más alta, recuperarían esa ganancia.";
+    else nota = "Con " + n + " etapas la ganancia total es de " + coma(20 * Math.log10(G), 0) + " dB, pero el ancho de banda cayó al " + coma(bw / fH * 100, 0) + " % del de cada etapa: los polos se suman y la curva azul cae antes y más rápido, " + (20 * n) + " dB por década.";
+    $("meNota").innerHTML = nota;
+  }
+  ["meN", "meA", "meF", "meR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
