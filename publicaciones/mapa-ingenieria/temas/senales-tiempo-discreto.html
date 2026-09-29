@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Señales en tiempo discreto · Teoría de los Circuitos II · Catto</title>
+<meta name="description" content="Las secuencias y la frecuencia normalizada, la periodicidad de las senoidales discretas, los sistemas discretos con su ecuación en diferencias, los sistemas FIR e IIR, el plano z con su relación con el plano s y la estabilidad, y la DFT, con laboratorio interactivo de un resonador de dos polos en el plano z. Contenido de Teoría de los Circuitos II, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/senales-tiempo-discreto">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Teoría de los Circuitos II</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Teoría de los Circuitos II</span> · 120 h · Contenido 6 de 8</div>
+    <h1>Señales en tiempo discreto</h1>
+    <p class="lead">Una senoidal de 7 kHz muestreada a 8 kHz da exactamente las mismas muestras que una de 1 kHz. En tiempo discreto, la frecuencia solo tiene sentido entre cero y la mitad de la de muestreo.</p>
+    <div class="chips">
+      <span class="chip hi">Secuencias</span>
+      <span class="chip">Frecuencia normalizada</span>
+      <span class="chip">Ecuación en diferencias</span>
+      <span class="chip">Plano z</span>
+      <span class="chip">DFT</span>
+    </div>
+    <hr class="rule">
+
+    <section id="secuencias">
+      <h2><span class="n">01</span>De la señal a la secuencia</h2>
+      <p>Cuando un conversor muestrea una señal cada \( T \) segundos, lo que queda es una <b>secuencia</b> de números
+      \( x[n] = x(nT) \), definida solo para \( n \) entero. Lo que pasa entre muestras se perdió, y por el
+      <a href="/publicaciones/mapa-ingenieria/temas/muestreo-shannon">teorema del muestreo</a> no importa si la señal
+      no tenía frecuencias por encima de \( f_s/2 \). Todo el procesamiento digital trabaja sobre secuencias, y sus
+      herramientas son las mismas que las de los circuitos, en versión discreta: la convolución, las ecuaciones en
+      diferencias y la transformada Z en lugar de la de Laplace. La presentación de los dos tipos de señal está en
+      <a href="/publicaciones/mapa-ingenieria/temas/senales-continuas-discretas">señales de tiempo continuo y
+      discreto</a>.</p>
+    </section>
+
+    <section id="frecuencia">
+      <h2><span class="n">02</span>La frecuencia en tiempo discreto</h2>
+      <p>Una senoidal muestreada es \( x[n] = \cos(\Omega n) \), con \( \Omega = 2\pi f / f_s \) la <b>frecuencia
+      normalizada</b> en radianes por muestra. Dos propiedades la distinguen de la continua:</p>
+      <ul>
+        <li><b>Es periódica en Ω con período 2π.</b> \( \cos((\Omega + 2\pi) n) = \cos(\Omega n) \) para todo \( n \) entero:
+        las frecuencias \( \Omega \) y \( \Omega + 2\pi \) son indistinguibles. Es el <a href="/publicaciones/mapa-ingenieria/temas/aliasing">aliasing</a>
+        visto desde las muestras. Solo tiene sentido el intervalo de 0 a π, que corresponde a 0 hasta \( f_s/2 \).</li>
+        <li><b>No siempre es periódica en n.</b> Solo lo es si \( \Omega / 2\pi \) es un número racional.</li>
+      </ul>
+    </section>
+
+    <section id="sistemas">
+      <h2><span class="n">03</span>Sistemas discretos</h2>
+      <p>Un sistema discreto lineal e invariante queda descrito por su respuesta al impulso \( h[n] \), y la salida es la
+      convolución discreta \( y[n] = \sum_k h[k]\, x[n - k] \). En la práctica casi todos se escriben como una
+      <b>ecuación en diferencias</b>, que dice cómo calcular cada muestra de salida con las entradas y salidas
+      anteriores:</p>
+      <div class="form">
+        \[ y[n] = \sum_{k=0}^{M} b_k\, x[n-k] - \sum_{k=1}^{N} a_k\, y[n-k] \]
+        <span class="cap">Si no hay términos con salidas anteriores (\( N = 0 \)), la respuesta al impulso dura \( M + 1 \) muestras: es un sistema FIR. Si los hay, la realimentación la hace infinita: es un sistema IIR.</span>
+      </div>
+    </section>
+
+    <section id="plano-z">
+      <h2><span class="n">04</span>La transformada Z y el plano z</h2>
+      <p>La <a href="/publicaciones/mapa-ingenieria/temas/transformada-z">transformada Z</a> convierte el retardo de una
+      muestra en un producto por \( z^{-1} \), y la ecuación en diferencias en una función de transferencia racional
+      \( H(z) \). El plano z cumple el papel del plano s, relacionados por \( z = e^{sT} \):</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>En el plano s</th><th>En el plano z</th></tr></thead>
+        <tbody>
+          <tr><td>Eje imaginario \( j\omega \)</td><td>Circunferencia unitaria \( |z| = 1 \)</td></tr>
+          <tr><td>Semiplano izquierdo (estable)</td><td>Interior del círculo unitario</td></tr>
+          <tr><td>Polo en \( -\sigma \pm j\omega \)</td><td>Polo en \( r e^{\pm j\Omega} \), con \( r = e^{-\sigma T} \) y \( \Omega = \omega T \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>La respuesta en frecuencia es \( H(z) \) evaluada sobre la circunferencia, \( z = e^{j\Omega} \). Un polo cerca de la
+      circunferencia produce un pico en esa frecuencia; un cero sobre ella, una anulación.</p>
+      <div class="lw" id="zp">
+        <div class="lt">Laboratorio · un resonador de dos polos</div>
+        <p class="ls">El sistema \( y[n] = x[n] + 2r\cos\Omega_0\, y[n-1] - r^2\, y[n-2] \) tiene dos polos en \( r e^{\pm j\Omega_0} \).
+        A la izquierda, la respuesta al impulso calculada muestra por muestra; a la derecha, los polos en el plano z; abajo,
+        el módulo de la respuesta en frecuencia de 0 a π.</p>
+        <div class="fila"><label>Radio de los polos r = <b id="zpRv"></b></label><input type="range" id="zpR" min="0.5" max="1.08" step="0.005" value="0.9"></div>
+        <div class="fila"><label>Ángulo Ω₀ = <b id="zpTv"></b></label><input type="range" id="zpT" min="0.05" max="3.1" step="0.01" value="0.785"></div>
+        <canvas id="zpLienzo" style="display:block;width:100%;max-width:620px;height:260px;margin:6px auto 0"></canvas>
+        <div class="datos" id="zpDatos"></div>
+        <div class="nota" id="zpNota"></div>
+      </div>
+    </section>
+
+    <section id="dft">
+      <h2><span class="n">05</span>La transformada discreta de Fourier</h2>
+      <p>Para calcular el espectro de una secuencia de largo finito con una computadora se usa la <b>DFT</b>, que da
+      \( N \) valores de la respuesta en frecuencia equiespaciados sobre la circunferencia unitaria. La <b>FFT</b> es un
+      algoritmo que la calcula con \( N \log_2 N \) operaciones en lugar de \( N^2 \): para 4096 puntos, unas 50 000 en lugar
+      de 16 millones. Es la herramienta que usaron los laboratorios de
+      <a href="/publicaciones/mapa-ingenieria/temas/conversores-datos">conversores</a> para medir la relación señal a
+      ruido.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Una ecuación en diferencias</div>
+        <p>Programar el resonador del laboratorio en un microcontrolador, excitarlo con un impulso y enviar la salida a un
+        DAC. Medir la frecuencia de oscilación con el osciloscopio.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Aliasing en las muestras</div>
+        <p>Muestrear con un ADC senoidales de frecuencias \( f \) y \( f_s - f \) y mostrar que dan la misma secuencia.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · FFT en Python</div>
+        <p>Calcular la FFT de 1024 muestras de una señal compuesta y ubicar sus componentes en frecuencia normalizada y en
+        hertz.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Confundir la frecuencia normalizada con la analógica.</b> Ω = π corresponde a \( f_s/2 \), no a 1 Hz.</li>
+        <li><b>Olvidar que una realimentación puede hacer inestable al sistema.</b> Basta un polo fuera del círculo unitario.</li>
+        <li><b>Esperar que toda senoidal muestreada sea periódica.</b> Solo si Ω/2π es racional.</li>
+        <li><b>Tomar la DFT como el espectro continuo.</b> Son muestras de él, con la resolución \( f_s/N \).</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué frecuencia normalizada tiene una senoidal de 1 kHz muestreada a 8 kHz?</summary>
+        <div class="a"><p>\( \Omega = 2\pi/8 = \pi/4 \) radianes por muestra.</p></div></details>
+      <details class="q"><summary>¿Es estable un sistema con polos en 0,9 e<sup>±j0,5</sup>?</summary>
+        <div class="a"><p>Sí: están dentro del círculo unitario.</p></div></details>
+      <details class="q"><summary>¿Es FIR o IIR y = 0,5x[n] + 0,5x[n−1]?</summary>
+        <div class="a"><p>FIR: no usa salidas anteriores; su respuesta al impulso tiene dos muestras.</p></div></details>
+      <details class="q"><summary>¿Qué resolución en frecuencia da una DFT de 1024 puntos a 48 kHz?</summary>
+        <div class="a"><p>\( 48\,000/1024 \approx 46{,}9 \) Hz.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim y Ronald W. Schafer.</span>
+          <span class="ti">Discrete-Time Signal Processing</span>.
+          <span class="ed">3.ª ed., Pearson, 2010.</span>
+          <span class="pq">La referencia del procesamiento de señales discretas: secuencias, transformada Z, DFT y filtros.</span></li>
+        <li><span class="au">John G. Proakis y Dimitris G. Manolakis.</span>
+          <span class="ti">Tratamiento digital de señales</span>.
+          <span class="ed">4.ª ed., Pearson, 2007.</span>
+          <span class="pq">El texto de curso en castellano, con muchos ejemplos.</span></li>
+        <li><span class="au">Steven W. Smith.</span>
+          <span class="ti">The Scientist and Engineer's Guide to Digital Signal Processing</span>.
+          <span class="ed">California Technical Publishing, 1997.</span>
+          <span class="pq">Una introducción práctica e intuitiva, de libre acceso en línea.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/filtros-analogicos">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Filtros analógicos activos y pasivos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Señales en tiempo discreto»</b> de <b>Teoría de los Circuitos II</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Resonador de dos polos: y[n] = x[n] + 2 r cos W0 y[n-1] - r^2 y[n-2].
+   h[n] = r^n sen((n+1) W0) / sen W0 (verificado contra la recursion).
+   |H(e^jW)| = 1 / |1 - 2 r cos W0 e^-jW + r^2 e^-2jW|.
+   Control (Python): r 0,9, W0 = pi/4 -> h = 1; 1,2728; 0,81; 0; -0,6561;
+   |H(0)| = 1,861, pico 7,44. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("zpLienzo"), ctx = cv.getContext("2d");
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function Hmod(r, t, w){ var re = 1 - 2 * r * Math.cos(t) * Math.cos(w) + r * r * Math.cos(2 * w), im = 2 * r * Math.cos(t) * Math.sin(w) - r * r * Math.sin(2 * w); return 1 / Math.hypot(re, im); }
+
+  function pintar(){
+    var r = +$("zpR").value, t = +$("zpT").value;
+    $("zpRv").textContent = coma(r, 3); $("zpTv").textContent = coma(t, 2) + " rad (" + coma(t / Math.PI, 3) + " π)";
+    var N = 40, h = [], y1 = 0, y2 = 0;
+    for(var n = 0; n < N; n++){ var y = (n === 0 ? 1 : 0) + 2 * r * Math.cos(t) * y1 - r * r * y2; h.push(y); y2 = y1; y1 = y; }
+    var hm = 0; h.forEach(function(v){ hm = Math.max(hm, Math.abs(v)); });
+    var pico = 0, wp = 0; for(var k = 0; k <= 400; k++){ var w = Math.PI * k / 400, m = Hmod(r, t, w); if(m > pico){ pico = m; wp = w; } }
+
+    var rc = cv.getBoundingClientRect();
+    if(rc.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(rc.width * dp) || cv.height !== Math.round(rc.height * dp)){
+        cv.width = Math.round(rc.width * dp); cv.height = Math.round(rc.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = rc.width, H = rc.height, zs = Math.min(130, W * 0.32), x0 = 12, x1 = W - zs - 20, y0 = 10, y1 = H * 0.58, ym = (y0 + y1) / 2;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      /* respuesta al impulso */
+      var esc = Math.max(1, Math.min(hm, 1e3));
+      ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, ym); ctx.lineTo(x1, ym); ctx.stroke();
+      h.forEach(function(v, j){
+        var x = x0 + (j + 0.5) / N * (x1 - x0), yy = ym - Math.max(-1, Math.min(1, v / esc)) * (y1 - y0) / 2;
+        ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, ym); ctx.lineTo(x, yy); ctx.stroke();
+        ctx.fillStyle = "#58a6ff"; ctx.beginPath(); ctx.arc(x, yy, 2.4, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("h[n], n = 0 a " + (N - 1) + " (escala ±" + (esc >= 100 ? coma(esc, 0) : coma(esc, 2)) + ")", x0, y1 + 12);
+      /* plano z */
+      var cxz = W - zs / 2 - 10, cyz = y0 + (y1 - y0) / 2 + 4, R = Math.min(zs / 2 - 6, (y1 - y0) / 2 - 2) / 1.12;
+      ctx.strokeStyle = "#3a4456"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cxz - R * 1.15, cyz); ctx.lineTo(cxz + R * 1.15, cyz); ctx.moveTo(cxz, cyz - R * 1.15); ctx.lineTo(cxz, cyz + R * 1.15); ctx.stroke();
+      ctx.strokeStyle = "#9aa7b4"; ctx.beginPath(); ctx.arc(cxz, cyz, R, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = r >= 1 ? "#f85149" : "#f2cc60"; ctx.lineWidth = 2.2;
+      [1, -1].forEach(function(s){ var px = cxz + R * r * Math.cos(t), py = cyz - s * R * r * Math.sin(t); ctx.beginPath(); ctx.moveTo(px - 5, py - 5); ctx.lineTo(px + 5, py + 5); ctx.moveTo(px + 5, py - 5); ctx.lineTo(px - 5, py + 5); ctx.stroke(); });
+      ctx.lineWidth = 1; ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("plano z", cxz, y1 + 12);
+      /* respuesta en frecuencia */
+      var f0 = y1 + 24, f1 = H - 16, mx = Math.max(pico, 1);
+      ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, f1); ctx.lineTo(W - 12, f1); ctx.stroke();
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2; ctx.beginPath();
+      for(k = 0; k <= 300; k++){ w = Math.PI * k / 300; var yy2 = f1 - Math.min(Hmod(r, t, w), mx) / mx * (f1 - f0); if(k) ctx.lineTo(x0 + k / 300 * (W - 12 - x0), yy2); else ctx.moveTo(x0, yy2); }
+      ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "left"; ctx.fillText("0", x0, H - 4); ctx.textAlign = "right"; ctx.fillText("π (fs/2)", W - 12, H - 4);
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText("|H| sobre el círculo unitario", (x0 + W - 12) / 2, H - 4);
+    }
+
+    $("zpDatos").innerHTML =
+      "<span>polos</span><b>" + coma(r, 3) + " e<sup>±j" + coma(t, 2) + "</sup></b>" +
+      "<span>coeficientes de la ecuación</span><b>a₁ = " + coma(2 * r * Math.cos(t), 4) + " · a₂ = " + coma(-r * r, 4) + "</b>" +
+      "<span>pico de la respuesta en frecuencia</span><b>" + (r >= 1 ? "no existe: el sistema es inestable" : coma(pico, 2) + " en Ω = " + coma(wp, 2) + " rad") + "</b>";
+    var nota;
+    if(r > 1.0005) nota = "<b>Inestable:</b> con los polos fuera del círculo unitario la respuesta al impulso crece sin límite. En un procesador, el número desborda en pocas decenas de muestras.";
+    else if(r > 0.9995) nota = "Polos sobre la circunferencia: la respuesta al impulso oscila sin decaer. Es un <b>oscilador digital</b>: genera una senoidal de frecuencia Ω₀ = " + coma(t, 2) + " rad/muestra.";
+    else nota = "Polos dentro del círculo: la respuesta decae como r<sup>n</sup>, y oscila con período de unas " + coma(2 * Math.PI / t, 1) + " muestras. Cuanto más cerca de la circunferencia, más angosto y alto el pico en la frecuencia Ω₀.";
+    $("zpNota").innerHTML = nota;
+  }
+  ["zpR", "zpT"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
