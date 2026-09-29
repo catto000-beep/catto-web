@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filtros analógicos activos y pasivos · Teoría de los Circuitos II · Catto</title>
+<meta name="description" content="La plantilla de un filtro, las aproximaciones de Butterworth, Chebyshev, elíptica y Bessel, el cálculo del orden mínimo, los filtros pasivos en escalera LC y los activos con secciones Sallen-Key, con laboratorio interactivo que compara aproximaciones contra una plantilla y da los componentes de cada sección. Contenido de Teoría de los Circuitos II, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/filtros-analogicos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Teoría de los Circuitos II</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Teoría de los Circuitos II</span> · 120 h · Contenido 5 de 8</div>
+    <h1>Filtros analógicos activos y pasivos</h1>
+    <p class="lead">Para rechazar 40 dB a dos veces la frecuencia de corte, un Butterworth necesita siete polos y un Chebyshev de 0,5 dB, cinco. La ondulación en la banda de paso compra pendiente.</p>
+    <div class="chips">
+      <span class="chip hi">Plantilla</span>
+      <span class="chip">Butterworth</span>
+      <span class="chip">Chebyshev</span>
+      <span class="chip">Escalera LC</span>
+      <span class="chip">Sallen-Key</span>
+    </div>
+    <hr class="rule">
+
+    <section id="plantilla">
+      <h2><span class="n">01</span>La plantilla de un filtro</h2>
+      <p>Un filtro se especifica con una <b>plantilla</b>: en la banda de paso, hasta \( \omega_p \), la atenuación no
+      puede superar \( A_p \); en la banda de rechazo, desde \( \omega_s \), tiene que ser al menos \( A_s \). Entre las dos
+      queda la banda de transición. Cuanto más angosta la transición y más exigentes \( A_p \) y \( A_s \), más orden
+      hace falta: más polos, más componentes. Los filtros pasaaltos, pasabanda y rechazabanda se diseñan a partir
+      de un pasabajos normalizado con una transformación de frecuencia, así que todo empieza por el pasabajos.
+      Los filtros básicos se presentan en la tecnicatura, en <a href="/publicaciones/mapa-electronica/temas/filtros">filtros</a>.</p>
+    </section>
+
+    <section id="aproximaciones">
+      <h2><span class="n">02</span>Las aproximaciones</h2>
+      <p>El filtro ideal —ganancia 1 hasta el corte y 0 después— no se puede construir. Una <b>aproximación</b> es una
+      función de transferencia realizable que se le acerca de una manera determinada, y cada una elige qué
+      sacrificar:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Aproximación</th><th>Banda de paso</th><th>Transición</th><th>Respuesta al escalón</th></tr></thead>
+        <tbody>
+          <tr><td>Butterworth</td><td>Máximamente plana</td><td>Moderada</td><td>Sobrepico moderado</td></tr>
+          <tr><td>Chebyshev</td><td>Con ondulación de \( A_p \)</td><td>Más abrupta para el mismo orden</td><td>Sobrepico y oscilación mayores</td></tr>
+          <tr><td>Chebyshev inverso</td><td>Plana</td><td>Abrupta, con ceros en la banda de rechazo</td><td>Moderada</td></tr>
+          <tr><td>Elíptica (Cauer)</td><td>Con ondulación</td><td>La más abrupta posible</td><td>La peor</td></tr>
+          <tr><td>Bessel</td><td>Cae suave</td><td>Muy lenta</td><td>Casi sin sobrepico: retardo de grupo constante</td></tr>
+        </tbody>
+      </table></div>
+      <div class="form">
+        \[ |H(j\omega)|^2 = \frac{1}{1 + \omega^{2n}} \]
+        \[ |H(j\omega)|^2 = \frac{1}{1 + \varepsilon^2\, T_n^2(\omega)} \]
+        <span class="cap">Butterworth normalizado a −3 dB en \( \omega = 1 \), y Chebyshev con los polinomios \( T_n \), normalizado al borde de la ondulación, con \( \varepsilon^2 = 10^{A_p/10} - 1 \). Fuera de la banda de paso los dos caen a 20n dB por década, pero Chebyshev arranca desde más abajo.</span>
+      </div>
+      <p>El orden mínimo sale de la plantilla:</p>
+      <div class="form">
+        \[ n_{B} \ge \frac{\log\sqrt{\frac{10^{A_s/10} - 1}{10^{A_p/10} - 1}}}{\log(\omega_s/\omega_p)} \]
+        \[ n_{C} \ge \frac{\operatorname{arccosh}\sqrt{\frac{10^{A_s/10} - 1}{10^{A_p/10} - 1}}}{\operatorname{arccosh}(\omega_s/\omega_p)} \]
+        <span class="cap">Para 40 dB de rechazo a dos veces la frecuencia de corte hacen falta 7 polos de Butterworth (con 3 dB en la banda de paso) o 5 de Chebyshev con 0,5 dB de ondulación.</span>
+      </div>
+    </section>
+
+    <section id="pasivos">
+      <h2><span class="n">03</span>Filtros pasivos en escalera</h2>
+      <p>El filtro pasivo clásico es una escalera LC entre la resistencia del generador y la de la carga, con
+      inductores en serie y capacitores en derivación: la forma de Cauer de <a href="/publicaciones/mapa-ingenieria/temas/funciones-red">funciones
+      de red</a>. Sus valores están tabulados en forma normalizada, para 1 Ω y 1 rad/s; para Butterworth son
+      \( g_k = 2\sin\frac{(2k - 1)\pi}{2n} \): un filtro de orden 3 tiene 1 H, 2 F y 1 H. Se desnormalizan dividiendo
+      las inductancias y capacidades por \( \omega_c \) y escalando por la impedancia. Las escaleras doblemente terminadas
+      tienen una ventaja notable: su respuesta es muy poco sensible a las tolerancias de los componentes.</p>
+    </section>
+
+    <section id="activos">
+      <h2><span class="n">04</span>Filtros activos</h2>
+      <p>A frecuencias bajas los inductores son grandes, caros y poco ideales. Un filtro activo reemplaza la escalera
+      por una cascada de secciones de segundo orden con amplificadores operacionales, cada una con un par de polos.
+      La más usada es la de <b>Sallen-Key</b>: con ganancia unitaria y resistores iguales \( R \), los capacitores
+      fijan la frecuencia y el factor de calidad de la sección:</p>
+      <div class="form">
+        \[ C_1 = \frac{2Q}{\omega_0 R} \]
+        \[ C_2 = \frac{1}{2Q\,\omega_0 R} \]
+        <span class="cap">\( C_1 \) es el capacitor de realimentación y \( C_2 \) el que va a masa. Cada sección realiza un par de polos con su \( \omega_0 \) y su \( Q \); si el orden es impar, se agrega una red RC de primer orden.</span>
+      </div>
+      <p>Las secciones se ordenan con Q creciente, para que las de Q alto no saturen con señales que la sección siguiente
+      iba a atenuar. El amplificador operacional tiene que tener un producto ganancia por ancho de banda bastante
+      mayor que \( Q \cdot f_0 \) de cada sección; si no, la respuesta se deforma.</p>
+      <div class="lw" id="fa">
+        <div class="lt">Laboratorio · Butterworth contra Chebyshev</div>
+        <p class="ls">La respuesta de un pasabajos normalizado del tipo y orden elegidos, con la plantilla de la
+        especificación sombreada. Abajo, el orden mínimo para cumplirla y las secciones Sallen-Key de ganancia unitaria
+        para un corte de 1 kHz con resistores de 10 kΩ.</p>
+        <div class="fila">
+          <select id="faT">
+            <option value="b" selected>Butterworth</option>
+            <option value="c05">Chebyshev de 0,5 dB</option>
+            <option value="c1">Chebyshev de 1 dB</option>
+          </select>
+          <select id="faS">
+            <option value="40,2" selected>Rechazo de 40 dB a 2 veces el corte</option>
+            <option value="60,3">Rechazo de 60 dB a 3 veces el corte</option>
+            <option value="30,1.5">Rechazo de 30 dB a 1,5 veces el corte</option>
+          </select>
+        </div>
+        <div class="fila"><label>Orden n = <b id="faNv"></b></label><input type="range" id="faN" min="1" max="8" step="1" value="4"></div>
+        <canvas id="faLienzo" style="display:block;width:100%;max-width:620px;height:230px;margin:6px auto 0"></canvas>
+        <div class="datos" id="faDatos"></div>
+        <div class="nota" id="faNota"></div>
+      </div>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">05</span>Dónde aparece en la electrónica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Aplicación</th><th>Filtro típico</th></tr></thead>
+        <tbody>
+          <tr><td>Antialias antes de un conversor</td><td>Butterworth o Bessel activo de orden 2 a 8</td></tr>
+          <tr><td>Etapa de salida de un transmisor</td><td>Escalera LC Chebyshev o elíptica, para las armónicas</td></tr>
+          <tr><td>Medición de pulsos o audio de alta calidad</td><td>Bessel, por su respuesta al escalón sin sobrepico</td></tr>
+          <tr><td>Cruce de parlantes</td><td>Linkwitz-Riley: dos Butterworth en cascada</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Un Butterworth de cuarto orden</div>
+        <p>Armar las dos secciones Sallen-Key del laboratorio para 1 kHz, medir la respuesta en frecuencia y compararla
+        con la teórica.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Respuesta al escalón</div>
+        <p>Comparar la respuesta a una onda cuadrada de un Butterworth y un Chebyshev de 1 dB del mismo orden.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Un filtro LC</div>
+        <p>Desnormalizar un Butterworth LC de orden 5 para 10 MHz y 50 Ω, armarlo y medirlo con un analizador de redes.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Confundir las normalizaciones.</b> Butterworth se normaliza a −3 dB; Chebyshev, al borde de la ondulación.</li>
+        <li><b>Usar un operacional lento en una sección de Q alto.</b> El pico se corre y se agranda.</li>
+        <li><b>Ordenar mal las secciones.</b> Las de Q alto al final.</li>
+        <li><b>Elegir por la respuesta en frecuencia solamente.</b> Si importa la forma de onda, hay que mirar el retardo de
+        grupo.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuánto atenúa un Butterworth de orden 4 a dos veces su frecuencia de corte?</summary>
+        <div class="a"><p>\( 10\log(1 + 2^8) \approx 24{,}1 \) dB.</p></div></details>
+      <details class="q"><summary>¿Qué Q tienen las secciones de un Butterworth de orden 4?</summary>
+        <div class="a"><p>0,541 y 1,307, las dos con \( \omega_0 = 1 \).</p></div></details>
+      <details class="q"><summary>¿Qué capacitores lleva una Sallen-Key de ganancia unitaria con Q = 0,707, 1 kHz y 10 kΩ?</summary>
+        <div class="a"><p>\( C_1 = 2 \cdot 0{,}707 / (2\pi \cdot 1000 \cdot 10^4) \approx 22{,}5 \) nF y \( C_2 \approx 11{,}3 \) nF.</p></div></details>
+      <details class="q"><summary>¿Por qué un Chebyshev necesita menos orden que un Butterworth?</summary>
+        <div class="a"><p>Porque acepta ondulación en la banda de paso y a cambio cae más rápido en la transición.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Arthur B. Williams y Fred J. Taylor.</span>
+          <span class="ti">Electronic Filter Design Handbook</span>.
+          <span class="ed">4.ª ed., McGraw-Hill, 2006.</span>
+          <span class="pq">Las tablas de polos, secciones y escaleras normalizadas de todas las aproximaciones.</span></li>
+        <li><span class="au">Rolf Schaumann, Haiqiao Xiao y Mac E. Van Valkenburg.</span>
+          <span class="ti">Design of Analog Filters</span>.
+          <span class="ed">2.ª ed., Oxford University Press, 2009.</span>
+          <span class="pq">El diseño de filtros activos y pasivos con su teoría completa.</span></li>
+        <li><span class="au">Texas Instruments.</span>
+          <span class="ti">Op Amps for Everyone, capítulo de filtros activos</span>.
+          <span class="ed">Texas Instruments, varias ediciones.</span>
+          <span class="pq">El diseño práctico de Sallen-Key y de realimentación múltiple, con tablas de coeficientes.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/atenuadores-compensadores">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Atenuadores y compensadores</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Filtros analógicos activos y pasivos»</b> de <b>Teoría de los Circuitos II</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Pasabajos normalizado: Butterworth (-3 dB en w = 1) y Chebyshev (borde de la
+   ondulacion en w = 1). Secciones: Butterworth Q_k = 1 / (2 sen th_k),
+   th_k = (2k - 1) pi / 2n; Chebyshev con a = asinh(1/eps) / n, polos
+   -senh(a) sen th_k +- j cosh(a) cos th_k, w0 = modulo, Q = w0 / (2 senh(a) sen th_k).
+   Orden minimo por las formulas de la pagina. Sallen-Key de ganancia unitaria:
+   C1 = 2Q / (w0 R), C2 = 1 / (2Q w0 R), R = 10 k, fc = 1 kHz.
+   Control (Python y tablas): Chebyshev 0,5 dB n 4 -> (0,597; 0,705) y
+   (1,031; 2,941); Butterworth n 4 -> 0,541 y 1,307, C 41,59/6,09 nF y
+   17,23/14,70 nF; orden para 40 dB a 2: 7 (B) y 5 (C 0,5 dB). */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("faLienzo"), ctx = cv.getContext("2d");
+  var R = 1e4, FC = 1e3;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function cap(c){ return c >= 1e-6 ? coma(c * 1e6, 2) + " µF" : coma(c * 1e9, c >= 1e-8 ? 1 : 2) + " nF"; }
+  function acosh(x){ return Math.log(x + Math.sqrt(x * x - 1)); }
+  function asinh(x){ return Math.log(x + Math.sqrt(x * x + 1)); }
+  function info(t){ return t === "b" ? { rip: 3, cheb: false, nom: "Butterworth" } : { rip: t === "c05" ? 0.5 : 1, cheb: true, nom: "Chebyshev de " + (t === "c05" ? "0,5" : "1") + " dB" }; }
+  function mag(t, n, w){
+    var i = info(t); if(!i.cheb) return -10 * Math.log10(1 + Math.pow(w, 2 * n));
+    var e2 = Math.pow(10, i.rip / 10) - 1, T = w <= 1 ? Math.cos(n * Math.acos(w)) : Math.cosh(n * acosh(w));
+    return -10 * Math.log10(1 + e2 * T * T);
+  }
+  function secciones(t, n){
+    var i = info(t), o = [];
+    if(!i.cheb){ for(var k = 1; k <= Math.floor(n / 2); k++) o.push([1, 1 / (2 * Math.sin((2 * k - 1) * Math.PI / (2 * n)))]); if(n % 2) o.push([1, null]); }
+    else {
+      var eps = Math.sqrt(Math.pow(10, i.rip / 10) - 1), a = asinh(1 / eps) / n;
+      for(k = 1; k <= Math.floor(n / 2); k++){ var th = (2 * k - 1) * Math.PI / (2 * n), s = Math.sinh(a) * Math.sin(th), w = Math.cosh(a) * Math.cos(th), w0 = Math.hypot(s, w); o.push([w0, w0 / (2 * s)]); }
+      if(n % 2) o.push([Math.sinh(a), null]);
+    }
+    return o.sort(function(x, y){ return (x[1] || 0) - (y[1] || 0); });
+  }
+  function ordenMin(t, As, ws){
+    var i = info(t), r = Math.sqrt((Math.pow(10, As / 10) - 1) / (Math.pow(10, i.rip / 10) - 1));
+    return i.cheb ? Math.ceil(acosh(r) / acosh(ws)) : Math.ceil(Math.log10(r) / Math.log10(ws));
+  }
+
+  function pintar(){
+    var t = $("faT").value, n = +$("faN").value, sp = $("faS").value.split(","), As = +sp[0], ws = +sp[1], i = info(t);
+    $("faNv").textContent = n;
+    var nmin = ordenMin(t, As, ws), aws = mag(t, n, ws), cumple = aws <= -As + 1e-9;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 38, x1 = W - 14, y0 = 10, y1 = H - 28, D0 = 5, D1 = -80;
+      var X = function(w){ return x0 + (Math.log10(w) + 1) / 2 * (x1 - x0); }, Y = function(d){ return y0 + (D0 - Math.max(D1, Math.min(D0, d))) / (D0 - D1) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      /* plantilla */
+      /* zonas prohibidas: debajo de -Ap en la banda de paso y encima de -As en la de rechazo */
+      ctx.fillStyle = "rgba(248,81,73,.16)"; ctx.fillRect(X(ws), y0, x1 - X(ws), Y(-As) - y0);
+      ctx.fillRect(x0, Y(-i.rip), X(1) - x0, y1 - Y(-i.rip));
+      for(var d = 0; d >= D1; d -= 20){ ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(d)); ctx.lineTo(x1, Y(d)); ctx.stroke(); ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(d + " dB", x0 - 4, Y(d) + 3); }
+      [[0.1, "0,1"], [1, "1"], [10, "10"]].forEach(function(e){ ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(X(e[0]), y0); ctx.lineTo(X(e[0]), y1); ctx.stroke(); ctx.fillStyle = "#6b7484"; ctx.textAlign = e[0] === 0.1 ? "left" : e[0] === 10 ? "right" : "center"; ctx.fillText(e[1], X(e[0]), y1 + 13); });
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("frecuencia normalizada (1 = borde de la banda de paso)", (x0 + x1) / 2, H - 4);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.4; ctx.beginPath();
+      for(var k = 0; k <= 400; k++){ var w = Math.pow(10, -1 + 2 * k / 400), y = Y(mag(t, n, w)); if(k) ctx.lineTo(X(w), y); else ctx.moveTo(X(w), y); }
+      ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = cumple ? "#7ee787" : "#f85149"; ctx.beginPath(); ctx.arc(X(ws), Y(aws), 5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    var sec = secciones(t, n), txt = sec.map(function(s){
+      var w0 = 2 * Math.PI * FC * s[0];
+      if(s[1] === null) return "RC de primer orden a " + coma(s[0] * FC, 0) + " Hz: C = " + cap(1 / (w0 * R));
+      return "f₀ " + coma(s[0] * FC, 0) + " Hz, Q " + coma(s[1], 3) + ": C₁ = " + cap(2 * s[1] / (w0 * R)) + ", C₂ = " + cap(1 / (2 * s[1] * w0 * R));
+    });
+    $("faDatos").innerHTML =
+      "<span>atenuación a " + coma(ws, 1) + " veces el borde de paso, con n = " + n + "</span><b>" + coma(-aws, 1) + " dB (" + (cumple ? "cumple" : "no cumple") + " los " + As + " dB)</b>" +
+      "<span>orden mínimo para la plantilla</span><b>" + nmin + " con " + i.nom + "</b>" +
+      txt.map(function(s, j){ return "<span>sección " + (j + 1) + "</span><b>" + s + "</b>"; }).join("");
+    var otro = t === "b" ? ordenMin("c05", As, ws) : ordenMin("b", As, ws);
+    var nota = (cumple ? "Con orden " + n + " se cumple la plantilla." : "Con orden " + n + " no alcanza: hace falta al menos " + nmin + ".") + " " +
+      (t === "b" ? "Un Chebyshev de 0,5 dB lo logra con orden " + otro + ", a cambio de ondular en la banda de paso." : "Un Butterworth necesitaría orden " + otro + ": la ondulación compra pendiente.") +
+      (sec.some(function(s){ return s[1] && s[1] > 3; }) ? " Hay secciones de Q alto, sensibles a las tolerancias y al operacional." : "");
+    $("faNota").innerHTML = nota;
+  }
+  ["faT", "faS", "faN"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
