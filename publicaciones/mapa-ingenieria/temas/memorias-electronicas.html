@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memorias electrónicas · Técnicas Digitales II · Catto</title>
+<meta name="description" content="Cómo guarda el bit cada tecnología y qué propiedades salen de eso: SRAM, DRAM con refresco, flash NOR y NAND, EEPROM y FRAM; la organización interna en filas y columnas, la decodificación de direcciones, el desgaste de la flash y los códigos correctores de Hamming, con laboratorio interactivo de un código SECDED que corrige un error y detecta dos. Contenido de Técnicas Digitales II, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/memorias-electronicas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Técnicas Digitales II</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Técnicas Digitales II</span> · 120 h · Contenido 2 de 6</div>
+    <h1>Memorias electrónicas</h1>
+    <p class="lead">Un módulo de memoria de servidor tiene 72 bits de ancho para guardar 64: los ocho restantes corrigen cualquier bit que invierta un rayo cósmico.</p>
+    <div class="chips">
+      <span class="chip hi">SRAM y DRAM</span>
+      <span class="chip">Flash NOR y NAND</span>
+      <span class="chip">Mapa de memoria</span>
+      <span class="chip">Desgaste</span>
+      <span class="chip">Código de Hamming</span>
+    </div>
+    <hr class="rule">
+
+    <section id="clasificacion">
+      <h2><span class="n">01</span>Qué distingue a una memoria de otra</h2>
+      <p>Una memoria guarda bits en celdas, y cada tecnología guarda el bit de una forma física distinta: el
+      estado de un biestable, la carga de un capacitor, la carga atrapada en una compuerta aislada o la
+      polarización de un material. De esa forma física salen todas sus propiedades: si pierde el dato al cortar
+      la alimentación, cuánto tarda en leer y escribir, cuántas veces se puede reescribir y cuánto ocupa cada bit.
+      La <a href="/publicaciones/mapa-electronica/temas/memorias-dispositivos-programables">página de la
+      tecnicatura</a> presenta los tipos; acá se ve por qué son como son.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Memoria</th><th>Celda</th><th>¿Volátil?</th><th>Reescrituras</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>SRAM</td><td>6 transistores (biestable)</td><td>Sí</td><td>Ilimitadas</td><td>Registros, caché, RAM de microcontroladores</td></tr>
+          <tr><td>DRAM</td><td>1 transistor y 1 capacitor</td><td>Sí, y además hay que refrescarla</td><td>Ilimitadas</td><td>Memoria principal de computadoras</td></tr>
+          <tr><td>Flash NOR</td><td>Transistor de compuerta flotante</td><td>No</td><td>Unas 100 000</td><td>Programa de microcontroladores; se ejecuta en el lugar</td></tr>
+          <tr><td>Flash NAND</td><td>Compuerta flotante o trampa de carga, en serie</td><td>No</td><td>De 1000 a 100 000 según bits por celda</td><td>Discos de estado sólido, tarjetas SD</td></tr>
+          <tr><td>EEPROM</td><td>Compuerta flotante con borrado por byte</td><td>No</td><td>Alrededor de un millón</td><td>Configuración y calibración</td></tr>
+          <tr><td>FRAM</td><td>Capacitor ferroeléctrico</td><td>No</td><td>Del orden de 10<sup>14</sup></td><td>Registro de datos frecuente con poco consumo</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="organizacion">
+      <h2><span class="n">02</span>Organización interna</h2>
+      <p>Las celdas forman una matriz de filas y columnas. Un <b>decodificador de filas</b> activa una fila entera,
+      los <b>amplificadores de lectura</b> detectan las pequeñas diferencias de tensión de sus columnas, y un
+      <b>multiplexor de columnas</b> elige las que salen. Una memoria de \( 2^A \) palabras de \( w \) bits necesita
+      \( A \) líneas de dirección y \( w \) de datos: una de 128 K × 8 tiene 17 líneas de dirección y 8 de datos.</p>
+      <p>En un sistema con varias memorias y periféricos, la <b>decodificación de direcciones</b> reparte el
+      espacio: los bits altos de la dirección eligen qué chip se habilita, con su señal de selección, y los bajos
+      eligen la palabra dentro del chip. El resultado es el <b>mapa de memoria</b> del sistema.</p>
+    </section>
+
+    <section id="ram">
+      <h2><span class="n">03</span>SRAM y DRAM</h2>
+      <p>La celda <b>SRAM</b> es un biestable de dos inversores cruzados más dos transistores de acceso: mantiene el
+      dato mientras haya alimentación, se lee sin destruirlo y es rápida, pero ocupa seis transistores por bit.</p>
+      <p>La celda <b>DRAM</b> guarda el bit como la carga de un capacitor de unos femtofaradios, detrás de un
+      transistor. Es mucho más densa, pero la carga se fuga y hay que <b>refrescar</b> cada celda, típicamente
+      cada 64 ms, y la lectura descarga el capacitor, así que cada lectura se reescribe. Las DRAM multiplexan la
+      dirección: primero la fila, después la columna. Las DDR transfieren en los dos flancos del reloj: un módulo
+      DDR4-3200 hace 3200 millones de transferencias de 64 bits por segundo, 25,6 GB/s.</p>
+    </section>
+
+    <section id="flash">
+      <h2><span class="n">04</span>Memorias no volátiles</h2>
+      <p>En una celda <b>flash</b>, el bit es la carga atrapada en una compuerta rodeada de óxido. Esa carga
+      corre el umbral del transistor, y la lectura detecta si conduce o no. Para escribir y borrar se hace pasar
+      carga a través del óxido con campos altos, y cada paso lo desgasta un poco: por eso la cantidad de
+      reescrituras es limitada.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>NOR</th><th>NAND</th></tr></thead>
+        <tbody>
+          <tr><td>Acceso</td><td>Aleatorio por palabra, como una RAM</td><td>Por páginas de kilobytes</td></tr>
+          <tr><td>Borrado</td><td>Por sectores</td><td>Por bloques de cientos de páginas</td></tr>
+          <tr><td>Densidad y costo por bit</td><td>Menor densidad, mayor costo</td><td>Máxima densidad, mínimo costo</td></tr>
+          <tr><td>Gestión</td><td>Casi ninguna</td><td>Corrección de errores, bloques defectuosos y nivelación del desgaste</td></tr>
+        </tbody>
+      </table></div>
+      <p>Guardar más de un bit por celda, con varios niveles de carga, multiplica la capacidad pero achica los
+      márgenes entre niveles: una celda de un bit (SLC) soporta del orden de 100 000 borrados; una de tres bits
+      (TLC), de unos pocos miles.</p>
+    </section>
+
+    <section id="ecc">
+      <h2><span class="n">05</span>Errores y códigos correctores</h2>
+      <p>Ninguna memoria es perfecta. Una partícula alfa del encapsulado o un neutrón de los rayos cósmicos puede
+      invertir un bit de una DRAM o una SRAM (un <b>error blando</b>), y en una flash los bits se degradan con el
+      uso. Los sistemas que no pueden fallar guardan, junto con cada palabra, bits de paridad calculados con un
+      <b>código de Hamming</b>. Para corregir un error en \( m \) bits de datos hacen falta \( r \) bits de
+      paridad tales que:</p>
+      <div class="form">
+        \[ 2^r \ge m + r + 1 \]
+        <span class="cap">Con \( r \) bits se pueden señalar \( 2^r \) situaciones: ningún error o un error en cualquiera de los \( m + r \) bits. Con un bit de paridad global más, el código corrige un error y detecta dos (SECDED). Para 64 bits de datos hacen falta 8 bits de control: los módulos de memoria con ECC tienen 72 bits de ancho.</span>
+      </div>
+      <p>En el código de Hamming, los bits de paridad van en las posiciones que son potencias de dos, y cada uno
+      cubre las posiciones cuyo número binario tiene ese bit en 1. Al leer, se recalculan las paridades: el
+      número binario que forman las que fallan, el <b>síndrome</b>, es directamente la posición del bit erróneo.</p>
+      <div class="lw" id="hm">
+        <div class="lt">Laboratorio · un código de Hamming SECDED</div>
+        <p class="ls">Cuatro bits de datos se codifican en ocho: tres paridades de Hamming en las posiciones 1, 2 y
+        4, y una paridad global en la posición 0. Elegís los datos, después tocás los bits guardados para
+        alterarlos, como haría una partícula, y el decodificador responde.</p>
+        <div class="fila" id="hmDatos"></div>
+        <div class="fila" id="hmPalabra" style="margin-top:6px"></div>
+        <div class="fila"><button id="hmLimpiar">quitar los errores</button></div>
+        <div class="datos" id="hmRes"></div>
+        <div class="nota" id="hmNota"></div>
+      </div>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">06</span>Dónde aparece en la electrónica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Sistema</th><th>Memorias que usa</th></tr></thead>
+        <tbody>
+          <tr><td>Microcontrolador</td><td>Flash NOR para el programa, SRAM para los datos, a veces EEPROM emulada en flash</td></tr>
+          <tr><td>Servidor</td><td>DRAM con ECC SECDED de 72 bits</td></tr>
+          <tr><td>Disco de estado sólido</td><td>NAND con un controlador que corrige errores y reparte el desgaste</td></tr>
+          <tr><td>Satélite</td><td>Memorias endurecidas a la radiación, con ECC y relectura periódica</td></tr>
+          <tr><td>Medidor de energía</td><td>FRAM o EEPROM para los registros que cambian seguido</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Mapa de memoria</div>
+        <p>Diseñar la decodificación de direcciones de un sistema con una EPROM de 32 K × 8, una SRAM de 8 K × 8 y
+        un periférico de 16 registros sobre un bus de 16 bits de dirección. Dibujar el mapa.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Leer y escribir una EEPROM I²C</div>
+        <p>Con un microcontrolador, escribir una página en una EEPROM serie, medir el tiempo de escritura y verificar
+        la lectura.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Hamming en firmware</div>
+        <p>Programar la codificación y la decodificación SECDED de un byte e inyectar errores para probar la
+        corrección.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Escribir seguido en la flash.</b> Un registro que se graba cada segundo agota 100 000 ciclos en poco
+        más de un día.</li>
+        <li><b>Olvidar que la flash se borra por bloques.</b> Cambiar un byte exige borrar y reescribir el bloque
+        entero.</li>
+        <li><b>Confundir capacidad en bits y en bytes.</b> Un chip de 8 Mbit tiene 1 MB.</li>
+        <li><b>Creer que la paridad simple corrige.</b> Solo detecta un número impar de errores.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuántas líneas de dirección tiene una memoria de 512 K × 16?</summary>
+        <div class="a"><p>19, porque \( 2^{19} = 524\,288 \).</p></div></details>
+      <details class="q"><summary>¿Cuántos bits de paridad necesita un Hamming que corrija un error en 16 bits?</summary>
+        <div class="a"><p>Cinco: \( 2^5 = 32 \ge 16 + 5 + 1 \). Con SECDED, seis.</p></div></details>
+      <details class="q"><summary>En un Hamming (7,4), las paridades 1 y 4 fallan y la 2 no. ¿Qué bit está mal?</summary>
+        <div class="a"><p>El de la posición 5 (101 en binario).</p></div></details>
+      <details class="q"><summary>¿Por qué una DRAM necesita refresco y una SRAM no?</summary>
+        <div class="a"><p>Porque guarda el bit como carga en un capacitor que se descarga por fugas; la SRAM lo guarda
+        en un biestable que se sostiene solo mientras hay alimentación.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Bruce Jacob, Spencer W. Ng y David T. Wang.</span>
+          <span class="ti">Memory Systems: Cache, DRAM, Disk</span>.
+          <span class="ed">Morgan Kaufmann, 2008.</span>
+          <span class="pq">La referencia sobre la organización, la temporización y el diseño de sistemas de memoria.</span></li>
+        <li><span class="au">Betty Prince.</span>
+          <span class="ti">Semiconductor Memories: A Handbook of Design, Manufacture and Application</span>.
+          <span class="ed">2.ª ed., Wiley, 1991.</span>
+          <span class="pq">Las celdas y los circuitos de cada tipo de memoria, desde adentro del chip.</span></li>
+        <li><span class="au">Shu Lin y Daniel J. Costello.</span>
+          <span class="ti">Error Control Coding</span>.
+          <span class="ed">2.ª ed., Pearson, 2004.</span>
+          <span class="pq">Los códigos de Hamming y sus sucesores, con la teoría completa.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/conversores-datos">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Conversores analógico-digitales y digital-analógicos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Memorias electrónicas»</b> de <b>Técnicas Digitales II</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Hamming SECDED (8,4): posiciones 1..7 de Hamming (paridades en 1, 2, 4;
+   datos en 3, 5, 6, 7) y paridad global en la posicion 0.
+   Sindrome = XOR de las posiciones en 1; paridad global = suma mod 2.
+   s = 0 y p = 0: sin error; p = 1: un error en la posicion s (s = 0 es la
+   paridad global); s != 0 y p = 0: dos errores, detectados sin corregir.
+   Control (Python, exhaustivo): los 16 datos x 8 errores simples se corrigen
+   y los 16 x 28 errores dobles se detectan. Datos 1011 -> posiciones 1..7
+   = 0110011, p0 = 0. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var datos = [1, 0, 1, 1], err = [0, 0, 0, 0, 0, 0, 0, 0];
+  var NOM = ["p0", "p1", "p2", "d1", "p4", "d2", "d3", "d4"];
+  function codificar(d){
+    var c = [0, 0, 0, d[0], 0, d[1], d[2], d[3]];
+    c[1] = c[3] ^ c[5] ^ c[7]; c[2] = c[3] ^ c[6] ^ c[7]; c[4] = c[5] ^ c[6] ^ c[7];
+    c[0] = (c[1] + c[2] + c[3] + c[4] + c[5] + c[6] + c[7]) % 2;
+    return c;
+  }
+  function boton(txt, on, sub, estilo){
+    var b = document.createElement("button");
+    b.innerHTML = "<span style='font-size:1.15em;font-weight:700'>" + txt + "</span><br><span style='font-size:.78em;opacity:.8'>" + sub + "</span>";
+    b.style.cssText = "min-width:44px;line-height:1.25;padding:6px 8px;" + (estilo || "");
+    if(on) b.classList.add("on");
+    return b;
+  }
+
+  function render(){
+    var c = codificar(datos), g = c.map(function(b, i){ return b ^ err[i]; });
+    var fd = $("hmDatos"); fd.innerHTML = "<span style='margin-right:6px'>datos:</span>";
+    datos.forEach(function(b, i){
+      var x = boton(b, b, "d" + (i + 1)); x.addEventListener("click", function(){ datos[i] ^= 1; err = [0, 0, 0, 0, 0, 0, 0, 0]; render(); }); fd.appendChild(x);
+    });
+    var fp = $("hmPalabra"); fp.innerHTML = "<span style='margin-right:6px'>guardado:</span>";
+    g.forEach(function(b, i){
+      var x = boton(b, false, i + " · " + NOM[i], err[i] ? "border-color:#ad2436;color:#ad2436;border-width:2px" : (i === 0 || i === 1 || i === 2 || i === 4) ? "opacity:.85" : "");
+      x.title = "alterar el bit " + i;
+      x.addEventListener("click", function(){ err[i] ^= 1; render(); }); fp.appendChild(x);
+    });
+    var s = 0; for(var i = 1; i < 8; i++) if(g[i]) s ^= i;
+    var p = g.reduce(function(a, b){ return a + b; }, 0) % 2, n = err.reduce(function(a, b){ return a + b; }, 0);
+    var est, nota;
+    if(s === 0 && p === 0){ est = "sin error"; nota = n ? "Con " + n + " bits alterados el código no ve nada: los errores forman otra palabra válida. SECDED garantiza corregir uno y detectar dos, no más." : "La palabra guardada es válida: todas las paridades dan cero."; }
+    else if(p === 1){
+      var corr = g.slice(); corr[s] ^= 1;
+      var dd = [corr[3], corr[5], corr[6], corr[7]].join("");
+      est = "un error en la posición " + s + " (" + NOM[s] + "), corregido";
+      nota = (s === 0 ? "El síndrome es cero pero la paridad global falla: el error está en la propia paridad global, y los datos están bien." : "El síndrome vale " + s + " = " + s.toString(2).padStart(3, "0") + " en binario: fallan las paridades " + [1, 2, 4].filter(function(q){ return s & q; }).join(" y ") + ", y la única posición cubierta por esas y no por las otras es la " + s + ".") +
+             (n > 1 ? " <b>Atención:</b> en realidad hay " + n + " bits alterados; con tres errores el decodificador corrige mal." : "") + " Datos recuperados: " + dd + ".";
+    } else { est = "dos errores detectados, no corregibles"; nota = "El síndrome no es cero pero la paridad global da bien: eso solo pasa con un número par de errores. El decodificador no puede saber cuáles son, así que avisa en lugar de corregir mal. En una computadora, esto detiene el sistema."; }
+    $("hmRes").innerHTML =
+      "<span>palabra guardada (posiciones 0 a 7)</span><b>" + g.join("") + "</b>" +
+      "<span>síndrome (paridades 4, 2, 1)</span><b>" + s.toString(2).padStart(3, "0") + " = " + s + "</b>" +
+      "<span>paridad global</span><b>" + (p ? "falla" : "bien") + "</b>" +
+      "<span>diagnóstico</span><b>" + est + "</b>";
+    $("hmNota").innerHTML = nota;
+  }
+  $("hmLimpiar").addEventListener("click", function(){ err = [0, 0, 0, 0, 0, 0, 0, 0]; render(); });
+  render();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
