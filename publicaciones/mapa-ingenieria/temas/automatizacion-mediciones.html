@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automatización de mediciones · Medidas Electrónicas I · Catto</title>
+<meta name="description" content="Por qué automatizar, las interfaces GPIB, USB-TMC, LAN/LXI y PXI, la biblioteca VISA, el lenguaje SCPI con los comandos comunes de IEEE 488.2, la estructura de un programa de medición en Python, el compromiso entre tiempo de integración y velocidad, y las placas de adquisición, con una consola SCPI interactiva que simula un multímetro programable. Contenido de Medidas Electrónicas I, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/automatizacion-mediciones">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Medidas Electrónicas I</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Medidas Electrónicas I</span> · 120 h · Contenido 11 de 11</div>
+    <h1>Automatización de mediciones</h1>
+    <p class="lead">Un comando mal escrito no detiene un programa de medición: el instrumento solo guarda un error en su cola, y si nadie la lee, los datos parecen buenos.</p>
+    <div class="chips">
+      <span class="chip hi">GPIB</span>
+      <span class="chip">VISA</span>
+      <span class="chip">SCPI</span>
+      <span class="chip">PyVISA</span>
+      <span class="chip">Adquisición de datos</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que">
+      <h2><span class="n">01</span>Por qué automatizar una medición</h2>
+      <p>Barrer la respuesta en frecuencia de un filtro en cien puntos, registrar una temperatura cada minuto durante
+      una semana o ensayar mil placas al final de una línea de producción no se puede hacer a mano. Un sistema
+      automático de medición controla los instrumentos desde una computadora: los configura, dispara las
+      mediciones, lee los resultados y los guarda con todos sus datos. Gana velocidad, repetibilidad y registro: cada
+      medición se hace exactamente igual, y queda documentado con qué instrumento, en qué condiciones y cuándo.</p>
+    </section>
+
+    <section id="arquitectura">
+      <h2><span class="n">02</span>Controlador, bus e instrumentos</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Interfaz</th><th>Características</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>GPIB (IEEE 488)</td><td>Bus paralelo de 8 bits, hasta 15 instrumentos, unos 20 m, alrededor de 1 MB/s</td><td>Bancos de laboratorio desde los años 70; todavía muy difundido</td></tr>
+          <tr><td>RS-232</td><td>Serie punto a punto, lenta</td><td>Instrumentos simples y equipos antiguos</td></tr>
+          <tr><td>USB-TMC</td><td>USB con una clase normalizada para instrumentos</td><td>Instrumentos de mesa actuales</td></tr>
+          <tr><td>LAN / LXI</td><td>Ethernet con reglas comunes de descubrimiento y disparo</td><td>Sistemas distribuidos y control remoto</td></tr>
+          <tr><td>PXI</td><td>Instrumentos en tarjetas dentro de un chasis con bus PCI Express y disparo sincronizado</td><td>Ensayo en producción, alta velocidad</td></tr>
+        </tbody>
+      </table></div>
+      <p>Para no escribir un programa distinto por interfaz, el software usa una biblioteca intermedia, <b>VISA</b>,
+      que abre una sesión con cualquier instrumento a partir de una dirección como <code>GPIB0::22::INSTR</code>,
+      <code>USB0::…::INSTR</code> o <code>TCPIP0::192.168.1.20::INSTR</code>, y ofrece las mismas funciones para
+      escribir y leer. En Python, el paquete PyVISA la usa; en la industria también se usa LabVIEW.</p>
+    </section>
+
+    <section id="scpi">
+      <h2><span class="n">03</span>El lenguaje SCPI</h2>
+      <p>Casi todos los instrumentos programables entienden <b>SCPI</b> (<i>Standard Commands for Programmable
+      Instruments</i>), un lenguaje de texto con comandos jerárquicos separados por dos puntos. Cada palabra tiene
+      una forma larga y una corta, la parte en mayúsculas: <code>MEASure:VOLTage:DC?</code> se puede escribir
+      <code>MEAS:VOLT:DC?</code>. Los comandos que terminan en <code>?</code> son consultas y devuelven una
+      respuesta. La norma IEEE 488.2 agrega comandos comunes que empiezan con asterisco:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Comando</th><th>Qué hace</th></tr></thead>
+        <tbody>
+          <tr><td><code>*IDN?</code></td><td>Devuelve fabricante, modelo, número de serie y versión</td></tr>
+          <tr><td><code>*RST</code></td><td>Lleva el instrumento a un estado conocido</td></tr>
+          <tr><td><code>*OPC?</code></td><td>Responde 1 cuando terminaron las operaciones pendientes: sirve para sincronizar</td></tr>
+          <tr><td><code>SYST:ERR?</code></td><td>Lee el próximo error de la cola; un programa robusto la vacía al final</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="programa">
+      <h2><span class="n">04</span>La estructura de un programa de medición</h2>
+      <p>Un programa bien hecho sigue siempre los mismos pasos: llevar el instrumento a un estado conocido,
+      configurarlo explícitamente (sin depender de cómo lo dejó el último usuario), disparar, leer, verificar que no
+      haya errores y guardar los datos con su contexto. En Python con PyVISA:</p>
+      <pre class="code"><code>import pyvisa
+rm = pyvisa.ResourceManager()
+dmm = rm.open_resource("USB0::0x1234::0x5678::MY001::INSTR")
+dmm.timeout = 5000                      # milisegundos
+print(dmm.query("*IDN?"))
+dmm.write("*RST")
+dmm.write("CONF:VOLT:DC 10")            # función y rango fijos
+dmm.write("VOLT:DC:NPLC 10")            # integración de 10 ciclos de red
+dmm.write("TRIG:COUN 5")
+lecturas = [float(x) for x in dmm.query("READ?").split(",")]
+print(dmm.query("SYST:ERR?"))           # debería ser +0,"No error"</code></pre>
+      <p>La velocidad de una medición automática la fija casi siempre el instrumento, no el bus. Un multímetro que
+      integra 10 ciclos de red tarda 200 ms por lectura a 50 Hz, y el rango automático y la puesta a cero automática
+      agregan más. Es el mismo compromiso visto en <a href="/publicaciones/mapa-ingenieria/temas/interferencias-medicion">interferencias</a>:
+      más tiempo de integración, menos ruido y más rechazo de 50 Hz, pero menos lecturas por segundo.</p>
+      <div class="lw" id="sc">
+        <div class="lt">Laboratorio · una consola SCPI</div>
+        <p class="ls">Un multímetro programable simulado, conectado a una fuente de 1,234567 V y a un resistor de
+        1000,12 Ω. Tocás un comando o lo escribís, y el instrumento responde como uno real, con su cola de errores y el
+        tiempo que tardaría cada lectura. El modelo es ficticio.</p>
+        <div class="fila" id="scRap"></div>
+        <div class="fila"><input type="text" id="scIn" placeholder="escribí un comando, por ejemplo MEAS:VOLT:DC?" style="flex:1;min-width:0" autocomplete="off" spellcheck="false"><button id="scEnv" class="pri">enviar</button></div>
+        <pre id="scCon" style="margin:8px 0 0;height:230px;overflow:auto;background:#0f141a;color:#c9d1d9;border-radius:6px;padding:10px 12px;font-size:12.5px;line-height:1.55;white-space:pre-wrap"></pre>
+        <div class="nota" id="scNota"></div>
+      </div>
+    </section>
+
+    <section id="daq">
+      <h2><span class="n">05</span>Placas de adquisición y buenas prácticas</h2>
+      <p>Para muchas señales a la vez se usan <b>placas de adquisición de datos</b> (DAQ): un conversor con un
+      multiplexor de entradas, entradas y salidas digitales, contadores y a veces salidas analógicas, conectadas por
+      USB, PCI Express o Ethernet. Al multiplexar, la frecuencia de muestreo se reparte entre los canales, y cambiar
+      de canal requiere un tiempo de asentamiento: con fuentes de impedancia alta, un canal contamina al siguiente.</p>
+      <p>Los datos automáticos valen tanto como su contexto. Cada archivo debería guardar, junto con las lecturas, la
+      identificación y la configuración de los instrumentos, las condiciones ambientales, la fecha de la última
+      calibración y la versión del programa.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Primer contacto</div>
+        <p>Conectar un multímetro o un osciloscopio por USB, identificarlo con <code>*IDN?</code> desde PyVISA y leer
+        una medición.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Respuesta en frecuencia automática</div>
+        <p>Programar un generador y un osciloscopio para barrer un filtro de 100 Hz a 100 kHz en 50 puntos logarítmicos
+        y graficar el diagrama de Bode.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Registro de larga duración</div>
+        <p>Registrar la tensión de una batería en descarga cada 10 s durante horas, guardando los datos con su
+        contexto en un archivo CSV.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>No configurar todo explícitamente.</b> El programa funciona hasta que alguien deja el instrumento en otro
+        modo.</li>
+        <li><b>Leer antes de que termine la medición.</b> Sin <code>*OPC?</code> o sin un tiempo de espera adecuado, se
+        leen datos viejos.</li>
+        <li><b>Ignorar la cola de errores.</b> Un comando mal escrito no detiene el programa: solo deja un error que nadie
+        lee.</li>
+        <li><b>Guardar números sin unidades ni contexto.</b> Un archivo de lecturas sin configuración es inservible un
+        mes después.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuánto tarda un multímetro en tomar 100 lecturas con NPLC 10 en una red de 50 Hz?</summary>
+        <div class="a"><p>Al menos 100 · 200 ms = 20 s, más el tiempo propio de cada conversión.</p></div></details>
+      <details class="q"><summary>¿Cuál es la forma corta de <code>SENSe:VOLTage:DC:RANGe</code>?</summary>
+        <div class="a"><p><code>SENS:VOLT:DC:RANG</code>, y como SENSe es opcional, también <code>VOLT:DC:RANG</code>.</p></div></details>
+      <details class="q"><summary>¿Para qué sirve <code>*OPC?</code>?</summary>
+        <div class="a"><p>Para esperar a que el instrumento termine lo pendiente antes de seguir: responde 1 recién
+        entonces.</p></div></details>
+      <details class="q"><summary>¿Qué ventaja da VISA frente a programar cada interfaz?</summary>
+        <div class="a"><p>Que el mismo programa funciona con el instrumento conectado por GPIB, USB o red, cambiando solo
+        la dirección.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">SCPI Consortium.</span>
+          <span class="ti">Standard Commands for Programmable Instruments (SCPI), Volume 1: Syntax and Style</span>.
+          <span class="ed">SCPI Consortium, 1999.</span>
+          <span class="pq">La norma del lenguaje: sintaxis, jerarquía de comandos y formato de las respuestas.</span></li>
+        <li><span class="au">John Park y Steve Mackay.</span>
+          <span class="ti">Practical Data Acquisition for Instrumentation and Control Systems</span>.
+          <span class="ed">Newnes, 2003.</span>
+          <span class="pq">Placas de adquisición, interfaces y software para sistemas de medición.</span></li>
+        <li><span class="au">Alan S. Morris y Reza Langari.</span>
+          <span class="ti">Measurement and Instrumentation: Theory and Application</span>.
+          <span class="ed">3.ª ed., Academic Press, 2020.</span>
+          <span class="pq">Los sistemas de medición computarizados en el contexto de la instrumentación completa.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/ensayos-normas">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Ensayos según normas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Fin de la materia →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Automatización de mediciones»</b> de <b>Medidas Electrónicas I</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Consola SCPI con un multimetro simulado (modelo ficticio). Estado:
+   funcion (VOLT:DC o RES), rango, NPLC, cantidad de disparos y cola de
+   errores. Lecturas: valor verdadero + ruido gaussiano de 20 uV / sqrt(NPLC)
+   (0,02 ohm / sqrt(NPLC) en resistencia), con mulberry32 de semilla fija.
+   Tiempo por lectura: NPLC * 20 ms + 2 ms. Formato de respuesta SCPI:
+   +1.23456700E+00. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var VV = 1.234567, RV = 1000.12;
+  var est, rnd, cola;
+  function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function reset(){ est = { fn: "VOLT:DC", rango: "AUTO", nplc: 10, n: 1 }; }
+  function gauss(){ var u = Math.max(rnd(), 1e-12), v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  function sci(x){ var e = x === 0 ? 0 : Math.floor(Math.log10(Math.abs(x))), m = x / Math.pow(10, e); return (x < 0 ? "-" : "+") + Math.abs(m).toFixed(8) + "E" + (e < 0 ? "-" : "+") + String(Math.abs(e)).padStart(2, "0"); }
+  function lectura(){ return est.fn === "RES" ? RV + gauss() * 0.02 / Math.sqrt(est.nplc) : VV + gauss() * 20e-6 / Math.sqrt(est.nplc); }
+  function error(c, m){ cola.push(c + ',"' + m + '"'); }
+  function norm(s){ return s.trim().toUpperCase().replace(/^:/, "").replace(/\s+/g, " "); }
+  /* acepta forma corta y larga de cada palabra clave */
+  function palabra(p){ return p.replace(/^SENSE?$/, "SENS").replace(/^VOLTAGE$/, "VOLT").replace(/^CONFIGURE$/, "CONF").replace(/^MEASURE$/, "MEAS").replace(/^RESISTANCE$/, "RES").replace(/^TRIGGER$/, "TRIG").replace(/^COUNT$/, "COUN").replace(/^SYSTEM$/, "SYST").replace(/^ERROR$/, "ERR").replace(/^FETCH$/, "FETC").replace(/^RANGE$/, "RANG"); }
+  function canon(cmd){
+    var sp = cmd.indexOf(" "), cab = sp < 0 ? cmd : cmd.slice(0, sp), arg = sp < 0 ? "" : cmd.slice(sp + 1).trim();
+    var q = /\?$/.test(cab); cab = cab.replace(/\?$/, "");
+    var ps = cab.split(":").map(palabra); if(ps[0] === "SENS") ps.shift();
+    return { cab: ps.join(":") + (q ? "?" : ""), arg: arg };
+  }
+  function ejecutar(linea){
+    var c = norm(linea); if(!c) return null;
+    if(c === "*IDN?") return "CATTO,DMM-65 (simulado),000001,1.0";
+    if(c === "*RST"){ reset(); return ""; }
+    if(c === "*CLS"){ cola = []; return ""; }
+    if(c === "*OPC?") return "1";
+    var k = canon(c), t;
+    if(k.cab === "SYST:ERR?") return cola.length ? cola.shift() : '+0,"No error"';
+    if(k.cab === "CONF:VOLT:DC"){ est.fn = "VOLT:DC"; est.rango = k.arg || "AUTO"; return ""; }
+    if(k.cab === "CONF:RES"){ est.fn = "RES"; est.rango = k.arg || "AUTO"; return ""; }
+    if(k.cab === "VOLT:DC:NPLC" || k.cab === "RES:NPLC"){
+      var n = parseFloat(k.arg); if([0.02, 0.2, 1, 10, 100].indexOf(n) < 0){ error(-222, "Data out of range"); return ""; } est.nplc = n; return ""; }
+    if(k.cab === "VOLT:DC:NPLC?" || k.cab === "RES:NPLC?") return sci(est.nplc);
+    if(k.cab === "TRIG:COUN"){ var m = parseInt(k.arg, 10); if(!(m >= 1 && m <= 50)){ error(-222, "Data out of range"); return ""; } est.n = m; return ""; }
+    if(k.cab === "READ?"){ var r = []; for(var i = 0; i < est.n; i++) r.push(sci(lectura())); t = est.n * (est.nplc * 20 + 2); return { txt: r.join(","), ms: t }; }
+    if(k.cab === "MEAS:VOLT:DC?"){ reset(); return { txt: sci(lectura()), ms: 10 * 20 + 2 + 30 }; }
+    if(k.cab === "MEAS:RES?"){ reset(); est.fn = "RES"; return { txt: sci(lectura()), ms: 10 * 20 + 2 + 30 }; }
+    error(-113, "Undefined header"); return "";
+  }
+  var RAP = ["*IDN?", "*RST", "CONF:VOLT:DC 10", "VOLT:DC:NPLC 1", "VOLT:DC:NPLC 100", "TRIG:COUN 5", "READ?", "MEAS:RES?", "SYST:ERR?", "VOLT:DC:NPLC 7"];
+  function escribir(txt, color){ var con = $("scCon"), s = document.createElement("span"); s.style.color = color; s.textContent = txt + "\n"; con.appendChild(s); con.scrollTop = con.scrollHeight; }
+  function enviar(cmd){
+    if(!cmd.trim()) return;
+    escribir("> " + cmd.trim(), "#58a6ff");
+    var r = ejecutar(cmd), nota;
+    if(r && typeof r === "object"){
+      escribir(r.txt, "#7ee787");
+      var vals = r.txt.split(",").map(parseFloat), m = vals.reduce(function(a, b){ return a + b; }, 0) / vals.length;
+      var s = vals.length > 1 ? Math.sqrt(vals.reduce(function(a, b){ return a + (b - m) * (b - m); }, 0) / (vals.length - 1)) : null;
+      nota = "La respuesta tardaría unos " + (r.ms >= 1000 ? (r.ms / 1000).toFixed(1).replace(".", ",") + " s" : Math.round(r.ms) + " ms") + " con NPLC " + String(est.nplc).replace(".", ",") + ". " + (s !== null ? "Desviación estándar de las " + vals.length + " lecturas: " + (est.fn === "RES" ? (s * 1e3).toFixed(1).replace(".", ",") + " mΩ" : (s * 1e6).toFixed(1).replace(".", ",") + " µV") + ". Probá con otro NPLC y compará el ruido con el tiempo." : "");
+    } else if(r){ escribir(r, "#7ee787"); nota = ""; }
+    else nota = cola.length ? "El instrumento no respondió nada, pero dejó un error en la cola: leelo con SYST:ERR?." : "Comando aceptado. Los comandos sin ? no devuelven respuesta.";
+    $("scNota").innerHTML = nota;
+  }
+  RAP.forEach(function(c){ var b = document.createElement("button"); b.textContent = c; b.style.fontFamily = "var(--mono, monospace)"; b.addEventListener("click", function(){ enviar(c); }); $("scRap").appendChild(b); });
+  $("scEnv").addEventListener("click", function(){ enviar($("scIn").value); $("scIn").value = ""; });
+  $("scIn").addEventListener("keydown", function(e){ if(e.key === "Enter"){ enviar($("scIn").value); $("scIn").value = ""; } });
+  reset(); rnd = mulberry(42); cola = [];
+  escribir("Multímetro simulado listo. Dirección: USB0::0x1234::0x5678::MY001::INSTR", "#8b93a3");
+  $("scNota").innerHTML = "Empezá por *IDN? y *RST. Después configurá, dispará con READ? y revisá la cola de errores.";
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
