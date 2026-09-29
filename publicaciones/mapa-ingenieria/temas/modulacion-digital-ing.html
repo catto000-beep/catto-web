@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modulación digital · Sistemas de Comunicaciones · Catto</title>
+<meta name="description" content="Los bits y los símbolos, la interferencia entre símbolos, el criterio de Nyquist y el pulso de coseno alzado, el diagrama de ojo, las modulaciones ASK, FSK, PSK y QAM con sus constelaciones, el código Gray y la eficiencia espectral, con laboratorio interactivo del diagrama de ojo. Contenido de Sistemas de Comunicaciones, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/modulacion-digital-ing">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Sistemas de Comunicaciones</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Sistemas de Comunicaciones</span> · 96 h · Contenido 8 de 11</div>
+    <h1>Modulación digital</h1>
+    <p class="lead">Con pulsos de ancho de banda mínimo, un error del 10 % en el instante de muestreo cierra el ojo un 40 %. Con el doble de banda, el mismo error lo cierra menos del 10 %.</p>
+    <div class="chips">
+      <span class="chip hi">Símbolos y baudios</span>
+      <span class="chip">Criterio de Nyquist</span>
+      <span class="chip">Coseno alzado</span>
+      <span class="chip">Diagrama de ojo</span>
+      <span class="chip">QAM y PSK</span>
+    </div>
+    <hr class="rule">
+
+    <section id="simbolos">
+      <h2><span class="n">01</span>Bits, símbolos y pulsos</h2>
+      <p>Un sistema digital agrupa los bits de a \( k \) y transmite uno de \( M = 2^k \) <b>símbolos</b> posibles. Cada símbolo es
+      un pulso de forma conocida cuya amplitud, fase o frecuencia depende de los bits. Hay que distinguir dos velocidades:</p>
+      <div class="form">
+        \[ R_s = \frac{R_b}{\log_2 M} \]
+        <span class="cap">\( R_b \) es la velocidad de bits, en bit/s, y \( R_s \) la de símbolos, en baudios. Con 16 símbolos cada uno lleva 4 bits, y 100 Mbit/s se transmiten a 25 Mbaudios. El ancho de banda depende de \( R_s \), no de \( R_b \).</span>
+      </div>
+      <p>La presentación de las modulaciones con los equipos está en <a href="/publicaciones/mapa-electronica/temas/modulacion-digital">modulación
+      digital</a>, de la tecnicatura. Aquí se trabaja con los modelos: la forma del pulso, el ancho de banda y la
+      <a href="/publicaciones/mapa-ingenieria/temas/envolvente-compleja">envolvente compleja</a> de cada modulación.</p>
+    </section>
+
+    <section id="nyquist">
+      <h2><span class="n">02</span>Interferencia entre símbolos y el criterio de Nyquist</h2>
+      <p>Un pulso limitado en banda dura, en teoría, un tiempo infinito, y se superpone con los vecinos. Esa
+      <b>interferencia entre símbolos</b> (ISI) no molesta si en el instante de muestreo de cada símbolo los demás pulsos
+      pasan por cero. Es el <b>criterio de Nyquist</b>: el pulso \( p(t) \) debe valer 1 en \( t = 0 \) y 0 en todos los múltiplos
+      de \( T = 1/R_s \). El pulso más angosto en frecuencia que lo cumple es el sinc, que ocupa \( R_s/2 \); en la práctica se
+      usa el <b>coseno alzado</b>, que cae más rápido en el tiempo a cambio de un exceso de banda α:</p>
+      <div class="form">
+        \[ p(t) = \frac{\sin(\pi t/T)}{\pi t/T} \cdot \frac{\cos(\pi \alpha t/T)}{1 - (2\alpha t/T)^2} \]
+        \[ B = \frac{(1 + \alpha)\, R_s}{2} \]
+        <span class="cap">α va de 0 (el sinc) a 1. Con α = 0,35, habitual en enlaces satelitales, un canal de 10 Mbaudios en banda base ocupa 6,75 MHz. Normalmente el coseno alzado se reparte entre el transmisor y el receptor, con un filtro de raíz de coseno alzado en cada extremo.</span>
+      </div>
+      <p>El <b>diagrama de ojo</b> es la herramienta para ver la ISI: se superponen en el osciloscopio los tramos de la señal
+      de dos períodos de símbolo, disparando con el reloj. La abertura vertical del ojo es el margen contra el ruido; la
+      horizontal, contra los errores en el instante de muestreo.</p>
+      <div class="lw" id="ojo">
+        <div class="lt">Laboratorio · el diagrama de ojo</div>
+        <p class="ls">240 símbolos binarios al azar (±1) con pulsos de coseno alzado, pasados por un canal pasabajos de primer
+        orden. La línea amarilla es el instante de muestreo, que se puede correr respecto del óptimo. La abertura se calcula
+        con el peor caso de todos los símbolos, relativa a la amplitud media.</p>
+        <div class="fila"><label>Exceso de banda α = <b id="ojAv"></b></label><input type="range" id="ojA" min="0" max="1" step="0.05" value="0.35"></div>
+        <div class="fila">
+          <select id="ojC">
+            <option value="0" selected>Canal sin limitación de banda</option>
+            <option value="1">Canal RC con fc = Rs</option>
+            <option value="0.5">Canal RC con fc = Rs/2</option>
+            <option value="0.3">Canal RC con fc = 0,3 Rs</option>
+          </select>
+        </div>
+        <div class="fila"><label>Error en el instante de muestreo = <b id="ojOv"></b></label><input type="range" id="ojO" min="0" max="12" step="1" value="0"></div>
+        <canvas id="ojLienzo" style="display:block;width:100%;max-width:620px;height:240px;margin:6px auto 0"></canvas>
+        <div class="datos" id="ojDatos"></div>
+        <div class="nota" id="ojNota"></div>
+      </div>
+    </section>
+
+    <section id="pasabanda">
+      <h2><span class="n">03</span>Modulaciones pasabanda</h2>
+      <p>Para transmitir por radio, el pulso modula una portadora. Escrita como envolvente compleja, cada modulación es un
+      conjunto de puntos en el plano I/Q, la <b>constelación</b>, y la señal salta de punto en punto a la velocidad de
+      símbolos:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Modulación</th><th>Bits por símbolo</th><th>Constelación</th><th>Uso típico</th></tr></thead>
+        <tbody>
+          <tr><td>ASK / OOK</td><td>1</td><td>Dos puntos sobre el eje I, uno en el origen</td><td>Controles remotos, fibra óptica de corto alcance</td></tr>
+          <tr><td>FSK</td><td>1 o más</td><td>Frecuencias distintas: no es una constelación plana</td><td>Enlaces de baja velocidad, Bluetooth (GFSK)</td></tr>
+          <tr><td>BPSK</td><td>1</td><td>Dos puntos opuestos</td><td>Enlaces con mucho ruido, GPS</td></tr>
+          <tr><td>QPSK</td><td>2</td><td>Cuatro puntos en un círculo</td><td>Satélite, telefonía celular</td></tr>
+          <tr><td>M-QAM</td><td>\( \log_2 M \)</td><td>Una grilla de \( \sqrt{M} \times \sqrt{M} \)</td><td>Wi-Fi, cable módem, microondas</td></tr>
+        </tbody>
+      </table></div>
+      <p>Una modulación pasabanda con pulsos de coseno alzado ocupa el doble que en banda base, \( (1 + \alpha) R_s \),
+      porque el espectro se desdobla a ambos lados de la portadora. Los bits se asignan a los puntos con <b>código Gray</b>:
+      los puntos vecinos difieren en un solo bit, y el error más probable, confundir un punto con su vecino, cuesta un solo
+      bit.</p>
+    </section>
+
+    <section id="eficiencia">
+      <h2><span class="n">04</span>Eficiencia espectral</h2>
+      <div class="form">
+        \[ \eta_B = \frac{R_b}{B} = \frac{\log_2 M}{1 + \alpha} \ \ \mathrm{bit/s/Hz} \]
+        <span class="cap">Con α = 0,25, QPSK da 1,6 bit/s/Hz y 256-QAM, 6,4 bit/s/Hz. Las modulaciones de muchos puntos aprovechan mejor el espectro, pero los puntos quedan más juntos y necesitan más relación señal a ruido para la misma tasa de error.</span>
+      </div>
+      <p>Por eso los sistemas modernos adaptan la modulación al estado del canal: un teléfono cerca de la antena usa 256-QAM
+      y lejos baja a QPSK. La relación entre la tasa de error, la potencia y el número de puntos es el tema de la unidad de
+      ruido en modulaciones digitales. Las constelaciones M-PSK y FSK, con envolvente constante o casi constante, se
+      prefieren cuando el amplificador de potencia tiene que trabajar cerca de la saturación.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Ojo en un cable</div>
+        <p>Transmitir una secuencia seudoaleatoria por un cable largo y observar el diagrama de ojo en el osciloscopio,
+        disparando con el reloj de datos. Aumentar la velocidad hasta que el ojo se cierre.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Constelación</div>
+        <p>Con un generador vectorial y un analizador, observar las constelaciones de QPSK y 16-QAM y la magnitud del vector
+        de error (EVM).</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Espectro y α</div>
+        <p>Medir el ancho de banda ocupado de una QPSK para varios valores de α y compararlo con \( (1 + \alpha)R_s \).</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Confundir baudios con bit/s.</b> Coinciden solo en las modulaciones binarias.</li>
+        <li><b>Creer que el sinc es la mejor opción.</b> Ocupa la banda mínima, pero su ojo se cierra con el menor error de sincronismo.</li>
+        <li><b>Olvidar que el canal agrega ISI.</b> Aunque el pulso cumpla el criterio de Nyquist, un canal limitado en banda lo deforma, y hace falta un ecualizador.</li>
+        <li><b>Asignar los bits a los puntos en orden binario natural.</b> Sin código Gray, un error entre vecinos puede costar varios bits.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿A cuántos baudios se transmiten 60 Mbit/s con 64-QAM?</summary>
+        <div class="a"><p>A 10 Mbaudios: cada símbolo lleva 6 bits.</p></div></details>
+      <details class="q"><summary>¿Qué ancho de banda ocupa una QPSK de 20 Mbit/s con α = 0,2?</summary>
+        <div class="a"><p>\( R_s \) = 10 Mbaudios y \( B = 1{,}2 \cdot 10 = 12 \) MHz.</p></div></details>
+      <details class="q"><summary>¿Qué mide la abertura vertical del ojo?</summary>
+        <div class="a"><p>El margen de amplitud entre los símbolos en el instante de muestreo: cuánto ruido se puede sumar antes de equivocarse.</p></div></details>
+      <details class="q"><summary>¿Por qué un α mayor tolera mejor los errores de sincronismo?</summary>
+        <div class="a"><p>Porque las colas del pulso decaen más rápido y la ISI crece más despacio al alejarse del instante óptimo.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">John G. Proakis y Masoud Salehi.</span>
+          <span class="ti">Digital Communications</span>.
+          <span class="ed">5.ª ed., McGraw-Hill, 2008.</span>
+          <span class="pq">La referencia sobre modulaciones digitales, el criterio de Nyquist y la ecualización.</span></li>
+        <li><span class="au">Bernard Sklar.</span>
+          <span class="ti">Digital Communications: Fundamentals and Applications</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 2001.</span>
+          <span class="pq">La ISI, el coseno alzado y las modulaciones pasabanda con ejemplos numéricos.</span></li>
+        <li><span class="au">B. P. Lathi y Zhi Ding.</span>
+          <span class="ti">Modern Digital and Analog Communication Systems</span>.
+          <span class="ed">5.ª ed., Oxford University Press, 2019.</span>
+          <span class="pq">La transmisión digital en banda base y pasabanda en un mismo marco.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/ruido-modulaciones-analogicas">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Ruido en modulaciones analógicas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Modulación digital»</b> de <b>Sistemas de Comunicaciones</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Diagrama de ojo: 240 simbolos +-1 (mulberry32, semilla 12345) con pulsos de
+   coseno alzado truncados a +-8 T, 32 muestras por simbolo, canal RC de
+   primer orden y(n) = y(n-1) + c (x(n) - y(n-1)), c = 1 - exp(-2 pi fc / 32 Rs).
+   Abertura = (min de los +1 - max de los -1) / 2, relativa a la amplitud media,
+   en la fase optima corrida "off" treintaidosavos de T.
+   Control (Python): a 0 -> 1 / 0,6005 / 0,195 con off 0 / 3 / 6;
+   a 0,35 fc Rs/2 off 3 -> 0,7321; a 1 fc 0,3 Rs off 6 -> 0,4836;
+   a 0 fc Rs/2 off 0 -> 0,8082. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("ojLienzo"), ctx = cv.getContext("2d");
+  var OS = 32, NSYM = 240, SPAN = 8;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function mulberry32(a){ return function(){ a = (a + 0x6D2B79F5) | 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  var rnd = mulberry32(12345), S = [];
+  for(var i = 0; i < NSYM; i++) S.push(rnd() < 0.5 ? 1 : -1);
+  function rc(t, a){
+    if(Math.abs(t) < 1e-9) return 1;
+    if(a > 0 && Math.abs(Math.abs(t) - 1 / (2 * a)) < 1e-6) return Math.PI / 4 * Math.sin(Math.PI * t) / (Math.PI * t);
+    return Math.sin(Math.PI * t) / (Math.PI * t) * Math.cos(Math.PI * a * t) / (1 - (2 * a * t) * (2 * a * t));
+  }
+  function senal(a, fc){
+    var N = NSYM * OS, x = new Float64Array(N);
+    for(var i = 0; i < NSYM; i++) for(var k = -SPAN * OS; k <= SPAN * OS; k++){ var n = i * OS + k; if(n >= 0 && n < N) x[n] += S[i] * rc(k / OS, a); }
+    if(fc > 0){ var c = 1 - Math.exp(-2 * Math.PI * fc / OS), p = 0; for(var m = 0; m < N; m++){ p += c * (x[m] - p); x[m] = p; } }
+    return x;
+  }
+  function ab(y, ph){
+    var mu = 1e9, md = -1e9, su = 0, sd = 0, nu = 0, nd = 0;
+    for(var i = SPAN + 2; i < NSYM - SPAN - 2; i++){ var v = y[i * OS + ph]; if(S[i] > 0){ mu = Math.min(mu, v); su += v; nu++; } else { md = Math.max(md, v); sd += v; nd++; } }
+    return [(mu - md) / 2, (su / nu - sd / nd) / 2];
+  }
+
+  function pintar(){
+    var a = +$("ojA").value, fc = +$("ojC").value, off = +$("ojO").value;
+    $("ojAv").textContent = coma(a, 2); $("ojOv").textContent = off ? coma(off / OS, 3) + " T" : "0 (instante óptimo)";
+    var y = senal(a, fc), ph0 = 0, best = -1e9;
+    for(var p = 0; p < OS; p++){ var q = ab(y, p)[0]; if(q > best){ best = q; ph0 = p; } }
+    var g = ab(y, ph0)[1], abre = ab(y, (ph0 + off) % OS)[0] / g, abre0 = best / g;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 12, x1 = W - 12, y0 = 10, y1 = H - 22, ym = (y0 + y1) / 2, A = (y1 - y0) / 2 / 1.6;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.beginPath(); ctx.moveTo(x0, ym); ctx.lineTo(x1, ym); ctx.stroke();
+      [-1, 1].forEach(function(v){ ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.moveTo(x0, ym - v * A); ctx.lineTo(x1, ym - v * A); ctx.stroke(); });
+      ctx.setLineDash([]);
+      /* trazos: ventana de 2 T centrada en el instante optimo */
+      ctx.strokeStyle = "rgba(88,166,255,.22)"; ctx.lineWidth = 1;
+      for(var i2 = SPAN + 2; i2 < NSYM - SPAN - 3; i2++){
+        var c0 = i2 * OS + ph0 - OS;
+        ctx.beginPath();
+        for(var k = 0; k <= 2 * OS; k++){ var X = x0 + k / (2 * OS) * (x1 - x0), Yv = ym - y[c0 + k] / g * A; if(k) ctx.lineTo(X, Yv); else ctx.moveTo(X, Yv); }
+        ctx.stroke();
+      }
+      /* instante de muestreo */
+      var xs = x0 + (OS + off) / (2 * OS) * (x1 - x0);
+      ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(xs, y0); ctx.lineTo(xs, y1); ctx.stroke();
+      if(abre > 0){ ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(xs, ym - abre * A); ctx.lineTo(xs, ym + abre * A); ctx.stroke(); }
+      ctx.lineWidth = 1; ctx.fillStyle = "#6b7484"; ctx.textAlign = "center";
+      ctx.fillText("−T", x0 + 8, y1 + 14); ctx.fillText("0", (x0 + x1) / 2, y1 + 14); ctx.fillText("+T", x1 - 8, y1 + 14);
+    }
+
+    var anchoB = (1 + a) / 2;
+    $("ojDatos").innerHTML =
+      "<span>ancho de banda en banda base</span><b>" + coma(anchoB, 3) + " R<sub>s</sub></b>" +
+      "<span>abertura en el instante óptimo</span><b>" + coma(100 * abre0, 1) + " %</b>" +
+      "<span>abertura en el instante elegido</span><b>" + (abre > 0 ? coma(100 * abre, 1) + " %" : "cerrado") + "</b>";
+    var nota;
+    if(abre <= 0) nota = "<b>El ojo está cerrado:</b> en el peor caso, la interferencia de los vecinos supera al símbolo y se producen errores aun sin ruido.";
+    else if(fc > 0 && abre0 < 0.9) nota = "El canal limita la banda: los pulsos se estiran, se superponen en el instante de muestreo y el ojo pierde " + coma(100 * (1 - abre0), 0) + " % de su abertura. Un ecualizador puede recuperarla.";
+    else if(off > 0) nota = "Con el instante corrido " + coma(off / OS, 3) + " T, la abertura cae al " + coma(100 * abre, 0) + " %. " + (a < 0.3 ? "Con α chico las colas del pulso son largas y el ojo es angosto." : "Con α grande el ojo es más ancho y tolera mejor el error de sincronismo.");
+    else nota = "En el instante óptimo el pulso cumple el criterio de Nyquist: los vecinos pasan por cero y el ojo está abierto del todo. Corriendo el instante de muestreo se ve el ancho del ojo.";
+    $("ojNota").innerHTML = nota;
+  }
+  ["ojA", "ojC", "ojO"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
