@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comunicaciones y protocolos seriales · Técnicas Digitales II · Catto</title>
+<meta name="description" content="Por qué los buses pasaron de paralelo a serie, los enlaces sincrónicos, asincrónicos y con reloj embebido, UART, SPI e I²C con el cálculo de las pull-up, los buses de campo CAN y RS-485 con el arbitraje y el relleno de bits, y los enlaces rápidos con LVDS, codificación 8b/10b y 128b/130b y diagrama de ojo, con laboratorio interactivo que dibuja y mide tramas. Contenido de Técnicas Digitales II, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/protocolos-seriales">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Técnicas Digitales II</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Técnicas Digitales II</span> · 120 h · Contenido 5 de 6</div>
+    <h1>Comunicaciones y protocolos seriales</h1>
+    <p class="lead">Una trama CAN lleva a lo sumo 8 bytes de datos y 47 bits de control. Por eso, aun a 1 Mbit/s, el bus de un auto no transporta más de unos 72 kB/s de datos útiles.</p>
+    <div class="chips">
+      <span class="chip hi">UART</span>
+      <span class="chip">SPI</span>
+      <span class="chip">I²C</span>
+      <span class="chip">CAN</span>
+      <span class="chip">Codificación de línea</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que">
+      <h2><span class="n">01</span>Por qué casi todo es serie</h2>
+      <p>Durante décadas los datos viajaron en paralelo: ocho, dieciséis o treinta y dos líneas a la vez. A alta
+      velocidad eso deja de funcionar: los bits de un mismo dato llegan con diferencias de tiempo por las
+      distintas longitudes de las pistas, y cada línea que conmuta agrega ruido a las vecinas. Una sola línea
+      diferencial, bien adaptada, llega hoy a decenas de gigabits por segundo. Por eso USB, SATA, PCI Express y
+      Ethernet reemplazaron a sus antecesores paralelos, y en la placa, dos o tres cables de un bus serie
+      reemplazan a un bus de datos completo.</p>
+      <p>La diferencia fundamental es cómo sabe el receptor cuándo leer cada bit. En un enlace <b>sincrónico</b>
+      viaja un reloj aparte; en uno <b>asincrónico</b>, los dos extremos acuerdan la velocidad y se sincronizan con
+      un bit de arranque; en los enlaces rápidos, el reloj va <b>embebido</b> en los datos y el receptor lo
+      recupera. Los circuitos se presentan en la tecnicatura, en <a href="/publicaciones/mapa-electronica/temas/comunicacion-serie">comunicación
+      serie</a> y <a href="/publicaciones/mapa-electronica/temas/buses-serie">buses serie</a>.</p>
+    </section>
+
+    <section id="placa">
+      <h2><span class="n">02</span>Dentro de la placa: UART, SPI e I²C</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>UART</th><th>SPI</th><th>I²C</th></tr></thead>
+        <tbody>
+          <tr><td>Líneas</td><td>TX y RX</td><td>SCLK, MOSI, MISO y una selección por esclavo</td><td>SDA y SCL, de drenaje abierto con resistencias de pull-up</td></tr>
+          <tr><td>Reloj</td><td>Asincrónico, velocidad acordada</td><td>Sincrónico, lo genera el maestro</td><td>Sincrónico, lo genera el maestro</td></tr>
+          <tr><td>Velocidad típica</td><td>9600 a 1 Mbit/s</td><td>1 a 50 MHz</td><td>100 kHz, 400 kHz o 1 MHz</td></tr>
+          <tr><td>Dispositivos</td><td>Dos</td><td>Uno por línea de selección</td><td>Hasta 127, por dirección de 7 bits</td></tr>
+          <tr><td>Sobrecarga</td><td>Arranque y parada por byte</td><td>Ninguna</td><td>Dirección y un bit de reconocimiento por byte</td></tr>
+        </tbody>
+      </table></div>
+      <p>La UART tolera una diferencia de velocidad limitada entre los dos extremos: el receptor muestrea en el
+      centro de cada bit contando desde el flanco de arranque, y al décimo bit el error acumulado no puede
+      superar medio bit. En la práctica, la suma de los errores de los dos relojes debe quedar por debajo de
+      alrededor del 4 %, lo que descarta a veces el oscilador RC interno.</p>
+      <p>En I²C, las líneas se ponen en bajo activamente y suben por las resistencias de pull-up. El tiempo de
+      subida, que la norma limita, fija el valor máximo de la resistencia:</p>
+      <div class="form">
+        \[ R_{p,max} = \frac{t_r}{0{,}8473\; C_b} \]
+        <span class="cap">\( t_r \) es el tiempo de subida entre el 30 % y el 70 % y \( C_b \) la capacidad total del bus. A 400 kHz (\( t_r \le 300 \) ns) con 200 pF de bus, la resistencia no puede superar 1,8 kΩ. Con más dispositivos o cables más largos, hay que bajar la velocidad.</span>
+      </div>
+    </section>
+
+    <section id="campo">
+      <h2><span class="n">03</span>Buses de campo: CAN y RS-485</h2>
+      <p>Fuera de la placa, entre equipos, los buses usan señales <b>diferenciales</b>: dos cables trenzados que
+      llevan la señal y su opuesta, de modo que el ruido que afecta a los dos por igual se cancela en el receptor.
+      <b>RS-485</b> define solo la capa eléctrica, para hasta 32 cargas unitarias sobre 1200 m. <b>CAN</b>, diseñado
+      para los autos, agrega un protocolo completo:</p>
+      <ul>
+        <li><b>Arbitraje no destructivo.</b> El bit 0 es dominante: si dos nodos transmiten a la vez, el que envía
+        un 1 y lee un 0 se retira sin perder nada. Gana el identificador más bajo, que es el de mayor
+        prioridad.</li>
+        <li><b>Relleno de bits.</b> Después de cinco bits iguales se inserta uno opuesto, para que haya flancos
+        suficientes para resincronizar los relojes. El largo de la trama depende de los datos.</li>
+        <li><b>Detección de errores.</b> CRC de 15 bits, reconocimiento de todos los receptores y contadores que
+        desconectan a un nodo defectuoso.</li>
+      </ul>
+      <div class="lw" id="sr">
+        <div class="lt">Laboratorio · el costo de una trama</div>
+        <p class="ls">Se envían \( n \) bytes por el protocolo elegido. El gráfico muestra los primeros bits de la
+        trama, con sus campos (el primer dato es 0x4B), y abajo, cuánto de la trama son datos útiles. En CAN, el
+        identificador es 0x123 y se calcula el relleno real de bits con el CRC.</p>
+        <div class="fila">
+          <select id="srP">
+            <option value="uart" selected>UART 8N1</option>
+            <option value="spi">SPI</option>
+            <option value="i2c">I²C, escritura a la dirección 0x50</option>
+            <option value="can">CAN 2.0A, identificador 0x123</option>
+          </select>
+          <select id="srV"></select>
+        </div>
+        <div class="fila"><label>Bytes de datos n = <b id="srNv"></b></label><input type="range" id="srN" min="1" max="8" step="1" value="8"></div>
+        <canvas id="srLienzo" style="display:block;width:100%;max-width:620px;height:225px;margin:6px auto 0"></canvas>
+        <div class="datos" id="srDatos"></div>
+        <div class="nota" id="srNota"></div>
+      </div>
+    </section>
+
+    <section id="alta">
+      <h2><span class="n">04</span>Alta velocidad</h2>
+      <p>Por encima de unos cientos de megabits por segundo, cada enlace es una <a href="/publicaciones/mapa-ingenieria/temas/lineas-transmision">línea
+      de transmisión</a> diferencial de impedancia controlada, típicamente 90 o 100 Ω, terminada en el receptor.
+      <b>LVDS</b> usa una excursión de apenas 350 mV, que conmuta rápido y consume poco. El reloj no viaja aparte:
+      se <b>codifica</b> en los datos para garantizar transiciones, y el receptor lo recupera con un PLL.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Enlace</th><th>Velocidad por línea</th><th>Codificación</th><th>Eficiencia</th></tr></thead>
+        <tbody>
+          <tr><td>USB 2.0 alta velocidad</td><td>480 Mbit/s</td><td>NRZI con relleno de bits</td><td>Depende de los datos: en el peor caso, un bit extra cada seis</td></tr>
+          <tr><td>PCI Express 2.0 y USB 3.0</td><td>5 Gbit/s</td><td>8b/10b</td><td>80 %</td></tr>
+          <tr><td>PCI Express 3.0</td><td>8 Gbit/s</td><td>128b/130b</td><td>98,5 %</td></tr>
+          <tr><td>Ethernet 10GBASE-R</td><td>10,3 Gbit/s</td><td>64b/66b</td><td>97 %</td></tr>
+        </tbody>
+      </table></div>
+      <p>La calidad de un enlace rápido se evalúa con el <b>diagrama de ojo</b>: se superponen en el osciloscopio
+      todos los bits sincronizados con el reloj recuperado. Un ojo abierto significa que el receptor distingue
+      bien los ceros de los unos; el ruido, el jitter y las reflexiones lo cierran.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">05</span>Dónde aparece en la electrónica</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Aplicación</th><th>Bus típico</th></tr></thead>
+        <tbody>
+          <tr><td>Sensor de temperatura o acelerómetro en una placa</td><td>I²C o SPI</td></tr>
+          <tr><td>Pantalla o memoria flash externa</td><td>SPI, o QSPI con cuatro líneas de datos</td></tr>
+          <tr><td>Consola de depuración de un microcontrolador</td><td>UART</td></tr>
+          <tr><td>Automóvil, maquinaria agrícola</td><td>CAN y CAN FD</td></tr>
+          <tr><td>Automatización industrial</td><td>RS-485 con Modbus, o Ethernet industrial</td></tr>
+          <tr><td>Placa de video, disco de estado sólido</td><td>PCI Express</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Decodificar tramas</div>
+        <p>Con un analizador lógico, capturar una transacción I²C con un sensor y una SPI con una memoria.
+        Identificar dirección, reconocimientos y datos, y medir la velocidad real del reloj.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Tiempo de subida en I²C</div>
+        <p>Medir el tiempo de subida de SDA con pull-ups de 10 kΩ, 4,7 kΩ y 1 kΩ, y verificar cuál cumple la norma a
+        400 kHz.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Dos nodos CAN</div>
+        <p>Armar un bus CAN con dos microcontroladores y sus transceptores, con terminaciones de 120 Ω. Enviar
+        tramas con identificadores distintos al mismo tiempo y observar el arbitraje.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Olvidar las pull-up de I²C, o poner demasiadas.</b> Cada módulo trae las suyas y en paralelo bajan
+        tanto la resistencia que los dispositivos no pueden poner la línea en bajo.</li>
+        <li><b>Confundir el modo de SPI.</b> La polaridad y la fase del reloj tienen que coincidir en maestro y
+        esclavo; si no, los datos llegan corridos un bit.</li>
+        <li><b>No terminar un bus CAN o RS-485.</b> Sin las resistencias de los extremos, las reflexiones corrompen
+        los bits.</li>
+        <li><b>Calcular el tiempo de una trama CAN sin el relleno.</b> En el peor caso agrega 24 bits a una trama de 111: casi un 22 %.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuánto tarda en enviarse un byte por UART 8N1 a 115 200 bit/s?</summary>
+        <div class="a"><p>10 bits: 86,8 µs.</p></div></details>
+      <details class="q"><summary>¿Cuántos bits ocupa en I²C escribir 2 bytes a un dispositivo?</summary>
+        <div class="a"><p>Arranque, 9 bits de dirección y 9 por byte y parada: \( 9 \cdot 3 + 2 = 29 \).</p></div></details>
+      <details class="q"><summary>Dos nodos CAN transmiten a la vez los identificadores 0x120 y 0x123. ¿Cuál gana?</summary>
+        <div class="a"><p>0x120, el menor: en el primer bit en que difieren envía un 0 dominante.</p></div></details>
+      <details class="q"><summary>¿Qué eficiencia tiene la codificación 8b/10b?</summary>
+        <div class="a"><p>80 %: cada 8 bits de datos se transmiten 10.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">NXP Semiconductors.</span>
+          <span class="ti">UM10204: I²C-bus Specification and User Manual</span>.
+          <span class="ed">Rev. 7, 2021.</span>
+          <span class="pq">La norma del bus I²C, con los tiempos, las velocidades y el cálculo de las resistencias de pull-up.</span></li>
+        <li><span class="au">Wilfried Voss.</span>
+          <span class="ti">A Comprehensible Guide to Controller Area Network</span>.
+          <span class="ed">2.ª ed., Copperhill, 2005.</span>
+          <span class="pq">CAN explicado desde la capa física hasta el manejo de errores.</span></li>
+        <li><span class="au">Howard Johnson y Martin Graham.</span>
+          <span class="ti">High-Speed Signal Propagation: Advanced Black Magic</span>.
+          <span class="ed">Prentice Hall, 2003.</span>
+          <span class="pq">Los enlaces serie rápidos como problema de líneas de transmisión, pérdidas y ecualización.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/sistemas-embebidos">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Hardware y software de sistemas embebidos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Comunicaciones y protocolos seriales»</b> de <b>Técnicas Digitales II</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Costo de una trama serie con n bytes.
+   UART 8N1: 10 n bits. SPI: 8 n. I2C escritura: arranque + 9 (direccion,
+   R/W y ACK) + 9 n + parada = 9 (n + 1) + 2. CAN 2.0A: 47 + 8 n sin relleno;
+   peor caso 47 + 8 n + floor((34 + 8 n - 1) / 4); relleno real calculado
+   sobre SOF..CRC con el CRC-15 (polinomio 0x4599), identificador 0x123 y
+   datos 0x4B.
+   Control (Python): UART 115200, 8 bytes -> 80 bits, 694,4 us; I2C 400 kHz,
+   8 bytes -> 83 bits, 207,5 us, 77,1 %; CAN 500 k, 8 bytes -> 111 bits
+   (relleno real 0), peor 135 (270 us); 1 byte -> 55, real 56, peor 65. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("srLienzo"), ctx = cv.getContext("2d");
+  var VEL = {
+    uart: [[9600, "9600 bit/s"], [115200, "115 200 bit/s"], [1e6, "1 Mbit/s"]],
+    spi:  [[1e6, "Reloj de 1 MHz"], [10e6, "Reloj de 10 MHz"], [50e6, "Reloj de 50 MHz"]],
+    i2c:  [[100e3, "100 kHz (estándar)"], [400e3, "400 kHz (rápido)"], [1e6, "1 MHz (rápido plus)"]],
+    can:  [[125e3, "125 kbit/s"], [500e3, "500 kbit/s"], [1e6, "1 Mbit/s"]]
+  };
+  var DEF = { uart: 1, spi: 1, i2c: 1, can: 1 };
+  var COL = { reposo: "#3a4456", arranque: "#f2cc60", dato: "#58a6ff", "dirección": "#d2a8ff", ID: "#d2a8ff", control: "#9aa7b4", ACK: "#7ee787", parada: "#f0883e", relleno: "#f85149", SOF: "#f2cc60" };
+  var D = 0x4B;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function tiempo(s){ return s >= 1e-3 ? coma(s * 1e3, 3) + " ms" : coma(s * 1e6, 2) + " µs"; }
+  function bitsDe(v, k, lsb){ var r = []; for(var i = 0; i < k; i++) r.push(lsb ? (v >> i) & 1 : (v >> (k - 1 - i)) & 1); return r; }
+  function crc15(b){ var c = 0; b.forEach(function(x){ var nx = x ^ ((c >> 14) & 1); c = (c << 1) & 0x7FFF; if(nx) c ^= 0x4599; }); return c; }
+  function canTrama(n){
+    var f = [[0, "SOF"]];
+    bitsDe(0x123, 11).forEach(function(x){ f.push([x, "ID"]); });
+    [0, 0, 0].forEach(function(x){ f.push([x, "control"]); });
+    bitsDe(n, 4).forEach(function(x){ f.push([x, "control"]); });
+    for(var i = 0; i < n; i++) bitsDe(D, 8).forEach(function(x){ f.push([x, "dato"]); });
+    var c = crc15(f.map(function(e){ return e[0]; }));
+    bitsDe(c, 15).forEach(function(x){ f.push([x, "control"]); });
+    var o = [], run = 0, last = -1, st = 0;
+    f.forEach(function(e){
+      o.push(e);
+      if(e[0] === last) run++; else { run = 1; last = e[0]; }
+      if(run === 5){ var s = 1 - e[0]; o.push([s, "relleno"]); st++; last = s; run = 1; }
+    });
+    return { bits: o, relleno: st };
+  }
+
+  function armarVel(){
+    var p = $("srP").value, sel = $("srV"); sel.innerHTML = "";
+    VEL[p].forEach(function(v, i){ var o = document.createElement("option"); o.value = v[0]; o.textContent = v[1]; if(i === DEF[p]) o.selected = true; sel.appendChild(o); });
+  }
+
+  function pintar(){
+    var p = $("srP").value, f = +$("srV").value, n = +$("srN").value;
+    $("srNv").textContent = n;
+    var tot, util = 8 * n, seq = [], reloj = false, extra = "", can = null;
+    if(p === "uart"){
+      tot = 10 * n; seq.push([1, "reposo"]);
+      for(var i = 0; i < Math.min(n, 2); i++){ seq.push([0, "arranque"]); bitsDe(D, 8, true).forEach(function(x){ seq.push([x, "dato"]); }); seq.push([1, "parada"]); }
+    } else if(p === "spi"){
+      tot = 8 * n; reloj = true;
+      for(i = 0; i < Math.min(n, 2); i++) bitsDe(D, 8).forEach(function(x){ seq.push([x, "dato"]); });
+    } else if(p === "i2c"){
+      tot = 9 * (n + 1) + 2; reloj = true;
+      seq.push([0, "arranque"]); bitsDe(0x50, 7).forEach(function(x){ seq.push([x, "dirección"]); }); seq.push([0, "control"]); seq.push([0, "ACK"]);
+      bitsDe(D, 8).forEach(function(x){ seq.push([x, "dato"]); }); seq.push([0, "ACK"]);
+    } else {
+      can = canTrama(n); tot = can.bits.length + 13;
+      seq = can.bits.slice(0, 26);
+      var peor = 47 + 8 * n + Math.floor((34 + 8 * n - 1) / 4);
+      extra = "<span>con relleno real / peor caso</span><b>" + tot + " / " + peor + " bits (" + can.relleno + " de relleno en esta trama)</b>";
+    }
+    var t = tot / f;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 50, x1 = W - 12, bw = (x1 - x0) / seq.length;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]);
+      /* banda de campos */
+      seq.forEach(function(e, k){ ctx.fillStyle = COL[e[1]]; ctx.fillRect(x0 + k * bw, 8, bw - 1, 12); });
+      ctx.font = "10px system-ui, sans-serif"; ctx.fillStyle = "#8b93a3"; ctx.textAlign = "right"; ctx.fillText("campo", x0 - 6, 18);
+      /* reloj */
+      var yd0 = reloj ? 118 : 88, yd1 = reloj ? 146 : 132;
+      if(reloj){
+        ctx.fillText(p === "spi" ? "SCLK" : "SCL", x0 - 6, 82);
+        ctx.strokeStyle = "#9aa7b4"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x0, p === "i2c" ? 50 : 88);
+        seq.forEach(function(e, k){
+          var xa = x0 + k * bw;
+          if(p === "i2c" && k === 0){ ctx.lineTo(xa + bw, 50); return; }
+          ctx.lineTo(xa + bw * 0.25, 88); ctx.lineTo(xa + bw * 0.5, 88); ctx.lineTo(xa + bw * 0.5, 50); ctx.lineTo(xa + bw, 50); ctx.lineTo(xa + bw, 88);
+        });
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "right";
+      ctx.fillText(p === "uart" ? "TX" : p === "spi" ? "MOSI" : p === "i2c" ? "SDA" : "bus", x0 - 6, (yd0 + yd1) / 2 + 3);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.2; ctx.beginPath();
+      var prev = null;
+      seq.forEach(function(e, k){
+        var y = e[0] ? yd0 : yd1, xa = x0 + k * bw;
+        if(p === "i2c" && k === 0){ ctx.moveTo(xa, yd0); ctx.lineTo(xa + bw * 0.4, yd0); ctx.lineTo(xa + bw * 0.4, yd1); ctx.lineTo(xa + bw, yd1); prev = yd1; return; }
+        if(prev === null) ctx.moveTo(xa, y); else if(prev !== y) ctx.lineTo(xa, y);
+        ctx.lineTo(xa + bw, y); prev = y;
+      });
+      ctx.stroke();
+      if(p === "can"){ ctx.fillStyle = "#6b7484"; ctx.textAlign = "left"; ctx.fillText("recesivo (1)", x1 - 64, yd0 - 4); ctx.fillText("dominante (0)", x1 - 70, yd1 + 12); }
+      /* bits escritos */
+      if(bw > 11){ ctx.font = "600 10px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = "#c9d1d9";
+        seq.forEach(function(e, k){ ctx.fillText(e[0], x0 + (k + 0.5) * bw, yd1 + 24); }); }
+      /* leyenda de campos */
+      var usados = []; seq.forEach(function(e){ if(usados.indexOf(e[1]) < 0) usados.push(e[1]); });
+      ctx.font = "10.5px system-ui, sans-serif"; ctx.textAlign = "left"; var lx = x0, ly = yd1 + (bw > 11 ? 44 : 30);
+      usados.forEach(function(u){ var w = ctx.measureText(u).width + 24; if(lx + w > x1){ lx = x0; ly += 15; } ctx.fillStyle = COL[u]; ctx.fillRect(lx, ly - 9, 10, 10); ctx.fillStyle = "#c9d1d9"; ctx.fillText(u, lx + 14, ly); lx += w; });
+    }
+
+    $("srDatos").innerHTML =
+      "<span>bits en la línea para " + n + (n > 1 ? " bytes" : " byte") + "</span><b>" + tot + " bits (" + util + " de datos)</b>" + extra +
+      "<span>duración de la trama</span><b>" + tiempo(t) + "</b>" +
+      "<span>eficiencia</span><b>" + coma(100 * util / tot, 1) + " %</b>" +
+      "<span>datos útiles por segundo, tramas seguidas</span><b>" + coma(n / t / 1000, 1) + " kB/s</b>";
+    var nota = {
+      uart: "Cada byte lleva un bit de arranque y uno de parada: la eficiencia es siempre del 80 %, con cualquier cantidad de bytes. Los datos salen con el bit menos significativo primero: 0x4B = 01001011 se ve como 1, 1, 0, 1, 0, 0, 1, 0.",
+      spi: "SPI no agrega nada: cada ciclo de reloj es un bit de dato, y en el mismo ciclo entra otro bit por MISO. Por eso es el más rápido y el que se usa para memorias y pantallas. El precio es una línea de selección por dispositivo.",
+      i2c: "La dirección y un reconocimiento por byte cuestan caro con pocos datos: con un byte la eficiencia es del 40 %. A cambio, dos líneas alcanzan para más de cien dispositivos. La condición de arranque es SDA bajando mientras SCL está alto.",
+      can: "La trama CAN tiene 47 bits de control para a lo sumo 8 de datos: la eficiencia máxima es del 58 %. " + (can && can.relleno ? (can.relleno === 1 ? "En esta trama se insertó 1 bit" : "En esta trama se insertaron " + can.relleno + " bits") + " de relleno (en rojo) después de cinco bits iguales." : "Con estos datos no hizo falta ningún bit de relleno, pero con otros datos puede haber hasta " + Math.floor((34 + 8 * n - 1) / 4) + ".")
+    }[p];
+    $("srNota").innerHTML = nota;
+  }
+  $("srP").addEventListener("input", function(){ armarVel(); pintar(); });
+  ["srV", "srN"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  armarVel(); pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
