@@ -169,7 +169,7 @@
    recuadro; si no entran en un renglon, el CSS las apila.
    ============================================================ */
 (function(){
-  var GAP = 24;
+  var GAP = 24, HUECO_MAX = 160;
   function ecuaciones(f){
     return [].filter.call(f.children, function(c){
       return c.matches('math[display="block"]') || (c.tagName === 'SPAN' && c.querySelector(':scope > .katex-display'));
@@ -194,6 +194,9 @@
       var izq = Math.min.apply(null, rs.map(function(x){ return x.left; })) - base;
       var der = Math.max.apply(null, rs.map(function(x){ return x.right; })) - base;
       if(der - izq < total) return;                   /* la oracion es mas corta que las ecuaciones */
+      /* si alinearlas con la oracion las deja muy separadas (dos ecuaciones
+         cortas bajo una oracion larga), queda el reparto centrado del CSS */
+      if((der - izq - total) / (eq.length - 1) + GAP > HUECO_MAX) return;
       f.classList.add('eq-fila');
       eq[0].style.marginLeft = Math.max(0, izq) + 'px';
       eq[eq.length - 1].style.marginRight = Math.max(0, ancho - der) + 'px';
