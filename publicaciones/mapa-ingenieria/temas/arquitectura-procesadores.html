@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquitecturas y organización de procesadores · Técnicas Digitales II · Catto</title>
+<meta name="description" content="Arquitectura y organización, von Neumann y Harvard, conjuntos de instrucciones CISC y RISC, la ecuación del rendimiento, el pipeline de cinco etapas y sus riesgos, la jerarquía de memoria y la caché con sus tres tipos de fallos, y el paralelismo superescalar, SIMD y multinúcleo, con laboratorio interactivo que simula una caché ante cuatro programas. Contenido de Técnicas Digitales II, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/arquitectura-procesadores">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Técnicas Digitales II</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Técnicas Digitales II</span> · 120 h · Contenido 3 de 6</div>
+    <h1>Arquitecturas y organización de procesadores</h1>
+    <p class="lead">Sumar una matriz recorriéndola por columnas en lugar de por filas puede bajar la tasa de aciertos de la caché del 87 % al 0 %. El algoritmo es el mismo; lo que cambia es el orden.</p>
+    <div class="chips">
+      <span class="chip hi">RISC y CISC</span>
+      <span class="chip">CPI</span>
+      <span class="chip">Pipeline</span>
+      <span class="chip">Caché</span>
+      <span class="chip">Localidad</span>
+    </div>
+    <hr class="rule">
+
+    <section id="niveles">
+      <h2><span class="n">01</span>Arquitectura y organización</h2>
+      <p>Hay dos maneras de mirar un procesador. La <b>arquitectura</b> es el contrato con el software: el conjunto
+      de instrucciones, los registros visibles, los modos de direccionamiento, el modelo de memoria. La
+      <b>organización</b> (o microarquitectura) es cómo se cumple ese contrato en el silicio: cuántas etapas
+      tiene el pipeline, qué cachés hay, cuántas instrucciones se ejecutan a la vez. Dos procesadores con la misma
+      arquitectura, como un Cortex-M0 y un Cortex-M7, ejecutan el mismo código con organizaciones y rendimientos
+      muy distintos. La visión general de CPU, memoria y buses está en
+      <a href="/publicaciones/mapa-ingenieria/temas/sistema-computacional">el sistema computacional</a> de
+      Informática I y en <a href="/publicaciones/mapa-electronica/temas/arquitectura-microprocesadores">arquitectura
+      de microprocesadores</a>, de la tecnicatura.</p>
+      <p>La primera decisión de organización es cómo llegan instrucciones y datos. En la arquitectura de
+      <b>von Neumann</b> comparten memoria y bus; en la <b>Harvard</b>, tienen memorias y buses separados y se
+      pueden leer a la vez. Casi todos los procesadores actuales son Harvard modificados: una sola memoria
+      principal, pero cachés separadas de instrucciones y de datos.</p>
+    </section>
+
+    <section id="isa">
+      <h2><span class="n">02</span>El conjunto de instrucciones</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>CISC</th><th>RISC</th></tr></thead>
+        <tbody>
+          <tr><td>Instrucciones</td><td>Muchas, algunas complejas, de largo variable</td><td>Pocas y simples, de largo fijo (32 bits)</td></tr>
+          <tr><td>Acceso a memoria</td><td>Casi cualquier instrucción puede operar sobre memoria</td><td>Solo las de carga y almacenamiento (load/store)</td></tr>
+          <tr><td>Registros</td><td>Pocos, con usos especiales</td><td>Muchos de propósito general (32 en RISC-V)</td></tr>
+          <tr><td>Ejemplos</td><td>x86, 8051</td><td>ARM, RISC-V, AVR, MIPS</td></tr>
+        </tbody>
+      </table></div>
+      <p>La simplicidad de RISC es lo que permite segmentar la ejecución con eficiencia: todas las instrucciones
+      pasan por las mismas etapas y tardan lo mismo en cada una. Los procesadores x86 modernos traducen
+      internamente sus instrucciones complejas a microoperaciones de tipo RISC.</p>
+    </section>
+
+    <section id="rendimiento">
+      <h2><span class="n">03</span>La ecuación del rendimiento</h2>
+      <div class="form">
+        \[ T_{CPU} = N_{instr} \cdot CPI \cdot T_{clk} \]
+        <span class="cap">El tiempo de ejecución es la cantidad de instrucciones por los ciclos promedio por instrucción por el período del reloj. Mil millones de instrucciones con CPI 1,5 a 500 MHz tardan 3 s. Mejorar un factor a costa de otro no siempre gana.</span>
+      </div>
+      <p>El compilador y el conjunto de instrucciones deciden \( N_{instr} \); la organización decide el CPI; la
+      tecnología y la profundidad del pipeline deciden el reloj. Comparar procesadores por su frecuencia de reloj
+      solamente ignora los otros dos factores.</p>
+    </section>
+
+    <section id="pipeline">
+      <h2><span class="n">04</span>Segmentación</h2>
+      <p>Un <b>pipeline</b> divide la ejecución en etapas, y cada etapa trabaja sobre una instrucción distinta a la
+      vez, como una línea de montaje. El clásico de cinco etapas: búsqueda (IF), decodificación y lectura de
+      registros (ID), ejecución (EX), acceso a memoria (MEM) y escritura del resultado (WB). Idealmente termina
+      una instrucción por ciclo, y el reloj puede ser hasta cinco veces más rápido que sin segmentar.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Riesgo</th><th>Causa</th><th>Solución</th></tr></thead>
+        <tbody>
+          <tr><td>Estructural</td><td>Dos etapas necesitan el mismo recurso</td><td>Duplicar el recurso: memorias separadas de instrucciones y datos</td></tr>
+          <tr><td>De datos</td><td>Una instrucción necesita un resultado que todavía no se escribió</td><td>Adelantamiento (forwarding) desde las etapas posteriores; si no alcanza, una burbuja</td></tr>
+          <tr><td>De control</td><td>Un salto se resuelve recién en EX, con instrucciones ya buscadas detrás</td><td>Predicción de saltos; si falla, se descartan las instrucciones buscadas</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="cache">
+      <h2><span class="n">05</span>Jerarquía de memoria y caché</h2>
+      <p>Un procesador ejecuta una instrucción por nanosegundo, y una DRAM tarda decenas de nanosegundos en
+      responder. La solución es una jerarquía: una memoria pequeña y rápida, la <b>caché</b>, guarda copias de lo
+      usado recientemente. Funciona porque los programas tienen <b>localidad</b>: <i>temporal</i> (lo que se usó
+      se vuelve a usar) y <i>espacial</i> (después de una dirección se usa la siguiente). Por eso la caché trae
+      líneas enteras de 32 o 64 bytes.</p>
+      <p>La dirección se divide en tres campos: el <b>desplazamiento</b> elige el byte dentro de la línea, el
+      <b>índice</b> elige el conjunto donde puede estar, y la <b>etiqueta</b> se compara para saber si la línea
+      guardada es la buscada. En una caché de <b>correspondencia directa</b> cada línea tiene un solo lugar
+      posible; en una <b>asociativa de n vías</b>, n lugares.</p>
+      <div class="form">
+        \[ t_{medio} = t_{acierto} + m \cdot t_{penalidad} \]
+        <span class="cap">El tiempo medio de acceso: con 1 ciclo de acierto, 100 de penalidad y 5 % de fallos, 6 ciclos. Cada punto de tasa de fallos cuesta un ciclo por acceso.</span>
+      </div>
+      <p>Los fallos tienen tres causas: <b>obligatorios</b> (el primer acceso a una línea), <b>de capacidad</b> (el
+      programa usa más datos de los que caben) y <b>de conflicto</b> (líneas que compiten por el mismo conjunto
+      aunque sobre lugar en otros). Los últimos dependen de las direcciones, y el mismo algoritmo puede ser rápido
+      o lento según cómo recorre los datos.</p>
+      <div class="lw" id="ca">
+        <div class="lt">Laboratorio · una caché ante cuatro programas</div>
+        <p class="ls">Una caché de datos con reemplazo LRU recibe la secuencia de direcciones de un programa corto.
+        La franja de arriba muestra los primeros 512 accesos (verde, acierto; rojo, fallo) y la grilla, qué arreglo
+        ocupa cada línea al terminar. Se supone 1 ciclo por acierto y 100 por fallo.</p>
+        <div class="fila">
+          <select id="caP">
+            <option value="sec">Sumar un arreglo de 2048 enteros, dos veces</option>
+            <option value="filas">Recorrer una matriz de 64 × 64 por filas</option>
+            <option value="columnas" selected>Recorrer la misma matriz por columnas</option>
+            <option value="conflicto">Producto escalar de dos arreglos separados 8 KB</option>
+          </select>
+        </div>
+        <div class="fila">
+          <select id="caT">
+            <option value="1024" selected>Caché de 1 KB</option>
+            <option value="4096">Caché de 4 KB</option>
+            <option value="16384">Caché de 16 KB</option>
+          </select>
+          <select id="caL">
+            <option value="16">Líneas de 16 B</option>
+            <option value="32" selected>Líneas de 32 B</option>
+            <option value="64">Líneas de 64 B</option>
+          </select>
+          <select id="caV">
+            <option value="1" selected>Correspondencia directa</option>
+            <option value="2">Asociativa de 2 vías</option>
+            <option value="4">Asociativa de 4 vías</option>
+          </select>
+        </div>
+        <canvas id="caLienzo" style="display:block;width:100%;max-width:620px;height:250px;margin:6px auto 0"></canvas>
+        <div class="datos" id="caDatos"></div>
+        <div class="nota" id="caNota"></div>
+      </div>
+    </section>
+
+    <section id="paralelismo">
+      <h2><span class="n">06</span>Más allá de una instrucción por ciclo</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Técnica</th><th>Qué hace</th><th>Dónde</th></tr></thead>
+        <tbody>
+          <tr><td>Superescalar</td><td>Varias instrucciones por ciclo, con ejecución fuera de orden</td><td>Procesadores de computadoras y teléfonos</td></tr>
+          <tr><td>SIMD</td><td>Una instrucción opera sobre varios datos a la vez</td><td>Extensiones vectoriales para audio, video y redes neuronales</td></tr>
+          <tr><td>Multinúcleo</td><td>Varios procesadores completos en un chip, con cachés compartidas</td><td>Casi todo lo que no es un microcontrolador simple</td></tr>
+          <tr><td>DSP</td><td>Multiplicación y acumulación en un ciclo y direccionamiento circular</td><td>Filtros digitales y procesamiento de señales</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Filas contra columnas</div>
+        <p>Escribir en C la suma de una matriz de 2048 × 2048 recorrida por filas y por columnas, medir los tiempos en
+        una computadora y explicar la diferencia con la caché.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Ciclos por instrucción</div>
+        <p>En un microcontrolador con contador de ciclos, medir cuántos ciclos tarda un lazo y compararlo con el
+        código ensamblador que generó el compilador.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Un pipeline a mano</div>
+        <p>Dibujar el diagrama de un pipeline de cinco etapas para una secuencia de seis instrucciones con dos
+        dependencias de datos, con y sin adelantamiento, y contar los ciclos.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Comparar procesadores solo por el reloj.</b> El CPI y la cantidad de instrucciones pesan igual.</li>
+        <li><b>Recorrer una matriz en contra de cómo está guardada.</b> En C se guarda por filas; recorrerla por
+        columnas puede multiplicar el tiempo.</li>
+        <li><b>Usar tamaños y separaciones potencia de dos sin pensar.</b> Hacen coincidir los índices de caché y
+        provocan fallos de conflicto.</li>
+        <li><b>Confundir arquitectura con organización.</b> Un mismo binario ARM corre en procesadores muy
+        distintos.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cómo se divide una dirección de 32 bits en una caché directa de 4 KB con líneas de 32 B?</summary>
+        <div class="a"><p>5 bits de desplazamiento, 7 de índice (128 líneas) y 20 de etiqueta.</p></div></details>
+      <details class="q"><summary>¿Qué tiempo medio de acceso da una tasa de fallos del 2 % con 1 ciclo de acierto y 80 de penalidad?</summary>
+        <div class="a"><p>\( 1 + 0{,}02 \cdot 80 = 2{,}6 \) ciclos.</p></div></details>
+      <details class="q"><summary>Un programa pasa de CPI 2 a CPI 1,2, pero el reloj baja de 1 GHz a 800 MHz. ¿Mejora?</summary>
+        <div class="a"><p>Sí: el tiempo por instrucción pasa de 2 ns a 1,5 ns.</p></div></details>
+      <details class="q"><summary>¿Qué tipo de fallo elimina aumentar la asociatividad?</summary>
+        <div class="a"><p>Los de conflicto. Los de capacidad necesitan una caché más grande, y los obligatorios, líneas
+        más largas o precarga.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">David A. Patterson y John L. Hennessy.</span>
+          <span class="ti">Computer Organization and Design: RISC-V Edition</span>.
+          <span class="ed">2.ª ed., Morgan Kaufmann, 2020.</span>
+          <span class="pq">El texto de curso: conjunto de instrucciones, pipeline y jerarquía de memoria sobre RISC-V.</span></li>
+        <li><span class="au">John L. Hennessy y David A. Patterson.</span>
+          <span class="ti">Computer Architecture: A Quantitative Approach</span>.
+          <span class="ed">6.ª ed., Morgan Kaufmann, 2017.</span>
+          <span class="pq">El nivel siguiente: paralelismo de instrucciones, cachés avanzadas y aceleradores.</span></li>
+        <li><span class="au">Sarah L. Harris y David Harris.</span>
+          <span class="ti">Digital Design and Computer Architecture: RISC-V Edition</span>.
+          <span class="ed">Morgan Kaufmann, 2021.</span>
+          <span class="pq">Construye un procesador RISC-V completo en HDL, desde las compuertas.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/memorias-electronicas">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Memorias electrónicas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Arquitecturas y organización de procesadores»</b> de <b>Técnicas Digitales II</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Simulador de cache de datos con reemplazo LRU.
+   Trazas (base 0x10000): suma de 2048 enteros dos veces; matriz 64 x 64 de
+   float por filas y por columnas; producto escalar de dos arreglos de 1024
+   enteros separados 8 KB (a[i], b[i] alternados).
+   conjuntos = tamano / (linea * vias); bloque = dir / linea; indice = bloque
+   mod conjuntos; etiqueta = bloque / conjuntos. Tiempo medio = 1 + m * 100.
+   Control (Python): sec 1K/32/1 -> 87,5 %; columnas 1K/32/1 -> 0 %;
+   columnas 16K/32/1 -> 87,5 %; columnas 4K/64/4 -> 0 %; conflicto 4K/32/1
+   -> 0 %; conflicto 4K/32/2 -> 87,5 %; sec 16K/32/1 -> 93,75 %. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("caLienzo"), ctx = cv.getContext("2d");
+  var B = 0x10000;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function traza(p){
+    var t = [], i, j, r;
+    if(p === "sec"){ for(r = 0; r < 2; r++) for(i = 0; i < 2048; i++) t.push(B + 4 * i); }
+    else if(p === "filas"){ for(i = 0; i < 64; i++) for(j = 0; j < 64; j++) t.push(B + (i * 64 + j) * 4); }
+    else if(p === "columnas"){ for(j = 0; j < 64; j++) for(i = 0; i < 64; i++) t.push(B + (i * 64 + j) * 4); }
+    else { for(i = 0; i < 1024; i++){ t.push(B + 4 * i); t.push(B + 8192 + 4 * i); } }
+    return t;
+  }
+  function log2(x){ return Math.round(Math.log(x) / Math.LN2); }
+
+  function pintar(){
+    var p = $("caP").value, T = +$("caT").value, L = +$("caL").value, V = +$("caV").value;
+    var S = T / (L * V), tr = traza(p), C = [], dueno = [], hit = 0, marcas = [];
+    for(var s = 0; s < S; s++){ C.push([]); dueno.push([]); }
+    tr.forEach(function(a, k){
+      var blk = Math.floor(a / L), si = blk % S, tag = Math.floor(blk / S), l = C[si], d = dueno[si], pos = l.indexOf(tag);
+      var ar = p === "conflicto" && a >= B + 8192 ? 1 : 0, ok;
+      if(pos >= 0){ hit++; l.splice(pos, 1); var dv = d.splice(pos, 1)[0]; l.push(tag); d.push(dv); ok = true; }
+      else { if(l.length >= V){ l.shift(); d.shift(); } l.push(tag); d.push(ar); ok = false; }
+      if(k < 512) marcas.push(ok);
+    });
+    var n = tr.length, mis = n - hit, tasa = hit / n, amat = 1 + (1 - tasa) * 100;
+    var off = log2(L), idx = log2(S), etq = 32 - off - idx;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 14, x1 = W - 14;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]);
+      ctx.font = "10px system-ui, sans-serif"; ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left";
+      ctx.fillText("primeros 512 accesos", x0, 12);
+      /* franja de aciertos y fallos: 2 filas de 256 */
+      var cw = (x1 - x0) / 256;
+      marcas.forEach(function(ok, k){
+        ctx.fillStyle = ok ? "#7ee787" : "#f85149";
+        ctx.fillRect(x0 + (k % 256) * cw, 18 + Math.floor(k / 256) * 12, Math.max(1, cw - 0.3), 10);
+      });
+      ctx.fillStyle = "#8b93a3"; ctx.fillText("contenido final de la caché: " + S + " conjuntos × " + V + (V > 1 ? " vías" : " vía") + " = " + (S * V) + " líneas", x0, 56);
+      /* grilla de lineas: filas = conjuntos agrupados, columnas */
+      var nl = S * V, cols = Math.ceil(Math.sqrt(nl * (x1 - x0) / (H - 70))), filas = Math.ceil(nl / cols);
+      var gw = (x1 - x0) / cols, gh = Math.min(16, (H - 66) / filas);
+      for(var q = 0; q < nl; q++){
+        var si2 = Math.floor(q / V), w = q % V, own = dueno[si2][w];
+        ctx.fillStyle = own === undefined ? "#2a3140" : own ? "#d2a8ff" : "#58a6ff";
+        ctx.fillRect(x0 + (q % cols) * gw, 62 + Math.floor(q / cols) * gh, Math.max(1, gw - 1), Math.max(1, gh - 1));
+      }
+      /* leyenda */
+      var ly = H - 8, lx = x0;
+      [["#58a6ff", p === "conflicto" ? "arreglo a" : p === "sec" ? "arreglo" : "matriz"]].concat(p === "conflicto" ? [["#d2a8ff", "arreglo b"]] : []).concat([["#2a3140", "vacía"]]).forEach(function(e){
+        ctx.fillStyle = e[0]; ctx.fillRect(lx, ly - 9, 12, 10);
+        ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText(e[1], lx + 16, ly); lx += 22 + ctx.measureText(e[1]).width + 12;
+      });
+    }
+
+    $("caDatos").innerHTML =
+      "<span>accesos</span><b>" + n + "</b>" +
+      "<span>aciertos / fallos</span><b>" + hit + " / " + mis + "</b>" +
+      "<span>tasa de aciertos</span><b>" + coma(tasa * 100, 2) + " %</b>" +
+      "<span>tiempo medio de acceso</span><b>" + coma(amat, 2) + " ciclos</b>" +
+      "<span>dirección: etiqueta / índice / desplazamiento</span><b>" + etq + " / " + idx + " / " + off + " bits</b>";
+
+    /* conjuntos distintos que toca una sola columna de la matriz */
+    var cjs = {}; for(var fi = 0; fi < 64; fi++) cjs[Math.floor((B + fi * 256) / L) % S] = 1;
+    var ncol = Object.keys(cjs).length;
+    var nota;
+    if(tasa === 0 && p === "conflicto") nota = "<b>Fallos de conflicto:</b> a[i] y b[i] están separados 8 KB, múltiplo del tamaño de la caché, y caen en el mismo conjunto. Con una sola vía se desalojan uno al otro en cada acceso. Con dos vías conviven.";
+    else if(tasa === 0 && p === "columnas") nota = "<b>Ningún acierto:</b> por columnas, cada acceso salta 256 bytes (una fila entera) y usa una línea distinta. Cuando vuelve a la primera fila para la columna siguiente, esa línea ya fue desalojada. Las 64 filas de una columna caen en solo " + ncol + " de los " + S + " conjuntos, porque el salto de 256 bytes es potencia de dos: compiten " + 64 + " líneas por " + (ncol * V) + " lugares.";
+    else if(p === "columnas") nota = "La caché es lo bastante grande para guardar las 64 líneas que toca una columna, y la columna siguiente las encuentra: la localidad espacial se recupera, aunque el recorrido sea en contra del orden de la matriz.";
+    else if(p === "conflicto") nota = "Con " + V + " vías, a[i] y b[i] comparten conjunto sin desalojarse: solo quedan los fallos obligatorios, uno por línea de cada arreglo.";
+    else nota = "Localidad espacial: cada fallo trae una línea de " + L + " bytes, y los " + (L / 4 - 1) + " enteros siguientes son aciertos. " + (p === "sec" && T < 8192 ? "El arreglo ocupa 8 KB y no cabe: la segunda pasada vuelve a fallar en cada línea (fallos de capacidad)." : p === "sec" ? "El arreglo cabe entero: la segunda pasada es toda aciertos." : "Recorrer en el orden en que la matriz está guardada es lo más eficiente.");
+    $("caNota").innerHTML = nota;
+  }
+  ["caP", "caT", "caL", "caV"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
