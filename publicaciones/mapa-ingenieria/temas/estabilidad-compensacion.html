@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estabilidad, compensación, osciladores y slew rate · Electrónica Aplicada II · Catto</title>
+<meta name="description" content="La condición de oscilación, los márgenes de fase y de ganancia, la compensación por polo dominante, por desplazamiento del primer polo y por Miller, el slew rate y el ancho de banda de potencia, y los osciladores de puente de Wien y de corrimiento de fase, con laboratorio interactivo que compensa un amplificador de tres polos. Contenido de Electrónica Aplicada II, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/estabilidad-compensacion">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica Aplicada II</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Aplicada II</span> · 120 h · Contenido 5 de 8</div>
+    <h1>Estabilidad, compensación, osciladores y slew rate</h1>
+    <p class="lead">Para estabilizar un seguidor, agregar un polo nuevo deja menos de 1 kHz de ancho de banda. Bajar el polo que ya existía deja 845 kHz con el mismo margen de fase.</p>
+    <div class="chips">
+      <span class="chip hi">Margen de fase</span>
+      <span class="chip">Polo dominante</span>
+      <span class="chip">Compensación de Miller</span>
+      <span class="chip">Slew rate</span>
+      <span class="chip">Puente de Wien</span>
+    </div>
+    <hr class="rule">
+
+    <section id="criterio">
+      <h2><span class="n">01</span>Cuándo oscila un amplificador realimentado</h2>
+      <p>El denominador \( 1 + T(s) \) se anula si en alguna frecuencia la ganancia de lazo vale exactamente −1: módulo 1 y fase
+      −180°. Una señal de esa frecuencia recorre el lazo y vuelve igual, sin ninguna excitación. El <b>criterio de Nyquist</b>
+      da la condición completa; para los amplificadores de todos los días, con ganancia de lazo que decrece con la frecuencia,
+      alcanza con los márgenes que se vieron en la <a href="/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia-realimentados">unidad
+      anterior</a>:</p>
+      <div class="form">
+        \[ \mathrm{MF} = 180° + \angle T(j\omega_c), \quad |T(j\omega_c)| = 1 \]
+        \[ \mathrm{MG} = -20 \log_{10} |T(j\omega_{180})| \]
+        <span class="cap">El margen de fase MF se mide en la frecuencia de cruce; el margen de ganancia MG, en la frecuencia donde la fase llega a −180°. Los dos tienen que ser positivos; en la práctica se pide MF ≥ 45° y MG ≥ 10 dB.</span>
+      </div>
+    </section>
+
+    <section id="compensacion">
+      <h2><span class="n">02</span>Compensación</h2>
+      <p>Compensar es modificar la ganancia sin realimentar para que \( |T| \) cruce 1 antes de que la fase se acerque a −180°.
+      Hay dos maneras con un solo capacitor:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Método</th><th>Qué hace</th><th>Costo</th></tr></thead>
+        <tbody>
+          <tr><td>Polo dominante agregado</td><td>Una red RC nueva agrega un polo muy bajo</td><td>El ancho de banda cae a casi nada</td></tr>
+          <tr><td>Desplazamiento del primer polo</td><td>Un capacitor grande en el nodo del primer polo lo baja</td><td>Mucho menor: el polo original deja de sumar fase</td></tr>
+          <tr><td>Miller (división de polos)</td><td>Un capacitor entre la entrada y la salida de la etapa de ganancia</td><td>Baja el primer polo y además sube el segundo</td></tr>
+        </tbody>
+      </table></div>
+      <p>La compensación por Miller es la de casi todos los operacionales integrados: el efecto Miller que en
+      <a href="/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia-amplificadores">respuesta en frecuencia</a> era un
+      problema se usa a favor. Un capacitor de pocos picofarads, multiplicado por la ganancia de la segunda etapa, crea el
+      polo dominante, y la realimentación local que introduce separa el segundo polo hacia frecuencias altas.</p>
+      <div class="lw" id="cmp">
+        <div class="lt">Laboratorio · compensar un amplificador de tres polos</div>
+        <p class="ls">El amplificador de la unidad anterior: ganancia \( 10^5 \) y polos en 1 kHz, 1 MHz y 10 MHz. Se compensa
+        agregando un polo en \( f_d \) o bajando el de 1 kHz hasta \( f_d \). La curva gris es la ganancia original; la azul, la
+        compensada; la verde, la realimentada, y la amarilla punteada, \( 1/\beta \).</p>
+        <div class="fila">
+          <select id="cmM">
+            <option value="bajar" selected>Bajar el primer polo hasta f<sub>d</sub></option>
+            <option value="agregar">Agregar un polo nuevo en f<sub>d</sub></option>
+          </select>
+        </div>
+        <div class="fila">
+          <select id="cmG">
+            <option value="1" selected>Seguidor (ganancia 1)</option>
+            <option value="10">Ganancia 10</option>
+            <option value="100">Ganancia 100</option>
+          </select>
+        </div>
+        <div class="fila"><label>Polo dominante f<sub>d</sub> = <b id="cmFv"></b></label><input type="range" id="cmF" min="-3" max="3" step="0.05" value="0.75"></div>
+        <canvas id="cmLienzo" style="display:block;width:100%;max-width:620px;height:240px;margin:6px auto 0"></canvas>
+        <div class="datos" id="cmDatos"></div>
+        <div class="nota" id="cmNota"></div>
+      </div>
+    </section>
+
+    <section id="slew">
+      <h2><span class="n">03</span>Slew rate</h2>
+      <p>La compensación tiene otra consecuencia. En un operacional con compensación de Miller, la corriente máxima que la
+      etapa de entrada puede entregar al capacitor \( C_c \) limita la velocidad con la que puede cambiar la salida:</p>
+      <div class="form">
+        \[ SR = \frac{I_{\max}}{C_c} \]
+        \[ f_{\max} = \frac{SR}{2\pi V_p} \]
+        <span class="cap">\( f_{\max} \) es el <b>ancho de banda de potencia</b>: la frecuencia más alta a la que se obtiene una senoidal de amplitud \( V_p \) sin deformarla. Con 0,5 V/μs, típico de un 741, una salida de 10 V de pico se deforma por encima de 8 kHz, aunque el ancho de banda de señal chica sea de 1 MHz.</span>
+      </div>
+      <p>Por encima de \( f_{\max} \) la senoidal se convierte en un triángulo. Es una limitación de señal fuerte, que no aparece
+      en el análisis con pequeña señal: un amplificador puede tener banda de sobra y distorsionar igual.</p>
+    </section>
+
+    <section id="osciladores">
+      <h2><span class="n">04</span>Osciladores de baja frecuencia</h2>
+      <p>Un oscilador es un amplificador que cumple a propósito la condición de oscilación en una sola frecuencia: el
+      <b>criterio de Barkhausen</b>, \( T(j\omega_0) = 1 \). En el <b>puente de Wien</b>, una red RC serie–paralelo tiene fase
+      nula y transferencia 1/3 en una frecuencia, y el amplificador aporta ganancia 3:</p>
+      <div class="form">
+        \[ f_0 = \frac{1}{2\pi RC} \]
+        \[ A = 1 + \frac{R_2}{R_1} = 3 \]
+        <span class="cap">Con ganancia exactamente 3 la amplitud queda indeterminada; con un poco más, crece hasta saturar y distorsiona. Los osciladores de calidad controlan la ganancia con un elemento que depende de la amplitud: una lámpara, un termistor o un JFET con un detector.</span>
+      </div>
+      <p>El oscilador por <b>corrimiento de fase</b> usa tres celdas RC que suman 180° y un inversor de ganancia 29. Los osciladores
+      de audiofrecuencia de los laboratorios son de puente de Wien: la primera empresa de Hewlett y Packard nació con uno,
+      estabilizado con una lámpara. La presentación con los equipos está en
+      <a href="/publicaciones/mapa-electronica/temas/osciladores">osciladores</a>, de la tecnicatura.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Slew rate</div>
+        <p>Aplicar una onda cuadrada grande a un seguidor y medir la pendiente de la salida. Con una senoidal de 10 V de pico,
+        subir la frecuencia hasta que aparezca el triángulo y comparar con \( f_{\max} \).</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Puente de Wien</div>
+        <p>Armar un oscilador de puente de Wien con estabilización por diodos y medir la frecuencia y la distorsión. Cambiar
+        la ganancia y observar el arranque.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Compensación externa</div>
+        <p>Con un operacional descompensado, como los que traen patas para el capacitor de compensación, medir el sobrepico
+        como seguidor con distintos capacitores.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Compensar para ganancia alta y usar el amplificador como seguidor.</b> La compensación se diseña para la menor ganancia de uso.</li>
+        <li><b>Confundir ancho de banda de señal chica con ancho de banda de potencia.</b> El segundo lo fija el slew rate y depende de la amplitud.</li>
+        <li><b>Poner la ganancia del Wien en 3 exactos.</b> El oscilador no arranca o se apaga; hace falta un margen y un control de amplitud.</li>
+        <li><b>Olvidar las capacidades parásitas.</b> Un cable largo en la salida agrega un polo y se come el margen de fase.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué ancho de banda de potencia tiene un operacional de 13 V/μs con 10 V de pico?</summary>
+        <div class="a"><p>\( 13/(2\pi \cdot 10) \) MHz ≈ 207 kHz.</p></div></details>
+      <details class="q"><summary>Un puente de Wien usa R = 10 kΩ y C = 10 nF. ¿A qué frecuencia oscila?</summary>
+        <div class="a"><p>\( 1/(2\pi \cdot 10^{-4}) \approx 1{,}59 \) kHz.</p></div></details>
+      <details class="q"><summary>¿Por qué desplazar el primer polo da más ancho de banda que agregar un polo nuevo?</summary>
+        <div class="a"><p>Porque el polo original de 1 kHz deja de sumar fase: el cruce puede estar cerca del segundo polo en lugar de debajo del primero.</p></div></details>
+      <details class="q"><summary>Si I<sub>max</sub> = 20 μA y C<sub>c</sub> = 30 pF, ¿cuál es el slew rate?</summary>
+        <div class="a"><p>0,67 V/μs.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Paul R. Gray, Paul J. Hurst, Stephen H. Lewis y Robert G. Meyer.</span>
+          <span class="ti">Analysis and Design of Analog Integrated Circuits</span>.
+          <span class="ed">5.ª ed., Wiley, 2009.</span>
+          <span class="pq">La compensación de Miller, la división de polos y el slew rate del operacional de dos etapas.</span></li>
+        <li><span class="au">Sergio Franco.</span>
+          <span class="ti">Design with Operational Amplifiers and Analog Integrated Circuits</span>.
+          <span class="ed">4.ª ed., McGraw-Hill, 2015.</span>
+          <span class="pq">La estabilidad con cargas capacitivas y los osciladores con operacionales.</span></li>
+        <li><span class="au">Jerald G. Graeme.</span>
+          <span class="ti">Optimizing Op Amp Performance</span>.
+          <span class="ed">McGraw-Hill, 1997.</span>
+          <span class="pq">La estabilidad y la compensación de circuitos con operacionales, analizadas con la ganancia de lazo.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia-realimentados">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Respuesta en frecuencia de amplificadores realimentados</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Estabilidad, compensación, osciladores y slew rate»</b> de <b>Electrónica Aplicada II</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Compensacion del amplificador A0 = 1e5 con polos en 1 kHz, 1 MHz y 10 MHz.
+   "agregar": polos fd, 1k, 1M, 10M. "bajar": polos fd, 1M, 10M.
+   Margen de fase con fase sin envolver; ancho de banda realimentado por barrido y biseccion.
+   Control (Python), fd para 60 grados: bajar G1 5,748 Hz (BW 845,4 kHz), G10 57,50 Hz;
+   agregar G1 0,006655 Hz (BW 923,1 Hz). Con fd 10 Hz bajando: G1 PM 47,40 (BW 1,316 MHz),
+   G10 83,75, G100 89,43. Agregando fd 10 Hz, G1: PM -0,16. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("cmLienzo"), ctx = cv.getContext("2d");
+  var A0 = 1e5, ORIG = [1e3, 1e6, 1e7];
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function frec(f){ return f >= 1e6 ? coma(f / 1e6, 2) + " MHz" : f >= 1e3 ? coma(f / 1e3, f >= 1e5 ? 0 : 1) + " kHz" : f >= 1 ? coma(f, f >= 100 ? 0 : 2) + " Hz" : coma(f * 1e3, f >= 0.1 ? 0 : 2) + " mHz"; }
+  function polos(m, fd){ return m === "agregar" ? [fd, 1e3, 1e6, 1e7] : [fd, 1e6, 1e7]; }
+  function Aabs(f, P){ var p = A0; P.forEach(function(q){ p /= Math.hypot(1, f / q); }); return p; }
+  function fase(f, P){ var s = 0; P.forEach(function(q){ s -= Math.atan(f / q) * 180 / Math.PI; }); return s; }
+  function margen(P, b){ var lo = 1e-3, hi = 1e12; for(var i = 0; i < 300; i++){ var m = Math.sqrt(lo * hi); if(Aabs(m, P) * b > 1) lo = m; else hi = m; } return [lo, 180 + fase(lo, P)]; }
+  function cerr(f, P, b){ var re = 1, im = 0; P.forEach(function(q){ var c = f / q, nr = re - im * c, ni = re * c + im; re = nr; im = ni; }); return A0 / Math.hypot(re + A0 * b, im); }
+  function bw(P, b){
+    var a0 = cerr(1e-3, P, b), k = 0, f;
+    for(k = 0; k <= 6000; k++){ f = Math.pow(10, k / 6000 * 9); if(cerr(f, P, b) < a0 / Math.SQRT2) break; }
+    var lo = Math.pow(10, (k - 1) / 6000 * 9), hi = f; for(var i = 0; i < 80; i++){ var m = Math.sqrt(lo * hi); if(cerr(m, P, b) > a0 / Math.SQRT2) lo = m; else hi = m; } return lo;
+  }
+  function fdPara(met, G, obj){ var lo = 1e-3, hi = 1e6; for(var i = 0; i < 200; i++){ var m = Math.sqrt(lo * hi); if(margen(polos(met, m), 1 / G)[1] > obj) lo = m; else hi = m; } return lo; }
+
+  function pintar(){
+    var met = $("cmM").value, G = +$("cmG").value, b = 1 / G, fd = Math.pow(10, +$("cmF").value);
+    if(met === "bajar" && fd > 1e3) fd = 1e3;
+    $("cmFv").textContent = frec(fd);
+    var P = polos(met, fd), mg = margen(P, b), pm = mg[1], estable = pm > 0, B = estable ? bw(P, b) : null, f60 = fdPara(met, G, 60);
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 30, x1 = W - 12, y0 = 10, y1 = H - 28, F0 = -3, F1 = 8, D1 = 110, D0 = -30;
+      var X = function(fx){ return x0 + (Math.log10(fx) - F0) / (F1 - F0) * (x1 - x0); };
+      var Y = function(d){ return y0 + (D1 - d) / (D1 - D0) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(var d = -20; d <= 100; d += 20){ ctx.beginPath(); ctx.moveTo(x0, Y(d)); ctx.lineTo(x1, Y(d)); ctx.stroke(); ctx.fillText(d < 0 ? "−" + (-d) : d, x0 - 4, Y(d) + 3); }
+      ctx.textAlign = "center";
+      var ET = {"-3": "1m", "0": "1", "3": "1k", "6": "1M"};
+      for(var e = F0; e <= F1; e++){ ctx.beginPath(); ctx.moveTo(X(Math.pow(10, e)), y0); ctx.lineTo(X(Math.pow(10, e)), y1); ctx.stroke(); if(ET[e]) ctx.fillText(ET[e], X(Math.pow(10, e)), y1 + 13); }
+      ctx.fillStyle = "#8b93a3"; ctx.fillText("frecuencia (Hz)", (x0 + x1) / 2, y1 + 25);
+      ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+      function curva(fn, color, w){ ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath(); for(var k = 0; k <= 330; k++){ var fx = Math.pow(10, F0 + k / 330 * (F1 - F0)), yy = Y(20 * Math.log10(fn(fx))); if(k) ctx.lineTo(X(fx), yy); else ctx.moveTo(X(fx), yy); } ctx.stroke(); ctx.lineWidth = 1; }
+      curva(function(fx){ return Aabs(fx, ORIG); }, "#6b7484", 1.4);
+      ctx.strokeStyle = "#f2cc60"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x0, Y(20 * Math.log10(G))); ctx.lineTo(x1, Y(20 * Math.log10(G))); ctx.stroke(); ctx.setLineDash([]);
+      curva(function(fx){ return Aabs(fx, P); }, "#58a6ff", 2);
+      if(estable) curva(function(fx){ return cerr(fx, P, b); }, "#7ee787", 2);
+      ctx.fillStyle = estable ? "#f2cc60" : "#f85149"; ctx.beginPath(); ctx.arc(X(mg[0]), Y(20 * Math.log10(G)), 4, 0, 2 * Math.PI); ctx.fill();
+      ctx.restore();
+      if(!estable){ ctx.fillStyle = "#f85149"; ctx.font = "600 12px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText("inestable: oscila", (x0 + x1) / 2, Y(-10)); }
+    }
+
+    $("cmDatos").innerHTML =
+      "<span>margen de fase</span><b>" + coma(pm, 1) + "°</b>" +
+      "<span>frecuencia de cruce</span><b>" + frec(mg[0]) + "</b>" +
+      "<span>ancho de banda realimentado</span><b>" + (estable ? frec(B) : "—") + "</b>" +
+      "<span>f<sub>d</sub> para 60° con este método</span><b>" + frec(f60) + "</b>";
+    var nota;
+    if(!estable) nota = "<b>Sigue inestable:</b> la ganancia compensada todavía cruza 1/β donde la fase pasó −180°. Hay que bajar más f<sub>d</sub>.";
+    else if(met === "agregar") nota = "Agregando un polo, para 60° de margen hace falta f<sub>d</sub> = " + frec(f60) + ": el cruce tiene que quedar por debajo del polo de 1 kHz, que sigue sumando fase. El ancho de banda cae a " + (estable ? frec(B) : "—") + ". Bajando el polo existente se consigue casi mil veces más.";
+    else if(pm < 45) nota = "Margen de " + coma(pm, 0) + "°: la respuesta tendrá pico y sobrepico. Bajar f<sub>d</sub> hasta " + frec(f60) + " da 60°.";
+    else nota = "Con " + coma(pm, 0) + "° de margen, el amplificador compensado es estable con ganancia " + G + " y tiene un ancho de banda de " + frec(B) + ". Es lo que hace un capacitor de Miller en un operacional integrado.";
+    $("cmNota").innerHTML = nota;
+  }
+  ["cmM", "cmG", "cmF"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
