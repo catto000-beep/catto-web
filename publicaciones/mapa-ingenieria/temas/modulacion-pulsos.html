@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modulación de pulsos y PCM · Sistemas de Comunicaciones · Catto</title>
+<meta name="description" content="Las modulaciones de pulsos PAM, PWM y PPM, la PCM con su velocidad y su ruido de cuantificación, la compansión con las leyes μ y A, la multiplexación por división de tiempo con el sistema E1 y las variantes diferenciales, con laboratorio interactivo que compara la PCM uniforme con la ley μ. Contenido de Sistemas de Comunicaciones, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/modulacion-pulsos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Sistemas de Comunicaciones</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Sistemas de Comunicaciones</span> · 96 h · Contenido 6 de 11</div>
+    <h1>Modulación de pulsos y PCM</h1>
+    <p class="lead">Con 8 bits y la ley μ, una voz 40 dB por debajo del máximo se oye con la misma calidad que con un conversor uniforme de 12 bits. La telefonía digital ahorra cuatro bits por muestra con una curva logarítmica.</p>
+    <div class="chips">
+      <span class="chip hi">PAM, PWM y PPM</span>
+      <span class="chip">PCM</span>
+      <span class="chip">Ruido de cuantificación</span>
+      <span class="chip">Ley μ y ley A</span>
+      <span class="chip">TDM y E1</span>
+    </div>
+    <hr class="rule">
+
+    <section id="pulsos">
+      <h2><span class="n">01</span>Modular un tren de pulsos</h2>
+      <p>Si el mensaje se <a href="/publicaciones/mapa-ingenieria/temas/muestreo-shannon">muestrea</a> a una frecuencia mayor
+      que el doble de su ancho de banda, basta transmitir las muestras. La portadora pasa a ser un tren de pulsos, y el mensaje
+      puede cambiar su amplitud, su duración o su posición:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Modulación</th><th>Qué lleva la muestra</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>PAM (amplitud)</td><td>La altura del pulso</td><td>Paso intermedio de todo conversor; base de la PCM</td></tr>
+          <tr><td>PWM (duración)</td><td>El ancho del pulso</td><td>Control de motores, amplificadores de clase D, fuentes conmutadas</td></tr>
+          <tr><td>PPM (posición)</td><td>El retardo del pulso respecto de un reloj</td><td>Radiocontrol, comunicaciones ópticas de baja potencia</td></tr>
+          <tr><td>PCM (código)</td><td>Un número binario con el valor cuantificado</td><td>Telefonía digital, audio, casi toda transmisión actual</td></tr>
+        </tbody>
+      </table></div>
+      <p>PAM, PWM y PPM siguen siendo analógicas: el ruido que se suma a la altura, al ancho o a la posición del pulso llega
+      al mensaje. En la PCM, en cambio, cada muestra se redondea a uno de \( 2^n \) niveles y se transmite como \( n \) bits.
+      El receptor solo tiene que decidir si llegó un 1 o un 0, y un repetidor puede regenerar la señal sin acumular ruido.
+      La presentación de los equipos está en <a href="/publicaciones/mapa-electronica/temas/teorema-muestreo">teorema del
+      muestreo</a>, de la tecnicatura.</p>
+    </section>
+
+    <section id="pcm">
+      <h2><span class="n">02</span>PCM: velocidad y ruido de cuantificación</h2>
+      <p>Un sistema PCM muestrea a \( f_s \), cuantifica con \( n \) bits y transmite la secuencia de bits. La velocidad y el
+      ancho de banda mínimo, con pulsos de Nyquist, son:</p>
+      <div class="form">
+        \[ R_b = n\, f_s \]
+        \[ B_{\min} = \frac{R_b}{2} \]
+        <span class="cap">La telefonía muestrea la voz a 8 kHz con 8 bits: 64 kbit/s por canal. El audio de un CD, a 44,1 kHz con 16 bits y dos canales, necesita 1,41 Mbit/s.</span>
+      </div>
+      <p>El redondeo agrega un error que, con un cuantificador uniforme de paso \( \Delta \), se reparte entre
+      \( \pm\Delta/2 \) y tiene potencia \( \Delta^2/12 \). Con un seno que ocupa todo el rango, la relación señal a ruido de
+      cuantificación es:</p>
+      <div class="form">
+        \[ \mathrm{SNR_q} = 6{,}02\, n + 1{,}76 \ \mathrm{dB} \]
+        <span class="cap">Cada bit agrega unos 6 dB. La fórmula vale solo a plena escala: con una señal 20 dB más chica, el error de cuantificación es el mismo y la relación cae 20 dB. Los detalles del cuantificador y del conversor están en <a href="/publicaciones/mapa-ingenieria/temas/conversores-datos">conversores de datos</a>.</span>
+      </div>
+    </section>
+
+    <section id="compansion">
+      <h2><span class="n">03</span>Compansión: ley μ y ley A</h2>
+      <p>La voz tiene un rango dinámico de unos 40 dB: una persona que habla bajo produce señales cien veces más chicas que
+      una que grita. Con un cuantificador uniforme, las señales débiles quedan con muy pocos niveles. La solución es
+      <b>comprimir</b> la señal antes de cuantificar, con una curva logarítmica que amplía los valores chicos, y
+      <b>expandirla</b> en el receptor. La norma G.711 usa en América del Norte y Japón la ley μ:</p>
+      <div class="form">
+        \[ c(x) = \operatorname{sgn}(x)\, \frac{\ln(1 + \mu |x|)}{\ln(1 + \mu)} \]
+        <span class="cap">La entrada está normalizada a \( |x| \le 1 \) y la norma usa μ = 255. En Europa y la Argentina se usa la ley A, con A = 87,6, muy parecida. En los dos casos el paso de cuantificación crece con la amplitud y el error queda aproximadamente proporcional a la señal.</span>
+      </div>
+      <p>El resultado es una relación señal a ruido casi constante en un rango amplio de niveles, a cambio de perder unos
+      12 dB a plena escala. Con 8 bits, la ley μ da a una señal de −40 dB la misma calidad que un cuantificador uniforme de
+      12 bits.</p>
+      <div class="lw" id="pcm">
+        <div class="lt">Laboratorio · PCM uniforme y con ley μ</div>
+        <p class="ls">Un seno cuantificado con \( n \) bits, directamente o comprimido con la ley μ. La curva azul es la relación
+        señal a ruido del cuantificador uniforme en función del nivel de la señal; la verde, la de la ley μ. El punto marca el
+        nivel elegido. Los valores salen de cuantificar 4096 muestras.</p>
+        <div class="fila"><label>Bits por muestra n = <b id="pcmNv"></b></label><input type="range" id="pcmN" min="4" max="12" step="1" value="8"></div>
+        <div class="fila"><label>Nivel de la señal = <b id="pcmLv"></b></label><input type="range" id="pcmL" min="-60" max="0" step="1" value="-30"></div>
+        <canvas id="pcmLienzo" style="display:block;width:100%;max-width:620px;height:250px;margin:6px auto 0"></canvas>
+        <div class="datos" id="pcmDatos"></div>
+        <div class="nota" id="pcmNota"></div>
+      </div>
+    </section>
+
+    <section id="tdm">
+      <h2><span class="n">04</span>Multiplexación por división de tiempo</h2>
+      <p>Entre dos muestras de un canal queda tiempo libre, que se usa para transmitir las de otros canales: es la
+      <b>multiplexación por división de tiempo</b> (TDM). Una trama contiene una muestra de cada canal y se repite a la
+      frecuencia de muestreo. La jerarquía europea, que usa la Argentina, empieza por el sistema E1:</p>
+      <div class="form">
+        \[ R_{E1} = 32 \times 8\ \mathrm{bit} \times 8\ \mathrm{kHz} = 2{,}048\ \mathrm{Mbit/s} \]
+        <span class="cap">De los 32 intervalos, 30 llevan voz; uno lleva la sincronización de trama y otro la señalización. El sistema norteamericano T1 agrupa 24 canales con un bit de trama: 1,544 Mbit/s.</span>
+      </div>
+      <p>Otras variantes reducen la velocidad a costa de complejidad: la <b>PCM diferencial</b> (DPCM) cuantifica la diferencia
+      entre la muestra y una predicción, y la <b>modulación delta</b> usa un solo bit por muestra, a una frecuencia mucho mayor.
+      Los codificadores de voz actuales transmiten parámetros de un modelo del tracto vocal y bajan a unos pocos kbit/s.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Ruido de cuantificación</div>
+        <p>Digitalizar un seno con un microcontrolador, reduciendo por software la cantidad de bits, y medir la relación
+        señal a ruido con la FFT para cada resolución. Verificar los 6 dB por bit.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Compansión</div>
+        <p>Implementar la ley μ en el microcontrolador y repetir la medición para distintos niveles de entrada. Comparar
+        con el cuantificador uniforme de la misma cantidad de bits.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · PWM</div>
+        <p>Generar una PWM modulada por un tono y recuperarlo con un filtro pasabajos RC. Observar el residuo de la
+        frecuencia de conmutación.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Aplicar 6,02n + 1,76 dB a cualquier señal.</b> Vale para un seno a plena escala; con señales más chicas la relación cae dB por dB.</li>
+        <li><b>Olvidar el filtro antialias.</b> Lo que está por encima de \( f_s/2 \) se pliega sobre la banda útil y no se puede separar.</li>
+        <li><b>Creer que la compansión mejora todo.</b> Iguala la calidad entre niveles, pero a plena escala es peor que la uniforme.</li>
+        <li><b>Confundir la velocidad de bits con el ancho de banda.</b> El ancho de banda depende de la forma de los pulsos: como mínimo, la mitad de la velocidad.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué relación señal a ruido de cuantificación da un conversor de 12 bits con un seno a plena escala?</summary>
+        <div class="a"><p>\( 6{,}02 \cdot 12 + 1{,}76 \approx 74 \) dB.</p></div></details>
+      <details class="q"><summary>¿Qué velocidad necesita un canal de audio muestreado a 48 kHz con 24 bits?</summary>
+        <div class="a"><p>1,152 Mbit/s.</p></div></details>
+      <details class="q"><summary>¿Cuántos canales de voz lleva un E1 y cuál es su velocidad?</summary>
+        <div class="a"><p>30 canales de voz en 2,048 Mbit/s.</p></div></details>
+      <details class="q"><summary>Con un cuantificador uniforme de 8 bits, ¿qué relación señal a ruido tiene un seno 30 dB por debajo de plena escala?</summary>
+        <div class="a"><p>Unos 50 − 30 = 20 dB.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">B. P. Lathi y Zhi Ding.</span>
+          <span class="ti">Modern Digital and Analog Communication Systems</span>.
+          <span class="ed">5.ª ed., Oxford University Press, 2019.</span>
+          <span class="pq">El muestreo, la PCM, la compansión, la DPCM y la modulación delta.</span></li>
+        <li><span class="au">Simon Haykin.</span>
+          <span class="ti">Digital Communication Systems</span>.
+          <span class="ed">Wiley, 2014.</span>
+          <span class="pq">La cuantificación y la codificación de forma de onda con un enfoque de modelos.</span></li>
+        <li><span class="au">Bernard Sklar.</span>
+          <span class="ti">Digital Communications: Fundamentals and Applications</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 2001.</span>
+          <span class="pq">La PCM y la multiplexación desde el punto de vista del sistema.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/modulacion-exponencial">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Modulación exponencial: FM y PM</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Modulación de pulsos y PCM»</b> de <b>Sistemas de Comunicaciones</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Relacion senal a ruido de cuantificacion de un seno, uniforme y con ley mu
+   (mu = 255), cuantificador de media huella (mid-rise) en [-1, 1). 4096
+   muestras de sin(2 pi 0,0137 k + 0,3).
+   Control (Python), 8 bits: 0 dB -> 49,72 / 37,41; -20 dB -> 30,19 / 38,24;
+   -40 dB -> 9,34 / 33,98; uniforme 12 bits a -40 dB -> 34,23. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pcmLienzo"), ctx = cv.getContext("2d");
+  var MU = 255, LMU = Math.log(1 + MU), NS = 4096;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function q(v, n){ var L = Math.pow(2, n), d = 2 / L, k = Math.floor(v / d); k = Math.max(-L / 2, Math.min(L / 2 - 1, k)); return (k + 0.5) * d; }
+  function snr(nivel, n, mu){
+    var A = Math.pow(10, nivel / 20), ps = 0, pe = 0;
+    for(var k = 0; k < NS; k++){
+      var x = A * Math.sin(2 * Math.PI * 0.0137 * k + 0.3), y;
+      if(mu){ var c = (x < 0 ? -1 : 1) * Math.log(1 + MU * Math.abs(x)) / LMU, cq = q(c, n); y = (cq < 0 ? -1 : 1) * (Math.pow(1 + MU, Math.abs(cq)) - 1) / MU; }
+      else y = q(x, n);
+      ps += x * x; pe += (y - x) * (y - x);
+    }
+    return 10 * Math.log10(ps / pe);
+  }
+  var cache = {};
+  function curvas(n){
+    if(cache[n]) return cache[n];
+    var u = [], m = [];
+    for(var l = -60; l <= 0; l++){ u.push(snr(l, n, false)); m.push(snr(l, n, true)); }
+    return (cache[n] = {u: u, m: m});
+  }
+
+  function pintar(){
+    var n = +$("pcmN").value, lv = +$("pcmL").value;
+    $("pcmNv").textContent = n; $("pcmLv").textContent = coma(lv, 0) + " dB de plena escala";
+    var c = curvas(n), su = c.u[lv + 60], sm = c.m[lv + 60];
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 34, x1 = W - 14, y0 = 12, y1 = H - 30;
+      var SMAX = 80, SMIN = -20;
+      var X = function(l){ return x0 + (l + 60) / 60 * (x1 - x0); };
+      var Y = function(s){ s = Math.max(SMIN, Math.min(SMAX, s)); return y1 - (s - SMIN) / (SMAX - SMIN) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(var s = SMIN; s <= SMAX; s += 20){ ctx.beginPath(); ctx.moveTo(x0, Y(s)); ctx.lineTo(x1, Y(s)); ctx.stroke(); ctx.fillText(s < 0 ? "−" + (-s) : s, x0 - 5, Y(s) + 3); }
+      ctx.textAlign = "center";
+      for(var l = -60; l <= 0; l += 10){ ctx.beginPath(); ctx.moveTo(X(l), y0); ctx.lineTo(X(l), y1); ctx.stroke(); ctx.fillText(l === 0 ? "0" : "−" + (-l), X(l), y1 + 13); }
+      ctx.fillStyle = "#8b93a3"; ctx.fillText("nivel de la señal (dB de plena escala)", (x0 + x1) / 2, y1 + 26);
+      ctx.save(); ctx.translate(10, (y0 + y1) / 2); ctx.rotate(-Math.PI / 2); ctx.fillText("SNR (dB)", 0, 0); ctx.restore();
+      [[c.u, "#58a6ff"], [c.m, "#7ee787"]].forEach(function(p){
+        ctx.strokeStyle = p[1]; ctx.lineWidth = 2; ctx.beginPath();
+        p[0].forEach(function(v, i){ var xx = X(i - 60), yy = Y(v); if(i) ctx.lineTo(xx, yy); else ctx.moveTo(xx, yy); });
+        ctx.stroke();
+      });
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(242,204,96,.7)"; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(X(lv), y0); ctx.lineTo(X(lv), y1); ctx.stroke(); ctx.setLineDash([]);
+      [[su, "#58a6ff"], [sm, "#7ee787"]].forEach(function(p){ ctx.fillStyle = p[1]; ctx.beginPath(); ctx.arc(X(lv), Y(p[0]), 4, 0, 2 * Math.PI); ctx.fill(); });
+      /* leyenda */
+      ctx.textAlign = "left"; ctx.font = "600 10px system-ui, sans-serif";
+      var lx = x0 + 8, ly = y0 + 4;
+      ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(lx - 4, ly - 2, 92, 32);
+      ctx.fillStyle = "#58a6ff"; ctx.fillText("uniforme", lx + 14, ly + 10); ctx.fillRect(lx, ly + 5, 10, 3);
+      ctx.fillStyle = "#7ee787"; ctx.fillText("ley μ (255)", lx + 14, ly + 24); ctx.fillRect(lx, ly + 19, 10, 3);
+    }
+
+    $("pcmDatos").innerHTML =
+      "<span>SNR con cuantificador uniforme</span><b>" + coma(su, 1) + " dB</b>" +
+      "<span>SNR con ley μ</span><b>" + coma(sm, 1) + " dB</b>" +
+      "<span>fórmula 6,02n + 1,76 + nivel</span><b>" + coma(6.02 * n + 1.76 + lv, 1) + " dB</b>" +
+      "<span>velocidad de un canal a 8 kHz</span><b>" + (8 * n) + " kbit/s</b>";
+    var nota;
+    if(sm > su + 1) nota = "A este nivel la <b>ley μ gana " + coma(sm - su, 1) + " dB</b>: la señal débil usa los escalones finos de la zona central, donde la curva de compresión la amplía.";
+    else if(su > sm + 1) nota = "A este nivel el <b>cuantificador uniforme gana " + coma(su - sm, 1) + " dB</b>: la señal ocupa casi todo el rango y la compansión desperdicia niveles en valores chicos que no aparecen.";
+    else nota = "Cerca del cruce de las dos curvas los dos cuantificadores dan casi la misma calidad.";
+    if(su < 0) nota += " La señal uniforme ya está por debajo del escalón: el error es más grande que la señal.";
+    $("pcmNota").innerHTML = nota;
+  }
+  ["pcmN", "pcmL"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
