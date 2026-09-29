@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuentes de alimentación reguladas lineales · Electrónica Aplicada II · Catto</title>
+<meta name="description" content="Los bloques de una fuente lineal, el rectificador en puente con capacitor de filtro y su ondulación, el regulador serie con su referencia y su amplificador de error, la tensión de caída y los LDO, la disipación y el rendimiento, y las protecciones, con laboratorio interactivo que simula en el tiempo una fuente de 5 V. Contenido de Electrónica Aplicada II, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/fuentes-reguladas-lineales">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica Aplicada II</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Aplicada II</span> · 120 h · Contenido 7 de 8</div>
+    <h1>Fuentes de alimentación reguladas lineales</h1>
+    <p class="lead">Con un secundario de 7,5 V, un 7805 pierde la regulación cien veces por segundo y un LDO regula con casi 1 V de margen. Lo que decide es el fondo de la ondulación, no la tensión media.</p>
+    <div class="chips">
+      <span class="chip hi">Rectificador y filtro</span>
+      <span class="chip">Ondulación</span>
+      <span class="chip">Regulador serie</span>
+      <span class="chip">Tensión de caída</span>
+      <span class="chip">Disipación</span>
+    </div>
+    <hr class="rule">
+
+    <section id="estructura">
+      <h2><span class="n">01</span>De la red a una tensión continua estable</h2>
+      <p>Una fuente lineal tiene cuatro bloques: un <b>transformador</b> que baja la tensión de red y aísla, un
+      <b>rectificador</b>, un <b>capacitor de filtro</b> que convierte los pulsos en una continua con ondulación, y un
+      <b>regulador</b> que elimina la ondulación y las variaciones de la red y de la carga. El regulador es un amplificador
+      realimentado: compara una fracción de la salida con una referencia y maneja un transistor en serie que absorbe la
+      diferencia de tensión.</p>
+      <p>Los diodos rectificadores se presentaron en <a href="/publicaciones/mapa-electronica/temas/semiconductores-diodos">semiconductores
+      y diodos</a>, de la tecnicatura, y hay una publicación con el diseño completo de una
+      <a href="/publicaciones/fuente-lm317">fuente regulada con LM317</a>.</p>
+    </section>
+
+    <section id="filtro">
+      <h2><span class="n">02</span>Rectificador y capacitor de filtro</h2>
+      <p>Con un puente, el capacitor se carga en los picos de cada semiciclo y se descarga por la carga el resto del tiempo.
+      El pico es el de la tensión del secundario menos dos caídas de diodo, y la ondulación depende de cuánta carga se
+      pierde entre picos:</p>
+      <div class="form">
+        \[ V_{\max} \approx \sqrt{2}\, V_s - 2 V_D \]
+        \[ \Delta V \approx \frac{I_L}{2 f C} \]
+        <span class="cap">\( f \) es la frecuencia de red. La fórmula supone que el capacitor se descarga durante todo el semiciclo, y sobreestima la ondulación: en la práctica la carga dura una fracción del ciclo. La resistencia del bobinado baja el pico real bastante más que las caídas de diodo.</span>
+      </div>
+      <p>La recarga ocurre en un ángulo corto, así que la corriente por los diodos y el secundario llega en pulsos de varias
+      veces la corriente de carga. Por eso el transformador se dimensiona con una potencia aparente mayor que la de continua
+      que entrega, y los diodos y el capacitor con su corriente de pico y su corriente eficaz de ondulación.</p>
+    </section>
+
+    <section id="regulador">
+      <h2><span class="n">03</span>El regulador serie</h2>
+      <p>El regulador lineal clásico tiene una referencia de tensión, un zener compensado o una referencia de <i>bandgap</i> de
+      1,25 V, un amplificador de error y un transistor de paso. La realimentación hace que la salida siga a la referencia
+      multiplicada por el divisor, y reduce en la ganancia de lazo el efecto de la red y de la carga:</p>
+      <div class="form">
+        \[ V_o = V_{ref} \left(1 + \frac{R_2}{R_1}\right) \]
+        <span class="cap">Las hojas de datos dan la <b>regulación de línea</b> (cambio de la salida por volt de entrada), la <b>regulación de carga</b> (por ampere) y el <b>rechazo de ondulación</b>, que en un 7805 es de 60 dB o más a la frecuencia de ondulación: 1 V a la entrada se convierte en menos de 1 mV a la salida.</span>
+      </div>
+      <p>Para regular, el transistor de paso necesita una tensión mínima entre entrada y salida, la <b>tensión de caída</b>
+      (<i>dropout</i>). En los reguladores con salida por emisor NPN, como el 7805, es de unos 2 V; en los <b>LDO</b>, con un PNP o un
+      PMOS de paso, baja a unas décimas de volt. Si en el fondo de la ondulación la entrada queda por debajo de
+      \( V_o + V_{DO} \), la ondulación pasa a la salida.</p>
+    </section>
+
+    <section id="disipacion">
+      <h2><span class="n">04</span>Disipación y rendimiento</h2>
+      <div class="form">
+        \[ P_D = (\overline{V_{in}} - V_o)\, I_L \]
+        \[ \eta_{reg} = \frac{V_o}{\overline{V_{in}}} \]
+        <span class="cap">Todo lo que sobra entre la entrada media y la salida se disipa en el transistor de paso. Con 9 V medios, 5 V y 1 A, el regulador disipa 4 W y el rendimiento del regulador es del 56 %, sin contar el transformador ni los diodos.</span>
+      </div>
+      <p>El diseño es un compromiso: la tensión del secundario tiene que alcanzar para que el fondo de la ondulación supere
+      la caída del regulador con la red baja, pero cada volt de más es calor. Los LDO permiten bajar el secundario y la
+      disipación; las <a href="/publicaciones/mapa-electronica/temas/fuentes-conmutadas">fuentes conmutadas</a> resuelven el
+      problema de raíz, a cambio de ruido de conmutación.</p>
+      <div class="lw" id="fue">
+        <div class="lt">Laboratorio · rectificador, filtro y regulador de 5 V</div>
+        <p class="ls">Simulación en el tiempo de un puente de diodos (0,8 V cada uno) alimentado desde un secundario con 0,5 Ω
+        de resistencia de bobinado, a 50 Hz, con capacitor de filtro y carga de corriente constante. El trazo gris es la
+        tensión rectificada; el azul, la del capacitor; la línea roja, la mínima que necesita el regulador, y el verde, la
+        salida.</p>
+        <div class="fila">
+          <select id="fuS">
+            <option value="7.5">Secundario de 7,5 V eficaces</option>
+            <option value="9" selected>Secundario de 9 V eficaces</option>
+            <option value="12">Secundario de 12 V eficaces</option>
+          </select>
+        </div>
+        <div class="fila">
+          <select id="fuC">
+            <option value="1000">C = 1000 μF</option>
+            <option value="2200">C = 2200 μF</option>
+            <option value="4700" selected>C = 4700 μF</option>
+            <option value="10000">C = 10 000 μF</option>
+          </select>
+        </div>
+        <div class="fila">
+          <select id="fuR">
+            <option value="2" selected>Regulador 7805 (caída de 2 V)</option>
+            <option value="0.4">Regulador LDO (caída de 0,4 V)</option>
+          </select>
+        </div>
+        <div class="fila"><label>Corriente de carga = <b id="fuIv"></b></label><input type="range" id="fuI" min="0.1" max="1.5" step="0.05" value="1"></div>
+        <div class="fila"><label>Tensión de red = <b id="fuNv"></b></label><input type="range" id="fuN" min="85" max="110" step="1" value="100"></div>
+        <canvas id="fuLienzo" style="display:block;width:100%;max-width:620px;height:230px;margin:6px auto 0"></canvas>
+        <div class="datos" id="fuDatos"></div>
+        <div class="nota" id="fuNota"></div>
+      </div>
+      <p>Los reguladores integrados agregan protecciones: <b>limitación de corriente</b>, a veces con retroceso (<i>foldback</i>)
+      para reducir la disipación en cortocircuito, <b>apagado térmico</b> y protección del área de operación segura del
+      transistor de paso.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Ondulación</div>
+        <p>Medir con el osciloscopio la ondulación sobre el capacitor para varias corrientes de carga y compararla con
+        \( I_L/(2fC) \). Medir también la corriente de pico por los diodos con una resistencia chica en serie.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Caída del regulador</div>
+        <p>Bajar la tensión de red con un autotransformador variable y observar en qué punto la ondulación aparece a la
+        salida de un 7805 y de un LDO.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Regulación</div>
+        <p>Medir las regulaciones de línea y de carga de un regulador ajustable y compararlas con la hoja de datos.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Mirar la tensión media y no el fondo de la ondulación.</b> El regulador deja de regular en el mínimo, no en el promedio.</li>
+        <li><b>Diseñar con la red nominal.</b> La red puede estar un 10 % abajo y la fuente tiene que seguir regulando.</li>
+        <li><b>Olvidar la resistencia del transformador.</b> Con carga, el pico real queda bastante por debajo de \( \sqrt 2 V_s \).</li>
+        <li><b>Subir el secundario "por las dudas".</b> Cada volt de más se convierte en calor en el regulador.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué ondulación estima la fórmula para 0,5 A con 2200 μF a 50 Hz?</summary>
+        <div class="a"><p>\( 0{,}5/(2 \cdot 50 \cdot 2{,}2\cdot10^{-3}) \approx 2{,}3 \) V.</p></div></details>
+      <details class="q"><summary>¿Qué salida da un LM317 con R<sub>1</sub> = 240 Ω y R<sub>2</sub> = 720 Ω?</summary>
+        <div class="a"><p>\( 1{,}25 \cdot (1 + 3) = 5 \) V.</p></div></details>
+      <details class="q"><summary>Un regulador de 12 V entrega 0,8 A con 17 V medios de entrada. ¿Cuánto disipa?</summary>
+        <div class="a"><p>4 W.</p></div></details>
+      <details class="q"><summary>¿Por qué un LDO permite usar un transformador de menor tensión?</summary>
+        <div class="a"><p>Porque necesita solo unas décimas de volt entre entrada y salida, en lugar de unos 2 V.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Paul Horowitz y Winfield Hill.</span>
+          <span class="ti">The Art of Electronics</span>.
+          <span class="ed">3.ª ed., Cambridge University Press, 2015.</span>
+          <span class="pq">El capítulo de reguladores lineales, con el diseño de fuentes completas.</span></li>
+        <li><span class="au">Adel S. Sedra y Kenneth C. Smith.</span>
+          <span class="ti">Microelectronic Circuits</span>.
+          <span class="ed">8.ª ed., Oxford University Press, 2020.</span>
+          <span class="pq">El rectificador con capacitor y el ángulo de conducción.</span></li>
+        <li><span class="au">Texas Instruments.</span>
+          <span class="ti">Hojas de datos de los reguladores LM7800, LM317 y de la familia LDO</span>.
+          <span class="ed">Disponibles en el sitio del fabricante.</span>
+          <span class="pq">Las especificaciones de regulación, rechazo de ondulación, caída y protecciones.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/amplificadores-potencia-ing">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Amplificadores de potencia de baja frecuencia</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Fuentes de alimentación reguladas lineales»</b> de <b>Electrónica Aplicada II</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Fuente lineal: puente (0,8 V por diodo), bobinado de 0,5 ohm, 50 Hz, capacitor C,
+   carga de corriente constante. Euler con 2000 pasos por ciclo durante 20 ciclos; se
+   mide el ultimo. Regula si el minimo del capacitor supera 5 V + caida.
+   Control (Python): 9 V, 4700 uF, 1 A -> min 8,279, max 9,668, media 8,987, Pd 3,99 W;
+   red 90 % -> min 7,090; 7,5 V 4700 uF 1 A -> min 6,301 (7805 no regula, LDO si);
+   7,5 V 2200 uF -> min 5,254, max 8,051. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("fuLienzo"), ctx = cv.getContext("2d");
+  var F = 50, VD = 0.8, RW = 0.5, VO = 5, M = 2000, CIC = 20;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function sim(vs, red, C, IL){
+    var vp = vs * Math.SQRT2 * red, dt = 1 / F / M, vc = vp - 2 * VD, rec = [], cap = [];
+    for(var n = 0; n < M * CIC; n++){
+      var vr = Math.abs(vp * Math.sin(2 * Math.PI * F * n * dt)) - 2 * VD, i = vr > vc ? (vr - vc) / RW : 0;
+      vc += (i - IL) * dt / C;
+      if(n >= M * (CIC - 1)){ cap.push(vc); rec.push(vr); }
+    }
+    return {cap: cap, rec: rec, vp: vp};
+  }
+
+  function pintar(){
+    var vs = +$("fuS").value, C = +$("fuC").value * 1e-6, DO = +$("fuR").value, IL = +$("fuI").value, red = +$("fuN").value / 100;
+    $("fuIv").textContent = coma(IL, 2) + " A"; $("fuNv").textContent = Math.round(red * 100) + " % (" + Math.round(220 * red) + " V)";
+    var S = sim(vs, red, C, IL), mn = Infinity, mx = -Infinity, av = 0;
+    S.cap.forEach(function(v){ mn = Math.min(mn, v); mx = Math.max(mx, v); av += v; }); av /= S.cap.length;
+    var sal = S.cap.map(function(v){ return Math.min(VO, v - DO); }), smin = Math.min.apply(null, sal), regula = mn - VO >= DO;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 28, x1 = W - 12, y0 = 10, y1 = H - 22, VMAX = 18;
+      var X = function(k){ return x0 + k / (M - 1) * (x1 - x0); };
+      var Y = function(v){ return y1 - Math.max(0, v) / VMAX * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(var v = 0; v <= VMAX; v += 3){ ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke(); ctx.fillText(v, x0 - 4, Y(v) + 3); }
+      ctx.textAlign = "center"; ctx.fillText("un ciclo de red (20 ms)", (x0 + x1) / 2, y1 + 14);
+      ctx.strokeStyle = "rgba(154,167,180,.7)"; ctx.setLineDash([4, 4]); ctx.beginPath();
+      S.rec.forEach(function(q, k){ if(k) ctx.lineTo(X(k), Y(q)); else ctx.moveTo(X(k), Y(q)); }); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = "#f85149"; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(x0, Y(VO + DO)); ctx.lineTo(x1, Y(VO + DO)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath(); S.cap.forEach(function(q, k){ if(k) ctx.lineTo(X(k), Y(q)); else ctx.moveTo(X(k), Y(q)); }); ctx.stroke();
+      ctx.strokeStyle = "#7ee787"; ctx.beginPath(); sal.forEach(function(q, k){ if(k) ctx.lineTo(X(k), Y(q)); else ctx.moveTo(X(k), Y(q)); }); ctx.stroke(); ctx.lineWidth = 1;
+      ctx.font = "600 10px system-ui, sans-serif"; ctx.textAlign = "left";
+      var et = "mínimo para regular " + coma(VO + DO, 1) + " V", we = ctx.measureText(et).width;
+      ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(x0 + 4, y0 + 2, we + 8, 15);
+      ctx.fillStyle = "#f85149"; ctx.fillText(et, x0 + 8, y0 + 13);
+    }
+
+    $("fuDatos").innerHTML =
+      "<span>tensión en el capacitor, mín / máx / media</span><b>" + coma(mn, 2) + " / " + coma(mx, 2) + " / " + coma(av, 2) + " V</b>" +
+      "<span>ondulación pico a pico (fórmula I/2fC)</span><b>" + coma(mx - mn, 2) + " V (" + coma(IL / (2 * F * C), 2) + " V)</b>" +
+      "<span>margen sobre la caída del regulador</span><b>" + coma(mn - VO - DO, 2) + " V</b>" +
+      "<span>disipación en el regulador</span><b>" + coma(Math.max(0, av - VO) * IL, 2) + " W</b>" +
+      "<span>rendimiento del regulador</span><b>" + coma(100 * Math.min(1, VO / av), 0) + " %</b>";
+    var nota;
+    if(!regula) nota = "<b>La salida pierde regulación:</b> en el fondo de la ondulación la entrada baja a " + coma(mn, 2) + " V, menos que los " + coma(VO + DO, 1) + " V que necesita el regulador, y la salida cae a " + coma(smin, 2) + " V cien veces por segundo. Hace falta más capacidad, un secundario mayor o un LDO.";
+    else if(mn - VO - DO > 2.5) nota = "Regula con " + coma(mn - VO - DO, 1) + " V de margen, pero ese exceso se quema: el regulador disipa " + coma((av - VO) * IL, 1) + " W. Un secundario menor o un LDO bajarían el calor.";
+    else nota = "Regula con " + coma(mn - VO - DO, 2) + " V de margen. Conviene verificarlo con la red al 90 %.";
+    $("fuNota").innerHTML = nota;
+  }
+  ["fuS", "fuC", "fuR", "fuI", "fuN"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
