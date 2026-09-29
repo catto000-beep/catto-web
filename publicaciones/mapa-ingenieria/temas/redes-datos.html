@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redes de datos y protocolos · Técnicas Digitales III · Catto</title>
+<meta name="description" content="Las capas de la pila TCP/IP y el encapsulamiento, Ethernet con sus conmutadores, el direccionamiento IP y el encaminamiento, UDP y TCP con su ventana y su control de congestión, el producto ancho de banda por retardo y los protocolos de aplicación de la Internet de las cosas, con laboratorio interactivo de las cotas del rendimiento de TCP. Contenido de Técnicas Digitales III, quinto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/redes-datos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Técnicas Digitales III</a>
+    <span class="anio">5<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Técnicas Digitales III</span> · 120 h · Contenido 2 de 3</div>
+    <h1>Redes de datos y protocolos</h1>
+    <p class="lead">Con la ventana original de 64 KB y 100 ms de ida y vuelta, una conexión TCP no pasa de 5,2 Mbit/s aunque el enlace sea de un gigabit. El límite no está en el cable.</p>
+    <div class="chips">
+      <span class="chip hi">Pila TCP/IP</span>
+      <span class="chip">Ethernet</span>
+      <span class="chip">Direccionamiento IP</span>
+      <span class="chip">Ventana de TCP</span>
+      <span class="chip">MQTT</span>
+    </div>
+    <hr class="rule">
+
+    <section id="capas">
+      <h2><span class="n">01</span>Capas y encapsulamiento</h2>
+      <p>Una red de datos resuelve muchos problemas a la vez: transmitir bits por un medio, repartir el medio entre
+      estaciones, encontrar el camino entre redes, entregar los datos completos y en orden, y darles significado. Para que
+      cada problema se resuelva por separado, los protocolos se organizan en <b>capas</b>: cada una usa el servicio de la de
+      abajo y ofrece uno a la de arriba. El modelo OSI tiene siete; la pila TCP/IP, que es la que se usa, cuatro:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Capa TCP/IP</th><th>Función</th><th>Ejemplos</th><th>Unidad</th></tr></thead>
+        <tbody>
+          <tr><td>Aplicación</td><td>El significado de los datos</td><td>HTTP, DNS, MQTT, SSH</td><td>Mensaje</td></tr>
+          <tr><td>Transporte</td><td>Comunicación entre procesos, confiabilidad</td><td>TCP, UDP</td><td>Segmento</td></tr>
+          <tr><td>Internet</td><td>Direccionamiento y encaminamiento entre redes</td><td>IPv4, IPv6, ICMP</td><td>Paquete</td></tr>
+          <tr><td>Acceso a la red</td><td>Transmisión en un enlace</td><td>Ethernet, Wi-Fi</td><td>Trama</td></tr>
+        </tbody>
+      </table></div>
+      <p>Cada capa agrega su encabezado a los datos de la de arriba: es el <b>encapsulamiento</b>. Un segmento TCP con 1460 bytes
+      de datos viaja con 20 bytes de TCP, 20 de IP y, en Ethernet, 14 de encabezado, 4 de verificación, 8 de preámbulo y 12 de
+      separación entre tramas: 1538 bytes en el cable, un 95 % de eficiencia. Los buses de corto alcance se vieron en
+      <a href="/publicaciones/mapa-ingenieria/temas/protocolos-seriales">protocolos seriales</a>.</p>
+    </section>
+
+    <section id="enlace">
+      <h2><span class="n">02</span>Enlace y red: Ethernet e IP</h2>
+      <p><b>Ethernet</b> identifica cada interfaz con una dirección física de 48 bits. Los conmutadores (<i>switches</i>)
+      aprenden en qué puerto está cada dirección y reenvían cada trama solo hacia su destino; con enlaces full dúplex ya no hay
+      colisiones. Wi-Fi, en cambio, comparte el medio y usa acceso con detección de portadora y prevención de colisiones.</p>
+      <p><b>IP</b> da a cada interfaz una dirección lógica, 32 bits en IPv4 y 128 en IPv6, organizada en redes con un prefijo:
+      en 192.168.1.0/24, los primeros 24 bits identifican la red y quedan 254 direcciones para equipos. Los enrutadores
+      reenvían cada paquete según su tabla, hacia el siguiente salto, sin garantizar que llegue ni en qué orden. Dentro de una
+      red local, el protocolo ARP traduce la dirección IP a la física.</p>
+    </section>
+
+    <section id="tcp">
+      <h2><span class="n">03</span>Transporte: UDP y TCP</h2>
+      <p><b>UDP</b> entrega datagramas sin garantías ni conexión: es lo que conviene para voz, video en vivo o mediciones
+      periódicas, donde un dato tardío no sirve. <b>TCP</b> construye un flujo confiable y ordenado: numera los bytes, el
+      receptor confirma lo que recibió y el emisor retransmite lo que se pierde. Para no esperar una confirmación por segmento,
+      mantiene en vuelo una <b>ventana</b> de datos sin confirmar, y eso limita su velocidad:</p>
+      <div class="form">
+        \[ R \le \frac{W}{RTT} \]
+        \[ R \lesssim \frac{MSS}{RTT} \cdot \frac{1{,}22}{\sqrt{p}} \]
+        <span class="cap">\( W \) es la ventana, \( RTT \) el tiempo de ida y vuelta, \( MSS \) el tamaño máximo de segmento y \( p \) la probabilidad de pérdida. La segunda cota, de Mathis y colaboradores, sale del control de congestión: TCP reduce la ventana a la mitad con cada pérdida y la crece de a un segmento por RTT.</span>
+      </div>
+      <p>Para llenar un enlace, la ventana tiene que alcanzar el <b>producto ancho de banda por retardo</b>: los datos que caben
+      "en el cable". La ventana original de TCP era de 64 KB; con 100 ms de RTT eso limita a 5,2 Mbit/s aunque el enlace sea de
+      1 Gbit/s. La opción de escalado de ventana la extiende hasta 1 GB.</p>
+      <div class="lw" id="rtcp">
+        <div class="lt">Laboratorio · ¿qué limita a una conexión TCP?</div>
+        <p class="ls">Las tres cotas del rendimiento de una conexión: el enlace, la ventana y las pérdidas. El rendimiento es la
+        menor; la barra resaltada es la que manda. Segmentos de 1460 bytes.</p>
+        <div class="fila"><label>Velocidad del enlace = <b id="tcLv"></b></label><input type="range" id="tcL" min="0" max="4" step="0.05" value="2"></div>
+        <div class="fila"><label>Tiempo de ida y vuelta = <b id="tcRv"></b></label><input type="range" id="tcR" min="1" max="300" step="1" value="100"></div>
+        <div class="fila">
+          <select id="tcW">
+            <option value="65535" selected>Ventana de 64 KB (sin escalado)</option>
+            <option value="1048576">Ventana de 1 MB</option>
+            <option value="16777216">Ventana de 16 MB</option>
+          </select>
+        </div>
+        <div class="fila"><label>Probabilidad de pérdida = <b id="tcPv"></b></label><input type="range" id="tcP" min="-7" max="-1" step="0.1" value="-4"></div>
+        <canvas id="tcLienzo" style="display:block;width:100%;max-width:620px;height:180px;margin:6px auto 0"></canvas>
+        <div class="datos" id="tcDatos"></div>
+        <div class="nota" id="tcNota"></div>
+      </div>
+    </section>
+
+    <section id="aplicacion">
+      <h2><span class="n">04</span>Aplicaciones y la Internet de las cosas</h2>
+      <p>Sobre TCP y UDP corren los protocolos de aplicación. HTTP transfiere páginas y datos de servicios web; DNS traduce
+      nombres a direcciones; TLS cifra y autentica la conexión debajo de HTTPS. En la Internet de las cosas, donde los equipos
+      tienen poca memoria y energía, se usan protocolos livianos: <b>MQTT</b>, de publicación y suscripción sobre TCP, y
+      <b>CoAP</b>, sobre UDP. Un sensor que manda una medición por minuto casi no usa ancho de banda: lo que importa es cuánto
+      tiempo tiene la radio encendida para hacerlo.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Capturar el encapsulamiento</div>
+        <p>Capturar con Wireshark la carga de una página y reconocer en una trama los encabezados de Ethernet, IP, TCP y
+        HTTP.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Rendimiento</div>
+        <p>Medir con iperf el rendimiento entre dos equipos, y agregar retardo y pérdidas con el emulador de red del sistema
+        operativo. Comparar con las cotas del laboratorio.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · MQTT</div>
+        <p>Publicar mediciones de un sensor desde un microcontrolador con Wi-Fi a un servidor MQTT y suscribirse desde una
+        computadora.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Esperar que un enlace más rápido acelere una transferencia lejana.</b> Con ventana chica o pérdidas, el enlace no es el límite.</li>
+        <li><b>Confundir la dirección física con la IP.</b> La primera identifica la interfaz en el enlace; la segunda, en la red.</li>
+        <li><b>Usar TCP para audio en tiempo real.</b> Las retransmisiones llegan tarde; conviene UDP con su propia tolerancia a pérdidas.</li>
+        <li><b>Olvidar el encabezado en paquetes chicos.</b> Con pocos bytes de datos, la eficiencia cae mucho.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuántas direcciones de equipo tiene una red /26?</summary>
+        <div class="a"><p>\( 2^6 - 2 = 62 \).</p></div></details>
+      <details class="q"><summary>¿Qué ventana hace falta para llenar 1 Gbit/s con 50 ms de RTT?</summary>
+        <div class="a"><p>\( 10^9 \cdot 0{,}05/8 \approx 6{,}25 \) MB.</p></div></details>
+      <details class="q"><summary>Con 64 KB de ventana y 20 ms de RTT, ¿cuál es la cota de rendimiento?</summary>
+        <div class="a"><p>\( 65\,535 \cdot 8/0{,}02 \approx 26 \) Mbit/s.</p></div></details>
+      <details class="q"><summary>¿Por qué MQTT es adecuado para sensores?</summary>
+        <div class="a"><p>Porque tiene encabezados mínimos y un modelo de publicación y suscripción que desacopla sensores y consumidores.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Andrew S. Tanenbaum, Nick Feamster y David Wetherall.</span>
+          <span class="ti">Computer Networks</span>.
+          <span class="ed">6.ª ed., Pearson, 2021.</span>
+          <span class="pq">La referencia clásica, capa por capa.</span></li>
+        <li><span class="au">James F. Kurose y Keith W. Ross.</span>
+          <span class="ti">Redes de computadoras: un enfoque descendente</span>.
+          <span class="ed">7.ª ed., Pearson, 2017.</span>
+          <span class="pq">De las aplicaciones hacia abajo, con TCP y su control de congestión en detalle.</span></li>
+        <li><span class="au">Matthew Mathis, Jeffrey Semke, Jamshid Mahdavi y Teunis Ott.</span>
+          <span class="ti">The Macroscopic Behavior of the TCP Congestion Avoidance Algorithm</span>.
+          <span class="ed">ACM SIGCOMM Computer Communication Review, 27(3), 1997.</span>
+          <span class="pq">El artículo de la cota de rendimiento con pérdidas.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/dsp-hardware">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Procesamiento digital de señales y hardware</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Redes de datos y protocolos»</b> de <b>Técnicas Digitales III</b> (quinto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Cotas del rendimiento TCP: enlace; ventana W 8 / RTT; Mathis MSS 8 / RTT sqrt(3/2)/sqrt(p),
+   MSS 1460 B. Rendimiento = minimo. Producto ancho de banda por retardo = enlace RTT / 8.
+   Control (Python): 100 Mbit/s, 100 ms, 64 KB, p 1e-4 -> 100 / 5,243 / 14,305 -> 5,243;
+   1 Gbit/s, 100 ms, 4 MB, 1e-5 -> ventana 335,5, Mathis 45,24; 10 Mbit/s, 200 ms, 1e-2 -> 0,715. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("tcLienzo"), ctx = cv.getContext("2d");
+  var MSS = 1460;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function vel(b){ return b >= 1e9 ? coma(b / 1e9, 2) + " Gbit/s" : b >= 1e6 ? coma(b / 1e6, b >= 1e8 ? 0 : 2) + " Mbit/s" : coma(b / 1e3, 0) + " kbit/s"; }
+  function bytes(B){ return B >= 1048576 ? coma(B / 1048576, 1) + " MB" : coma(B / 1024, 0) + " KB"; }
+  function cien(v){ var e = Math.floor(Math.log10(v) + 1e-9), m = v / Math.pow(10, e); if(m >= 9.95){ m = 1; e++; } return (Math.abs(m - 1) < 0.05 ? "" : coma(m, 1) + "·") + "10<sup>" + (e < 0 ? "−" + (-e) : e) + "</sup>"; }
+
+  function pintar(){
+    var L = Math.pow(10, +$("tcL").value) * 1e6, rtt = +$("tcR").value / 1000, W = +$("tcW").value, p = Math.pow(10, +$("tcP").value);
+    $("tcLv").textContent = vel(L); $("tcRv").textContent = Math.round(rtt * 1000) + " ms"; $("tcPv").innerHTML = cien(p);
+    var cw = W * 8 / rtt, cm = MSS * 8 / rtt * Math.sqrt(1.5) / Math.sqrt(p), R = Math.min(L, cw, cm), bdp = L * rtt / 8;
+    var cot = [["enlace", L, "#9aa7b4"], ["ventana", cw, "#58a6ff"], ["pérdidas", cm, "#f0883e"]], lim = cot.reduce(function(a, c){ return c[1] < a[1] ? c : a; });
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var Wc = r.width, H = r.height, x0 = 70, x1 = Wc - 12, L0 = 4, L1 = 11;
+      var X = function(b){ return x0 + (Math.log10(Math.max(b, Math.pow(10, L0))) - L0) / (L1 - L0) * (x1 - x0); };
+      ctx.clearRect(0, 0, Wc, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "center";
+      var ET = {4: "10k", 5: "100k", 6: "1M", 7: "10M", 8: "100M", 9: "1G", 10: "10G", 11: "100G"};
+      for(var e = L0; e <= L1; e++){ ctx.beginPath(); ctx.moveTo(X(Math.pow(10, e)), 8); ctx.lineTo(X(Math.pow(10, e)), H - 22); ctx.stroke(); if(Wc >= 420 || e % 2 === 0) ctx.fillText(ET[e], X(Math.pow(10, e)), H - 9); }
+      cot.forEach(function(c, i){
+        var y = 14 + i * 44, h = 26, es = c === lim;
+        ctx.fillStyle = c[2]; ctx.globalAlpha = es ? 1 : 0.45; ctx.fillRect(x0, y, Math.min(X(c[1]), x1) - x0, h); ctx.globalAlpha = 1;
+        if(es){ ctx.strokeStyle = "#f3f6f8"; ctx.lineWidth = 2; ctx.strokeRect(x0, y, Math.min(X(c[1]), x1) - x0, h); ctx.lineWidth = 1; }
+        ctx.fillStyle = "#c9d1d9"; ctx.textAlign = "right"; ctx.font = (es ? "600 " : "") + "10px system-ui, sans-serif"; ctx.fillText(c[0], x0 - 6, y + 17);
+        ctx.font = "10px system-ui, sans-serif";
+      });
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("bit/s", 6, H - 9);
+    }
+
+    $("tcDatos").innerHTML =
+      "<span>cota del enlace / de la ventana / de las pérdidas</span><b>" + vel(L) + " / " + vel(cw) + " / " + vel(cm) + "</b>" +
+      "<span>rendimiento de la conexión</span><b>" + vel(R) + " (" + coma(100 * R / L, 1) + " % del enlace)</b>" +
+      "<span>producto ancho de banda por retardo</span><b>" + bytes(bdp) + "</b>" +
+      "<span>tiempo para transferir 1 GB</span><b>" + (8 * 1073741824 / R >= 3600 ? coma(8 * 1073741824 / R / 3600, 1) + " h" : coma(8 * 1073741824 / R / 60, 1) + " min") + "</b>";
+    var nota;
+    if(lim[0] === "enlace") nota = "El enlace es el cuello de botella: la ventana alcanza para cubrir el producto ancho de banda por retardo y las pérdidas son pocas.";
+    else if(lim[0] === "ventana") nota = "<b>Limita la ventana:</b> con " + bytes(W) + " en vuelo y " + Math.round(rtt * 1000) + " ms de ida y vuelta no se pueden mandar más de " + vel(cw) + ", aunque el enlace dé " + vel(L) + ". Hace falta una ventana de " + bytes(bdp) + ".";
+    else nota = "<b>Limitan las pérdidas:</b> cada pérdida parte la ventana a la mitad. Con " + Math.round(rtt * 1000) + " ms de RTT, aun pocas pérdidas frenan la conexión; en enlaces largos se usan otros algoritmos de congestión o corrección de errores.";
+    $("tcNota").innerHTML = nota;
+  }
+  ["tcL", "tcR", "tcW", "tcP"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
