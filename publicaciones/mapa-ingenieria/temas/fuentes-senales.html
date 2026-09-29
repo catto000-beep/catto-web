@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fuentes de señales · Medidas Electrónicas I · Catto</title>
+<meta name="description" content="Los generadores de funciones analógicos, la síntesis digital directa con el acumulador de fase, la palabra de sintonía y la resolución, la caída sen(x)/x y las imágenes del retenedor, los generadores arbitrarios, de pulsos y de RF con su ruido de fase, y la salida de 50 Ω, con laboratorio interactivo de un sintetizador DDS. Contenido de Medidas Electrónicas I, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/fuentes-senales">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Medidas Electrónicas I</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Medidas Electrónicas I</span> · 120 h · Contenido 3 de 11</div>
+    <h1>Fuentes de señales</h1>
+    <p class="lead">Un DDS con reloj de 100 MHz ajusta la frecuencia en pasos de 0,023 Hz, pero a 45 MHz su imagen queda casi al mismo nivel que la señal. Por eso nadie lo usa más allá del 40 % de su reloj.</p>
+    <div class="chips">
+      <span class="chip hi">Generador de funciones</span>
+      <span class="chip">DDS</span>
+      <span class="chip">Palabra de sintonía</span>
+      <span class="chip">Imágenes</span>
+      <span class="chip">Salida de 50 Ω</span>
+    </div>
+    <hr class="rule">
+
+    <section id="para-que">
+      <h2><span class="n">01</span>La mitad de cada medición</h2>
+      <p>Para medir la respuesta de un amplificador, un filtro o un receptor hace falta excitarlo con una señal
+      conocida. La <b>fuente de señales</b> es la otra mitad del banco de medición, y sus imperfecciones —distorsión,
+      error de frecuencia, ruido de fase, amplitud que cambia con la frecuencia— se suman a las del circuito que se
+      ensaya. Conocer cómo se generan las señales permite saber cuándo el generador limita la medición.</p>
+    </section>
+
+    <section id="funciones">
+      <h2><span class="n">02</span>Generadores de funciones analógicos</h2>
+      <p>El generador de funciones clásico parte de una onda triangular: un integrador carga un capacitor con
+      corriente constante y un comparador con histéresis invierte el sentido al llegar a cada umbral. La salida
+      del comparador es la onda cuadrada, y la senoidal se obtiene redondeando la triangular con una red de
+      diodos que aproxima la curvatura por tramos, con una distorsión típica del 0,5 al 1 %. La frecuencia se
+      cambia con la corriente de carga, lo que permite barrerla con una tensión de control.</p>
+      <p>Los osciladores senoidales de baja distorsión, como el puente de Wien con control de amplitud, se ven en
+      la tecnicatura, en <a href="/publicaciones/mapa-electronica/temas/osciladores">osciladores</a>.</p>
+    </section>
+
+    <section id="dds">
+      <h2><span class="n">03</span>Síntesis digital directa</h2>
+      <p>Casi todos los generadores actuales son de <b>síntesis digital directa</b> (DDS). Un registro de \( N \) bits,
+      el <b>acumulador de fase</b>, suma en cada ciclo de reloj un número \( M \), la palabra de sintonía. Su valor
+      recorre la fase de 0 a \( 2\pi \) y se desborda para volver a empezar. Los bits altos del acumulador indexan una
+      tabla con los valores del seno, y un DAC los convierte en tensión:</p>
+      <div class="form">
+        \[ f_{out} = \frac{M \cdot f_{clk}}{2^N} \]
+        \[ \Delta f = \frac{f_{clk}}{2^N} \]
+        <span class="cap">Con un reloj de 100 MHz y un acumulador de 32 bits, la resolución es de 0,023 Hz, y la frecuencia cambia de un valor a otro sin transitorio, en un ciclo de reloj. La exactitud de la frecuencia es la del reloj: un oscilador de cuarzo compensado da unas pocas partes por millón.</span>
+      </div>
+      <p>La salida del DAC es una escalera: cada muestra se mantiene durante un período de reloj. Eso produce dos
+      efectos. La amplitud cae con la frecuencia según \( \sin(\pi f/f_{clk}) / (\pi f/f_{clk}) \), y aparecen
+      <b>imágenes</b> del espectro en \( f_{clk} \pm f_{out} \), \( 2 f_{clk} \pm f_{out} \)… Un filtro de
+      reconstrucción las elimina, y por eso un DDS se usa hasta alrededor del 40 % de su frecuencia de reloj: más
+      arriba, la imagen queda demasiado cerca para filtrarla.</p>
+      <div class="lw" id="dd">
+        <div class="lt">Laboratorio · un sintetizador DDS</div>
+        <p class="ls">Reloj de 100 MHz, acumulador de fase de 32 bits y DAC de 14 bits. Arriba, las muestras que salen
+        del DAC (escalera) sobre la senoidal ideal, durante dos períodos; abajo, el espectro antes del filtro, con la
+        fundamental y las dos primeras imágenes.</p>
+        <div class="fila"><label>Frecuencia pedida = <b id="ddFv"></b></label><input type="range" id="ddF" min="3" max="7.69" step="0.005" value="7"></div>
+        <canvas id="ddLienzo" style="display:block;width:100%;max-width:620px;height:260px;margin:6px auto 0"></canvas>
+        <div class="datos" id="ddDatos"></div>
+        <div class="nota" id="ddNota"></div>
+      </div>
+    </section>
+
+    <section id="otros">
+      <h2><span class="n">04</span>Generadores arbitrarios, de pulsos y de RF</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Generador</th><th>Cómo funciona</th><th>Especificación clave</th></tr></thead>
+        <tbody>
+          <tr><td>De formas arbitrarias (AWG)</td><td>Una memoria con muestras de cualquier forma, leída a velocidad fija</td><td>Frecuencia de muestreo, largo de memoria y bits del DAC</td></tr>
+          <tr><td>De pulsos</td><td>Pulsos con ancho, período, retardo y flancos ajustables</td><td>Tiempo de subida, jitter</td></tr>
+          <tr><td>De RF</td><td>Un oscilador controlado por tensión enganchado con un PLL a una referencia</td><td>Ruido de fase, potencia de salida calibrada, modulaciones</td></tr>
+        </tbody>
+      </table></div>
+      <p>El <b>ruido de fase</b> de un generador de RF es la potencia de ruido a una distancia dada de la portadora,
+      en dBc/Hz: por ejemplo, −110 dBc/Hz a 10 kHz. Limita la medición de receptores y de osciladores, porque el
+      ruido del generador se confunde con el del circuito.</p>
+    </section>
+
+    <section id="salida">
+      <h2><span class="n">05</span>La impedancia de salida</h2>
+      <p>Casi todos los generadores tienen 50 Ω de impedancia de salida y muestran la amplitud suponiendo una carga
+      de 50 Ω. Si la carga es alta, como la entrada de un osciloscopio o de un amplificador operacional, la tensión
+      real es el <b>doble</b> de la indicada: el divisor entre los 50 Ω internos y la carga ya no divide por dos.
+      Los generadores permiten configurar la carga para que la indicación coincida. Con cargas intermedias hay que
+      calcular el divisor.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · La salida de 50 Ω</div>
+        <p>Programar 1 V pico a pico en un generador y medirlo con el osciloscopio en alta impedancia y con una
+        terminación de 50 Ω. Explicar la diferencia.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Las imágenes del DDS</div>
+        <p>Con un analizador de espectro, observar la salida de un módulo DDS sin filtro a varias frecuencias y
+        medir el nivel de la primera imagen. Compararlo con el laboratorio.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Distorsión del generador</div>
+        <p>Medir con un analizador de espectro la distorsión armónica de la senoidal de un generador de funciones
+        analógico y de uno DDS.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Olvidar la carga de 50 Ω.</b> Con un osciloscopio en alta impedancia se mide el doble de lo
+        programado.</li>
+        <li><b>Usar un DDS cerca de la mitad de su reloj.</b> La imagen queda casi al mismo nivel que la señal.</li>
+        <li><b>Atribuir al circuito la distorsión del generador.</b> Hay que medir primero el generador solo.</li>
+        <li><b>Confiar en la frecuencia sin mirar la referencia.</b> La exactitud es la del cristal, y un reloj
+        externo de 10 MHz mejora todo el banco.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué palabra de sintonía da 1 MHz en un DDS de 32 bits con reloj de 100 MHz?</summary>
+        <div class="a"><p>\( M = 10^6 \cdot 2^{32} / 10^8 \approx 42\,949\,673 \).</p></div></details>
+      <details class="q"><summary>¿Cuánto cae la amplitud de un DDS a un cuarto de su frecuencia de reloj?</summary>
+        <div class="a"><p>\( \sin(\pi/4)/(\pi/4) = 0{,}90 \): 0,91 dB.</p></div></details>
+      <details class="q"><summary>Un generador indica 2 V en una carga de 50 Ω. ¿Qué tensión da en una carga de 1 MΩ?</summary>
+        <div class="a"><p>4 V.</p></div></details>
+      <details class="q"><summary>¿Dónde aparece la primera imagen de una salida de 30 MHz con reloj de 100 MHz?</summary>
+        <div class="a"><p>En 70 MHz.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Analog Devices.</span>
+          <span class="ti">A Technical Tutorial on Digital Signal Synthesis</span>.
+          <span class="ed">Analog Devices, 1999.</span>
+          <span class="pq">El tutorial de referencia sobre DDS: acumulador de fase, truncamiento, espurios e imágenes.</span></li>
+        <li><span class="au">Albert D. Helfrick y William D. Cooper.</span>
+          <span class="ti">Instrumentación electrónica moderna y técnicas de medición</span>.
+          <span class="ed">Prentice Hall Hispanoamericana, 1991.</span>
+          <span class="pq">Los generadores de señales y de funciones, con sus circuitos.</span></li>
+        <li><span class="au">Ulrich L. Rohde y Enrico Rubiola.</span>
+          <span class="ti">Microwave and Wireless Synthesizers: Theory and Design</span>.
+          <span class="ed">2.ª ed., Wiley, 2021.</span>
+          <span class="pq">Síntesis de frecuencia con PLL y DDS, y el ruido de fase a fondo.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/mediciones-baja-frecuencia">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Tensión, corriente y potencia en baja frecuencia</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Fuentes de señales»</b> de <b>Medidas Electrónicas I</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Sintetizador DDS: fclk = 100 MHz, acumulador de 32 bits, DAC de 14 bits.
+   M = round(f 2^32 / fclk); f real = M fclk / 2^32; resolucion fclk / 2^32.
+   Retenedor de orden cero: amplitud sinc(f / fclk); imagenes en fclk - f y
+   fclk + f con amplitud sinc de su frecuencia.
+   Control (Python): 10 MHz -> M 429 496 730, error +9,3 mHz, caida -0,143 dB,
+   imagen en 90 MHz a -19,08 dB de la fundamental; 40 MHz -> -2,42 dB e
+   imagen a -3,52 dB; 25 MHz -> M = 2^30 exacto. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("ddLienzo"), ctx = cv.getContext("2d");
+  var FC = 100e6, N2 = 4294967296, B = 14;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function hz(f){ return f >= 1e6 ? coma(f / 1e6, f >= 1e7 ? 2 : 3) + " MHz" : f >= 1e3 ? coma(f / 1e3, f >= 1e5 ? 1 : 2) + " kHz" : coma(f, 1) + " Hz"; }
+  function sinc(x){ return x === 0 ? 1 : Math.sin(Math.PI * x) / (Math.PI * x); }
+  function tres(x){ var e = Math.floor(Math.log10(x)) - 2, p = Math.pow(10, e); return Math.round(x / p) * p; }
+
+  function pintar(){
+    var f = tres(Math.pow(10, +$("ddF").value));
+    $("ddFv").textContent = hz(f);
+    var M = Math.round(f * N2 / FC), fa = M * FC / N2, err = fa - f;
+    var d0 = sinc(f / FC), im1 = FC - f, im2 = FC + f, a1 = Math.abs(sinc(im1 / FC)), a2 = Math.abs(sinc(im2 / FC));
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 16, x1 = W - 16;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      /* tiempo: dos periodos */
+      var t0 = 14, t1 = 110, ym = (t0 + t1) / 2, amp = (t1 - t0) / 2 - 4, Tt = 2 / fa, ns = Math.round(Tt * FC);
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("salida del DAC: " + (ns > 400 ? "más de 400" : ns) + " muestras en dos períodos", x0, 10);
+      ctx.strokeStyle = "rgba(242,204,96,.7)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.beginPath();
+      for(var k = 0; k <= 300; k++){ var tt = Tt * k / 300, y = ym - amp * Math.sin(2 * Math.PI * fa * tt); if(k) ctx.lineTo(x0 + k / 300 * (x1 - x0), y); else ctx.moveTo(x0, y); }
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 1.8; ctx.beginPath();
+      /* con muchas muestras los escalones no se ven: se dibuja una de cada "paso" */
+      var fase = 0, cuanto = Math.pow(2, B - 1) - 1, paso = Math.max(1, Math.ceil(ns / 2000));
+      for(var n = 0; n <= ns; n += paso){
+        var v = Math.round(Math.sin(2 * Math.PI * fase / N2) * cuanto) / cuanto, xa = x0 + (n / FC) / Tt * (x1 - x0), xb = x0 + Math.min((n + paso) / FC, Tt) / Tt * (x1 - x0), yv = ym - amp * v;
+        if(n) ctx.lineTo(xa, yv); else ctx.moveTo(xa, yv);
+        ctx.lineTo(xb, yv);
+        fase = (fase + M * paso) % N2;
+      }
+      ctx.stroke();
+      /* espectro 0 a 200 MHz en dB relativos, -60 a 0 */
+      var s0 = 136, s1 = H - 24, X = function(fr){ return x0 + fr / 200e6 * (x1 - x0); }, Y = function(db){ return s0 + (-Math.max(-60, db)) / 60 * (s1 - s0); };
+      for(var fm = 0; fm <= 200; fm += 50){
+        ctx.strokeStyle = fm === 100 ? "#3a4456" : "#2a3140"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(fm * 1e6), s0); ctx.lineTo(X(fm * 1e6), s1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = fm === 0 ? "left" : fm === 200 ? "right" : "center"; ctx.fillText(fm === 100 ? "f clk" : fm === 200 ? "200 MHz" : fm, X(fm * 1e6), s1 + 12);
+      }
+      /* envolvente sinc */
+      ctx.strokeStyle = "rgba(154,167,180,.6)"; ctx.setLineDash([3, 3]); ctx.beginPath();
+      for(k = 1; k <= 200; k++){ var fr = k * 1e6, db = 20 * Math.log10(Math.abs(sinc(fr / FC)) + 1e-9); if(k > 1) ctx.lineTo(X(fr), Y(db)); else ctx.moveTo(X(fr), Y(db)); }
+      ctx.stroke(); ctx.setLineDash([]);
+      [[fa, d0, "#58a6ff"], [im1, a1, "#f85149"], [im2, a2, "#f85149"]].forEach(function(l){
+        var db = 20 * Math.log10(l[1] + 1e-12);
+        ctx.strokeStyle = l[2]; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(l[0]), s1); ctx.lineTo(X(l[0]), Y(db)); ctx.stroke();
+      });
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("espectro sin filtrar (0 a −60 dB)", x0, s0 - 6);
+    }
+
+    $("ddDatos").innerHTML =
+      "<span>palabra de sintonía M</span><b>" + M.toLocaleString("es-AR") + "</b>" +
+      "<span>frecuencia obtenida</span><b>" + hz(fa) + " (error de " + coma(err * 1e3, 1) + " mHz)</b>" +
+      "<span>caída de amplitud sen(x)/x</span><b>" + coma(20 * Math.log10(d0), Math.abs(20 * Math.log10(d0)) < 0.1 ? 4 : 2) + " dB</b>" +
+      "<span>primera imagen</span><b>" + hz(im1) + ", " + coma(20 * Math.log10(a1 / d0), 1) + " dB respecto de la señal</b>";
+    var nota;
+    if(f / FC > 0.4) nota = "<b>Demasiado cerca de la mitad del reloj:</b> la imagen en " + hz(im1) + " está apenas " + coma(-20 * Math.log10(a1 / d0), 1) + " dB por debajo de la señal y a " + hz(im1 - fa) + " de distancia. Ningún filtro práctico la separa.";
+    else if(f / FC > 0.1) nota = "La imagen en " + hz(im1) + " está " + coma(-20 * Math.log10(a1 / d0), 1) + " dB abajo: un filtro de reconstrucción que corte a unos 40 MHz la elimina. La caída sen(x)/x ya se nota (" + coma(20 * Math.log10(d0), 2) + " dB) y los generadores la compensan en la tabla.";
+    else nota = "Con muchas muestras por período, la escalera sigue de cerca a la senoidal y la imagen queda muy abajo, cerca de " + hz(im1) + ". La resolución de frecuencia es de 0,023 Hz: cualquier frecuencia se obtiene con un error de milihertz.";
+    $("ddNota").innerHTML = nota;
+  }
+  $("ddF").addEventListener("input", pintar);
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
