@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motores paso a paso · Máquinas e Instalaciones Eléctricas · Catto</title>
+<meta name="description" content="El posicionamiento a lazo abierto, los tipos de motor paso a paso, las secuencias de onda, paso completo, medio paso y micropasos, los accionamientos L/R y chopper, la constante de tiempo de la bobina y la curva par-velocidad con la pérdida de pasos, con laboratorio interactivo de la corriente de una bobina a distintas velocidades. Contenido de Máquinas e Instalaciones Eléctricas, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/motores-paso">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Máquinas e Instalaciones Eléctricas</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Máquinas e Instalaciones Eléctricas</span> · 96 h · Contenido 3 de 5</div>
+    <h1>Motores paso a paso</h1>
+    <p class="lead">A 300 rpm, un motor paso a paso accionado con su tensión nominal conserva un 20 % de su par. Con un driver chopper a 24 V conserva más del 80 %: el motor es el mismo, lo que cambia es cómo sube la corriente.</p>
+    <div class="chips">
+      <span class="chip hi">Paso completo</span>
+      <span class="chip">Micropasos</span>
+      <span class="chip">Constante L/R</span>
+      <span class="chip">Chopper</span>
+      <span class="chip">Pérdida de pasos</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que-es">
+      <h2><span class="n">01</span>Posicionar sin medir</h2>
+      <p>Un motor paso a paso gira en incrementos fijos, típicamente de 1,8° (200 pasos por vuelta), cada vez que el
+      controlador cambia la corriente de sus bobinas. Si la carga no supera su par, la posición es la cantidad de pasos
+      enviados: se posiciona <b>a lazo abierto</b>, sin codificador. Eso lo hace barato y simple para impresoras 3D,
+      máquinas CNC chicas, cámaras y válvulas. El funcionamiento básico se presenta en la tecnicatura, en
+      <a href="/publicaciones/mapa-electronica/temas/motores-paso-a-paso">motores paso a paso</a>.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Tipo</th><th>Rotor</th><th>Característica</th></tr></thead>
+        <tbody>
+          <tr><td>Reluctancia variable</td><td>Hierro dentado sin imán</td><td>Sin par de retención sin corriente</td></tr>
+          <tr><td>Imán permanente</td><td>Imán con polos radiales</td><td>Pasos grandes, de 7,5° a 15°, baratos</td></tr>
+          <tr><td>Híbrido</td><td>Imán axial entre dos coronas dentadas</td><td>Pasos de 1,8° o 0,9° con buen par: el más usado</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="secuencias">
+      <h2><span class="n">02</span>Secuencias de excitación</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Modo</th><th>Cómo se energiza</th><th>Pasos por vuelta (motor de 1,8°)</th><th>Par</th></tr></thead>
+        <tbody>
+          <tr><td>Onda</td><td>Una fase por vez</td><td>200</td><td>Menor</td></tr>
+          <tr><td>Paso completo</td><td>Dos fases a la vez</td><td>200</td><td>Unas 1,4 veces el de onda</td></tr>
+          <tr><td>Medio paso</td><td>Alterna una y dos fases</td><td>400</td><td>Irregular entre pasos</td></tr>
+          <tr><td>Micropasos</td><td>Corrientes senoidal y cosenoidal escalonadas</td><td>Hasta 51 200</td><td>Más suave, menos resonancia</td></tr>
+        </tbody>
+      </table></div>
+      <p>Los micropasos mejoran la suavidad, pero no la exactitud en la misma proporción: el par que sostiene un
+      micropaso contra la carga es pequeño, y la posición real se desvía del valor ideal.</p>
+    </section>
+
+    <section id="accionamiento">
+      <h2><span class="n">03</span>Accionamiento: por qué el par cae con la velocidad</h2>
+      <p>Cada bobina es un inductor con resistencia, y la corriente tarda en establecerse con la constante de tiempo
+      \( \tau = L/R \). A pocos pasos por segundo alcanza su valor nominal; a muchos, se invierte antes de llegar, y como el
+      par es proporcional a la corriente, el motor pierde fuerza. Hay tres formas de accionarlo:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Accionamiento</th><th>Cómo funciona</th><th>Efecto</th></tr></thead>
+        <tbody>
+          <tr><td>L/R simple</td><td>Se aplica la tensión nominal de la bobina</td><td>La corriente sube lento: poco par a alta velocidad</td></tr>
+          <tr><td>L/R con resistencia en serie</td><td>Tensión más alta y un resistor que limita la corriente final</td><td>Constante de tiempo menor, pero el resistor disipa</td></tr>
+          <tr><td>Chopper de corriente constante</td><td>Tensión alta y un puente H que corta cuando la corriente llega al valor fijado</td><td>Subida rápida sin disipar: el estándar actual</td></tr>
+        </tbody>
+      </table></div>
+      <div class="form">
+        \[ i(t) = \frac{V}{R} + \left(i_0 - \frac{V}{R}\right) e^{-t/\tau} \]
+        <span class="cap">En cada cambio de paso la corriente parte de su valor anterior y tiende a \( V/R \). Con el chopper, \( V \) es varias veces mayor que la nominal de la bobina y la corriente se corta en el valor fijado: sube con pendiente \( V/L \), mucho más rápido.</span>
+      </div>
+      <div class="lw" id="pp">
+        <div class="lt">Laboratorio · la corriente de una bobina a distintas velocidades</div>
+        <p class="ls">Un motor de 200 pasos por vuelta con bobinas de 5 mH y 2 Ω, para 1,5 A. Accionado en paso completo, cada
+        bobina invierte su corriente cada dos pasos. El gráfico muestra un período de la corriente en régimen; el dato
+        principal es el valor medio de su módulo, al que es proporcional el par.</p>
+        <div class="fila">
+          <select id="ppM">
+            <option value="lr">L/R simple, 3 V</option>
+            <option value="lr4">L/R con 6 Ω en serie, 12 V</option>
+            <option value="chop" selected>Chopper a 24 V, 1,5 A</option>
+          </select>
+        </div>
+        <div class="fila"><label>Velocidad = <b id="ppVv"></b></label><input type="range" id="ppV" min="1.7" max="3.3" step="0.01" value="3"></div>
+        <canvas id="ppLienzo" style="display:block;width:100%;max-width:620px;height:210px;margin:6px auto 0"></canvas>
+        <div class="datos" id="ppDatos"></div>
+        <div class="nota" id="ppNota"></div>
+      </div>
+    </section>
+
+    <section id="curva">
+      <h2><span class="n">04</span>La curva par-velocidad y la pérdida de pasos</h2>
+      <p>El fabricante da dos curvas. La de <b>arranque</b> (pull-in) indica hasta qué velocidad el motor arranca y se detiene
+      sin perder pasos con una carga dada; la de <b>funcionamiento</b> (pull-out), hasta dónde se puede llegar acelerando de a
+      poco. Entre las dos se trabaja con rampas de aceleración. Si el par pedido supera al disponible, el rotor se atrasa
+      más de medio paso respecto del campo y <b>pierde pasos</b>: el controlador cree que está en un lugar y el motor está
+      en otro, sin que nadie se entere. A velocidades intermedias aparece además una <b>resonancia</b> mecánica que puede
+      hacerlo perder pasos aun con poca carga; los micropasos y los amortiguadores la atenúan.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · La corriente real</div>
+        <p>Con una sonda de corriente, medir la forma de onda de una bobina a 100, 500 y 1000 pasos por segundo, con un driver
+        de corriente constante.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Perder pasos</div>
+        <p>Marcar el eje, dar 2000 pasos a velocidad creciente con una carga en una polea y medir cuántos se perdieron.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Micropasos</div>
+        <p>Comparar el ruido y la vibración del mismo movimiento en paso completo y con 16 micropasos.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Arrancar a la velocidad final sin rampa.</b> El motor pierde pasos o no arranca.</li>
+        <li><b>Ajustar la corriente del driver por encima de la nominal.</b> El motor se calienta, aunque dé más par.</li>
+        <li><b>Confiar en la posición sin referencia.</b> Hay que buscar un final de carrera al encender.</li>
+        <li><b>Alimentar el chopper con poca tensión.</b> Sin margen sobre la de la bobina, se comporta como un L/R.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Cuántos pasos por segundo da un motor de 1,8° a 300 rpm en paso completo?</summary>
+        <div class="a"><p>\( 300/60 \cdot 200 = 1000 \) pasos por segundo.</p></div></details>
+      <details class="q"><summary>¿Qué constante de tiempo tiene una bobina de 5 mH y 2 Ω? ¿Y con 6 Ω en serie?</summary>
+        <div class="a"><p>2,5 ms; con el resistor, \( 5/8 = 0{,}625 \) ms.</p></div></details>
+      <details class="q"><summary>¿Cuántos micropasos por vuelta da un motor de 200 pasos con 16 micropasos?</summary>
+        <div class="a"><p>3200.</p></div></details>
+      <details class="q"><summary>¿Por qué un chopper necesita tensión alta?</summary>
+        <div class="a"><p>Porque la pendiente de subida de la corriente es V/L: más tensión, más rápido llega al valor fijado.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Takashi Kenjo y Akira Sugawara.</span>
+          <span class="ti">Stepping Motors and Their Microprocessor Controls</span>.
+          <span class="ed">2.ª ed., Clarendon Press, 1994.</span>
+          <span class="pq">El libro de referencia sobre motores paso a paso y su control.</span></li>
+        <li><span class="au">Austin Hughes y Bill Drury.</span>
+          <span class="ti">Electric Motors and Drives</span>.
+          <span class="ed">5.ª ed., Newnes, 2019.</span>
+          <span class="pq">El capítulo de motores paso a paso con la curva par-velocidad y los accionamientos.</span></li>
+        <li><span class="au">Douglas W. Jones.</span>
+          <span class="ti">Control of Stepping Motors: A Tutorial</span>.
+          <span class="ed">University of Iowa, en línea.</span>
+          <span class="pq">Un tutorial clásico y práctico sobre secuencias, accionamientos y micropasos.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/maquinas-cc">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Máquinas de corriente continua y motores sin escobillas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Motores paso a paso»</b> de <b>Máquinas e Instalaciones Eléctricas</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Corriente de una bobina de motor paso a paso (L 5 mH, R 2 ohm, nominal 1,5 A)
+   en paso completo: la tension se invierte cada dos pasos. Integracion paso a
+   paso (400 por semiperiodo) durante 40 semiperiodos hasta el regimen:
+   di/dt = (s V - Rt i) / L; el chopper corta en +-1,5 A.
+   Dato principal: valor medio de |i| en un semiperiodo, proporcional al par.
+   Control (Python, 1000 pasos por semiperiodo): 1000 pasos/s -> L/R 3 V 19,5 %;
+   L/R 12 V con 6 ohm 59,2 %; chopper 24 V 84,3 %; a 200 pasos/s: 66,3 / 91,4 / 96,9 %. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("ppLienzo"), ctx = cv.getContext("2d");
+  var L = 5e-3, R = 2, IN = 1.5, MODOS = { lr: [3, 0, null], lr4: [12, 6, null], chop: [24, 0, 1.5] };
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function simular(m, pps){
+    var V = MODOS[m][0], Rt = R + MODOS[m][1], Is = MODOS[m][2], T = 2 / pps, N = 400, dt = T / N, i = 0, s = 1, h = [], avg = 0;
+    for(var per = 0; per < 40; per++){
+      var acc = 0;
+      for(var k = 0; k < N; k++){ var i2 = i + (s * V - Rt * i) / L * dt; if(Is !== null && s * i2 > Is) i2 = s * Is; i = i2; acc += Math.abs(i) * dt; if(per >= 38) h.push(i); }
+      avg = acc / T; s = -s;
+    }
+    return { avg: avg, h: h };
+  }
+
+  function pintar(){
+    var m = $("ppM").value, pps = Math.round(Math.pow(10, +$("ppV").value));
+    $("ppVv").textContent = pps + " pasos/s (" + coma(pps / 200 * 60, 0) + " rpm)";
+    var r1 = simular(m, pps), fr = r1.avg / IN;
+    var otros = Object.keys(MODOS).map(function(k){ return [k, simular(k, pps).avg / IN]; });
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 40, x1 = W - 14, y0 = 10, y1 = H - 26, ym = (y0 + y1) / 2;
+      var Y = function(i){ return ym - i / 2 * (y1 - y0) / 2; };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      [-1.5, 0, 1.5].forEach(function(v){ ctx.strokeStyle = v === 0 ? "#3a4456" : "#2a3140"; ctx.setLineDash(v ? [4, 4] : []); ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(coma(v, 1) + " A", x0 - 4, Y(v) + 3); });
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.4; ctx.beginPath();
+      r1.h.forEach(function(v, k){ var x = x0 + k / (r1.h.length - 1) * (x1 - x0); if(k) ctx.lineTo(x, Y(v)); else ctx.moveTo(x, Y(v)); });
+      ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("corriente de una bobina durante un período (" + coma(4000 / pps, 2) + " ms)", (x0 + x1) / 2, H - 5);
+    }
+
+    var nom = { lr: "L/R simple", lr4: "L/R con resistor", chop: "chopper" };
+    $("ppDatos").innerHTML =
+      "<span>corriente media en la bobina</span><b>" + coma(r1.avg, 3) + " A (" + coma(fr * 100, 1) + " % de la nominal)</b>" +
+      "<span>par disponible relativo, los tres accionamientos</span><b>" + otros.map(function(o){ return nom[o[0]] + " " + coma(o[1] * 100, 0) + " %"; }).join(" · ") + "</b>" +
+      "<span>duración de cada paso</span><b>" + coma(1000 / pps, 2) + " ms, contra τ = " + coma(L / (R + MODOS[m][1]) * 1000, 2) + " ms</b>";
+    var nota;
+    if(fr > 0.9) nota = "Cada paso dura bastante más que la constante de tiempo: la corriente llega a su valor final y el motor da prácticamente todo su par.";
+    else if(fr > 0.5) nota = "La corriente ya no llega del todo a su valor antes de invertirse: el par disponible bajó al " + coma(fr * 100, 0) + " %. Si la carga pide más que eso, el motor pierde pasos.";
+    else nota = "<b>Poco par:</b> la corriente apenas sube antes de invertirse. " + (m === "chop" ? "Aun con el chopper, a esta velocidad hace falta más tensión." : "Un chopper con tensión alta haría subir la corriente " + coma((MODOS.chop[0] / L) / (MODOS[m][0] / L), 0) + " veces más rápido.");
+    $("ppNota").innerHTML = nota;
+  }
+  ["ppM", "ppV"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
