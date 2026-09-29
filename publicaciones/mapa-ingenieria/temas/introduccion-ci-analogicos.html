@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introducción al diseño de circuitos integrados analógicos · Electrónica Aplicada II · Catto</title>
+<meta name="description" content="El flujo de diseño de un bloque analógico integrado, el operacional CMOS de dos etapas con su ganancia y su GBW, la compensación de Miller con el cero del semiplano derecho y la resistencia de anulación, las reglas de diseño, el slew rate, el cascodo plegado y la referencia de bandgap, con laboratorio interactivo que dimensiona un operacional de dos etapas. Contenido de Electrónica Aplicada II, cuarto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/introduccion-ci-analogicos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica Aplicada II</a>
+    <span class="anio">4<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Aplicada II</span> · 120 h · Contenido 8 de 8</div>
+    <h1>Introducción al diseño de circuitos integrados analógicos</h1>
+    <p class="lead">Un capacitor de 2 pF fija el ancho de banda de un operacional integrado y crea un cero que le roba fase. Una resistencia de 1/gm en serie lo hace desaparecer.</p>
+    <div class="chips">
+      <span class="chip hi">Flujo de diseño</span>
+      <span class="chip">Operacional de dos etapas</span>
+      <span class="chip">Compensación de Miller</span>
+      <span class="chip">Cero de Miller</span>
+      <span class="chip">Bandgap</span>
+    </div>
+    <hr class="rule">
+
+    <section id="flujo">
+      <h2><span class="n">01</span>Del pliego de especificaciones al silicio</h2>
+      <p>Diseñar un circuito integrado analógico es repartir un presupuesto: con una corriente y un área limitadas hay que
+      obtener ganancia, ancho de banda, margen de fase, excursión de salida, ruido y offset. Electrónica Aplicada I presentó las
+      bases, el apareamiento, la ley de Pelgrom y el diseño con \( g_m/I_D \), en <a href="/publicaciones/mapa-ingenieria/temas/diseno-ci-analogicos">diseño
+      de circuitos integrados analógicos</a>. Aquí se recorre el diseño de un bloque completo con todo lo visto en la materia:
+      realimentación, respuesta en frecuencia y compensación.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Etapa</th><th>Qué se decide</th><th>Herramienta</th></tr></thead>
+        <tbody>
+          <tr><td>Especificación</td><td>Ganancia, GBW, margen de fase, slew rate, potencia, excursión</td><td>El sistema que usa el bloque</td></tr>
+          <tr><td>Topología</td><td>Una o dos etapas, cascodo plegado, entrada rail-to-rail</td><td>Cálculo a mano</td></tr>
+          <tr><td>Dimensionamiento</td><td>Corrientes, \( g_m/I_D \), largos y anchos</td><td>Curvas de \( g_m/I_D \) de la tecnología</td></tr>
+          <tr><td>Verificación</td><td>Esquinas de proceso, tensión y temperatura; Monte Carlo</td><td>Simulador SPICE con modelos del fabricante</td></tr>
+          <tr><td>Layout</td><td>Apareamiento, centroide común, guardas, blindajes</td><td>Editor de layout y extracción de parásitos</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="dosetapas">
+      <h2><span class="n">02</span>El operacional de dos etapas</h2>
+      <p>El operacional CMOS más enseñado tiene un par diferencial con carga de espejo, una
+      <a href="/publicaciones/mapa-ingenieria/temas/amplificador-diferencial">etapa diferencial</a> que da ganancia y convierte a
+      salida simple, seguida de una fuente común con carga activa. Cada etapa aporta una ganancia del orden de la intrínseca
+      del transistor, y el producto supera fácilmente los 70 dB:</p>
+      <div class="form">
+        \[ A_0 = g_{m1}\,(r_{o2} \parallel r_{o4}) \cdot g_{m6}\,(r_{o6} \parallel r_{o7}) \]
+        \[ \mathrm{GBW} = \frac{g_{m1}}{2\pi C_c} \]
+        <span class="cap">El capacitor de Miller \( C_c \), entre la entrada y la salida de la segunda etapa, fija el polo dominante. El producto ganancia por ancho de banda depende solo de la transconductancia de entrada y de \( C_c \).</span>
+      </div>
+    </section>
+
+    <section id="miller">
+      <h2><span class="n">03</span>Compensación de Miller y el cero</h2>
+      <p>La <a href="/publicaciones/mapa-ingenieria/temas/estabilidad-compensacion">compensación de Miller</a> separa los polos:
+      el primero baja y el segundo sube hasta cerca de \( g_{m6}/C_L \). Pero \( C_c \) crea además un camino directo de la
+      entrada a la salida de la segunda etapa, que produce un <b>cero en el semiplano derecho</b>: suma atraso de fase como un
+      polo, y le quita margen al amplificador:</p>
+      <div class="form">
+        \[ p_2 \approx \frac{g_{m6}}{C_L} \]
+        \[ z = \frac{1}{C_c\,(1/g_{m6} - R_z)} \]
+        <span class="cap">Sin resistencia \( R_z \), el cero está en \( g_{m6}/C_c \), en el semiplano derecho. Con \( R_z = 1/g_{m6} \) en serie con \( C_c \) se va al infinito, y con una \( R_z \) mayor pasa al semiplano izquierdo, donde agrega fase.</span>
+      </div>
+      <p>Las reglas de diseño clásicas, de Allen y Holberg, piden \( g_{m6} \ge 10\, g_{m1} \) para alejar el cero y
+      \( C_c \ge 0{,}22\, C_L \) para que el segundo polo quede a más de 2,2 veces el GBW: con eso el margen de fase ronda los
+      60°. El <b>slew rate</b> lo fija la corriente de cola cargando a \( C_c \), \( I_5/C_c \), salvo que la segunda etapa no
+      alcance a cargar la carga: \( (I_6 - I_5)/C_L \).</p>
+      <div class="lw" id="dos">
+        <div class="lt">Laboratorio · dimensionar un operacional de dos etapas</div>
+        <p class="ls">Un operacional de dos etapas en un proceso de 3,3 V, con \( g_m/I_D = 10\ \mathrm{V^{-1}} \) en todos los
+        transistores de señal, ganancia de continua 5000 y 0,2 pF de capacidad parásita en la salida de la primera etapa. Se
+        usa como seguidor. La curva es la ganancia de lazo; la línea punteada marca 0 dB.</p>
+        <div class="fila"><label>Corriente de cola I<sub>5</sub> = <b id="doIv"></b></label><input type="range" id="doI" min="10" max="60" step="1" value="20"></div>
+        <div class="fila"><label>Corriente de la segunda etapa I<sub>6</sub> = <b id="doJv"></b></label><input type="range" id="doJ" min="100" max="600" step="10" value="200"></div>
+        <div class="fila"><label>Capacitor de Miller C<sub>c</sub> = <b id="doCv"></b></label><input type="range" id="doC" min="0.3" max="5" step="0.1" value="2"></div>
+        <div class="fila"><label>Carga C<sub>L</sub> = <b id="doLv"></b></label><input type="range" id="doL" min="1" max="20" step="0.5" value="5"></div>
+        <div class="fila">
+          <select id="doR">
+            <option value="0" selected>Sin resistencia de anulación</option>
+            <option value="1">R<sub>z</sub> = 1/g<sub>m6</sub></option>
+            <option value="2">R<sub>z</sub> = 2/g<sub>m6</sub></option>
+          </select>
+        </div>
+        <canvas id="doLienzo" style="display:block;width:100%;max-width:620px;height:230px;margin:6px auto 0"></canvas>
+        <div class="datos" id="doDatos"></div>
+        <div class="nota" id="doNota"></div>
+      </div>
+    </section>
+
+    <section id="otras">
+      <h2><span class="n">04</span>Otras topologías y bloques</h2>
+      <p>El <b>cascodo plegado</b> obtiene ganancia alta en una sola etapa: el único nodo de alta impedancia es la salida, la
+      carga misma lo compensa y no hay cero de Miller. Es la elección habitual para cargas capacitivas, como en los
+      circuitos de capacitores conmutados. Con una etapa de salida clase AB se obtiene excursión de riel a riel, y con dos
+      pares complementarios en la entrada, entrada de riel a riel.</p>
+      <p>Alrededor de los amplificadores, un chip analógico necesita otros bloques: una <b>referencia de bandgap</b>, que
+      combina la tensión base–emisor, que baja con la temperatura, con una tensión proporcional a la temperatura absoluta
+      para obtener unos 1,2 V casi independientes de ella; una <b>polarización de g<sub>m</sub> constante</b>; reguladores LDO
+      internos y conversores de datos. Todos se diseñan con el mismo método: especificar, elegir la topología, dimensionar a
+      mano con \( g_m/I_D \) y verificar en el simulador.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Simulación</div>
+        <p>Dimensionar el operacional de dos etapas en un simulador SPICE con modelos de una tecnología abierta, como la
+        SKY130, y comparar el margen de fase simulado con el calculado a mano.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Esquinas y Monte Carlo</div>
+        <p>Repetir la simulación en las esquinas de proceso y temperatura y con Monte Carlo del offset. Identificar qué
+        especificación se pierde primero.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Slew rate</div>
+        <p>Simular la respuesta a un escalón grande y medir el slew rate de subida y de bajada. Explicar la asimetría.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Olvidar el cero del semiplano derecho.</b> Con \( g_{m6} \) chica, el cero se acerca y el margen de fase calculado con dos polos es optimista.</li>
+        <li><b>Diseñar para la carga nominal.</b> El segundo polo depende de \( C_L \); con más carga el margen cae.</li>
+        <li><b>Achicar \( C_c \) para ganar GBW sin mirar el segundo polo.</b> El GBW sube y el margen de fase baja.</li>
+        <li><b>Confiar en el cálculo a mano sin simular las esquinas.</b> Las corrientes y las capacidades cambian con el proceso y la temperatura.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué GBW tiene un operacional con g<sub>m1</sub> = 100 μS y C<sub>c</sub> = 2 pF?</summary>
+        <div class="a"><p>\( 10^{-4}/(2\pi \cdot 2\cdot10^{-12}) \approx 8 \) MHz.</p></div></details>
+      <details class="q"><summary>Con g<sub>m6</sub> = 2 mS y C<sub>c</sub> = 2 pF, ¿dónde está el cero sin R<sub>z</sub>?</summary>
+        <div class="a"><p>En \( 2\cdot10^{-3}/(2\pi \cdot 2\cdot10^{-12}) \approx 159 \) MHz, en el semiplano derecho.</p></div></details>
+      <details class="q"><summary>¿Qué slew rate da una cola de 20 μA con C<sub>c</sub> = 2 pF?</summary>
+        <div class="a"><p>10 V/μs.</p></div></details>
+      <details class="q"><summary>¿Qué valor de R<sub>z</sub> elimina el cero?</summary>
+        <div class="a"><p>\( R_z = 1/g_{m6} \).</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Phillip E. Allen y Douglas R. Holberg.</span>
+          <span class="ti">CMOS Analog Circuit Design</span>.
+          <span class="ed">3.ª ed., Oxford University Press, 2012.</span>
+          <span class="pq">El procedimiento de diseño del operacional de dos etapas, paso a paso.</span></li>
+        <li><span class="au">Behzad Razavi.</span>
+          <span class="ti">Design of Analog CMOS Integrated Circuits</span>.
+          <span class="ed">2.ª ed., McGraw-Hill, 2017.</span>
+          <span class="pq">Los operacionales, la compensación y la referencia de bandgap con intuición física.</span></li>
+        <li><span class="au">Paul G. A. Jespers y Boris Murmann.</span>
+          <span class="ti">Systematic Design of Analog CMOS Circuits Using Pre-Computed Lookup Tables</span>.
+          <span class="ed">Cambridge University Press, 2017.</span>
+          <span class="pq">El diseño con \( g_m/I_D \) llevado a un método sistemático.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/fuentes-reguladas-lineales">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Fuentes de alimentación reguladas lineales</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Fin de la materia →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Introducción al diseño de circuitos integrados analógicos»</b> de <b>Electrónica Aplicada II</b> (cuarto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Operacional de dos etapas: gm = 10 I (gm1 = 10 I5/2, gm6 = 10 I6), A0 = 5000,
+   C1 = 0,2 pF. GBW = gm1/Cc; p2 = gm6 Cc / (C1 Cc + CL C1 + CL Cc);
+   z = 1 / (Cc (1/gm6 - Rz)). Seguidor: margen de fase en |A| = 1.
+   SR = min(I5/Cc, (I6 - I5)/CL). Potencia 3,3 V (I5 + I6).
+   Control (Python): 20 uA, 200 uA, 2 pF, 5 pF -> GBW 7,958 MHz, fu 7,889 MHz,
+   p2 55,84 MHz, z 159,2 MHz (RHP), PM 79,13; Rz = 1/gm6 -> 81,98; 2/gm6 -> 84,81;
+   20 uA, 100 uA, 1 pF, 5 pF -> fu 14,02 MHz, PM 56,33, SR 16 V/us. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("doLienzo"), ctx = cv.getContext("2d");
+  var GMID = 10, A0 = 5000, C1 = 0.2e-12, VDD = 3.3;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function frec(f){ return f === Infinity ? "infinito" : f >= 1e9 ? coma(f / 1e9, 2) + " GHz" : f >= 1e6 ? coma(f / 1e6, 1) + " MHz" : coma(f / 1e3, 0) + " kHz"; }
+  function diseno(I5, I6, Cc, CL, rz){
+    var gm1 = GMID * I5 / 2, gm6 = GMID * I6, GBW = gm1 / Cc, p1 = GBW / A0;
+    var p2 = gm6 * Cc / (C1 * Cc + CL * C1 + CL * Cc), den = 1 / gm6 - rz / gm6;
+    var z = Math.abs(den) < 1e-30 ? Infinity : 1 / (Cc * den);
+    function mag(w){ var m = A0 / Math.hypot(1, w / p1) / Math.hypot(1, w / p2); if(z !== Infinity) m *= Math.hypot(1, w / Math.abs(z)); return m; }
+    function fase(w){ var f = -Math.atan(w / p1) - Math.atan(w / p2); if(z !== Infinity) f += z > 0 ? -Math.atan(w / z) : Math.atan(-w / z); return f * 180 / Math.PI; }
+    var lo = 1, hi = 1e13; for(var i = 0; i < 300; i++){ var m = Math.sqrt(lo * hi); if(mag(m) > 1) lo = m; else hi = m; }
+    return {gm1: gm1, gm6: gm6, GBW: GBW, p2: p2, z: z, wu: lo, pm: 180 + fase(lo), mag: mag, SR: Math.min(I5 / Cc, (I6 - I5) / CL), srInt: I5 / Cc <= (I6 - I5) / CL, P: VDD * (I5 + I6)};
+  }
+
+  function pintar(){
+    var I5 = +$("doI").value * 1e-6, I6 = +$("doJ").value * 1e-6, Cc = +$("doC").value * 1e-12, CL = +$("doL").value * 1e-12, rz = +$("doR").value;
+    $("doIv").textContent = Math.round(I5 * 1e6) + " μA"; $("doJv").textContent = Math.round(I6 * 1e6) + " μA";
+    $("doCv").textContent = coma(Cc * 1e12, 1) + " pF"; $("doLv").textContent = coma(CL * 1e12, 1) + " pF";
+    var D = diseno(I5, I6, Cc, CL, rz), TP = 2 * Math.PI;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 30, x1 = W - 12, y0 = 10, y1 = H - 28, F0 = 2, F1 = 10, D1 = 80, D0 = -40;
+      var X = function(f){ return x0 + (Math.log10(f) - F0) / (F1 - F0) * (x1 - x0); };
+      var Y = function(d){ return y0 + (D1 - d) / (D1 - D0) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(var d = -40; d <= 80; d += 20){ ctx.beginPath(); ctx.moveTo(x0, Y(d)); ctx.lineTo(x1, Y(d)); ctx.stroke(); ctx.fillText(d < 0 ? "−" + (-d) : d, x0 - 4, Y(d) + 3); }
+      ctx.textAlign = "center";
+      var ET = {2: "100", 4: "10k", 6: "1M", 8: "100M", 10: "10G"};
+      for(var e = F0; e <= F1; e++){ ctx.beginPath(); ctx.moveTo(X(Math.pow(10, e)), y0); ctx.lineTo(X(Math.pow(10, e)), y1); ctx.stroke(); if(ET[e] && e < F1) ctx.fillText(ET[e], X(Math.pow(10, e)), y1 + 13); }
+      ctx.fillStyle = "#8b93a3"; ctx.fillText("frecuencia (Hz)", (x0 + x1) / 2, y1 + 25);
+      ctx.strokeStyle = "#f2cc60"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x0, Y(0)); ctx.lineTo(x1, Y(0)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      for(var k = 0; k <= 320; k++){ var f = Math.pow(10, F0 + k / 320 * (F1 - F0)), yy = Y(20 * Math.log10(D.mag(TP * f))); if(k) ctx.lineTo(X(f), yy); else ctx.moveTo(X(f), yy); }
+      ctx.stroke(); ctx.lineWidth = 1;
+      [[D.p2 / TP, "#f85149", "p2"], [Math.abs(D.z) / TP, D.z > 0 ? "#f0883e" : "#7ee787", "z"]].forEach(function(p){
+        if(!isFinite(p[0])) return;
+        ctx.strokeStyle = p[1]; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(p[0]), y0); ctx.lineTo(X(p[0]), y1); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = p[1]; ctx.font = "600 10px system-ui, sans-serif"; ctx.fillText(p[2], X(p[0]) + 8, y0 + 12); ctx.font = "10px system-ui, sans-serif";
+      });
+      ctx.fillStyle = "#f2cc60"; ctx.beginPath(); ctx.arc(X(D.wu / TP), Y(0), 4, 0, TP); ctx.fill();
+      ctx.restore();
+    }
+
+    $("doDatos").innerHTML =
+      "<span>g<sub>m1</sub> / g<sub>m6</sub></span><b>" + coma(D.gm1 * 1e6, 0) + " μS / " + coma(D.gm6 * 1e3, 2) + " mS</b>" +
+      "<span>GBW / cruce real</span><b>" + frec(D.GBW / TP) + " / " + frec(D.wu / TP) + "</b>" +
+      "<span>segundo polo / cero</span><b>" + frec(D.p2 / TP) + " / " + (D.z === Infinity ? "anulado" : frec(Math.abs(D.z) / TP) + (D.z > 0 ? " (derecho)" : " (izquierdo)")) + "</b>" +
+      "<span>margen de fase como seguidor</span><b>" + coma(D.pm, 1) + "°</b>" +
+      "<span>slew rate</span><b>" + coma(D.SR / 1e6, 1) + " V/μs (" + (D.srInt ? "I<sub>5</sub>/C<sub>c</sub>" : "(I<sub>6</sub> − I<sub>5</sub>)/C<sub>L</sub>") + ")</b>" +
+      "<span>potencia</span><b>" + coma(D.P * 1e6, 0) + " μW</b>";
+    var nota, reglaC = Cc >= 0.22 * CL, reglaG = D.gm6 >= 10 * D.gm1;
+    if(D.pm < 45) nota = "<b>Margen insuficiente (" + coma(D.pm, 0) + "°):</b> el segundo polo está a solo " + coma(D.p2 / D.wu, 1) + " veces el cruce. " + (!reglaC ? "Subir C<sub>c</sub> por encima de 0,22 C<sub>L</sub> = " + coma(0.22 * CL * 1e12, 1) + " pF o " : "") + "aumentar I<sub>6</sub> para subir g<sub>m6</sub>.";
+    else if(D.pm > 75) nota = "Margen de " + coma(D.pm, 0) + "°: sobra estabilidad. Se puede achicar C<sub>c</sub> para ganar GBW y slew rate, o bajar I<sub>6</sub> para ahorrar potencia.";
+    else nota = "Margen de " + coma(D.pm, 0) + "°, en el rango de diseño. " + (reglaC && reglaG ? "Se cumplen las dos reglas de Allen y Holberg." : "No se cumple " + (!reglaC ? "C<sub>c</sub> ≥ 0,22 C<sub>L</sub>" : "g<sub>m6</sub> ≥ 10 g<sub>m1</sub>") + ", pero el margen alcanza con este cero y esta carga.");
+    $("doNota").innerHTML = nota;
+  }
+  ["doI", "doJ", "doC", "doL", "doR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
