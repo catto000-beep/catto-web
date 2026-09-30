@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radio definida por software y comunicaciones digitales · Electrónica Aplicada III · Catto</title>
+<meta name="description" content="La radio definida por software con sus bloques digitales, el muestreo pasabanda con sus intervalos válidos y la inversión del espectro, el jitter del reloj, y los sistemas digitales actuales con OFDM, códigos y MIMO, con laboratorio interactivo del muestreo pasabanda. Contenido de Electrónica Aplicada III, quinto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/comunicaciones-digitales-rf">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica Aplicada III</a>
+    <span class="anio">5<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Aplicada III</span> · 120 h · Contenido 10 de 10</div>
+    <h1>Radio definida por software y comunicaciones digitales</h1>
+    <p class="lead">Una banda de 20 MHz centrada en 70 MHz se puede digitalizar con un conversor de 56 MS/s, menos que su frecuencia más alta. El conversor, bien elegido, hace de mezclador.</p>
+    <div class="chips">
+      <span class="chip hi">Radio definida por software</span>
+      <span class="chip">Muestreo pasabanda</span>
+      <span class="chip">Zonas de Nyquist</span>
+      <span class="chip">OFDM</span>
+      <span class="chip">MIMO</span>
+    </div>
+    <hr class="rule">
+
+    <section id="sdr">
+      <h2><span class="n">01</span>La radio definida por software</h2>
+      <p>En un receptor clásico, cada función es un circuito: el filtro de canal, el demodulador, la recuperación de portadora. En
+      una <b>radio definida por software</b> (SDR), el frente analógico se reduce a amplificar, a veces trasladar, y digitalizar; todo
+      lo demás lo hace un procesador, una FPGA o una computadora. Cambiar de estándar, de ancho de banda o de modulación es cambiar
+      el programa. Los mismos bloques de <a href="/publicaciones/mapa-ingenieria/temas/receptores">receptores</a> y
+      <a href="/publicaciones/mapa-ingenieria/temas/transmisores">transmisores</a> siguen estando, pero del lado digital del
+      conversor:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Bloque digital</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Oscilador numérico y mezclador digital</td><td>Bajar el canal a banda base, con I y Q perfectamente balanceados</td></tr>
+          <tr><td>Filtros diezmadores (CIC y FIR)</td><td>Seleccionar el canal y reducir la frecuencia de muestreo</td></tr>
+          <tr><td>Sincronización</td><td>Recuperar la portadora, el reloj de símbolos y la trama</td></tr>
+          <tr><td>Ecualizador y demodulador</td><td>Corregir el canal y decidir los símbolos</td></tr>
+          <tr><td>Decodificador de canal</td><td>Corregir errores con el código</td></tr>
+        </tbody>
+      </table></div>
+      <p>El procesamiento se apoya en el hardware de <a href="/publicaciones/mapa-ingenieria/temas/dsp-hardware">procesamiento
+      digital de señales</a>, y las modulaciones y sus tasas de error son las de <a href="/publicaciones/mapa-ingenieria/temas/ruido-modulaciones-digitales">ruido
+      en modulaciones digitales</a>.</p>
+    </section>
+
+    <section id="pasabanda">
+      <h2><span class="n">02</span>Muestreo pasabanda</h2>
+      <p>El teorema del muestreo pide muestrear al doble de la frecuencia máxima, pero para una señal pasabanda, que ocupa solo de
+      \( f_L \) a \( f_H \), alcanza con el doble del <b>ancho de banda</b>, si se elige bien la frecuencia de muestreo: el alias de la banda
+      cae limpio en la primera zona de Nyquist, sin superponerse consigo mismo. Es el <b>submuestreo</b>, que reemplaza a un mezclador
+      por el propio conversor:</p>
+      <div class="form">
+        \[ \frac{2 f_H}{n} \le f_s \le \frac{2 f_L}{n - 1}, \quad n = 1, 2, \dots, \left\lfloor \frac{f_H}{B} \right\rfloor \]
+        <span class="cap">Cada n da un intervalo válido; con n par la banda aparece invertida, lo que se corrige en el procesamiento. La frecuencia mínima teórica es 2B, pero en la práctica se deja margen para los filtros y la tolerancia del reloj. El conversor tiene que tener ancho de banda analógico hasta \( f_H \) y un reloj de bajo ruido de fase, porque el jitter se multiplica con la frecuencia de la señal.</span>
+      </div>
+      <div class="lw" id="pbs">
+        <div class="lt">Laboratorio · muestreo pasabanda</div>
+        <p class="ls">Una banda de ancho B centrada en f<sub>c</sub>. Arriba, dónde aparece al muestrear, en la primera zona de Nyquist, de 0 a
+        f<sub>s</sub>/2; abajo, las frecuencias de muestreo válidas en verde y la elegida en amarillo.</p>
+        <div class="fila"><label>Frecuencia central f<sub>c</sub> = <b id="pbCv"></b></label><input type="range" id="pbC" min="20" max="200" step="1" value="70"></div>
+        <div class="fila"><label>Ancho de banda B = <b id="pbBv"></b></label><input type="range" id="pbB" min="1" max="40" step="0.5" value="20"></div>
+        <div class="fila"><label>Frecuencia de muestreo f<sub>s</sub> = <b id="pbSv"></b></label><input type="range" id="pbS" min="10" max="400" step="0.5" value="100"></div>
+        <canvas id="pbLienzo" style="display:block;width:100%;max-width:620px;height:220px;margin:6px auto 0"></canvas>
+        <div class="datos" id="pbDatos"></div>
+        <div class="nota" id="pbNota"></div>
+      </div>
+    </section>
+
+    <section id="sistemas">
+      <h2><span class="n">03</span>Los sistemas digitales actuales</h2>
+      <p>Las comunicaciones móviles, el Wi-Fi y la televisión digital combinan todo lo visto: modulaciones QAM adaptativas, OFDM con
+      cientos de subportadoras que convierten un canal con ecos en muchos canales planos, códigos LDPC o turbo cerca del
+      <a href="/publicaciones/mapa-ingenieria/temas/intercomparacion-sistemas">límite de Shannon</a>, múltiples antenas (MIMO) que
+      multiplican la capacidad aprovechando los distintos caminos de propagación, y un frente de RF que es, en gran parte, una radio
+      definida por software.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Receptor SDR</div>
+        <p>Con un receptor SDR de bajo costo y GNU Radio, recibir una emisora de FM comercial, filtrar el canal, demodular y
+        escuchar el audio. Identificar cada bloque del diagrama.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Submuestreo</div>
+        <p>Muestrear una señal de 10,7 MHz con un conversor de 4 MS/s y encontrar dónde aparece en el espectro digital.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Constelación</div>
+        <p>Transmitir y recibir una QPSK entre dos SDR y observar la constelación antes y después de la recuperación de portadora.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Muestrear una señal pasabanda con cualquier frecuencia mayor que 2B.</b> Solo sirven los intervalos válidos.</li>
+        <li><b>Olvidar el filtro de banda antes del conversor.</b> El ruido y las señales de todas las zonas de Nyquist se pliegan sobre la banda.</li>
+        <li><b>Usar un reloj ruidoso para submuestrear.</b> El jitter degrada la relación señal a ruido en proporción a la frecuencia de la señal.</li>
+        <li><b>Olvidar la inversión del espectro en las zonas pares.</b> Hay que invertir la frecuencia en el procesamiento.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">06</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué frecuencias de muestreo sirven para una banda de 60 a 80 MHz con n = 2?</summary>
+        <div class="a"><p>De 80 a 120 MHz.</p></div></details>
+      <details class="q"><summary>Con f<sub>s</sub> = 100 MHz, ¿dónde aparece esa banda y cómo?</summary>
+        <div class="a"><p>Entre 20 y 40 MHz, invertida.</p></div></details>
+      <details class="q"><summary>¿Cuál es la mínima frecuencia de muestreo teórica para una banda de 20 MHz?</summary>
+        <div class="a"><p>40 MHz, si la banda está ubicada en una posición entera respecto de su ancho.</p></div></details>
+      <details class="q"><summary>¿Qué ventaja tiene el mezclador digital sobre uno analógico?</summary>
+        <div class="a"><p>Sus ramas I y Q son exactamente iguales: no hay desbalance ni fuga de portadora.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">07</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Travis F. Collins, Robin Getz, Di Pu y Alexander M. Wyglinski.</span>
+          <span class="ti">Software-Defined Radio for Engineers</span>.
+          <span class="ed">Artech House, 2018.</span>
+          <span class="pq">La radio definida por software con ejercicios sobre hardware real, de acceso libre.</span></li>
+        <li><span class="au">Richard G. Lyons.</span>
+          <span class="ti">Understanding Digital Signal Processing</span>.
+          <span class="ed">3.ª ed., Prentice Hall, 2010.</span>
+          <span class="pq">El muestreo pasabanda y la conversión digital de frecuencia.</span></li>
+        <li><span class="au">Jeffrey H. Reed.</span>
+          <span class="ti">Software Radio: A Modern Approach to Radio Engineering</span>.
+          <span class="ed">Prentice Hall, 2002.</span>
+          <span class="pq">La arquitectura de las radios definidas por software.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/receptores">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Receptores</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Fin de la materia →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Radio definida por software y comunicaciones digitales»</b> de <b>Electrónica Aplicada III</b> (quinto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Muestreo pasabanda: intervalos validos 2 fH / n <= fs <= 2 fL /(n - 1), n = 1..floor(fH/B).
+   Plegado: f mod fs, reflejado si pasa de fs/2; la banda esta invertida si su zona de Nyquist
+   floor(fL/(fs/2)) es impar (primera zona = 0). Es valida si fL y fH caen en la misma zona.
+   Control (Python): fc 70, B 20 -> n1 fs >= 160; n2 80..120; n3 53,33..60; n4 40..40.
+   fs 100 -> banda en 20..40 MHz invertida; fs 56 -> 4..24 sin invertir; fs 45 -> se superpone. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pbLienzo"), ctx = cv.getContext("2d");
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function fold(f, fs){ var r = f % fs; return r <= fs / 2 ? r : fs - r; }
+
+  function pintar(){
+    var fc = +$("pbC").value, B = +$("pbB").value, fs = +$("pbS").value;
+    if(B / 2 >= fc) B = 2 * fc - 1;
+    $("pbCv").textContent = fc + " MHz"; $("pbBv").textContent = coma(B, 1) + " MHz"; $("pbSv").textContent = coma(fs, 1) + " MS/s";
+    var fL = fc - B / 2, fH = fc + B / 2, zonas = [];
+    for(var n = 1; n <= Math.floor(fH / B); n++){ var lo = 2 * fH / n, hi = n > 1 ? 2 * fL / (n - 1) : Infinity; if(lo <= hi + 1e-9) zonas.push([n, lo, hi]); }
+    var zL = Math.floor(fL / (fs / 2)), zH = Math.floor(fH / (fs / 2) - 1e-12), valida = zL === zH, inv = zL % 2 === 1;
+    var a = fold(fL, fs), b = fold(fH, fs);
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 14, x1 = W - 14;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      /* primera zona */
+      var t0 = 26, t1 = 96, X1 = function(f){ return x0 + f / (fs / 2) * (x1 - x0); };
+      ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, t1); ctx.lineTo(x1, t1); ctx.stroke();
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "left"; ctx.fillText("0", x0, t1 + 13); ctx.textAlign = "right"; ctx.fillText("fs/2 = " + coma(fs / 2, 1) + " MHz", x1, t1 + 13);
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("la banda después de muestrear", x0, 12);
+      if(valida){
+        var xa = X1(Math.min(a, b)), xb = X1(Math.max(a, b));
+        var gr = ctx.createLinearGradient(X1(a), 0, X1(b), 0); gr.addColorStop(0, "rgba(88,166,255,.35)"); gr.addColorStop(1, "rgba(88,166,255,.95)");
+        ctx.fillStyle = gr; ctx.fillRect(xa, t0, Math.max(2, xb - xa), t1 - t0);
+        ctx.fillStyle = "#c9d1d9"; ctx.textAlign = "center"; ctx.fillText(inv ? "invertida" : "derecha", (xa + xb) / 2, t0 - 4);
+      } else {
+        ctx.fillStyle = "rgba(248,81,73,.5)";
+        for(var k = 0; k <= 60; k++){ var f = fL + B * k / 60, xf = X1(fold(f, fs)); ctx.fillRect(xf - 1, t0, 2, t1 - t0); }
+        ctx.fillStyle = "#f85149"; ctx.textAlign = "center"; ctx.fillText("la banda se pliega sobre sí misma", (x0 + x1) / 2, t0 - 4);
+      }
+      /* frecuencias de muestreo validas */
+      var s0 = 150, S1 = 400, XS = function(v){ return x0 + (v - 10) / (S1 - 10) * (x1 - x0); };
+      ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, s0); ctx.lineTo(x1, s0); ctx.stroke();
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 8;
+      zonas.forEach(function(z){ var h = Math.min(z[2], S1); if(z[1] <= S1){ ctx.beginPath(); ctx.moveTo(XS(Math.max(10, z[1])), s0); ctx.lineTo(Math.max(XS(h), XS(z[1]) + 2), s0); ctx.stroke(); } });
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#f2cc60"; ctx.beginPath(); ctx.moveTo(XS(fs), s0 - 8); ctx.lineTo(XS(fs) - 6, s0 - 18); ctx.lineTo(XS(fs) + 6, s0 - 18); ctx.fill();
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; [10, 100, 200, 300, 400].forEach(function(v){ ctx.textAlign = v === 10 ? "left" : v === 400 ? "right" : "center"; ctx.fillText(v, XS(v), s0 + 20); });
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText("frecuencia de muestreo (MS/s); en verde, las válidas", (x0 + x1) / 2, s0 + 34);
+    }
+
+    var lista = zonas.filter(function(z){ return z[1] <= 400; }).slice(-3).map(function(z){ return "n=" + z[0] + ": " + coma(z[1], 1) + (isFinite(z[2]) ? "–" + coma(z[2], 1) : " o más"); }).join("; ");
+    $("pbDatos").innerHTML =
+      "<span>banda de entrada</span><b>" + coma(fL, 1) + " a " + coma(fH, 1) + " MHz</b>" +
+      "<span>¿muestreo válido?</span><b>" + (valida ? "sí, zona " + (zL + 1) + (inv ? " (espectro invertido)" : "") : "no: la banda cruza un múltiplo de fs/2") + "</b>" +
+      (valida ? "<span>dónde aparece</span><b>" + coma(Math.min(a, b), 1) + " a " + coma(Math.max(a, b), 1) + " MHz</b>" : "") +
+      "<span>intervalos válidos más bajos</span><b>" + lista + "</b>";
+    var nota;
+    if(!valida) nota = "<b>La banda se superpone consigo misma:</b> parte cae de un lado de un múltiplo de f<sub>s</sub>/2 y parte del otro, y los dos pedazos se mezclan. Hay que elegir una frecuencia dentro de un intervalo verde.";
+    else if(fs >= 2 * fH) nota = "Se está muestreando por encima de 2 f<sub>H</sub>: vale, pero no se aprovecha el submuestreo, y el conversor trabaja más rápido de lo necesario.";
+    else nota = "<b>Submuestreo:</b> con " + coma(fs, 1) + " MS/s, por debajo de 2 f<sub>H</sub> = " + coma(2 * fH, 0) + " MHz, la banda llega limpia a la primera zona" + (inv ? ", invertida." : ".") + " El conversor hace de mezclador.";
+    $("pbNota").innerHTML = nota;
+  }
+  ["pbC", "pbB", "pbS"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
