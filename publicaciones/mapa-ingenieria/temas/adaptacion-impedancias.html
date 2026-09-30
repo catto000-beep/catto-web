@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adaptación de impedancias · Electrónica Aplicada III · Catto</title>
+<meta name="description" content="La máxima transferencia de potencia y la carga conjugada, la red L con su factor de calidad y sus reactancias, el ancho de banda de la adaptación, las redes π y T, las secciones múltiples, los stubs y los transformadores de banda ancha, con laboratorio interactivo que diseña una red L y mide su banda. Contenido de Electrónica Aplicada III, quinto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/adaptacion-impedancias">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica Aplicada III</a>
+    <span class="anio">5<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica Aplicada III</span> · 120 h · Contenido 4 de 10</div>
+    <h1>Adaptación de impedancias</h1>
+    <p class="lead">Adaptar 5 Ω a 50 Ω con una red L obliga a un Q de 3, y la adaptación dura unos 23 MHz alrededor de 100. La relación de transformación decide el ancho de banda.</p>
+    <div class="chips">
+      <span class="chip hi">Carga conjugada</span>
+      <span class="chip">Red L</span>
+      <span class="chip">Factor de calidad</span>
+      <span class="chip">Redes π y T</span>
+      <span class="chip">Pérdida de retorno</span>
+    </div>
+    <hr class="rule">
+
+    <section id="porque">
+      <h2><span class="n">01</span>Por qué adaptar</h2>
+      <p>Un transistor de potencia de RF presenta pocos ohms en su salida; una antena, 50 Ω; un amplificador de bajo ruido rinde su
+      mejor figura de ruido con una impedancia de fuente particular. Conectarlos directamente desperdicia potencia y, en líneas,
+      produce las ondas estacionarias de <a href="/publicaciones/mapa-ingenieria/temas/lineas-transmision">líneas de
+      transmisión</a>. Una <b>red de adaptación</b>, sin pérdidas, transforma una impedancia en otra a una frecuencia:</p>
+      <div class="form">
+        \[ P_{L,\max} = \frac{|V_s|^2}{8 R_s} \quad \text{si} \quad Z_L = Z_s^* \]
+        <span class="cap">La máxima transferencia de potencia se obtiene con la carga conjugada de la fuente. En un amplificador de potencia, en cambio, se elige la carga que da la potencia y el rendimiento pedidos, que no es la conjugada: la red transforma la antena en esa carga.</span>
+      </div>
+    </section>
+
+    <section id="redl">
+      <h2><span class="n">02</span>La red L</h2>
+      <p>La red más simple tiene dos reactancias: una en serie del lado de la resistencia menor y otra en paralelo del lado de la
+      mayor. La relación entre las resistencias fija su factor de calidad, y de él salen las reactancias:</p>
+      <div class="form">
+        \[ Q = \sqrt{\frac{R_{alta}}{R_{baja}} - 1} \]
+        \[ X_{serie} = Q\, R_{baja}, \quad X_{paralelo} = \frac{R_{alta}}{Q} \]
+        <span class="cap">Con una inductancia en serie y un capacitor en paralelo, la red es pasabajos y además atenúa las armónicas; con los componentes intercambiados, pasaaltos. Para llevar 5 Ω a 50 Ω en 100 MHz, Q = 3: 23,9 nH en serie y 95,5 pF en paralelo.</span>
+      </div>
+      <p>El Q no es libre: lo fija la relación de transformación, y con él el ancho de banda de la adaptación, que es
+      aproximadamente inverso a Q. Una transformación grande en un solo paso es angosta.</p>
+      <div class="lw" id="adp">
+        <div class="lt">Laboratorio · una red L entre 50 Ω y una carga</div>
+        <p class="ls">Una red L pasabajos que adapta una carga resistiva a una fuente de 50 Ω en 100 MHz. La curva es la pérdida de
+        retorno vista desde la fuente; la línea punteada, 10 dB, el umbral usual de una adaptación aceptable.</p>
+        <div class="fila"><label>Resistencia de la carga R<sub>L</sub> = <b id="adRv"></b></label><input type="range" id="adR" min="0.3" max="2.7" step="0.01" value="0.7"></div>
+        <canvas id="adLienzo" style="display:block;width:100%;max-width:620px;height:220px;margin:6px auto 0"></canvas>
+        <div class="datos" id="adDatos"></div>
+        <div class="nota" id="adNota"></div>
+      </div>
+    </section>
+
+    <section id="otras">
+      <h2><span class="n">03</span>Redes π y T, varias secciones y transformadores</h2>
+      <p>Con tres elementos, las redes <b>π</b> y <b>T</b> permiten elegir el Q independientemente de la relación de transformación:
+      se pasa por una resistencia intermedia virtual. Sirven para angostar la banda, por ejemplo para filtrar armónicas en la salida
+      de un transmisor. Para ensanchar la banda se hace al revés: varias redes L en cascada con resistencias intermedias en
+      progresión geométrica, cada una con un Q menor. A frecuencias más altas, las redes se arman con tramos de línea y
+      <i>stubs</i>, y se diseñan sobre la <a href="/publicaciones/carta-smith">carta de Smith</a>. Los transformadores de banda
+      ancha, con núcleo de ferrita o de línea de transmisión, dan relaciones fijas en varias octavas.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Diseñar y medir</div>
+        <p>Diseñar una red L que adapte una resistencia de 12 Ω a 50 Ω en 50 MHz, armarla con componentes SMD y medir la pérdida
+        de retorno con un analizador de redes.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Dos secciones</div>
+        <p>Rediseñar la misma adaptación con dos redes L y una resistencia intermedia de √(12·50) ≈ 24,5 Ω, y comparar el ancho
+        de banda.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Carta de Smith</div>
+        <p>Representar sobre la carta de Smith el recorrido de la impedancia a medida que se agregan los componentes.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Olvidar los parásitos de los componentes.</b> A cientos de megahertz un capacitor tiene inductancia y un inductor, capacidad.</li>
+        <li><b>Esperar banda ancha de una transformación grande en un paso.</b> El Q alto lo impide; hacen falta varias secciones.</li>
+        <li><b>Adaptar un amplificador de potencia a la conjugada.</b> Se adapta a la carga que da la potencia y el rendimiento pedidos.</li>
+        <li><b>Ignorar las pérdidas de los inductores.</b> Con Q de red alto, la corriente circulante disipa en la resistencia del bobinado.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">06</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué Q tiene una red L que adapta 10 Ω a 50 Ω?</summary>
+        <div class="a"><p>\( \sqrt{5 - 1} = 2 \).</p></div></details>
+      <details class="q"><summary>¿Qué reactancias necesita en serie y en paralelo?</summary>
+        <div class="a"><p>20 Ω en serie del lado de 10 Ω y 25 Ω en paralelo del lado de 50 Ω.</p></div></details>
+      <details class="q"><summary>¿Qué ventaja tiene una red L pasabajos a la salida de un transmisor?</summary>
+        <div class="a"><p>Además de adaptar, atenúa las armónicas.</p></div></details>
+      <details class="q"><summary>¿Cómo se ensancha la banda de una adaptación de relación grande?</summary>
+        <div class="a"><p>Con varias secciones en cascada y resistencias intermedias en progresión geométrica.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">07</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Chris Bowick.</span>
+          <span class="ti">RF Circuit Design</span>.
+          <span class="ed">2.ª ed., Newnes, 2008.</span>
+          <span class="pq">Las redes L, π y T con ejemplos de diseño numéricos.</span></li>
+        <li><span class="au">David M. Pozar.</span>
+          <span class="ti">Microwave Engineering</span>.
+          <span class="ed">4.ª ed., Wiley, 2012.</span>
+          <span class="pq">La adaptación con elementos concentrados, stubs y transformadores de cuarto de onda.</span></li>
+        <li><span class="au">Les Besser y Rowan Gilmore.</span>
+          <span class="ti">Practical RF Circuit Design for Modern Wireless Systems</span>.
+          <span class="ed">Artech House, 2003.</span>
+          <span class="pq">La adaptación de impedancias en amplificadores y el uso de la carta de Smith.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/mezcladores">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Mezcladores</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Adaptación de impedancias»</b> de <b>Electrónica Aplicada III</b> (quinto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Red L pasabajos entre Rs = 50 ohm y RL en f0 = 100 MHz: Q = sqrt(Ralta/Rbaja - 1);
+   L = Q Rbaja / w0 (serie, lado bajo), C = Q / (Ralta w0) (paralelo, lado alto).
+   Rs > RL: Z = (1/jwC) || (RL + jwL); Rs < RL: Z = jwL + (1/jwC || RL). Gamma = (Z - Rs)/(Z + Rs).
+   Ancho de banda: frecuencias con |Gamma| < 0,3162 (10 dB) barriendo 0,2 a 3 f0 cada 0,001 f0.
+   Control (Python): 5 ohm -> Q 3, L 23,873 nH, C 95,493 pF, 87,6 a 111,0 MHz (23,4 MHz);
+   200 ohm -> Q 1,732, L 137,832 nH, C 13,783 pF, 74,6 a 120,1 MHz. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("adLienzo"), ctx = cv.getContext("2d");
+  var RS = 50, F0 = 100e6;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function cdiv(a, b){ var d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; }
+  function par(a, b){ var s = [a[0] + b[0], a[1] + b[1]], p = [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]]; return cdiv(p, s); }
+
+  function pintar(){
+    var RL = Math.pow(10, +$("adR").value);
+    $("adRv").textContent = coma(RL, RL < 10 ? 1 : 0) + " Ω";
+    var Rh = Math.max(RS, RL), Rl = Math.min(RS, RL), Q = Math.sqrt(Rh / Rl - 1), w0 = 2 * Math.PI * F0, L = Q * Rl / w0, C = Q / (Rh * w0);
+    var gam = function(f){
+      var w = 2 * Math.PI * f, Z;
+      if(RS > RL) Z = par([0, -1 / (w * C)], [RL, w * L]);
+      else { var zp = par([0, -1 / (w * C)], [RL, 0]); Z = [zp[0], zp[1] + w * L]; }
+      var g = cdiv([Z[0] - RS, Z[1]], [Z[0] + RS, Z[1]]); return Math.hypot(g[0], g[1]);
+    };
+    var fmin = null, fmax = null;
+    for(var k = 200; k <= 3000; k++){ var f = F0 * k / 1000; if(gam(f) < 0.3162){ if(fmin === null) fmin = f; fmax = f; } }
+    var casi = Math.abs(RL - RS) < 1;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 30, x1 = W - 12, y0 = 10, y1 = H - 26, FA = 20e6, FB = 300e6, DM = 40;
+      var X = function(f){ return x0 + (f - FA) / (FB - FA) * (x1 - x0); }, Y = function(d){ return y0 + Math.min(DM, d) / DM * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(var d = 0; d <= DM; d += 10){ ctx.beginPath(); ctx.moveTo(x0, Y(d)); ctx.lineTo(x1, Y(d)); ctx.stroke(); ctx.fillText(d, x0 - 4, Y(d) + 3); }
+      ctx.textAlign = "center";
+      [50, 100, 150, 200, 250, 300].forEach(function(q){ ctx.textAlign = q === 300 ? "right" : "center"; ctx.fillText(q, X(q * 1e6), y1 + 13); });
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText(W < 480 ? "MHz; pérdida de retorno (dB)" : "frecuencia (MHz); pérdida de retorno (dB), hacia abajo es mejor", (x0 + x1) / 2, y1 + 24);
+      if(fmin){ ctx.fillStyle = "rgba(126,231,135,.10)"; ctx.fillRect(X(fmin), y0, X(fmax) - X(fmin), y1 - y0); }
+      ctx.strokeStyle = "#f2cc60"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x0, Y(10)); ctx.lineTo(x1, Y(10)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      for(k = 0; k <= 560; k++){ f = FA + (FB - FA) * k / 560; var rl = -20 * Math.log10(Math.max(gam(f), 1e-6)), yy = Y(rl); if(k) ctx.lineTo(X(f), yy); else ctx.moveTo(X(f), yy); }
+      ctx.stroke(); ctx.lineWidth = 1;
+    }
+
+    $("adDatos").innerHTML =
+      "<span>factor de calidad Q de la red</span><b>" + coma(Q, 3) + "</b>" +
+      "<span>inductancia serie (lado de " + coma(Rl, Rl < 10 ? 1 : 0) + " Ω)</span><b>" + coma(L * 1e9, 2) + " nH</b>" +
+      "<span>capacidad en paralelo (lado de " + coma(Rh, Rh < 10 ? 1 : 0) + " Ω)</span><b>" + coma(C * 1e12, 2) + " pF</b>" +
+      "<span>banda con pérdida de retorno ≥ 10 dB</span><b>" + (casi ? "toda" : fmin ? coma(fmin / 1e6, 1) + " a " + coma(fmax / 1e6, 1) + " MHz (" + coma((fmax - fmin) / 1e6, 1) + " MHz)" : "—") + "</b>";
+    var nota;
+    if(casi) nota = "La carga ya es casi de 50 Ω: la red no hace falta.";
+    else if(Q > 2.5) nota = "Relación de transformación grande: la red tiene Q = " + coma(Q, 1) + " y la adaptación es angosta. Con dos secciones y una resistencia intermedia de " + coma(Math.sqrt(RS * RL), 0) + " Ω cada una tendría un Q menor y la banda sería más ancha.";
+    else nota = "Relación de transformación moderada: con Q = " + coma(Q, 2) + " la adaptación cubre una banda amplia alrededor de 100 MHz.";
+    $("adNota").innerHTML = nota;
+  }
+  $("adR").addEventListener("input", pintar);
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
