@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convertidores CA-CA · Electrónica de Potencia · Catto</title>
+<meta name="description" content="Los controladores de tensión alterna por control de fase y por ciclos enteros, con carga resistiva e inductiva, los arrancadores suaves, el cicloconvertidor, el convertidor matricial y el esquema de rectificador e inversor, con laboratorio interactivo de la tensión, los armónicos y el factor de potencia del control de fase. Contenido de Electrónica de Potencia, quinto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/convertidores-ca-ca">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica de Potencia</a>
+    <span class="anio">5<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica de Potencia</span> · 96 h · Contenido 4 de 8</div>
+    <h1>Convertidores CA-CA</h1>
+    <p class="lead">Con el disparo a 90°, un control de fase le entrega la mitad de la potencia a un calefactor, pero su corriente lleva un 54 % de tercer armónico y el factor de potencia baja a 0,71 aunque la carga sea una resistencia.</p>
+    <div class="chips">
+      <span class="chip hi">Control de fase</span>
+      <span class="chip">Triac</span>
+      <span class="chip">Ciclos enteros</span>
+      <span class="chip">Arrancador suave</span>
+      <span class="chip">Cicloconvertidor</span>
+    </div>
+    <hr class="rule">
+
+    <section id="controladores">
+      <h2><span class="n">01</span>Controladores de tensión alterna</h2>
+      <p>Un <b>controlador de tensión alterna</b> regula la tensión eficaz sobre una carga sin cambiar la frecuencia. Se arma con dos
+      tiristores en antiparalelo o, en potencias chicas, con un triac. Hay dos formas de manejarlo:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Método</th><th>Cómo funciona</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td>Control de fase</td><td>En cada semiciclo se dispara con un retardo α; la carga recibe solo el final de cada semionda</td><td>Atenuadores de luz, motores universales, arrancadores suaves</td></tr>
+          <tr><td>Control por ciclos enteros</td><td>Se deja pasar n ciclos completos de cada N, conmutando en el cruce por cero</td><td>Calefactores y hornos con mucha inercia térmica</td></tr>
+        </tbody>
+      </table></div>
+      <p>Con carga resistiva y control de fase, la tensión eficaz sobre la carga es:</p>
+      <div class="form">
+        \[ V_{ef} = V \sqrt{1 - \frac{\alpha}{\pi} + \frac{\sin 2\alpha}{2\pi}} \]
+        <span class="cap">El factor de potencia es \( V_{ef}/V \), menor que 1 aunque la carga sea una resistencia: la corriente de red no es senoidal y su fundamental queda atrasada respecto de la tensión. El control por ciclos enteros no genera armónicos de la red, pero produce fluctuaciones de baja frecuencia que se notan como parpadeo en la iluminación.</span>
+      </div>
+      <div class="lw" id="cf">
+        <div class="lt">Laboratorio · control de fase</div>
+        <p class="ls">Un calefactor de 1 kW en 230 V y 50 Hz con control de fase. Arriba, la tensión sobre la carga en un ciclo, igual en
+        forma a la corriente; abajo, sus armónicos impares en porcentaje de la fundamental.</p>
+        <div class="fila"><label>Ángulo de disparo α = <b id="cfAv"></b></label><input type="range" id="cfA" min="0" max="170" step="1" value="90"></div>
+        <canvas id="cfLienzo" style="display:block;width:100%;max-width:620px;height:260px;margin:6px auto 0"></canvas>
+        <div class="datos" id="cfDatos"></div>
+        <div class="nota" id="cfNota"></div>
+      </div>
+      <p>Con carga inductiva, la corriente sigue circulando después del cruce por cero de la tensión; si α es menor que el ángulo de la
+      carga, el control se pierde. Los <b>arrancadores suaves</b> de motores de inducción suben α de a poco para limitar la corriente de
+      arranque y luego se puentean con un contactor.</p>
+    </section>
+
+    <section id="frecuencia">
+      <h2><span class="n">02</span>Cambiar la frecuencia</h2>
+      <p>El <b>cicloconvertidor</b> arma una tensión de baja frecuencia con tramos de la red, usando dos puentes de tiristores en
+      antiparalelo por fase; sirvió para grandes accionamientos de baja velocidad, como molinos, con frecuencias de salida de hasta un
+      tercio de la de red. El <b>convertidor matricial</b> conecta cada fase de salida a cualquiera de entrada con llaves bidireccionales, sin
+      elementos de almacenamiento intermedios. Pero la solución que domina la industria es indirecta: un <a href="/publicaciones/mapa-ingenieria/temas/rectificadores-potencia">rectificador</a>
+      que carga un bus de continua y un inversor que genera la tensión alterna de la frecuencia deseada, tema de las páginas siguientes.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">03</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Atenuador</div>
+        <p>Con un triac, un diac y una red RC, armar un atenuador para una lámpara incandescente y medir la tensión eficaz con un
+        multímetro de verdadero valor eficaz y con uno de valor medio.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Armónicos</div>
+        <p>Medir con un analizador de redes el espectro de la corriente de un atenuador a varios ángulos y compararlo con el laboratorio.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Ciclos enteros</div>
+        <p>Controlar un calefactor con un relé de estado sólido con detección de cruce por cero y observar la corriente.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">04</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Medir la tensión recortada con un multímetro de valor medio.</b> Solo uno de verdadero valor eficaz da el resultado correcto.</li>
+        <li><b>Creer que una carga resistiva siempre tiene factor de potencia 1.</b> Con control de fase no.</li>
+        <li><b>Controlar una lámpara con ciclos enteros.</b> Parpadea visiblemente.</li>
+        <li><b>Disparar con pulsos cortos una carga inductiva.</b> La corriente no llega a la de enganche y el tiristor no queda encendido.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">05</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué fracción de la potencia recibe una carga resistiva con α = 90°?</summary>
+        <div class="a"><p>La mitad: \( V_{ef}^2/V^2 = 1 - 1/2 = 0{,}5 \).</p></div></details>
+      <details class="q"><summary>¿Cuál es entonces su factor de potencia?</summary>
+        <div class="a"><p>\( \sqrt{0{,}5} \approx 0{,}71 \).</p></div></details>
+      <details class="q"><summary>¿Por qué el control por ciclos enteros no genera armónicos de la red?</summary>
+        <div class="a"><p>Porque conmuta en los cruces por cero y deja pasar ciclos senoidales completos; en cambio, genera componentes de frecuencia menor que la de red.</p></div></details>
+      <details class="q"><summary>¿Cómo se cambia hoy la frecuencia de un motor de la industria?</summary>
+        <div class="a"><p>Con un rectificador, un bus de continua y un inversor.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">06</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Muhammad H. Rashid.</span>
+          <span class="ti">Electrónica de potencia</span>.
+          <span class="ed">4.ª ed., Pearson.</span>
+          <span class="pq">Los controladores de tensión alterna y los cicloconvertidores.</span></li>
+        <li><span class="au">Ned Mohan, Tore M. Undeland y William P. Robbins.</span>
+          <span class="ti">Power Electronics: Converters, Applications, and Design</span>.
+          <span class="ed">3.ª ed., Wiley, 2003.</span>
+          <span class="pq">Los convertidores CA-CA en el conjunto de la materia.</span></li>
+        <li><span class="au">Bimal K. Bose.</span>
+          <span class="ti">Modern Power Electronics and AC Drives</span>.
+          <span class="ed">Prentice Hall, 2002.</span>
+          <span class="pq">Los cicloconvertidores y los convertidores matriciales en los accionamientos.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/fuentes-conmutadas-ing">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Fuentes conmutadas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Convertidores CA-CA»</b> de <b>Electrónica de Potencia</b> (quinto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Control de fase con carga resistiva, 230 V, 50 Hz, R 52,9 ohm (1 kW). 3600 muestras en puntos medios; v = Vm sin t si
+   (t mod pi) >= alfa. Armonicos impares por Fourier; desplazamiento = cos(atan2(a1, b1)).
+   Control (Python): a 30 -> Vef 226,660, P 971,17 W, FP 0,9855, cos phi1 0,9967, THD 15,11 %, h3 8,17 %, h5 7,20, h7 5,93;
+   a 60 -> 206,296, 804,50, 0,8969, 0,9587, 37,74 %, 28,45 / 16,42 / 8,21; a 90 -> 162,635, 500,00, 0,7071, 0,8436, 65,05 %,
+   53,70 / 17,90 / 17,90; a 120 -> 101,696, 195,50, 0,4422, 0,6336, 102,63 %; a 150 -> 39,056, 28,83, 0,1698, 0,3407, 173,92 %. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("cfLienzo"), ctx = cv.getContext("2d");
+  var V = 230, VM = V * Math.SQRT2, R = 52.9, N = 3600, HS = [1, 3, 5, 7, 9, 11, 13, 15];
+  function coma(v, d){ if(Math.abs(v) < 0.5 * Math.pow(10, -d)) v = 0; return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+
+  function simular(adeg){
+    var a = adeg * Math.PI / 180, v = [], s2 = 0;
+    for(var n = 0; n < N; n++){ var t = 2 * Math.PI * (n + 0.5) / N, x = (t % Math.PI) >= a ? VM * Math.sin(t) : 0; v.push(x); s2 += x * x; }
+    var vr = Math.sqrt(s2 / N), H = {};
+    HS.forEach(function(h){
+      var ah = 0, bh = 0;
+      for(var n = 0; n < N; n++){ var t = h * 2 * Math.PI * (n + 0.5) / N; ah += v[n] * Math.cos(t); bh += v[n] * Math.sin(t); }
+      ah *= 2 / N; bh *= 2 / N; H[h] = [Math.hypot(ah, bh) / Math.SQRT2, Math.atan2(ah, bh)];
+    });
+    var v1 = H[1][0];
+    return { v: v, vr: vr, H: H, P: vr * vr / R, fp: vr / V, disp: Math.cos(H[1][1]), thd: Math.sqrt(Math.max(0, vr * vr - v1 * v1)) / v1 };
+  }
+
+  function pintar(){
+    var al = +$("cfA").value;
+    $("cfAv").textContent = al + "°";
+    var r = simular(al), v1 = r.H[1][0];
+
+    var b = cv.getBoundingClientRect();
+    if(b.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(b.width * dp) || cv.height !== Math.round(b.height * dp)){
+        cv.width = Math.round(b.width * dp); cv.height = Math.round(b.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = b.width, H = b.height, x0 = 38, x1 = W - 10;
+      var a0 = 8, a1 = 118, yc = (a0 + a1) / 2, YV = function(x){ return yc - x / 340 * (a1 - a0) / 2; }, X = function(n){ return x0 + n / N * (x1 - x0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#252d3a"; ctx.lineWidth = 1;
+      [-325, 0, 325].forEach(function(x){ ctx.beginPath(); ctx.moveTo(x0, YV(x)); ctx.lineTo(x1, YV(x)); ctx.stroke(); });
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      [-325, 0, 325].forEach(function(x){ ctx.fillText(coma(x, 0) + " V", x0 - 4, YV(x) + 3); });
+      ctx.strokeStyle = "#6b7484"; ctx.setLineDash([3, 3]); ctx.beginPath();
+      for(var n = 0; n < N; n += 6){ var py = YV(VM * Math.sin(2 * Math.PI * (n + 0.5) / N)); if(n) ctx.lineTo(X(n), py); else ctx.moveTo(X(n), py); }
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      for(n = 0; n < N; n += 2){ if(n) ctx.lineTo(X(n), YV(r.v[n])); else ctx.moveTo(X(n), YV(r.v[n])); }
+      ctx.stroke(); ctx.lineWidth = 1;
+      /* espectro */
+      var s0 = 140, s1 = H - 26, YS = function(p){ return s1 - p / 100 * (s1 - s0); }, bw = (x1 - x0) / HS.length;
+      ctx.strokeStyle = "#252d3a";
+      [0, 50, 100].forEach(function(p){ ctx.beginPath(); ctx.moveTo(x0, YS(p)); ctx.lineTo(x1, YS(p)); ctx.stroke(); });
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      [0, 50, 100].forEach(function(p){ ctx.fillText(p + " %", x0 - 4, YS(p) + 3); });
+      HS.forEach(function(h, i){
+        var p = v1 > 0 ? Math.min(100, r.H[h][0] / v1 * 100) : 0, cx = x0 + (i + 0.5) * bw;
+        ctx.fillStyle = h === 1 ? "#7ee787" : "#f0883e"; ctx.fillRect(cx - bw * 0.3, YS(p), bw * 0.6, s1 - YS(p));
+        ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText(h, cx, s1 + 13);
+      });
+    }
+
+    $("cfDatos").innerHTML =
+      "<span>tensión eficaz sobre la carga</span><b>" + coma(r.vr, 1) + " V</b>" +
+      "<span>potencia</span><b>" + coma(r.P, 1) + " W</b>" +
+      "<span>factor de potencia</span><b>" + coma(r.fp, 3) + "</b>" +
+      "<span>factor de desplazamiento (cos φ<sub>1</sub>)</span><b>" + coma(r.disp, 3) + "</b>" +
+      "<span>distorsión armónica</span><b>" + coma(r.thd * 100, 1) + " %</b>" +
+      "<span>3.º, 5.º y 7.º armónico</span><b>" + [3, 5, 7].map(function(h){ return coma(v1 > 0 ? r.H[h][0] / v1 * 100 : 0, 1); }).join(" / ") + " %</b>";
+    var nota;
+    if(al === 0) nota = "Sin retardo, el control conduce todo el ciclo: la carga recibe la senoide completa y el factor de potencia es 1.";
+    else if(al <= 45) nota = "Con poco retardo se pierde poca potencia (" + coma(r.P, 0) + " W) y aparecen armónicos moderados. El factor de potencia, " + coma(r.fp, 3) + ", ya no es 1.";
+    else nota = "El factor de potencia, " + coma(r.fp, 3) + ", es el producto de dos efectos: la fundamental de la corriente se atrasa (cos φ<sub>1</sub> = " + coma(r.disp, 3) + ") y además la onda está muy deformada (distorsión del " + coma(r.thd * 100, 0) + " %). Un capacitor puede corregir el desplazamiento, pero no la deformación.";
+    $("cfNota").innerHTML = nota;
+  }
+  $("cfA").addEventListener("input", pintar);
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
