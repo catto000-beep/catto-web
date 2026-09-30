@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generadores de señales sintetizados · Medidas Electrónicas II · Catto</title>
+<meta name="description" content="La síntesis de frecuencia con lazo enganchado en fase, los bloques del sintetizador, el ancho de banda del lazo, el ruido de fase dentro y fuera de la banda con la figura de mérito, los sintetizadores de N entero y de N fraccional con sus espurias, y la hoja de datos de un generador de RF, con laboratorio interactivo que compara las dos arquitecturas. Contenido de Medidas Electrónicas II, quinto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/generadores-sintetizados">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Medidas Electrónicas II</a>
+    <span class="anio">5<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Medidas Electrónicas II</span> · 120 h · Contenido 3 de 10</div>
+    <h1>Generadores de señales sintetizados</h1>
+    <p class="lead">Para canales de 1 MHz a 2,4 GHz, un sintetizador de N entero multiplica por 2440 el ruido de fase de su comparador. Uno fraccional, por 49: su ruido de fase queda 17 dB más abajo.</p>
+    <div class="chips">
+      <span class="chip hi">PLL</span>
+      <span class="chip">Divisor N</span>
+      <span class="chip">Ruido de fase</span>
+      <span class="chip">N fraccional</span>
+      <span class="chip">Espurias</span>
+    </div>
+    <hr class="rule">
+
+    <section id="sintesis">
+      <h2><span class="n">01</span>Del DDS al lazo enganchado en fase</h2>
+      <p>La síntesis digital directa de las <a href="/publicaciones/mapa-ingenieria/temas/fuentes-senales">fuentes de
+      señales</a> de Medidas I da una resolución finísima, pero su salida no puede pasar de una fracción del reloj. Para
+      generar señales de cientos de megahertz a varios gigahertz con la exactitud de un cristal, los generadores de RF usan un
+      <b>lazo enganchado en fase</b> (PLL): un oscilador controlado por tensión (VCO) cuya frecuencia, dividida por \( N \), se
+      compara con una referencia estable. El lazo corrige el VCO hasta que las dos coinciden:</p>
+      <div class="form">
+        \[ f_{out} = N \cdot f_{PFD} \]
+        \[ f_{PFD} = \frac{f_{ref}}{R} \]
+        <span class="cap">\( f_{PFD} \) es la frecuencia a la que trabaja el comparador de fase y frecuencia. En un sintetizador de <b>N entero</b>, el paso de frecuencia de salida es \( f_{PFD} \): para canales de 25 kHz, hay que comparar a 25 kHz.</span>
+      </div>
+    </section>
+
+    <section id="bloques">
+      <h2><span class="n">02</span>Los bloques del sintetizador</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Bloque</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Referencia</td><td>Un oscilador de cristal compensado (TCXO) o en horno (OCXO), a veces enganchado a GPS</td></tr>
+          <tr><td>Divisor R</td><td>Baja la referencia a la frecuencia de comparación</td></tr>
+          <tr><td>Comparador de fase y frecuencia con bomba de carga</td><td>Entrega pulsos de corriente proporcionales al error de fase</td></tr>
+          <tr><td>Filtro del lazo</td><td>Integra los pulsos y fija el ancho de banda del lazo y su estabilidad</td></tr>
+          <tr><td>VCO</td><td>Genera la salida; su frecuencia depende de la tensión de control</td></tr>
+          <tr><td>Divisor N</td><td>Lleva la salida a la frecuencia de comparación</td></tr>
+        </tbody>
+      </table></div>
+      <p>El PLL es un sistema realimentado, y su ancho de banda y su margen de fase se diseñan como los de un
+      <a href="/publicaciones/mapa-ingenieria/temas/estabilidad-compensacion">amplificador realimentado</a>. Por estabilidad, el
+      ancho de banda del lazo se mantiene por debajo de un décimo de \( f_{PFD} \): comparar a baja frecuencia obliga a un lazo
+      lento, que tarda en engancharse al cambiar de canal.</p>
+    </section>
+
+    <section id="ruido">
+      <h2><span class="n">03</span>Ruido de fase</h2>
+      <p>Un generador real no produce una línea espectral perfecta: su fase fluctúa, y el espectro tiene "faldas" a los costados
+      de la portadora. El <b>ruido de fase</b> se especifica en dBc/Hz a una distancia de la portadora. Dentro del ancho de banda
+      del lazo, el ruido de la referencia y del comparador se multiplica por \( N \), es decir, sube \( 20 \log N \); fuera, domina el
+      del VCO. El ruido dentro de la banda se estima con la <b>figura de mérito</b> del comparador, de unos −220 dBc/Hz en los
+      circuitos actuales:</p>
+      <div class="form">
+        \[ \mathcal{L}_{banda} \approx FOM + 10\log f_{PFD} + 20 \log N \]
+        <span class="cap">A igual frecuencia de salida, \( N f_{PFD} \) es fijo: duplicar \( f_{PFD} \) suma 3 dB por el segundo término y resta 6 dB por el tercero. Conviene comparar a la frecuencia más alta posible.</span>
+      </div>
+      <p>Esa es la razón de ser de los sintetizadores de <b>N fraccional</b>: el divisor alterna entre \( N \) y \( N+1 \) con un
+      modulador sigma–delta, de modo que el promedio es fraccionario. Se compara a decenas de megahertz y se obtiene un paso
+      de pocos hertz. El precio son las <b>espurias fraccionales</b>, líneas cercanas a la portadora que el modulador y el
+      filtro del lazo tienen que mantener bajas.</p>
+      <div class="lw" id="pll">
+        <div class="lt">Laboratorio · sintetizador de N entero o fraccional</div>
+        <p class="ls">Un sintetizador para la banda de 2,4 GHz con una figura de mérito de −220 dBc/Hz. En N entero, la frecuencia
+        de comparación es el paso de canal; en N fraccional, 50 MHz. Las barras comparan el ruido de fase dentro de la banda del
+        lazo de las dos arquitecturas.</p>
+        <div class="fila"><label>Frecuencia de salida = <b id="plFv"></b></label><input type="range" id="plF" min="2400" max="2480" step="1" value="2440"></div>
+        <div class="fila">
+          <select id="plS">
+            <option value="25000">Paso de canal de 25 kHz</option>
+            <option value="200000">Paso de 200 kHz</option>
+            <option value="1000000" selected>Paso de 1 MHz</option>
+          </select>
+        </div>
+        <canvas id="plLienzo" style="display:block;width:100%;max-width:620px;height:170px;margin:6px auto 0"></canvas>
+        <div class="datos" id="plDatos"></div>
+        <div class="nota" id="plNota"></div>
+      </div>
+    </section>
+
+    <section id="especificaciones">
+      <h2><span class="n">04</span>Cómo leer la hoja de datos de un generador sintetizado</h2>
+      <ul>
+        <li><b>Rango y resolución</b> de frecuencia, y la exactitud, que es la de la referencia interna o externa.</li>
+        <li><b>Ruido de fase</b> a 10 kHz o 20 kHz de la portadora, la cifra que separa a un generador de laboratorio de uno de
+        alta pureza.</li>
+        <li><b>Espurias y armónicas</b>, en dBc.</li>
+        <li><b>Tiempo de conmutación</b> entre frecuencias, que depende del ancho de banda del lazo.</li>
+        <li><b>Nivel de salida</b> y su exactitud, y las <b>modulaciones</b> disponibles: AM, FM, pulsos, I/Q.</li>
+      </ul>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Ruido de fase</div>
+        <p>Medir con un analizador de espectro el ruido de fase de un generador sintetizado a 1 kHz, 10 kHz y 100 kHz de la
+        portadora, corrigiendo por el ancho de banda de resolución.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Un PLL integrado</div>
+        <p>Programar un sintetizador PLL integrado con un microcontrolador, en N entero y en N fraccional, y comparar el
+        espectro de salida y las espurias.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Referencia externa</div>
+        <p>Enganchar el generador y el contador del laboratorio a una misma referencia de 10 MHz y observar cómo desaparece la
+        diferencia de lectura.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Comparar a la frecuencia del paso de canal sin necesidad.</b> Sube el ruido de fase y hace lento al lazo.</li>
+        <li><b>Olvidar que el ruido de la referencia se multiplica.</b> Una referencia ruidosa arruina un sintetizador de GHz.</li>
+        <li><b>Ignorar las espurias del N fraccional.</b> Pueden caer dentro del canal vecino.</li>
+        <li><b>Leer el ruido de fase del analizador sin corregir su ancho de banda.</b> Se expresa por hertz.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Qué N hace falta para sintetizar 915 MHz comparando a 200 kHz?</summary>
+        <div class="a"><p>4575.</p></div></details>
+      <details class="q"><summary>¿Cuánto sube el ruido de fase en banda al multiplicar por 1000?</summary>
+        <div class="a"><p>\( 20 \log 1000 = 60 \) dB.</p></div></details>
+      <details class="q"><summary>¿Por qué un sintetizador fraccional puede tener un lazo más rápido?</summary>
+        <div class="a"><p>Porque compara a una frecuencia mucho mayor, y el ancho de banda del lazo puede ser proporcionalmente mayor.</p></div></details>
+      <details class="q"><summary>¿Qué desventaja tiene el N fraccional?</summary>
+        <div class="a"><p>Las espurias fraccionales cerca de la portadora.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Dean Banerjee.</span>
+          <span class="ti">PLL Performance, Simulation, and Design</span>.
+          <span class="ed">5.ª ed., Dog Ear Publishing, 2017.</span>
+          <span class="pq">El diseño de sintetizadores con bomba de carga, con ruido de fase y espurias.</span></li>
+        <li><span class="au">Ulrich L. Rohde.</span>
+          <span class="ti">Microwave and Wireless Synthesizers: Theory and Design</span>.
+          <span class="ed">Wiley, 1997.</span>
+          <span class="pq">La referencia clásica sobre sintetizadores de radiofrecuencia.</span></li>
+        <li><span class="au">Roland E. Best.</span>
+          <span class="ti">Phase-Locked Loops: Design, Simulation, and Applications</span>.
+          <span class="ed">6.ª ed., McGraw-Hill, 2007.</span>
+          <span class="pq">Los PLL analógicos y digitales desde la teoría de control.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/osciloscopio-avanzado">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">El osciloscopio digital avanzado</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Generadores de señales sintetizados»</b> de <b>Medidas Electrónicas II</b> (quinto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Sintetizador PLL: N entero con fPFD = paso; N fraccional con fPFD = 50 MHz.
+   Ruido en banda L = FOM + 10 log fPFD + 20 log N, FOM = -220 dBc/Hz. Ancho de banda
+   maximo del lazo ~ fPFD/10.
+   Control (Python), 2440 MHz: paso 1 MHz entero -> N 2440, -92,25 dBc/Hz; fraccional -> N 48,8,
+   -109,24; paso 25 kHz entero -> N 97 600, -76,23; 2402 MHz paso 200 kHz -> -85,40. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("plLienzo"), ctx = cv.getContext("2d");
+  var FOM = -220, FFR = 50e6;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function frec(f){ return f >= 1e6 ? coma(f / 1e6, f % 1e6 ? 3 : 0) + " MHz" : coma(f / 1e3, f < 1e4 && f % 1e3 ? 1 : 0) + " kHz"; }
+  function ruido(fp, N){ return FOM + 10 * Math.log10(fp) + 20 * Math.log10(N); }
+
+  function pintar(){
+    var fo = +$("plF").value * 1e6, st = +$("plS").value;
+    $("plFv").textContent = coma(fo / 1e6, 0) + " MHz";
+    var Ni = fo / st, Li = ruido(st, Ni), Nf = fo / FFR, Lf = ruido(FFR, Nf), ent = Math.floor(Nf), frac = Math.round((Nf - ent) * FFR / st), mod = Math.round(FFR / st);
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 92, x1 = W - 14, D0 = -130, D1 = -60;
+      var X = function(d){ return x0 + (d - D0) / (D1 - D0) * (x1 - x0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "center";
+      for(var d = D0; d <= D1; d += 10){ ctx.beginPath(); ctx.moveTo(X(d), 8); ctx.lineTo(X(d), H - 36); ctx.stroke(); if(W >= 420 || ((d - D0) / 10) % 2 === 0) ctx.fillText("−" + (-d), X(d), H - 24); }
+      ctx.fillStyle = "#8b93a3"; ctx.fillText(W < 480 ? "ruido en banda (dBc/Hz)" : "ruido de fase en banda (dBc/Hz): más a la izquierda es mejor", (x0 + x1) / 2, H - 8);
+      [["N entero", Li, "#f0883e", 20], ["N fraccional", Lf, "#7ee787", 70]].forEach(function(b){
+        ctx.fillStyle = b[2]; ctx.fillRect(x0, b[3], X(b[1]) - x0, 30);
+        ctx.fillStyle = "#c9d1d9"; ctx.textAlign = "right"; ctx.font = "600 10px system-ui, sans-serif"; ctx.fillText(b[0], x0 - 6, b[3] + 19);
+        ctx.fillStyle = "#1f2a24"; ctx.textAlign = "right"; ctx.fillText(coma(b[1], 1), X(b[1]) - 5, b[3] + 19); ctx.font = "10px system-ui, sans-serif";
+      });
+    }
+
+    $("plDatos").innerHTML =
+      "<span>N entero: f<sub>PFD</sub> / N</span><b>" + frec(st) + " / " + Math.round(Ni).toLocaleString("es-AR") + "</b>" +
+      "<span>N fraccional: f<sub>PFD</sub> / N</span><b>50 MHz / " + ent + " + " + frac + "/" + mod + "</b>" +
+      "<span>ruido en banda, entero / fraccional</span><b>" + coma(Li, 1) + " / " + coma(Lf, 1) + " dBc/Hz</b>" +
+      "<span>ancho de banda del lazo, a lo sumo</span><b>" + frec(st / 10) + " / 5 MHz</b>";
+    $("plNota").innerHTML = "El N fraccional mejora el ruido en banda " + coma(Li - Lf, 1) + " dB y permite un lazo " + Math.round(FFR / st) + " veces más ancho, que conmuta de canal mucho más rápido. " + (st <= 25000 ? "Con canales de 25 kHz, la arquitectura entera es inviable en esta banda." : "A cambio, hay que vigilar las espurias fraccionales cerca de la portadora.");
+  }
+  ["plF", "plS"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
