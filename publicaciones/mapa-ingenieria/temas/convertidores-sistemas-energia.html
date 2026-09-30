@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convertidores en los sistemas de energía · Electrónica de Potencia · Catto</title>
+<meta name="description" content="Los convertidores en la generación fotovoltaica y eólica, el seguimiento del punto de máxima potencia, el inversor conectado a la red con su sincronización y su control de corriente, el almacenamiento en baterías, la transmisión en continua, los compensadores estáticos y los filtros activos, con laboratorio interactivo del seguimiento por perturbación y observación. Contenido de Electrónica de Potencia, quinto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/convertidores-sistemas-energia">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Electrónica de Potencia</a>
+    <span class="anio">5<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electrónica de Potencia</span> · 96 h · Contenido 7 de 8</div>
+    <h1>Convertidores en los sistemas de energía</h1>
+    <p class="lead">Un seguidor por perturbación y observación con pasos de 2 V encuentra enseguida el punto de máxima potencia, pero oscila y pierde casi un 2 %. Con pasos de 0,1 V es preciso, pero lento: en 40 iteraciones todavía no llegó.</p>
+    <div class="chips">
+      <span class="chip hi">Fotovoltaica</span>
+      <span class="chip">MPPT</span>
+      <span class="chip">Inversor conectado a red</span>
+      <span class="chip">STATCOM</span>
+      <span class="chip">Transmisión en continua</span>
+    </div>
+    <hr class="rule">
+
+    <section id="renovables">
+      <h2><span class="n">01</span>Los convertidores en la generación</h2>
+      <p>La generación renovable llega a la red a través de convertidores. Un panel <b>fotovoltaico</b> entrega corriente continua con una
+      característica corriente-tensión que depende de la irradiancia y la temperatura; un convertidor continua-continua lo hace trabajar en su
+      punto de máxima potencia y un inversor inyecta esa potencia en la red. Un <b>aerogenerador</b> moderno produce alterna de frecuencia
+      variable, que un convertidor espalda con espalda —rectificador activo, bus de continua e inversor— adapta a la frecuencia de la red.
+      Los <b>sistemas de almacenamiento</b> en baterías usan convertidores bidireccionales que cargan o descargan según el pedido de la red.</p>
+    </section>
+
+    <section id="mppt">
+      <h2><span class="n">02</span>El punto de máxima potencia</h2>
+      <p>Con el modelo de un diodo, sin resistencias parásitas, la corriente de un panel de \( N_s \) celdas en serie es:</p>
+      <div class="form">
+        \[ I = I_{sc}\,\frac{G}{1000} - I_0\left(e^{V / (n N_s V_T)} - 1\right) \]
+        <span class="cap">La potencia \( P = V I \) tiene un máximo, que se mueve con la irradiancia \( G \) y con la temperatura. El algoritmo más usado para seguirlo es el de <b>perturbación y observación</b>: se cambia la tensión un paso; si la potencia subió, se sigue en el mismo sentido, y si bajó, se invierte. Nunca se queda quieto: oscila alrededor del máximo.</span>
+      </div>
+      <div class="lw" id="mp">
+        <div class="lt">Laboratorio · seguimiento del punto de máxima potencia</div>
+        <p class="ls">Un panel de 60 celdas con I<sub>sc</sub> = 9 A y V<sub>oc</sub> = 38 V a 1000 W/m², con n = 1,3, a 25 °C. El seguidor
+        arranca en 20 V y da 80 pasos: los primeros 40 con la irradiancia inicial y los otros 40 con la final. Las curvas son la potencia
+        en función de la tensión; los puntos, el recorrido del seguidor.</p>
+        <div class="fila"><label>Irradiancia inicial = <b id="mpAv"></b></label><input type="range" id="mpA" min="100" max="1000" step="50" value="1000"></div>
+        <div class="fila"><label>Irradiancia final = <b id="mpBv"></b></label><input type="range" id="mpB" min="100" max="1000" step="50" value="500"></div>
+        <div class="fila"><label>Paso de tensión ΔV = <b id="mpSv"></b></label><input type="range" id="mpS" min="0.1" max="3" step="0.1" value="0.5"></div>
+        <canvas id="mpLienzo" style="display:block;width:100%;max-width:620px;height:230px;margin:6px auto 0"></canvas>
+        <div class="datos" id="mpDatos"></div>
+        <div class="nota" id="mpNota"></div>
+      </div>
+      <p>Cuando hay sombras parciales, la curva de un conjunto de paneles tiene varios máximos y el algoritmo simple puede quedar en uno
+      local; los inversores comerciales hacen barridos periódicos de toda la curva.</p>
+    </section>
+
+    <section id="red">
+      <h2><span class="n">03</span>El inversor conectado a la red</h2>
+      <p>Un inversor conectado a la red no fija la tensión, que impone la red, sino la <b>corriente</b> que inyecta. Un lazo de enganche de
+      fase (PLL) mide la fase de la red y el control genera una referencia de corriente senoidal en fase con ella, con la amplitud que
+      corresponde a la potencia disponible; un filtro L o LCL atenúa los armónicos de la conmutación. Debe detectar la pérdida de la red y
+      desconectarse, la protección <b>anti-isla</b>, y cumplir los requisitos de conexión de la distribuidora.</p>
+    </section>
+
+    <section id="transmision">
+      <h2><span class="n">04</span>Transmisión y compensación</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Sistema</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Transmisión en corriente continua (HVDC)</td><td>Enlaces largos o submarinos y entre redes de distinta frecuencia, con rectificadores e inversores de tiristores o con convertidores de fuente de tensión</td></tr>
+          <tr><td>Compensador estático de reactivo (SVC)</td><td>Reactores controlados por tiristores y capacitores conmutados que regulan la tensión</td></tr>
+          <tr><td>STATCOM</td><td>Un inversor que inyecta corriente reactiva capacitiva o inductiva, rápido y compacto</td></tr>
+          <tr><td>Filtro activo</td><td>Un inversor que inyecta los armónicos opuestos a los de una carga no lineal</td></tr>
+        </tbody>
+      </table></div>
+      <p>Los problemas que estos equipos resuelven se describieron en <a href="/publicaciones/mapa-ingenieria/temas/calidad-energia">calidad
+      de energía</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Curva de un panel</div>
+        <p>Medir la curva corriente-tensión de un panel con una carga electrónica variable, a pleno sol y con sombra parcial.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Seguidor</div>
+        <p>Programar un seguidor de perturbación y observación en un microcontrolador que maneje un reductor, y registrar la potencia.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Sincronización</div>
+        <p>Implementar un PLL digital que se enganche a la tensión de red atenuada y medir su respuesta a un salto de fase.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Elegir un paso de tensión sin pensar en el compromiso.</b> Grande oscila; chico tarda en seguir los cambios de irradiancia.</li>
+        <li><b>Confiar en un seguidor simple con sombras parciales.</b> Puede quedar en un máximo local.</li>
+        <li><b>Controlar en tensión un inversor conectado a la red.</b> La red impone la tensión; hay que controlar la corriente.</li>
+        <li><b>Omitir la protección anti-isla.</b> Pone en riesgo a quien trabaja en una línea que creía desenergizada.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>¿Dónde está el punto de máxima potencia del panel del laboratorio a 1000 W/m²?</summary>
+        <div class="a"><p>En unos 32,3 V, con 273,8 W.</p></div></details>
+      <details class="q"><summary>¿Y a 500 W/m²?</summary>
+        <div class="a"><p>En unos 31,0 V, con 131 W: la tensión casi no cambia, la corriente sí.</p></div></details>
+      <details class="q"><summary>¿Qué controla un inversor conectado a la red?</summary>
+        <div class="a"><p>La corriente que inyecta, en fase con la tensión de la red.</p></div></details>
+      <details class="q"><summary>¿Qué hace un STATCOM?</summary>
+        <div class="a"><p>Inyecta potencia reactiva con un inversor para regular la tensión de la red.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Remus Teodorescu, Marco Liserre y Pedro Rodríguez.</span>
+          <span class="ti">Grid Converters for Photovoltaic and Wind Power Systems</span>.
+          <span class="ed">Wiley-IEEE Press, 2011.</span>
+          <span class="pq">El control de los inversores conectados a la red, la sincronización y la anti-isla.</span></li>
+        <li><span class="au">Narain G. Hingorani y Laszlo Gyugyi.</span>
+          <span class="ti">Understanding FACTS</span>.
+          <span class="ed">Wiley-IEEE Press, 2000.</span>
+          <span class="pq">Los compensadores estáticos y los sistemas flexibles de transmisión.</span></li>
+        <li><span class="au">Gilbert M. Masters.</span>
+          <span class="ti">Renewable and Efficient Electric Power Systems</span>.
+          <span class="ed">2.ª ed., Wiley, 2013.</span>
+          <span class="pq">La generación fotovoltaica y eólica desde el recurso hasta la red.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/control-maquinas">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Control de máquinas eléctricas</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Próximo contenido, en preparación →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Convertidores en los sistemas de energía»</b> de <b>Electrónica de Potencia</b> (quinto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Seguimiento del punto de maxima potencia por perturbacion y observacion. Panel de 60 celdas, Isc 9 A, Voc 38 V, n 1,3,
+   VT 0,025693 V; I = max(0, Isc G/1000 - I0 (e^(V/A) - 1)), A = n Ns VT, I0 = Isc / (e^(Voc/A) - 1).
+   Seguidor: V0 20 V, P0 con G1; 80 pasos (40 con G1, 40 con G2): V += d dV, si P < Panterior se invierte d.
+   Rendimiento de seguimiento: promedio de los ultimos 20 pasos de cada tramo sobre el maximo (seccion aurea, 200 iteraciones).
+   Control (Python): MPP 1000 W/m2 32,308 V 273,79 W; 500 -> 30,997 V 131,02 W; 200 -> 29,268 V 49,31 W; 800 -> 31,885 V 216,00 W.
+   1000/500 paso 0,5 -> 99,68 % y 99,89 %, V final 31,0; paso 2 -> 98,30 y 98,06 %, 28,0; paso 0,1 -> 75,72 y 91,48 %, 27,8. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("mpLienzo"), ctx = cv.getContext("2d");
+  var NS = 60, ISC = 9, VOC = 38, A = 1.3 * NS * 0.025693, I0 = ISC / (Math.exp(VOC / A) - 1), K = 80;
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+  function corr(V, G){ return Math.max(0, ISC * G / 1000 - I0 * (Math.exp(V / A) - 1)); }
+  function pot(V, G){ return V * corr(V, G); }
+  function mpp(G){
+    var a = 0, b = VOC, g = (Math.sqrt(5) - 1) / 2;
+    for(var i = 0; i < 200; i++){ var c = b - g * (b - a), d = a + g * (b - a); if(pot(c, G) > pot(d, G)) b = d; else a = c; }
+    var v = (a + b) / 2; return [v, pot(v, G)];
+  }
+  function seguir(G1, G2, dV){
+    var V = 20, Pp = pot(V, G1), d = 1, tr = [];
+    for(var k = 0; k < K; k++){
+      var G = k < K / 2 ? G1 : G2;
+      V = V + d * dV; var p = pot(V, G);
+      if(p < Pp) d = -d;
+      Pp = p; tr.push([V, p]);
+    }
+    return tr;
+  }
+
+  function pintar(){
+    var G1 = +$("mpA").value, G2 = +$("mpB").value, dV = +$("mpS").value;
+    $("mpAv").textContent = G1 + " W/m²"; $("mpBv").textContent = G2 + " W/m²"; $("mpSv").textContent = coma(dV, 1) + " V";
+    var tr = seguir(G1, G2, dV), m1 = mpp(G1), m2 = mpp(G2), s1 = 0, s2 = 0;
+    for(var k = K / 2 - 20; k < K / 2; k++) s1 += tr[k][1];
+    for(k = K - 20; k < K; k++) s2 += tr[k][1];
+    var e1 = s1 / 20 / m1[1], e2 = s2 / 20 / m2[1];
+
+    var b = cv.getBoundingClientRect();
+    if(b.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(b.width * dp) || cv.height !== Math.round(b.height * dp)){
+        cv.width = Math.round(b.width * dp); cv.height = Math.round(b.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = b.width, H = b.height, x0 = 32, x1 = W - 10, y0 = 24, y1 = H - 30, VM = 40, PM = 300;
+      var X = function(v){ return x0 + v / VM * (x1 - x0); }, Y = function(p){ return y1 - p / PM * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#252d3a"; ctx.lineWidth = 1;
+      for(var p = 0; p <= PM; p += 100){ ctx.beginPath(); ctx.moveTo(x0, Y(p)); ctx.lineTo(x1, Y(p)); ctx.stroke(); }
+      for(var v = 0; v <= VM; v += 10){ ctx.beginPath(); ctx.moveTo(X(v), y0); ctx.lineTo(X(v), y1); ctx.stroke(); }
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(p = 0; p <= PM; p += 100) ctx.fillText(p, x0 - 4, Y(p) + 3);
+      for(v = 0; v <= VM; v += 10){ ctx.textAlign = v === 0 ? "left" : v === VM ? "right" : "center"; ctx.fillText(v, X(v), y1 + 13); }
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText("tensión del panel (V); en vertical, potencia (W)", (x0 + x1) / 2, y1 + 26);
+      function curva(G, col){
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
+        for(var i = 0; i <= 200; i++){ var vv = VOC * i / 200 * 1.02, py = Y(pot(Math.min(vv, VOC), G)); if(i) ctx.lineTo(X(vv), py); else ctx.moveTo(X(vv), py); }
+        ctx.stroke(); ctx.lineWidth = 1;
+      }
+      curva(G1, "#58a6ff"); if(G2 !== G1) curva(G2, "#d2a8ff");
+      tr.forEach(function(t, i){ ctx.fillStyle = i < K / 2 ? "rgba(88,166,255,.9)" : "rgba(210,168,255,.9)"; ctx.beginPath(); ctx.arc(X(t[0]), Y(t[1]), 2.4, 0, 2 * Math.PI); ctx.fill(); });
+      [m1, m2].forEach(function(m){ ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(m[0]), Y(m[1]), 6, 0, 2 * Math.PI); ctx.stroke(); ctx.lineWidth = 1; });
+      ctx.textAlign = "left"; ctx.lineWidth = 2;
+      ctx.strokeStyle = "#58a6ff"; ctx.beginPath(); ctx.moveTo(x0, 9); ctx.lineTo(x0 + 16, 9); ctx.stroke();
+      ctx.fillStyle = "#58a6ff"; ctx.fillText("inicial", x0 + 21, 12);
+      ctx.strokeStyle = "#d2a8ff"; ctx.beginPath(); ctx.moveTo(x0 + 70, 9); ctx.lineTo(x0 + 86, 9); ctx.stroke();
+      ctx.fillStyle = "#d2a8ff"; ctx.fillText("final", x0 + 91, 12);
+      ctx.strokeStyle = "#f2cc60"; ctx.beginPath(); ctx.arc(x0 + 140, 9, 5, 0, 2 * Math.PI); ctx.stroke();
+      ctx.fillStyle = "#f2cc60"; ctx.fillText("máximo", x0 + 149, 12); ctx.lineWidth = 1;
+    }
+
+    $("mpDatos").innerHTML =
+      "<span>máximo con la irradiancia inicial</span><b>" + coma(m1[1], 1) + " W en " + coma(m1[0], 2) + " V</b>" +
+      "<span>máximo con la irradiancia final</span><b>" + coma(m2[1], 1) + " W en " + coma(m2[0], 2) + " V</b>" +
+      "<span>aprovechamiento, primer tramo</span><b>" + coma(e1 * 100, 2) + " %</b>" +
+      "<span>aprovechamiento, segundo tramo</span><b>" + coma(e2 * 100, 2) + " %</b>" +
+      "<span>tensión al final</span><b>" + coma(tr[K - 1][0], 2) + " V</b>";
+    var nota;
+    if(Math.min(e1, e2) < 0.95) nota = "<b>Paso demasiado chico:</b> el seguidor avanza " + coma(dV, 1) + " V por iteración y no alcanza a llegar al máximo en 40 pasos; se pierde energía mientras camina.";
+    else if(dV >= 1.5) nota = "<b>Paso grande:</b> el seguidor llega rápido, pero oscila varios voltios alrededor del máximo y pierde " + coma((1 - Math.min(e1, e2)) * 100, 1) + " % de la energía en régimen.";
+    else nota = "Buen compromiso: el seguidor llega al máximo en pocos pasos y oscila cerca. Nótese que la tensión del máximo cambia poco con la irradiancia; la que cambia es la corriente.";
+    $("mpNota").innerHTML = nota;
+  }
+  ["mpA", "mpB", "mpS"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
