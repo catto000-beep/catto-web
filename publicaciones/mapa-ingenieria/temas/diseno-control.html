@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diseño de controladores continuos y discretos · Sistemas de Control · Catto</title>
+<meta name="description" content="El controlador PID con sus tres acciones, la sintonía de Ziegler y Nichols por el método de la oscilación, la implementación digital con muestreo y retención, el efecto del período de muestreo y las etapas del proyecto de un sistema de control, con laboratorio interactivo que compara un PID continuo con su versión digital. Contenido de Sistemas de Control, quinto nivel de Ingeniería Electrónica (UTN).">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/diseno-control">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-ingenieria">Mapa de Temas · Sistemas de Control</a>
+    <span class="anio">5<sup>to</sup> nivel</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Sistemas de Control</span> · 96 h · Contenido 8 de 8</div>
+    <h1>Diseño de controladores continuos y discretos</h1>
+    <p class="lead">El mismo PID que controla bien una planta en continuo la hace oscilar si se lo implementa muestreando cada medio segundo. El período de muestreo es parte del diseño.</p>
+    <div class="chips">
+      <span class="chip hi">PID</span>
+      <span class="chip">Ziegler-Nichols</span>
+      <span class="chip">Control digital</span>
+      <span class="chip">Período de muestreo</span>
+      <span class="chip">Desborde de la integral</span>
+    </div>
+    <hr class="rule">
+
+    <section id="pid">
+      <h2><span class="n">01</span>El controlador PID</h2>
+      <p>La mayoría de los lazos industriales usan un controlador de tres acciones. La <b>proporcional</b> actúa según el error
+      actual; la <b>integral</b>, según el error acumulado, y elimina el error permanente porque sube el tipo del sistema, como se
+      vio en <a href="/publicaciones/mapa-ingenieria/temas/estado-permanente">estado permanente</a>; la <b>derivativa</b>, según la
+      velocidad de cambio, y anticipa, agregando fase y amortiguamiento:</p>
+      <div class="form">
+        \[ u(t) = K_p \left( e(t) + \frac{1}{T_i}\int_0^t e\,d\tau + T_d \frac{de}{dt} \right) \]
+        <span class="cap">\( T_i \) es el tiempo integral y \( T_d \) el derivativo. En la práctica la derivada se aplica a la medición y no al error, para no dar un golpe al cambiar la referencia, y se filtra para no amplificar el ruido.</span>
+      </div>
+      <p>En el lugar de las raíces, el PID agrega un polo en el origen y dos ceros, que atraen las ramas hacia la izquierda; en
+      frecuencia, sube la ganancia a bajas frecuencias y agrega fase cerca del cruce. Las dos lecturas se vieron en
+      <a href="/publicaciones/mapa-ingenieria/temas/lugar-raices">lugar de las raíces</a> y en
+      <a href="/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia-control">respuesta en frecuencia</a>.</p>
+    </section>
+
+    <section id="sintonia">
+      <h2><span class="n">02</span>Sintonía: Ziegler y Nichols</h2>
+      <p>En 1942, John Ziegler y Nathaniel Nichols propusieron reglas empíricas para ajustar un PID sin modelo. En el método de la
+      oscilación, se deja solo la acción proporcional, se sube la ganancia hasta que el lazo oscila en forma sostenida y se
+      anotan esa ganancia última \( K_u \) y el período \( T_u \). Es la ganancia crítica que da el criterio de
+      <a href="/publicaciones/mapa-ingenieria/temas/estabilidad-control">Routh</a>:</p>
+      <div class="form">
+        \[ K_p = 0{,}6\, K_u, \quad T_i = T_u/2, \quad T_d = T_u/8 \]
+        <span class="cap">Para la planta \( 1/(s+1)^3 \), \( K_u = 8 \) y \( T_u = 2\pi/\sqrt 3 \approx 3{,}63 \) s. Las reglas buscan un decaimiento de un cuarto entre picos sucesivos: dan una respuesta rápida pero con mucho sobrepaso, y son un punto de partida para el ajuste fino.</span>
+      </div>
+    </section>
+
+    <section id="discreto">
+      <h2><span class="n">03</span>El controlador digital</h2>
+      <p>Hoy el PID se implementa en un microcontrolador o un PLC. En cada período de muestreo \( T_s \) se lee el sensor, se calcula
+      la acción y se la mantiene constante hasta el período siguiente (retenedor de orden cero). La forma más simple aproxima la
+      integral por una suma y la derivada por una diferencia:</p>
+      <div class="form">
+        \[ I_k = I_{k-1} + \frac{K_p T_s}{T_i}\, e_k \]
+        \[ u_k = K_p\, e_k + I_k - K_p T_d\, \frac{y_k - y_{k-1}}{T_s} \]
+        <span class="cap">Hay versiones más exactas, como la transformación bilineal de Tustin, que conserva mejor la respuesta en frecuencia. El muestreo y la retención equivalen aproximadamente a un retardo de medio período, que resta fase: con \( T_s \) grande frente a la dinámica del lazo, el control digital se degrada y puede volverse inestable. La regla práctica pide muestrear entre diez y veinte veces por constante de tiempo del lazo cerrado.</span>
+      </div>
+      <div class="lw" id="pid">
+        <div class="lt">Laboratorio · PID continuo y digital</div>
+        <p class="ls">Un PID sobre la planta \( 1/(s+1)^3 \) con un escalón de referencia unitario. La planta se integra con Runge-Kutta con
+        paso de 1 ms; el controlador calcula su acción cada \( T_s \) y la mantiene hasta el período siguiente. La línea punteada
+        es la referencia.</p>
+        <div class="fila">
+          <select id="pdS">
+            <option value="zn" selected>Sintonía de Ziegler-Nichols</option>
+            <option value="suave">Sintonía más suave</option>
+          </select>
+        </div>
+        <div class="fila"><label>K<sub>p</sub> = <b id="pdKv"></b></label><input type="range" id="pdK" min="0.5" max="8" step="0.1" value="4.8"></div>
+        <div class="fila"><label>T<sub>i</sub> = <b id="pdIv"></b></label><input type="range" id="pdI" min="0.5" max="10" step="0.0001" value="1.8138"></div>
+        <div class="fila"><label>T<sub>d</sub> = <b id="pdDv"></b></label><input type="range" id="pdD" min="0" max="1.5" step="0.0001" value="0.4534"></div>
+        <div class="fila">
+          <select id="pdT">
+            <option value="0.001" selected>Continuo (T<sub>s</sub> = 1 ms)</option>
+            <option value="0.05">T<sub>s</sub> = 50 ms</option>
+            <option value="0.2">T<sub>s</sub> = 200 ms</option>
+            <option value="0.5">T<sub>s</sub> = 500 ms</option>
+          </select>
+        </div>
+        <canvas id="pdLienzo" style="display:block;width:100%;max-width:620px;height:220px;margin:6px auto 0"></canvas>
+        <div class="datos" id="pdDatos"></div>
+        <div class="nota" id="pdNota"></div>
+      </div>
+    </section>
+
+    <section id="proyecto">
+      <h2><span class="n">04</span>El proyecto de un sistema de control</h2>
+      <p>Un proyecto completo recorre todo lo visto en la materia: especificar el comportamiento pedido (sobrepaso, tiempo de
+      establecimiento, error permanente, rechazo de perturbaciones), modelar o identificar la planta, elegir la estructura del
+      controlador, calcularlo con el lugar de las raíces o en frecuencia, verificarlo por simulación con las no linealidades
+      reales (saturación del actuador, con su protección contra el desborde de la integral), elegir el período de muestreo,
+      implementarlo y ajustarlo sobre la planta real.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>En el laboratorio</h2>
+      <div class="box lab"><div class="bt">Actividad 1 · Ziegler-Nichols real</div>
+        <p>Sobre una planta térmica o de velocidad, encontrar K<sub>u</sub> y T<sub>u</sub> con el método de la oscilación y aplicar
+        las reglas. Medir el sobrepaso y ajustar a mano.</p></div>
+      <div class="box lab"><div class="bt">Actividad 2 · Período de muestreo</div>
+        <p>Implementar el PID en un microcontrolador y aumentar el período de muestreo hasta que la respuesta se degrade.</p></div>
+      <div class="box lab"><div class="bt">Actividad 3 · Desborde de la integral</div>
+        <p>Saturar el actuador con un escalón grande y comparar la respuesta con y sin protección contra el desborde de la
+        integral.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Errores frecuentes</h2>
+      <ul>
+        <li><b>Derivar el error.</b> Un cambio de referencia produce un pico enorme de la acción; conviene derivar la medición.</li>
+        <li><b>Olvidar la saturación del actuador.</b> La integral sigue creciendo y produce un sobrepaso grande al salir de la saturación.</li>
+        <li><b>Muestrear demasiado lento.</b> El retardo del muestreo resta fase y puede volver inestable un lazo que en continuo era estable.</li>
+        <li><b>Tomar la sintonía de Ziegler-Nichols como final.</b> Da respuestas con mucho sobrepaso; es un punto de partida.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Autoevaluación</h2>
+      <details class="q"><summary>Un lazo oscila con K<sub>u</sub> = 12 y T<sub>u</sub> = 2 s. ¿Qué PID dan las reglas de Ziegler-Nichols?</summary>
+        <div class="a"><p>K<sub>p</sub> = 7,2; T<sub>i</sub> = 1 s; T<sub>d</sub> = 0,25 s.</p></div></details>
+      <details class="q"><summary>¿Qué acción elimina el error permanente frente a un escalón?</summary>
+        <div class="a"><p>La integral.</p></div></details>
+      <details class="q"><summary>¿Qué retardo aproximado agrega un retenedor con T<sub>s</sub> = 0,2 s?</summary>
+        <div class="a"><p>Medio período: 0,1 s.</p></div></details>
+      <details class="q"><summary>¿Por qué se filtra la acción derivativa?</summary>
+        <div class="a"><p>Porque amplifica el ruido de alta frecuencia de la medición.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Para ampliar</h2>
+      <ul class="libros">
+        <li><span class="au">Karl J. Åström y Tore Hägglund.</span>
+          <span class="ti">Advanced PID Control</span>.
+          <span class="ed">ISA, 2006.</span>
+          <span class="pq">El PID en la práctica: sintonía, filtrado, desborde de la integral e implementación.</span></li>
+        <li><span class="au">Katsuhiko Ogata.</span>
+          <span class="ti">Sistemas de control en tiempo discreto</span>.
+          <span class="ed">2.ª ed., Prentice Hall, 1996.</span>
+          <span class="pq">La transformada z, el muestreo y el diseño de controladores digitales.</span></li>
+        <li><span class="au">John G. Ziegler y Nathaniel B. Nichols.</span>
+          <span class="ti">Optimum Settings for Automatic Controllers</span>.
+          <span class="ed">Transactions of the ASME, 64, 1942.</span>
+          <span class="pq">El artículo original de las reglas de sintonía.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia-control">
+        <div class="dir">← Contenido anterior</div>
+        <div class="tt">Respuesta en frecuencia en control</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-ingenieria">
+        <div class="dir">Fin de la materia →</div>
+        <div class="tt">Volver al Mapa de Temas</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del contenido <b>«Diseño de controladores continuos y discretos»</b> de <b>Sistemas de Control</b> (quinto nivel), según el diseño
+  curricular de Ingeniería Electrónica, Plan 2023 — Ordenanza N° 1849 del Consejo Superior de la UTN.
+  <a href="/publicaciones/mapa-ingenieria">Volver al Mapa de Temas</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* PID sobre 1/(s+1)^3 (x1' = -x1 + u, x2' = -x2 + x1, x3' = -x3 + x2, y = x3), RK4 con 1 ms
+   durante 25 s. Cada Ts: e = 1 - y; I += Kp Ts/Ti e; D = Kp Td (y_ant - y)/Ts; u = Kp e + I + D
+   retenido hasta el periodo siguiente.
+   Control (Python): Ziegler-Nichols 4,8 / 1,8138 / 0,45345: continuo 52,53 %, ts 9,907 s;
+   Ts 0,2 -> 66,04 %, 15,142 s; Ts 0,5 -> inestable. Suave 2,4 / 2,5 / 0,6: 19,56 %, 6,648 s;
+   Ts 0,2 -> 23,03 %, 5,706 s. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pdLienzo"), ctx = cv.getContext("2d");
+  var TF = 25, DT = 0.001, TU = 2 * Math.PI / Math.sqrt(3);
+  var PRE = { zn: [4.8, TU / 2, TU / 8], suave: [2.4, 2.5, 0.6] };
+  function coma(v, d){ return v.toFixed(d).replace(".", ",").replace("-", "−"); }
+
+  function sim(Kp, Ti, Td, h){
+    var x = [0, 0, 0], I = 0, yp = 0, u = 0, n = Math.round(TF / DT), m = Math.round(h / DT), Y = [], U = [];
+    var f = function(xx, uu){ return [-xx[0] + uu, -xx[1] + xx[0], -xx[2] + xx[1]]; };
+    for(var k = 0; k < n; k++){
+      if(k % m === 0){ var y = x[2], e = 1 - y; I += Kp / Ti * h * e; var D = Kp * Td * (yp - y) / h; u = Kp * e + I + D; yp = y; }
+      var k1 = f(x, u), k2 = f([x[0] + DT / 2 * k1[0], x[1] + DT / 2 * k1[1], x[2] + DT / 2 * k1[2]], u), k3 = f([x[0] + DT / 2 * k2[0], x[1] + DT / 2 * k2[1], x[2] + DT / 2 * k2[2]], u), k4 = f([x[0] + DT * k3[0], x[1] + DT * k3[1], x[2] + DT * k3[2]], u);
+      for(var i = 0; i < 3; i++) x[i] += DT / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
+      Y.push(x[2]); U.push(u);
+    }
+    return {Y: Y, U: U};
+  }
+  function preset(){ var p = PRE[$("pdS").value]; $("pdK").value = p[0]; $("pdI").value = p[1]; $("pdD").value = p[2]; pintar(); }
+
+  function pintar(){
+    var Kp = +$("pdK").value, Ti = +$("pdI").value, Td = +$("pdD").value, h = +$("pdT").value;
+    $("pdKv").textContent = coma(Kp, 2); $("pdIv").textContent = coma(Ti, 2) + " s"; $("pdDv").textContent = coma(Td, 2) + " s";
+    var S = sim(Kp, Ti, Td, h), mx = -1e9, ts = 0, n = S.Y.length, div = false;
+    for(var i = 0; i < n; i++){ mx = Math.max(mx, S.Y[i]); if(Math.abs(S.Y[i] - 1) > 0.02) ts = (i + 1) * DT; }
+    if(ts >= TF - DT * 2 && Math.abs(S.Y[n - 1] - 1) > 0.2) div = true;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 30, x1 = W - 12, y0 = 10, y1 = H - 24, V0 = -0.2, V1 = 2.2;
+      var X = function(t){ return x0 + t / TF * (x1 - x0); }, Y = function(v){ return y1 - (Math.max(V0, Math.min(V1, v)) - V0) / (V1 - V0) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      [0, 0.5, 1, 1.5, 2].forEach(function(v){ ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke(); ctx.fillText(coma(v, 1), x0 - 4, Y(v) + 3); });
+      ctx.fillStyle = "rgba(126,231,135,.12)"; ctx.fillRect(x0, Y(1.02), x1 - x0, Y(0.98) - Y(1.02));
+      ctx.strokeStyle = "#f2cc60"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x0, Y(1)); ctx.lineTo(x1, Y(1)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = div ? "#f85149" : "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      for(i = 0; i < n; i += 25){ var yy = Y(S.Y[i]); if(i) ctx.lineTo(X((i + 1) * DT), yy); else ctx.moveTo(X(DT), yy); }
+      ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("0 s", x0, H - 6); ctx.textAlign = "right"; ctx.fillText("25 s", x1, H - 6);
+    }
+
+    $("pdDatos").innerHTML =
+      "<span>sobrepaso</span><b>" + (div ? "—" : coma(Math.max(0, 100 * (mx - 1)), 1) + " %") + "</b>" +
+      "<span>tiempo de establecimiento al 2 %</span><b>" + (div ? "no se establece" : ts >= TF - 0.01 ? "más de 25 s" : coma(ts, 2) + " s") + "</b>" +
+      "<span>muestras por período de oscilación T<sub>u</sub></span><b>" + (h >= 0.01 ? coma(TU / h, 0) : "continuo") + "</b>";
+    var nota;
+    if(div) nota = "<b>El lazo digital es inestable:</b> con T<sub>s</sub> = " + coma(h, 1) + " s el retardo del muestreo resta tanta fase que el mismo PID que funcionaba en continuo hace oscilar al sistema.";
+    else if(mx > 1.4) nota = "Sobrepaso de " + coma(100 * (mx - 1), 0) + " %: es la respuesta típica de la sintonía de Ziegler-Nichols, pensada para un decaimiento de un cuarto. Bajar K<sub>p</sub> o subir T<sub>i</sub> la suaviza.";
+    else if(h > 0.1) nota = "El muestreo ya se nota: comparar con la versión continua. El retardo de medio período del retenedor agrega sobrepaso.";
+    else nota = "Respuesta razonable: sobrepaso moderado y establecimiento en " + coma(ts, 1) + " s, sin error permanente gracias a la acción integral.";
+    $("pdNota").innerHTML = nota;
+  }
+  $("pdS").addEventListener("input", preset);
+  ["pdK", "pdI", "pdD", "pdT"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
