@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingresar · Foro · Catto</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0d1117">
+<link rel="stylesheet" href="/assets/css/base.css?v=12">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="/foro/foro.css?v=1">
+<script src="/aula/assets/vendor/supabase.js"></script>
+<script src="/aula/assets/config.js"></script>
+<script src="/foro/foro.js?v=1"></script>
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="brand" href="/"><span class="logo">⚡</span> <span>catto<span class="dom">.ar</span></span></a>
+    <nav class="main">
+      <a href="/">Inicio</a>
+      <a href="/#publicaciones">Publicaciones</a>
+      <a href="/foro" class="active">Foro</a>
+    </nav>
+  </div>
+</header>
+<div class="foro-barra"><div class="in" id="foroBarra"></div></div>
+
+<main class="foro">
+  <h1>Ingresar al foro</h1>
+  <p class="bajada">Para leer no hace falta cuenta. Para consultar y responder, se ingresa con una cuenta de Google. El foro no ve tu contraseña ni publica tu nombre ni tu correo: en los mensajes solo aparece el alias que elijas.</p>
+  <div id="estado"></div>
+  <p><button class="f-google" id="google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l7.9-6z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.2-8.5 2.2-6.3 0-11.6-4.2-13.5-9.9l-7.9 6C6.6 42.6 14.6 48 24 48z"/></svg>Ingresar con Google</button></p>
+  <p class="f-err" id="err"></p>
+  <p class="f-pagina">Al ingresar aceptás las <a href="/foro/normas">normas del foro</a> y la <a href="/foro/privacidad">política de privacidad</a>. Hace falta tener 13 años o más.</p>
+</main>
+
+<script>
+(function () {
+  var F = window.Foro, volver = F.q('volver');
+  if (volver && /^\/foro/.test(volver)) sessionStorage.setItem('foro-volver', volver);
+  var err = F.q('error_description');
+  if (err) F.$('err').textContent = 'No se pudo ingresar: ' + err;
+
+  F.estado().then(function (s) {
+    if (!s.usuario) return;
+    var destino = sessionStorage.getItem('foro-volver') || '/foro';
+    sessionStorage.removeItem('foro-volver');
+    location.replace(s.perfil ? destino : '/foro/perfil?volver=' + encodeURIComponent(destino));
+  });
+
+  F.$('google').onclick = function () {
+    F.$('err').textContent = '';
+    F.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + '/foro/ingresar' } })
+      .then(function (r) { if (r.error) F.$('err').textContent = F.error(r.error); });
+  };
+})();
+</script>
+</body>
+</html>

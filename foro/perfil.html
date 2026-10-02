@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi perfil · Foro · Catto</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0d1117">
+<link rel="stylesheet" href="/assets/css/base.css?v=12">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="/foro/foro.css?v=1">
+<script src="/aula/assets/vendor/supabase.js"></script>
+<script src="/aula/assets/config.js"></script>
+<script src="/foro/foro.js?v=1"></script>
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="brand" href="/"><span class="logo">⚡</span> <span>catto<span class="dom">.ar</span></span></a>
+    <nav class="main">
+      <a href="/">Inicio</a>
+      <a href="/#publicaciones">Publicaciones</a>
+      <a href="/foro" class="active">Foro</a>
+    </nav>
+  </div>
+</header>
+<div class="foro-barra"><div class="in" id="foroBarra"></div></div>
+
+<main class="foro">
+  <h1 id="titulo">Mi perfil</h1>
+  <p class="bajada" id="bajada"></p>
+
+  <form class="f-form" id="form" hidden>
+    <label for="alias">Alias público</label>
+    <input type="text" id="alias" maxlength="20" autocomplete="off" placeholder="lucia_g">
+    <p class="f-pagina" style="color:var(--soft)">De 3 a 20 caracteres: letras minúsculas, números, punto o guion bajo. No uses tu nombre completo.</p>
+    <label for="curso">Curso o nivel</label>
+    <select id="curso"></select>
+    <div id="nuevo">
+      <label class="chk"><input type="checkbox" id="edad"> <span>Tengo 13 años o más.</span></label>
+      <label class="chk"><input type="checkbox" id="normas"> <span>Leí y acepto las <a href="/foro/normas" target="_blank">normas del foro</a> y la <a href="/foro/privacidad" target="_blank">política de privacidad</a>.</span></label>
+    </div>
+    <p class="f-err" id="err"></p>
+    <p style="margin-top:14px"><button class="f-btn pri" type="submit" id="guardar">Guardar</button></p>
+    <p class="f-ok" id="ok"></p>
+  </form>
+
+  <section id="cuenta" hidden>
+    <h2 class="f-grupo" style="margin-top:30px">Mis consultas</h2>
+    <div id="mias"></div>
+    <h2 class="f-grupo" style="margin-top:30px">Cuenta</h2>
+    <p class="f-fila"><button class="f-btn" id="salir">Cerrar sesión</button></p>
+    <div class="f-msg" style="margin-top:18px">
+      <b>Borrar la cuenta</b>
+      <p style="font-size:14px;margin:6px 0">Se borran el perfil y todas las consultas y respuestas publicadas, y no se puede deshacer. Para confirmar, escribí tu alias.</p>
+      <div class="f-fila f-form"><input type="text" id="confirma" style="max-width:220px" autocomplete="off"><button class="f-btn peligro" id="borrar">Borrar mi cuenta</button></div>
+      <p class="f-err" id="errB"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var F = window.Foro, perfil = null;
+  F.$('curso').innerHTML = '<option value="">Elegí una opción</option>' + F.CURSOS.map(function (c) { return '<option>' + F.esc(c) + '</option>'; }).join('');
+
+  F.exigir(false).then(function (s) {
+    if (!s) return;
+    perfil = s.perfil;
+    F.$('form').hidden = false;
+    if (!perfil) {
+      F.$('titulo').textContent = 'Completar el perfil';
+      F.$('bajada').textContent = 'Un último paso antes de participar. Lo que completes acá es lo único que se muestra de vos en el foro.';
+      F.$('guardar').textContent = 'Crear perfil';
+    } else {
+      F.$('nuevo').hidden = true;
+      F.$('alias').value = perfil.alias; F.$('curso').value = perfil.curso;
+      F.$('bajada').textContent = perfil.rol === 'moderador' ? 'Cuenta con permisos de moderación.' : 'Podés cambiar tu alias y tu curso cuando quieras.';
+      F.$('cuenta').hidden = false;
+      F.sb.from('foro_tema').select(F.SEL_TEMA).eq('autor', perfil.id).order('creado', { ascending: false }).then(function (t) {
+        F.listaTemas(F.$('mias'), t.data || []);
+      });
+    }
+  });
+
+  ['alias', 'curso', 'edad', 'normas'].forEach(function (id) { F.$(id).addEventListener('input', function () { F.$('err').textContent = ''; F.$('ok').textContent = ''; }); });
+
+  F.$('form').onsubmit = function (e) {
+    e.preventDefault();
+    var alias = F.$('alias').value.trim().toLowerCase(), curso = F.$('curso').value;
+    if (!/^[a-z0-9_.]{3,20}$/.test(alias)) { F.$('err').textContent = 'El alias admite de 3 a 20 letras minúsculas, números, punto o guion bajo.'; return; }
+    if (!curso) { F.$('err').textContent = 'Elegí tu curso o nivel.'; return; }
+    var op;
+    if (!perfil) {
+      if (!F.$('edad').checked) { F.$('err').textContent = 'Para participar hace falta tener 13 años o más.'; return; }
+      if (!F.$('normas').checked) { F.$('err').textContent = 'Hace falta aceptar las normas y la política de privacidad.'; return; }
+      op = F.estado().then(function (s) { return F.sb.from('foro_perfil').insert({ id: s.usuario.id, alias: alias, curso: curso, mayor_13: true }); });
+    } else {
+      op = F.sb.from('foro_perfil').update({ alias: alias, curso: curso }).eq('id', perfil.id);
+    }
+    op.then(function (r) {
+      if (r.error) { F.$('err').textContent = F.error(r.error); return; }
+      if (!perfil) { var v = F.q('volver'); location.replace(v && /^\/foro/.test(v) ? v : '/foro'); }
+      else { F.$('ok').textContent = 'Cambios guardados.'; setTimeout(function () { location.reload(); }, 800); }
+    });
+  };
+
+  F.$('salir').onclick = function () { F.sb.auth.signOut().then(function () { location.href = '/foro'; }); };
+
+  F.$('borrar').onclick = function () {
+    F.$('errB').textContent = '';
+    if (F.$('confirma').value.trim().toLowerCase() !== perfil.alias) { F.$('errB').textContent = 'Escribí tu alias exactamente para confirmar.'; return; }
+    F.sb.rpc('foro_borrar_cuenta').then(function (r) {
+      if (r.error) { F.$('errB').textContent = F.error(r.error); return; }
+      F.sb.auth.signOut().then(function () { location.href = '/foro'; });
+    });
+  };
+})();
+</script>
+</body>
+</html>

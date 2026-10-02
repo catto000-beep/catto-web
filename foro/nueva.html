@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nueva consulta · Foro · Catto</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0d1117">
+<link rel="stylesheet" href="/assets/css/base.css?v=12">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="/foro/foro.css?v=1">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="/aula/assets/vendor/supabase.js"></script>
+<script src="/aula/assets/config.js"></script>
+<script src="/foro/foro.js?v=1"></script>
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="brand" href="/"><span class="logo">⚡</span> <span>catto<span class="dom">.ar</span></span></a>
+    <nav class="main">
+      <a href="/">Inicio</a>
+      <a href="/#publicaciones">Publicaciones</a>
+      <a href="/foro" class="active">Foro</a>
+    </nav>
+  </div>
+</header>
+<div class="foro-barra"><div class="in" id="foroBarra"></div></div>
+
+<main class="foro">
+  <p class="f-pagina"><a href="/foro">← Foro</a></p>
+  <h1>Nueva consulta</h1>
+  <p class="bajada">Una buena consulta cuenta qué querés lograr, qué hiciste y dónde te trabaste. Si hay cálculos, escribilos: así es más fácil ayudarte.</p>
+
+  <form class="f-form" id="form" hidden>
+    <label for="cat">Categoría</label>
+    <select id="cat"></select>
+    <div id="pagBox" hidden>
+      <label>Página relacionada</label>
+      <p class="f-fila" style="margin:0"><a id="pagLink" target="_blank"></a> <button type="button" class="f-btn link" id="pagQuitar">quitar</button></p>
+    </div>
+    <label for="tit">Título</label>
+    <input type="text" id="tit" maxlength="150" placeholder="¿Por qué el diagrama de Bode cae 20 dB por década después del polo?">
+    <label for="cue">Consulta</label>
+    <div class="f-barra-ed" id="barraEd">
+      <button type="button" data-w="**|**" title="Negrita"><b>N</b></button>
+      <button type="button" data-w="*|*" title="Cursiva"><i>C</i></button>
+      <button type="button" data-w="`|`" title="Código">&lt;/&gt;</button>
+      <button type="button" data-w="$|$" title="Fórmula">∑</button>
+      <button type="button" data-w="[|](https://)" title="Enlace">🔗</button>
+      <span class="sep"></span>
+      <button type="button" id="bEsc" style="padding:0 10px">Escribir</button>
+      <button type="button" id="bPrev" style="padding:0 10px">Vista previa</button>
+    </div>
+    <textarea id="cue" maxlength="10000" placeholder="Tengo un pasabajos RC con R = 1 kΩ y C = 100 nF. Calculé $f_c = 1/(2\pi RC) \approx 1{,}59$ kHz, pero no entiendo por qué la pendiente es de 20 dB por década."></textarea>
+    <div class="f-prev f-cuerpo" id="prev" hidden></div>
+    <p class="f-pagina" style="color:var(--soft)">Formato: **negrita**, *cursiva*, `código`, fórmulas entre $ … $ (o $$ … $$ en su propia línea) y enlaces [texto](https://…).</p>
+    <p class="f-err" id="err"></p>
+    <p class="f-fila" style="margin-top:14px"><button class="f-btn pri" type="submit" id="enviar">Publicar consulta</button></p>
+  </form>
+  <div id="listo" hidden></div>
+</main>
+
+<script>
+(function () {
+  var F = window.Foro, pagina = F.q('p');
+  if (pagina && !/^\/publicaciones\/[a-z0-9\/_.-]+$/.test(pagina)) pagina = null;
+
+  F.exigir(true).then(function (s) {
+    if (!s) return;
+    F.$('form').hidden = false;
+    var bor = sessionStorage.getItem('foro-borrador');
+    if (bor) { try { bor = JSON.parse(bor); F.$('tit').value = bor.t || ''; F.$('cue').value = bor.c || ''; } catch (e) {} }
+    F.sb.from('foro_categoria').select('*').order('orden').then(function (r) {
+      var grupo = '', h = '<option value="">Elegí una categoría</option>';
+      (r.data || []).forEach(function (c) {
+        if (c.grupo !== grupo) { if (grupo) h += '</optgroup>'; grupo = c.grupo; h += '<optgroup label="' + F.esc(grupo) + '">'; }
+        h += '<option value="' + c.slug + '">' + F.esc(c.grupo === 'General' ? c.nombre : c.grupo + ' · ' + c.nombre) + '</option>';
+      });
+      F.$('cat').innerHTML = h + '</optgroup>';
+      F.$('cat').value = F.q('c') || '';
+    });
+    if (pagina) {
+      F.$('pagBox').hidden = false;
+      F.$('pagLink').href = pagina;
+      F.$('pagLink').textContent = decodeURIComponent(F.q('pt') || pagina);
+    }
+  });
+
+  F.$('pagQuitar').onclick = function () { pagina = null; F.$('pagBox').hidden = true; };
+
+  var cue = F.$('cue'), prev = F.$('prev');
+  function modo(p) {
+    cue.hidden = p; prev.hidden = !p;
+    if (p) { prev.innerHTML = F.md(cue.value) || '<span style="color:var(--soft)">Nada para mostrar todavía.</span>'; F.formulas(prev); }
+  }
+  F.$('bEsc').onclick = function () { modo(false); };
+  F.$('bPrev').onclick = function () { modo(true); };
+  Array.prototype.forEach.call(document.querySelectorAll('#barraEd button[data-w]'), function (b) {
+    b.onclick = function () {
+      modo(false);
+      var w = b.getAttribute('data-w').split('|'), a = cue.selectionStart, z = cue.selectionEnd, t = cue.value;
+      cue.value = t.slice(0, a) + w[0] + t.slice(a, z) + w[1] + t.slice(z);
+      cue.focus(); cue.selectionStart = a + w[0].length; cue.selectionEnd = z + w[0].length;
+    };
+  });
+  ['tit', 'cue', 'cat'].forEach(function (id) {
+    F.$(id).addEventListener('input', function () {
+      F.$('err').textContent = '';
+      sessionStorage.setItem('foro-borrador', JSON.stringify({ t: F.$('tit').value, c: cue.value }));
+    });
+  });
+
+  F.$('form').onsubmit = function (e) {
+    e.preventDefault();
+    var cat = F.$('cat').value, tit = F.$('tit').value.trim(), txt = cue.value.trim();
+    if (!cat) { F.$('err').textContent = 'Elegí una categoría.'; return; }
+    if (tit.length < 10) { F.$('err').textContent = 'El título tiene que resumir la duda en al menos 10 caracteres.'; return; }
+    if (txt.length < 30) { F.$('err').textContent = 'Contá un poco más: qué hiciste y dónde te trabaste (al menos 30 caracteres).'; return; }
+    F.$('enviar').disabled = true;
+    F.sb.from('foro_tema').insert({ categoria: cat, titulo: tit, cuerpo: txt, pagina: pagina }).select('id,estado').single().then(function (r) {
+      F.$('enviar').disabled = false;
+      if (r.error) { F.$('err').textContent = F.error(r.error); return; }
+      sessionStorage.removeItem('foro-borrador');
+      if (r.data.estado === 'publicado') { location.href = '/foro/tema?id=' + r.data.id; return; }
+      F.$('form').hidden = true; F.$('listo').hidden = false;
+      F.$('listo').innerHTML = '<div class="f-aviso">Consulta enviada. Como es tu primera publicación, la revisa un moderador antes de que se vea en el foro. Después de esa primera aprobación, tus mensajes se publican directamente.</div>' +
+        '<p><a href="/foro/tema?id=' + r.data.id + '">Ver mi consulta</a> · <a href="/foro">Volver al foro</a></p>';
+    });
+  };
+})();
+</script>
+</body>
+</html>

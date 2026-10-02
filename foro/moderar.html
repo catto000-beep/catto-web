@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moderación · Foro · Catto</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0d1117">
+<link rel="stylesheet" href="/assets/css/base.css?v=12">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="/foro/foro.css?v=1">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="/aula/assets/vendor/supabase.js"></script>
+<script src="/aula/assets/config.js"></script>
+<script src="/foro/foro.js?v=1"></script>
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="brand" href="/"><span class="logo">⚡</span> <span>catto<span class="dom">.ar</span></span></a>
+    <nav class="main">
+      <a href="/">Inicio</a>
+      <a href="/#publicaciones">Publicaciones</a>
+      <a href="/foro" class="active">Foro</a>
+    </nav>
+  </div>
+</header>
+<div class="foro-barra"><div class="in" id="foroBarra"></div></div>
+
+<main class="foro">
+  <h1>Moderación</h1>
+  <p class="bajada">Al aprobar el primer mensaje de alguien, sus próximas publicaciones salen directo. Ocultar no borra: el mensaje deja de verse y se puede volver a publicar.</p>
+  <div id="sin" hidden><p class="f-err">Esta página es solo para moderadores.</p></div>
+  <div id="panel" hidden>
+    <h2 class="f-grupo">Pendientes de aprobación</h2>
+    <div id="pend"></div>
+    <h2 class="f-grupo" style="margin-top:30px">Denuncias sin atender</h2>
+    <div id="dens"></div>
+    <h2 class="f-grupo" style="margin-top:30px">Suspender o rehabilitar una cuenta</h2>
+    <form class="f-form f-fila" id="fB">
+      <input type="text" id="aliasB" placeholder="alias" style="max-width:220px" autocomplete="off">
+      <button class="f-btn peligro" type="button" id="bloq">Suspender</button>
+      <button class="f-btn" type="button" id="desbloq">Rehabilitar</button>
+    </form>
+    <p class="f-err" id="eB"></p>
+    <h2 class="f-grupo" style="margin-top:30px">Últimas acciones</h2>
+    <div id="acc"></div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var F = window.Foro;
+  function tarjeta(m, tipo, extra) {
+    var link = tipo === 'tema' ? '/foro/tema?id=' + m.id : '/foro/tema?id=' + m.tema_id + '#respuesta-' + m.id;
+    return '<div class="f-msg"><div class="cab"><b>' + F.esc(m.autor ? m.autor.alias : '') + '</b><span>' + F.esc(m.autor ? m.autor.curso : '') + '</span><span>· ' + F.hace(m.creado) + '</span>' +
+      '<span>· ' + (tipo === 'tema' ? 'consulta' : 'respuesta') + '</span> <a href="' + link + '">abrir</a></div>' +
+      (m.titulo ? '<b>' + F.esc(m.titulo) + '</b>' : '') + '<div class="f-cuerpo">' + F.md(m.cuerpo) + '</div>' + (extra || '') +
+      '<div class="acc"><button class="f-btn pri" data-t="' + tipo + '" data-id="' + m.id + '" data-e="publicado">Aprobar</button>' +
+      '<button class="f-btn peligro" data-t="' + tipo + '" data-id="' + m.id + '" data-e="oculto">Ocultar</button></div></div>';
+  }
+  function cargar() {
+    Promise.all([
+      F.sb.from('foro_tema').select('*,autor:foro_perfil(alias,curso)').eq('estado', 'pendiente').order('creado'),
+      F.sb.from('foro_respuesta').select('*,autor:foro_perfil(alias,curso)').eq('estado', 'pendiente').order('creado'),
+      F.sb.from('foro_denuncia').select('*,autor:foro_perfil(alias),tema:foro_tema(id,titulo,cuerpo,estado,autor:foro_perfil(alias,curso)),resp:foro_respuesta(id,tema_id,cuerpo,estado,autor:foro_perfil(alias,curso))').eq('atendida', false).order('creado'),
+      F.sb.from('foro_accion').select('*,moderador:foro_perfil(alias)').order('creado', { ascending: false }).limit(15)
+    ]).then(function (r) {
+      var p = (r[0].data || []).map(function (m) { return tarjeta(m, 'tema'); }).concat((r[1].data || []).map(function (m) { return tarjeta(m, 'respuesta'); }));
+      F.$('pend').innerHTML = p.length ? p.join('') : '<p class="f-vacio">No hay mensajes esperando aprobación.</p>';
+      var d = (r[2].data || []).map(function (x) {
+        var m = x.tema || x.resp, tipo = x.tema ? 'tema' : 'respuesta';
+        if (!m) return '';
+        var link = tipo === 'tema' ? '/foro/tema?id=' + m.id : '/foro/tema?id=' + m.tema_id;
+        return '<div class="f-msg"><div class="cab"><span>Denuncia de</span><b>' + F.esc(x.autor ? x.autor.alias : '') + '</b><span>· ' + F.hace(x.creado) + '</span> <a href="' + link + '">abrir</a></div>' +
+          '<p style="margin:0 0 8px"><em>«' + F.esc(x.motivo) + '»</em></p>' +
+          '<div class="cab"><span>Mensaje de</span><b>' + F.esc(m.autor ? m.autor.alias : '') + '</b><span>· ' + F.esc(m.estado) + '</span></div>' +
+          (m.titulo ? '<b>' + F.esc(m.titulo) + '</b>' : '') + '<div class="f-cuerpo">' + F.md(m.cuerpo) + '</div>' +
+          '<div class="acc"><button class="f-btn peligro" data-t="' + tipo + '" data-id="' + m.id + '" data-e="oculto" data-den="' + x.id + '">Ocultar el mensaje</button>' +
+          '<button class="f-btn" data-at="' + x.id + '">Descartar la denuncia</button></div></div>';
+      }).join('');
+      F.$('dens').innerHTML = d || '<p class="f-vacio">No hay denuncias pendientes.</p>';
+      F.$('acc').innerHTML = (r[3].data || []).length ? '<ul class="f-lista">' + r[3].data.map(function (a) {
+        return '<li><div class="t"><span class="meta">' + F.hace(a.creado) + ' · ' + F.esc(a.moderador ? a.moderador.alias : '') + ' · ' + F.esc(a.accion) + ' ' + F.esc(a.tipo) + ' ' + F.esc(a.objeto) + '</span></div></li>';
+      }).join('') + '</ul>' : '<p class="f-vacio">Todavía no hay acciones registradas.</p>';
+      F.formulas(F.$('pend')); F.formulas(F.$('dens'));
+    });
+  }
+
+  F.exigir(true).then(function (s) {
+    if (!s) return;
+    if (s.perfil.rol !== 'moderador') { F.$('sin').hidden = false; return; }
+    F.$('panel').hidden = false;
+    cargar();
+  });
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.e) {
+      F.sb.rpc('foro_moderar', { p_tipo: b.dataset.t, p_id: +b.dataset.id, p_estado: b.dataset.e }).then(function (r) {
+        if (r.error) { alert(F.error(r.error)); return; }
+        if (b.dataset.den) F.sb.rpc('foro_atender_denuncia', { p_id: +b.dataset.den }).then(cargar); else cargar();
+      });
+    } else if (b.dataset.at) {
+      F.sb.rpc('foro_atender_denuncia', { p_id: +b.dataset.at }).then(function (r) { if (r.error) alert(F.error(r.error)); else cargar(); });
+    }
+  });
+
+  function bloquear(v) {
+    var a = F.$('aliasB').value.trim();
+    F.$('eB').textContent = '';
+    if (!a) { F.$('eB').textContent = 'Escribí el alias.'; return; }
+    F.sb.rpc('foro_bloquear', { p_alias: a, p_valor: v }).then(function (r) {
+      if (r.error) { F.$('eB').textContent = F.error(r.error); return; }
+      F.$('eB').innerHTML = '<span class="f-ok">' + (v ? 'Cuenta suspendida.' : 'Cuenta rehabilitada.') + '</span>'; cargar();
+    });
+  }
+  F.$('bloq').onclick = function () { bloquear(true); };
+  F.$('desbloq').onclick = function () { bloquear(false); };
+})();
+</script>
+</body>
+</html>

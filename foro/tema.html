@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consulta · Foro · Catto</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0d1117">
+<link rel="stylesheet" href="/assets/css/base.css?v=12">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<link rel="stylesheet" href="/foro/foro.css?v=1">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+<script src="/aula/assets/vendor/supabase.js"></script>
+<script src="/aula/assets/config.js"></script>
+<script src="/foro/foro.js?v=1"></script>
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="brand" href="/"><span class="logo">⚡</span> <span>catto<span class="dom">.ar</span></span></a>
+    <nav class="main">
+      <a href="/">Inicio</a>
+      <a href="/#publicaciones">Publicaciones</a>
+      <a href="/foro" class="active">Foro</a>
+    </nav>
+  </div>
+</header>
+<div class="foro-barra"><div class="in" id="foroBarra"></div></div>
+
+<main class="foro">
+  <p class="f-pagina" id="miga"><a href="/foro">← Foro</a></p>
+  <div id="tema"><p class="f-vacio">Cargando…</p></div>
+  <h2 class="f-grupo" id="titResp" hidden>Respuestas</h2>
+  <div id="resps"></div>
+  <div id="responder"></div>
+</main>
+
+<script>
+(function () {
+  var F = window.Foro, id = parseInt(F.q('id'), 10), S = null, tema = null;
+  if (!id) { F.$('tema').innerHTML = '<p class="f-err">Falta indicar la consulta.</p>'; return; }
+
+  function mensaje(m, tipo) {
+    var et = m.estado === 'pendiente' ? '<span class="f-et pend">en revisión</span>' : m.estado === 'oculto' ? '<span class="f-et oc">oculto</span>' : '';
+    var acc = '';
+    if (S && S.perfil) {
+      if (S.perfil.rol === 'moderador') {
+        acc += m.estado !== 'publicado' ? '<button class="f-btn" data-mod="publicado" data-t="' + tipo + '" data-id="' + m.id + '">Publicar</button>' : '';
+        acc += m.estado !== 'oculto' ? '<button class="f-btn peligro" data-mod="oculto" data-t="' + tipo + '" data-id="' + m.id + '">Ocultar</button>' : '';
+      }
+      if (m.autor && m.autor.alias !== S.perfil.alias && m.estado === 'publicado') acc += '<button class="f-btn link" data-den="' + tipo + '" data-id="' + m.id + '">Denunciar</button>';
+    }
+    return '<div class="f-msg" id="' + tipo + '-' + m.id + '"><div class="cab"><b>' + F.esc(m.autor ? m.autor.alias : '') + '</b>' +
+      '<span>' + F.esc(m.autor ? m.autor.curso : '') + '</span><span>· ' + F.hace(m.creado) + '</span>' + et + '</div>' +
+      '<div class="f-cuerpo">' + F.md(m.cuerpo) + '</div>' + (acc ? '<div class="acc">' + acc + '</div>' : '') + '<div class="den"></div></div>';
+  }
+
+  function cargar() {
+    return Promise.all([
+      F.sb.from('foro_tema').select('*,autor:foro_perfil(alias,curso),cat:foro_categoria(nombre,grupo)').eq('id', id).maybeSingle(),
+      F.sb.from('foro_respuesta').select('*,autor:foro_perfil(alias,curso)').eq('tema_id', id).order('creado')
+    ]).then(function (r) {
+      if (r[0].error) { F.$('tema').innerHTML = '<p class="f-err">' + F.esc(F.error(r[0].error)) + '</p>'; return; }
+      tema = r[0].data;
+      if (!tema) { F.$('tema').innerHTML = '<p class="f-err">Esta consulta no existe o todavía no está publicada.</p>'; return; }
+      document.title = tema.titulo + ' · Foro · Catto';
+      var cat = tema.cat ? (tema.cat.grupo === 'General' ? tema.cat.nombre : tema.cat.grupo + ' · ' + tema.cat.nombre) : '';
+      F.$('miga').innerHTML = '<a href="/foro">← Foro</a> · <a href="/foro/categoria?c=' + tema.categoria + '">' + F.esc(cat) + '</a>';
+      var aviso = tema.estado === 'pendiente' ? '<div class="f-aviso">Esta consulta está en revisión: por ahora solo la ven quien la escribió y la moderación.</div>' : '';
+      var pag = tema.pagina ? '<p class="f-pagina">Sobre la página <a href="' + F.esc(tema.pagina) + '">' + F.esc(tema.pagina.split('/').pop().replace(/-/g, ' ')) + '</a></p>' : '';
+      var res = '';
+      if (S && S.perfil && (S.perfil.alias === (tema.autor && tema.autor.alias) || S.perfil.rol === 'moderador') && tema.estado === 'publicado')
+        res = '<p class="f-fila"><button class="f-btn" id="bRes">' + (tema.resuelto ? 'Marcar como no resuelta' : 'Marcar como resuelta') + '</button></p>';
+      F.$('tema').innerHTML = '<h1>' + F.esc(tema.titulo) + (tema.resuelto ? ' <span class="f-et ok">resuelta</span>' : '') + '</h1>' + pag + aviso + mensaje(tema, 'tema') + res;
+      var resps = r[1].data || [];
+      F.$('titResp').hidden = !resps.length;
+      F.$('titResp').textContent = resps.length === 1 ? '1 respuesta' : resps.length + ' respuestas';
+      F.$('resps').innerHTML = resps.map(function (m) { return mensaje(m, 'respuesta'); }).join('');
+      F.formulas(F.$('tema')); F.formulas(F.$('resps'));
+      if (F.$('bRes')) F.$('bRes').onclick = function () {
+        F.sb.rpc('foro_marcar_resuelto', { p_tema: id, p_valor: !tema.resuelto }).then(function (x) { if (x.error) alert(F.error(x.error)); else cargar(); });
+      };
+      formResponder();
+    });
+  }
+
+  function formResponder() {
+    var el = F.$('responder');
+    if (!tema || tema.estado !== 'publicado') { el.innerHTML = ''; return; }
+    if (!S || !S.usuario) { el.innerHTML = '<p class="f-fila" style="margin-top:18px"><a class="f-btn pri" href="/foro/ingresar?volver=' + encodeURIComponent(location.pathname + location.search) + '">Ingresar para responder</a></p>'; return; }
+    if (!S.perfil) { el.innerHTML = '<p style="margin-top:18px"><a class="f-btn pri" href="/foro/perfil">Completar el perfil para responder</a></p>'; return; }
+    if (el.dataset.listo) return;
+    el.dataset.listo = '1';
+    el.innerHTML = '<form class="f-form" id="fR"><label for="tR">Tu respuesta</label><textarea id="tR" maxlength="10000" style="min-height:130px" placeholder="Explicá el razonamiento, no solo el resultado. Las fórmulas van entre $ … $."></textarea>' +
+      '<div class="f-prev f-cuerpo" id="pR" hidden></div><p class="f-err" id="eR"></p>' +
+      '<p class="f-fila" style="margin-top:10px"><button class="f-btn pri" type="submit">Responder</button><button class="f-btn" type="button" id="vR">Vista previa</button></p></form>';
+    var t = F.$('tR'), p = F.$('pR');
+    t.oninput = function () { F.$('eR').textContent = ''; };
+    F.$('vR').onclick = function () {
+      var ver = p.hidden; p.hidden = !ver; t.hidden = ver; F.$('vR').textContent = ver ? 'Seguir escribiendo' : 'Vista previa';
+      if (ver) { p.innerHTML = F.md(t.value); F.formulas(p); }
+    };
+    F.$('fR').onsubmit = function (e) {
+      e.preventDefault();
+      var txt = t.value.trim();
+      if (txt.length < 2) { F.$('eR').textContent = 'Escribí una respuesta.'; return; }
+      F.sb.from('foro_respuesta').insert({ tema_id: id, cuerpo: txt }).select('estado').single().then(function (r) {
+        if (r.error) { F.$('eR').textContent = F.error(r.error); return; }
+        t.value = ''; p.hidden = true; t.hidden = false;
+        if (r.data.estado === 'pendiente') F.$('eR').innerHTML = '<span class="f-ok">Respuesta enviada. Como es tu primera publicación, la revisa un moderador antes de que se vea.</span>';
+        cargar();
+      });
+    };
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.mod) {
+      F.sb.rpc('foro_moderar', { p_tipo: b.dataset.t, p_id: +b.dataset.id, p_estado: b.dataset.mod }).then(function (r) { if (r.error) alert(F.error(r.error)); else cargar(); });
+    } else if (b.dataset.den) {
+      var caja = document.getElementById(b.dataset.den + '-' + b.dataset.id).querySelector('.den');
+      caja.innerHTML = '<form class="f-form"><label>¿Por qué lo denunciás?</label><input type="text" maxlength="500" placeholder="Agresión, datos personales, contenido fuera de tema…">' +
+        '<p class="f-fila" style="margin-top:8px"><button class="f-btn" type="submit">Enviar denuncia</button></p><p class="f-err"></p></form>';
+      var f = caja.querySelector('form');
+      f.onsubmit = function (ev) {
+        ev.preventDefault();
+        var mot = f.querySelector('input').value.trim(), er = f.querySelector('.f-err');
+        if (mot.length < 3) { er.textContent = 'Contá brevemente el motivo.'; return; }
+        var fila = { motivo: mot }; fila[b.dataset.den === 'tema' ? 'tema_id' : 'respuesta_id'] = +b.dataset.id;
+        F.sb.from('foro_denuncia').insert(fila).then(function (r) {
+          if (r.error) { er.textContent = /duplicate/.test(r.error.message) ? 'Ya habías denunciado este mensaje.' : F.error(r.error); return; }
+          caja.innerHTML = '<p class="f-ok">Denuncia enviada. La moderación la va a revisar.</p>';
+        });
+      };
+    }
+  });
+
+  F.estado().then(function (s) { S = s; return cargar(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Foro · Catto</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="description" content="Foro de consultas sobre los contenidos de catto.ar, para estudiantes de la tecnicatura en electrónica y de Ingeniería Electrónica.">
+<meta name="theme-color" content="#0d1117">
+<link rel="stylesheet" href="/assets/css/base.css?v=12">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="/foro/foro.css?v=1">
+<script src="/aula/assets/vendor/supabase.js"></script>
+<script src="/aula/assets/config.js"></script>
+<script src="/foro/foro.js?v=1"></script>
+</head>
+<body>
+<header class="site">
+  <div class="container">
+    <a class="brand" href="/"><span class="logo">⚡</span> <span>catto<span class="dom">.ar</span></span></a>
+    <nav class="main">
+      <a href="/">Inicio</a>
+      <a href="/#publicaciones">Publicaciones</a>
+      <a href="/foro" class="active">Foro</a>
+    </nav>
+  </div>
+</header>
+<div class="foro-barra"><div class="in" id="foroBarra"></div></div>
+
+<main class="foro">
+  <h1>Foro de consultas</h1>
+  <p class="bajada">Preguntas y respuestas sobre los contenidos del sitio, para estudiantes de la tecnicatura desde 4.º año y de Ingeniería Electrónica. Todos los mensajes son públicos; antes de participar, leé las <a href="/foro/normas">normas del foro</a>.</p>
+
+  <div id="cats"><p class="f-vacio">Cargando…</p></div>
+
+  <h2 class="f-grupo" style="margin-top:30px">Últimas consultas</h2>
+  <div id="ultimas"></div>
+  <p class="f-pagina" style="margin-top:24px"><a href="/foro/normas">Normas del foro</a> · <a href="/foro/privacidad">Privacidad</a></p>
+</main>
+
+<script>
+(function () {
+  var F = window.Foro, nombres = {};
+  F.sb.from('foro_resumen').select('*').order('orden').then(function (r) {
+    if (r.error) { F.$('cats').innerHTML = '<p class="f-err">' + F.esc(F.error(r.error)) + '</p>'; return; }
+    var h = '', grupo = '';
+    r.data.forEach(function (c) {
+      nombres[c.slug] = c.grupo === 'General' ? c.nombre : c.grupo + ' ' + c.nombre.toLowerCase();
+      if (c.grupo !== grupo) { if (grupo) h += '</div>'; grupo = c.grupo; h += '<h2 class="f-grupo">' + F.esc(grupo) + '</h2><div class="f-cats">'; }
+      h += '<a class="f-cat" href="/foro/categoria?c=' + c.slug + '"><b>' + F.esc(c.nombre) + '</b><span>' +
+        (c.temas ? c.temas + (c.temas === 1 ? ' consulta' : ' consultas') + ' · ' + F.hace(c.ultima) : 'sin consultas todavía') + '</span></a>';
+    });
+    F.$('cats').innerHTML = h + '</div>';
+    return F.sb.from('foro_tema').select(F.SEL_TEMA).eq('estado', 'publicado').order('actividad', { ascending: false }).limit(20).then(function (t) {
+      if (t.error) { F.$('ultimas').innerHTML = '<p class="f-err">' + F.esc(F.error(t.error)) + '</p>'; return; }
+      F.listaTemas(F.$('ultimas'), t.data, nombres);
+    });
+  });
+})();
+</script>
+</body>
+</html>
