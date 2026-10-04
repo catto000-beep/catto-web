@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="/assets/css/base.css?v=12">
 <link rel="stylesheet" href="/assets/css/papel.css?v=8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
-<link rel="stylesheet" href="/foro/foro.css?v=7">
+<link rel="stylesheet" href="/foro/foro.css?v=8">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script src="/aula/assets/vendor/supabase.js"></script>
@@ -46,6 +46,8 @@
       <button class="f-btn" type="button" id="desbloq">Rehabilitar</button>
     </form>
     <p class="f-err" id="eB"></p>
+    <h2 class="f-grupo" style="margin-top:30px">Registrados <span id="nReg"></span></h2>
+    <div id="regs"></div>
     <h2 class="f-grupo" style="margin-top:30px">Últimas acciones</h2>
     <div id="acc"></div>
   </div>
@@ -67,8 +69,12 @@
       F.sb.from('foro_tema').select('*,autor:foro_perfil(alias,curso)').eq('estado', 'pendiente').order('creado'),
       F.sb.from('foro_respuesta').select('*,autor:foro_perfil(alias,curso)').eq('estado', 'pendiente').order('creado'),
       F.sb.from('foro_denuncia').select('*,autor:foro_perfil(alias),tema:foro_tema(id,titulo,cuerpo,estado,autor:foro_perfil(alias,curso)),resp:foro_respuesta(id,tema_id,cuerpo,estado,autor:foro_perfil(alias,curso))').eq('atendida', false).order('creado'),
-      F.sb.from('foro_accion').select('*,moderador:foro_perfil(alias)').order('creado', { ascending: false }).limit(15)
+      F.sb.from('foro_accion').select('*,moderador:foro_perfil(alias)').order('creado', { ascending: false }).limit(15),
+      F.sb.from('foro_perfil').select('id,alias,curso,rol,confiable,bloqueado,creado').order('creado', { ascending: false }),
+      F.sb.from('foro_tema').select('autor'),
+      F.sb.from('foro_respuesta').select('autor')
     ]).then(function (r) {
+      registrados(r[4], r[5].data || [], r[6].data || []);
       var p = (r[0].data || []).map(function (m) { return tarjeta(m, 'tema'); }).concat((r[1].data || []).map(function (m) { return tarjeta(m, 'respuesta'); }));
       F.$('pend').innerHTML = p.length ? p.join('') : '<p class="f-vacio">No hay mensajes esperando aprobación.</p>';
       var d = (r[2].data || []).map(function (x) {
@@ -89,6 +95,27 @@
       F.formulas(F.$('pend')); F.formulas(F.$('dens'));
       F.pendientes();
     });
+  }
+
+  /* Lista de cuentas del foro: solo lo que hay en el perfil (alias y curso);
+     el correo vive en la cuenta de Google y el foro no lo guarda. */
+  function registrados(rp, temas, resps) {
+    if (rp.error) { F.$('regs').innerHTML = '<p class="f-err">' + F.esc(F.error(rp.error)) + '</p>'; return; }
+    var nt = {}, nr = {};
+    temas.forEach(function (t) { nt[t.autor] = (nt[t.autor] || 0) + 1; });
+    resps.forEach(function (t) { nr[t.autor] = (nr[t.autor] || 0) + 1; });
+    var u = rp.data || [];
+    F.$('nReg').textContent = '(' + u.length + ')';
+    if (!u.length) { F.$('regs').innerHTML = '<p class="f-vacio">Todavía no hay cuentas.</p>'; return; }
+    F.$('regs').innerHTML = '<div class="f-tabla-c"><table class="f-tabla"><thead><tr><th>Alias</th><th>Curso</th><th>Alta</th><th class="num">Consultas</th><th class="num">Respuestas</th><th>Estado</th></tr></thead><tbody>' +
+      u.map(function (p) {
+        var est = p.bloqueado ? '<span class="f-et oc">suspendida</span>'
+          : p.rol === 'moderador' ? '<span class="f-et ok">moderador</span>'
+          : p.confiable ? '<span class="f-et">publica sin revisión</span>'
+          : '<span class="f-et pend">primera publicación con revisión</span>';
+        return '<tr><td class="al">' + F.esc(p.alias) + '</td><td>' + F.esc(p.curso) + '</td><td title="' + F.esc(new Date(p.creado).toLocaleString('es-AR')) + '">' +
+          F.esc(new Date(p.creado).toLocaleDateString('es-AR')) + '</td><td class="num">' + (nt[p.id] || 0) + '</td><td class="num">' + (nr[p.id] || 0) + '</td><td>' + est + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
   }
 
   F.exigir(true).then(function (s) {
