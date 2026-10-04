@@ -20,6 +20,10 @@
     'Ingeniería nivel 1', 'Ingeniería nivel 2', 'Ingeniería nivel 3', 'Ingeniería nivel 4',
     'Ingeniería nivel 5', 'Ingeniería nivel 6', 'Docente', 'Otro'];
 
+  /* Solo se muestran imágenes guardadas en el almacenamiento del foro */
+  var BASE_IMG = C.SUPABASE_URL + '/storage/v1/object/public/foro/';
+  var IMG = new RegExp('!\\[([^\\]\\n]*)\\]\\((' + BASE_IMG.replace(/[.\/]/g, '\\$&') + '[A-Za-z0-9\\/_.-]+)\\)', 'g');
+
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function q(nombre) { return new URLSearchParams(location.search).get(nombre); }
@@ -33,7 +37,8 @@
     s = s.replace(/\$([^$\n]+?)\$/g, function (m) { formulas.push(m); return '\u0000' + (formulas.length - 1) + '\u0000'; });
     var bloques = [];
     s = s.replace(/```\n?([\s\S]*?)```/g, function (m, c) { bloques.push('<pre><code>' + c.replace(/\n$/, '') + '</code></pre>'); return '\u0001' + (bloques.length - 1) + '\u0001'; });
-    s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    s = s.replace(IMG, '<a href="$2" target="_blank" rel="noopener"><img src="$2" alt="$1" loading="lazy"></a>')
+         .replace(/`([^`\n]+)`/g, '<code>$1</code>')
          .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
          .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
          .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" rel="nofollow ugc noopener" target="_blank">$1</a>');
@@ -72,6 +77,9 @@
     if (/cuerpo_check/.test(m)) return 'El texto es demasiado corto o demasiado largo.';
     if (/relation .* does not exist|Could not find the table/.test(m)) return 'El foro todavía no está habilitado.';
     if (/Failed to fetch|NetworkError/.test(m)) return 'No hay conexión con el servidor. Probá de nuevo en un momento.';
+    if (/Bucket not found/i.test(m)) return 'Las imágenes todavía no están habilitadas.';
+    if (/row-level security/i.test(m)) return 'No se pudo subir la imagen: puede que se haya alcanzado el límite de 10 imágenes por hora.';
+    if (/exceeded the maximum allowed size|Payload too large/i.test(m)) return 'La imagen pesa más de 2 MB.';
     return m;
   }
 
@@ -117,6 +125,46 @@
     });
   }
 
+  /* Imágenes: el navegador las reduce a 1600 px de lado (fondo blanco
+     para las PNG transparentes) y las sube a foro/{id del usuario}/. */
+  function reducir(file) {
+    return new Promise(function (ok, mal) {
+      var u = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var M = 1600, w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, M / Math.max(w, h));
+        var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+        var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(u);
+        var tipo = c.toDataURL('image/webp').indexOf('data:image/webp') === 0 ? 'image/webp' : 'image/jpeg';
+        c.toBlob(function (b) { if (b) ok({ blob: b, tipo: tipo }); else mal(new Error('No se pudo procesar la imagen.')); }, tipo, 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(u); mal(new Error('Ese archivo no es una imagen que el navegador pueda leer.')); };
+      img.src = u;
+    });
+  }
+  function subirImagen(file) {
+    if (!file || !/^image\/(jpeg|png|webp|gif|bmp)$/.test(file.type)) return Promise.reject(new Error('Elegí una imagen JPG, PNG o WebP.'));
+    if (file.size > 15e6) return Promise.reject(new Error('La imagen es demasiado grande (más de 15 MB).'));
+    return estado().then(function (s) {
+      if (!s.usuario) throw new Error('Hace falta ingresar para subir imágenes.');
+      return reducir(file).then(function (r) {
+        if (r.blob.size > 2097152) throw new Error('Aun reducida, la imagen pesa más de 2 MB.');
+        var nombre = s.usuario.id + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) + (r.tipo === 'image/webp' ? '.webp' : '.jpg');
+        return sb.storage.from('foro').upload(nombre, r.blob, { contentType: r.tipo, upsert: false }).then(function (x) {
+          if (x.error) throw x.error;
+          return sb.storage.from('foro').getPublicUrl(nombre).data.publicUrl;
+        });
+      });
+    });
+  }
+  /* Borra todas las imágenes propias (antes de borrar la cuenta) */
+  function borrarMisImagenes(uid) {
+    return sb.storage.from('foro').list(uid, { limit: 1000 }).then(function (r) {
+      if (r.error || !r.data || !r.data.length) return;
+      return sb.storage.from('foro').remove(r.data.map(function (f) { return uid + '/' + f.name; }));
+    });
+  }
+
   /* Lista de temas (portada, categoría, perfil) */
   var SEL_TEMA = 'id,titulo,categoria,estado,resuelto,respuestas,actividad,pagina,autor:foro_perfil(alias)';
   function listaTemas(el, temas, nombres) {
@@ -133,6 +181,6 @@
     }).join('') + '</ul>';
   }
 
-  window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, exigir: exigir, listaTemas: listaTemas };
+  window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, exigir: exigir, listaTemas: listaTemas, subirImagen: subirImagen, borrarMisImagenes: borrarMisImagenes };
   document.addEventListener('DOMContentLoaded', barra);
 })();

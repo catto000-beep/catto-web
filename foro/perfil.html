@@ -9,10 +9,10 @@
 <meta name="theme-color" content="#0d1117">
 <link rel="stylesheet" href="/assets/css/base.css?v=12">
 <link rel="stylesheet" href="/assets/css/papel.css?v=8">
-<link rel="stylesheet" href="/foro/foro.css?v=1">
+<link rel="stylesheet" href="/foro/foro.css?v=2">
 <script src="/aula/assets/vendor/supabase.js"></script>
 <script src="/aula/assets/config.js"></script>
-<script src="/foro/foro.js?v=1"></script>
+<script src="/foro/foro.js?v=2"></script>
 </head>
 <body>
 <header class="site">
@@ -53,7 +53,7 @@
     <p class="f-fila"><button class="f-btn" id="salir">Cerrar sesión</button></p>
     <div class="f-msg" style="margin-top:18px">
       <b>Borrar la cuenta</b>
-      <p style="font-size:14px;margin:6px 0">Se borran el perfil y todas las consultas y respuestas publicadas, y no se puede deshacer. Para confirmar, escribí tu alias.</p>
+      <p style="font-size:14px;margin:6px 0">Se borran el perfil, todas las consultas y respuestas publicadas y las imágenes subidas, y no se puede deshacer. Para confirmar, escribí tu alias.</p>
       <div class="f-fila f-form"><input type="text" id="confirma" style="max-width:220px" autocomplete="off"><button class="f-btn peligro" id="borrar">Borrar mi cuenta</button></div>
       <p class="f-err" id="errB"></p>
     </div>
@@ -111,7 +111,7 @@
   F.$('borrar').onclick = function () {
     F.$('errB').textContent = '';
     if (F.$('confirma').value.trim().toLowerCase() !== perfil.alias) { F.$('errB').textContent = 'Escribí tu alias exactamente para confirmar.'; return; }
-    F.sb.rpc('foro_borrar_cuenta').then(function (r) {
+    F.borrarMisImagenes(perfil.id).catch(function () {}).then(function () { return F.sb.rpc('foro_borrar_cuenta'); }).then(function (r) {
       if (r.error) { F.$('errB').textContent = F.error(r.error); return; }
       F.sb.auth.signOut().then(function () { location.href = '/foro'; });
     });

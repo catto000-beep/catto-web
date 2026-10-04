@@ -10,12 +10,12 @@
 <link rel="stylesheet" href="/assets/css/base.css?v=12">
 <link rel="stylesheet" href="/assets/css/papel.css?v=8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
-<link rel="stylesheet" href="/foro/foro.css?v=1">
+<link rel="stylesheet" href="/foro/foro.css?v=2">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script src="/aula/assets/vendor/supabase.js"></script>
 <script src="/aula/assets/config.js"></script>
-<script src="/foro/foro.js?v=1"></script>
+<script src="/foro/foro.js?v=2"></script>
 </head>
 <body>
 <header class="site">
@@ -51,13 +51,16 @@
       <button type="button" data-w="`|`" title="Código">&lt;/&gt;</button>
       <button type="button" data-w="$|$" title="Fórmula">∑</button>
       <button type="button" data-w="[|](https://)" title="Enlace">🔗</button>
+      <button type="button" id="bImg" title="Agregar una imagen" style="padding:0 10px">🖼 Imagen</button>
+      <input type="file" id="fImg" accept="image/jpeg,image/png,image/webp" hidden>
       <span class="sep"></span>
       <button type="button" id="bEsc" style="padding:0 10px">Escribir</button>
       <button type="button" id="bPrev" style="padding:0 10px">Vista previa</button>
     </div>
     <textarea id="cue" maxlength="10000" placeholder="Tengo un pasabajos RC con R = 1 kΩ y C = 100 nF. Calculé $f_c = 1/(2\pi RC) \approx 1{,}59$ kHz, pero no entiendo por qué la pendiente es de 20 dB por década."></textarea>
     <div class="f-prev f-cuerpo" id="prev" hidden></div>
-    <p class="f-pagina" style="color:var(--soft)">Formato: **negrita**, *cursiva*, `código`, fórmulas entre $ … $ (o $$ … $$ en su propia línea) y enlaces [texto](https://…).</p>
+    <p class="f-pagina" id="estImg" style="color:var(--soft)" aria-live="polite"></p>
+    <p class="f-pagina" style="color:var(--soft)">Formato: **negrita**, *cursiva*, `código`, fórmulas entre $ … $ (o $$ … $$ en su propia línea) y enlaces [texto](https://…). Las imágenes —un esquema, una medición, una captura— se agregan con el botón o pegándolas con Ctrl+V; no subas fotos donde aparezcan personas. Las consultas con imágenes las revisa un moderador antes de publicarse.</p>
     <p class="f-err" id="err"></p>
     <p class="f-fila" style="margin-top:14px"><button class="f-btn pri" type="submit" id="enviar">Publicar consulta</button></p>
   </form>
@@ -107,6 +110,34 @@
       cue.focus(); cue.selectionStart = a + w[0].length; cue.selectionEnd = z + w[0].length;
     };
   });
+  /* Imágenes: botón o pegar desde el portapapeles */
+  function insertar(txt) {
+    var a = cue.selectionStart, t = cue.value;
+    var antes = a > 0 && t[a - 1] !== '\n' ? '\n' : '';
+    cue.value = t.slice(0, a) + antes + txt + '\n' + t.slice(a);
+    cue.focus(); cue.selectionStart = cue.selectionEnd = a + antes.length + txt.length + 1;
+    cue.dispatchEvent(new Event('input'));
+  }
+  function subir(file) {
+    modo(false);
+    F.$('estImg').style.color = 'var(--soft)';
+    F.$('estImg').textContent = 'Subiendo la imagen…';
+    F.$('bImg').disabled = true;
+    F.subirImagen(file).then(function (url) {
+      insertar('![imagen](' + url + ')');
+      F.$('estImg').textContent = 'Imagen agregada. Podés verla con «Vista previa».';
+    }).catch(function (e) {
+      F.$('estImg').style.color = '#ad2436';
+      F.$('estImg').textContent = F.error(e);
+    }).then(function () { F.$('bImg').disabled = false; F.$('fImg').value = ''; });
+  }
+  F.$('bImg').onclick = function () { F.$('fImg').click(); };
+  F.$('fImg').onchange = function () { if (this.files[0]) subir(this.files[0]); };
+  cue.addEventListener('paste', function (e) {
+    var it = e.clipboardData && e.clipboardData.files && e.clipboardData.files[0];
+    if (it && /^image\//.test(it.type)) { e.preventDefault(); subir(it); }
+  });
+
   ['tit', 'cue', 'cat'].forEach(function (id) {
     F.$(id).addEventListener('input', function () {
       F.$('err').textContent = '';
@@ -127,7 +158,10 @@
       sessionStorage.removeItem('foro-borrador');
       if (r.data.estado === 'publicado') { location.href = '/foro/tema?id=' + r.data.id; return; }
       F.$('form').hidden = true; F.$('listo').hidden = false;
-      F.$('listo').innerHTML = '<div class="f-aviso">Consulta enviada. Como es tu primera publicación, la revisa un moderador antes de que se vea en el foro. Después de esa primera aprobación, tus mensajes se publican directamente.</div>' +
+      var conImg = /!\[[^\]]*\]\(/.test(txt);
+      F.$('listo').innerHTML = '<div class="f-aviso">' + (conImg
+          ? 'Consulta enviada. Como incluye imágenes, la revisa un moderador antes de que se vea en el foro.'
+          : 'Consulta enviada. Como es tu primera publicación, la revisa un moderador antes de que se vea en el foro. Después de esa primera aprobación, tus mensajes se publican directamente.') + '</div>' +
         '<p><a href="/foro/tema?id=' + r.data.id + '">Ver mi consulta</a> · <a href="/foro">Volver al foro</a></p>';
     });
   };

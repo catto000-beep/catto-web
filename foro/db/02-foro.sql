@@ -118,6 +118,8 @@ begin
   new.autor  := p.id;
   new.creado := now();
   new.estado := case when p.confiable or p.rol = 'moderador' then 'publicado' else 'pendiente' end;
+  -- con imagen, siempre a revisión (agregado en 04-imagenes.sql)
+  if p.rol <> 'moderador' and new.cuerpo ~ '!\[[^]]*\]\(' then new.estado := 'pendiente'; end if;
   if tg_table_name = 'foro_tema' then
     select count(*) into n from foro_tema where autor = p.id and creado > now() - interval '1 hour';
     if n >= 5 and p.rol <> 'moderador' then raise exception 'Se alcanzó el límite de 5 consultas por hora.'; end if;
