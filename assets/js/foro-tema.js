@@ -24,14 +24,14 @@
 
   var css = document.createElement('style');
   css.textContent =
-    '.doc .foro-tema{margin:34px 0 8px;padding:16px 18px;background:var(--panel,#f1efea);border:1px solid var(--line,#cdc9bf);border-left:4px solid var(--accent,#ad2436);border-radius:3px}' +
+    '.doc .foro-tema{margin:34px 0 8px;padding:16px 18px;background:var(--panel,#f1efea);border:1px solid var(--line,#cdc9bf);border-left:4px solid var(--accent,#1f5f99);border-radius:3px}' +
     '.doc .foro-tema h2{margin:0 0 6px;padding:0;font-size:18px;background:none;border:0;text-transform:none;letter-spacing:0}' +
     '.doc .foro-tema p{margin:0 0 10px}' +
     '.doc .foro-tema ul{list-style:none;margin:10px 0 12px;padding:0;border-top:1px solid var(--line,#cdc9bf)}' +
     '.doc .foro-tema li{padding:7px 0;border-bottom:1px solid var(--line,#cdc9bf);font-size:15px;margin:0}' +
     '.doc .foro-tema li span{color:var(--soft,#62676e);font-size:13px;margin-left:6px}' +
-    '.doc .foro-tema .ft-btn{display:inline-block;background:#ad2436;color:#fff;padding:7px 16px;border-radius:3px;font-size:15px}' +
-    '.doc .foro-tema .ft-btn:hover{background:#8f1d2c;text-decoration:none}' +
+    '.doc .foro-tema .ft-btn{display:inline-block;background:#1f5f99;color:#fff;padding:7px 16px;border-radius:3px;font-size:15px}' +
+    '.doc .foro-tema .ft-btn:hover{background:#164a78;text-decoration:none}' +
     '.doc .foro-tema .ft-ver{display:inline-block;white-space:nowrap;margin:8px 0 0 14px;font-size:14px}';
   document.head.appendChild(css);
 

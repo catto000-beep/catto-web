@@ -234,7 +234,7 @@
 (function(){
   if(!document.querySelector('main.doc')) return;
   var s = document.createElement('script');
-  s.src = '/assets/js/foro-tema.js?v=1';
+  s.src = '/assets/js/foro-tema.js?v=2';
   s.defer = true;
   document.body.appendChild(s);
 })();
