@@ -15,7 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script src="/aula/assets/vendor/supabase.js"></script>
 <script src="/aula/assets/config.js"></script>
-<script src="/foro/foro.js?v=2"></script>
+<script src="/foro/foro.js?v=3"></script>
 </head>
 <body>
 <header class="site">
@@ -32,7 +32,7 @@
 
 <main class="foro">
   <p class="f-pagina"><a href="/foro">← Foro</a></p>
-  <h1>Nueva consulta</h1>
+  <h1 id="titPag">Nueva consulta</h1>
   <p class="bajada">Una buena consulta cuenta qué querés lograr, qué hiciste y dónde te trabaste. Si hay cálculos, escribilos: así es más fácil ayudarte.</p>
 
   <form class="f-form" id="form" hidden>
@@ -69,14 +69,30 @@
 
 <script>
 (function () {
-  var F = window.Foro, pagina = F.q('p');
+  var F = window.Foro, pagina = F.q('p'), editar = parseInt(F.q('editar'), 10) || 0, tema = null;
   if (pagina && !/^\/publicaciones\/[a-z0-9\/_.-]+$/.test(pagina)) pagina = null;
 
   F.exigir(true).then(function (s) {
     if (!s) return;
+    var cargaTema = Promise.resolve(null);
+    if (editar) {
+      cargaTema = F.sb.from('foro_tema').select('*').eq('id', editar).maybeSingle().then(function (r) {
+        var t = r.data;
+        if (!t || t.autor !== s.perfil.id) { F.$('err').textContent = 'Solo quien hizo la consulta puede editarla.'; return null; }
+        if (t.respuestas > 0) { F.$('err').textContent = 'La consulta ya tiene respuestas: no se puede editar.'; return null; }
+        tema = t;
+        document.title = 'Editar consulta · Foro · Catto';
+        F.$('titPag').textContent = 'Editar consulta';
+        F.$('enviar').textContent = 'Guardar cambios';
+        F.$('tit').value = t.titulo; F.$('cue').value = t.cuerpo;
+        pagina = t.pagina;
+        return t;
+      });
+    } else {
+      var bor = sessionStorage.getItem('foro-borrador');
+      if (bor) { try { bor = JSON.parse(bor); F.$('tit').value = bor.t || ''; F.$('cue').value = bor.c || ''; } catch (e) {} }
+    }
     F.$('form').hidden = false;
-    var bor = sessionStorage.getItem('foro-borrador');
-    if (bor) { try { bor = JSON.parse(bor); F.$('tit').value = bor.t || ''; F.$('cue').value = bor.c || ''; } catch (e) {} }
     F.sb.from('foro_categoria').select('*').order('orden').then(function (r) {
       var grupo = '', h = '<option value="">Elegí una categoría</option>';
       (r.data || []).forEach(function (c) {
@@ -85,8 +101,9 @@
       });
       F.$('cat').innerHTML = h + '</optgroup>';
       F.$('cat').value = F.q('c') || '';
+      cargaTema.then(function (t) { if (t) F.$('cat').value = t.categoria; });
     });
-    if (pagina) {
+    if (pagina && !editar) {
       F.$('pagBox').hidden = false;
       F.$('pagLink').href = pagina;
       F.$('pagLink').textContent = decodeURIComponent(F.q('pt') || pagina);
@@ -141,7 +158,7 @@
   ['tit', 'cue', 'cat'].forEach(function (id) {
     F.$(id).addEventListener('input', function () {
       F.$('err').textContent = '';
-      sessionStorage.setItem('foro-borrador', JSON.stringify({ t: F.$('tit').value, c: cue.value }));
+      if (!editar) sessionStorage.setItem('foro-borrador', JSON.stringify({ t: F.$('tit').value, c: cue.value }));
     });
   });
 
@@ -152,6 +169,21 @@
     if (tit.length < 10) { F.$('err').textContent = 'El título tiene que resumir la duda en al menos 10 caracteres.'; return; }
     if (txt.length < 30) { F.$('err').textContent = 'Contá un poco más: qué hiciste y dónde te trabaste (al menos 30 caracteres).'; return; }
     F.$('enviar').disabled = true;
+    if (editar) {
+      if (!tema) { F.$('enviar').disabled = false; return; }
+      F.sb.rpc('foro_editar_tema', { p_tema: editar, p_titulo: tit, p_cuerpo: txt, p_categoria: cat }).then(function (r) {
+        F.$('enviar').disabled = false;
+        if (r.error) { F.$('err').textContent = F.error(r.error); return; }
+        if (r.data === 'pendiente' && tema.estado === 'publicado') {
+          F.$('form').hidden = true; F.$('listo').hidden = false;
+          F.$('listo').innerHTML = '<div class="f-aviso">Cambios guardados. Como agregaste una imagen nueva, la consulta vuelve a revisión antes de verse en el foro.</div>' +
+            '<p><a href="/foro/tema?id=' + editar + '">Ver mi consulta</a></p>';
+          return;
+        }
+        location.href = '/foro/tema?id=' + editar;
+      });
+      return;
+    }
     F.sb.from('foro_tema').insert({ categoria: cat, titulo: tit, cuerpo: txt, pagina: pagina }).select('id,estado').single().then(function (r) {
       F.$('enviar').disabled = false;
       if (r.error) { F.$('err').textContent = F.error(r.error); return; }

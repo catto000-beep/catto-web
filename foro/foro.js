@@ -78,6 +78,7 @@
     if (/relation .* does not exist|Could not find the table/.test(m)) return 'El foro todavía no está habilitado.';
     if (/Failed to fetch|NetworkError/.test(m)) return 'No hay conexión con el servidor. Probá de nuevo en un momento.';
     if (/Bucket not found/i.test(m)) return 'Las imágenes todavía no están habilitadas.';
+    if (/foro_editar_tema/.test(m) && /Could not find|does not exist/.test(m)) return 'La edición todavía no está habilitada.';
     if (/row-level security/i.test(m)) return 'No se pudo subir la imagen: puede que se haya alcanzado el límite de 10 imágenes por hora.';
     if (/exceeded the maximum allowed size|Payload too large/i.test(m)) return 'La imagen pesa más de 2 MB.';
     return m;

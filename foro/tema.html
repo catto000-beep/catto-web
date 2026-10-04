@@ -14,7 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script src="/aula/assets/vendor/supabase.js"></script>
 <script src="/aula/assets/config.js"></script>
-<script src="/foro/foro.js?v=2"></script>
+<script src="/foro/foro.js?v=3"></script>
 </head>
 <body>
 <header class="site">
@@ -53,7 +53,7 @@
       if (m.autor && m.autor.alias !== S.perfil.alias && m.estado === 'publicado') acc += '<button class="f-btn link" data-den="' + tipo + '" data-id="' + m.id + '">Denunciar</button>';
     }
     return '<div class="f-msg" id="' + tipo + '-' + m.id + '"><div class="cab"><b>' + F.esc(m.autor ? m.autor.alias : '') + '</b>' +
-      '<span>' + F.esc(m.autor ? m.autor.curso : '') + '</span><span>· ' + F.hace(m.creado) + '</span>' + et + '</div>' +
+      '<span>' + F.esc(m.autor ? m.autor.curso : '') + '</span><span>· ' + F.hace(m.creado) + '</span>' + (m.editado ? '<span>· editada ' + F.hace(m.editado) + '</span>' : '') + et + '</div>' +
       '<div class="f-cuerpo">' + F.md(m.cuerpo) + '</div>' + (acc ? '<div class="acc">' + acc + '</div>' : '') + '<div class="den"></div></div>';
   }
 
@@ -70,9 +70,12 @@
       F.$('miga').innerHTML = '<a href="/foro">← Foro</a> · <a href="/foro/categoria?c=' + tema.categoria + '">' + F.esc(cat) + '</a>';
       var aviso = tema.estado === 'pendiente' ? '<div class="f-aviso">Esta consulta está en revisión: por ahora solo la ven quien la escribió y la moderación.</div>' : '';
       var pag = tema.pagina ? '<p class="f-pagina">Sobre la página <a href="' + F.esc(tema.pagina) + '">' + F.esc(tema.pagina.split('/').pop().replace(/-/g, ' ')) + '</a></p>' : '';
-      var res = '';
-      if (S && S.perfil && (S.perfil.alias === (tema.autor && tema.autor.alias) || S.perfil.rol === 'moderador') && tema.estado === 'publicado')
-        res = '<p class="f-fila"><button class="f-btn" id="bRes">' + (tema.resuelto ? 'Marcar como no resuelta' : 'Marcar como resuelta') + '</button></p>';
+      var res = '', esAutor = S && S.perfil && tema.autor && S.perfil.alias === tema.autor.alias;
+      if (S && S.perfil && (esAutor || S.perfil.rol === 'moderador') && tema.estado === 'publicado')
+        res += '<button class="f-btn" id="bRes">' + (tema.resuelto ? 'Marcar como no resuelta' : 'Marcar como resuelta') + '</button>';
+      if (esAutor && tema.estado !== 'oculto' && tema.respuestas === 0 && !(r[1].data || []).length)
+        res += '<a class="f-btn" href="/foro/nueva?editar=' + tema.id + '">Editar la consulta</a>';
+      if (res) res = '<p class="f-fila">' + res + '</p>';
       F.$('tema').innerHTML = '<h1>' + F.esc(tema.titulo) + (tema.resuelto ? ' <span class="f-et ok">resuelta</span>' : '') + '</h1>' + pag + aviso + mensaje(tema, 'tema') + res;
       var resps = r[1].data || [];
       F.$('titResp').hidden = !resps.length;
