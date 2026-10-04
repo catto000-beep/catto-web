@@ -105,7 +105,7 @@
     return estado().then(function (s) {
       var h = '<a href="/foro">Foro</a>';
       if (s.perfil) {
-        if (s.perfil.rol === 'moderador') h += '<a href="/foro/moderar">Moderación</a>';
+        if (s.perfil.rol === 'moderador') h += '<a href="/foro/moderar" class="fb-mod">Moderación<span class="fb-num" id="fbNum" hidden></span></a>';
         h += '<a href="/foro/nueva" class="fb-primario">Nueva consulta</a>';
         h += '<a href="/foro/perfil" class="fb-yo">' + esc(s.perfil.alias) + '</a>';
       } else if (s.usuario) {
@@ -114,6 +114,25 @@
         h += '<a href="/foro/ingresar?volver=' + encodeURIComponent(location.pathname + location.search) + '" class="fb-primario">Ingresar</a>';
       }
       el.innerHTML = h;
+      if (s.perfil && s.perfil.rol === 'moderador') pendientes();
+    });
+  }
+
+  /* Para el moderador: cuántas cosas esperan una decisión (mensajes pendientes y denuncias sin atender) */
+  function pendientes() {
+    var el = $('fbNum');
+    if (!el) return Promise.resolve();
+    var c = function (q) { return q.then(function (r) { return r.error ? 0 : (r.count || 0); }); };
+    return Promise.all([
+      c(sb.from('foro_tema').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente')),
+      c(sb.from('foro_respuesta').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente')),
+      c(sb.from('foro_denuncia').select('id', { count: 'exact', head: true }).eq('atendida', false))
+    ]).then(function (n) {
+      var t = n[0] + n[1] + n[2];
+      el.textContent = t > 99 ? '99+' : t;
+      el.hidden = !t;
+      el.title = n[0] + n[1] + ' por aprobar · ' + n[2] + (n[2] === 1 ? ' denuncia' : ' denuncias');
+      el.parentNode.setAttribute('aria-label', 'Moderación' + (t ? ': ' + t + ' pendientes' : ''));
     });
   }
 
@@ -182,6 +201,6 @@
     }).join('') + '</ul>';
   }
 
-  window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, exigir: exigir, listaTemas: listaTemas, subirImagen: subirImagen, borrarMisImagenes: borrarMisImagenes };
+  window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, pendientes: pendientes, exigir: exigir, listaTemas: listaTemas, subirImagen: subirImagen, borrarMisImagenes: borrarMisImagenes };
   document.addEventListener('DOMContentLoaded', barra);
 })();
