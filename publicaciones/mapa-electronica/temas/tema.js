@@ -229,3 +229,12 @@
     }));
   }catch(e){}
 })();
+
+// 4) Foro: bloque "Consultas sobre este tema" al pie (assets/js/foro-tema.js)
+(function(){
+  if(!document.querySelector('main.doc')) return;
+  var s = document.createElement('script');
+  s.src = '/assets/js/foro-tema.js?v=1';
+  s.defer = true;
+  document.body.appendChild(s);
+})();

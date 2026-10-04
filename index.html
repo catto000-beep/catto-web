@@ -62,6 +62,30 @@ html.js .m-item.abierto .m-ejes{display:block}
 .card p,#mapa .card p,#publicaciones .card p,#contacto .card p{font-size:14.5px}
 .card .meta,#mapa .card .meta,#publicaciones .card .meta,#contacto .card .meta{font-size:12px}
 .card .go,#mapa .card .go,#publicaciones .card .go,#contacto .card .go{font-size:13.5px}
+
+/* Foro: etiqueta "nuevo" inclinada, pegada al final de la palabra, que
+   titila con un brillo (pedido de Diego, 3/10). Sin animación si el
+   sistema pide movimiento reducido. */
+nav.main a.con-nuevo{position:relative;padding-right:22px}
+.nuevo{position:absolute;top:-3px;right:-14px;transform:rotate(-24deg);
+  font:700 9px/1 "IBM Plex Mono",monospace;letter-spacing:.6px;text-transform:uppercase;
+  color:#fff;background:#d6303f;padding:3px 5px 2px;border-radius:2px;pointer-events:none;
+  box-shadow:0 0 0 1px rgba(255,255,255,.35);animation:nuevoTitila 1.3s ease-in-out infinite}
+@keyframes nuevoTitila{
+  0%,100%{opacity:1;box-shadow:0 0 0 1px rgba(255,255,255,.35),0 0 10px 2px rgba(255,80,90,.85)}
+  50%{opacity:.35;box-shadow:0 0 0 1px rgba(255,255,255,.15),0 0 0 0 rgba(255,80,90,0)}}
+@media(prefers-reduced-motion:reduce){.nuevo{animation:none}}
+
+/* Franja del foro arriba de los años */
+.foro-bl{padding:22px 0 0}
+.foro-fr{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 16px;
+  background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:3px;color:var(--txt)}
+.foro-fr:hover{border-color:var(--accent);text-decoration:none}
+.foro-fr .ff-et{font-family:"IBM Plex Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--soft)}
+.foro-fr .ff-t{flex:1 1 300px;min-width:0;font-size:15px}
+.foro-fr .ff-t b{font-weight:600}
+.foro-fr .ff-m{color:var(--soft);font-size:13.5px}
+.foro-fr .ff-go{flex:none;font-size:14px;color:#fff;background:var(--accent);padding:6px 14px;border-radius:3px}
 </style>
 </head>
 <body>
@@ -119,6 +143,7 @@ html.js .m-item.abierto .m-ejes{display:block}
       <a href="#publicaciones">Herramientas</a>
       <a href="/descargas" target="_blank" rel="noopener">Descargas</a>
       <a href="/aula">Aula</a>
+      <a href="/foro" class="con-nuevo">Foro<span class="nuevo" aria-hidden="true">nuevo</span></a>
       <a href="#contacto">Contacto</a>
     </nav>
   </div>
@@ -194,6 +219,42 @@ html.js .m-item.abierto .m-ejes{display:block}
     </a>
   </div>
 </section>
+
+<!-- ============ FORO ============ -->
+<section class="block foro-bl" id="foroFranja">
+  <div class="container">
+    <a class="foro-fr" href="/foro">
+      <span class="ff-et">Foro de consultas</span>
+      <span class="ff-t" id="ffTexto">¿Te trabaste con algún tema? Preguntalo en el foro: lo responden otros estudiantes y docentes.</span>
+      <span class="ff-go">Preguntar →</span>
+    </a>
+  </div>
+</section>
+<script>
+/* Muestra cuántas consultas hay y la última. Habla directo con la API de
+   Supabase (la clave publicable de /aula/assets/config.js) para no cargar
+   la librería en la portada. Si falla, queda el texto fijo. */
+(function () {
+  var U = 'https://fjzcajiemogsqizdgqjs.supabase.co/rest/v1/foro_tema', K = 'sb_publishable_mGM62YDOYWB3uvFj6QCO_A_Elj_cjAy';
+  fetch(U + '?select=id,titulo,actividad&estado=eq.publicado&order=actividad.desc&limit=1',
+        { headers: { apikey: K, Authorization: 'Bearer ' + K, Prefer: 'count=exact' } })
+    .then(function (r) {
+      var n = parseInt((r.headers.get('content-range') || '').split('/')[1], 10);
+      return r.json().then(function (d) { return { n: n, d: d }; });
+    })
+    .then(function (x) {
+      if (!x.n || !x.d.length) return;
+      var t = x.d[0], s = (Date.now() - new Date(t.actividad)) / 1000;
+      var hace = s < 3600 ? 'hace ' + Math.max(1, Math.floor(s / 60)) + ' min' : s < 86400 ? 'hace ' + Math.floor(s / 3600) + ' h' : 'hace ' + Math.floor(s / 86400) + (s < 172800 ? ' día' : ' días');
+      var el = document.getElementById('ffTexto'), b = document.createElement('b');
+      b.textContent = '«' + t.titulo + '»';
+      el.textContent = (x.n === 1 ? '1 consulta' : x.n + ' consultas') + ' · la última, ' + hace + ': ';
+      el.appendChild(b);
+      document.querySelector('#foroFranja .ff-go').textContent = 'Ir al foro →';
+    })
+    .catch(function () {});
+})();
+</script>
 
 <!-- ============ LOS CUATRO AÑOS ============ -->
 <section class="block" id="anios">
