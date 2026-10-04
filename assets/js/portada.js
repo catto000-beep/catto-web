@@ -11,6 +11,7 @@
    1) Abrir y cerrar cada materia.
    2) El buscador del encabezado, que filtra las dos carreras en vivo.
    3) La tira de "segui donde ibas", si hay una pagina de tema visitada.
+   4) Llegando con /#t=<tema>, abrir la materia de ese tema y marcarlo.
 
    El HTML de la tecnicatura lo genera scratchpad/generar-anios.js a partir
    de assets/js/tecnicatura.js, y el de la ingeniería lo rehace
@@ -63,6 +64,46 @@
     f.li.className = si ? "m-item abierto" : "m-item";
     f.boton.setAttribute("aria-expanded", si ? "true" : "false");
   }
+
+  /* ------------------------------------- llegando desde una página de tema
+     La barra de cada tema enlaza la materia a /#t=<dirección del tema>: se
+     abre la materia que contiene ese tema, se la trae a la vista y el tema
+     queda marcado. */
+  function desdeTema() {
+    var m = /^#t=(\/[^#?]*)$/.exec(location.hash);
+    if (!m) return;
+    var destino = decodeURIComponent(m[1]).replace(/\.html$/, "");
+    filas.forEach(function (f) {
+      f.ejes.forEach(function (e) {
+        var a = e.li.querySelector("a");
+        if (!a || a.getAttribute("href").replace(/\.html$/, "") !== destino) return;
+        abrir(f, true);
+        a.className += " aqui";
+        a.setAttribute("aria-current", "page");
+        setTimeout(function () { mostrar(f.li, a); }, 60);
+      });
+    });
+  }
+  /* Deja debajo del encabezado fijo la cabecera del año (o nivel) con la
+     materia; si así el tema marcado no entra en pantalla, deja arriba la
+     materia, y si tampoco, centra el tema. */
+  function mostrar(li, a) {
+    var cab = document.querySelector("header.site");
+    var alto = cab ? cab.getBoundingClientRect().bottom : 0;
+    var r = a.getBoundingClientRect(), y0 = window.pageYOffset;
+    var col = li.closest ? li.closest("section.anio") : null;
+    var y = null;
+    [col, li].some(function (el) {
+      if (!el) return false;
+      var top = el.getBoundingClientRect().top;
+      if (r.bottom - top + alto + 12 <= window.innerHeight) { y = y0 + top - alto - 12; return true; }
+      return false;
+    });
+    if (y === null) y = y0 + r.top - alto - (window.innerHeight - alto - r.height) / 2;
+    window.scrollTo(0, Math.max(0, y));
+  }
+  desdeTema();
+  window.addEventListener("hashchange", desdeTema);
 
   /* -------------------------------------------------------------- filtrado */
   var input = document.getElementById("btIn");
