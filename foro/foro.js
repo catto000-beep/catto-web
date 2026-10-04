@@ -102,12 +102,17 @@
   function barra() {
     var el = $('foroBarra');
     if (!el) return Promise.resolve();
+    /* la página en la que está el usuario queda marcada en celeste */
+    var pag = location.pathname.replace(/\.html$/, '').replace(/\/$/, '').split('/').pop();
+    var aqui = { moderar: 'mod', nueva: 'nueva', perfil: 'yo', ingresar: '' }[pag];
+    if (aqui === undefined) aqui = 'foro';
+    var act = function (k) { return aqui === k ? ' fb-activo" aria-current="page' : ''; };
     return estado().then(function (s) {
-      var h = '<a href="/foro">Foro</a>';
+      var h = '<a href="/foro" class="fb-foro' + act('foro') + '">Foro</a>';
       if (s.perfil) {
-        if (s.perfil.rol === 'moderador') h += '<a href="/foro/moderar" class="fb-mod">Moderación<span class="fb-num" id="fbNum" hidden></span></a>';
-        h += '<a href="/foro/nueva" class="fb-primario">Nueva consulta</a>';
-        h += '<a href="/foro/perfil" class="fb-yo">' + esc(s.perfil.alias) + '</a>';
+        if (s.perfil.rol === 'moderador') h += '<a href="/foro/moderar" class="fb-mod' + act('mod') + '">Moderación<span class="fb-num" id="fbNum" hidden></span></a>';
+        h += '<a href="/foro/nueva" class="fb-nueva' + act('nueva') + '">Nueva consulta</a>';
+        h += '<a href="/foro/perfil" class="fb-yo' + act('yo') + '">' + esc(s.perfil.alias) + '</a>';
       } else if (s.usuario) {
         h += '<a href="/foro/perfil" class="fb-primario">Completar perfil</a>';
       } else {
