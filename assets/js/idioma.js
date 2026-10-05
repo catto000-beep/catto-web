@@ -89,6 +89,10 @@
     '.idioma.flotante{position:fixed;top:10px;right:12px;z-index:300}' +
     /* portada: que el menú no se parta en dos líneas por el selector; achica el buscador */
     '@media (min-width:1240px){header.site nav.main{flex-shrink:0}}' +
+    /* páginas de tema en el teléfono: botón mínimo, que el lugar es para la materia */
+    '@media (max-width:600px){.tbar .idioma>button svg,.tbar .idioma>button .fl{display:none}.tbar .idioma>button{padding:0 7px;height:28px;font-size:12px}' +
+    /* y del «Catto» queda solo el chanchito, que sigue llevando al inicio */
+    '.tbar .brand{font-size:0;gap:0}.tbar .brand .logo{font-size:14px}.tbar .in{gap:10px}}' +
     '.idioma.flotante>button{background:#0d1117;border-color:#30363d}' +
     'html[lang=en] a[data-solo-es]::after{content:"ES";display:inline-block;margin-left:5px;padding:0 4px;border:1px solid currentColor;border-radius:2px;font-size:9px;font-weight:700;letter-spacing:.5px;line-height:13px;vertical-align:2px;opacity:.6;text-decoration:none}' +
     '.idioma-aviso{position:relative;z-index:60;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;padding:8px 44px 8px 16px;background:#1f5f99;color:#fff;font-size:14px;line-height:1.4;text-align:center}' +
@@ -121,9 +125,11 @@
       menu.className = si ? 'idioma-menu abierto' : 'idioma-menu';
       boton.setAttribute('aria-expanded', si ? 'true' : 'false');
       if (si) {
-        var r = boton.getBoundingClientRect();
+        /* alineado al borde derecho del botón, pero siempre adentro de la pantalla */
+        var r = boton.getBoundingClientRect(), vw = document.documentElement.clientWidth, mw = menu.offsetWidth;
         menu.style.top = Math.round(r.bottom + 6) + 'px';
-        menu.style.right = Math.max(8, Math.round(document.documentElement.clientWidth - r.right)) + 'px';
+        menu.style.right = 'auto';
+        menu.style.left = Math.round(Math.max(8, Math.min(r.right - mw, vw - mw - 8))) + 'px';
       }
     }
     /* en el celular la barra de direcciones dispara resize al moverse: solo
@@ -142,7 +148,18 @@
     var nav = document.querySelector('header.site nav.main');
     var tbar = document.querySelector('.tbar .in');
     var volver = document.getElementById('cattoBack');      /* barra de las publicaciones interactivas */
-    if (nav) { nav.parentNode.insertBefore(caja, nav.nextSibling); caja.style.marginLeft = '8px'; }
+    if (nav) {
+      /* en la computadora va a la derecha del menú; en el teléfono, adentro del
+         renglón del menú y contra el margen derecho: arriba el lugar depende de si
+         aparece o no el contador de visitas, y el selector saltaría */
+      var tel = window.matchMedia ? window.matchMedia('(max-width:640px)') : null;
+      var ubicar = function () {
+        if (tel && tel.matches) { nav.appendChild(caja); caja.style.marginLeft = 'auto'; }
+        else { nav.parentNode.insertBefore(caja, nav.nextSibling); caja.style.marginLeft = '8px'; }
+      };
+      ubicar();
+      if (tel) { if (tel.addEventListener) tel.addEventListener('change', ubicar); else if (tel.addListener) tel.addListener(ubicar); }
+    }
     else if (volver) { volver.appendChild(caja); }
     else if (tbar) tbar.insertBefore(caja, tbar.querySelector('.anio'));
     else { caja.flot = true; caja.className = 'idioma flotante'; document.body.appendChild(caja); }
