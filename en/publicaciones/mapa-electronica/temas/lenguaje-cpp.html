@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The C++ language · Computing for Electronics I · Catto</title>
+<meta name="description" content="Classes and objects, encapsulation, constructors and destructors, function and operator overloading, inheritance, polymorphism with virtual functions, interfaces applied to device drivers, exceptions, and using C++ on microcontrollers. A topic of Computing for Electronics I, Year 4.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/lenguaje-cpp">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/lenguaje-cpp">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/lenguaje-cpp">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/lenguaje-cpp">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Computing for Electronics I</a>
+    <span class="anio">Year 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computing for Electronics I</span> · 72 h · Topic 3 of 3</div>
+    <h1>The C++ language</h1>
+    <p class="lead">C++ adds to C the ability to <b>model objects</b>: an LED, a sensor or a motor
+    stop being a loose collection of variables and become entities that keep their data and their operations
+    together. It is the language of Arduino and of a good part of the modern embedded industry.</p>
+    <div class="chips">
+      <span class="chip hi">Programming</span>
+      <span class="chip">Classes and objects</span>
+      <span class="chip">Inheritance</span>
+      <span class="chip">Polymorphism</span>
+      <span class="chip">Drivers</span>
+    </div>
+    <hr class="rule">
+
+    <section id="de-c-a-cpp">
+      <h2><span class="n">01</span>What C++ adds to C</h2>
+      <p>C++ is, almost entirely, a <b>superset</b> of C: a C program compiles as C++. What it
+      adds is a different way of organizing large programs.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Feature</th><th>What it is for</th><th class="c">Does it cost resources?</th></tr></thead>
+          <tbody>
+            <tr><td><b>Classes and objects</b></td><td>Group data together with the functions that manipulate it.</td><td class="c">No</td></tr>
+            <tr><td><b>Constructors / destructors</b></td><td>Guarantee that an object is born initialized and releases whatever it took.</td><td class="c">No</td></tr>
+            <tr><td><b>Overloading</b></td><td>Several functions with the same name and different parameters.</td><td class="c">No</td></tr>
+            <tr><td><b>References (<code>&amp;</code>)</b></td><td>Pass-by-reference that is more readable than with pointers.</td><td class="c">No</td></tr>
+            <tr><td><b>Inheritance</b></td><td>Reuse and specialize existing code.</td><td class="c">No</td></tr>
+            <tr><td><b>Virtual functions</b></td><td>Polymorphism: choose the implementation at run time.</td><td class="c">Little</td></tr>
+            <tr><td><b>Templates (<i>generic programming</i>)</b></td><td>Generic code that works for any type.</td><td class="c">Little</td></tr>
+            <tr><td><b>Exceptions</b></td><td>Error handling kept separate from the normal flow.</td><td class="c"><b>Yes</b></td></tr>
+            <tr><td><b>Standard library (STL)</b></td><td>Ready-made containers and algorithms.</td><td class="c"><b>Yes</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">“You don’t pay for what you don’t use”</div>
+        <p>This is the C++ design principle, and it explains why the language is used in embedded systems. Classes,
+        single inheritance and constructors generate <b>exactly the same machine code</b> as the equivalent
+        C version: they are organization, not layers of runtime. What does cost something is exceptions, run-time
+        type information and the STL with dynamic allocation — and those three are
+        disabled in most microcontroller projects.</p>
+      </div>
+    </section>
+
+    <section id="clases">
+      <h2><span class="n">02</span>Classes and objects</h2>
+
+      <figure>
+        <svg viewBox="0 0 700 310" role="img" aria-label="An object is data plus functions, animated" class="svg-t" data-anim><style>.ob-t{fill:#e6edf3;font-size:11.5px;font-weight:700}.ob-c{fill:#9aa7b4;font-size:11px;font-family:ui-monospace,monospace}.ob-l{fill:#7d8a99;font-size:10px}.ob-x{fill:#9aa7b4;font-size:10.5px}</style><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="14s" repeatCount="indefinite"/><rect x="80" y="96" width="200" height="140" rx="10" fill="#9aa7b4" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.8"/><text class="ob-t" x="94" y="120" fill="#9aa7b4">rojo</text><text class="ob-l" x="94" y="142">private data</text><text class="ob-c" x="94" y="162">pin = 8</text><text class="ob-c" x="94" y="180">estado = false</text><text class="ob-l" x="94" y="204">public functions</text><text class="ob-c" x="94" y="224">encender()  apagar()</text><rect x="400" y="96" width="200" height="140" rx="10" fill="#9aa7b4" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.8"/><text class="ob-t" x="414" y="120" fill="#9aa7b4">verde</text><text class="ob-l" x="414" y="142">private data</text><text class="ob-c" x="414" y="162">pin = 9</text><text class="ob-c" x="414" y="180">estado = false</text><text class="ob-l" x="414" y="204">public functions</text><text class="ob-c" x="414" y="224">encender()  apagar()</text><circle cx="310" cy="130" r="14" fill="#f85149" fill-opacity="0.00" stroke="#f85149" stroke-width="1.6"/><circle cx="630" cy="130" r="14" fill="#3fb950" fill-opacity="0.00" stroke="#3fb950" stroke-width="1.6"/><text class="ob-c" x="80" y="66" fill="#3fb950" font-size="13">Led rojo(8), verde(9);</text><text class="ob-x" x="80" y="270">Two objects of the same class. Each one has its own copy of the data.</text><text class="ob-x" x="80" y="288"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="14s" repeatCount="indefinite"/><rect x="80" y="96" width="200" height="140" rx="10" fill="#f85149" fill-opacity="0.10" stroke="#f85149" stroke-width="1.8"/><text class="ob-t" x="94" y="120" fill="#f85149">rojo</text><text class="ob-l" x="94" y="142">private data</text><text class="ob-c" x="94" y="162">pin = 8</text><text class="ob-c" x="94" y="180">estado = true</text><text class="ob-l" x="94" y="204">public functions</text><text class="ob-c" x="94" y="224">encender()  apagar()</text><rect x="400" y="96" width="200" height="140" rx="10" fill="#9aa7b4" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.8"/><text class="ob-t" x="414" y="120" fill="#9aa7b4">verde</text><text class="ob-l" x="414" y="142">private data</text><text class="ob-c" x="414" y="162">pin = 9</text><text class="ob-c" x="414" y="180">estado = false</text><text class="ob-l" x="414" y="204">public functions</text><text class="ob-c" x="414" y="224">encender()  apagar()</text><circle cx="310" cy="130" r="14" fill="#f85149" fill-opacity="0.70" stroke="#f85149" stroke-width="1.6"/><circle cx="630" cy="130" r="14" fill="#3fb950" fill-opacity="0.00" stroke="#3fb950" stroke-width="1.6"/><text class="ob-c" x="80" y="66" fill="#58a6ff" font-size="13">rojo.encender();</text><text class="ob-x" x="80" y="270">The function works on the data of rojo, unaware that verde exists.</text><text class="ob-x" x="80" y="288"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="14s" repeatCount="indefinite"/><rect x="80" y="96" width="200" height="140" rx="10" fill="#f85149" fill-opacity="0.10" stroke="#f85149" stroke-width="1.8"/><text class="ob-t" x="94" y="120" fill="#f85149">rojo</text><text class="ob-l" x="94" y="142">private data</text><text class="ob-c" x="94" y="162">pin = 8</text><text class="ob-c" x="94" y="180">estado = true</text><text class="ob-l" x="94" y="204">public functions</text><text class="ob-c" x="94" y="224">encender()  apagar()</text><rect x="400" y="96" width="200" height="140" rx="10" fill="#3fb950" fill-opacity="0.10" stroke="#3fb950" stroke-width="1.8"/><text class="ob-t" x="414" y="120" fill="#3fb950">verde</text><text class="ob-l" x="414" y="142">private data</text><text class="ob-c" x="414" y="162">pin = 9</text><text class="ob-c" x="414" y="180">estado = true</text><text class="ob-l" x="414" y="204">public functions</text><text class="ob-c" x="414" y="224">encender()  apagar()</text><circle cx="310" cy="130" r="14" fill="#f85149" fill-opacity="0.70" stroke="#f85149" stroke-width="1.6"/><circle cx="630" cy="130" r="14" fill="#3fb950" fill-opacity="0.70" stroke="#3fb950" stroke-width="1.6"/><text class="ob-c" x="80" y="66" fill="#bc8cff" font-size="13">verde.encender();</text><text class="ob-x" x="80" y="270">Now both are on, and each object still remembers its own state.</text><text class="ob-x" x="80" y="288"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="14s" repeatCount="indefinite"/><rect x="80" y="96" width="200" height="140" rx="10" fill="#9aa7b4" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.8"/><text class="ob-t" x="94" y="120" fill="#9aa7b4">rojo</text><text class="ob-l" x="94" y="142">private data</text><text class="ob-c" x="94" y="162">pin = 8</text><text class="ob-c" x="94" y="180">estado = false</text><text class="ob-l" x="94" y="204">public functions</text><text class="ob-c" x="94" y="224">encender()  apagar()</text><rect x="400" y="96" width="200" height="140" rx="10" fill="#3fb950" fill-opacity="0.10" stroke="#3fb950" stroke-width="1.8"/><text class="ob-t" x="414" y="120" fill="#3fb950">verde</text><text class="ob-l" x="414" y="142">private data</text><text class="ob-c" x="414" y="162">pin = 9</text><text class="ob-c" x="414" y="180">estado = true</text><text class="ob-l" x="414" y="204">public functions</text><text class="ob-c" x="414" y="224">encender()  apagar()</text><circle cx="310" cy="130" r="14" fill="#f85149" fill-opacity="0.00" stroke="#f85149" stroke-width="1.6"/><circle cx="630" cy="130" r="14" fill="#3fb950" fill-opacity="0.70" stroke="#3fb950" stroke-width="1.6"/><text class="ob-c" x="80" y="66" fill="#d29922" font-size="13">rojo.apagar();</text><text class="ob-x" x="80" y="270">Only one is switched off. Without objects you would have to keep a state variable by hand for every LED.</text><text class="ob-x" x="80" y="288"></text></g><text class="ob-x" x="80" y="42" fill="#7d8a99">A class is the mold; each object is a piece made with that mold, with its own data.</text></svg>
+        <figcaption><b>Figure 1.</b> An object is data plus functions, animated: two LEDs of the same class, each with its
+        own pin and its own state. The function always works on the data of its own object.</figcaption>
+      </figure>
+      <p>A <b>class</b> is a mold: it describes what data a thing has and what can be done with it. An
+      <b>object</b> is a concrete instance created from that mold.</p>
+
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">Led</span> {
+  <span class="c-kw">private</span>:                       <span class="c-com">// nobody outside can touch this</span>
+    <span class="c-ty">uint8_t</span> pin;
+    <span class="c-ty">bool</span>    encendido;
+
+  <span class="c-kw">public</span>:                        <span class="c-com">// the visible interface</span>
+    <span class="c-fn">Led</span>(<span class="c-ty">uint8_t</span> p);                 <span class="c-com">// constructor</span>
+    <span class="c-ty">void</span> <span class="c-fn">on</span>();
+    <span class="c-ty">void</span> <span class="c-fn">off</span>();
+    <span class="c-ty">void</span> <span class="c-fn">toggle</span>();
+    <span class="c-ty">bool</span> <span class="c-fn">estado</span>() <span class="c-kw">const</span>;          <span class="c-com">// const: does not modify the object</span>
+};
+
+<span class="c-com">// --- implementation ---</span>
+<span class="c-ty">Led</span>::<span class="c-fn">Led</span>(<span class="c-ty">uint8_t</span> p) : pin(p), encendido(<span class="c-kw">false</span>) {
+    <span class="c-fn">pinMode</span>(pin, OUTPUT);
+    <span class="c-fn">digitalWrite</span>(pin, LOW);
+}
+<span class="c-ty">void</span> <span class="c-ty">Led</span>::<span class="c-fn">on</span>()     { <span class="c-fn">digitalWrite</span>(pin, HIGH); encendido = <span class="c-kw">true</span>; }
+<span class="c-ty">void</span> <span class="c-ty">Led</span>::<span class="c-fn">off</span>()    { <span class="c-fn">digitalWrite</span>(pin, LOW);  encendido = <span class="c-kw">false</span>; }
+<span class="c-ty">void</span> <span class="c-ty">Led</span>::<span class="c-fn">toggle</span>() { encendido ? <span class="c-fn">off</span>() : <span class="c-fn">on</span>(); }
+<span class="c-ty">bool</span> <span class="c-ty">Led</span>::<span class="c-fn">estado</span>() <span class="c-kw">const</span> { <span class="c-kw">return</span> encendido; }
+
+<span class="c-com">// --- usage ---</span>
+<span class="c-ty">Led</span> rojo(<span class="c-num">13</span>);       <span class="c-com">// two independent objects are created</span>
+<span class="c-ty">Led</span> verde(<span class="c-num">12</span>);      <span class="c-com">// each with its own pin and its own state</span>
+
+rojo.<span class="c-fn">on</span>();
+verde.<span class="c-fn">toggle</span>();</code></pre>
+
+      <div class="box key">
+        <div class="bt">Encapsulation</div>
+        <p>The data goes in <code>private</code> and only the functions of the class can touch it. The rest
+        of the program communicates exclusively through the <b>public interface</b>. The concrete advantage: if
+        tomorrow the way the state is represented internally changes, <b>nothing outside breaks</b>, because
+        nobody depended on those details. And it is impossible to leave the object in an inconsistent state from
+        outside.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The difference from a C <code>struct</code></div>
+        <p>A <code>struct</code> groups data; a class groups <b>data and behavior</b>, and also
+        controls access. In C you would write <code>led_on(&amp;rojo)</code>, passing the structure as the
+        first parameter; in C++ you write <code>rojo.on()</code> and that pointer to the object (called
+        <code>this</code>) is passed by the compiler on its own. It is literally the same call, with better
+        syntax.</p>
+      </div>
+    </section>
+
+    <section id="constructores">
+      <h2><span class="n">03</span>Constructors and destructors</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Constructor</div>
+          <p>It runs <b>automatically</b> when the object is created. It has the same name as the class and
+          returns nothing. Its job is to leave the object ready to use.</p>
+          <p style="font-size:13px;margin-top:8px">There can be several (overloaded) with different
+          parameters.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--hot)">Destructor</div>
+          <p>It runs <b>automatically</b> when the object is destroyed: on leaving its scope or when it is freed.
+          It is named <code>~Class()</code> and takes no parameters.</p>
+          <p style="font-size:13px;margin-top:8px">Its job is to give back whatever the object has taken:
+          memory, a file, a port.</p>
+        </div>
+      </div>
+
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">PuertoSerie</span> {
+    <span class="c-ty">int</span> fd;
+  <span class="c-kw">public</span>:
+    <span class="c-fn">PuertoSerie</span>(<span class="c-ty">uint32_t</span> baudios) {
+        fd = <span class="c-fn">abrir_uart</span>(baudios);       <span class="c-com">// takes the resource</span>
+    }
+    ~<span class="c-fn">PuertoSerie</span>() {
+        <span class="c-fn">cerrar_uart</span>(fd);               <span class="c-com">// gives it back, no matter what</span>
+    }
+    <span class="c-ty">void</span> <span class="c-fn">enviar</span>(<span class="c-kw">const</span> <span class="c-ty">char</span> *s);
+};
+
+<span class="c-ty">void</span> <span class="c-fn">tarea</span>() {
+    <span class="c-ty">PuertoSerie</span> p(<span class="c-num">9600</span>);   <span class="c-com">// constructor: opens</span>
+    p.<span class="c-fn">enviar</span>(<span class="c-str">"hello"</span>);
+    <span class="c-kw">if</span> (error) <span class="c-kw">return</span>;      <span class="c-com">// even when leaving here...</span>
+    ...
+}                            <span class="c-com">// ...the destructor closes the port</span></code></pre>
+
+      <div class="box key">
+        <div class="bt">RAII: the most useful pattern in C++</div>
+        <p><i>Resource Acquisition Is Initialization</i>: the resource is acquired in the constructor and released in
+        the destructor. Because the destructor <b>always</b> runs when leaving the scope —by any
+        path— it becomes impossible to forget to release. In C, by contrast, every early <code>return</code>
+        is a chance to leave a resource held. In embedded systems it is applied to ports, SPI or I²C buses, and to
+        critical sections: an object that disables interrupts in the constructor and restores them in the
+        destructor makes it impossible to forget to re-enable them.</p>
+      </div>
+    </section>
+
+    <section id="sobrecarga">
+      <h2><span class="n">04</span>Overloading</h2>
+      <p>In C++ several functions can coexist with the same name if they differ in the <b>number or the
+      type</b> of their parameters. The compiler picks the right one depending on how it is called.</p>
+
+      <pre class="code"><code><span class="c-ty">void</span> <span class="c-fn">mostrar</span>(<span class="c-ty">int</span> v);
+<span class="c-ty">void</span> <span class="c-fn">mostrar</span>(<span class="c-ty">float</span> v);
+<span class="c-ty">void</span> <span class="c-fn">mostrar</span>(<span class="c-kw">const</span> <span class="c-ty">char</span> *s);
+<span class="c-ty">void</span> <span class="c-fn">mostrar</span>(<span class="c-ty">int</span> v, <span class="c-ty">uint8_t</span> base);
+
+<span class="c-fn">mostrar</span>(<span class="c-num">42</span>);           <span class="c-com">// calls the first one</span>
+<span class="c-fn">mostrar</span>(<span class="c-num">3.14f</span>);        <span class="c-com">// the second</span>
+<span class="c-fn">mostrar</span>(<span class="c-str">"done"</span>);      <span class="c-com">// the third</span>
+<span class="c-fn">mostrar</span>(<span class="c-num">255</span>, <span class="c-num">16</span>);      <span class="c-com">// the fourth: in hexadecimal</span></code></pre>
+
+      <p>In C you would need four different names (<code>mostrar_int</code>,
+      <code>mostrar_float</code>…). This is exactly what Arduino’s <code>Serial.print()</code> does: it
+      accepts integers, decimals and strings, because it is really several overloaded functions.</p>
+
+      <h3>Operator overloading</h3>
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">Medicion</span> {
+    <span class="c-ty">int16_t</span> mV;
+  <span class="c-kw">public</span>:
+    <span class="c-fn">Medicion</span>(<span class="c-ty">int16_t</span> v) : mV(v) {}
+    <span class="c-ty">Medicion</span> <span class="c-kw">operator</span>+(<span class="c-kw">const</span> <span class="c-ty">Medicion</span> &amp;o) <span class="c-kw">const</span> {
+        <span class="c-kw">return</span> <span class="c-ty">Medicion</span>(mV + o.mV);
+    }
+    <span class="c-ty">bool</span> <span class="c-kw">operator</span>&gt;(<span class="c-kw">const</span> <span class="c-ty">Medicion</span> &amp;o) <span class="c-kw">const</span> { <span class="c-kw">return</span> mV &gt; o.mV; }
+};
+
+<span class="c-ty">Medicion</span> a(<span class="c-num">1200</span>), b(<span class="c-num">340</span>);
+<span class="c-ty">Medicion</span> c = a + b;      <span class="c-com">// reads like math</span>
+<span class="c-kw">if</span> (a &gt; b) { ... }</code></pre>
+
+      <div class="box ojo">
+        <div class="bt">In moderation</div>
+        <p>Overloading operators makes sense when the operation is <b>obvious</b> for that type: adding two
+        measurements, comparing two times, multiplying two matrices. Overloading <code>+</code> to do
+        something unexpected makes the code indecipherable. The rule is: if someone reading <code>a + b</code>
+        could be mistaken about what it does, do not overload it.</p>
+      </div>
+    </section>
+
+    <section id="herencia">
+      <h2><span class="n">05</span>Inheritance</h2>
+      <p>A class can <b>derive</b> from another: it inherits its data and methods, and adds or modifies whatever
+      it needs. It is the way to express an “is a” relationship.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 330" role="img" aria-label="Inheritance and polymorphism in a sensor hierarchy, animated" class="svg-t" data-anim><style>.cl-t{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}.cl-s{fill:#7d8a99;font-size:9.5px;text-anchor:middle}.cl-c{fill:#9aa7b4;font-size:10.5px}.cl-h{fill:#e6edf3;font-size:12px;font-weight:700}</style><rect x="210" y="48" width="180" height="56" rx="8" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.6"/><text class="cl-t" x="300" y="72">Sensor</text><text class="cl-s" x="300" y="90">virtual float leer() = 0;</text><rect x="38" y="172" width="164" height="56" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cl-t" x="120" y="196" fill="#7d8a99">SensorNTC</text><text class="cl-s" x="120" y="214">reads a thermistor</text><path d="M120 172 V148 H300 V104" fill="none" stroke="#2a3140" stroke-width="1.2"/><rect x="218" y="172" width="164" height="56" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cl-t" x="300" y="196" fill="#7d8a99">SensorPT100</text><text class="cl-s" x="300" y="214">reads a PT100</text><path d="M300 172 V148 H300 V104" fill="none" stroke="#2a3140" stroke-width="1.2"/><rect x="398" y="172" width="164" height="56" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cl-t" x="480" y="196" fill="#7d8a99">SensorDS18B20</text><text class="cl-s" x="480" y="214">reads over 1-Wire</text><path d="M480 172 V148 H300 V104" fill="none" stroke="#2a3140" stroke-width="1.2"/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0" dur="12s" repeatCount="indefinite"/><rect x="38" y="172" width="164" height="56" rx="8" fill="#3fb950" fill-opacity="0.26" stroke="#3fb950" stroke-width="2"/><text class="cl-t" x="120" y="196" fill="#3fb950">SensorNTC</text><text class="cl-s" x="120" y="214" fill="#9aa7b4">reads a thermistor</text><path d="M120 172 V148 H300 V104" fill="none" stroke="#3fb950" stroke-width="2.2"/><circle r="4.5" fill="#3fb950"><animateMotion path="M120 172 V148 H300 V104" dur="1.8s" repeatCount="indefinite"/></circle><text class="cl-h" x="40" y="286" fill="#3fb950">s-&gt;leer() calls the SensorNTC version</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0" dur="12s" repeatCount="indefinite"/><rect x="218" y="172" width="164" height="56" rx="8" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="2"/><text class="cl-t" x="300" y="196" fill="#58a6ff">SensorPT100</text><text class="cl-s" x="300" y="214" fill="#9aa7b4">reads a PT100</text><path d="M300 172 V148 H300 V104" fill="none" stroke="#58a6ff" stroke-width="2.2"/><circle r="4.5" fill="#58a6ff"><animateMotion path="M300 172 V148 H300 V104" dur="1.8s" repeatCount="indefinite"/></circle><text class="cl-h" x="40" y="286" fill="#58a6ff">s-&gt;leer() calls the SensorPT100 version</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1" dur="12s" repeatCount="indefinite"/><rect x="398" y="172" width="164" height="56" rx="8" fill="#bc8cff" fill-opacity="0.26" stroke="#bc8cff" stroke-width="2"/><text class="cl-t" x="480" y="196" fill="#bc8cff">SensorDS18B20</text><text class="cl-s" x="480" y="214" fill="#9aa7b4">reads over 1-Wire</text><path d="M480 172 V148 H300 V104" fill="none" stroke="#bc8cff" stroke-width="2.2"/><circle r="4.5" fill="#bc8cff"><animateMotion path="M480 172 V148 H300 V104" dur="1.8s" repeatCount="indefinite"/></circle><text class="cl-h" x="40" y="286" fill="#bc8cff">s-&gt;leer() calls the SensorDS18B20 version</text></g><text class="cl-c" x="40" y="264" fill="#7d8a99">The program holds a pointer to Sensor and always calls leer(). Which of the three runs is decided by the real object,</text><text class="cl-c" x="40" y="310" fill="#7d8a99">not the pointer type: that is polymorphism, and it lets you add a new sensor without touching the rest of the program.</text></svg>
+        <figcaption><b>Figure 2.</b> Inheritance and polymorphism, animated: the program always calls <code>leer()</code>, and
+        which of the three versions runs is decided by the real object, not by the pointer type.</figcaption>
+      </figure>
+
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">Sensor</span> {                     <span class="c-com">// base class</span>
+  <span class="c-kw">protected</span>:                        <span class="c-com">// visible to the derived classes</span>
+    <span class="c-ty">uint8_t</span> pin;
+  <span class="c-kw">public</span>:
+    <span class="c-fn">Sensor</span>(<span class="c-ty">uint8_t</span> p) : pin(p) {}
+    <span class="c-kw">virtual</span> <span class="c-ty">float</span> <span class="c-fn">leer</span>() = <span class="c-num">0</span>;        <span class="c-com">// = 0 : PURE virtual</span>
+    <span class="c-kw">virtual</span> ~<span class="c-fn">Sensor</span>() {}              <span class="c-com">// virtual destructor: mandatory</span>
+};
+
+<span class="c-kw">class</span> <span class="c-ty">SensorTemp</span> : <span class="c-kw">public</span> <span class="c-ty">Sensor</span> {   <span class="c-com">// derives from Sensor</span>
+  <span class="c-kw">public</span>:
+    <span class="c-fn">SensorTemp</span>(<span class="c-ty">uint8_t</span> p) : <span class="c-ty">Sensor</span>(p) {}
+    <span class="c-ty">float</span> <span class="c-fn">leer</span>() <span class="c-kw">override</span> {        <span class="c-com">// LM35: 10 mV per degree</span>
+        <span class="c-kw">return</span> <span class="c-fn">analogRead</span>(pin) * <span class="c-num">500.0f</span> / <span class="c-num">1024.0f</span>;
+    }
+};</code></pre>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Visibility</th><th>Who can access</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><code>private</code></td><td>Only the class itself. It is the <b>default</b>.</td></tr>
+            <tr><td class="c"><code>protected</code></td><td>The class itself and its derived classes.</td></tr>
+            <tr><td class="c"><code>public</code></td><td>Anyone.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="polimorfismo">
+      <h2><span class="n">06</span>Polymorphism and interfaces</h2>
+      <p>It is the powerful consequence of inheritance: you can write code that works with the
+      <b>base</b> class and works correctly with any derived class, even those that do not exist
+      yet.</p>
+
+      <pre class="code"><code><span class="c-com">// This function neither knows nor cares which sensors there are</span>
+<span class="c-ty">void</span> <span class="c-fn">registrar</span>(<span class="c-ty">Sensor</span> *lista[], <span class="c-ty">uint8_t</span> n) {
+    <span class="c-kw">for</span> (<span class="c-ty">uint8_t</span> i = <span class="c-num">0</span>; i &lt; n; i++) {
+        <span class="c-ty">float</span> v = lista[i]-&gt;<span class="c-fn">leer</span>();   <span class="c-com">// calls the CORRECT leer()</span>
+        <span class="c-fn">guardar</span>(i, v);
+    }
+}
+
+<span class="c-ty">SensorTemp</span> t(<span class="c-num">0</span>);
+<span class="c-ty">SensorLuz</span>  l(<span class="c-num">1</span>);
+<span class="c-ty">SensorHum</span>  h(<span class="c-num">2</span>);
+<span class="c-ty">Sensor</span> *todos[] = { &amp;t, &amp;l, &amp;h };
+
+<span class="c-fn">registrar</span>(todos, <span class="c-num">3</span>);   <span class="c-com">// each one is read the way it should be</span></code></pre>
+
+      <div class="box key">
+        <div class="bt">How it works inside</div>
+        <p>A class with <code>virtual</code> functions carries a hidden pointer to a <b>table of virtual
+        functions</b> (<i>vtable</i>). When you call <code>lista[i]-&gt;leer()</code>, the program looks up that
+        table at run time and jumps to the implementation of the real object. The cost is one pointer per
+        object and one indirection per call: perfectly affordable even on an
+        8-bit microcontroller.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">The destructor of a base class must be <code>virtual</code></div>
+        <p>If a derived object is destroyed through a pointer to the base and the destructor is <b>not</b>
+        virtual, only the base destructor runs: the derived one never runs and its resources
+        stay held. It is a classic, silent error. The rule is simple: <b>if a class has any
+        virtual function, its destructor must be virtual too.</b></p>
+      </div>
+
+      <h3>Interfaces: pure abstract classes</h3>
+      <p>A class whose methods are <b>all</b> pure virtual (<code>= 0</code>) cannot be instantiated:
+      it defines only a <b>contract</b>. It is the mechanism used to declare “what a driver has to
+      be able to do,” without saying anything about how.</p>
+
+      <pre class="code"><code><span class="c-kw">class</span> <span class="c-ty">IDisplay</span> {                 <span class="c-com">// interface: just the contract</span>
+  <span class="c-kw">public</span>:
+    <span class="c-kw">virtual</span> <span class="c-ty">void</span> <span class="c-fn">limpiar</span>() = <span class="c-num">0</span>;
+    <span class="c-kw">virtual</span> <span class="c-ty">void</span> <span class="c-fn">escribir</span>(<span class="c-ty">uint8_t</span> f, <span class="c-ty">uint8_t</span> c, <span class="c-kw">const</span> <span class="c-ty">char</span> *t) = <span class="c-num">0</span>;
+    <span class="c-kw">virtual</span> ~<span class="c-fn">IDisplay</span>() {}
+};
+
+<span class="c-kw">class</span> <span class="c-ty">LCD1602</span>  : <span class="c-kw">public</span> <span class="c-ty">IDisplay</span> { <span class="c-com">/* 4-bit parallel */</span> };
+<span class="c-kw">class</span> <span class="c-ty">OLED_I2C</span> : <span class="c-kw">public</span> <span class="c-ty">IDisplay</span> { <span class="c-com">/* over the I2C bus */</span> };
+<span class="c-kw">class</span> <span class="c-ty">DisplayFalso</span> : <span class="c-kw">public</span> <span class="c-ty">IDisplay</span> { <span class="c-com">/* prints to the console: for testing */</span> };
+
+<span class="c-com">// The menu works with any of the three, without changing a line</span>
+<span class="c-ty">void</span> <span class="c-fn">menu</span>(<span class="c-ty">IDisplay</span> &amp;d) {
+    d.<span class="c-fn">limpiar</span>();
+    d.<span class="c-fn">escribir</span>(<span class="c-num">0</span>, <span class="c-num">0</span>, <span class="c-str">"Temperature"</span>);
+}</code></pre>
+
+      <div class="box key">
+        <div class="bt">Why this matters in electronics</div>
+        <p>It lets you write all the logic of the device <b>before</b> you have the hardware, testing it against a
+        fake driver. And it lets you switch from an LCD to an OLED, or from one microcontroller to another,
+        by touching a single class. It is the C++ version of the principle of
+        <a href="/en/publicaciones/mapa-electronica/temas/entornos-c-cpp">separation into drivers</a> seen
+        in the previous topic.</p>
+      </div>
+    </section>
+
+    <section id="excepciones">
+      <h2><span class="n">07</span>Exceptions</h2>
+      <p>They let you separate error handling from the normal flow of the program: instead of every function
+      returning an error code that has to be checked, an exception is <b>thrown</b> and caught wherever
+      appropriate.</p>
+
+      <pre class="code"><code><span class="c-kw">try</span> {
+    <span class="c-ty">float</span> t = sensor.<span class="c-fn">leer</span>();      <span class="c-com">// may throw</span>
+    <span class="c-fn">procesar</span>(t);
+}
+<span class="c-kw">catch</span> (<span class="c-kw">const</span> <span class="c-ty">SensorDesconectado</span> &amp;e) {
+    <span class="c-fn">alarma</span>(<span class="c-str">"sensor offline"</span>);
+}
+<span class="c-kw">catch</span> (...) {                     <span class="c-com">// any other</span>
+    <span class="c-fn">reiniciar</span>();
+}</code></pre>
+
+      <div class="box ojo">
+        <div class="bt">On microcontrollers they are usually disabled</div>
+        <p>Exceptions require stack-unwinding tables that take up several KB of flash, and their propagation
+        time is <b>unbounded</b>, which makes them unacceptable in real time. That is why almost
+        all embedded projects compile with <code>-fno-exceptions</code> and handle errors as in
+        C: with return codes or with an object that represents “value or error.” On a PC, by contrast,
+        exceptions are the normal and recommended way to handle errors.</p>
+      </div>
+    </section>
+
+    <section id="embebidos">
+      <h2><span class="n">08</span>C++ on microcontrollers</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Safe to use</div>
+          <ul style="margin:0;padding-left:18px">
+            <li>Classes, encapsulation, methods.</li>
+            <li>Constructors and destructors (RAII).</li>
+            <li>Function and operator overloading.</li>
+            <li>References instead of pointers.</li>
+            <li><code>const</code> y <code>constexpr</code>.</li>
+            <li>Single inheritance and virtual functions, with judgment.</li>
+            <li>Templates, as long as the number of instances does not explode.</li>
+            <li><code>enum class</code> for states and modes.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--hot)">Avoid</div>
+          <ul style="margin:0;padding-left:18px">
+            <li><b>Exceptions</b> (<code>-fno-exceptions</code>).</li>
+            <li><b>RTTI</b> and <code>dynamic_cast</code> (<code>-fno-rtti</code>).</li>
+            <li><b><code>new</code> and <code>delete</code></b>: same reason as <code>malloc</code>, RAM gets
+            fragmented.</li>
+            <li><code>std::vector</code>, <code>std::string</code> and, in general, the STL with dynamic
+            memory.</li>
+            <li>Multiple inheritance and deep hierarchies.</li>
+            <li><code>iostream</code>: adds tens of KB.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Arduino is C++</div>
+        <p>Even though it is not presented that way, the Arduino environment compiles C++ with <code>avr-g++</code>. Each
+        library is a class: <code>Serial</code> is an object of the class <code>HardwareSerial</code>,
+        <code>Servo</code>, <code>LiquidCrystal</code> and <code>Wire</code> are classes, and
+        <code>Serial.print()</code> is overloaded for all types. The <code>.ino</code> files are
+        concatenated, a <code>main()</code> is added that calls <code>setup()</code> and then
+        <code>loop()</code> inside a <code>while(1)</code>, and everything is compiled as C++. Recognizing this lets you go
+        from “using Arduino” to “programming the microcontroller.”</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>In the lab</h2>
+      <div class="box lab">
+        <div class="bt">Lab 1 · First class</div>
+        <p>Write a <code>Contador</code> (counter) class with a private value and the methods
+        <code>incrementar()</code>, <code>decrementar()</code>, <code>reiniciar()</code> and
+        <code>valor()</code>, with a maximum limit passed through the constructor. Create three objects with different
+        limits and check that each one keeps its own state. Try to access the private data from
+        outside and read the compiler error: that <b>is</b> encapsulation.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 2 · Constructor, destructor and RAII</div>
+        <p>A <code>Recurso</code> (resource) class whose constructor prints “acquired” and whose destructor prints
+        “released.” Create objects inside <code>{ }</code> blocks and at different points of a function with
+        several <code>return</code> statements. Observe the exact order in which the destructors run: always on
+        leaving the scope, and in the reverse order of creation.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 3 · Inheritance and polymorphism</div>
+        <p>An abstract base class <code>Figura</code> (shape) with <code>virtual float area() = 0;</code> and the derived classes
+        <code>Circulo</code> (circle), <code>Rectangulo</code> (rectangle) and <code>Triangulo</code> (triangle). Store pointers to the three in
+        an array of <code>Figura*</code> and loop through it adding up areas. Then <b>remove</b> the word
+        <code>virtual</code> and run it again: the base method is always called. It is the direct demonstration
+        of what <code>virtual</code> is for.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 4 · Display interface</div>
+        <p>Define <code>IDisplay</code> as in the example and write two implementations: one that prints
+        to the console and another that simulates an LCD by drawing a 16×2-character box. Write a function
+        <code>menu(IDisplay&amp;)</code> and run it with both, without modifying it. It is a direct rehearsal of
+        how device software is developed before the hardware is available.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Mistake</th><th>Consequence</th></tr></thead>
+          <tbody>
+            <tr><td>Forgetting the <code>;</code> after the closing brace of a class</td><td>A cascade of incomprehensible compile errors on the following lines.</td></tr>
+            <tr><td>Base destructor not <code>virtual</code></td><td>When destroying through a pointer to the base, the derived destructor does not run: a silent resource leak.</td></tr>
+            <tr><td>Forgetting <code>virtual</code> on the method that is meant to be polymorphic</td><td>The base-class version is always called. The program compiles and does what you do not want.</td></tr>
+            <tr><td>Members not initialized in the constructor</td><td>Garbage values. It is best to use the <b>initializer list</b> (<code>: pin(p), estado(false)</code>).</td></tr>
+            <tr><td>Using <code>new</code> without <code>delete</code></td><td>Memory leak. On a micro with 2 KB of RAM, it runs out in minutes.</td></tr>
+            <tr><td>Building with the STL on a small microcontroller</td><td>The program does not fit in flash, or it fits and fails when RAM runs out.</td></tr>
+            <tr><td>Overloading operators in a non-intuitive way</td><td>Code that is impossible to read. Overloading is justified only if the meaning is obvious.</td></tr>
+            <tr><td>Making everything <code>public</code></td><td>Encapsulation is lost, and with it the whole advantage of using classes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">11</span>Self-assessment</h2>
+
+      <details class="q"><summary>What is the difference between a class and an object?</summary>
+        <div class="a"><p>The <b>class</b> is the mold: it describes what data and methods an entity has. The
+        <b>object</b> is a concrete instance created from that mold, with its own values. From a
+        <code>Led</code> class you can create many objects, each with its own pin and state.</p></div></details>
+
+      <details class="q"><summary>What does a program gain by declaring its data as <code>private</code>?</summary>
+        <div class="a"><p>That nobody outside can leave the object in an inconsistent state, and that the
+        internal representation can be changed without breaking the rest of the program, because nobody depended on
+        it. That is <b>encapsulation</b>.</p></div></details>
+
+      <details class="q"><summary>When does a destructor run, and what is it for?</summary>
+        <div class="a"><p>Automatically, when the object is destroyed: on leaving the scope where it was created, or on
+        calling <code>delete</code>. It is used to <b>release</b> whatever the object has taken (memory, a port,
+        a file). Because it runs on every exit path, it makes forgetting impossible.</p></div></details>
+
+      <details class="q"><summary>What is RAII and what problem does it solve?</summary>
+        <div class="a"><p><i>Resource Acquisition Is Initialization</i>: acquiring the resource in the constructor and
+        releasing it in the destructor. It solves the problem of forgotten releases, especially when a
+        function has several exit points.</p></div></details>
+
+      <details class="q"><summary>What does the keyword <code>virtual</code> do?</summary>
+        <div class="a"><p>It indicates that the method can be <b>overridden</b> in a derived class, and that the
+        decision of which one to run is made at <b>run time</b> according to the real type of the object, not
+        the type of the pointer. It is what makes polymorphism possible.</p></div></details>
+
+      <details class="q"><summary>What is a pure virtual function, and what effect does it have on the class?</summary>
+        <div class="a"><p>It is one declared with <code>= 0</code>: it has no implementation in the base. It makes
+        the class <b>abstract</b>, meaning it cannot be instantiated, and forces every concrete
+        derived class to implement it. If all of its methods are pure virtual, the class is an <b>interface</b>.</p></div></details>
+
+      <details class="q"><summary>Why must the destructor of a base class be <code>virtual</code>?</summary>
+        <div class="a"><p>So that, when a derived object is destroyed through a pointer to the base, the
+        derived destructor runs as well. If it is not virtual, only the base one runs and the resources of
+        the derived class are left unreleased.</p></div></details>
+
+      <details class="q"><summary>Why are exceptions disabled on microcontrollers?</summary>
+        <div class="a"><p>Because they require stack-unwinding tables that take up several KB of flash and
+        because their propagation time is <b>unbounded</b>, which makes them incompatible with real-time
+        requirements. You compile with <code>-fno-exceptions</code> and handle errors with return
+        codes.</p></div></details>
+
+      <details class="q"><summary>What language is an Arduino program written in?</summary>
+        <div class="a"><p>In <b>C++</b>. The environment concatenates the <code>.ino</code> files, adds a
+        <code>main()</code> that calls <code>setup()</code> and then <code>loop()</code> inside a
+        <code>while(1)</code>, and compiles everything with <code>avr-g++</code>. <code>Serial</code>,
+        <code>Servo</code> and <code>LiquidCrystal</code> are C++ classes.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/entornos-c-cpp">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">C and C++ development environments</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/contadores-programables">
+        <div class="dir">Next topic · Year 5 →</div>
+        <div class="tt">Programmable counters</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“The C++ language”</b> of <b>Computing for Electronics I</b> (Year 4), based on the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

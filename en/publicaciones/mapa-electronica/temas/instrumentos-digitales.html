@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital measuring instruments · Digital Electronics II · Catto</title>
+<meta name="description" content="Architecture of a digital instrument: signal conditioning, dual-slope converter, counter and display. Multimeters: counts, digits, accuracy, True RMS, burden voltage and safety categories. Frequency counters and digital oscilloscopes. A topic of Digital Electronics II, Year 5.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/instrumentos-digitales">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/instrumentos-digitales">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/instrumentos-digitales">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/instrumentos-digitales">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Digital Electronics II</a>
+    <span class="anio">Year 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Electronics II</span> · 96 h · Topic 3 of 4</div>
+    <h1>Digital measuring instruments</h1>
+    <p class="lead">A digital instrument is not an analog instrument with a number display. Inside
+    there is a different chain, with different errors, and a way of lying all its own: showing five
+    solid digits of a value that is not exact in any of them.</p>
+    <div class="chips">
+      <span class="chip hi">Measurement</span>
+      <span class="chip">Multimeter</span>
+      <span class="chip">Dual slope</span>
+      <span class="chip">Frequency counter</span>
+      <span class="chip">Accuracy</span>
+    </div>
+    <hr class="rule">
+
+    <section id="analogico-digital">
+      <h2><span class="n">01</span>What changed compared with the pointer instrument</h2>
+      <p>In <a href="/en/publicaciones/mapa-electronica/temas/instrumentos-analogicos">analog instruments</a>
+      the measurement was a physical phenomenon: a current produced a torque on a coil and the pointer
+      stayed where that torque balanced against the spring. Here the measurement is a <b>number</b>, and the whole
+      instrument exists to produce it.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th>Analog</th><th>Digital</th></tr></thead>
+          <tbody>
+            <tr><td><b>Reading</b></td><td>Interpreted by the operator on a scale</td><td>Numeric, no interpretation</td></tr>
+            <tr><td><b>Reading error</b></td><td>Parallax, interpolation between marks</td><td>None: the number is what it is</td></tr>
+            <tr><td><b>Input impedance</b></td><td>20 kΩ/V typical: <b>loads the circuit</b></td><td>10 MΩ constant on all ranges</td></tr>
+            <tr><td><b>Varying signals</b></td><td>The trend is visible on the pointer</td><td>The digits dance and you cannot make sense of anything</td></tr>
+            <tr><td><b>Zero adjustment</b></td><td>Mechanical, and for the ohmmeter, every time</td><td>Automatic, internal</td></tr>
+            <tr><td><b>Range</b></td><td>Always manual</td><td>Autoranging</td></tr>
+            <tr><td><b>Robustness</b></td><td>The movement is damaged by a knock</td><td>Electronics with no moving parts</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The one thing the analog does better</div>
+        <p>Seeing <b>how a quantity changes</b>. Adjusting a trimmer to the maximum, looking for a peak, following the charging
+        of a capacitor: the pointer shows it at a glance and the digits do not. That is why many good-quality
+        digital multimeters have an analog <b>bargraph</b> below the number: it is exactly that
+        function that was being lost.</p>
+      </div>
+    </section>
+
+    <section id="arquitectura">
+      <h2><span class="n">02</span>Architecture of a digital instrument</h2>
+      <p>All digital instruments —multimeter, frequency counter, capacitance meter, scale— share the
+      same skeleton. The first block changes, the one that translates the quantity into a voltage.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 250" role="img" aria-label="Block diagram of a digital instrument" class="svg-t">
+          <style>.iq-b{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
+          .iq-n{fill:#e6edf3;font-size:12px;text-anchor:middle;font-weight:600}
+          .iq-s{fill:#9aa7b4;font-size:10px;text-anchor:middle}
+          .iq-d{fill:#7d8a99;font-size:10.5px;text-anchor:middle}</style>
+          <rect class="iq-b" x="16"  y="56" width="104" height="64" rx="9"/>
+          <text class="iq-n" x="68" y="80">Input</text><text class="iq-s" x="68" y="98">attenuator,</text><text class="iq-s" x="68" y="112">shunt, rectifier</text>
+          <rect class="iq-b" x="152" y="56" width="104" height="64" rx="9"/>
+          <text class="iq-n" x="204" y="80">Amplifier</text><text class="iq-s" x="204" y="98">(instrumentation)</text><text class="iq-s" x="204" y="112">and filter</text>
+          <rect class="iq-b" x="288" y="56" width="104" height="64" rx="9" stroke="#3fb950"/>
+          <text class="iq-n" x="340" y="80">A/D</text><text class="iq-s" x="340" y="98">dual-slope</text><text class="iq-s" x="340" y="112">converter</text>
+          <rect class="iq-b" x="424" y="56" width="104" height="64" rx="9"/>
+          <text class="iq-n" x="476" y="80">Counter</text><text class="iq-s" x="476" y="98">and range</text><text class="iq-s" x="476" y="112">control</text>
+          <rect class="iq-b" x="560" y="56" width="104" height="64" rx="9" stroke="#a371f7"/>
+          <text class="iq-n" x="612" y="80">Display</text><text class="iq-s" x="612" y="98">LCD with</text><text class="iq-s" x="612" y="112">multiplexing</text>
+          <g stroke="#9aa7b4" stroke-width="1.6" fill="none">
+            <line x1="120" y1="88" x2="152" y2="88"/><polygon points="152,88 144,84 144,92" fill="#9aa7b4"/>
+            <line x1="256" y1="88" x2="288" y2="88"/><polygon points="288,88 280,84 280,92" fill="#9aa7b4"/>
+            <line x1="392" y1="88" x2="424" y2="88"/><polygon points="424,88 416,84 416,92" fill="#9aa7b4"/>
+            <line x1="528" y1="88" x2="560" y2="88"/><polygon points="560,88 552,84 552,92" fill="#9aa7b4"/>
+          </g>
+          <rect class="iq-b" x="288" y="164" width="240" height="46" rx="9" stroke="#d29922"/>
+          <text class="iq-n" x="408" y="184">Voltage reference</text>
+          <text class="iq-s" x="408" y="200">all the instrument’s accuracy depends on it</text>
+          <path d="M408,164 V140 h-68 v-20" fill="none" stroke="#d29922" stroke-width="1.6"/>
+          <polygon points="340,120 336,128 344,128" fill="#d29922"/>
+          <path d="M476,140 v-20" fill="none" stroke="#9aa7b4" stroke-width="1.6"/>
+          <text class="iq-d" x="340" y="238">Only the input block changes between a voltmeter, a frequency counter and a scale</text>
+        </svg>
+        <figcaption><b>Figure 1.</b> The common skeleton. The <b>voltage reference</b> is the standard against which
+        everything is compared: if it drifts with temperature or over the years, the whole instrument shifts, without
+        anything seeming to fail.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Autoranging</div>
+        <p>The control block looks at the result of each conversion. If the number exceeds full scale
+        (<i>overflow</i>: the screen shows a lone “1” or “OL”), it goes up a range; if it falls below 10%,
+        it goes down, and that way it makes use of all the digits. It is convenient, but it has two costs: it <b>takes time</b> while
+        it searches, and on a signal that changes a lot it can end up hopping between two ranges. That is why every
+        decent multimeter has a <b>RANGE</b> key to lock it by hand, which is what you should use
+        when you are adjusting something.</p>
+      </div>
+    </section>
+
+    <section id="doble-rampa">
+      <h2><span class="n">03</span>The dual-slope converter</h2>
+      <p>It is the heart of almost all multimeters. It was already mentioned in
+      <a href="/en/publicaciones/mapa-electronica/temas/conversores-ad-da">A/D and D/A converters</a>; here it is
+      seen in detail, because it explains where its three virtues come from: accuracy, immunity to mains noise and
+      low cost.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 344" role="img" aria-label="Dual-slope conversion" class="svg-t" data-anim>
+          <style>.dr-d{fill:#7d8a99;font-size:10.5px}.dr-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="70" y1="250" x2="660" y2="250" stroke="#2a3140" stroke-width="1.4"/>
+          <line x1="70" y1="250" x2="70" y2="54" stroke="#2a3140" stroke-width="1.4"/>
+          <text class="dr-d" x="66" y="50" text-anchor="end">integrator</text>
+          <text class="dr-d" x="66" y="64" text-anchor="end">output</text>
+          <path d="M100,250 L300,187.0 L391.0,250" fill="none" stroke="#7d8a99" stroke-width="1.8" stroke-dasharray="6 5"/>
+          <text class="dr-d" x="314.0" y="179.0">smaller input: the ramp rises less and discharges sooner</text>
+          <path d="M100,250 L300,106.0 L508.0,250" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <circle cx="100" cy="250" r="6" fill="#ffa657"><animate attributeName="cx" values="100;300;508.0" keyTimes="0;0.5;1" dur="6s" repeatCount="indefinite"/><animate attributeName="cy" values="250;106.0;250" keyTimes="0;0.5;1" dur="6s" repeatCount="indefinite"/></circle>
+          <line x1="300" y1="250" x2="300" y2="60" stroke="#2a3140" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="100" y1="272" x2="300" y2="272" stroke="#58a6ff" stroke-width="1.5"/>
+          <line x1="100" y1="266" x2="100" y2="278" stroke="#58a6ff" stroke-width="1.5"/>
+          <line x1="300" y1="266" x2="300" y2="278" stroke="#58a6ff" stroke-width="1.5"/>
+          <text class="dr-l" x="200" y="290" text-anchor="middle" fill="#58a6ff">t₁ fixed · input integrated</text>
+          <line x1="300" y1="272" x2="508.0" y2="272" stroke="#ffa657" stroke-width="1.5"/>
+          <line x1="508.0" y1="266" x2="508.0" y2="278" stroke="#ffa657" stroke-width="1.5"/>
+          <text class="dr-l" x="404.0" y="290" text-anchor="middle" fill="#ffa657">t₂ · counted</text>
+          <rect x="300" y="302" width="0" height="10" rx="3" fill="#ffa657" opacity=".55"><animate attributeName="width" values="0;0;208.0" keyTimes="0;0.5;1" dur="6s" repeatCount="indefinite"/></rect>
+          <text class="dr-d" x="306" y="326">the counter runs only during t₂: its final value is the reading</text>
+          <text class="dr-d" x="126" y="152">slope ∝ V<tspan baseline-shift="sub" font-size="8">in</tspan></text>
+          <text class="dr-d" x="390" y="192">fixed slope (−V<tspan baseline-shift="sub" font-size="8">ref</tspan>)</text>
+          </svg>
+        <figcaption><b>Figure 2.</b> Dual slope, animated. First the input is integrated for a
+        <b>fixed</b> time: the higher the voltage, the steeper the ramp. Then it is discharged with the reference, at a
+        <b>fixed</b> slope, and the time it takes is counted. That time is proportional to the input.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>V</mi><mrow><mi>i</mi><mi>n</mi></mrow></msub><mo>=</mo><msub><mi>V</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mo>·</mo><mfrac><msub><mi>t</mi><mn>2</mn></msub><msub><mi>t</mi><mn>1</mn></msub></mfrac></mrow></math>
+        <span class="cap">Neither R nor C appears in the result: they cancel between the two ramps. That is why the
+        converter does not depend on the capacitor’s tolerance or its thermal drift.</span>
+      </div>
+
+      <div class="g2">
+        <div class="box key">
+          <div class="bt">Why it is so accurate</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>R and C cancel: only V<sub>ref</sub> and the clock matter.</li>
+            <li>The clock cancels too, because both times are measured with the same one.</li>
+            <li>A single critical standard remains: the <b>voltage reference</b>.</li>
+          </ul>
+        </div>
+        <div class="box key">
+          <div class="bt">Why it ignores 50 Hz</div>
+          <p>The first ramp <b>averages</b> the input over t<sub>1</sub>. If t<sub>1</sub> is an
+          exact multiple of 20 ms, any mains interference contributes the same above and below
+          zero: it cancels itself. This is what datasheets call <b>NMR</b> (normal mode rejection)
+          and it gives 60 dB or more at 50 Hz.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The downside: it is slow</div>
+        <p>Between the two ramps and the auto-zero, a complete measurement takes from <b>10 to 400 ms</b>. A
+        typical multimeter refreshes two or three times per second, and that is its physical limit, not a limitation
+        of the display. It is no use for fast-changing signals: for those you go to the
+        <a href="/en/publicaciones/mapa-electronica/temas/osciloscopio">oscilloscope</a>.</p>
+      </div>
+    </section>
+
+    <section id="multimetro">
+      <h2><span class="n">04</span>The digital multimeter: how to read its specification</h2>
+
+      <h3>Counts and digits</h3>
+      <p>A “3½-digit” multimeter has three full digits (0 to 9) and one that can only be 0 or 1:
+      it goes up to <b>1999</b>, which is <b>2000 counts</b>. The “count” is the unit of resolution, and it defines
+      what the last digit is worth on each range.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Digits</th><th class="c">Counts</th><th class="c">Maximum reading</th><th class="c">Resolution on 20 V</th><th>Instrument category</th></tr></thead>
+          <tbody>
+            <tr><td class="c">3½</td><td class="c">2000</td><td class="c">1999</td><td class="c">10 mV</td><td>Pocket multimeter</td></tr>
+            <tr><td class="c">3¾</td><td class="c">4000</td><td class="c">3999</td><td class="c">10 mV</td><td>Workshop, mid-range</td></tr>
+            <tr><td class="c">4½</td><td class="c">20,000</td><td class="c">19,999</td><td class="c">1 mV</td><td>Bench, laboratory</td></tr>
+            <tr><td class="c">6½</td><td class="c">2,000,000</td><td class="c">1,999,999</td><td class="c">10 µV</td><td>Calibration standard</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Accuracy: not the same as resolution</h3>
+      <p>Resolution is <b>how many numbers it can display</b>; accuracy is <b>how close they are to the true
+      value</b>. It is always specified with two terms:</p>
+
+      <div class="form">
+        <math display="block"><mrow><mi>e</mi><mo>=</mo><mo>±</mo><mo>(</mo><mi>a</mi><mo>%</mo><mspace width="4px"/><mtext>of reading</mtext><mo>+</mo><mi>n</mi><mspace width="4px"/><mtext>digits</mtext><mo>)</mo></mrow></math>
+        <span class="cap">The first term grows with what is measured; the second is fixed and dominates on
+        small readings.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · What the display is really worth</div>
+        <p>A 3½-digit multimeter, DC specification ±(0.5% + 3 digits). It measures on the
+        <b>20 V</b> range (resolution 10 mV) and the screen shows <b>12.45 V</b>.</p>
+        <ul>
+          <li>0.5% of 12.45 V = <b>62.3 mV</b></li>
+          <li>3 digits × 10 mV = <b>30 mV</b></li>
+          <li>Total error: ±92.3 mV ≈ <b>±0.09 V</b></li>
+        </ul>
+        <p>The true value lies between <b>12.36 V and 12.54 V</b>. The screen shows hundredths, but the
+        last reliable digit is the tenths one. <b>Reporting “12.45 V” without the error is reporting
+        too much.</b></p>
+        <p style="margin-top:10px">Now the same measurement on the <b>200 V</b> range (resolution 100 mV):
+        0.5% of 12.4 = 62 mV, plus 3 × 100 mV = 300 mV, total <b>±0.36 V</b>. Four times worse just for
+        leaving the range high. <b>Always the lowest range that does not overflow.</b></p>
+      </div>
+
+      <h3>The four traps of the digital multimeter</h3>
+      <div class="g2">
+        <div class="box ojo">
+          <div class="bt">Average-responding, RMS-calibrated</div>
+          <p>On AC, almost all the inexpensive ones rectify and multiply by 1.111: they are only right with
+          a pure sine wave. With the output of a dimmer or a switching power supply the error reaches 40%. You
+          need <b>True RMS</b>, as explained in
+          <a href="/en/publicaciones/mapa-electronica/temas/mediciones-ca">AC measurements</a>.</p>
+        </div>
+        <div class="box ojo">
+          <div class="bt">Burden voltage in current measurements</div>
+          <p>To measure current the instrument inserts a <b>shunt</b>. That resistor drops a voltage
+          (<i>burden voltage</i>): typically 200 mV at full scale. In a 3.3 V circuit that drop
+          changes what is being measured. With small currents you should use the mA range, not the 10 A one,
+          and always check the figure in the manual.</p>
+        </div>
+        <div class="box ojo">
+          <div class="bt">Bandwidth</div>
+          <p>The AC range is usually specified from 40 Hz to 400 Hz or 1 kHz. Outside that the reading
+          drops without warning. Measuring the output of an audio amplifier at 10 kHz with an ordinary multimeter gives a
+          number, and that number is wrong.</p>
+        </div>
+        <div class="box peligro">
+          <div class="bt">Safety category</div>
+          <p><b>CAT II</b> outlets, <b>CAT III</b> panels and fixed distribution, <b>CAT IV</b> service entrance
+          and meter. The category is not about the voltage it measures but about the energy of a transient it
+          can withstand without blowing up. A CAT II instrument on an industrial panel is an accident
+          waiting to happen, and the test leads have a category too.</p>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Functions worth knowing</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Continuity with buzzer</b>: it measures without looking at the screen, indispensable at the top of a
+          ladder.</li>
+          <li><b>Diode test</b>: it injects ~1 mA and shows the forward drop. 0.6 V is silicon, 0.3 V
+          germanium or Schottky, 1.8 V a red LED.</li>
+          <li><b>HOLD</b>: freezes the reading, for measuring in a place where you cannot see the screen.</li>
+          <li><b>MIN/MAX</b>: records extremes; useful for catching a motor starting spike.</li>
+          <li><b>REL / relative zero</b>: subtracts the current reading. It is the way to subtract the resistance
+          of the test leads when measuring low values.</li>
+          <li><b>Low impedance (LoZ)</b>: discharges the ghost voltages that appear through capacitive
+          coupling in long cables and make you think a conductor is live.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="frecuencimetro">
+      <h2><span class="n">05</span>The digital frequency counter</h2>
+      <p>It is the purest case of a digital instrument: it converts nothing, it <b>counts</b>. And what it counts is
+      exactly what you want to measure.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 280" role="img" aria-label="Gated counting" class="svg-t" data-anim>
+          <style>.pu-d{fill:#7d8a99;font-size:10.5px}.pu-l{fill:#9aa7b4;font-size:11px}</style>
+          <rect x="246.0" y="46" width="308.0" height="72" rx="6" fill="#3fb950" opacity=".10"/>
+          <line x1="246.0" y1="46" x2="246.0" y2="118" stroke="#3fb950" stroke-width="1.6"/>
+          <line x1="554.0" y1="46" x2="554.0" y2="118" stroke="#3fb950" stroke-width="1.6"/>
+          <text class="pu-l" x="400.0" y="38" text-anchor="middle" fill="#3fb950">gate open for exactly 1 s</text>
+          <path d="M62.0,96.0 L83.0,96.0 L83.0,62.0 L101.0,62.0 L101.0,96.0 L127.0,96.0 L127.0,62.0 L145.0,62.0 L145.0,96.0 L171.0,96.0 L171.0,62.0 L189.0,62.0 L189.0,96.0 L215.0,96.0 L215.0,62.0 L233.0,62.0 L233.0,96.0 L259.0,96.0 L259.0,62.0 L277.0,62.0 L277.0,96.0 L303.0,96.0 L303.0,62.0 L321.0,62.0 L321.0,96.0 L347.0,96.0 L347.0,62.0 L365.0,62.0 L365.0,96.0 L391.0,96.0 L391.0,62.0 L409.0,62.0 L409.0,96.0 L435.0,96.0 L435.0,62.0 L453.0,62.0 L453.0,96.0 L479.0,96.0 L479.0,62.0 L497.0,62.0 L497.0,96.0 L523.0,96.0 L523.0,62.0 L541.0,62.0 L541.0,96.0 L567.0,96.0 L567.0,62.0 L585.0,62.0 L585.0,96.0 L620.0,96.0" fill="none" stroke="#58a6ff" stroke-width="2"/>
+          <text class="pu-d" x="56.0" y="92.0" text-anchor="end">signal</text>
+          <g><line x1="92.0" y1="42" x2="92.0" y2="180" stroke="#f85149" stroke-width="1.5"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.0 0;44.0 0;88.0 0;132.0 0;176.0 0;220.0 0;264.0 0;308.0 0;352.0 0;396.0 0;440.0 0;484.0 0" dur="8s" repeatCount="indefinite"/></g>
+          <rect x="264" y="150" width="150" height="60" rx="10" fill="#11161e" stroke="#2a3140"/>
+          <clipPath id="pu-win"><rect x="265" y="151" width="148" height="58"/></clipPath>
+          <g clip-path="url(#pu-win)"><g>
+          <text x="339" y="192" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">0</text>
+          <text x="339" y="252" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">1</text>
+          <text x="339" y="312" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">2</text>
+          <text x="339" y="372" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">3</text>
+          <text x="339" y="432" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">4</text>
+          <text x="339" y="492" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">5</text>
+          <text x="339" y="552" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">6</text>
+          <text x="339" y="612" fill="#3fb950" font-size="30" font-weight="700" text-anchor="middle">7</text>
+          <animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 0;0 0;0 0;0 0;0 -60;0 -120;0 -180;0 -240;0 -300;0 -360;0 -420;0 -420" dur="8s" repeatCount="indefinite"/>
+          </g></g>
+          <text class="pu-d" x="339" y="144" text-anchor="middle">counter</text>
+          <text class="pu-d" x="339" y="228" text-anchor="middle">N cycles in 1 s = N hertz</text>
+          <text class="pu-l" x="60" y="252">Pulses that fall outside the window are not counted. The one at the edge may or may not get in:</text>
+          <text class="pu-l" x="60" y="270" fill="#f85149">hence the ±1 count uncertainty, which matters a lot when N is small.</text>
+          </svg>
+        <figcaption><b>Figure 3.</b> Gated counting, animated. The timebase opens the gate for
+        exactly one second; the cycles that fall inside that window are the hertz. The pulses that fall
+        outside are not counted, and the last one may or may not get in: hence the ±1 count uncertainty.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><mi>f</mi><mo>=</mo><mfrac><mi>N</mi><msub><mi>t</mi><mrow><mi>w</mi><mi>i</mi><mi>n</mi><mi>d</mi><mi>o</mi><mi>w</mi></mrow></msub></mfrac><mspace width="30px"/><mfrac><mrow><mi>Δ</mi><mi>f</mi></mrow><mi>f</mi></mfrac><mo>=</mo><mfrac><mn>1</mn><mi>N</mi></mfrac><mo>+</mo><mfrac><mrow><mi>Δ</mi><msub><mi>t</mi><mn>0</mn></msub></mrow><msub><mi>t</mi><mn>0</mn></msub></mfrac></mrow></math>
+        <span class="cap">Two errors add up: the ±1 count one, which matters at low frequencies, and the
+        one from the timebase crystal, which matters at high ones.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · The two errors, each in its own territory</div>
+        <p>Frequency counter with a 1 s timebase and a <b>10 ppm</b> crystal:</p>
+        <ul>
+          <li>Measuring <b>50 Hz</b>: N = 50, the counting error is 1/50 = <b>2%</b>, and the crystal’s is
+          0.001%. Counting dominates. It is better to measure the <b>period</b>.</li>
+          <li>Measuring <b>10 MHz</b>: N = 10<sup>7</sup>, the counting error is 0.00001%, and the crystal’s is
+          10 ppm = <b>0.001%</b>, that is ±100 Hz. The crystal dominates.</li>
+        </ul>
+        <p>That is why laboratory frequency counters have a temperature-compensated oscillator (TCXO) or
+        an oven-controlled one (OCXO), and why the good ones have an input for an external 10 MHz standard.</p>
+      </div>
+
+      <div class="g3">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Measuring period</div>
+          <p>The roles are reversed: the signal opens the gate and pulses of the standard clock are counted. For 50 Hz
+          with a 10 MHz clock, 200,000 counts get in: the ±1 count error drops to 0.0005%.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Prescaler</div>
+          <p>Above the speed of the counter, the signal is divided by 10, 64 or 256 before being counted and
+          the result is compensated. It is what makes it possible to reach UHF.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Reciprocal</div>
+          <p>Modern instruments always measure the period of a whole number of cycles and calculate the
+          frequency. It gives constant resolution in digits, regardless of the frequency.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The input conditioner</div>
+        <p>Before the counter there is a <b>Schmitt trigger</b> that converts any waveform into clean
+        pulses. Its hysteresis is what keeps superimposed noise from crossing the threshold several times
+        per cycle. If the signal is very small, very dirty or has a DC component, the frequency counter reads
+        anything or nothing: you have to AC-couple it and, if necessary, amplify it.</p>
+      </div>
+    </section>
+
+    <section id="otros">
+      <h2><span class="n">06</span>Other digital instruments in the shop</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Instrument</th><th>What it measures and how</th><th>What to look at</th></tr></thead>
+          <tbody>
+            <tr><td><b>Capacitance meter</b></td><td>It charges the capacitor with a constant current and measures the time, or measures the frequency of an oscillator that includes it.</td><td>Electrolytics have ±20% tolerance: an “odd” value can be normal. It does not measure series resistance (ESR), which is the most common fault.</td></tr>
+            <tr><td><b>ESR meter</b></td><td>It injects a signal of ~100 kHz and measures the resistive part.</td><td>It is the instrument that really finds the dried-out electrolytics in a switching power supply, with the capacitor still on the circuit board.</td></tr>
+            <tr><td><b>LCR meter</b></td><td>It measures the magnitude and phase of the impedance at a chosen frequency.</td><td>The test frequency matters: an inductor is not worth the same at 100 Hz as at 100 kHz. It is covered in <a href="/en/publicaciones/mapa-electronica/temas/mediciones-impedancia">standard-circuit measurements</a>.</td></tr>
+            <tr><td><b>Digital oscilloscope</b></td><td>It samples and stores; then it draws.</td><td>Sampling rate, memory depth and real bandwidth. And aliasing, which on a digital instrument is a concrete danger.</td></tr>
+            <tr><td><b>Clamp meter</b></td><td>It measures the magnetic field around the conductor with a split core or a Hall sensor.</td><td>Transformer-type ones only measure AC; Hall-effect ones also measure DC. You have to clamp around <b>only one</b> conductor.</td></tr>
+            <tr><td><b>Data logger</b></td><td>A digital instrument with memory and a clock.</td><td>It turns a measurement into a time series: it is what lets you find the fault that shows up at three in the morning.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The digital oscilloscope deserves a separate warning</div>
+        <p>Its two specifications are confused all the time. The <b>bandwidth</b> (for example
+        100 MHz) is analog: it says up to what frequency the signal reaches the converter intact. The
+        <b>sampling rate</b> (for example 1 GSa/s) says how many samples per second it takes. The practical
+        rule is that the sampling should be <b>5 to 10 times</b> the bandwidth; if an instrument claims
+        100 MHz and 100 MSa/s, the numbers do not add up and with fast signals it will show shapes that do not
+        exist.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Resolution versus accuracy</div>
+        <p>Measure the same battery with all the multimeters in the shop and note the readings. They will differ in
+        the last digit or in two. Look up the specification in each manual and calculate the error interval of
+        each one: you will see that <b>all the intervals overlap</b> and that none contradicts the others.
+        It is the best way to understand that one more digit is not a truer value.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Burden voltage, measured</div>
+        <p>Build an LED with its current-limiting resistor at 5 V. Measure the current on the mA range and note it.
+        Then measure the voltage across the LED with and without the ammeter inserted. The difference is the
+        instrument’s <b>burden voltage</b>. Repeat on the 10 A range and compare: the shunt is
+        different.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · 50 Hz rejection</div>
+        <p>Measure a battery with the multimeter and note it. Then bring the test lead wire close to a mains
+        cable (without touching it) and measure again: the reading barely changes, because the dual slope averages. Repeat
+        the same with the oscilloscope on DC: there you do see the superimposed hum. Two instruments, two
+        different responses to the same noise.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Frequency versus period</div>
+        <p>Measure a 50 Hz signal from the generator with the frequency counter in frequency mode, 1 s gate, and
+        note how much the last digit fluctuates. Switch to period mode and compare the stability. Then measure
+        1 MHz in both modes: there the advantage is reversed. Build a table with the four cases.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Before measuring on a panel</div>
+        <p>Check the category of the instrument and of the <b>test leads</b>, that the fuse is the original (not
+        a piece of wire), that the leads do not have cracked insulation and that the selector is not on current
+        when you are going to measure voltage. Putting a multimeter in ammeter mode across 220 V is a plain
+        short circuit: that is why the good ones warn with a buzzer when the lead is in the current jack and the
+        selector is on voltage.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Usual cause</th></tr></thead>
+          <tbody>
+            <tr><td>Two multimeters give different values</td><td>Normal if the difference falls within each one’s error. It is only a problem if the intervals do not overlap.</td></tr>
+            <tr><td>The AC reading is 0 with a signal that exists</td><td>Frequency outside the bandwidth, or input DC-coupled on a small signal riding on a large value.</td></tr>
+            <tr><td>It measures voltage where nothing is connected</td><td>Ghost voltage from capacitive coupling in long cables, and the 10 MΩ input does not discharge it. Use LoZ mode.</td></tr>
+            <tr><td>The circuit stops working when the ammeter is inserted</td><td>Burden voltage of the shunt. Change range or measure the drop across a known resistor.</td></tr>
+            <tr><td>The measured resistance is higher than the resistor’s</td><td>You are measuring with the circuit powered or with another component in parallel. And at low values, the resistance of the test leads: use REL.</td></tr>
+            <tr><td>The display shows a lone “1” or “OL”</td><td>Out of range, not a fault. Go up a range.</td></tr>
+            <tr><td>The frequency counter jumps or reads double</td><td>Noisy signal crossing the Schmitt threshold twice, or insufficient amplitude.</td></tr>
+            <tr><td>The reading drifts over the months</td><td>Drift of the voltage reference. The instrument needs calibration: it is a service with a traceable standard, not a trimmer you adjust by eye.</td></tr>
+            <tr><td>With worn-out batteries the instrument measures wrong before warning</td><td>Several models lose accuracy before showing the low-battery symbol. Replace them at any suspicious reading.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Self-assessment</h2>
+
+      <details class="q"><summary>How many counts does a 4½-digit multimeter have and what is its maximum reading?</summary>
+        <div class="a"><p>20,000 counts, and it shows up to <b>19,999</b>. The “half digit” is the one on the
+        left, which can only be 0 or 1.</p></div></details>
+
+      <details class="q"><summary>A multimeter of ±(0.8% + 2 dig) on the 200 V range shows 118.5 V. What is the error?</summary>
+        <div class="a"><p>The resolution on 200 V with 3½ digits is 0.1 V. So: 0.8% of 118.5 = 0.95 V,
+        plus 2 × 0.1 = 0.2 V. Total error <b>±1.15 V</b>: the true value lies between 117.4 and
+        119.7 V.</p></div></details>
+
+      <details class="q"><summary>Why does the capacitor’s tolerance not matter in a dual slope?</summary>
+        <div class="a"><p>Because the same capacitor is used to charge and to discharge. In the quotient
+        t<sub>2</sub>/t<sub>1</sub> the RC product cancels, and the result depends only on the voltage
+        reference.</p></div></details>
+
+      <details class="q"><summary>What integration time is appropriate in a country with a 50 Hz mains, and why?</summary>
+        <div class="a"><p>A multiple of <b>20 ms</b> (the mains period): 20, 40, 100 ms. That way the
+        mains interference averages to zero during the first ramp. In a 60 Hz country the multiple is
+        16.67 ms; some instruments let you choose it.</p></div></details>
+
+      <details class="q"><summary>Why does measuring 50 Hz with a frequency counter in frequency mode give a poor result?</summary>
+        <div class="a"><p>Because with a 1 s gate 50 pulses are counted and the ±1 count uncertainty is
+        <b>2%</b>. Measuring the period with a 10 MHz standard clock, 200,000 pulses are counted and the error
+        drops to 0.0005%.</p></div></details>
+
+      <details class="q"><summary>A 10 ppm crystal measuring 10 MHz: what is the error in hertz?</summary>
+        <div class="a"><p>10 ppm = 10 × 10<sup>−6</sup>, which on 10<sup>7</sup> Hz gives <b>±100 Hz</b>. It is the
+        accuracy floor of the instrument: no counting trick improves it.</p></div></details>
+
+      <details class="q"><summary>What does it mean for a multimeter to be CAT III 600 V?</summary>
+        <div class="a"><p>That it is designed for measuring in fixed installations —panels, distribution
+        lines— withstanding the high-energy transients that occur there, up to 600 V nominal. It
+        is not the same as “measures up to 600 V”: two instruments with the same voltage number can have
+        different categories, and that is where the safety difference lies.</p></div></details>
+
+      <details class="q"><summary>Why does a digital multimeter measure 12 V where nothing is connected?</summary>
+        <div class="a"><p>Through capacitive coupling between parallel conductors: its 10 MΩ input is so
+        high that it cannot discharge that induced voltage. The <b>LoZ</b> function lowers the input
+        impedance and makes the ghost reading disappear. With an analog instrument the phenomenon does not appear,
+        because its coil loads the circuit.</p></div></details>
+
+      <details class="q"><summary>An oscilloscope claims 100 MHz of bandwidth and 100 MSa/s. What can you expect?</summary>
+        <div class="a"><p>Trouble. With 100 MSa/s the Nyquist limit is 50 MHz: an 80 MHz signal that its
+        input lets through will appear on the screen as a false frequency. The healthy ratio is 5 to 10
+        samples per cycle of the highest declared frequency.</p></div></details>
+
+      <details class="q"><summary>What is the REL or relative zero function for?</summary>
+        <div class="a"><p>To subtract the current value from all the following readings. It is used mostly on
+        low resistances —you short the leads, press REL and so their own resistance is subtracted—
+        and on small capacitances, to subtract that of the cable.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/conversores-ad-da">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">A/D and D/A converters</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/arquitectura-microprocesadores">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Microprocessor and microcontroller architecture</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Digital measuring instruments”</b> of <b>Digital Electronics II</b> (Year 5),
+  based on the “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

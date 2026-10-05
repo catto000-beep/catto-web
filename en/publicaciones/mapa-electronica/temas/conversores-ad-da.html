@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A/D and D/A converters · Digital Electronics II · Catto</title>
+<meta name="description" content="Sampling, quantization and resolution. Weighted-network and R-2R D/A converters. Flash, ramp, successive-approximation and dual-slope A/D converters. RS232, RS422 and RS485 interfaces. A topic of Digital Electronics II, Year 5.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/conversores-ad-da">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/conversores-ad-da">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/conversores-ad-da">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/conversores-ad-da">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Digital Electronics II</a>
+    <span class="anio">Year 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Electronics II</span> · 96 h · Topic 2 of 4</div>
+    <h1>A/D and D/A converters</h1>
+    <p class="lead">The world is analog and processing is digital. All modern electronics lives on the
+    border between the two, and that border is made of two circuits: the one that translates a voltage into a number and the
+    one that translates a number into a voltage.</p>
+    <div class="chips">
+      <span class="chip hi">Conversion</span>
+      <span class="chip">Sampling</span>
+      <span class="chip">R-2R</span>
+      <span class="chip">Successive approximation</span>
+      <span class="chip">RS485</span>
+    </div>
+    <hr class="rule">
+
+    <section id="frontera">
+      <h2><span class="n">01</span>The border between the two worlds</h2>
+      <p>A microphone delivers millivolts that change continuously. A microcontroller only understands
+      numbers. Between the two there is always the same chain, and it is worth having the whole of it in your head
+      before studying each block separately:</p>
+
+      <figure>
+        <svg viewBox="0 0 680 190" role="img" aria-label="Signal acquisition and reproduction chain" class="svg-t">
+          <style>.cd-b{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
+          .cd-n{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}
+          .cd-s{fill:#9aa7b4;font-size:10px;text-anchor:middle}
+          .cd-t{fill:#7d8a99;font-size:10.5px;text-anchor:middle}</style>
+          <rect class="cd-b" x="14"  y="46" width="92" height="56" rx="8"/>
+          <text class="cd-n" x="60" y="70">Sensor</text><text class="cd-s" x="60" y="88">quantity → V</text>
+          <rect class="cd-b" x="126" y="46" width="92" height="56" rx="8"/>
+          <text class="cd-n" x="172" y="70">Conditioning</text><text class="cd-s" x="172" y="88">amplify, filter</text>
+          <rect class="cd-b" x="238" y="46" width="92" height="56" rx="8"/>
+          <text class="cd-n" x="284" y="70">S / H</text><text class="cd-s" x="284" y="88">holds the value</text>
+          <rect class="cd-b" x="350" y="46" width="92" height="56" rx="8" stroke="#3fb950"/>
+          <text class="cd-n" x="396" y="70">A / D</text><text class="cd-s" x="396" y="88">V → number</text>
+          <rect class="cd-b" x="462" y="46" width="92" height="56" rx="8"/>
+          <text class="cd-n" x="508" y="70">Processing</text><text class="cd-s" x="508" y="88">µC or µP</text>
+          <rect class="cd-b" x="574" y="46" width="92" height="56" rx="8" stroke="#a371f7"/>
+          <text class="cd-n" x="620" y="70">D / A</text><text class="cd-s" x="620" y="88">number → V</text>
+          <g stroke="#9aa7b4" stroke-width="1.6" fill="none">
+            <line x1="106" y1="74" x2="126" y2="74"/><line x1="218" y1="74" x2="238" y2="74"/>
+            <line x1="330" y1="74" x2="350" y2="74"/><line x1="442" y1="74" x2="462" y2="74"/>
+            <line x1="554" y1="74" x2="574" y2="74"/>
+          </g>
+          <text class="cd-t" x="180" y="130">analog world</text>
+          <line x1="14" y1="140" x2="346" y2="140" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text class="cd-t" x="508" y="130">digital world</text>
+          <line x1="350" y1="140" x2="666" y2="140" stroke="#58a6ff" stroke-width="1.5" stroke-dasharray="5 4"/>
+          <text class="cd-t" x="340" y="168">Each block adds its own error: the whole system cannot be better than the worst of them</text>
+        </svg>
+        <figcaption><b>Figure 1.</b> The typical chain. In a modern microcontroller, everything from the S/H to the D/A is
+        inside the chip; the technician’s work is left to the sensor, the signal conditioning and the
+        filter.</figcaption>
+      </figure>
+    </section>
+
+    <section id="muestreo">
+      <h2><span class="n">02</span>Sampling and quantization</h2>
+      <p>Converting means <b>discretizing twice</b>: in time (sampling) and in amplitude
+      (quantization). They are two different operations, with two different limits, and confusing them is the source
+      of almost all the misunderstandings on this topic.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 280" role="img" aria-label="Sampling and holding of a sine-wave signal" class="svg-t" data-anim>
+          <style>.ms-d{fill:#7d8a99;font-size:10.5px}.ms-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="58.0" y1="148.0" x2="626.0" y2="148.0" stroke="#2a3140" stroke-width="1.4"/>
+          <line x1="58.0" y1="46" x2="58.0" y2="240" stroke="#2a3140" stroke-width="1.4"/>
+          <text class="ms-d" x="630.0" y="152.0">t</text>
+          <text class="ms-d" x="58.0" y="40" text-anchor="middle">v</text>
+          <polyline points="66.00,148.00 68.48,143.78 70.96,139.56 73.45,135.38 75.93,131.24 78.41,127.15 80.89,123.13 83.37,119.19 85.85,115.35 88.34,111.61 90.82,107.99 93.30,104.50 95.78,101.16 98.26,97.96 100.75,94.93 103.23,92.07 105.71,89.40 108.19,86.92 110.67,84.63 113.15,82.55 115.64,80.69 118.12,79.04 120.60,77.62 123.08,76.43 125.56,75.47 128.05,74.75 130.53,74.27 133.01,74.03 135.49,74.03 137.97,74.27 140.45,74.75 142.94,75.47 145.42,76.43 147.90,77.62 150.38,79.04 152.86,80.69 155.35,82.55 157.83,84.63 160.31,86.92 162.79,89.40 165.27,92.07 167.75,94.93 170.24,97.96 172.72,101.16 175.20,104.50 177.68,107.99 180.16,111.61 182.65,115.35 185.13,119.19 187.61,123.13 190.09,127.15 192.57,131.24 195.05,135.38 197.54,139.56 200.02,143.78 202.50,148.00 204.98,152.22 207.46,156.44 209.95,160.62 212.43,164.76 214.91,168.85 217.39,172.87 219.87,176.81 222.35,180.65 224.84,184.39 227.32,188.01 229.80,191.50 232.28,194.84 234.76,198.04 237.25,201.07 239.73,203.93 242.21,206.60 244.69,209.08 247.17,211.37 249.65,213.45 252.14,215.31 254.62,216.96 257.10,218.38 259.58,219.57 262.06,220.53 264.55,221.25 267.03,221.73 269.51,221.97 271.99,221.97 274.47,221.73 276.95,221.25 279.44,220.53 281.92,219.57 284.40,218.38 286.88,216.96 289.36,215.31 291.85,213.45 294.33,211.37 296.81,209.08 299.29,206.60 301.77,203.93 304.25,201.07 306.74,198.04 309.22,194.84 311.70,191.50 314.18,188.01 316.66,184.39 319.15,180.65 321.63,176.81 324.11,172.87 326.59,168.85 329.07,164.76 331.55,160.62 334.04,156.44 336.52,152.22 339.00,148.00 341.48,143.78 343.96,139.56 346.45,135.38 348.93,131.24 351.41,127.15 353.89,123.13 356.37,119.19 358.85,115.35 361.34,111.61 363.82,107.99 366.30,104.50 368.78,101.16 371.26,97.96 373.75,94.93 376.23,92.07 378.71,89.40 381.19,86.92 383.67,84.63 386.15,82.55 388.64,80.69 391.12,79.04 393.60,77.62 396.08,76.43 398.56,75.47 401.05,74.75 403.53,74.27 406.01,74.03 408.49,74.03 410.97,74.27 413.45,74.75 415.94,75.47 418.42,76.43 420.90,77.62 423.38,79.04 425.86,80.69 428.35,82.55 430.83,84.63 433.31,86.92 435.79,89.40 438.27,92.07 440.75,94.93 443.24,97.96 445.72,101.16 448.20,104.50 450.68,107.99 453.16,111.61 455.65,115.35 458.13,119.19 460.61,123.13 463.09,127.15 465.57,131.24 468.05,135.38 470.54,139.56 473.02,143.78 475.50,148.00 477.98,152.22 480.46,156.44 482.95,160.62 485.43,164.76 487.91,168.85 490.39,172.87 492.87,176.81 495.35,180.65 497.84,184.39 500.32,188.01 502.80,191.50 505.28,194.84 507.76,198.04 510.25,201.07 512.73,203.93 515.21,206.60 517.69,209.08 520.17,211.37 522.65,213.45 525.14,215.31 527.62,216.96 530.10,218.38 532.58,219.57 535.06,220.53 537.55,221.25 540.03,221.73 542.51,221.97 544.99,221.97 547.47,221.73 549.95,221.25 552.44,220.53 554.92,219.57 557.40,218.38 559.88,216.96 562.36,215.31 564.85,213.45 567.33,211.37 569.81,209.08 572.29,206.60 574.77,203.93 577.25,201.07 579.74,198.04 582.22,194.84 584.70,191.50 587.18,188.01 589.66,184.39 592.15,180.65 594.63,176.81 597.11,172.87 599.59,168.85 602.07,164.76 604.55,160.62 607.04,156.44 609.52,152.22 612.00,148.00" fill="none" stroke="#3fb950" stroke-width="2.2"/>
+          <path d="M66.00,148.00 L100.12,148.00 L100.12,95.67 M100.12,95.67 L134.25,95.67 L134.25,74.00 M134.25,74.00 L168.38,74.00 L168.38,95.67 M168.38,95.67 L202.50,95.67 L202.50,148.00 M202.50,148.00 L236.62,148.00 L236.62,200.33 M236.62,200.33 L270.75,200.33 L270.75,222.00 M270.75,222.00 L304.88,222.00 L304.88,200.33 M304.88,200.33 L339.00,200.33 L339.00,148.00 M339.00,148.00 L373.12,148.00 L373.12,95.67 M373.12,95.67 L407.25,95.67 L407.25,74.00 M407.25,74.00 L441.38,74.00 L441.38,95.67 M441.38,95.67 L475.50,95.67 L475.50,148.00 M475.50,148.00 L509.62,148.00 L509.62,200.33 M509.62,200.33 L543.75,200.33 L543.75,222.00 M543.75,222.00 L577.88,222.00 L577.88,200.33 M577.88,200.33 L612.00,200.33 " fill="none" stroke="#ffa657" stroke-width="2.2"/>
+          <line x1="66.00" y1="148.00" x2="66.00" y2="148.00" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="66.00" cy="148.00" r="3.4" fill="#58a6ff"/>
+          <line x1="100.12" y1="148.00" x2="100.12" y2="95.67" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="100.12" cy="95.67" r="3.4" fill="#58a6ff"/>
+          <line x1="134.25" y1="148.00" x2="134.25" y2="74.00" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="134.25" cy="74.00" r="3.4" fill="#58a6ff"/>
+          <line x1="168.38" y1="148.00" x2="168.38" y2="95.67" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="168.38" cy="95.67" r="3.4" fill="#58a6ff"/>
+          <line x1="202.50" y1="148.00" x2="202.50" y2="148.00" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="202.50" cy="148.00" r="3.4" fill="#58a6ff"/>
+          <line x1="236.62" y1="148.00" x2="236.62" y2="200.33" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="236.62" cy="200.33" r="3.4" fill="#58a6ff"/>
+          <line x1="270.75" y1="148.00" x2="270.75" y2="222.00" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="270.75" cy="222.00" r="3.4" fill="#58a6ff"/>
+          <line x1="304.88" y1="148.00" x2="304.88" y2="200.33" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="304.88" cy="200.33" r="3.4" fill="#58a6ff"/>
+          <line x1="339.00" y1="148.00" x2="339.00" y2="148.00" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="339.00" cy="148.00" r="3.4" fill="#58a6ff"/>
+          <line x1="373.12" y1="148.00" x2="373.12" y2="95.67" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="373.12" cy="95.67" r="3.4" fill="#58a6ff"/>
+          <line x1="407.25" y1="148.00" x2="407.25" y2="74.00" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="407.25" cy="74.00" r="3.4" fill="#58a6ff"/>
+          <line x1="441.38" y1="148.00" x2="441.38" y2="95.67" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="441.38" cy="95.67" r="3.4" fill="#58a6ff"/>
+          <line x1="475.50" y1="148.00" x2="475.50" y2="148.00" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="475.50" cy="148.00" r="3.4" fill="#58a6ff"/>
+          <line x1="509.62" y1="148.00" x2="509.62" y2="200.33" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="509.62" cy="200.33" r="3.4" fill="#58a6ff"/>
+          <line x1="543.75" y1="148.00" x2="543.75" y2="222.00" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="543.75" cy="222.00" r="3.4" fill="#58a6ff"/>
+          <line x1="577.88" y1="148.00" x2="577.88" y2="200.33" stroke="#2a3140" stroke-width="1" opacity=".7"/>
+          <circle cx="577.88" cy="200.33" r="3.4" fill="#58a6ff"/>
+          <g><line x1="66.00" y1="44" x2="66.00" y2="242" stroke="#f85149" stroke-width="1.5" opacity=".85"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;34.12 0;68.25 0;102.38 0;136.50 0;170.62 0;204.75 0;238.88 0;273.00 0;307.12 0;341.25 0;375.38 0;409.50 0;443.62 0;477.75 0;511.88 0" dur="8s" repeatCount="indefinite"/></g>
+          <circle cx="83.06" cy="148.00" r="6" fill="#ffa657"><animate attributeName="cx" calcMode="discrete" values="83.06;117.19;151.31;185.44;219.56;253.69;287.81;321.94;356.06;390.19;424.31;458.44;492.56;526.69;560.81;594.94" dur="8s" repeatCount="indefinite"/><animate attributeName="cy" calcMode="discrete" values="148.00;95.67;74.00;95.67;148.00;200.33;222.00;200.33;148.00;95.67;74.00;95.67;148.00;200.33;222.00;200.33" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ms-l" x="70" y="264" fill="#3fb950">original signal</text>
+          <text class="ms-l" x="200" y="264" fill="#58a6ff">sampling instants</text>
+          <text class="ms-l" x="366" y="264" fill="#ffa657">held value (S/H)</text>
+          <text class="ms-d" x="514" y="264">8 samples per cycle</text>
+          </svg>
+        <figcaption><b>Figure 2.</b> Sampling and holding, animated. The cursor runs along the signal; at each
+        sampling instant the value is taken and held until the next one. The reconstructed output is
+        the orange staircase: it resembles the original, but it is not the original.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Sampling theorem (Nyquist-Shannon)</div>
+        <p>To be able to reconstruct a signal you have to sample it at more than <b>twice</b> its highest
+        frequency. Otherwise, the components above f<sub>s</sub>/2 appear reflected inside the useful
+        band as false frequencies that can no longer be separated: this is <b>aliasing</b>.</p>
+        <div class="form" style="margin:12px 0 0">
+          <math display="block"><mrow><msub><mi>f</mi><mi>s</mi></msub><mo>&gt;</mo><mn>2</mn><mo>·</mo><msub><mi>f</mi><mrow><mi>m</mi><mi>a</mi><mi>x</mi></mrow></msub></mrow></math>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Aliasing cannot be fixed afterward</div>
+        <p>Once the false frequency has got in, it is indistinguishable from a real signal: no digital filter
+        can remove it. That is why <b>before</b> the converter there is always an analog <b>anti-aliasing filter</b>,
+        a low-pass that cuts off above f<sub>s</sub>/2. It is the clearest example that
+        <a href="/en/publicaciones/mapa-electronica/temas/filtros">filters</a> are not decoration.</p>
+        <p style="margin-top:10px">The effect can be seen every day: the wheels of a car that in the movies
+        seem to turn backward are aliasing between the rotation frequency and the 24 frames per second of the
+        camera.</p>
+      </div>
+
+      <h3>Resolution: how many steps there are</h3>
+      <p>Quantization splits the input range into 2<sup>n</sup> steps. The step is called the
+      <b>LSB</b> (least significant bit) and is the smallest difference the converter can distinguish.</p>
+
+      <div class="form">
+        <math display="block"><mrow><mi>L</mi><mi>S</mi><mi>B</mi><mo>=</mo><mfrac><msub><mi>V</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><msup><mn>2</mn><mi>n</mi></msup></mfrac><mspace width="30px"/><mi>e</mi><mo>=</mo><mo>±</mo><mfrac><mn>1</mn><mn>2</mn></mfrac><mi>L</mi><mi>S</mi><mi>B</mi></mrow></math>
+        <span class="cap">Quantization error is unavoidable: even with a perfect converter, the actual
+        value lies somewhere within the step.</span>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Bits</th><th class="c">Steps</th><th class="c">LSB at 5 V</th><th class="c">LSB at 3.3 V</th><th>Where it is used</th></tr></thead>
+          <tbody>
+            <tr><td class="c">8</td><td class="c">256</td><td class="c">19.53 mV</td><td class="c">12.89 mV</td><td>Simple control, slow sensors.</td></tr>
+            <tr><td class="c">10</td><td class="c">1024</td><td class="c">4.88 mV</td><td class="c">3.22 mV</td><td>The typical microcontroller A/D.</td></tr>
+            <tr><td class="c">12</td><td class="c">4096</td><td class="c">1.22 mV</td><td class="c">0.81 mV</td><td>General-purpose instrumentation.</td></tr>
+            <tr><td class="c">16</td><td class="c">65,536</td><td class="c">76.3 µV</td><td class="c">50.4 µV</td><td>Audio, scales, precision measurement.</td></tr>
+            <tr><td class="c">24</td><td class="c">16,777,216</td><td class="c">0.30 µV</td><td class="c">0.20 µV</td><td>Load cells and thermocouples (sigma-delta).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · Measuring temperature with an LM35</div>
+        <p>The LM35 delivers <b>10 mV per degree</b>. With the 10-bit A/D of a microcontroller and a 5 V
+        reference:</p>
+        <ul>
+          <li>LSB = 5 V / 1024 = <b>4.88 mV</b> → resolution = 4.88 / 10 = <b>0.49 °C</b>.</li>
+          <li>The range goes up to 5 V / 10 mV/°C = 500 °C, which the sensor cannot even withstand: almost the
+          whole converter is being wasted.</li>
+        </ul>
+        <p>With the internal <b>1.1 V</b> reference that many micros have: LSB = 1.1 / 1024 = 1.074 mV →
+        resolution <b>0.107 °C</b>, and the range becomes 110 °C, very reasonable. <b>Without changing the converter the
+        resolution improved four and a half times</b>, just by choosing the reference well. That is the first
+        design decision in any measurement.</p>
+      </div>
+
+      <p>There is a direct relationship between bits and signal-to-noise ratio, which is quoted all the time in audio:</p>
+      <div class="form">
+        <math display="block"><mrow><mi>S</mi><mi>N</mi><mi>R</mi><mo>≈</mo><mn>6.02</mn><mo>·</mo><mi>n</mi><mo>+</mo><mn>1.76</mn><mspace width="6px"/><mi>d</mi><mi>B</mi></mrow></math>
+        <span class="cap">Each added bit is 6 dB. The 16 bits of the CD give 98 dB; the 8 bits of a toy,
+        50 dB, and that is why you can hear the background noise.</span>
+      </div>
+    </section>
+
+    <section id="dac">
+      <h2><span class="n">03</span>D/A converters: from number to voltage</h2>
+      <p>They are the easiest to understand and so they are studied first, even though in the chain they come last.
+      The idea is always the same: <b>add weighted currents or voltages</b>, each one with the weight of its
+      bit.</p>
+
+      <h3>Weighted network (fan-out)</h3>
+      <p>Each bit drives a resistor of value R, 2R, 4R, 8R… all connected to the inverting input of an
+      <a class="ref" href="/publicaciones/amplificadores-operacionales" hreflang="es">operational amplifier</a> that
+      works as a summer. The current contributed by each bit is half that of the previous one.</p>
+
+      <div class="box ojo">
+        <div class="bt">Why it is hardly ever used</div>
+        <p>With 8 bits, the ratio between the smallest and the largest resistor is <b>1 to 128</b>. If R
+        is 10 kΩ, the last bit’s is 1.28 MΩ. And all of them have to be accurate <b>to 0.2%</b> so that
+        the most significant bit does not swamp the least significant one. Making resistors that different
+        and that precise on a chip is very expensive. It works for 4 bits and not much more.</p>
+      </div>
+
+      <h3>R-2R network (ladder)</h3>
+      <p>It solves the problem at the root: it uses <b>only two values</b>, R and 2R, repeated. The ladder
+      makes the current divide by exactly two at every node, so the binary weight comes from the
+      topology and not from the precision of each resistor.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 330" role="img" aria-label="Four-bit R-2R network with its output staircase" class="svg-t" data-anim>
+          <style>.rr-d{fill:#7d8a99;font-size:10.5px}.rr-l{fill:#9aa7b4;font-size:11px;text-anchor:middle}.rr-r{fill:#1c2230;stroke:#9aa7b4;stroke-width:1.4}</style>
+          <line x1="70" y1="110.0" x2="150" y2="110.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="90" y="103.0" width="40" height="14" rx="3"/>
+          <text class="rr-d" x="110" y="97.0" text-anchor="middle">R</text>
+          <line x1="70" y1="110.0" x2="70" y2="176" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="63" y="132" width="14" height="40" rx="3"/>
+          <text class="rr-d" x="46" y="156">2R</text>
+          <path d="M60,176 h20 M64,182 h12 M67,188 h6" stroke="#9aa7b4" stroke-width="1.6" fill="none"/>
+          <circle cx="150.0" cy="110.0" r="3.2" fill="#9aa7b4"/>
+          <line x1="150.0" y1="110.0" x2="150.0" y2="182" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="143.0" y="132" width="14" height="40" rx="3"/>
+          <text class="rr-d" x="162.0" y="156">2R</text>
+          <circle cx="134.0" cy="212" r="3" fill="#7d8a99"/>
+          <circle cx="166.0" cy="212" r="3" fill="#7d8a99"/>
+          <text class="rr-d" x="134.0" y="232" text-anchor="middle">0</text>
+          <text class="rr-d" x="166.0" y="232" text-anchor="middle">1</text>
+          <line x1="150.0" y1="182" x2="134.0" y2="212" stroke="#9aa7b4" stroke-width="2.4" stroke-linecap="round"><animate attributeName="x2" calcMode="discrete" values="134.0;166.0;134.0;166.0;134.0;166.0;134.0;166.0;134.0;166.0;134.0;166.0;134.0;166.0;134.0;166.0" dur="8s" repeatCount="indefinite"/><animate attributeName="stroke" calcMode="discrete" values="#9aa7b4;#3fb950;#9aa7b4;#3fb950;#9aa7b4;#3fb950;#9aa7b4;#3fb950;#9aa7b4;#3fb950;#9aa7b4;#3fb950;#9aa7b4;#3fb950;#9aa7b4;#3fb950" dur="8s" repeatCount="indefinite"/></line>
+          <text class="rr-l" x="150.0" y="264" fill="#58a6ff">b0</text>
+          <text class="rr-l" x="150.0" y="284" fill="#3fb950" font-weight="700" font-size="13">0<animate attributeName="fill" calcMode="discrete" values="#3a4250;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3fb950" dur="8s" repeatCount="indefinite"/></text>
+          <line x1="150.0" y1="110.0" x2="230.0" y2="110.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="170.0" y="103.0" width="40" height="14" rx="3"/>
+          <text class="rr-d" x="190.0" y="97.0" text-anchor="middle">R</text>
+          <circle cx="230.0" cy="110.0" r="3.2" fill="#9aa7b4"/>
+          <line x1="230.0" y1="110.0" x2="230.0" y2="182" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="223.0" y="132" width="14" height="40" rx="3"/>
+          <text class="rr-d" x="242.0" y="156">2R</text>
+          <circle cx="214.0" cy="212" r="3" fill="#7d8a99"/>
+          <circle cx="246.0" cy="212" r="3" fill="#7d8a99"/>
+          <text class="rr-d" x="214.0" y="232" text-anchor="middle">0</text>
+          <text class="rr-d" x="246.0" y="232" text-anchor="middle">1</text>
+          <line x1="230.0" y1="182" x2="214.0" y2="212" stroke="#9aa7b4" stroke-width="2.4" stroke-linecap="round"><animate attributeName="x2" calcMode="discrete" values="214.0;214.0;246.0;246.0;214.0;214.0;246.0;246.0;214.0;214.0;246.0;246.0;214.0;214.0;246.0;246.0" dur="8s" repeatCount="indefinite"/><animate attributeName="stroke" calcMode="discrete" values="#9aa7b4;#9aa7b4;#3fb950;#3fb950;#9aa7b4;#9aa7b4;#3fb950;#3fb950;#9aa7b4;#9aa7b4;#3fb950;#3fb950;#9aa7b4;#9aa7b4;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></line>
+          <text class="rr-l" x="230.0" y="264" fill="#58a6ff">b1</text>
+          <text class="rr-l" x="230.0" y="284" fill="#3fb950" font-weight="700" font-size="13">0<animate attributeName="fill" calcMode="discrete" values="#3a4250;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3fb950" dur="8s" repeatCount="indefinite"/></text>
+          <line x1="230.0" y1="110.0" x2="310.0" y2="110.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="250.0" y="103.0" width="40" height="14" rx="3"/>
+          <text class="rr-d" x="270.0" y="97.0" text-anchor="middle">R</text>
+          <circle cx="310.0" cy="110.0" r="3.2" fill="#9aa7b4"/>
+          <line x1="310.0" y1="110.0" x2="310.0" y2="182" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="303.0" y="132" width="14" height="40" rx="3"/>
+          <text class="rr-d" x="322.0" y="156">2R</text>
+          <circle cx="294.0" cy="212" r="3" fill="#7d8a99"/>
+          <circle cx="326.0" cy="212" r="3" fill="#7d8a99"/>
+          <text class="rr-d" x="294.0" y="232" text-anchor="middle">0</text>
+          <text class="rr-d" x="326.0" y="232" text-anchor="middle">1</text>
+          <line x1="310.0" y1="182" x2="294.0" y2="212" stroke="#9aa7b4" stroke-width="2.4" stroke-linecap="round"><animate attributeName="x2" calcMode="discrete" values="294.0;294.0;294.0;294.0;326.0;326.0;326.0;326.0;294.0;294.0;294.0;294.0;326.0;326.0;326.0;326.0" dur="8s" repeatCount="indefinite"/><animate attributeName="stroke" calcMode="discrete" values="#9aa7b4;#9aa7b4;#9aa7b4;#9aa7b4;#3fb950;#3fb950;#3fb950;#3fb950;#9aa7b4;#9aa7b4;#9aa7b4;#9aa7b4;#3fb950;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></line>
+          <text class="rr-l" x="310.0" y="264" fill="#58a6ff">b2</text>
+          <text class="rr-l" x="310.0" y="284" fill="#3fb950" font-weight="700" font-size="13">0<animate attributeName="fill" calcMode="discrete" values="#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950" dur="8s" repeatCount="indefinite"/></text>
+          <line x1="310.0" y1="110.0" x2="390.0" y2="110.0" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="330.0" y="103.0" width="40" height="14" rx="3"/>
+          <text class="rr-d" x="350.0" y="97.0" text-anchor="middle">R</text>
+          <circle cx="390.0" cy="110.0" r="3.2" fill="#9aa7b4"/>
+          <line x1="390.0" y1="110.0" x2="390.0" y2="182" stroke="#9aa7b4" stroke-width="1.6"/>
+          <rect class="rr-r" x="383.0" y="132" width="14" height="40" rx="3"/>
+          <text class="rr-d" x="402.0" y="156">2R</text>
+          <circle cx="374.0" cy="212" r="3" fill="#7d8a99"/>
+          <circle cx="406.0" cy="212" r="3" fill="#7d8a99"/>
+          <text class="rr-d" x="374.0" y="232" text-anchor="middle">0</text>
+          <text class="rr-d" x="406.0" y="232" text-anchor="middle">1</text>
+          <line x1="390.0" y1="182" x2="374.0" y2="212" stroke="#9aa7b4" stroke-width="2.4" stroke-linecap="round"><animate attributeName="x2" calcMode="discrete" values="374.0;374.0;374.0;374.0;374.0;374.0;374.0;374.0;406.0;406.0;406.0;406.0;406.0;406.0;406.0;406.0" dur="8s" repeatCount="indefinite"/><animate attributeName="stroke" calcMode="discrete" values="#9aa7b4;#9aa7b4;#9aa7b4;#9aa7b4;#9aa7b4;#9aa7b4;#9aa7b4;#9aa7b4;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></line>
+          <text class="rr-l" x="390.0" y="264" fill="#58a6ff">b3</text>
+          <text class="rr-l" x="390.0" y="284" fill="#3fb950" font-weight="700" font-size="13">0<animate attributeName="fill" calcMode="discrete" values="#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950;#3a4250;#3fb950" dur="8s" repeatCount="indefinite"/></text>
+          <line x1="54" y1="248" x2="410" y2="248" stroke="#7d8a99" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <text class="rr-d" x="418" y="252">ground (bit = 0) · V<tspan baseline-shift="sub" font-size="8">ref</tspan> (bit = 1)</text>
+          <text class="rr-l" x="230" y="306" fill="#7d8a99">Only two resistor values: the topology is what sets the binary weights</text>
+          <line x1="390" y1="110.0" x2="450" y2="110.0" stroke="#3fb950" stroke-width="2"/>
+          <polygon points="450,110.0 442,106.0 442,114.0" fill="#3fb950"/>
+          <text class="rr-d" x="404" y="98.0" fill="#3fb950">V<tspan baseline-shift="sub" font-size="8">out</tspan></text>
+          <line x1="480.0" y1="268.0" x2="674.0" y2="268.0" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="480.0" y1="268.0" x2="480.0" y2="54.0" stroke="#2a3140" stroke-width="1.3"/>
+          <path d="M480.00,268.00 L480.00,268.00 L491.75,268.00 L491.75,255.12 L503.50,255.12 L503.50,242.25 L515.25,242.25 L515.25,229.38 L527.00,229.38 L527.00,216.50 L538.75,216.50 L538.75,203.62 L550.50,203.62 L550.50,190.75 L562.25,190.75 L562.25,177.88 L574.00,177.88 L574.00,165.00 L585.75,165.00 L585.75,152.12 L597.50,152.12 L597.50,139.25 L609.25,139.25 L609.25,126.38 L621.00,126.38 L621.00,113.50 L632.75,113.50 L632.75,100.62 L644.50,100.62 L644.50,87.75 L656.25,87.75 L656.25,74.88 L668.00,74.88" fill="none" stroke="#ffa657" stroke-width="2"/>
+          <circle cx="485.88" cy="268.00" r="5" fill="#3fb950"><animate attributeName="cx" calcMode="discrete" values="485.88;497.62;509.38;521.12;532.88;544.62;556.38;568.12;579.88;591.62;603.38;615.12;626.88;638.62;650.38;662.12" dur="8s" repeatCount="indefinite"/><animate attributeName="cy" calcMode="discrete" values="268.00;255.12;242.25;229.38;216.50;203.62;190.75;177.88;165.00;152.12;139.25;126.38;113.50;100.62;87.75;74.88" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="rr-d" x="454.0" y="66.0">V<tspan baseline-shift="sub" font-size="8">ref</tspan></text>
+          <text class="rr-d" x="574.0" y="290.0" text-anchor="middle">16 equal steps</text>
+          <text class="rr-d" x="574.0" y="308.0" text-anchor="middle">input code 0 → 15</text>
+          </svg>
+        <figcaption><b>Figure 3.</b> A 4-bit R-2R network, animated. Each switch connects its 2R to ground (bit at 0)
+        or to the reference (bit at 1). On the right, the output: sixteen equal steps. With 8 bits the
+        steps number 256 and the staircase already looks like a ramp.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>V</mi><mrow><mi>o</mi><mi>u</mi><mi>t</mi></mrow></msub><mo>=</mo><msub><mi>V</mi><mrow><mi>r</mi><mi>e</mi><mi>f</mi></mrow></msub><mo>·</mo><mfrac><mi>D</mi><msup><mn>2</mn><mi>n</mi></msup></mfrac></mrow></math>
+        <span class="cap">D is the binary input number. With V<sub>ref</sub> = 5 V and 8 bits, code
+        200 gives 5 × 200/256 = 3.906 V.</span>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The three specifications to look at on the datasheet</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Settling time</b>: how long the output takes to settle within
+          ±½ LSB of the final value. It sets the maximum update rate.</li>
+          <li><b>Monotonicity</b>: the output never goes down when the code goes up. A non-monotonic D/A inside
+          a control loop makes it oscillate.</li>
+          <li><b>Differential linearity error (DNL)</b> and <b>integral (INL)</b>: how far each
+          step is from the ideal, and how far the whole curve is from the straight line.</li>
+        </ul>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Where a D/A shows up without being called that</div>
+        <p>The <b>PWM</b> output of a microcontroller, filtered with an R-C, is a low-cost D/A converter:
+        the average value of the square wave is proportional to the duty cycle. It is enough to regulate
+        the brightness of a lamp or the speed of a motor, which is what is seen in
+        <a href="/en/publicaciones/mapa-electronica/temas/simulacion-circuitos">simulation</a> and in the
+        peripherals of Year 6. It is not enough for quality audio, because the filter has to be very slow and
+        so the response is too.</p>
+      </div>
+    </section>
+
+    <section id="adc">
+      <h2><span class="n">04</span>A/D converters: the four architectures</h2>
+      <p>All of them compare the input against an internally generated voltage. What changes is
+      <b>how they search</b> for the value, and from that come the speed, the component count and the price.</p>
+
+      <h3>a) Flash (parallel)</h3>
+      <p>A resistor ladder generates all the levels at once and a comparator watches each one. The
+      output of the comparators goes through a priority encoder and that is it: the conversion comes out
+      <b>in a single step</b>.</p>
+
+      <figure>
+        <svg viewBox="0 0 660 300" role="img" aria-label="Flash analog-to-digital converter" class="svg-t" data-anim>
+          <style>.fl-d{fill:#7d8a99;font-size:10.5px}.fl-b{fill:#1c2230;stroke:#58a6ff;stroke-width:2}.fl-n{fill:#e6edf3;font-size:12px;text-anchor:middle;font-weight:600}</style>
+          <line x1="120" y1="40" x2="120" y2="240" stroke="#2a3140" stroke-width="2"/>
+          <text class="fl-d" x="120" y="30" text-anchor="middle">V<tspan baseline-shift="sub" font-size="9">ref</tspan></text>
+          <text class="fl-d" x="120" y="258" text-anchor="middle">ground</text>
+          <rect x="112" y="45.0" width="16" height="15" rx="2.5" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.3"/>
+          <rect x="112" y="70.0" width="16" height="15" rx="2.5" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.3"/>
+          <rect x="112" y="95.0" width="16" height="15" rx="2.5" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.3"/>
+          <rect x="112" y="120.0" width="16" height="15" rx="2.5" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.3"/>
+          <rect x="112" y="145.0" width="16" height="15" rx="2.5" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.3"/>
+          <rect x="112" y="170.0" width="16" height="15" rx="2.5" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.3"/>
+          <rect x="112" y="195.0" width="16" height="15" rx="2.5" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.3"/>
+          <rect x="112" y="220.0" width="16" height="15" rx="2.5" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.3"/>
+          <line x1="128" y1="215.0" x2="196" y2="215.0" stroke="#2a3140" stroke-width="1.2"/>
+          <polygon points="196,204.0 196,226.0 232,215.0" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/>
+          <circle cx="246" cy="215.0" r="5.5" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <line x1="252" y1="215.0" x2="330" y2="215.0" stroke="#2a3140" stroke-width="1"/>
+          <line x1="128" y1="190.0" x2="196" y2="190.0" stroke="#2a3140" stroke-width="1.2"/>
+          <polygon points="196,179.0 196,201.0 232,190.0" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/>
+          <circle cx="246" cy="190.0" r="5.5" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <line x1="252" y1="190.0" x2="330" y2="190.0" stroke="#2a3140" stroke-width="1"/>
+          <line x1="128" y1="165.0" x2="196" y2="165.0" stroke="#2a3140" stroke-width="1.2"/>
+          <polygon points="196,154.0 196,176.0 232,165.0" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/>
+          <circle cx="246" cy="165.0" r="5.5" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <line x1="252" y1="165.0" x2="330" y2="165.0" stroke="#2a3140" stroke-width="1"/>
+          <line x1="128" y1="140.0" x2="196" y2="140.0" stroke="#2a3140" stroke-width="1.2"/>
+          <polygon points="196,129.0 196,151.0 232,140.0" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/>
+          <circle cx="246" cy="140.0" r="5.5" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <line x1="252" y1="140.0" x2="330" y2="140.0" stroke="#2a3140" stroke-width="1"/>
+          <line x1="128" y1="115.0" x2="196" y2="115.0" stroke="#2a3140" stroke-width="1.2"/>
+          <polygon points="196,104.0 196,126.0 232,115.0" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/>
+          <circle cx="246" cy="115.0" r="5.5" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <line x1="252" y1="115.0" x2="330" y2="115.0" stroke="#2a3140" stroke-width="1"/>
+          <line x1="128" y1="90.0" x2="196" y2="90.0" stroke="#2a3140" stroke-width="1.2"/>
+          <polygon points="196,79.0 196,101.0 232,90.0" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/>
+          <circle cx="246" cy="90.0" r="5.5" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <line x1="252" y1="90.0" x2="330" y2="90.0" stroke="#2a3140" stroke-width="1"/>
+          <line x1="128" y1="65.0" x2="196" y2="65.0" stroke="#2a3140" stroke-width="1.2"/>
+          <polygon points="196,54.0 196,76.0 232,65.0" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/>
+          <circle cx="246" cy="65.0" r="5.5" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <line x1="252" y1="65.0" x2="330" y2="65.0" stroke="#2a3140" stroke-width="1"/>
+          <g><line x1="46" y1="140" x2="196" y2="140" stroke="#3fb950" stroke-width="2.4"/><animate attributeName="y1" calcMode="discrete" values="227.50;202.50;177.50;152.50;127.50;102.50;77.50;52.50" dur="8s" repeatCount="indefinite"/><animate attributeName="y2" calcMode="discrete" values="227.50;202.50;177.50;152.50;127.50;102.50;77.50;52.50" dur="8s" repeatCount="indefinite"/></g>
+          <text class="fl-d" x="42" y="112" text-anchor="end" fill="#3fb950">V<tspan baseline-shift="sub" font-size="9">in</tspan></text>
+          <rect class="fl-b" x="330" y="64" width="120" height="76" rx="9"/>
+          <text class="fl-n" x="390" y="94">Priority</text>
+          <text class="fl-d" x="390" y="114" text-anchor="middle">encoder</text>
+          <rect class="fl-b" x="490" y="64" width="130" height="76" rx="9" stroke="#a371f7"/>
+          <text class="fl-n" x="555" y="88">Output · 3 bits</text>
+          <line x1="450" y1="102" x2="490" y2="102" stroke="#9aa7b4" stroke-width="1.8"/>
+          <polygon points="490,102 482,98 482,106" fill="#9aa7b4"/>
+          <circle cx="591" cy="112" r="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.3"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#3fb950;#1c2230;#3fb950;#1c2230;#3fb950;#1c2230;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="fl-d" x="591" y="134" text-anchor="middle">b0</text>
+          <circle cx="555" cy="112" r="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.3"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#3fb950;#3fb950;#1c2230;#1c2230;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="fl-d" x="555" y="134" text-anchor="middle">b1</text>
+          <circle cx="519" cy="112" r="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.3"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="fl-d" x="519" y="134" text-anchor="middle">b2</text>
+          <text class="fl-d" x="330" y="196">2<tspan baseline-shift="super" font-size="8">n</tspan> − 1 comparators: 3 for 2 bits, 255 for 8 bits</text>
+          <text class="fl-d" x="330" y="218">The fastest there is: nanoseconds.</text>
+          <text class="fl-d" x="330" y="240">Also the most power-hungry and the most expensive.</text>
+          <text class="fl-d" x="330" y="262">Digital oscilloscopes, video, software-defined radio.</text>
+          </svg>
+        <figcaption><b>Figure 4.</b> Flash converter. One comparator for each level: the input is compared
+        against all of them at the same time and the result appears immediately. The number of comparators
+        <b>doubles with every bit</b>, and that is its limit.</figcaption>
+      </figure>
+
+      <h3>b) Ramp or counter type</h3>
+      <p>A counter feeds a D/A and its output climbs in a staircase until it exceeds the input. At that moment the
+      comparator freezes the counter: what is left inside is the result. It is cheap —it uses what was already seen
+      in <a href="/en/publicaciones/mapa-electronica/temas/contadores-programables">counters</a>— but the
+      conversion time depends on the measured value: up to 2<sup>n</sup> pulses.</p>
+
+      <h3>c) Successive approximation (SAR)</h3>
+      <p>It is the one found in almost all microcontrollers. Instead of counting one by one, it tests
+      <b>bit by bit</b>, from the most significant to the least, like weighing on a balance with
+      weights of 1/2, 1/4, 1/8 of the range. It always takes <b>n comparisons</b>, whatever the value.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 366" role="img" aria-label="Successive-approximation conversion" class="svg-t" data-anim>
+          <style>.sa-d{fill:#7d8a99;font-size:10.5px}.sa-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="96.0" y1="252.0" x2="600.0" y2="252.0" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="96.0" y1="252.0" x2="96.0" y2="42.0" stroke="#2a3140" stroke-width="1.3"/>
+          <text class="sa-d" x="102.0" y="36.0">full scale · 255 counts</text>
+          <line x1="96.0" y1="54.0" x2="600.0" y2="54.0" stroke="#2a3140" stroke-width="1" stroke-dasharray="4 5"/>
+          <text class="sa-d" x="88.0" y="256.0" text-anchor="end">0</text>
+          <line x1="96.0" y1="127.48" x2="600.0" y2="127.48" stroke="#3fb950" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="sa-d" x="102.0" y="118.48" fill="#3fb950">V<tspan baseline-shift="sub" font-size="8">in</tspan> = 161 counts</text>
+          <path d="M96.00,252.00 L96.00,153.00 L157.75,153.00 L157.75,103.50 L157.75,103.50 L219.50,103.50 L219.50,128.25 L219.50,128.25 L281.25,128.25 L281.25,115.88 L281.25,115.88 L343.00,115.88 L343.00,122.06 L343.00,122.06 L404.75,122.06 L404.75,125.16 L404.75,125.16 L466.50,125.16 L466.50,126.70 L466.50,126.70 L528.25,126.70 L528.25,127.48 L528.25,127.48 L590.00,127.48" fill="none" stroke="#ffa657" stroke-width="2.2"/>
+          <circle cx="126.88" cy="153.00" r="4.5" fill="#3fb950"/>
+          <text class="sa-d" x="126.88" y="142.00" text-anchor="middle" fill="#3fb950">128</text>
+          <text class="sa-d" x="126.88" y="270.0" text-anchor="middle">b7</text>
+          <text x="126.88" y="298.0" text-anchor="middle" font-size="17" font-weight="700" fill="#3fb950" opacity="0">1<animate attributeName="opacity" calcMode="discrete" values="1;1;1;1;1;1;1;1" dur="8s" repeatCount="indefinite"/></text>
+          <circle cx="188.62" cy="103.50" r="4.5" fill="#f85149"/>
+          <text class="sa-d" x="188.62" y="92.50" text-anchor="middle" fill="#f85149">192</text>
+          <text class="sa-d" x="188.62" y="270.0" text-anchor="middle">b6</text>
+          <text x="188.62" y="298.0" text-anchor="middle" font-size="17" font-weight="700" fill="#f85149" opacity="0">0<animate attributeName="opacity" calcMode="discrete" values="0;1;1;1;1;1;1;1" dur="8s" repeatCount="indefinite"/></text>
+          <circle cx="250.38" cy="128.25" r="4.5" fill="#3fb950"/>
+          <text class="sa-d" x="250.38" y="117.25" text-anchor="middle" fill="#3fb950">160</text>
+          <text class="sa-d" x="250.38" y="270.0" text-anchor="middle">b5</text>
+          <text x="250.38" y="298.0" text-anchor="middle" font-size="17" font-weight="700" fill="#3fb950" opacity="0">1<animate attributeName="opacity" calcMode="discrete" values="0;0;1;1;1;1;1;1" dur="8s" repeatCount="indefinite"/></text>
+          <circle cx="312.12" cy="115.88" r="4.5" fill="#f85149"/>
+          <text class="sa-d" x="312.12" y="104.88" text-anchor="middle" fill="#f85149">176</text>
+          <text class="sa-d" x="312.12" y="270.0" text-anchor="middle">b4</text>
+          <text x="312.12" y="298.0" text-anchor="middle" font-size="17" font-weight="700" fill="#f85149" opacity="0">0<animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;1;1;1;1" dur="8s" repeatCount="indefinite"/></text>
+          <circle cx="373.88" cy="122.06" r="4.5" fill="#f85149"/>
+          <text class="sa-d" x="373.88" y="111.06" text-anchor="middle" fill="#f85149">168</text>
+          <text class="sa-d" x="373.88" y="270.0" text-anchor="middle">b3</text>
+          <text x="373.88" y="298.0" text-anchor="middle" font-size="17" font-weight="700" fill="#f85149" opacity="0">0<animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;1;1;1" dur="8s" repeatCount="indefinite"/></text>
+          <circle cx="435.62" cy="125.16" r="4.5" fill="#f85149"/>
+          <text class="sa-d" x="435.62" y="114.16" text-anchor="middle" fill="#f85149">164</text>
+          <text class="sa-d" x="435.62" y="270.0" text-anchor="middle">b2</text>
+          <text x="435.62" y="298.0" text-anchor="middle" font-size="17" font-weight="700" fill="#f85149" opacity="0">0<animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1;1;1" dur="8s" repeatCount="indefinite"/></text>
+          <circle cx="497.38" cy="126.70" r="4.5" fill="#f85149"/>
+          <text class="sa-d" x="497.38" y="115.70" text-anchor="middle" fill="#f85149">162</text>
+          <text class="sa-d" x="497.38" y="270.0" text-anchor="middle">b1</text>
+          <text x="497.38" y="298.0" text-anchor="middle" font-size="17" font-weight="700" fill="#f85149" opacity="0">0<animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;1;1" dur="8s" repeatCount="indefinite"/></text>
+          <circle cx="559.12" cy="127.48" r="4.5" fill="#3fb950"/>
+          <text class="sa-d" x="559.12" y="116.48" text-anchor="middle" fill="#3fb950">161</text>
+          <text class="sa-d" x="559.12" y="270.0" text-anchor="middle">b0</text>
+          <text x="559.12" y="298.0" text-anchor="middle" font-size="17" font-weight="700" fill="#3fb950" opacity="0">1<animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0;1" dur="8s" repeatCount="indefinite"/></text>
+          <circle cx="126.88" cy="153.00" r="9" fill="none" stroke="#58a6ff" stroke-width="2.6"><animate attributeName="cx" calcMode="discrete" values="126.88;188.62;250.38;312.12;373.88;435.62;497.38;559.12" dur="8s" repeatCount="indefinite"/><animate attributeName="cy" calcMode="discrete" values="153.00;103.50;128.25;115.88;122.06;125.16;126.70;127.48" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="sa-l" x="66.0" y="336.0">Green: the trial fits and the bit stays at 1 · red: it overshoots and the bit goes back to 0</text>
+          <text class="sa-l" x="66.0" y="358.0" fill="#58a6ff">Result: 10100001 = 161 · eight steps for eight bits, whatever the input</text>
+          </svg>
+        <figcaption><b>Figure 5.</b> Successive approximation, animated. Each step tests one bit: if the
+        trial value overshoots the input, the bit is discarded; if not, it is kept. Eight steps and the number is
+        ready, whatever the input voltage.</figcaption>
+      </figure>
+
+      <h3>d) Dual slope (integrator)</h3>
+      <p>It charges a capacitor with the input voltage for a fixed time and then discharges it with a
+      reference, measuring how long it takes. It is slow —tens of milliseconds— but incredibly stable, and
+      it has a virtue none of the others has: it <b>averages</b>, so if the integration time
+      is a multiple of the mains period, the 50 Hz hum cancels itself. It is the converter in every
+      bench multimeter, and it is covered in
+      <a href="/en/publicaciones/mapa-electronica/temas/instrumentos-digitales">digital measuring
+      instruments</a>.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Architecture</th><th class="c">Speed</th><th class="c">Typical resolution</th><th>Where it is found</th></tr></thead>
+          <tbody>
+            <tr><td><b>Flash</b></td><td class="c">1 ns to 100 ns</td><td class="c">6 to 8 bits</td><td>Digital oscilloscopes, video, RF.</td></tr>
+            <tr><td><b>Ramp / counter</b></td><td class="c">µs to ms</td><td class="c">8 to 12 bits</td><td>Educational, discrete circuits.</td></tr>
+            <tr><td><b>Successive approximation</b></td><td class="c">1 µs to 100 µs</td><td class="c">8 to 16 bits</td><td>Microcontrollers, general data acquisition.</td></tr>
+            <tr><td><b>Dual slope</b></td><td class="c">10 ms to 400 ms</td><td class="c">3½ to 6½ digits</td><td>Multimeters, scales, thermometers.</td></tr>
+            <tr><td><b>Sigma-delta</b></td><td class="c">ms</td><td class="c">16 to 24 bits</td><td>Audio, load cells, thermocouples.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The sample &amp; hold is not optional</div>
+        <p>A 10-bit SAR takes a few microseconds to decide. If during that time the input moves
+        more than ½ LSB, the bits already decided correspond to one value and the remaining ones to another: the
+        result is neither of the two. That is why the input is frozen with a <b>sample &amp; hold</b>
+        (a capacitor and an analog switch) throughout the conversion. In microcontrollers the S/H
+        is inside, and what you have to respect is its <b>acquisition time</b>: if the sensor has a high
+        output impedance, the capacitor does not manage to charge and the reading comes out low. The fix is a
+        voltage follower before the A/D.</p>
+      </div>
+    </section>
+
+    <section id="interfaces">
+      <h2><span class="n">05</span>Getting the data out: RS232, RS422 and RS485</h2>
+      <p>Once the signal is a number, it has to be transported. The three standards of the EIA/TIA family
+      solve the same problem with different criteria. They are <b>electrical standards</b>: they say nothing about the
+      meaning of the data, only about voltages, cables and connectors.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th class="c">RS232</th><th class="c">RS422</th><th class="c">RS485</th></tr></thead>
+          <tbody>
+            <tr><td><b>Signaling</b></td><td class="c">Single-ended, referenced to ground</td><td class="c">Differential</td><td class="c">Differential</td></tr>
+            <tr><td><b>Levels</b></td><td class="c">±3 V to ±15 V<br><span class="v0">(a 1 is negative)</span></td><td class="c">±2 V to ±6 V<br><span class="v0">between A and B</span></td><td class="c">±1.5 V to ±6 V<br><span class="v0">between A and B</span></td></tr>
+            <tr><td><b>Distance</b></td><td class="c">15 m</td><td class="c">1200 m</td><td class="c">1200 m</td></tr>
+            <tr><td><b>Speed</b></td><td class="c">Up to 115 kbps</td><td class="c">Up to 10 Mbps</td><td class="c">Up to 10 Mbps</td></tr>
+            <tr><td><b>Nodes</b></td><td class="c">1 to 1</td><td class="c">1 driver, 10 receivers</td><td class="c">32 unit loads</td></tr>
+            <tr><td><b>Direction</b></td><td class="c">Full duplex</td><td class="c">Full duplex</td><td class="c">Half duplex (2 wires)</td></tr>
+            <tr><td><b>Where you see it</b></td><td class="c">Consoles, older PLCs, GPS</td><td class="c">Encoders, CNC</td><td class="c">Modbus, DMX512, Profibus</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The basic difference between RS232 and the other two is not the speed or the distance: it is
+      <b>what the signal is measured against</b>. And everything else follows from that.</p>
+
+      <figure>
+        <svg viewBox="0 0 680 300" role="img" aria-label="Common-mode rejection on a differential line" class="svg-t" data-anim>
+          <style>.rs-d{fill:#7d8a99;font-size:10.5px}.rs-l{fill:#9aa7b4;font-size:11px;text-anchor:end;font-weight:600}</style>
+          <g>
+          <path d="M150.00,50.00 L201.25,50.00 L201.25,76.00 L252.50,76.00 L252.50,50.00 L303.75,50.00 L355.00,50.00 L355.00,76.00 L406.25,76.00 L406.25,50.00 L457.50,50.00 L457.50,76.00 L508.75,76.00 L560.00,76.00" fill="none" stroke="#58a6ff" stroke-width="2.2"/>
+          <path d="M150.00,146.00 L201.25,146.00 L201.25,120.00 L252.50,120.00 L252.50,146.00 L303.75,146.00 L355.00,146.00 L355.00,120.00 L406.25,120.00 L406.25,146.00 L457.50,146.00 L457.50,120.00 L508.75,120.00 L560.00,120.00" fill="none" stroke="#a371f7" stroke-width="2.2"/>
+          <text class="rs-l" x="138.0" y="66" fill="#58a6ff">A</text>
+          <text class="rs-l" x="138.0" y="136" fill="#a371f7">B</text>
+          <animateTransform attributeName="transform" type="translate" values="0 0;0 -13;0 5;0 -9;0 11;0 -4;0 0" dur="3.2s" repeatCount="indefinite"/>
+          </g>
+          <path d="M150.00,198.00 L201.25,198.00 L201.25,232.00 L252.50,232.00 L252.50,198.00 L303.75,198.00 L355.00,198.00 L355.00,232.00 L406.25,232.00 L406.25,198.00 L457.50,198.00 L457.50,232.00 L508.75,232.00 L560.00,232.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <text class="rs-l" x="138.0" y="222" fill="#3fb950">A − B</text>
+          <line x1="90.0" y1="176" x2="600.0" y2="176" stroke="#2a3140" stroke-width="1.2" stroke-dasharray="5 5"/>
+          <text class="rs-d" x="90.0" y="192">what the receiver sees</text>
+          <path d="M596,58 l-16,34 h13 l-11,32 26,-40 h-13 z" fill="#d29922" opacity=".85"><animate attributeName="opacity" values=".25;1;.25" dur="3.2s" repeatCount="indefinite"/></path>
+          <text class="rs-d" x="588" y="146" fill="#d29922">induced noise</text>
+          <text class="rs-d" x="588" y="162" fill="#d29922">on both wires</text>
+          <text class="rs-d" x="175.62" y="284" text-anchor="middle">1</text>
+          <text class="rs-d" x="226.88" y="284" text-anchor="middle">0</text>
+          <text class="rs-d" x="278.12" y="284" text-anchor="middle">1</text>
+          <text class="rs-d" x="329.38" y="284" text-anchor="middle">1</text>
+          <text class="rs-d" x="380.62" y="284" text-anchor="middle">0</text>
+          <text class="rs-d" x="431.88" y="284" text-anchor="middle">1</text>
+          <text class="rs-d" x="483.12" y="284" text-anchor="middle">0</text>
+          <text class="rs-d" x="534.38" y="284" text-anchor="middle">0</text>
+          <text class="rs-d" x="138.0" y="284" text-anchor="end">data</text>
+          </svg>
+        <figcaption><b>Figure 6.</b> Common-mode rejection, animated. The noise that the installation induces in the
+        cable enters <b>equally on both wires</b>. The receiver does not look at either of them against ground: it looks at
+        the <b>difference</b>, and there the noise cancels. It is the same idea as the
+        instrumentation amplifier.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Practical rules for an RS485 bus</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Twisted pair</b>, and A and B must be from the same pair. If they are split across different pairs, the
+          noise rejection is lost.</li>
+          <li><b>Bus topology</b>, not star: one cable that runs past all the nodes with stubs
+          as short as possible.</li>
+          <li><b>120 Ω termination</b> at both ends of the cable, not in the middle or at each node. It is
+          the characteristic impedance of the twisted pair.</li>
+          <li><b>Bias resistors</b> (fail-safe) so that the bus takes a defined state when
+          no node is transmitting. Without them, the receiver reads noise as if it were data.</li>
+          <li><b>Only one transmitter at a time</b>: since it is half duplex, the protocol (Modbus, for example)
+          defines who talks and when.</li>
+          <li>The <b>ground</b> is also carried along, even though the signal is differential: the receiver’s
+          common-mode range is −7 V to +12 V, and in a factory that difference is easily exceeded.</li>
+        </ul>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">RS232 levels are inverted and large</div>
+        <p>A microcontroller delivers 0 V and 5 V; RS232 asks for <b>+12 V for the 0 and −12 V for the 1</b>. Between
+        the two there is always a level shifter: the classic <b>MAX232</b>, which generates the negative
+        voltages with a charge pump and four capacitors. Connecting an RS232 port directly to a
+        microcontroller pin destroys it.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · A 4-bit D/A with R-2R</div>
+        <p>Build the ladder with 10 kΩ and 20 kΩ resistors at 1%, with four switches to ground or to 5 V.
+        Measure the output at all sixteen codes and build the table of theoretical versus measured. The theoretical
+        step is 5/16 = <b>312.5 mV</b>. Plot it and calculate the maximum error. Then repeat with
+        5% resistors and compare: you can see directly why tolerance rules. Commercial values are chosen with the
+        <a class="ref" href="/publicaciones/calculadora-resistores" hreflang="es">resistor calculator</a>.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Digital ramp</div>
+        <p>Connect a CD4040 counter to the R-2R network above and a 1 kHz clock. On the oscilloscope
+        a staircase ramp appears. Count the steps, measure the height of each one and verify that the
+        period of the ramp is 16 times that of the clock. It is a digital sawtooth generator.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · Aliasing with the generator and the oscilloscope</div>
+        <p>With a digital oscilloscope on a slow timebase, inject a sine wave of increasing frequency.
+        Past a certain frequency, the screen shows a wave that is <b>slower</b> than the real one, one that
+        does not exist. Note at what frequency it starts and compare it with the sampling rate declared by the
+        instrument. It is the demonstration that aliasing is not a technicality.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Real resolution of an A/D</div>
+        <p>With a microcontroller, read a fixed voltage from a battery and show the raw code over the serial
+        port. Note how much the last digit fluctuates. Then average 64 readings and look again: the
+        fluctuation drops. That is the <b>oversampling</b> technique, which adds half an effective bit each time
+        the number of samples is quadrupled.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Usual cause</th></tr></thead>
+          <tbody>
+            <tr><td>The A/D reading jumps several counts with the input still</td><td>Noise on the reference or on the ground. Decouple V<sub>ref</sub>, separate the analog ground from the digital one and average readings.</td></tr>
+            <tr><td>The reading is always lower than it should be</td><td>Sensor output impedance too high for the S/H acquisition time. Put in a follower with an op amp.</td></tr>
+            <tr><td>A slow signal appears that does not exist</td><td>Aliasing: the anti-aliasing filter is missing or the sampling frequency is insufficient.</td></tr>
+            <tr><td>The D/A steps backward at some code</td><td>Non-monotonic converter, or network resistors out of tolerance. It is most noticeable at the 0111 → 1000 transition.</td></tr>
+            <tr><td>The converted value depends on temperature</td><td>Poor-quality voltage reference. Use a dedicated reference, not the supply itself.</td></tr>
+            <tr><td>The RS485 bus works on the bench and fails on the plant floor</td><td>Missing 120 Ω termination, or the cable is not twisted pair, or the ground was not carried along and the common-mode range was exceeded.</td></tr>
+            <tr><td>The serial port receives garbage</td><td>Wrong baud rate, or TTL levels connected directly to RS232 without an adapter.</td></tr>
+            <tr><td>On RS485 the first character of each message is lost</td><td>The direction control (DE/RE) switches too late. The transmitter has to be enabled before sending the first bit and released after the last one.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Self-assessment</h2>
+
+      <details class="q"><summary>A 12-bit A/D with a 3.3 V reference: what is its LSB?</summary>
+        <div class="a"><p>3.3 V / 4096 = <b>0.806 mV</b>, and the quantization error is half of that:
+        ±0.40 mV.</p></div></details>
+
+      <details class="q"><summary>Why does an anti-aliasing filter have to be analog and not digital?</summary>
+        <div class="a"><p>Because it has to act <b>before</b> sampling. Once sampled, the
+        high-frequency component has already been reflected into the useful band and is indistinguishable from a
+        legitimate signal: no later processing can separate it.</p></div></details>
+
+      <details class="q"><summary>What advantage does the R-2R network have over the weighted network?</summary>
+        <div class="a"><p>It uses <b>only two</b> resistor values instead of a progression that
+        doubles. With 8 bits, the weighted one needs values from R to 128R with 0.2% precision; the R-2R
+        needs many equal resistors, which is exactly what an integrated process does well.</p></div></details>
+
+      <details class="q"><summary>A 10-bit SAR with a 1 MHz clock: how long does a conversion take?</summary>
+        <div class="a"><p>Ten comparisons, one per bit, plus one sampling cycle:
+        approximately <b>11 µs</b>. And that time is the same for any input voltage, unlike
+        the ramp converter.</p></div></details>
+
+      <details class="q"><summary>Why does the dual-slope converter reject 50 Hz hum?</summary>
+        <div class="a"><p>Because it <b>integrates</b> the input for a fixed time. If that time is an exact
+        multiple of the mains period (20 ms), the sinusoidal interference contributes as much in the positive
+        half-cycles as in the negative ones and its average is zero.</p></div></details>
+
+      <details class="q"><summary>How many comparators does an 8-bit flash need?</summary>
+        <div class="a"><p>2<sup>8</sup> − 1 = <b>255</b>. With 10 bits it would be 1023 and with 16 bits, 65,535:
+        that is why flash does not go beyond 8 or 10 bits in practice.</p></div></details>
+
+      <details class="q"><summary>You want to measure an audio signal of up to 15 kHz. What sampling frequency is needed?</summary>
+        <div class="a"><p>More than 30 kHz. In practice quite a bit more is used, because the anti-aliasing filter does not
+        cut off abruptly: the CD’s 44.1 kHz leaves a margin between the 20 kHz of the signal and the 22.05 kHz of
+        Nyquist so that the filter has room to roll off.</p></div></details>
+
+      <details class="q"><summary>Why does RS485 withstand 1200 m and RS232 only 15?</summary>
+        <div class="a"><p>Because RS485 is <b>differential</b>: the receiver measures the difference between two twisted
+        wires and the noise, which enters equally on both, cancels. RS232 measures against ground, so every
+        potential difference and all induced noise add to the signal.</p></div></details>
+
+      <details class="q"><summary>What is the 120 Ω resistor at the end of an RS485 bus for?</summary>
+        <div class="a"><p>To match the cable to its characteristic impedance and prevent the signal from
+        <b>bouncing</b> back from the open end. Without termination, the echoes overlap the data and
+        errors appear that get worse the faster you transmit.</p></div></details>
+
+      <details class="q"><summary>With an 8-bit, 5 V A/D, can you measure the output of a type K thermocouple (about 40 µV/°C)?</summary>
+        <div class="a"><p>Not directly: the LSB is 19.5 mV, almost <b>500 °C</b> per step. You have to
+        amplify the thermocouple by about 250 with an instrumentation amplifier and also use a
+        converter with more bits, or simply a 24-bit sigma-delta designed for that.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/contadores-programables">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Programmable counters</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/instrumentos-digitales">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Digital measuring instruments</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“A/D and D/A converters”</b> of <b>Digital Electronics II</b> (Year 5), based on the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

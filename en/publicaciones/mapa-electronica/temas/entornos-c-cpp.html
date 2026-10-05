@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C and C++ development environments · Computing for Electronics I · Catto</title>
+<meta name="description" content="Toolchain and cross-compilation, pointers and pointer arithmetic, structures, hardware register access and device drivers, bootloaders, real time, interrupts and concurrency. A topic of Computing for Electronics I, Year 4.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/entornos-c-cpp">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/entornos-c-cpp">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/entornos-c-cpp">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/entornos-c-cpp">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Computing for Electronics I</a>
+    <span class="anio">Year 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computing for Electronics I</span> · 72 h · Topic 2 of 3</div>
+    <h1>C and C++ development environments</h1>
+    <p class="lead">The leap from “programming” to “programming hardware”. Pointers, structures and direct access to
+    registers are the tools with which a program stops running on top of an abstraction and starts
+    driving real pins, timers and converters.</p>
+    <div class="chips">
+      <span class="chip hi">Programming</span>
+      <span class="chip hi">Microcontrollers</span>
+      <span class="chip">Pointers</span>
+      <span class="chip">Interrupts</span>
+      <span class="chip">Embedded systems</span>
+    </div>
+    <hr class="rule">
+
+    <section id="toolchain">
+      <h2><span class="n">01</span>The toolchain</h2>
+      <p>Programming a microcontroller has one central difference from programming a PC: the program is
+      <b>written and compiled on one machine and run on another</b>. This is called <b>cross-compilation</b>.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 300" role="img" aria-label="Compilation toolchain, animated" class="svg-t" data-anim><style>.cd-t{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}.cd-s{fill:#7d8a99;font-size:9.5px;text-anchor:middle}.cd-c{fill:#9aa7b4;font-size:10.5px}.cd-h{fill:#e6edf3;font-size:12px;font-weight:700}</style><rect x="24" y="88" width="100" height="62" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cd-t" x="74" y="118" fill="#7d8a99">main.c</text><text class="cd-s" x="74" y="136">code</text><path d="M124 119 H136" stroke="#2a3140" stroke-width="1.2"/><rect x="136" y="88" width="100" height="62" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cd-t" x="186" y="118" fill="#7d8a99">Preprocessor</text><text class="cd-s" x="186" y="136">resolves</text><path d="M236 119 H248" stroke="#2a3140" stroke-width="1.2"/><rect x="248" y="88" width="100" height="62" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cd-t" x="298" y="118" fill="#7d8a99">Compiler</text><text class="cd-s" x="298" y="136">generates</text><path d="M348 119 H360" stroke="#2a3140" stroke-width="1.2"/><rect x="360" y="88" width="100" height="62" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cd-t" x="410" y="118" fill="#7d8a99">Assembler</text><text class="cd-s" x="410" y="136">generates</text><path d="M460 119 H472" stroke="#2a3140" stroke-width="1.2"/><rect x="472" y="88" width="100" height="62" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cd-t" x="522" y="118" fill="#7d8a99">Linker</text><text class="cd-s" x="522" y="136">joins</text><path d="M572 119 H584" stroke="#2a3140" stroke-width="1.2"/><rect x="584" y="88" width="100" height="62" rx="8" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="cd-t" x="634" y="118" fill="#7d8a99">main.hex</text><text class="cd-s" x="634" y="136">ready</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;1;1;1;1;1" dur="15s" repeatCount="indefinite"/><rect x="24" y="88" width="100" height="62" rx="8" fill="#9aa7b4" fill-opacity="0.26" stroke="#9aa7b4" stroke-width="1.8"/><text class="cd-t" x="74" y="118" fill="#9aa7b4">main.c</text><text class="cd-s" x="74" y="136" fill="#9aa7b4">code</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;1;1;1;1" dur="15s" repeatCount="indefinite"/><rect x="136" y="88" width="100" height="62" rx="8" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="1.8"/><text class="cd-t" x="186" y="118" fill="#58a6ff">Preprocessor</text><text class="cd-s" x="186" y="136" fill="#9aa7b4">resolves</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;1;1;1" dur="15s" repeatCount="indefinite"/><rect x="248" y="88" width="100" height="62" rx="8" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="1.8"/><text class="cd-t" x="298" y="118" fill="#58a6ff">Compiler</text><text class="cd-s" x="298" y="136" fill="#9aa7b4">generates</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;1;1" dur="15s" repeatCount="indefinite"/><rect x="360" y="88" width="100" height="62" rx="8" fill="#bc8cff" fill-opacity="0.26" stroke="#bc8cff" stroke-width="1.8"/><text class="cd-t" x="410" y="118" fill="#bc8cff">Assembler</text><text class="cd-s" x="410" y="136" fill="#9aa7b4">generates</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;1" dur="15s" repeatCount="indefinite"/><rect x="472" y="88" width="100" height="62" rx="8" fill="#bc8cff" fill-opacity="0.26" stroke="#bc8cff" stroke-width="1.8"/><text class="cd-t" x="522" y="118" fill="#bc8cff">Linker</text><text class="cd-s" x="522" y="136" fill="#9aa7b4">joins</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1" dur="15s" repeatCount="indefinite"/><rect x="584" y="88" width="100" height="62" rx="8" fill="#3fb950" fill-opacity="0.26" stroke="#3fb950" stroke-width="1.8"/><text class="cd-t" x="634" y="118" fill="#3fb950">main.hex</text><text class="cd-s" x="634" y="136" fill="#9aa7b4">ready</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0" dur="15s" repeatCount="indefinite"/><text class="cd-h" x="30" y="60" fill="#9aa7b4">main.c &#183; source code</text><text class="cd-c" x="30" y="212">The file the person writes: plain text with the instructions in C.</text><text class="cd-c" x="30" y="230"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0" dur="15s" repeatCount="indefinite"/><text class="cd-h" x="30" y="60" fill="#58a6ff">Preprocessor &#183; resolves #include and #define</text><text class="cd-c" x="30" y="212">Pastes in the contents of the headers and replaces the macros. It is still text.</text><text class="cd-c" x="30" y="230"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0" dur="15s" repeatCount="indefinite"/><text class="cd-h" x="30" y="60" fill="#58a6ff">Compiler &#183; generates assembly</text><text class="cd-c" x="30" y="212">Translates to the target processor's instructions and applies the optimizations.</text><text class="cd-c" x="30" y="230"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0" dur="15s" repeatCount="indefinite"/><text class="cd-h" x="30" y="60" fill="#bc8cff">Assembler &#183; generates object code</text><text class="cd-c" x="30" y="212">Converts the assembly into machine code, still with the addresses unresolved.</text><text class="cd-c" x="30" y="230"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0" dur="15s" repeatCount="indefinite"/><text class="cd-h" x="30" y="60" fill="#bc8cff">Linker &#183; joins everything and places it</text><text class="cd-c" x="30" y="212">Combines the objects with the libraries and decides where each thing lives in the chip's memory.</text><text class="cd-c" x="30" y="230"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1" dur="15s" repeatCount="indefinite"/><text class="cd-h" x="30" y="60" fill="#3fb950">main.hex &#183; ready to flash</text><text class="cd-c" x="30" y="212">The file the programmer writes into the microcontroller's flash memory.</text><text class="cd-c" x="30" y="230"></text></g><text class="cd-c" x="30" y="266" fill="#7d8a99">Almost all of this happens with a single command, but it pays to know it: error messages say in which stage it failed,</text><text class="cd-c" x="30" y="284" fill="#7d8a99">and a compiler error is not the same as a linker error.</text></svg>
+        <figcaption><b>Figure 1.</b> The toolchain, animated: each stage lights up in its turn. The error
+        messages say in which of them it failed, and a compiler error is not the same as a linker error.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Component</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><b>Toolchain</b></td><td>The set of compiler + assembler + linker + utilities, specific to the target architecture (<code>avr-gcc</code>, <code>arm-none-eabi-gcc</code>, Microchip XC8).</td></tr>
+            <tr><td><b>IDE</b></td><td>The graphical environment that integrates editor, compiler, programmer and debugger: MPLAB X, Atmel Studio, STM32CubeIDE, PlatformIO, Arduino IDE.</td></tr>
+            <tr><td><b>Linker script</b></td><td>Describes the chip's <b>memory map</b> and decides at which address each thing goes.</td></tr>
+            <tr><td><b>Startup code</b></td><td>An assembly routine that runs before <code>main()</code>: it sets up the stack, initializes variables and jumps to the program.</td></tr>
+            <tr><td><b>Programmer / flasher</b></td><td>The hardware that writes the <code>.hex</code> into flash: PICkit, USBasp, ST-Link, or a bootloader over USB.</td></tr>
+            <tr><td><b>Debugger</b></td><td>Lets you halt the program <b>on the real chip</b> and inspect variables: ICD, JTAG, SWD.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The three memories of a microcontroller</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Flash</b> — stores the program. Non-volatile, large (tens of KB), written when programming.</li>
+          <li><b>RAM</b> — stores the variables. Volatile and <b>very scarce</b>: 512 bytes to 8 KB in an
+          8-bit micro. It is the resource that runs out first.</li>
+          <li><b>EEPROM</b> — a few non-volatile bytes, for configuration that must survive power-off.</li>
+        </ul>
+        <p style="margin-top:10px">When compiling, the environment reports how much flash and how much RAM the program uses.
+        <b>Always look at that number.</b> A program that uses 95 % of the RAM will fail as soon as
+        the stack grows a little.</p>
+      </div>
+    </section>
+
+    <section id="punteros">
+      <h2><span class="n">02</span>Pointers</h2>
+      <p>A pointer is a variable that holds <b>a memory address</b>. It is the concept that is hardest
+      to grasp and the one that pays off most: without pointers there is no hardware access, no pass by reference, and no data
+      structures.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 342" role="img" aria-label="A variable and a pointer in the memory map, animated" class="svg-t" data-anim><style>.pt-c{fill:#9aa7b4;font-size:12px;font-family:ui-monospace,monospace}.pt-l{fill:#7d8a99;font-size:10px;text-anchor:middle}.pt-t{fill:#e6edf3;font-size:12px;font-weight:700}.pt-x{fill:#9aa7b4;font-size:10.5px}</style><rect x="300" y="96" width="92" height="40" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="pt-l" x="266" y="120">0x0200</text><rect x="300" y="144" width="92" height="40" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="pt-l" x="266" y="168">0x0204</text><rect x="300" y="192" width="92" height="40" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="pt-l" x="266" y="216">0x0208</text><rect x="300" y="240" width="92" height="40" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="pt-l" x="266" y="302">0x020C</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="14s" repeatCount="indefinite"/><text class="pt-c" x="40" y="140" fill="#3fb950">int  x = 25;</text><rect x="300" y="96" width="92" height="40" rx="4" fill="#3fb950" fill-opacity="0.24" stroke="#3fb950" stroke-width="1.8"/><text class="pt-c" x="346" y="121" fill="#e6edf3" text-anchor="middle">25</text><text class="pt-l" x="412" y="120" fill="#3fb950">x</text><text class="pt-x" x="40" y="302">A place in memory is reserved for x, at address 0x0200, and the 25 is stored there.</text><text class="pt-x" x="40" y="282"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="14s" repeatCount="indefinite"/><text class="pt-c" x="40" y="140" fill="#58a6ff">int *p = &amp;x;</text><rect x="300" y="96" width="92" height="40" rx="4" fill="#3fb950" fill-opacity="0.24" stroke="#3fb950" stroke-width="1.8"/><text class="pt-c" x="346" y="121" fill="#e6edf3" text-anchor="middle">25</text><text class="pt-l" x="412" y="120" fill="#3fb950">x</text><rect x="300" y="144" width="92" height="40" rx="4" fill="#58a6ff" fill-opacity="0.24" stroke="#58a6ff" stroke-width="1.8"/><text class="pt-c" x="346" y="169" fill="#e6edf3" text-anchor="middle" font-size="11">0x0200</text><text class="pt-l" x="412" y="168" fill="#58a6ff">p</text><path d="M294 164 C 240 156 240 116 294 116" fill="none" stroke="#58a6ff" stroke-width="1.8"/><path d="M292 116 l8 -5 v10 z" fill="#58a6ff"/><circle r="4" fill="#58a6ff"><animateMotion path="M294 164 C 240 156 240 116 294 116" dur="2s" repeatCount="indefinite"/></circle><text class="pt-x" x="40" y="302">p is another variable, at 0x0204, and what it holds is the ADDRESS of x, not its value.</text><text class="pt-x" x="40" y="282"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="14s" repeatCount="indefinite"/><text class="pt-c" x="40" y="140" fill="#d29922">*p = 40;</text><rect x="300" y="96" width="92" height="40" rx="4" fill="#3fb950" fill-opacity="0.24" stroke="#3fb950" stroke-width="1.8"/><text class="pt-c" x="346" y="121" fill="#e6edf3" text-anchor="middle">40</text><text class="pt-l" x="412" y="120" fill="#3fb950">x</text><rect x="300" y="144" width="92" height="40" rx="4" fill="#58a6ff" fill-opacity="0.24" stroke="#58a6ff" stroke-width="1.8"/><text class="pt-c" x="346" y="169" fill="#e6edf3" text-anchor="middle" font-size="11">0x0200</text><text class="pt-l" x="412" y="168" fill="#58a6ff">p</text><path d="M294 164 C 240 156 240 116 294 116" fill="none" stroke="#58a6ff" stroke-width="1.8"/><path d="M292 116 l8 -5 v10 z" fill="#58a6ff"/><circle r="4" fill="#58a6ff"><animateMotion path="M294 164 C 240 156 240 116 294 116" dur="2s" repeatCount="indefinite"/></circle><text class="pt-x" x="40" y="302">The asterisk means 'the contents of the address p holds': x is modified without naming it.</text><text class="pt-x" x="40" y="282"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="14s" repeatCount="indefinite"/><text class="pt-c" x="40" y="140" fill="#bc8cff">printf("%d", x);</text><rect x="300" y="96" width="92" height="40" rx="4" fill="#3fb950" fill-opacity="0.24" stroke="#3fb950" stroke-width="1.8"/><text class="pt-c" x="346" y="121" fill="#e6edf3" text-anchor="middle">40</text><text class="pt-l" x="412" y="120" fill="#3fb950">x</text><rect x="300" y="144" width="92" height="40" rx="4" fill="#58a6ff" fill-opacity="0.24" stroke="#58a6ff" stroke-width="1.8"/><text class="pt-c" x="346" y="169" fill="#e6edf3" text-anchor="middle" font-size="11">0x0200</text><text class="pt-l" x="412" y="168" fill="#58a6ff">p</text><path d="M294 164 C 240 156 240 116 294 116" fill="none" stroke="#58a6ff" stroke-width="1.8"/><path d="M292 116 l8 -5 v10 z" fill="#58a6ff"/><circle r="4" fill="#58a6ff"><animateMotion path="M294 164 C 240 156 240 116 294 116" dur="2s" repeatCount="indefinite"/></circle><text class="pt-x" x="40" y="302">powerful and dangerous.</text><text class="pt-x" x="40" y="282">x is 40 even though it was never touched directly. That is what makes pointers both</text></g><text class="pt-t" x="40" y="72" fill="#9aa7b4">memory</text><text class="pt-x" x="40" y="324" fill="#7d8a99">A pointer is a variable that holds an address. Nothing more than that, and everything else follows from it.</text></svg>
+        <figcaption><b>Figure 2.</b> A variable and a pointer in memory, animated: you can see that <code>p</code> holds the address
+        of <code>x</code>, and that writing to <code>*p</code> modifies <code>x</code> without naming it.</figcaption>
+      </figure>
+
+      <pre class="code"><code><span class="c-ty">int</span>  x = <span class="c-num">42</span>;
+<span class="c-ty">int</span> *p;          <span class="c-com">// p is a pointer to int</span>
+
+p = &amp;x;         <span class="c-com">// p takes the ADDRESS of x</span>
+<span class="c-fn">printf</span>(<span class="c-str">"%d"</span>, *p);  <span class="c-com">// prints 42 — * accesses the CONTENTS</span>
+*p = <span class="c-num">7</span>;          <span class="c-com">// now x is 7, without naming x</span></code></pre>
+
+      <h3>What they are really for</h3>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Modifying the caller's variables</div>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-com">// does NOT work: receives copies</span>
+<span class="c-ty">void</span> <span class="c-fn">mal</span>(<span class="c-ty">int</span> a, <span class="c-ty">int</span> b) {
+    <span class="c-ty">int</span> t = a; a = b; b = t;
+}
+
+<span class="c-com">// DOES work: receives addresses</span>
+<span class="c-ty">void</span> <span class="c-fn">bien</span>(<span class="c-ty">int</span> *a, <span class="c-ty">int</span> *b) {
+    <span class="c-ty">int</span> t = *a; *a = *b; *b = t;
+}
+<span class="c-fn">bien</span>(&amp;x, &amp;y);</code></pre>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Returning more than one value</div>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-ty">void</span> <span class="c-fn">leer_sensor</span>(<span class="c-ty">int</span> *temp,
+                 <span class="c-ty">int</span> *hum)
+{
+    *temp = <span class="c-fn">medir_t</span>();
+    *hum  = <span class="c-fn">medir_h</span>();
+}
+
+<span class="c-ty">int</span> t, h;
+<span class="c-fn">leer_sensor</span>(&amp;t, &amp;h);</code></pre>
+          <p style="font-size:13px;margin-top:8px">A C function returns a single value; with pointers it can
+          “return” as many as needed.</p>
+        </div>
+      </div>
+
+      <h3>Pointer arithmetic</h3>
+      <p>Adding 1 to a pointer does <b>not</b> add 1 to the address: it adds the size of the pointed-to type. That
+      is the reason a pointer has a type.</p>
+
+      <pre class="code"><code><span class="c-ty">int</span> v[<span class="c-num">5</span>] = {<span class="c-num">10</span>, <span class="c-num">20</span>, <span class="c-num">30</span>, <span class="c-num">40</span>, <span class="c-num">50</span>};
+<span class="c-ty">int</span> *p = v;        <span class="c-com">// the array name is ALREADY the address of the first element</span>
+
+*p        <span class="c-com">// 10  — equivalent to v[0]</span>
+*(p + <span class="c-num">2</span>)  <span class="c-com">// 30  — equivalent to v[2]; advanced 2 * sizeof(int) bytes</span>
+p[<span class="c-num">2</span>]      <span class="c-com">// 30  — bracket notation IS pointer arithmetic</span>
+
+<span class="c-com">// Traverse an array with pointers</span>
+<span class="c-kw">for</span> (<span class="c-ty">int</span> *q = v; q &lt; v + <span class="c-num">5</span>; q++) {
+    <span class="c-fn">printf</span>(<span class="c-str">"%d "</span>, *q);
+}</code></pre>
+
+      <div class="box peligro">
+        <div class="bt">The three pointer mistakes</div>
+        <ul style="margin:0;padding-left:18px">
+          <li><b>Uninitialized pointer.</b> It contains garbage and writing through it corrupts memory at
+          random. Every pointer gets initialized, even if only to <code>NULL</code>.</li>
+          <li><b>Dangling pointer.</b> It points to a local variable of a function that has already returned. That memory
+          has been reused and the contents are unpredictable. <b>Never return the address of a
+          local variable.</b></li>
+          <li><b>Dereferencing NULL.</b> On a PC it causes an immediate crash; on a microcontroller
+          it writes to address 0, which is often a critical register, and the chip resets.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="estructuras">
+      <h2><span class="n">03</span>Structures, unions and typedef</h2>
+      <p>A <b>structure</b> groups data of different types under a single name. It is what lets you treat
+      “a sensor” or “a measurement” as a single thing.</p>
+
+      <pre class="code"><code><span class="c-kw">typedef</span> <span class="c-kw">struct</span> {
+    <span class="c-ty">uint8_t</span>  id;
+    <span class="c-ty">int16_t</span>  temperatura;   <span class="c-com">// in tenths of a degree</span>
+    <span class="c-ty">uint16_t</span> humedad;
+    <span class="c-ty">uint8_t</span>  valido;
+} Sensor;
+
+Sensor s1;
+s1.id = <span class="c-num">3</span>;
+s1.temperatura = <span class="c-num">235</span>;      <span class="c-com">// 23.5 °C</span>
+
+Sensor red[<span class="c-num">8</span>];             <span class="c-com">// an array of structures</span>
+red[<span class="c-num">0</span>].humedad = <span class="c-num">640</span>;
+
+Sensor *ps = &amp;s1;
+ps-&gt;id = <span class="c-num">4</span>;                <span class="c-com">// with a pointer, use -&gt; instead of .</span></code></pre>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Union</div>
+          <p>All its fields share <b>the same place in memory</b>. It is used to view the same piece of data in two
+          ways.</p>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-kw">union</span> {
+    <span class="c-ty">uint16_t</span> palabra;
+    <span class="c-ty">uint8_t</span>  byte[<span class="c-num">2</span>];
+} conv;
+
+conv.palabra = <span class="c-num">0xABCD</span>;
+<span class="c-com">// conv.byte[0] and [1] are</span>
+<span class="c-com">// 0xCD and 0xAB (or the reverse,</span>
+<span class="c-com">// depending on endianness)</span></code></pre>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Bit fields</div>
+          <p>They let you declare fields of an exact width in bits: ideal for configuration registers.</p>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-kw">struct</span> {
+    <span class="c-ty">uint8_t</span> habilitado : <span class="c-num">1</span>;
+    <span class="c-ty">uint8_t</span> modo       : <span class="c-num">2</span>;
+    <span class="c-ty">uint8_t</span> prescaler  : <span class="c-num">3</span>;
+    <span class="c-ty">uint8_t</span> reservado  : <span class="c-num">2</span>;
+} ctrl;
+
+ctrl.modo = <span class="c-num">2</span>;   <span class="c-com">// readable</span></code></pre>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Structure padding (<i>alignment</i>)</div>
+        <p>The compiler may insert empty bytes between fields to align them, so
+        <code>sizeof(Sensor)</code> can be larger than the sum of its fields. This matters when the
+        structure represents the exact format of a communication frame or of a file: in those cases
+        you must use <code>__attribute__((packed))</code> or serialize field by field.</p>
+      </div>
+    </section>
+
+    <section id="hardware">
+      <h2><span class="n">04</span>Hardware access and device drivers</h2>
+      <p>Here everything above comes together. In a microcontroller, peripherals are controlled by writing and
+      reading <b>registers located at fixed memory addresses</b>. A pointer to a specific address
+      is the mechanism that makes it possible.</p>
+
+      <pre class="code"><code><span class="c-com">// A register is a pointer to a fixed address, marked volatile</span>
+<span class="c-pp">#define</span> PORTB  (*(<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> *) <span class="c-num">0x25</span>)
+<span class="c-pp">#define</span> DDRB   (*(<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> *) <span class="c-num">0x24</span>)
+<span class="c-pp">#define</span> PINB   (*(<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> *) <span class="c-num">0x23</span>)
+
+DDRB  |= (<span class="c-num">1</span> &lt;&lt; <span class="c-num">0</span>);   <span class="c-com">// PB0 as output</span>
+PORTB |= (<span class="c-num">1</span> &lt;&lt; <span class="c-num">0</span>);   <span class="c-com">// PB0 high</span></code></pre>
+
+      <p>The three elements of that line are the ones you need to understand:</p>
+      <ul>
+        <li><code>(volatile uint8_t *) 0x25</code> — converts the number 0x25 into a <b>pointer</b> to a byte
+        at that address.</li>
+        <li><code>volatile</code> — forbids the compiler from optimizing the accesses, because the value can
+        change by hardware.</li>
+        <li><code>*(...)</code> — dereferences, so that <code>PORTB</code> behaves like an ordinary
+        variable.</li>
+      </ul>
+
+      <h3>What a device driver is</h3>
+      <p>It is the software layer that translates between “what the program wants to do” and “the registers that
+      have to be touched”. It isolates the rest of the program from the details of the chip.</p>
+
+      <pre class="code"><code><span class="c-com">// ---- led.h : the INTERFACE, the only thing the rest of the program sees ----</span>
+<span class="c-ty">void</span> <span class="c-fn">led_init</span>(<span class="c-ty">void</span>);
+<span class="c-ty">void</span> <span class="c-fn">led_on</span>(<span class="c-ty">uint8_t</span> n);
+<span class="c-ty">void</span> <span class="c-fn">led_off</span>(<span class="c-ty">uint8_t</span> n);
+<span class="c-ty">void</span> <span class="c-fn">led_toggle</span>(<span class="c-ty">uint8_t</span> n);
+
+<span class="c-com">// ---- led.c : the IMPLEMENTATION, specific to this micro ----</span>
+<span class="c-pp">#include</span> <span class="c-str">"led.h"</span>
+<span class="c-pp">#include</span> <span class="c-str">"registros.h"</span>
+
+<span class="c-ty">void</span> <span class="c-fn">led_init</span>(<span class="c-ty">void</span>)          { DDRB = <span class="c-num">0xFF</span>; PORTB = <span class="c-num">0x00</span>; }
+<span class="c-ty">void</span> <span class="c-fn">led_on</span>(<span class="c-ty">uint8_t</span> n)     { PORTB |=  (<span class="c-num">1</span> &lt;&lt; n); }
+<span class="c-ty">void</span> <span class="c-fn">led_off</span>(<span class="c-ty">uint8_t</span> n)    { PORTB &amp;= ~(<span class="c-num">1</span> &lt;&lt; n); }
+<span class="c-ty">void</span> <span class="c-fn">led_toggle</span>(<span class="c-ty">uint8_t</span> n) { PORTB ^=  (<span class="c-num">1</span> &lt;&lt; n); }</code></pre>
+
+      <div class="box key">
+        <div class="bt">Why it is worth separating things this way</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li>The main program reads like the problem, not like the chip:
+          <code>led_on(3)</code> instead of <code>PORTB |= 8</code>.</li>
+          <li>If you change microcontroller, you rewrite <b>only the driver</b>. The rest is untouched.</li>
+          <li>You can test the program logic on a PC with a fake driver that prints to the screen.</li>
+          <li>This is exactly what the Arduino library does: <code>digitalWrite()</code> is a driver
+          on top of those same registers.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="bootloader">
+      <h2><span class="n">05</span>Bootloaders</h2>
+      <p>A <b>bootloader</b> is a small program that lives in a reserved area of the flash and runs
+      first at power-up. Its function is to be able to <b>program the rest of the flash</b> without needing an
+      external programmer.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Without bootloader</th><th>With bootloader</th></tr></thead>
+          <tbody>
+            <tr><td>A programmer is needed (PICkit, USBasp, ST-Link).</td><td>A USB or serial cable is enough.</td></tr>
+            <tr><td>All the flash is available for the program.</td><td>The bootloader takes between 0.5 and 4 KB.</td></tr>
+            <tr><td>Instant startup.</td><td>Initial delay while it waits to see whether a new program is sent.</td></tr>
+            <tr><td>Needed to flash the bootloader the first time.</td><td>Allows updating the firmware <b>in the field</b>, without opening the device.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">The best-known case</div>
+        <p>An Arduino board comes with a bootloader flashed at the factory. When you press “Upload”, the IDE compiles
+        with <code>avr-gcc</code>, generates the <code>.hex</code> and sends it over the serial port; the
+        bootloader receives it and writes it into flash. That is why an Arduino board does not need a programmer, and
+        why a “bare” micro bought loose does need one <b>at least once</b>, to flash the
+        bootloader onto it.</p>
+      </div>
+    </section>
+
+    <section id="tiempo-real">
+      <h2><span class="n">06</span>Real time and interrupts</h2>
+      <p>A system is <b>real-time</b> when responding late is equivalent to responding wrongly. It does not mean
+      “fast”: it means <b>predictable</b>. An airbag that fires 200 ms late has failed, even if the
+      processor is extremely fast.</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Polling (<i>cyclic query</i>)</div>
+          <p>The program asks over and over whether something happened.</p>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-kw">while</span> (<span class="c-num">1</span>) {
+  <span class="c-kw">if</span> (<span class="c-fn">boton_apretado</span>())
+      <span class="c-fn">accion</span>();
+  <span class="c-fn">otras_tareas</span>();
+}</code></pre>
+          <p style="font-size:13px;margin-top:8px">Simple and predictable, but it wastes time and the latency
+          depends on how long the rest of the loop takes.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Interrupts</div>
+          <p>The hardware gives notice: it suspends the program, runs a routine and returns.</p>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-fn">ISR</span>(INT0_vect) {
+    bandera = <span class="c-num">1</span>;   <span class="c-com">// short</span>
+}
+
+<span class="c-kw">while</span> (<span class="c-num">1</span>) {
+  <span class="c-kw">if</span> (bandera) { ... }
+}</code></pre>
+          <p style="font-size:13px;margin-top:8px">Immediate response without wasting CPU, in exchange for
+          a program that is harder to reason about.</p>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The three rules of an interrupt routine</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li><b>Keep it very short.</b> Set a flag, store a piece of data and exit. While the ISR runs, the
+          rest of the system is stopped.</li>
+          <li><b>No <code>printf</code>, no delays, no waiting.</b> Everything slow goes in the main
+          loop.</li>
+          <li><b>Every variable shared with the main loop is declared <code>volatile</code>.</b> Without
+          that, the optimizer breaks the communication between the two.</li>
+        </ol>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Latency and priorities</div>
+        <p><b>Latency</b> is the time between the event occurring and the ISR beginning to execute. It is
+        made up of the time to finish the instruction in progress, the context save, and — most
+        importantly — <b>any period during which interrupts are disabled</b> or another ISR is
+        running. That is why critical sections must be as short as possible: every instruction with
+        interrupts disabled worsens the latency of the whole system.</p>
+      </div>
+    </section>
+
+    <section id="concurrencia">
+      <h2><span class="n">07</span>Concurrency</h2>
+      <p>As soon as there are interrupts, there are two flows of execution sharing variables. And that is where
+      errors appear that do not exist in a sequential program.</p>
+
+      <div class="box peligro">
+        <div class="bt">The race condition</div>
+        <pre class="code" style="margin-top:10px"><code><span class="c-kw">volatile</span> <span class="c-ty">uint16_t</span> contador;   <span class="c-com">// 16 bits on an 8-bit micro</span>
+
+<span class="c-fn">ISR</span>(TIMER0_OVF_vect) { contador++; }
+
+<span class="c-ty">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>) {
+    <span class="c-kw">while</span> (<span class="c-num">1</span>) {
+        <span class="c-ty">uint16_t</span> c = contador;   <span class="c-com">// ← DANGER</span>
+        ...
+    }
+}</code></pre>
+        <p>An 8-bit micro needs <b>two instructions</b> to read a 16-bit variable. If the
+        interrupt lands right in the middle — after reading the low byte and before the high one — the value obtained
+        mixes the before and the after. With <code>contador</code> going from 0x00FF to 0x0100 you can read
+        0x01FF: a value that never existed.</p>
+        <p style="margin-top:10px">The solution is the <b>critical section</b>: read with interrupts
+        disabled, and re-enable them immediately.</p>
+        <pre class="code" style="margin-top:10px"><code><span class="c-ty">uint8_t</span> sreg = SREG;   <span class="c-com">// save the previous state</span>
+<span class="c-fn">cli</span>();                  <span class="c-com">// disable interrupts</span>
+<span class="c-ty">uint16_t</span> c = contador; <span class="c-com">// atomic read</span>
+SREG = sreg;            <span class="c-com">// restore (do NOT call sei() blindly)</span></code></pre>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Concept</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td><b>Critical section</b></td><td>A stretch of code that cannot be interrupted without corrupting data. It is protected by disabling interrupts, and must be as short as possible.</td></tr>
+            <tr><td><b>Atomic operation</b></td><td>One that completes with no possibility of interruption. On an 8-bit micro, reading or writing a <code>uint8_t</code> is atomic; a <code>uint16_t</code> is not.</td></tr>
+            <tr><td><b>Reentrant function</b></td><td>One that can be called again before it finishes (from an ISR) without breaking. It uses no global or static variables.</td></tr>
+            <tr><td><b>Circular buffer</b></td><td>The standard structure for passing data from an ISR to the main loop: the ISR writes at one index and the loop reads from another, without stepping on each other.</td></tr>
+            <tr><td><b>Deadlock</b> (<i>mutual blocking</i>)</td><td>Two tasks waiting for each other. It appears in systems with an RTOS and semaphores.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">When a real-time operating system comes in</div>
+        <p>As long as the problem fits into “configure + infinite loop + a few interrupts”, that is what is
+        best: it is simple, predictable and consumes no resources. When there are many tasks with different timings
+        (reading sensors every 10 ms, updating a display every 100 ms, handling a communication when
+        it arrives), you move to an <b>RTOS</b> — FreeRTOS is the most widespread — which shares the processor among
+        tasks with priorities. It is covered in depth in Year 7.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">08</span>In the lab</h2>
+      <div class="box lab">
+        <div class="bt">Lab 1 · Seeing memory for real</div>
+        <p>A PC program that declares several variables of different types and prints their address with
+        <code>%p</code> and their size with <code>sizeof</code>. Verify that the addresses of an array are
+        separated by exactly the size of the type, and that adding 1 to an <code>int*</code> advances 4 bytes
+        while adding 1 to a <code>char*</code> advances 1. It is the most direct way to understand
+        pointer arithmetic.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 2 · Pass by value and by reference</div>
+        <p>Write two versions of a function <code>intercambiar</code> (“swap”), one with ordinary parameters and another
+        with pointers. Check that the first one does nothing. Then write a function that receives an
+        array and its length and returns through pointers the maximum, the minimum and the average.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 3 · A simulated driver</div>
+        <p>Write <code>led.h</code> and <code>led.c</code> as in the example, but with a global variable
+        <code>unsigned char PORTB</code> that simulates the port, and a function that prints its contents in
+        binary. Then write a <code>main</code> that makes a “Knight Rider” chaser using <b>only</b> the
+        driver functions. Compile the two files separately and link them: it is the first multi-file project
+        of the course.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 4 · Structures and data frames</div>
+        <p>Define a structure that represents a measurement (identifier, value, timestamp,
+        <i>checksum</i>). Write functions to fill it in, compute the checksum and dump it into an array of
+        bytes ready to transmit. Print the <code>sizeof</code> of the structure and compare it with the sum
+        of its fields: if they differ, there is <i>padding</i>, and that is the reason to use
+        <code>packed</code>.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">09</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Mistake</th><th>Consequence</th></tr></thead>
+          <tbody>
+            <tr><td>Pointer declared but not initialized</td><td>A write to a random address. On a micro, a reset or erratic behavior.</td></tr>
+            <tr><td>Returning the address of a local variable</td><td>Dangling pointer: the memory has already been reused.</td></tr>
+            <tr><td>Confusing <code>*p = 5</code> with <code>p = 5</code></td><td>The first writes the value; the second changes the address pointed to. The second is almost never what you want.</td></tr>
+            <tr><td>Using <code>.</code> with a pointer to a structure</td><td>Compile error. With a pointer, use <code>-&gt;</code>.</td></tr>
+            <tr><td><code>volatile</code> missing on a register or on an ISR variable</td><td>The optimizer removes reads and the program hangs. It only shows up when compiling with optimization.</td></tr>
+            <tr><td>Long ISR, or one with delays</td><td>Other interrupts are lost and the system stops responding.</td></tr>
+            <tr><td>Reading a shared 16-bit variable without a critical section</td><td>Race condition: impossible values, very hard to reproduce.</td></tr>
+            <tr><td>Enabling interrupts with <code>sei()</code> at the end of a critical section</td><td>It enables them even if they were previously disabled for another reason. You must <b>save and restore</b> the state.</td></tr>
+            <tr><td>Using <code>malloc</code> on a microcontroller</td><td>Fragmentation of a tiny RAM and unpredictable failures. In embedded systems, static memory is used.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">10</span>Self-assessment</h2>
+
+      <details class="q"><summary>What is cross-compilation and why is it necessary in embedded systems?</summary>
+        <div class="a"><p>It means compiling on one machine (the PC) so that the program runs on a different
+        architecture (the microcontroller). It is necessary because the micro has no keyboard, screen
+        or capacity to run a compiler.</p></div></details>
+
+      <details class="q"><summary>If <code>int *p</code> is 0x1000 and <code>p++</code> is executed, what is its value now?</summary>
+        <div class="a"><p>It depends on the size of <code>int</code>: if it is 2 bytes, <b>0x1002</b>; if it is
+        4 bytes, <b>0x1004</b>. Pointer arithmetic advances in units of the <b>pointed-to type</b>, not in
+        bytes.</p></div></details>
+
+      <details class="q"><summary>Write a function that swaps two integers of the caller.</summary>
+        <div class="a"><pre class="code" style="margin:10px 0 0"><code><span class="c-ty">void</span> <span class="c-fn">intercambiar</span>(<span class="c-ty">int</span> *a, <span class="c-ty">int</span> *b) {
+    <span class="c-ty">int</span> t = *a;
+    *a = *b;
+    *b = t;
+}
+<span class="c-com">// call it like this:  intercambiar(&amp;x, &amp;y);</span></code></pre></div></details>
+
+      <details class="q"><summary>Why is a hardware register declared <code>volatile</code>?</summary>
+        <div class="a"><p>Because its value can change for reasons outside the program (the hardware
+        modifies it). Without <code>volatile</code>, the compiler may read it just once and reuse that copy,
+        or eliminate writes that “serve no purpose” but actually drive a
+        peripheral.</p></div></details>
+
+      <details class="q"><summary>What concrete advantage does separating code into a driver have?</summary>
+        <div class="a"><p>The rest of the program stops depending on the microcontroller. When you change chip,
+        only the driver is rewritten; in addition the program can be tested on a PC with a simulated driver and it
+        reads much better (<code>led_on(3)</code> instead of <code>PORTB |= 8</code>).</p></div></details>
+
+      <details class="q"><summary>What is a bootloader and what advantage does it give?</summary>
+        <div class="a"><p>A small program resident in flash that can program the rest of the flash over
+        a serial or USB port. It avoids needing an external programmer and allows updating the firmware in the
+        field. In exchange it takes up some flash and slows startup slightly.</p></div></details>
+
+      <details class="q"><summary>List the three rules of an interrupt routine.</summary>
+        <div class="a"><p>(1) Keep it <b>as short as possible</b>. (2) <b>No</b> delays, waits or
+        slow functions. (3) Every variable shared with the main program declared
+        <code>volatile</code>.</p></div></details>
+
+      <details class="q"><summary>Explain a race condition using a 16-bit counter.</summary>
+        <div class="a"><p>An 8-bit micro reads the variable in two instructions. If the interrupt that
+        increments it lands between the two, you get a mixture of the old and the new value — for example 0x01FF when
+        going from 0x00FF to 0x0100. It is solved by reading inside a critical section, with interrupts
+        disabled.</p></div></details>
+
+      <details class="q"><summary>Why is <code>malloc</code> avoided in embedded systems?</summary>
+        <div class="a"><p>Because the RAM is only a few KB and repeated dynamic allocation <b>fragments</b> it:
+        over time it can fail even though there is enough total free memory. In addition its execution time
+        is not predictable, which is unacceptable in real time. Static memory sized at
+        compile time is used instead.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/lenguaje-c">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Basic elements of the C language</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/lenguaje-cpp">
+        <div class="dir">Next topic →</div>
+        <div class="tt">The C++ language</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“C and C++ development environments”</b> of <b>Computing for Electronics I</b> (Year 4),
+  based on the “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

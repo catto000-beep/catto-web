@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Basic elements of the C language · Computing for Electronics I · Catto</title>
+<meta name="description" content="Structure of a C program, variables and data types, constants, operators, flow control, arrays and strings, functions, the preprocessor and the standard library. A topic of Computing for Electronics I, Year 4 of the Electronics Technician program.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/lenguaje-c">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/lenguaje-c">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/lenguaje-c">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/lenguaje-c">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Computing for Electronics I</a>
+    <span class="anio">Year 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computing for Electronics I</span> · 72 h · Topic 1 of 3</div>
+    <h1>Basic elements of the C language</h1>
+    <p class="lead">C is the language of electronics. It is used to program the microcontrollers of Years 6 and 7,
+    industrial embedded systems and the kernel of almost every operating system. It is
+    demanding, but it gives total control over the machine.</p>
+    <div class="chips">
+      <span class="chip hi">Programming</span>
+      <span class="chip">Data types</span>
+      <span class="chip">Flow control</span>
+      <span class="chip">Functions</span>
+      <span class="chip">Preprocessor</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que-c">
+      <h2><span class="n">01</span>Why C in an electronics technician program</h2>
+      <p>There are more comfortable languages, but none combines these four things at once:</p>
+      <ul>
+        <li><b>Direct access to the hardware.</b> It lets you write a value into a microcontroller register
+        or read an input port exactly as described in the datasheet.</li>
+        <li><b>Efficiency.</b> The generated code is almost as compact and fast as code written in
+        assembly, and that matters when you have 2 KB of memory.</li>
+        <li><b>Portability.</b> The same program, with minimal adjustments, compiles for a PIC, an AVR, an
+        ARM or a PC.</li>
+        <li><b>Universality.</b> Every microcontroller manufacturer supplies its own C compiler. It is the
+        common denominator of the industry.</li>
+      </ul>
+
+      <div class="box key">
+        <div class="bt">C is a compiled language</div>
+        <p>The source program (<code>.c</code>) goes through the <b>preprocessor</b>, then through the
+        <b>compiler</b>, which translates it to object code (<code>.o</code>), and finally through the
+        <b>linker</b> (<i>link editor</i>), which joins the objects and the libraries and produces the executable. On
+        a microcontroller that result is a <code>.hex</code> file that is written to flash memory.
+        Understanding this chain is what makes it possible to interpret error messages.</p>
+      </div>
+    </section>
+
+    <section id="estructura">
+      <h2><span class="n">02</span>Structure of a program</h2>
+
+      <pre class="code"><code><span class="c-pp">#include</span> <span class="c-str">&lt;stdio.h&gt;</span>      <span class="c-com">// preprocessor directives</span>
+<span class="c-pp">#define</span> PI <span class="c-num">3.14159</span>    <span class="c-com">// symbolic constant</span>
+
+<span class="c-ty">float</span> <span class="c-fn">area</span>(<span class="c-ty">float</span> radio);   <span class="c-com">// function prototype</span>
+
+<span class="c-ty">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>)             <span class="c-com">// EVERY program has a main</span>
+{
+    <span class="c-ty">float</span> r = <span class="c-num">2.5</span>;         <span class="c-com">// declaration with initialization</span>
+    <span class="c-fn">printf</span>(<span class="c-str">"Area = %.2f\n"</span>, <span class="c-fn">area</span>(r));
+    <span class="c-kw">return</span> <span class="c-num">0</span>;                <span class="c-com">// 0 = finished without error</span>
+}
+
+<span class="c-ty">float</span> <span class="c-fn">area</span>(<span class="c-ty">float</span> radio)    <span class="c-com">// function definition</span>
+{
+    <span class="c-kw">return</span> PI * radio * radio;
+}</code></pre>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Element</th><th>What it is for</th></tr></thead>
+          <tbody>
+            <tr><td><code>#include</code></td><td>Brings in a header file with ready-made declarations. With <code>&lt;&gt;</code> it searches the system libraries; with <code>""</code>, the project directory.</td></tr>
+            <tr><td><code>#define</code></td><td>Defines a constant or macro that the preprocessor replaces textually before compiling.</td></tr>
+            <tr><td><b>Prototype</b></td><td>Tells the compiler a function’s name, what it receives and what it returns, before its code appears.</td></tr>
+            <tr><td><code>main()</code></td><td>Entry point. On a microcontroller it never ends: its body is usually a <code>while(1)</code>.</td></tr>
+            <tr><td><code>{ }</code></td><td>Delimit blocks. Everything declared inside a block exists only there.</td></tr>
+            <tr><td><code>;</code></td><td>Ends each statement. Forgetting it is the number one compilation error.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">C is case-sensitive</div>
+        <p><code>contador</code>, <code>Contador</code> and <code>CONTADOR</code> are <b>three different
+        variables</b>. By convention, lowercase is used for variables and functions, and UPPERCASE for
+        constants defined with <code>#define</code>.</p>
+      </div>
+    </section>
+
+    <section id="tipos">
+      <h2><span class="n">03</span>Variables, types and constants</h2>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Data types and overflow, animated" class="svg-t" data-anim><style>.tp-l{fill:#9aa7b4;font-size:10.5px}.tp-t{fill:#e6edf3;font-size:12px;font-weight:700}.tp-c{fill:#9aa7b4;font-size:10.5px}.tp-v{fill:#e6edf3;font-size:14px;font-weight:700}.tp-k{fill:#7d8a99;font-size:10px;text-anchor:middle}</style><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0" dur="15s" repeatCount="indefinite"/><rect x="60" y="92" width="14" height="26" rx="2" fill="#3fb950" fill-opacity="0.28" stroke="#3fb950" stroke-width="1"/><rect x="77" y="92" width="14" height="26" rx="2" fill="#3fb950" fill-opacity="0.28" stroke="#3fb950" stroke-width="1"/><rect x="94" y="92" width="14" height="26" rx="2" fill="#3fb950" fill-opacity="0.28" stroke="#3fb950" stroke-width="1"/><rect x="111" y="92" width="14" height="26" rx="2" fill="#3fb950" fill-opacity="0.28" stroke="#3fb950" stroke-width="1"/><rect x="128" y="92" width="14" height="26" rx="2" fill="#3fb950" fill-opacity="0.28" stroke="#3fb950" stroke-width="1"/><rect x="145" y="92" width="14" height="26" rx="2" fill="#3fb950" fill-opacity="0.28" stroke="#3fb950" stroke-width="1"/><rect x="162" y="92" width="14" height="26" rx="2" fill="#3fb950" fill-opacity="0.28" stroke="#3fb950" stroke-width="1"/><rect x="179" y="92" width="14" height="26" rx="2" fill="#3fb950" fill-opacity="0.28" stroke="#3fb950" stroke-width="1"/><text class="tp-k" x="128" y="136" fill="#7d8a99">byte 1</text><text class="tp-t" x="60" y="72" fill="#3fb950">uint8_t</text><text class="tp-l" x="470" y="180">uses</text><text class="tp-v" x="470" y="204" fill="#3fb950">1 byte</text><text class="tp-l" x="60" y="180">range</text><text class="tp-v" x="60" y="204" fill="#3fb950">0 to 255</text><text class="tp-c" x="60" y="244">One byte. Enough for a parts counter or a PWM value.</text><text class="tp-c" x="60" y="262"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0" dur="15s" repeatCount="indefinite"/><rect x="60" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="77" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="94" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="111" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="128" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="145" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="162" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="179" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><text class="tp-k" x="128" y="136" fill="#7d8a99">byte 1</text><rect x="212" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="229" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="246" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="263" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="280" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="297" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="314" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="331" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><text class="tp-k" x="280" y="136" fill="#7d8a99">byte 2</text><text class="tp-t" x="60" y="72" fill="#58a6ff">int16_t</text><text class="tp-l" x="470" y="180">uses</text><text class="tp-v" x="470" y="204" fill="#58a6ff">2 bytes</text><text class="tp-l" x="60" y="180">range</text><text class="tp-v" x="60" y="204" fill="#58a6ff">-32,768 to 32,767</text><text class="tp-c" x="60" y="244">Two bytes, signed. It is the default integer on 8-bit micros.</text><text class="tp-c" x="60" y="262"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0" dur="15s" repeatCount="indefinite"/><rect x="60" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="77" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="94" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="111" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="128" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="145" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="162" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="179" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><text class="tp-k" x="128" y="136" fill="#7d8a99">byte 1</text><rect x="212" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="229" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="246" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="263" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="280" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="297" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="314" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><rect x="331" y="92" width="14" height="26" rx="2" fill="#58a6ff" fill-opacity="0.28" stroke="#58a6ff" stroke-width="1"/><text class="tp-k" x="280" y="136" fill="#7d8a99">byte 2</text><text class="tp-t" x="60" y="72" fill="#58a6ff">uint16_t</text><text class="tp-l" x="470" y="180">uses</text><text class="tp-v" x="470" y="204" fill="#58a6ff">2 bytes</text><text class="tp-l" x="60" y="180">range</text><text class="tp-v" x="60" y="204" fill="#58a6ff">0 to 65,535</text><text class="tp-c" x="60" y="244">Two bytes, unsigned: double the reach if there are never negative values.</text><text class="tp-c" x="60" y="262"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0" dur="15s" repeatCount="indefinite"/><rect x="60" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="77" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="94" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="111" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="128" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="145" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="162" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="179" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><text class="tp-k" x="128" y="136" fill="#7d8a99">byte 1</text><rect x="212" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="229" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="246" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="263" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="280" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="297" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="314" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="331" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><text class="tp-k" x="280" y="136" fill="#7d8a99">byte 2</text><rect x="364" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="381" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="398" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="415" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="432" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="449" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="466" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="483" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><text class="tp-k" x="432" y="136" fill="#7d8a99">byte 3</text><rect x="516" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="533" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="550" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="567" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="584" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="601" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="618" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><rect x="635" y="92" width="14" height="26" rx="2" fill="#bc8cff" fill-opacity="0.28" stroke="#bc8cff" stroke-width="1"/><text class="tp-k" x="584" y="136" fill="#7d8a99">byte 4</text><text class="tp-t" x="60" y="72" fill="#bc8cff">int32_t</text><text class="tp-l" x="470" y="180">uses</text><text class="tp-v" x="470" y="204" fill="#bc8cff">4 bytes</text><text class="tp-l" x="60" y="180">range</text><text class="tp-v" x="60" y="204" fill="#bc8cff">&#177;2,147,483,647</text><text class="tp-c" x="60" y="244">Four bytes. For accumulated milliseconds or large counts.</text><text class="tp-c" x="60" y="262"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1" dur="15s" repeatCount="indefinite"/><rect x="60" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="77" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="94" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="111" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="128" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="145" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="162" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="179" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><text class="tp-k" x="128" y="136" fill="#7d8a99">byte 1</text><rect x="212" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="229" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="246" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="263" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="280" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="297" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="314" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="331" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><text class="tp-k" x="280" y="136" fill="#7d8a99">byte 2</text><rect x="364" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="381" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="398" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="415" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="432" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="449" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="466" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="483" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><text class="tp-k" x="432" y="136" fill="#7d8a99">byte 3</text><rect x="516" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="533" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="550" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="567" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="584" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="601" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="618" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><rect x="635" y="92" width="14" height="26" rx="2" fill="#d29922" fill-opacity="0.28" stroke="#d29922" stroke-width="1"/><text class="tp-k" x="584" y="136" fill="#7d8a99">byte 4</text><text class="tp-t" x="60" y="72" fill="#d29922">float</text><text class="tp-l" x="470" y="180">uses</text><text class="tp-v" x="470" y="204" fill="#d29922">4 bytes</text><text class="tp-l" x="60" y="180">range</text><text class="tp-v" x="60" y="204" fill="#d29922">&#177;3.4 &#215; 10^38</text><text class="tp-c" x="60" y="244">4-byte floating point, with about 7 significant digits. On a micro with no floating-point unit it is</text><text class="tp-c" x="60" y="262">very slow.</text></g><text class="tp-c" x="60" y="294" fill="#7d8a99">Choosing the smallest type that fits saves memory, but exceeding the range gives no error: the value wraps around.</text><text class="tp-c" x="60" y="312" fill="#7d8a99">A uint8_t at 255 plus one is 0, and that is one of the hardest errors to find.</text></svg>
+        <figcaption><b>Figure 1.</b> The types and their size in memory, animated. Choosing the smallest one that fits saves
+        memory, but exceeding the range gives no error: the value wraps around and the problem shows up later.</figcaption>
+      </figure>
+      <p>Every variable must be <b>declared</b> before it is used, stating its type. That type determines how much
+      memory it takes up and what values it can hold.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Type</th><th class="c">Typical size<br>(8-bit microcontroller)</th><th class="c">Range</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td><code>char</code></td><td class="c">1 byte</td><td class="c">−128 to 127</td><td>A character, or a small signed integer.</td></tr>
+            <tr><td><code>unsigned char</code></td><td class="c">1 byte</td><td class="c">0 to 255</td><td><b>The most widely used type in microcontrollers</b>: one port, one byte.</td></tr>
+            <tr><td><code>int</code></td><td class="c">2 bytes</td><td class="c">−32,768 to 32,767</td><td>General-purpose integers. <b>Careful:</b> on a PC they are 4 bytes.</td></tr>
+            <tr><td><code>unsigned int</code></td><td class="c">2 bytes</td><td class="c">0 to 65,535</td><td>Counters, values from a 10-bit ADC.</td></tr>
+            <tr><td><code>long</code></td><td class="c">4 bytes</td><td class="c">± 2,147,483,648</td><td>Elapsed milliseconds, frequencies.</td></tr>
+            <tr><td><code>float</code></td><td class="c">4 bytes</td><td class="c">± 3.4 × 10<sup>38</sup>, 7 digits</td><td>Calculations with decimals. <b>Expensive</b> on a micro with no floating-point unit.</td></tr>
+            <tr><td><code>double</code></td><td class="c">8 bytes</td><td class="c">15 digits</td><td>Double precision. Rarely justifiable in embedded systems.</td></tr>
+            <tr><td><code>void</code></td><td class="c">—</td><td class="c">—</td><td>“Nothing.” A function that returns no value or takes no parameters.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The size of <code>int</code> depends on the machine</div>
+        <p>The C standard only guarantees minimums, not exact sizes. That is why in embedded programming the
+        types from <code>&lt;stdint.h&gt;</code> are used, which are unambiguous: <code>uint8_t</code>,
+        <code>int16_t</code>, <code>uint32_t</code>. The number is the count of <b>bits</b> and the <code>u</code>
+        means unsigned. It is the recommended professional practice and avoids errors when porting code.</p>
+      </div>
+
+      <h3>Overflow</h3>
+      <pre class="code"><code><span class="c-ty">unsigned char</span> c = <span class="c-num">250</span>;
+c = c + <span class="c-num">10</span>;     <span class="c-com">// NOT 260: it gives 4, because 260 does not fit in 8 bits</span>
+
+<span class="c-ty">unsigned char</span> i;
+<span class="c-kw">for</span> (i = <span class="c-num">0</span>; i &lt; <span class="c-num">300</span>; i++) { ... }   <span class="c-com">// INFINITE LOOP: i never reaches 300</span></code></pre>
+      <p>Overflow does not generate any error: the value simply “wraps around.” It is one of the hardest causes
+      to find in an embedded program, which is why the type must be chosen with the
+      <b>maximum possible value</b> in mind, not the usual one.</p>
+
+      <h3>Constants</h3>
+      <pre class="code"><code><span class="c-pp">#define</span> LARGO <span class="c-num">10</span>            <span class="c-com">// preprocessor: textual replacement, no type</span>
+<span class="c-kw">const</span> <span class="c-ty">float</span> PI = <span class="c-num">3.14159</span>;   <span class="c-com">// read-only variable, WITH a type</span>
+
+<span class="c-ty">int</span> a = <span class="c-num">255</span>;      <span class="c-com">// decimal</span>
+<span class="c-ty">int</span> b = <span class="c-num">0xFF</span>;     <span class="c-com">// hexadecimal — the most widely used with registers</span>
+<span class="c-ty">int</span> c = <span class="c-num">0b11111111</span>; <span class="c-com">// binary (GCC extension, very handy for ports)</span>
+<span class="c-ty">int</span> d = <span class="c-num">0377</span>;     <span class="c-com">// OCTAL: the leading 0 changes the base. Classic trap</span></code></pre>
+      <p>In electronics <b>hexadecimal</b> is the natural format: each hex digit represents exactly
+      4 bits, so <code>0xF0</code> reads at a glance as “the four high bits set to 1.”</p>
+    </section>
+
+    <section id="operadores">
+      <h2><span class="n">04</span>Operators</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Arithmetic and assignment</div>
+          <p style="font-size:13.5px"><code>+ − * / %</code> · <code>++ --</code> ·
+          <code>= += -= *= /=</code></p>
+          <p style="font-size:13px;margin-top:8px">The <code>%</code> is the <b>remainder</b> of integer
+          division. <code>/</code> between integers <b>truncates</b>: <code>7/2</code> gives 3, not 3.5.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Relational and logical</div>
+          <p style="font-size:13.5px"><code>== != &lt; &gt; &lt;= &gt;=</code> ·
+          <code>&amp;&amp; || !</code></p>
+          <p style="font-size:13px;margin-top:8px">In C, <b>0 is false</b> and any other value is
+          true.</p>
+        </div>
+      </div>
+
+      <h3>Bitwise operators: the essential ones</h3>
+      <p>These are what make C suitable for electronics. They let you manipulate <b>individual bits</b> of a
+      register without touching the others.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Operator</th><th>Function</th><th>Typical use</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><code>&amp;</code></td><td>Bitwise AND</td><td><b>Setting bits to 0</b> (masking) and <b>testing</b> a bit.</td></tr>
+            <tr><td class="c"><code>|</code></td><td>Bitwise OR</td><td><b>Setting bits to 1</b>.</td></tr>
+            <tr><td class="c"><code>^</code></td><td>Bitwise XOR</td><td><b>Inverting</b> bits (toggle).</td></tr>
+            <tr><td class="c"><code>~</code></td><td>Complement</td><td>Inverting all the bits.</td></tr>
+            <tr><td class="c"><code>&lt;&lt;</code></td><td>Shift left</td><td>Building masks. Equivalent to multiplying by 2.</td></tr>
+            <tr><td class="c"><code>&gt;&gt;</code></td><td>Shift right</td><td>Extracting fields. Equivalent to dividing by 2.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <pre class="code"><code><span class="c-com">// The four operations used all the time with registers:</span>
+
+PORTB |=  (<span class="c-num">1</span> &lt;&lt; <span class="c-num">3</span>);   <span class="c-com">// set bit 3 to 1, without touching the others</span>
+PORTB &amp;= ~(<span class="c-num">1</span> &lt;&lt; <span class="c-num">3</span>);   <span class="c-com">// set bit 3 to 0</span>
+PORTB ^=  (<span class="c-num">1</span> &lt;&lt; <span class="c-num">3</span>);   <span class="c-com">// toggle bit 3</span>
+
+<span class="c-kw">if</span> (PINB &amp; (<span class="c-num">1</span> &lt;&lt; <span class="c-num">3</span>)) { <span class="c-com">// is bit 3 set to 1?</span>
+    <span class="c-com">// yes: the pushbutton is pressed</span>
+}</code></pre>
+
+      <div class="box key">
+        <div class="bt">Why you do not write <code>PORTB = 8;</code></div>
+        <p>Because that would set bit 3 to 1 <b>and all the others to 0</b>, switching off the rest of the port’s
+        outputs. The forms with <code>|=</code> and <code>&amp;= ~</code> modify <b>only</b> the bit you
+        care about. It is the difference between a program that works and one that shuts off the motor every time
+        it turns on the LED.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The most common error of all: <code>=</code> versus <code>==</code></div>
+        <pre class="code" style="margin-top:10px"><code><span class="c-kw">if</span> (x = <span class="c-num">5</span>)   <span class="c-com">// ASSIGNS 5 to x, and since 5 is not 0, it is ALWAYS true</span>
+<span class="c-kw">if</span> (x == <span class="c-num">5</span>)  <span class="c-com">// COMPARES x with 5. This is what was intended</span></code></pre>
+        <p>It is not a compilation error: the program compiles and misbehaves. Modern compilers warn
+        with a <i>warning</i>, which is why you should always compile with <code>-Wall</code> and read the
+        warnings.</p>
+      </div>
+    </section>
+
+    <section id="control">
+      <h2><span class="n">05</span>Flow control</h2>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Step-by-step execution of a for loop, animated" class="svg-t" data-anim><style>.ej-c{fill:#9aa7b4;font-size:12px;font-family:ui-monospace,monospace}.ej-t{fill:#e6edf3;font-size:12px;font-weight:700}.ej-l{fill:#7d8a99;font-size:10.5px}.ej-v{fill:#e6edf3;font-size:15px;font-weight:700}.ej-x{fill:#9aa7b4;font-size:10.5px}</style><text class="ej-c" x="56" y="72">int suma = 0;</text><text class="ej-c" x="56" y="98">for (int i = 1; i &lt;= 4; i++) {</text><text class="ej-c" x="56" y="124">    suma = suma + i;</text><text class="ej-c" x="56" y="150">}</text><text class="ej-c" x="56" y="176">printf("%d", suma);</text><rect x="420" y="60" width="250" height="140" rx="7" fill="none" stroke="#2a3140" stroke-width="1"/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0;0;0;0;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="56" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 67 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">-</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">0</text><text class="ej-l" x="440" y="150">step 1 of 11</text><text class="ej-l" x="440" y="176"></text><text class="ej-x" x="40" y="256">suma is created and starts at zero.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0;0;0;0;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="82" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 93 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">1</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">0</text><text class="ej-l" x="440" y="150">step 2 of 11</text><text class="ej-l" x="440" y="176">condition true</text><text class="ej-x" x="40" y="256">i is created with value 1 and the condition is checked: 1 &#8804; 4, so the loop is entered.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0;0;0;0;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="108" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 119 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">1</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">1</text><text class="ej-l" x="440" y="150">step 3 of 11</text><text class="ej-l" x="440" y="176">condition true</text><text class="ej-x" x="40" y="256">suma takes the value 0 + 1 = 1.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0;0;0;0;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="82" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 93 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">2</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">1</text><text class="ej-l" x="440" y="150">step 4 of 11</text><text class="ej-l" x="440" y="176">condition true</text><text class="ej-x" x="40" y="256">i++ sets it to 2 and the check is repeated: 2 &#8804; 4, so the loop is entered again.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0;0;0;0;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="108" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 119 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">2</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">3</text><text class="ej-l" x="440" y="150">step 5 of 11</text><text class="ej-l" x="440" y="176">condition true</text><text class="ej-x" x="40" y="256">suma becomes 1 + 2 = 3.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1;0;0;0;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="82" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 93 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">3</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">3</text><text class="ej-l" x="440" y="150">step 6 of 11</text><text class="ej-l" x="440" y="176">condition true</text><text class="ej-x" x="40" y="256">i is 3, the condition still holds.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;1;0;0;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="108" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 119 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">3</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">6</text><text class="ej-l" x="440" y="150">step 7 of 11</text><text class="ej-l" x="440" y="176">condition true</text><text class="ej-x" x="40" y="256">suma becomes 3 + 3 = 6.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0;1;0;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="82" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 93 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">4</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">6</text><text class="ej-l" x="440" y="150">step 8 of 11</text><text class="ej-l" x="440" y="176">condition true</text><text class="ej-x" x="40" y="256">i is 4: the last value that satisfies 4 &#8804; 4.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0;0;1;0;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="108" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 119 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">4</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">10</text><text class="ej-l" x="440" y="150">step 9 of 11</text><text class="ej-l" x="440" y="176">condition true</text><text class="ej-x" x="40" y="256">suma becomes 6 + 4 = 10.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0;0;0;1;0" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="82" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 93 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">5</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">10</text><text class="ej-l" x="440" y="150">step 10 of 11</text><text class="ej-l" x="440" y="176">condition false</text><text class="ej-x" x="40" y="256">i is 5 and no longer satisfies the condition: the loop ends.</text><text class="ej-x" x="40" y="274"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0;0;0;0;1" dur="16.5s" repeatCount="indefinite"/><rect x="40" y="160" width="350" height="22" rx="4" fill="#58a6ff" fill-opacity="0.18"/><path d="M32 171 l8 -5 v10 z" fill="#58a6ff"/><text class="ej-l" x="440" y="88">i</text><text class="ej-v" x="440" y="114" fill="#58a6ff">5</text><text class="ej-l" x="540" y="88">suma</text><text class="ej-v" x="540" y="114" fill="#3fb950">10</text><text class="ej-l" x="440" y="150">step 11 of 11</text><text class="ej-l" x="440" y="176"></text><text class="ej-x" x="40" y="256">10 is printed.</text><text class="ej-x" x="40" y="274"></text></g><text class="ej-x" x="40" y="304" fill="#7d8a99">Tracing the program by hand, noting each variable at every step, is the best way to understand a loop.</text></svg>
+        <figcaption><b>Figure 2.</b> A <code>for</code> loop executed step by step, animated: you can see the line being
+        executed and the value of each variable at that moment.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Decision</div>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-kw">if</span> (temp &gt; <span class="c-num">30</span>) {
+    <span class="c-fn">encender_ventilador</span>();
+} <span class="c-kw">else if</span> (temp &lt; <span class="c-num">18</span>) {
+    <span class="c-fn">encender_estufa</span>();
+} <span class="c-kw">else</span> {
+    <span class="c-fn">apagar_todo</span>();
+}
+
+<span class="c-kw">switch</span> (tecla) {
+    <span class="c-kw">case</span> <span class="c-num">1</span>: <span class="c-fn">subir</span>();  <span class="c-kw">break</span>;
+    <span class="c-kw">case</span> <span class="c-num">2</span>: <span class="c-fn">bajar</span>();  <span class="c-kw">break</span>;
+    <span class="c-kw">default</span>: <span class="c-fn">parar</span>();
+}</code></pre>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Repetition</div>
+          <pre class="code" style="margin:8px 0 0"><code><span class="c-kw">for</span> (i = <span class="c-num">0</span>; i &lt; <span class="c-num">8</span>; i++) {
+    <span class="c-fn">encender_led</span>(i);
+}
+
+<span class="c-kw">while</span> (!<span class="c-fn">dato_listo</span>()) {
+    <span class="c-com">// wait</span>
+}
+
+<span class="c-kw">do</span> {
+    v = <span class="c-fn">leer_adc</span>();
+} <span class="c-kw">while</span> (v &lt; umbral);
+
+<span class="c-kw">while</span> (<span class="c-num">1</span>) { ... }  <span class="c-com">// main loop</span></code></pre>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Forgetting the <code>break</code> in a <code>switch</code></div>
+        <p>Without <code>break</code>, execution <b>keeps falling through</b> into the next case. Sometimes this is done
+        on purpose (to group cases), but it is almost always an oversight and produces
+        baffling behavior.</p>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">The main loop of an embedded system</div>
+        <pre class="code" style="margin-top:10px"><code><span class="c-ty">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>)
+{
+    <span class="c-fn">configurar_puertos</span>();   <span class="c-com">// runs ONCE</span>
+    <span class="c-fn">configurar_adc</span>();
+    <span class="c-fn">configurar_timers</span>();
+
+    <span class="c-kw">while</span> (<span class="c-num">1</span>) {              <span class="c-com">// repeats FOREVER</span>
+        <span class="c-fn">leer_sensores</span>();
+        <span class="c-fn">procesar</span>();
+        <span class="c-fn">actualizar_salidas</span>();
+    }
+    <span class="c-kw">return</span> <span class="c-num">0</span>;   <span class="c-com">// never reached</span>
+}</code></pre>
+        <p>This structure — configuration + infinite loop — is that of <b>every</b> microcontroller program,
+        and it is literally what the <code>setup()</code> and <code>loop()</code> functions of Arduino do,
+        which is C underneath.</p>
+      </div>
+    </section>
+
+    <section id="arreglos">
+      <h2><span class="n">06</span>Arrays and strings</h2>
+      <p>An <b>array</b> is a set of elements of the same type, contiguous in memory, accessed by
+      an index that <b>starts at 0</b>.</p>
+
+      <pre class="code"><code><span class="c-ty">int</span> muestras[<span class="c-num">10</span>];              <span class="c-com">// valid indices: 0 to 9</span>
+<span class="c-ty">int</span> tabla[<span class="c-num">5</span>] = {<span class="c-num">2</span>, <span class="c-num">4</span>, <span class="c-num">6</span>, <span class="c-num">8</span>, <span class="c-num">10</span>};
+
+muestras[<span class="c-num">0</span>] = <span class="c-num">512</span>;             <span class="c-com">// first element</span>
+muestras[<span class="c-num">9</span>] = <span class="c-num">128</span>;             <span class="c-com">// LAST element</span>
+muestras[<span class="c-num">10</span>] = <span class="c-num">0</span>;              <span class="c-com">// OUT OF RANGE! Overwrites memory that is not yours</span>
+
+<span class="c-com">// Average 10 samples from the ADC</span>
+<span class="c-ty">long</span> suma = <span class="c-num">0</span>;
+<span class="c-kw">for</span> (<span class="c-ty">int</span> i = <span class="c-num">0</span>; i &lt; <span class="c-num">10</span>; i++) {
+    muestras[i] = <span class="c-fn">leer_adc</span>();
+    suma += muestras[i];
+}
+<span class="c-ty">int</span> promedio = suma / <span class="c-num">10</span>;</code></pre>
+
+      <div class="box peligro">
+        <div class="bt">C does not check the bounds of an array</div>
+        <p>Writing <code>muestras[10]</code> in an array of 10 elements <b>gives no error</b>: it writes to the
+        next memory location, which may belong to another variable, to the stack or to a register. The
+        program keeps running and fails later in an inexplicable way. On a PC this is a classic security
+        hole (<i>buffer overflow</i>); on a microcontroller, a random hang. <b>Checking
+        the indices is the programmer’s responsibility.</b></p>
+      </div>
+
+      <h3>Character strings</h3>
+      <p>In C a string is simply an array of <code>char</code> terminated by the null character
+      <code>'\0'</code>. It is not a special type.</p>
+
+      <pre class="code"><code><span class="c-ty">char</span> nombre[<span class="c-num">20</span>] = <span class="c-str">"Electronics"</span>;   <span class="c-com">// takes 11 letters + 1 for the '\0' = 12</span>
+
+<span class="c-pp">#include</span> <span class="c-str">&lt;string.h&gt;</span>
+<span class="c-fn">strlen</span>(nombre);            <span class="c-com">// 11 — does not count the '\0'</span>
+<span class="c-fn">strcpy</span>(destino, origen);   <span class="c-com">// copy</span>
+<span class="c-fn">strcmp</span>(a, b);              <span class="c-com">// compare: returns 0 if they are equal</span>
+<span class="c-fn">strcat</span>(destino, origen);   <span class="c-com">// concatenate</span></code></pre>
+
+      <div class="box ojo">
+        <div class="bt">You must reserve room for the <code>'\0'</code></div>
+        <p>An array of 20 <code>char</code> holds at most a string of <b>19 characters</b>. And
+        <code>strcmp(a, b)</code> returns <b>0 when they are equal</b>, which is counterintuitive: you write
+        <code>if (strcmp(a,b) == 0)</code>. Never compare strings with <code>==</code>, because that compares
+        memory addresses, not contents.</p>
+      </div>
+    </section>
+
+    <section id="funciones">
+      <h2><span class="n">07</span>Functions</h2>
+      <p>Splitting the program into functions is not cosmetic: it is what lets you test each part separately,
+      reuse code and understand a thousand-line program.</p>
+
+      <pre class="code"><code><span class="c-com">// return_type  name(type param1, type param2)</span>
+<span class="c-ty">float</span> <span class="c-fn">celsius_a_fahrenheit</span>(<span class="c-ty">float</span> c)
+{
+    <span class="c-kw">return</span> c * <span class="c-num">9.0</span> / <span class="c-num">5.0</span> + <span class="c-num">32.0</span>;
+}
+
+<span class="c-ty">void</span> <span class="c-fn">parpadear</span>(<span class="c-ty">unsigned char</span> veces)   <span class="c-com">// void: returns nothing</span>
+{
+    <span class="c-kw">for</span> (<span class="c-ty">unsigned char</span> i = <span class="c-num">0</span>; i &lt; veces; i++) {
+        PORTB |= (<span class="c-num">1</span> &lt;&lt; <span class="c-num">0</span>);
+        <span class="c-fn">retardo_ms</span>(<span class="c-num">200</span>);
+        PORTB &amp;= ~(<span class="c-num">1</span> &lt;&lt; <span class="c-num">0</span>);
+        <span class="c-fn">retardo_ms</span>(<span class="c-num">200</span>);
+    }
+}</code></pre>
+
+      <div class="box key">
+        <div class="bt">In C, parameters are passed by value</div>
+        <p>The function receives a <b>copy</b> of the argument. If it modifies it, the original does not change. For
+        a function to be able to modify a variable of its caller you have to pass its <b>address</b>, with
+        pointers — which is the central subject of the
+        <a href="/en/publicaciones/mapa-electronica/temas/entornos-c-cpp">next topic</a>.</p>
+      </div>
+
+      <h3>Scope of variables</h3>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Kind</th><th>Where it lives</th><th>When to use it</th></tr></thead>
+          <tbody>
+            <tr><td><b>Local</b></td><td>Declared inside a function. Born on entry and dies on exit.</td><td><b>Whenever possible.</b> It is the safest and saves memory.</td></tr>
+            <tr><td><b>Global</b></td><td>Outside every function. Exists during the whole program.</td><td>Only for data shared by several parts, typically between the main loop and an interrupt.</td></tr>
+            <tr><td><b>Static</b></td><td><code>static</code> inside a function: keeps its value between calls.</td><td>Internal counters that must not be visible from outside.</td></tr>
+            <tr><td><b>Volatile</b></td><td><code>volatile</code>: tells the compiler that it can change outside the program flow.</td><td><b>Mandatory</b> for variables modified by an interrupt or mapped to a hardware register.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Without <code>volatile</code>, the optimizer breaks the program</div>
+        <p>If a global variable is modified inside an interrupt and the main loop reads it, the
+        compiler may “realize” that nobody changes it inside the loop and keep it in a register
+        forever. The program ends up waiting endlessly for a change it cannot see. The keyword
+        <code>volatile</code> forbids that optimization. It is an error that only shows up when compiling with
+        optimization turned on, and it is a classic of Year 6.</p>
+      </div>
+    </section>
+
+    <section id="preprocesador">
+      <h2><span class="n">08</span>The preprocessor and the standard library</h2>
+      <p>The preprocessor acts <b>before</b> the compiler and performs text replacements. It knows nothing about types
+      or C syntax.</p>
+
+      <pre class="code"><code><span class="c-pp">#include</span> <span class="c-str">&lt;stdio.h&gt;</span>       <span class="c-com">// paste the contents of that file here</span>
+<span class="c-pp">#define</span> LED_ON  PORTB |= <span class="c-num">1</span>
+<span class="c-pp">#define</span> MAX(a,b) ((a) &gt; (b) ? (a) : (b))   <span class="c-com">// macro with parameters</span>
+
+<span class="c-pp">#ifdef</span> DEBUG              <span class="c-com">// conditional compilation</span>
+    <span class="c-fn">printf</span>(<span class="c-str">"value = %d\n"</span>, x);
+<span class="c-pp">#endif</span>
+
+<span class="c-pp">#ifndef</span> CONFIG_H          <span class="c-com">// include guard: avoids including</span>
+<span class="c-pp">#define</span> CONFIG_H          <span class="c-com">// the same file twice</span>
+    ...
+<span class="c-pp">#endif</span></code></pre>
+
+      <div class="box ojo">
+        <div class="bt">Parentheses in macros are not optional</div>
+        <p>With <code>#define DOBLE(x) x*2</code>, the expression <code>DOBLE(3+1)</code> expands to
+        <code>3+1*2</code> = <b>5</b>, not 8. That is why every macro is written wrapping each parameter and the
+        whole expression in parentheses: <code>#define DOBLE(x) ((x)*2)</code>. When possible, an
+        <code>inline</code> function is preferable, since it does respect types.</p>
+      </div>
+
+      <h3>The libraries in use</h3>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Header</th><th>Contains</th><th>Note for embedded systems</th></tr></thead>
+          <tbody>
+            <tr><td><code>&lt;stdio.h&gt;</code></td><td><code>printf</code>, <code>scanf</code>, files</td><td><code>printf</code> takes up several KB: on a small micro it is replaced by a custom function that sends over serial.</td></tr>
+            <tr><td><code>&lt;stdlib.h&gt;</code></td><td><code>atoi</code>, <code>rand</code>, <code>malloc</code></td><td><b>Avoid <code>malloc</code></b> in embedded systems: it fragments memory and can fail without warning.</td></tr>
+            <tr><td><code>&lt;string.h&gt;</code></td><td>String and memory handling</td><td><code>memset</code> and <code>memcpy</code> are very useful with buffers.</td></tr>
+            <tr><td><code>&lt;math.h&gt;</code></td><td><code>sin</code>, <code>sqrt</code>, <code>pow</code></td><td>Very heavy. If it is enough, use integer arithmetic or precomputed tables.</td></tr>
+            <tr><td><code>&lt;stdint.h&gt;</code></td><td><code>uint8_t</code>, <code>int16_t</code>, …</td><td><b>Always use</b> in microcontroller programming.</td></tr>
+            <tr><td><code>&lt;stdbool.h&gt;</code></td><td><code>bool</code>, <code>true</code>, <code>false</code></td><td>Improves readability at no cost.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>In the lab</h2>
+      <div class="box lab">
+        <div class="bt">Lab 1 · First program and the compilation cycle</div>
+        <p>With GCC on the command line (not with a graphical environment, so you can see the steps):</p>
+        <pre class="code" style="margin-top:10px"><code>gcc -Wall -c hola.c -o hola.o    <span class="c-com"># compile to object</span>
+gcc hola.o -o hola               <span class="c-com"># link</span>
+./hola                           <span class="c-com"># run</span>
+gcc -E hola.c &gt; hola.i           <span class="c-com"># see the PREPROCESSOR output</span></code></pre>
+        <p>Open <code>hola.i</code> and check that the <code>#include</code> turned into hundreds of
+        lines and that the <code>#define</code>s disappeared, replaced by their value. It is the clearest way
+        to understand what each stage does.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 2 · Types and overflow</div>
+        <p>Write a program that declares an <code>unsigned char</code> at 250 and adds 1 to it in a loop,
+        printing the value. Observe how it jumps from 255 to 0. Then print
+        <code>sizeof(int)</code>, <code>sizeof(long)</code>, <code>sizeof(float)</code> and compare with what
+        the course notes say: on the workshop PC <code>int</code> will take up 4 bytes, not 2.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 3 · Bit manipulation</div>
+        <p>Simulate a port with a variable <code>unsigned char puerto = 0;</code> and write functions
+        <code>set_bit(n)</code>, <code>clear_bit(n)</code>, <code>toggle_bit(n)</code> and
+        <code>get_bit(n)</code>. Print the value in binary after each operation. It is exactly what
+        will be done with real registers in Digital Electronics III.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Lab 4 · Converting an ADC value</div>
+        <p>Write a function that takes the raw value of a 10-bit ADC (0 to 1023) and converts it
+        to voltage with a 5 V reference (it helps to have the <a class="ref" href="/publicaciones/conversor-si" hreflang="es">prefix
+        converter</a> at hand so you do not get lost between millivolts and volts). Do it in two ways: with <code>float</code> and with
+        integer arithmetic in millivolts. Compare the results and think about which is better on an
+        8-bit microcontroller. It is the calculation that will appear in every sensor project.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Mistake</th><th>Consequence</th></tr></thead>
+          <tbody>
+            <tr><td>A <code>;</code> is missing</td><td>Compilation error, sometimes reported on the <b>next</b> line. Always check the line above the one the compiler points to.</td></tr>
+            <tr><td><code>=</code> instead of <code>==</code> in an <code>if</code></td><td>It compiles, and the condition is always true. Compile with <code>-Wall</code>.</td></tr>
+            <tr><td>Array index out of range</td><td>No error: memory that is not yours is overwritten and the failure shows up much later, somewhere else.</td></tr>
+            <tr><td>Variable used uninitialized</td><td>It contains garbage. On a PC it often happens to be zero; on a micro, anything.</td></tr>
+            <tr><td>Integer division when decimals were expected</td><td><code>7/2</code> gives 3. You have to write <code>7.0/2</code> or use a <i>cast</i>.</td></tr>
+            <tr><td><code>volatile</code> missing on an interrupt variable</td><td>The optimizer “freezes” it and the program hangs waiting for a change it cannot see.</td></tr>
+            <tr><td><code>break</code> missing in a <code>switch</code></td><td>The following cases are executed too.</td></tr>
+            <tr><td>Comparing strings with <code>==</code></td><td>It compares memory addresses, not contents. You have to use <code>strcmp</code>.</td></tr>
+            <tr><td>Macro without parentheses</td><td>Unexpected arithmetic results because of operator precedence.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">11</span>Self-assessment</h2>
+
+      <details class="q"><summary>What are the three stages a C program goes through until it is executable?</summary>
+        <div class="a"><p><b>Preprocessor</b> (resolves <code>#include</code> and <code>#define</code>),
+        <b>compiler</b> (translates to object code) and <b>linker</b> (joins the objects with the libraries and
+        generates the executable or the <code>.hex</code>).</p></div></details>
+
+      <details class="q"><summary>What does <code>unsigned char c = 200; c = c + 100;</code> give?</summary>
+        <div class="a"><p><b>44</b>. 300 does not fit in 8 bits: 300 − 256 = 44. It is a silent
+        overflow.</p></div></details>
+
+      <details class="q"><summary>Write the statement that sets bit 5 of <code>PORTC</code> to 1 without altering the others.</summary>
+        <div class="a"><p><code>PORTC |= (1 &lt;&lt; 5);</code><br>
+        To clear it to 0: <code>PORTC &amp;= ~(1 &lt;&lt; 5);</code><br>
+        To toggle it: <code>PORTC ^= (1 &lt;&lt; 5);</code></p></div></details>
+
+      <details class="q"><summary>How many usable characters fit in <code>char texto[16];</code>?</summary>
+        <div class="a"><p><b>15</b>. The sixteenth slot is taken by the terminator <code>'\0'</code>.</p></div></details>
+
+      <details class="q"><summary>Why does <code>if (strcmp(a, b))</code> do the opposite of what it seems?</summary>
+        <div class="a"><p>Because <code>strcmp</code> returns <b>0 when the strings are equal</b>, and in C
+        0 is false. That is, that condition is true when they are <b>different</b>. You have to write
+        <code>if (strcmp(a, b) == 0)</code>.</p></div></details>
+
+      <details class="q"><summary>What is the difference between a local variable and a static one inside a function?</summary>
+        <div class="a"><p>The <b>local</b> one is created on entering the function and destroyed on leaving, losing its
+        value. The <b>static</b> one (<code>static</code>) keeps its value between successive calls, although
+        it is still invisible from outside the function.</p></div></details>
+
+      <details class="q"><summary>When is it mandatory to declare a variable as <code>volatile</code>?</summary>
+        <div class="a"><p>When it can change outside the normal flow of the program: variables modified
+        by an <b>interrupt</b>, or mapped to a <b>hardware register</b>. Without <code>volatile</code>,
+        the optimizer may assume nobody changes it and use a copy in a register.</p></div></details>
+
+      <details class="q"><summary>Why is it recommended to use <code>uint8_t</code> instead of <code>unsigned char</code>?</summary>
+        <div class="a"><p>Because the size of C’s basic types <b>depends on the platform</b>. The
+        types in <code>&lt;stdint.h&gt;</code> explicitly declare the number of bits, so the
+        program behaves the same when ported to another microcontroller or to a PC.</p></div></details>
+
+      <details class="q"><summary>What does <code>printf("%d", 7/2);</code> print? And how do you get 3.5?</summary>
+        <div class="a"><p>It prints <b>3</b>: division between two integers is integer division and truncates. To get
+        3.5 you have to force floating point: <code>7.0/2</code> or <code>(float)7/2</code>, and print it with
+        <code>%f</code>.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/corrientes-alternas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Alternating currents</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/entornos-c-cpp">
+        <div class="dir">Next topic →</div>
+        <div class="tt">C and C++ development environments</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Basic elements of the C language”</b> of <b>Computing for Electronics I</b> (Year 4),
+  following the “Curriculum Proposal – Second Cycle of the Technical-Professional Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
