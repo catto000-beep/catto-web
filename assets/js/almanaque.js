@@ -21,15 +21,28 @@
   var CAB = [["L", "lunes"], ["M", "martes"], ["M", "miércoles"], ["J", "jueves"],
              ["V", "viernes"], ["S", "sábado"], ["D", "domingo"]];
 
+  /* en la portada en inglés, los mismos nombres en inglés */
+  var EN = (document.documentElement.lang || "").indexOf("en") === 0;
+  if (EN) {
+    MESES = ["January", "February", "March", "April", "May", "June",
+             "July", "August", "September", "October", "November", "December"];
+    CORTOS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    DIAS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    CAB = [["M", "Monday"], ["T", "Tuesday"], ["W", "Wednesday"], ["T", "Thursday"],
+           ["F", "Friday"], ["S", "Saturday"], ["S", "Sunday"]];
+  }
+
   var el = {}, hoy = new Date(), verAno, verMes;
 
   function pintarHoy() {
     el.hojaMes.textContent = CORTOS[hoy.getMonth()];
     el.hojaNum.textContent = hoy.getDate();
     el.dia.textContent = DIAS[hoy.getDay()];
-    el.fecha.textContent = hoy.getDate() + " de " + MESES[hoy.getMonth()] + " de " + hoy.getFullYear();
-    el.raiz.setAttribute("aria-label",
-      "Hoy es " + DIAS[hoy.getDay()] + " " + el.fecha.textContent + ". Ver el almanaque del mes");
+    el.fecha.textContent = EN ? MESES[hoy.getMonth()] + " " + hoy.getDate() + ", " + hoy.getFullYear()
+                              : hoy.getDate() + " de " + MESES[hoy.getMonth()] + " de " + hoy.getFullYear();
+    el.raiz.setAttribute("aria-label", EN
+      ? "Today is " + DIAS[hoy.getDay()] + ", " + el.fecha.textContent + ". Show this month's calendar"
+      : "Hoy es " + DIAS[hoy.getDay()] + " " + el.fecha.textContent + ". Ver el almanaque del mes");
   }
 
   function pintarMes() {

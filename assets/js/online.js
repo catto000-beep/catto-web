@@ -216,7 +216,14 @@
 
   function marca(cc) { return hayBanderas ? bandera(cc) : cc; }
 
-  function nombre(cc) { return NOMBRES[cc] || cc; }
+  /* en las páginas en inglés, el nombre del país lo da el navegador */
+  var EN = (document.documentElement.lang || '').indexOf('en') === 0;
+  var regiones = null;
+  try { if (EN && Intl.DisplayNames) regiones = new Intl.DisplayNames(['en'], { type: 'region' }); } catch (e) {}
+  function nombre(cc) {
+    if (regiones) { try { return regiones.of(cc) || cc; } catch (e) {} }
+    return NOMBRES[cc] || cc;
+  }
 
   var caja = document.getElementById('online');
   var num  = document.getElementById('onlineN');
@@ -303,20 +310,20 @@
         } else {
           sobran += lista[i][1];
         }
-        detalle.push(lista[i][1] + ' de ' + nombre(lista[i][0]));
+        detalle.push(lista[i][1] + (EN ? ' from ' : ' de ') + nombre(lista[i][0]));
       }
       if (sobran) partes.push('<span class="online-pais-uno">+' + sobran + '</span>');
       if (res.sinDato) {
         partes.push('<span class="online-pais-uno sindato"><i>?</i><b>' +
                     res.sinDato + '</b></span>');
-        detalle.push(res.sinDato + ' sin ubicar');
+        detalle.push(res.sinDato + (EN ? ' unknown location' : ' sin ubicar'));
       }
       if (pais) {
         pais.innerHTML = partes.join('');
         pais.classList.toggle('hay', partes.length > 0);
       }
 
-      var texto = n + ' personas mirando el sitio ahora';
+      var texto = n + (EN ? (n === 1 ? ' person' : ' people') + ' viewing the site now' : ' personas mirando el sitio ahora');
       if (detalle.length) texto += ': ' + detalle.join(', ');
       caja.setAttribute('aria-label', texto);
       caja.setAttribute('title', texto);

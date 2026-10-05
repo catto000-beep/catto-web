@@ -239,6 +239,16 @@
   document.body.appendChild(s);
 })();
 
+// 4b) Selector de idioma (assets/js/idioma.js). Las páginas que ya tienen
+// traducción lo traen en el <head>; a las demás se lo agrega esto.
+(function(){
+  if(document.querySelector('script[src*="/assets/js/idioma.js"]')) return;
+  var s = document.createElement('script');
+  s.src = '/assets/js/idioma.js?v=1';
+  s.defer = true;
+  document.body.appendChild(s);
+})();
+
 /* ============================================================
    5) Barra superior: "Mapa de Temas · Materia" viene escrito como un
    solo enlace. Se parte en dos: "Mapa de Temas" sigue yendo al mapa, y
@@ -252,26 +262,35 @@
   if(partes.length < 2) return;
   var materia = partes.slice(1).join('·').trim();
   var ing = location.pathname.indexOf('/mapa-ingenieria/') !== -1;
+  var ingles = (document.documentElement.lang || '').indexOf('en') === 0;
   var mapa = document.createElement('a');
   mapa.className = 'up up-mapa';
   mapa.href = up.getAttribute('href');
-  /* en el celular queda solo "Mapa": el lugar es para la materia */
-  var txt = partes[0].trim(), corte = txt.indexOf(' ');
+  /* en el celular queda solo "Mapa" ("Map" en inglés): el lugar es para la materia */
+  var txt = partes[0].trim(), corte = ingles ? txt.lastIndexOf(' ') : txt.indexOf(' ');
   if(corte > 0){
-    mapa.appendChild(document.createTextNode(txt.slice(0, corte)));
     var resto = document.createElement('span');
     resto.className = 'up-larga';
-    resto.textContent = txt.slice(corte);
-    mapa.appendChild(resto);
+    if(ingles){
+      resto.textContent = txt.slice(0, corte + 1);
+      mapa.appendChild(resto);
+      mapa.appendChild(document.createTextNode(txt.slice(corte + 1)));
+    } else {
+      mapa.appendChild(document.createTextNode(txt.slice(0, corte)));
+      resto.textContent = txt.slice(corte);
+      mapa.appendChild(resto);
+    }
   } else mapa.textContent = txt;
   var punto = document.createElement('span');
   punto.className = 'sep up-sep';
   punto.textContent = '·';
   var mat = document.createElement('a');
   mat.className = 'up up-mat';
-  mat.href = '/#t=' + location.pathname.replace(/\.html$/, '');
+  mat.href = (ingles ? '/en/#t=' : '/#t=') + location.pathname.replace(/\.html$/, '');
   mat.textContent = materia;
-  mat.title = 'Ver ' + materia + ' en la portada, con todos sus temas (' + (ing ? 'ingeniería' : 'tecnicatura') + ')';
+  mat.title = ingles
+    ? 'See ' + materia + ' on the home page, with all its topics (' + (ing ? 'engineering' : 'technician program') + ')'
+    : 'Ver ' + materia + ' en la portada, con todos sus temas (' + (ing ? 'ingeniería' : 'tecnicatura') + ')';
   up.parentNode.insertBefore(mapa, up);
   up.parentNode.insertBefore(punto, up);
   up.parentNode.replaceChild(mat, up);

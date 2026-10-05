@@ -13,9 +13,11 @@
   if (!doc) return;
   var U = 'https://fjzcajiemogsqizdgqjs.supabase.co/rest/v1/foro_tema', K = 'sb_publishable_mGM62YDOYWB3uvFj6QCO_A_Elj_cjAy';
 
-  var ruta = location.pathname.replace(/\.html$/, '').replace(/\/$/, '');
+  /* las páginas en inglés (/en/...) comparten las consultas con su original */
+  var EN = (document.documentElement.lang || '').indexOf('en') === 0;
+  var ruta = location.pathname.replace(/\.html$/, '').replace(/\/$/, '').replace(/^\/en(?=\/)/, '');
   if (!/^\/publicaciones\/[a-z0-9\/_.-]+$/.test(ruta)) return;
-  var anio = document.querySelector('.tbar .anio'), n = anio ? parseInt(anio.textContent, 10) : NaN, cat = '';
+  var anio = document.querySelector('.tbar .anio'), n = anio ? parseInt((anio.textContent.match(/\d+/) || [])[0], 10) : NaN, cat = '';
   if (/\/mapa-ingenieria\//.test(ruta) && n >= 1 && n <= 6) cat = 'ing-' + n;
   else if (/\/mapa-electronica\//.test(ruta) && n >= 4 && n <= 7) cat = 'tec-' + n;
   var h1 = doc.querySelector('h1'), titulo = h1 ? h1.textContent.trim() : '';
@@ -38,11 +40,20 @@
   var caja = document.createElement('div');
   caja.className = 'foro-tema';
   var nueva = '/foro/nueva?' + (cat ? 'c=' + cat + '&' : '') + 'p=' + encodeURIComponent(ruta) + '&pt=' + encodeURIComponent(titulo);
-  caja.innerHTML = '<h2>Consultas sobre este tema</h2>' +
-    '<p>¿Te quedó una duda con este contenido? Preguntala en el foro: la consulta queda vinculada a esta página.</p>' +
+  var TX = EN ? {
+    tit: 'Questions about this topic',
+    txt: 'Still have a question about this content? Ask it in the forum and it will be linked to this page. The forum is in Spanish, but you can write in English.',
+    preg: 'Ask about this topic', ver: 'Go to the forum', res: 'solved · ', r1: ' reply', rn: ' replies'
+  } : {
+    tit: 'Consultas sobre este tema',
+    txt: '¿Te quedó una duda con este contenido? Preguntala en el foro: la consulta queda vinculada a esta página.',
+    preg: 'Preguntar sobre este tema', ver: 'Ver el foro', res: 'resuelta · ', r1: ' respuesta', rn: ' respuestas'
+  };
+  caja.innerHTML = '<h2>' + TX.tit + '</h2>' +
+    '<p>' + TX.txt + '</p>' +
     '<div class="ft-lista"></div>' +
-    '<a class="ft-btn" href="' + esc(nueva) + '">Preguntar sobre este tema</a>' +
-    '<a class="ft-ver" href="/foro' + (cat ? '/categoria?c=' + cat : '') + '">Ver el foro</a>';
+    '<a class="ft-btn" href="' + esc(nueva) + '">' + TX.preg + '</a>' +
+    '<a class="ft-ver" href="/foro' + (cat ? '/categoria?c=' + cat : '') + '">' + TX.ver + '</a>';
   var nav2 = doc.querySelector('.nav2');
   if (nav2) doc.insertBefore(caja, nav2); else doc.appendChild(caja);
 
@@ -53,7 +64,7 @@
       if (!d || !d.length) return;
       caja.querySelector('.ft-lista').innerHTML = '<ul>' + d.map(function (t) {
         return '<li><a href="/foro/tema?id=' + t.id + '">' + esc(t.titulo) + '</a><span>' +
-          (t.resuelto ? 'resuelta · ' : '') + t.respuestas + (t.respuestas === 1 ? ' respuesta' : ' respuestas') + '</span></li>';
+          (t.resuelto ? TX.res : '') + t.respuestas + (t.respuestas === 1 ? TX.r1 : TX.rn) + '</span></li>';
       }).join('') + '</ul>';
     })
     .catch(function () {});

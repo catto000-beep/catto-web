@@ -18,6 +18,15 @@
    ============================================================ */
 (function () {
   "use strict";
+  /* textos de la barra de control, en el idioma de la página */
+  var EN = (document.documentElement.lang || "").indexOf("en") === 0;
+  var TX = EN ? {
+    ant: "Previous state", sig: "Next state", tocar: "tap the figure to step through",
+    sola: "plays by itself · tap the figure to take control", demas: "tap the figure to see the other states"
+  } : {
+    ant: "Estado anterior", sig: "Estado siguiente", tocar: "tocá la figura para avanzar",
+    sola: "se pasa sola · tocá la figura para manejarla", demas: "tocá la figura para ver los demás estados"
+  };
 
   var svgs = [].slice.call(document.querySelectorAll("svg[data-anim]"));
   if (!svgs.length) return;
@@ -79,14 +88,13 @@
     var barra = document.createElement("div");
     barra.style.cssText = "display:flex;align-items:center;gap:10px;margin:8px 0 0;" +
       "font-size:12px;color:#9aa7b4";
-    var atras = boton("‹", "Estado anterior");
-    var adelante = boton("›", "Estado siguiente");
+    var atras = boton("‹", TX.ant);
+    var adelante = boton("›", TX.sig);
     var cuenta = document.createElement("span");
     cuenta.style.cssText = "min-width:52px;font-variant-numeric:tabular-nums";
     var nota = document.createElement("span");
     nota.style.cssText = "color:#7d8a99";
-    nota.textContent = quieto ? "tocá la figura para avanzar"
-                              : "se pasa sola · tocá la figura para manejarla";
+    nota.textContent = quieto ? TX.tocar : TX.sola;
 
     barra.appendChild(atras);
     barra.appendChild(adelante);
@@ -139,7 +147,7 @@
       pintar();
       /* tomarControl borra la nota, pero aca hace falta: es la unica manera
          de ver los demas estados. */
-      nota.textContent = "tocá la figura para ver los demás estados";
+      nota.textContent = TX.demas;
     } else {
       cuenta.textContent = "1 / " + e.pasos;
     }

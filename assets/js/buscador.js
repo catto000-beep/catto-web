@@ -39,6 +39,17 @@
     "/assets/js/buscador-datos-ing6.js"
   ];
   var TOPE = 10;          /* resultados que se muestran */
+  /* En la portada en inglés: la interfaz en inglés. El índice todavía es el
+     de las páginas en castellano (se suma el de inglés cuando haya páginas
+     traducidas); los enlaces a temas traducidos los pasa a /en/ idioma.js. */
+  var EN = (document.documentElement.lang || "").indexOf("en") === 0;
+  var TX = EN ? {
+    nada: function (q) { return "No results for “" + q + "” — the search index is still in Spanish"; },
+    uno: "1 place on the site", varios: " places on the site", muestro: function (n) { return " · showing the first " + n; }
+  } : {
+    nada: function (q) { return "No encontré nada con “" + q + "”"; },
+    uno: "1 lugar en el sitio", varios: " lugares en el sitio", muestro: function (n) { return " · muestro los " + n + " primeros"; }
+  };
   var ANCHO = 150;        /* largo del pedacito de texto de cada resultado */
 
   var el = {}, indice = null, pidiendo = false, resultados = [], marcado = -1, ultima = "";
@@ -202,7 +213,7 @@
     if (!resultados.length) {
       var vacio = document.createElement("li");
       vacio.className = "bs-nada";
-      vacio.textContent = "No encontré nada con “" + q.trim() + "”";
+      vacio.textContent = TX.nada(q.trim());
       el.lista.appendChild(vacio);
       el.cabe.textContent = "";
       abrir(true);
@@ -211,9 +222,9 @@
 
     var muestro = resultados.slice(0, TOPE);
     el.cabe.textContent = resultados.length === 1
-      ? "1 lugar en el sitio"
-      : resultados.length + " lugares en el sitio" +
-        (resultados.length > TOPE ? " · muestro los " + TOPE + " primeros" : "");
+      ? TX.uno
+      : resultados.length + TX.varios +
+        (resultados.length > TOPE ? TX.muestro(TOPE) : "");
 
     muestro.forEach(function (r, n) {
       var e = r.e;

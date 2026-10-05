@@ -23,6 +23,9 @@
 
   /* Dos desgloses: los cuatro años de la tecnicatura y los seis niveles de
      la ingeniería. El comportamiento es el mismo para los dos. */
+  var EN = (document.documentElement.lang || "").indexOf("en") === 0;
+  var TX = EN ? { de: " of ", t1: "1 topic", tn: " topics" } : { de: " de ", t1: "1 tema", tn: " temas" };
+
   var grids = ["gridAnios", "gridNiveles"]
     .map(function (id) { return document.getElementById(id); })
     .filter(Boolean);
@@ -72,11 +75,14 @@
   function desdeTema() {
     var m = /^#t=(\/[^#?]*)$/.exec(location.hash);
     if (!m) return;
-    var destino = decodeURIComponent(m[1]).replace(/\.html$/, "");
+    /* la portada en inglés enlaza a /en/... si el tema está traducido y al
+       original si no: se compara sin el /en para que valgan los dos */
+    function sinEn(h) { return h.replace(/\.html$/, "").replace(/^\/en(?=\/)/, ""); }
+    var destino = sinEn(decodeURIComponent(m[1]));
     filas.forEach(function (f) {
       f.ejes.forEach(function (e) {
         var a = e.li.querySelector("a");
-        if (!a || a.getAttribute("href").replace(/\.html$/, "") !== destino) return;
+        if (!a || sinEn(a.getAttribute("href")) !== destino) return;
         abrir(f, true);
         a.className += " aqui";
         a.setAttribute("aria-current", "page");
@@ -141,7 +147,7 @@
       }
 
       f.li.hidden = visibles === 0;
-      f.cuenta.textContent = visibles + " de " + f.total;
+      f.cuenta.textContent = visibles + TX.de + f.total;
       abrir(f, visibles > 0);
       hallados += visibles;
     });
@@ -167,7 +173,7 @@
     if (vacio) vacio.hidden = !(pal.length && hallados === 0);
     if (marcador) {
       marcador.textContent = !pal.length ? ""
-        : hallados === 1 ? "1 tema" : hallados + " temas";
+        : hallados === 1 ? TX.t1 : hallados + TX.tn;
     }
   }
 

@@ -12,6 +12,18 @@
 (function () {
   "use strict";
 
+  /* Idioma de la página: los mensajes de error salen en inglés en /en/ */
+  var EN = (document.documentElement.lang || "").indexOf("en") === 0;
+  var TX = EN ? {
+    sint: "Syntax error", cero: "Cannot divide by zero", dom: "Domain error",
+    fuera: "Out of domain", falta: "Missing number", ent: "Integers ≥ 0 only",
+    grande: "Number too large"
+  } : {
+    sint: "Error de sintaxis", cero: "No se puede dividir por cero", dom: "Error de dominio",
+    fuera: "Fuera de dominio", falta: "Falta un número", ent: "Sólo enteros ≥ 0",
+    grande: "Número demasiado grande"
+  };
+
   /* ==========================================================
      TECLADO — 8 filas de 6 teclas.
        t   texto de la tecla          ins  lo que agrega a la expresión
@@ -69,7 +81,7 @@
       if (/[0-9.]/.test(c)) {
         var j = i, punto = false;
         while (j < n && /[0-9.]/.test(src.charAt(j))) {
-          if (src.charAt(j) === ".") { if (punto) throw new Err("Error de sintaxis"); punto = true; }
+          if (src.charAt(j) === ".") { if (punto) throw new Err(TX.sint); punto = true; }
           j++;
         }
         if (src.charAt(j) === "E") {
@@ -83,7 +95,7 @@
           }
         }
         var txt = src.slice(i, j);
-        if (txt === ".") throw new Err("Error de sintaxis");
+        if (txt === ".") throw new Err(TX.sint);
         out.push({ t: "num", v: parseFloat(txt) });
         i = j; continue;
       }
@@ -97,7 +109,7 @@
         if (f) { out.push({ t: "fn", v: f }); i += f.length; continue; }
         if (c === "e") { out.push({ t: "num", v: Math.E }); i++; continue; }
         if (c === "A") { out.push({ t: "ans" }); i++; continue; }
-        throw new Err("Error de sintaxis");
+        throw new Err(TX.sint);
       }
 
       switch (c) {
@@ -116,7 +128,7 @@
         case "⁻": out.push({ t: "post", v: "inv" }); break;
         case "²": out.push({ t: "post", v: "sq" }); break;
         case "³": out.push({ t: "post", v: "cb" }); break;
-        default: throw new Err("Error de sintaxis");
+        default: throw new Err(TX.sint);
       }
       i++;
     }
@@ -163,8 +175,8 @@
           p++;
           var r = unario();
           if (t.v === "*") v = v * r;
-          else if (t.v === "/") { if (r === 0) throw new Err("No se puede dividir por cero"); v = v / r; }
-          else { if (r === 0) throw new Err("No se puede dividir por cero"); v = v - Math.floor(v / r) * r; }
+          else if (t.v === "/") { if (r === 0) throw new Err(TX.cero); v = v / r; }
+          else { if (r === 0) throw new Err(TX.cero); v = v - Math.floor(v / r) * r; }
         } else if (t && (t.t === "num" || t.t === "fn" || t.t === "ans" ||
                          (t.t === "par" && t.v === "("))) {
           v = v * unario();               /* multiplicación implícita: 2π, 3(4+1) */
@@ -185,9 +197,9 @@
       if (t && t.t === "op" && t.v === "root") {      /* b ʳ x = raíz b-ésima de x */
         p++;
         var x = unario();
-        if (b === 0) throw new Err("Error de dominio");
+        if (b === 0) throw new Err(TX.dom);
         if (x < 0 && Math.abs(b % 2) === 1) return -Math.pow(-x, 1 / b);
-        if (x < 0) throw new Err("Error de dominio");
+        if (x < 0) throw new Err(TX.dom);
         return Math.pow(x, 1 / b);
       }
       return b;
@@ -201,7 +213,7 @@
         p++;
         if (t.v === "!") v = factorial(v);
         else if (t.v === "%") v = v / 100;
-        else if (t.v === "inv") { if (v === 0) throw new Err("No se puede dividir por cero"); v = 1 / v; }
+        else if (t.v === "inv") { if (v === 0) throw new Err(TX.cero); v = 1 / v; }
         else if (t.v === "sq") v = v * v;
         else if (t.v === "cb") v = v * v * v;
       }
@@ -209,7 +221,7 @@
 
     function atomo() {
       var t = ver();
-      if (!t) throw new Err("Falta un número");
+      if (!t) throw new Err(TX.falta);
       if (t.t === "num") { p++; return t.v; }
       if (t.t === "ans") { p++; return ans; }
       if (t.t === "fn") {
@@ -225,7 +237,7 @@
         comer("par", ")");
         return v;
       }
-      throw new Err("Error de sintaxis");
+      throw new Err(TX.sint);
     }
 
     function aplicar(f, x) {
@@ -236,10 +248,10 @@
         case "tan":
           var a = grados ? x * R : x;
           if (grados && Math.abs(((x % 180) + 180) % 180 - 90) < 1e-10)
-            throw new Err("Fuera de dominio");
+            throw new Err(TX.fuera);
           return limpiar(Math.tan(a));
         case "asin": case "acos":
-          if (x < -1 || x > 1) throw new Err("Fuera de dominio");
+          if (x < -1 || x > 1) throw new Err(TX.fuera);
           var r1 = f === "asin" ? Math.asin(x) : Math.acos(x);
           return grados ? r1 / R : r1;
         case "atan": return grados ? Math.atan(x) / R : Math.atan(x);
@@ -248,41 +260,41 @@
         case "tanh": return Math.tanh(x);
         case "asinh": return Math.asinh(x);
         case "acosh":
-          if (x < 1) throw new Err("Fuera de dominio");
+          if (x < 1) throw new Err(TX.fuera);
           return Math.acosh(x);
         case "atanh":
-          if (x <= -1 || x >= 1) throw new Err("Fuera de dominio");
+          if (x <= -1 || x >= 1) throw new Err(TX.fuera);
           return Math.atanh(x);
         case "ln":
-          if (x <= 0) throw new Err("Fuera de dominio");
+          if (x <= 0) throw new Err(TX.fuera);
           return Math.log(x);
         case "log":
-          if (x <= 0) throw new Err("Fuera de dominio");
+          if (x <= 0) throw new Err(TX.fuera);
           return Math.log10(x);
         case "sqrt":
-          if (x < 0) throw new Err("Fuera de dominio");
+          if (x < 0) throw new Err(TX.fuera);
           return Math.sqrt(x);
         case "cbrt": return Math.cbrt(x);
         case "abs": return Math.abs(x);
       }
-      throw new Err("Error de sintaxis");
+      throw new Err(TX.sint);
     }
 
     /* sin(180°) da 1.2e-16: se lleva a cero lo que es cero */
     function limpiar(v) { return Math.abs(v) < 1e-14 ? 0 : v; }
 
     function factorial(x) {
-      if (x < 0 || Math.abs(x - Math.round(x)) > 1e-9) throw new Err("Sólo enteros ≥ 0");
-      if (x > 170) throw new Err("Número demasiado grande");
+      if (x < 0 || Math.abs(x - Math.round(x)) > 1e-9) throw new Err(TX.ent);
+      if (x > 170) throw new Err(TX.grande);
       var r = 1;
       for (var i = 2; i <= Math.round(x); i++) r *= i;
       return r;
     }
 
     var val = suma();
-    if (p < tk.length) throw new Err("Error de sintaxis");
+    if (p < tk.length) throw new Err(TX.sint);
     if (typeof val !== "number" || isNaN(val)) throw new Err("Error");
-    if (!isFinite(val)) throw new Err("Número demasiado grande");
+    if (!isFinite(val)) throw new Err(TX.grande);
     return val;
   }
 

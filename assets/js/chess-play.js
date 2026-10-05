@@ -10,6 +10,32 @@
 
   var LIGHT = "#EEEED2", DARK = "#769656", MARK = "#f6d55c", S = 45;
 
+  /* Idioma de la página: los textos que escribe el script salen en inglés en /en/ */
+  var EN = (document.documentElement.lang || "").indexOf("en") === 0;
+  var TX = EN ? {
+    rapida: "Rapid", clasica: "Classical", sinReloj: "No clock",
+    blancas: "White", negras: "Black",
+    tiempoN: "Time's up: Black wins", tiempoB: "Time's up: White wins",
+    mateN: "Checkmate: Black wins", mateB: "Checkmate: White wins",
+    ahogado: "Stalemate: draw", material: "Draw by insufficient material",
+    r50: "Draw by the fifty-move rule", triple: "Draw by threefold repetition",
+    mueveB: "White to move", mueveN: "Black to move", jaque: " · Check!",
+    pausa: "Paused · ", pausar: "Pause the clock", marcha: "Start the clock",
+    coronar: "Promote", nueva: "Start a new game? The current one will be lost.",
+    dec: "."
+  } : {
+    rapida: "Rápida", clasica: "Clásica", sinReloj: "Sin reloj",
+    blancas: "Blancas", negras: "Negras",
+    tiempoN: "Se acabó el tiempo: ganan las negras", tiempoB: "Se acabó el tiempo: ganan las blancas",
+    mateN: "Jaque mate: ganan las negras", mateB: "Jaque mate: ganan las blancas",
+    ahogado: "Ahogado: tablas", material: "Tablas por material insuficiente",
+    r50: "Tablas por la regla de las 50 jugadas", triple: "Tablas por triple repetición",
+    mueveB: "Mueven las blancas", mueveN: "Mueven las negras", jaque: " · ¡jaque!",
+    pausa: "En pausa · ", pausar: "Pausar el reloj", marcha: "Poner en marcha el reloj",
+    coronar: "Coronar", nueva: "¿Empezar una partida nueva? Se pierde la actual.",
+    dec: ","
+  };
+
   /* Tiempos de juego estándar (base en segundos + incremento por jugada) */
   var RELOJES = [
     { id: "1+0",   txt: "Bullet · 1 min",             base: 60,   inc: 0 },
@@ -19,11 +45,11 @@
     { id: "5+0",   txt: "Blitz · 5 min",              base: 300,  inc: 0 },
     { id: "5+3",   txt: "Blitz · 5 min + 3 s",        base: 300,  inc: 3 },
     { id: "6+0",   txt: "Blitz · 6 min",              base: 360,  inc: 0 },
-    { id: "10+0",  txt: "Rápida · 10 min",            base: 600,  inc: 0 },
-    { id: "10+5",  txt: "Rápida · 10 min + 5 s",      base: 600,  inc: 5 },
-    { id: "15+10", txt: "Rápida · 15 min + 10 s",     base: 900,  inc: 10 },
-    { id: "30+0",  txt: "Clásica · 30 min",           base: 1800, inc: 0 },
-    { id: "0",     txt: "Sin reloj",                  base: 0,    inc: 0 }
+    { id: "10+0",  txt: TX.rapida + " · 10 min",       base: 600,  inc: 0 },
+    { id: "10+5",  txt: TX.rapida + " · 10 min + 5 s", base: 600,  inc: 5 },
+    { id: "15+10", txt: TX.rapida + " · 15 min + 10 s", base: 900,  inc: 10 },
+    { id: "30+0",  txt: TX.clasica + " · 30 min",     base: 1800, inc: 0 },
+    { id: "0",     txt: TX.sinReloj,                base: 0,    inc: 0 }
   ];
   var RELOJ_INICIAL = "0";   /* arranca sin reloj: se juega tranquilo salvo que elijan tiempo */
 
@@ -258,7 +284,7 @@
 
   function fmt(s) {
     if (s <= 0) return "0:00";
-    if (s < 20) return s.toFixed(1).replace(".", ",");          // décimas en el apuro
+    if (s < 20) return s.toFixed(1).replace(".", TX.dec);          // décimas en el apuro
     var m = Math.floor(s / 60), seg = Math.floor(s % 60);
     return m + ":" + (seg < 10 ? "0" : "") + seg;
   }
@@ -289,7 +315,7 @@
     if (t[g.turn] <= 0) {
       t[g.turn] = 0;
       pararReloj();
-      terminar(g.turn === "w" ? "Se acabó el tiempo: ganan las negras" : "Se acabó el tiempo: ganan las blancas", "ok");
+      terminar(g.turn === "w" ? TX.tiempoN : TX.tiempoB, "ok");
     }
     pintarRelojes(); pintarEstado();
   }
@@ -342,15 +368,15 @@
   function evaluarFinal() {
     if (!hayLegales(g)) {
       if (inCheck(g, g.turn))
-        terminar(g.turn === "w" ? "Jaque mate: ganan las negras" : "Jaque mate: ganan las blancas", "ok");
-      else terminar("Ahogado: tablas", "draw");
+        terminar(g.turn === "w" ? TX.mateN : TX.mateB, "ok");
+      else terminar(TX.ahogado, "draw");
       return;
     }
-    if (materialInsuficiente(g)) { terminar("Tablas por material insuficiente", "draw"); return; }
-    if (g.half >= 100) { terminar("Tablas por la regla de las 50 jugadas", "draw"); return; }
+    if (materialInsuficiente(g)) { terminar(TX.material, "draw"); return; }
+    if (g.half >= 100) { terminar(TX.r50, "draw"); return; }
     var k = claves[claves.length - 1], n = 0;
     for (var i = 0; i < claves.length; i++) if (claves[i] === k) n++;
-    if (n >= 3) terminar("Tablas por triple repetición", "draw");
+    if (n >= 3) terminar(TX.triple, "draw");
   }
 
   function terminar(txt, cls) {
@@ -445,8 +471,8 @@
   function pintarRelojes() {
     // la fila de arriba muestra al que juega desde el otro lado del tablero
     var arriba = flip ? "w" : "b", abajo = flip ? "b" : "w";
-    el.topName.textContent = arriba === "w" ? "Blancas" : "Negras";
-    el.botName.textContent = abajo === "w" ? "Blancas" : "Negras";
+    el.topName.textContent = arriba === "w" ? TX.blancas : TX.negras;
+    el.botName.textContent = abajo === "w" ? TX.blancas : TX.negras;
     el.topAv.textContent = arriba === "w" ? "♔" : "♚";
     el.botAv.textContent = abajo === "w" ? "♔" : "♚";
     el.topAv.className = "chess-av cp-av " + (arriba === "w" ? "wh" : "bl");
@@ -469,14 +495,14 @@
     var txt, cls = "";
     if (fin) { txt = fin.txt; cls = fin.cls; }
     else {
-      txt = (g.turn === "w" ? "Mueven las blancas" : "Mueven las negras");
-      if (jaque) txt += " · ¡jaque!";
-      if (reloj.base && !corriendo && arrancada) txt = "En pausa · " + txt;
+      txt = (g.turn === "w" ? TX.mueveB : TX.mueveN);
+      if (jaque) txt += TX.jaque;
+      if (reloj.base && !corriendo && arrancada) txt = TX.pausa + txt;
     }
     el.status.textContent = txt;
     el.status.className = "chess-badge cp-status " + cls;
     el.pause.textContent = corriendo ? "⏸" : "▶";
-    el.pause.title = corriendo ? "Pausar el reloj" : "Poner en marcha el reloj";
+    el.pause.title = corriendo ? TX.pausar : TX.marcha;
     el.pause.disabled = !reloj.base || !!fin;
     el.pause.hidden = !reloj.base;   // sin reloj no hay nada que pausar
     el.undo.disabled = !hist.length;
@@ -487,7 +513,7 @@
     var col = g.turn, piezas = ["q", "r", "b", "n"], o = "";
     piezas.forEach(function (p) {
       var ch = col === "w" ? p.toUpperCase() : p;
-      o += '<button data-p="' + p + '" title="Coronar" aria-label="Coronar">' +
+      o += '<button data-p="' + p + '" title="' + TX.coronar + '" aria-label="' + TX.coronar + '">' +
            '<svg viewBox="0 0 45 45">' + (window.CHESS_PIECES[ch] || "") + "</svg></button>";
     });
     el.promoBox.innerHTML = o;
@@ -529,7 +555,7 @@
 
     el.sel.onchange = function () { reloj = relojPorId(this.value); nuevaPartida(); };
     root.querySelector("#cpNueva").onclick = function () {
-      if (hist.length && !fin && !confirm("¿Empezar una partida nueva? Se pierde la actual.")) return;
+      if (hist.length && !fin && !confirm(TX.nueva)) return;
       nuevaPartida();
     };
     root.querySelector("#cpFlip").onclick = function () { flip = !flip; render(); };
