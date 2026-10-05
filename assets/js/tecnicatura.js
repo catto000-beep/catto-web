@@ -150,7 +150,7 @@ var MATERIAS = [
   {t:"Módulo de comunicación", u:"buses-serie", d:"Serie síncrona. USART síncrono/asíncrono serie.", tm:[["micro",3],["modul",2]]},
   {t:"Las interrupciones", u:"interrupciones", d:"Manejo de interrupciones del microcontrolador.", tm:[["micro",3]]},
   {t:"Aplicaciones con controles", u:"aplicaciones-control", d:"Control de temperatura e iluminación, pesaje y dosificación, control de ascensores, sistemas automáticos de verificación y prueba.", tm:[["micro",4],["control",3]]},
-  {t:"Display inteligentes", u:"displays", d:"Aplicaciones con displays inteligentes.", tm:[["micro",3]]},
+  {t:"Displays inteligentes", u:"displays", d:"Aplicaciones con displays inteligentes.", tm:[["micro",3]]},
   {t:"Aplicaciones con microcontroladores", u:"proyectos-microcontrolador", d:"Proyectos integradores con microcontroladores.", tm:[["micro",4],["control",3]]}
 ]},
 {id:"ei2", n:"Electrónica Industrial II", area:"industrial", anio:7, h:120, ejes:[
