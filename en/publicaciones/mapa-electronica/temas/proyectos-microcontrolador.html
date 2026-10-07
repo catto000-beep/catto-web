@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microcontroller projects · Digital Electronics IV · Catto</title>
+<meta name="description" content="A method for taking a microcontroller project from the idea to the finished device: requirements, layered architecture, state machine, non-blocking cooperative scheduling, prototype and circuit board, testing, robustness with a watchdog timer and safe defaults, versioning and documentation. A topic of Digital Electronics IV, Year 7.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/proyectos-microcontrolador">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/proyectos-microcontrolador">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/proyectos-microcontrolador">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/proyectos-microcontrolador">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Digital Electronics IV</a>
+    <span class="anio">Year 7</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Electronics IV</span> · 120 h · Topic 6 of 6</div>
+    <h1>Microcontroller projects</h1>
+    <p class="lead">A project is not just a longer program: it is a way of working. What separates a
+    prototype that runs on the bench from a device that runs for a whole year in a plant is not the code,
+    it is the <b>method</b>.</p>
+    <div class="chips">
+      <span class="chip hi">Method</span>
+      <span class="chip">State machine</span>
+      <span class="chip">Non-blocking</span>
+      <span class="chip">Robustness</span>
+    </div>
+    <hr class="rule">
+
+    <section id="metodo">
+      <h2><span class="n">01</span>From the idea to the device</h2>
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Work cycle of a microcontroller project" class="svg-t" data-anim><style>.ci-t{fill:#e6edf3;font-size:12px;font-weight:700}.ci-k{fill:#7d8a99;font-size:9.5px}.ci-c{fill:#9aa7b4;font-size:10.5px}.ci-s{fill:#e6edf3;font-size:10px;font-weight:700;text-anchor:middle}</style><circle cx="208.0" cy="60.0" r="24" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="ci-s" x="208.0" y="65.0" fill="#7d8a99">1</text><path d="M243.6 94.1 L266.1 47.3" stroke="#2a3140" stroke-width="1"/><circle cx="292.4" cy="100.7" r="24" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="ci-s" x="292.4" y="105.7" fill="#7d8a99">2</text><path d="M287.9 149.8 L338.6 138.2" stroke="#2a3140" stroke-width="1"/><circle cx="313.3" cy="192.0" r="24" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="ci-s" x="313.3" y="197.0" fill="#7d8a99">3</text><path d="M272.1 219.1 L312.8 251.5" stroke="#2a3140" stroke-width="1"/><circle cx="254.9" cy="265.3" r="24" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="ci-s" x="254.9" y="270.3" fill="#7d8a99">4</text><path d="M208.0 250.0 L208.0 302.0" stroke="#2a3140" stroke-width="1"/><circle cx="161.1" cy="265.3" r="24" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="ci-s" x="161.1" y="270.3" fill="#7d8a99">5</text><path d="M143.9 219.1 L103.2 251.5" stroke="#2a3140" stroke-width="1"/><circle cx="102.7" cy="192.0" r="24" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="ci-s" x="102.7" y="197.0" fill="#7d8a99">6</text><path d="M128.1 149.8 L77.4 138.2" stroke="#2a3140" stroke-width="1"/><circle cx="123.6" cy="100.7" r="24" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="ci-s" x="123.6" y="105.7" fill="#7d8a99">7</text><path d="M172.4 94.1 L149.9 47.3" stroke="#2a3140" stroke-width="1"/><circle cx="208" cy="168" r="108" fill="none" stroke="#2a3140" stroke-width="1" stroke-dasharray="5 6"/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;1;1;1;1;1;1" dur="14s" repeatCount="indefinite"/><circle cx="208.0" cy="60.0" r="24" fill="#3fb950" fill-opacity="0.30" stroke="#3fb950" stroke-width="1.8"/><text class="ci-s" x="208.0" y="65.0" fill="#3fb950">1</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;1;1;1;1;1" dur="14s" repeatCount="indefinite"/><circle cx="292.4" cy="100.7" r="24" fill="#3fb950" fill-opacity="0.30" stroke="#3fb950" stroke-width="1.8"/><text class="ci-s" x="292.4" y="105.7" fill="#3fb950">2</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;1;1;1;1" dur="14s" repeatCount="indefinite"/><circle cx="313.3" cy="192.0" r="24" fill="#58a6ff" fill-opacity="0.30" stroke="#58a6ff" stroke-width="1.8"/><text class="ci-s" x="313.3" y="197.0" fill="#58a6ff">3</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;1;1;1" dur="14s" repeatCount="indefinite"/><circle cx="254.9" cy="265.3" r="24" fill="#58a6ff" fill-opacity="0.30" stroke="#58a6ff" stroke-width="1.8"/><text class="ci-s" x="254.9" y="270.3" fill="#58a6ff">4</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;1;1" dur="14s" repeatCount="indefinite"/><circle cx="161.1" cy="265.3" r="24" fill="#d29922" fill-opacity="0.30" stroke="#d29922" stroke-width="1.8"/><text class="ci-s" x="161.1" y="270.3" fill="#d29922">5</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1;1" dur="14s" repeatCount="indefinite"/><circle cx="102.7" cy="192.0" r="24" fill="#bc8cff" fill-opacity="0.30" stroke="#bc8cff" stroke-width="1.8"/><text class="ci-s" x="102.7" y="197.0" fill="#bc8cff">6</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;1" dur="14s" repeatCount="indefinite"/><circle cx="123.6" cy="100.7" r="24" fill="#bc8cff" fill-opacity="0.30" stroke="#bc8cff" stroke-width="1.8"/><text class="ci-s" x="123.6" y="105.7" fill="#bc8cff">7</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0;0" dur="14s" repeatCount="indefinite"/><text class="ci-t" x="368" y="120" fill="#3fb950">Stage 1 &#183; Requirements</text><text class="ci-c" x="368" y="146">deliverable: verifiable list</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0;0" dur="14s" repeatCount="indefinite"/><text class="ci-t" x="368" y="120" fill="#3fb950">Stage 2 &#183; Architecture</text><text class="ci-c" x="368" y="146">deliverable: blocks and pins</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0;0" dur="14s" repeatCount="indefinite"/><text class="ci-t" x="368" y="120" fill="#58a6ff">Stage 3 &#183; Prototype</text><text class="ci-c" x="368" y="146">deliverable: each block alone</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0;0" dur="14s" repeatCount="indefinite"/><text class="ci-t" x="368" y="120" fill="#58a6ff">Stage 4 &#183; Integration</text><text class="ci-c" x="368" y="146">deliverable: all together</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0;0" dur="14s" repeatCount="indefinite"/><text class="ci-t" x="368" y="120" fill="#d29922">Stage 5 &#183; Board</text><text class="ci-c" x="368" y="146">deliverable: schematic and PCB</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1;0" dur="14s" repeatCount="indefinite"/><text class="ci-t" x="368" y="120" fill="#bc8cff">Stage 6 &#183; Testing</text><text class="ci-c" x="368" y="146">deliverable: test protocol</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;1" dur="14s" repeatCount="indefinite"/><text class="ci-t" x="368" y="120" fill="#bc8cff">Stage 7 &#183; Delivery</text><text class="ci-c" x="368" y="146">deliverable: documentation</text></g><rect x="352" y="86" width="316" height="88" rx="7" fill="none" stroke="#2a3140" stroke-width="1"/><text class="ci-c" x="352" y="204" fill="#7d8a99">None of this is linear: each test</text><text class="ci-c" x="352" y="222" fill="#7d8a99">feeds back information that corrects the</text><text class="ci-c" x="352" y="240" fill="#7d8a99">previous stage. The only fixed rule is that</text><text class="ci-c" x="352" y="258" fill="#7d8a99">requirements come first.</text><text class="ci-c" x="26" y="304" fill="#7d8a99">A requirement that cannot be measured is not a requirement: it is an intention, and it cannot tell you whether the device is finished.</text></svg>
+        <figcaption><b>Figure 1.</b> The work cycle, animated. None of this is linear: each test
+        feeds back information that corrects the previous stage. What is fixed is that <b>requirements come
+        first</b>.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Stage</th><th>What is defined</th><th>What is delivered</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>1</b></td><td>Requirements: what it must do, with what accuracy, under what conditions, for whom.</td><td>List of verifiable requirements.</td></tr>
+            <tr><td class="c"><b>2</b></td><td>Architecture: blocks, the signals between them, choice of the microcontroller and the sensors.</td><td>Block diagram and pin budget.</td></tr>
+            <tr><td class="c"><b>3</b></td><td>Prototype in parts: each block is tested <b>on its own</b> before it is integrated.</td><td>Modules verified one by one.</td></tr>
+            <tr><td class="c"><b>4</b></td><td>Integration: the blocks are put together and the timing and noise problems appear.</td><td>Complete working prototype.</td></tr>
+            <tr><td class="c"><b>5</b></td><td>Board: schematic, printed circuit board, assembly.</td><td>Device in its final form.</td></tr>
+            <tr><td class="c"><b>6</b></td><td>Testing: functional, limit, endurance and fault-recovery tests.</td><td>Test protocol with results.</td></tr>
+            <tr><td class="c"><b>7</b></td><td>Documentation and delivery.</td><td>Schematics, code, manual and backup.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>The schematic and the board are developed with what was covered in
+      <a href="/en/publicaciones/mapa-electronica/temas/esquematicos">schematics</a> and
+      <a href="/en/publicaciones/mapa-electronica/temas/pcb">printed circuit boards</a>.</p>
+
+      <div class="box key">
+        <div class="bt">A verifiable requirement</div>
+        <p>“It should measure temperature well” is not a requirement: it cannot be checked. “Measure between −10 and
+        +80 °C with an error under ±0.5 °C, updating every second, powered from 12 V and operating at ambient
+        temperatures from 0 to 50 °C” is. The difference looks like a formality and it is not: <b>the verifiable
+        requirement is what gets tested later</b>, and what avoids the argument over whether the device is finished.</p>
+      </div>
+    </section>
+
+    <section id="estados">
+      <h2><span class="n">02</span>The state machine</h2>
+      <figure>
+        <svg viewBox="0 0 700 340" role="img" aria-label="State machine of a dosing system" class="svg-t" data-anim><style>.st-t{fill:#e6edf3;font-size:12px;font-weight:700}.st-k{fill:#7d8a99;font-size:9.5px}.st-c{fill:#9aa7b4;font-size:10.5px}.st-n{fill:#e6edf3;font-size:10.5px;font-weight:700;text-anchor:middle}</style><rect x="32" y="99" width="120" height="38" rx="19" fill="#1c2230" stroke="#2a3140" stroke-width="1.3"/><text class="st-n" x="92" y="122" fill="#7d8a99">IDLE</text><rect x="186" y="63" width="120" height="38" rx="19" fill="#1c2230" stroke="#2a3140" stroke-width="1.3"/><text class="st-n" x="246" y="86" fill="#7d8a99">FILLING</text><rect x="364" y="99" width="120" height="38" rx="19" fill="#1c2230" stroke="#2a3140" stroke-width="1.3"/><text class="st-n" x="424" y="122" fill="#7d8a99">SETTLING</text><rect x="268" y="207" width="120" height="38" rx="19" fill="#1c2230" stroke="#2a3140" stroke-width="1.3"/><text class="st-n" x="328" y="230" fill="#7d8a99">DISCHARGING</text><rect x="60" y="225" width="120" height="38" rx="19" fill="#1c2230" stroke="#2a3140" stroke-width="1.3"/><text class="st-n" x="120" y="248" fill="#7d8a99">FAULT</text><path d="M152 112 Q 200 78 186 84" fill="none" stroke="#2a3140" stroke-width="1.3" marker-end=""/><path d="M306 86 Q 350 92 364 112" fill="none" stroke="#2a3140" stroke-width="1.3" marker-end=""/><path d="M424 137 Q 420 200 388 219" fill="none" stroke="#2a3140" stroke-width="1.3" marker-end=""/><path d="M268 230 Q 160 232 116 137" fill="none" stroke="#2a3140" stroke-width="1.3" marker-end=""/><path d="M226 101 Q 140 160 132 225" fill="none" stroke="#2a3140" stroke-width="1.3" marker-end=""/><path d="M120 225 L98 137" fill="none" stroke="#2a3140" stroke-width="1.3" marker-end=""/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0" dur="15s" repeatCount="indefinite"/><path d="M152 112 Q 200 78 186 84" fill="none" stroke="#58a6ff" stroke-width="2.4"/><circle r="5" fill="#e6edf3"><animateMotion path="M152 112 Q 200 78 186 84" dur="2.5s" repeatCount="indefinite"/></circle><rect x="32" y="99" width="120" height="38" rx="19" fill="#3fb950" fill-opacity="0.26" stroke="#3fb950" stroke-width="2"/><text class="st-n" x="92" y="122" fill="#3fb950">IDLE</text><rect x="186" y="63" width="120" height="38" rx="19" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="2"/><text class="st-n" x="246" y="86" fill="#58a6ff">FILLING</text><text class="st-t" x="26" y="42" fill="#58a6ff">IDLE &#8594; FILLING</text><text class="st-c" x="280" y="42">event: order received</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0" dur="15s" repeatCount="indefinite"/><path d="M306 86 Q 350 92 364 112" fill="none" stroke="#58a6ff" stroke-width="2.4"/><circle r="5" fill="#e6edf3"><animateMotion path="M306 86 Q 350 92 364 112" dur="2.5s" repeatCount="indefinite"/></circle><rect x="186" y="63" width="120" height="38" rx="19" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="2"/><text class="st-n" x="246" y="86" fill="#58a6ff">FILLING</text><rect x="364" y="99" width="120" height="38" rx="19" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="2"/><text class="st-n" x="424" y="122" fill="#58a6ff">SETTLING</text><text class="st-t" x="26" y="42" fill="#58a6ff">FILLING &#8594; SETTLING</text><text class="st-c" x="280" y="42">event: weight &#8805; target</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0" dur="15s" repeatCount="indefinite"/><path d="M424 137 Q 420 200 388 219" fill="none" stroke="#d29922" stroke-width="2.4"/><circle r="5" fill="#e6edf3"><animateMotion path="M424 137 Q 420 200 388 219" dur="2.5s" repeatCount="indefinite"/></circle><rect x="364" y="99" width="120" height="38" rx="19" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="2"/><text class="st-n" x="424" y="122" fill="#58a6ff">SETTLING</text><rect x="268" y="207" width="120" height="38" rx="19" fill="#d29922" fill-opacity="0.26" stroke="#d29922" stroke-width="2"/><text class="st-n" x="328" y="230" fill="#d29922">DISCHARGING</text><text class="st-t" x="26" y="42" fill="#d29922">SETTLING &#8594; DISCHARGING</text><text class="st-c" x="280" y="42">event: 500 ms</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0" dur="15s" repeatCount="indefinite"/><path d="M268 230 Q 160 232 116 137" fill="none" stroke="#3fb950" stroke-width="2.4"/><circle r="5" fill="#e6edf3"><animateMotion path="M268 230 Q 160 232 116 137" dur="2.5s" repeatCount="indefinite"/></circle><rect x="268" y="207" width="120" height="38" rx="19" fill="#d29922" fill-opacity="0.26" stroke="#d29922" stroke-width="2"/><text class="st-n" x="328" y="230" fill="#d29922">DISCHARGING</text><rect x="32" y="99" width="120" height="38" rx="19" fill="#3fb950" fill-opacity="0.26" stroke="#3fb950" stroke-width="2"/><text class="st-n" x="92" y="122" fill="#3fb950">IDLE</text><text class="st-t" x="26" y="42" fill="#3fb950">DISCHARGING &#8594; IDLE</text><text class="st-c" x="280" y="42">event: container empty</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0" dur="15s" repeatCount="indefinite"/><path d="M226 101 Q 140 160 132 225" fill="none" stroke="#f85149" stroke-width="2.4"/><circle r="5" fill="#e6edf3"><animateMotion path="M226 101 Q 140 160 132 225" dur="2.5s" repeatCount="indefinite"/></circle><rect x="186" y="63" width="120" height="38" rx="19" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="2"/><text class="st-n" x="246" y="86" fill="#58a6ff">FILLING</text><rect x="60" y="225" width="120" height="38" rx="19" fill="#f85149" fill-opacity="0.26" stroke="#f85149" stroke-width="2"/><text class="st-n" x="120" y="248" fill="#f85149">FAULT</text><text class="st-t" x="26" y="42" fill="#f85149">FILLING &#8594; FAULT</text><text class="st-c" x="280" y="42">event: timeout</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1" dur="15s" repeatCount="indefinite"/><path d="M120 225 L98 137" fill="none" stroke="#3fb950" stroke-width="2.4"/><circle r="5" fill="#e6edf3"><animateMotion path="M120 225 L98 137" dur="2.5s" repeatCount="indefinite"/></circle><rect x="60" y="225" width="120" height="38" rx="19" fill="#f85149" fill-opacity="0.26" stroke="#f85149" stroke-width="2"/><text class="st-n" x="120" y="248" fill="#f85149">FAULT</text><rect x="32" y="99" width="120" height="38" rx="19" fill="#3fb950" fill-opacity="0.26" stroke="#3fb950" stroke-width="2"/><text class="st-n" x="92" y="122" fill="#3fb950">IDLE</text><text class="st-t" x="26" y="42" fill="#3fb950">FAULT &#8594; IDLE</text><text class="st-c" x="280" y="42">event: reset</text></g><text class="st-c" x="26" y="290" fill="#7d8a99">At any moment the system is in a single state. The function evaluates, decides and returns: it does not block, so in the same</text><text class="st-c" x="26" y="310" fill="#7d8a99">loop the display, the buttons and the communication are all served.</text><text class="st-c" x="26" y="332" fill="#7d8a99">Every state has a maximum time: the one that waits forever for an event that never arrives is the one that hangs the device.</text></svg>
+        <figcaption><b>Figure 2.</b> A state machine in operation, animated. At any moment the
+        system is in <b>one</b> state; events cause transitions. It is the tool that organizes
+        almost any control program.</figcaption>
+      </figure>
+
+      <pre class="code"><span class="c-kw">typedef</span> <span class="c-kw">enum</span> { REPOSO, LLENANDO, ESTABILIZANDO, DESCARGANDO, FALLA } estado_t;
+
+estado_t estado = REPOSO;
+
+<span class="c-ty">void</span> <span class="c-fn">maquina</span>(<span class="c-ty">void</span>)
+{
+    <span class="c-kw">switch</span> (estado) {
+
+    <span class="c-kw">case</span> REPOSO:
+        <span class="c-kw">if</span> (<span class="c-fn">hay_pedido</span>() &amp;&amp; <span class="c-fn">recipiente_ok</span>()) { <span class="c-fn">abrir_valvula</span>(); estado = LLENANDO; }
+        <span class="c-kw">break</span>;
+
+    <span class="c-kw">case</span> LLENANDO:
+        <span class="c-kw">if</span> (<span class="c-fn">peso</span>() &gt;= objetivo)      { <span class="c-fn">cerrar_valvula</span>(); t0 = <span class="c-fn">ahora</span>(); estado = ESTABILIZANDO; }
+        <span class="c-kw">else</span> <span class="c-kw">if</span> (<span class="c-fn">ahora</span>() - t0 &gt; T_MAX) { <span class="c-fn">cerrar_valvula</span>(); estado = FALLA; }
+        <span class="c-kw">break</span>;
+
+    <span class="c-kw">case</span> ESTABILIZANDO:
+        <span class="c-kw">if</span> (<span class="c-fn">ahora</span>() - t0 &gt; <span class="c-num">500</span>) { <span class="c-fn">registrar</span>(<span class="c-fn">peso</span>()); estado = DESCARGANDO; }
+        <span class="c-kw">break</span>;
+
+    <span class="c-kw">case</span> DESCARGANDO:
+        <span class="c-kw">if</span> (<span class="c-fn">peso</span>() &lt; VACIO) { estado = REPOSO; }
+        <span class="c-kw">break</span>;
+
+    <span class="c-kw">case</span> FALLA:
+        <span class="c-fn">todo_seguro</span>();
+        <span class="c-kw">if</span> (<span class="c-fn">rearme</span>()) { estado = REPOSO; }
+        <span class="c-kw">break</span>;
+    }
+}</pre>
+
+      <div class="box ojo">
+        <div class="bt">Why this is better than a sequence with waits</div>
+        <p>Because the function <b>does not block</b>: it enters, evaluates, returns. It can be called a thousand times
+        per second from the main loop, while the same loop serves the display, the communication and the
+        pushbuttons. With waits inside the sequence, everything else stops.</p>
+        <p style="margin-top:8px">In addition, each state has its own <b>maximum time</b>. A system that can
+        wait forever for an event that never arrives is a system that will hang at some point.</p>
+      </div>
+    </section>
+
+    <section id="bucle">
+      <h2><span class="n">03</span>A main loop that never blocks</h2>
+      <pre class="code"><span class="c-kw">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>)
+{
+    <span class="c-fn">inicializar</span>();
+    <span class="c-fn">wdt_habilitar</span>(WDT_2S);          <span class="c-com">/* 2-second watchdog timer */</span>
+
+    <span class="c-kw">while</span> (<span class="c-num">1</span>) {
+        <span class="c-ty">uint32_t</span> t = <span class="c-fn">ms_actual</span>();
+
+        <span class="c-kw">if</span> (t - t_control &gt;= <span class="c-num">10</span>)  { t_control = t; <span class="c-fn">leer_sensores</span>(); <span class="c-fn">maquina</span>(); }
+        <span class="c-kw">if</span> (t - t_pantalla &gt;= <span class="c-num">300</span>) { t_pantalla = t; <span class="c-fn">refrescar_pantalla</span>(); }
+        <span class="c-kw">if</span> (t - t_registro &gt;= <span class="c-num">1000</span>){ t_registro = t; <span class="c-fn">guardar_dato</span>(); }
+
+        <span class="c-fn">atender_serie</span>();               <span class="c-com">/* non-blocking: processes whatever is there */</span>
+        <span class="c-fn">wdt_refrescar</span>();               <span class="c-com">/* if the loop gets stuck, the device resets */</span>
+    }
+}</pre>
+
+      <div class="box key">
+        <div class="bt">Cooperative scheduling</div>
+        <p>Each task runs at its own pace and none of them waits. It is the closest thing to a real-time
+        operating system that you can have without using one, and for the vast majority of devices it is more than enough.</p>
+        <p style="margin-top:8px">The condition is that <b>no function takes too long</b>: if
+        <code>guardar_dato()</code> takes 300 ms writing to a memory, the 10 ms control task is missed
+        thirty times. Long functions are split into steps, or moved into the state machine.</p>
+      </div>
+    </section>
+
+    <section id="robustez">
+      <h2><span class="n">04</span>Still working next month</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Program robustness</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>Watchdog timer</b> enabled and refreshed in a single place. Never inside an
+            interrupt: it would lose its purpose.</li>
+            <li>Safe <b>default values</b> if the stored configuration is corrupt, detected with a
+            checksum.</li>
+            <li><b>Validated ranges</b> on every input: a disconnected sensor usually reads zero or full
+            scale, and that cannot be taken as good data.</li>
+            <li>An explicit <b>fault state</b>, which leaves everything in a safe condition and requires a
+            deliberate reset.</li>
+            <li><b>Event log</b>: how many times it reset, when and why. It is what makes remote
+            diagnosis possible.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Circuit robustness</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>100 nF decoupling capacitors <b>on every</b> supply pin, right next to the chip.</li>
+            <li>Inputs with filtering and protection; outputs with a flyback (freewheeling) diode if they drive coils.</li>
+            <li>Reset with its capacitor and, if needed, a supply supervisor.</li>
+            <li>Unused pins defined, not left floating.</li>
+            <li>Power supply with margin: a regulator at its limit is a failure waiting for summer.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">What to test before calling it finished</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Power off and on at the worst moment</b>, many times, even during a write to
+          memory.</li>
+          <li>Disconnect each sensor and each actuator while the device is running.</li>
+          <li>Leave it running <b>for several days in a row</b>: counter overflows and memory
+          leaks only show up then.</li>
+          <li>Out-of-range inputs, buttons pressed at the same time, malformed serial commands.</li>
+          <li>High and low temperature, and supply voltage variation over its whole range.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="documentacion">
+      <h2><span class="n">05</span>Versioning and documentation</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Item</th><th>What it must contain</th></tr></thead>
+          <tbody>
+            <tr><td><b>Version control</b></td><td>The code in a repository, with small changes and messages that say <b>why</b>. Every delivered version, tagged.</td></tr>
+            <tr><td><b>Version in the device</b></td><td>The version number visible on the display or through a serial command. Without it, you cannot tell what is running on each unit.</td></tr>
+            <tr><td><b>Schematic and board</b></td><td>Source files and PDF, with the revision marked on the board itself.</td></tr>
+            <tr><td><b>User manual</b></td><td>How to operate it, what each indication means and what to do about each error message.</td></tr>
+            <tr><td><b>Technical manual</b></td><td>How to calibrate it, how to update the program, what is checked during maintenance and what spare parts it uses.</td></tr>
+            <tr><td><b>Backup</b></td><td>Code, schematics, manufacturing files and component datasheets, all together and stored away from the working machine.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The acid test</div>
+        <p>That <b>another person</b> can pick up the project, understand it, compile it and modify it without
+        asking anything. If that is not possible, the project is incomplete even though the device works. And
+        it is worth measuring it for real: hand the folder to a classmate and see how far they get on their own.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Requirements</div>
+        <p>Take a project idea and write its requirements in a verifiable way, with numbers and
+        conditions. Swap with another group: if someone can interpret a requirement in two different
+        ways, it is badly written and must be corrected.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · From a blocking sequence to a state machine</div>
+        <p>Write a simple controller with waits and verify that the display and the buttons stop
+        responding while it runs. Rewrite it as a non-blocking state machine and check that everything
+        responds at the same time.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · Watchdog timer</div>
+        <p>Enable the watchdog timer and cause a deliberate lock-up inside a function. Verify that
+        the device resets by itself and logs the reset. Then move the watchdog refresh to a
+        wrong place and check that it no longer protects.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · The course capstone project</div>
+        <p>Take a project of your own through the seven stages, delivering each document. The whole
+        path is assessed, not just whether the device powers up: requirements, tests and documentation
+        weigh as much as the operation itself.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Mistake</th><th>Consequence</th></tr></thead>
+          <tbody>
+            <tr><td>Starting to program without requirements</td><td>The project never ends: something that nobody defined is always missing.</td></tr>
+            <tr><td>Integrating everything at once</td><td>When it fails, you do not know which of the ten blocks is at fault. Each block is tested alone first.</td></tr>
+            <tr><td>Blocking waits in the main loop</td><td>The interface stops responding and the control loop loses its timing.</td></tr>
+            <tr><td>States without a maximum time</td><td>The device can wait forever for an event that never arrives.</td></tr>
+            <tr><td>Refreshing the watchdog timer in an interrupt</td><td>The main program can be hung and the watchdog never acts.</td></tr>
+            <tr><td>Not validating input ranges</td><td>A disconnected sensor reads zero and the controller acts on false data.</td></tr>
+            <tr><td>No version number in the device</td><td>It is impossible to know which program each unit in the field has.</td></tr>
+            <tr><td>Testing only on the bench, for a few minutes</td><td>Problems of endurance, temperature and power loss appear later, at the customer’s site.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Self-assessment</h2>
+
+      <details class="q"><summary>What makes a requirement verifiable?</summary>
+        <div class="a"><p>That it has <b>numbers and conditions</b>: range, permissible error, response time,
+        operating conditions. It is what gets tested later and what defines whether the device is
+        finished.</p></div></details>
+
+      <details class="q"><summary>Why is each block tested separately before integration?</summary>
+        <div class="a"><p>Because if everything is integrated at once and it fails, there is no way to know which
+        block is the problem. Testing in parts shortens the diagnosis enormously.</p></div></details>
+
+      <details class="q"><summary>What advantage does a state machine have over a sequence with waits?</summary>
+        <div class="a"><p>It <b>does not block</b>: it can be called continuously from the main loop
+        while the display, communication and buttons are served. With waits, everything else
+        stops.</p></div></details>
+
+      <details class="q"><summary>Why must each state have a maximum time?</summary>
+        <div class="a"><p>So that the system does not wait indefinitely for an event that is not going to arrive.
+        When the time runs out, it moves to a safe fault state.</p></div></details>
+
+      <details class="q"><summary>What is cooperative scheduling?</summary>
+        <div class="a"><p>A main loop where each task runs at its own pace by comparing times,
+        with no waits. It requires that no function takes too long.</p></div></details>
+
+      <details class="q"><summary>Where is the watchdog timer refreshed, and why?</summary>
+        <div class="a"><p>In a <b>single place</b> in the main loop. If it were refreshed from an
+        interrupt, the loop could be hung and the watchdog would not detect it.</p></div></details>
+
+      <details class="q"><summary>Why must the range of the inputs be validated?</summary>
+        <div class="a"><p>Because a disconnected or faulty sensor usually reads zero or full scale, and the
+        controller would take that value as good and act on false data.</p></div></details>
+
+      <details class="q"><summary>Name three tests that cannot be left out.</summary>
+        <div class="a"><p>Power loss at critical moments, disconnecting sensors and actuators while
+        the device is running, and continuous operation for several days.</p></div></details>
+
+      <details class="q"><summary>Why must the device show its version number?</summary>
+        <div class="a"><p>Because in the field there are units with different versions of the program, and without
+        that information it is impossible to know which one each has or to reproduce a problem.</p></div></details>
+
+      <details class="q"><summary>What is the acid test of the documentation?</summary>
+        <div class="a"><p>That <b>another person</b> can pick up the project, understand it, compile it and
+        modify it without asking anything.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/displays">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Smart displays</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/automatismo-plc">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Automation and programmable logic controllers</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Microcontroller applications”</b> of <b>Digital Electronics IV</b> (Year 7),
+  based on the “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

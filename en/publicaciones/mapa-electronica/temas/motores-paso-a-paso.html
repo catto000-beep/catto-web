@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stepper motors · Industrial Electronics I · Catto</title>
+<meta name="description" content="Permanent-magnet and hybrid stepper motors, unipolar and bipolar windings, full-step, half-step and microstep sequences, voltage and current drivers, torque-speed curve, lost steps and troubleshooting. A topic of Industrial Electronics I, Year 6.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/motores-paso-a-paso">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/motores-paso-a-paso">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/motores-paso-a-paso">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/motores-paso-a-paso">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Industrial Electronics I</a>
+    <span class="anio">Year 6</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Industrial Electronics I</span> · 144 h · Topic 9 of 10</div>
+    <h1>Stepper motors</h1>
+    <p class="lead">An ordinary motor turns as long as voltage is applied. A stepper motor advances <b>an exact angle for
+    each pulse</b> and stays there. That makes it possible to position without sensors, and it is what sits inside a
+    3D printer, a homemade CNC machine or a dosing machine.</p>
+    <div class="chips">
+      <span class="chip hi">Electrical machines</span>
+      <span class="chip">Sensors</span>
+      <span class="chip">Microstepping</span>
+      <span class="chip">Drivers</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>Positioning without feedback</h2>
+      <p>The stator has several coils and the rotor is a toothed permanent magnet. By energizing the coils in a
+      certain order, the rotor <b>jumps</b> from one stable position to the next. By counting pulses you know
+      where it is, with no encoder.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th>Stepper</th><th>Servo motor</th></tr></thead>
+          <tbody>
+            <tr><td><b>Feedback</b></td><td>None</td><td>Encoder or resolver</td></tr>
+            <tr><td><b>Position</b></td><td>Counting pulses, in <b>open loop</b></td><td>Measured and corrected</td></tr>
+            <tr><td><b>If overloaded</b></td><td><b>Loses steps silently</b>: nobody notices</td><td>Detects the error and reports it</td></tr>
+            <tr><td><b>Torque at zero speed</b></td><td>High, with the coils energized</td><td>High, controlled</td></tr>
+            <tr><td><b>Torque at high speed</b></td><td>Drops sharply</td><td>Holds up</td></tr>
+            <tr><td><b>Cost</b></td><td>Low</td><td>High</td></tr>
+            <tr><td><b>Chosen for</b></td><td>3D printers, small CNC machines, dosing machines, light axes</td><td>Production machines, demanding axes, high speed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Step angle</div>
+        <p>The most common is <b>1.8°</b>, which is <b>200 steps per revolution</b>. There are also 0.9° motors
+        (400 steps) and, in small permanent-magnet motors, 7.5° (48 steps). With 1/16 microstepping the same
+        200-step motor gives <b>3200 positions</b> per revolution.</p>
+      </div>
+    </section>
+
+    <section id="tipos">
+      <h2><span class="n">02</span>Unipolar and bipolar</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Unipolar</div>
+          <p>Each coil has a <b>center tap</b>. Current always flows in the same direction through each
+          half-coil, so four simple transistors are enough (a ULN2003).</p>
+          <p style="margin-top:8px">Easier to drive, but only half a coil is used at a time: it delivers
+          about <b>30% less torque</b> than the same motor in bipolar mode.</p>
+          <p style="margin-top:8px">It is recognized by having <b>5 or 6 wires</b>.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Bipolar</div>
+          <p>Two coils with no tap. To reverse the field you have to reverse the current, which requires
+          an <b>H-bridge per coil</b>: four transistors per phase.</p>
+          <p style="margin-top:8px">It uses the whole coil: more torque for its size. It is what all modern
+          drivers are built for.</p>
+          <p style="margin-top:8px">It is recognized by having <b>4 wires</b> (8-wire motors can be connected
+          either way).</p>
+        </div>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Identifying the wires with an ohmmeter</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>Look for pairs with continuity: wires with no continuity between them belong to
+          <b>different coils</b>.</li>
+          <li>In a 6-wire motor, within each group of three the <b>common</b> wire measures half the
+          resistance against the other two.</li>
+          <li>A 4-wire bipolar motor gives two pairs, with no continuity between them.</li>
+          <li>Practical trick: join two wires and turn the shaft by hand; if it feels <b>stiffer</b>,
+          those two belong to the same coil.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="secuencias">
+      <h2><span class="n">03</span>Sequences</h2>
+      <figure>
+        <svg viewBox="0 0 700 330" role="img" aria-label="Energization sequence of a stepper motor" class="svg-t" data-anim>
+          <style>.ps-d{fill:#7d8a99;font-size:10.5px}.ps-l{fill:#9aa7b4;font-size:11px;text-anchor:middle}</style>
+          <circle cx="200" cy="160" r="92" fill="none" stroke="#2a3140" stroke-width="2"/>
+          <circle cx="200.0" cy="84.0" r="18" fill="#1c2230" stroke="#2a3140" stroke-width="1.6"><animate attributeName="fill" calcMode="discrete" values="#3fb950;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ps-l" x="200.0" y="88.0" fill="#e6edf3" font-weight="700">A</text>
+          <circle cx="276.0" cy="160.0" r="18" fill="#1c2230" stroke="#2a3140" stroke-width="1.6"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#3fb950;#3fb950;#3fb950;#1c2230;#1c2230;#1c2230;#1c2230" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ps-l" x="276.0" y="164.0" fill="#e6edf3" font-weight="700">B</text>
+          <circle cx="200.0" cy="236.0" r="18" fill="#1c2230" stroke="#2a3140" stroke-width="1.6"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950;#1c2230;#1c2230" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ps-l" x="200.0" y="240.0" fill="#e6edf3" font-weight="700">A'</text>
+          <circle cx="124.0" cy="160.0" r="18" fill="#1c2230" stroke="#2a3140" stroke-width="1.6"><animate attributeName="fill" calcMode="discrete" values="#1c2230;#1c2230;#1c2230;#1c2230;#1c2230;#3fb950;#3fb950;#3fb950" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="ps-l" x="124.0" y="164.0" fill="#e6edf3" font-weight="700">B'</text>
+          <circle cx="200" cy="160" r="40" fill="#1c2230" stroke="#9aa7b4" stroke-width="2"/>
+          <text class="ps-l" x="200" y="222" fill="#7d8a99">rotor</text>
+          <line x1="200" y1="160" x2="200" y2="124" stroke="#e6edf3" stroke-width="3.4" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" calcMode="discrete" values="0 200 160;45 200 160;90 200 160;135 200 160;180 200 160;225 200 160;270 200 160;315 200 160" dur="8s" repeatCount="indefinite"/></line>
+          <text class="ps-d" x="360" y="52">Half-step sequence</text>
+          <rect x="360" y="61" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="76">step 1</text>
+          <text class="ps-d" x="440" y="76" fill="#3fb950">A</text>
+          <text class="ps-d" x="560" y="76">0°</text>
+          <rect x="360" y="61" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0.34;0;0;0;0;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="87" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="102">step 2</text>
+          <text class="ps-d" x="440" y="102" fill="#3fb950">A + B</text>
+          <text class="ps-d" x="560" y="102">45°</text>
+          <rect x="360" y="87" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0.34;0;0;0;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="113" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="128">step 3</text>
+          <text class="ps-d" x="440" y="128" fill="#3fb950">B</text>
+          <text class="ps-d" x="560" y="128">90°</text>
+          <rect x="360" y="113" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0.34;0;0;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="139" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="154">step 4</text>
+          <text class="ps-d" x="440" y="154" fill="#3fb950">B + A'</text>
+          <text class="ps-d" x="560" y="154">135°</text>
+          <rect x="360" y="139" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0.34;0;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="165" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="180">step 5</text>
+          <text class="ps-d" x="440" y="180" fill="#3fb950">A'</text>
+          <text class="ps-d" x="560" y="180">180°</text>
+          <rect x="360" y="165" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0.34;0;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="191" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="206">step 6</text>
+          <text class="ps-d" x="440" y="206" fill="#3fb950">A' + B'</text>
+          <text class="ps-d" x="560" y="206">225°</text>
+          <rect x="360" y="191" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0.34;0;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="217" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="232">step 7</text>
+          <text class="ps-d" x="440" y="232" fill="#3fb950">B'</text>
+          <text class="ps-d" x="560" y="232">270°</text>
+          <rect x="360" y="217" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0.34;0" dur="8s" repeatCount="indefinite"/></rect>
+          <rect x="360" y="243" width="300" height="22" rx="5" fill="#1c2230" stroke="#2a3140" stroke-width="0.8"/>
+          <text class="ps-d" x="372" y="258">step 8</text>
+          <text class="ps-d" x="440" y="258" fill="#3fb950">B' + A</text>
+          <text class="ps-d" x="560" y="258">315°</text>
+          <rect x="360" y="243" width="300" height="22" rx="5" fill="#58a6ff" opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;0;0.34" dur="8s" repeatCount="indefinite"/></rect>
+          <text class="ps-d" x="40" y="300">Reversing the order of the sequence makes the motor turn the other way. Nothing else is needed to change direction.</text>
+          </svg>
+        <figcaption><b>Figure 1.</b> Energization sequence, animated. As the coils are activated in order, the
+        rotor chases the field and advances one step at a time. Reversing the order makes it turn the other way: that is all
+        there is to direction control.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Mode</th><th>Active coils</th><th class="c">Torque</th><th class="c">Resolution</th></tr></thead>
+          <tbody>
+            <tr><td><b>Full step, one phase</b></td><td>One at a time</td><td class="c">Lower</td><td class="c">200 steps</td></tr>
+            <tr><td><b>Full step, two phases</b></td><td>Two at a time</td><td class="c"><b>Higher</b> (≈ 40% more)</td><td class="c">200 steps</td></tr>
+            <tr><td><b>Half step</b></td><td>Alternates one and two</td><td class="c">Uneven</td><td class="c">400 steps</td></tr>
+            <tr><td><b>Microstepping</b></td><td>Graded currents in both coils</td><td class="c">Smooth and even</td><td class="c">1600 to 51,200</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Microstepping gives smoothness, not accuracy</div>
+        <p>With 1/16 steps the motion is much smoother and quieter, and resonance is avoided. But
+        <b>position accuracy</b> is still limited by the motor's mechanics —the tooth
+        tolerance is around 5% of a full step— and the holding torque of each microstep is a fraction of the
+        total. At a very fine microstep, a light load can shift the rotor without the driver noticing. Microstepping
+        is for <b>smoothness</b>; the real resolution comes from the mechanics: belt, lead screw or
+        gear reduction.</p>
+      </div>
+    </section>
+
+    <section id="drivers">
+      <h2><span class="n">04</span>Drivers</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Voltage drive</div>
+          <p>A simple H-bridge (L298) or Darlington transistors (ULN2003). Voltage is applied to the
+          coil and the current rises according to its inductance.</p>
+          <p style="margin-top:8px">Cheap and simple. At high speed, the current <b>does not have time to
+          build up</b> before the next step and the torque collapses.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Current drive (chopper)</div>
+          <p>A4988, DRV8825, TMC2209 and similar. They feed the coil with a voltage <b>much higher</b> than
+          the rated one and <b>chop</b> the current to the programmed value, measuring it with a sense
+          resistor.</p>
+          <p style="margin-top:8px">The current builds up much faster: torque is retained at high
+          speed. It is the current standard and has built-in microstepping.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · Setting the driver current</div>
+        <p>An A4988 with 0.1 Ω sense resistors, for a motor rated <b>1.2 A per phase</b>:</p>
+        <ul>
+          <li>The manufacturer's formula is V<sub>ref</sub> = I<sub>max</sub> × 8 × R<sub>sense</sub>.</li>
+          <li>V<sub>ref</sub> = 1.2 × 8 × 0.1 = <b>0.96 V</b>, measured between the module's potentiometer and
+          ground.</li>
+          <li>With the current too low the motor loses steps; with the current too high it overheats and the
+          driver enters thermal protection and cuts out at the wrong moment.</li>
+        </ul>
+        <p>It is the adjustment that causes the most trouble in 3D printers, and it is done with the motor connected and at
+        rest.</p>
+      </div>
+    </section>
+
+    <section id="par">
+      <h2><span class="n">05</span>Torque, speed and lost steps</h2>
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Torque-speed curve of a stepper motor" class="svg-t" data-anim>
+          <style>.pv-d{fill:#7d8a99;font-size:10.5px}.pv-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="96" y1="240" x2="574" y2="240" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="96" y1="240" x2="96" y2="54" stroke="#2a3140" stroke-width="1.3"/>
+          <polyline points="96.00,70.00 100.64,70.28 105.28,70.98 109.92,72.02 114.56,73.36 119.20,74.97 123.84,76.82 128.48,78.89 133.12,81.15 137.76,83.57 142.40,86.14 147.04,88.82 151.68,91.61 156.32,94.47 160.96,97.40 165.60,100.38 170.24,103.39 174.88,106.41 179.52,109.44 184.16,112.47 188.80,115.48 193.44,118.46 198.08,121.41 202.72,124.33 207.36,127.20 212.00,130.02 216.64,132.79 221.28,135.50 225.92,138.16 230.56,140.75 235.20,143.28 239.84,145.75 244.48,148.16 249.12,150.50 253.76,152.78 258.40,155.00 263.04,157.15 267.68,159.25 272.32,161.28 276.96,163.25 281.60,165.17 286.24,167.02 290.88,168.82 295.52,170.57 300.16,172.26 304.80,173.90 309.44,175.50 314.08,177.04 318.72,178.53 323.36,179.98 328.00,181.39 332.64,182.75 337.28,184.07 341.92,185.35 346.56,186.59 351.20,187.79 355.84,188.95 360.48,190.08 365.12,191.18 369.76,192.24 374.40,193.28 379.04,194.28 383.68,195.25 388.32,196.19 392.96,197.11 397.60,198.00 402.24,198.86 406.88,199.70 411.52,200.51 416.16,201.30 420.80,202.07 425.44,202.82 430.08,203.55 434.72,204.25 439.36,204.94 444.00,205.61 448.64,206.25 453.28,206.89 457.92,207.50 462.56,208.10 467.20,208.68 471.84,209.25 476.48,209.80 481.12,210.34 485.76,210.86 490.40,211.38 495.04,211.87 499.68,212.36 504.32,212.83 508.96,213.29 513.60,213.74 518.24,214.18 522.88,214.61 527.52,215.03 532.16,215.43 536.80,215.83 541.44,216.22 546.08,216.60 550.72,216.97 555.36,217.33 560.00,217.68" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <polyline points="96.00,146.50 100.64,146.66 105.28,147.04 109.92,147.61 114.56,148.35 119.20,149.23 123.84,150.25 128.48,151.39 133.12,152.63 137.76,153.96 142.40,155.38 147.04,156.85 151.68,158.38 156.32,159.96 160.96,161.57 165.60,163.21 170.24,164.86 174.88,166.53 179.52,168.19 184.16,169.86 188.80,171.51 193.44,173.15 198.08,174.78 202.72,176.38 207.36,177.96 212.00,179.51 216.64,181.03 221.28,182.53 225.92,183.99 230.56,185.41 235.20,186.81 239.84,188.16 244.48,189.49 249.12,190.78 253.76,192.03 258.40,193.25 263.04,194.44 267.68,195.59 272.32,196.70 276.96,197.79 281.60,198.84 286.24,199.86 290.88,200.85 295.52,201.81 300.16,202.74 304.80,203.65 309.44,204.52 314.08,205.37 318.72,206.19 323.36,206.99 328.00,207.76 332.64,208.51 337.28,209.24 341.92,209.94 346.56,210.62 351.20,211.28 355.84,211.92 360.48,212.55 365.12,213.15 369.76,213.73 374.40,214.30 379.04,214.85 383.68,215.39 388.32,215.91 392.96,216.41 397.60,216.90 402.24,217.37 406.88,217.83 411.52,218.28 416.16,218.72 420.80,219.14 425.44,219.55 430.08,219.95 434.72,220.34 439.36,220.72 444.00,221.08 448.64,221.44 453.28,221.79 457.92,222.13 462.56,222.46 467.20,222.78 471.84,223.09 476.48,223.39 481.12,223.69 485.76,223.98 490.40,224.26 495.04,224.53 499.68,224.80 504.32,225.06 508.96,225.31 513.60,225.56 518.24,225.80 522.88,226.03 527.52,226.26 532.16,226.49 536.80,226.71 541.44,226.92 546.08,227.13 550.72,227.33 555.36,227.53 560.00,227.73" fill="none" stroke="#58a6ff" stroke-width="2.4"/>
+          <text class="pv-d" x="305" y="164" fill="#3fb950">maximum torque · with ramp only</text>
+          <text class="pv-d" x="258" y="215" fill="#58a6ff">start torque · no ramp</text>
+          <text class="pv-l" x="100" y="48">torque</text>
+          <text class="pv-l" x="574" y="274" text-anchor="end">speed (steps per second)</text>
+          <text class="pv-d" x="212.0" y="258" text-anchor="middle">500</text>
+          <text class="pv-d" x="328.0" y="258" text-anchor="middle">1000</text>
+          <text class="pv-d" x="444.0" y="258" text-anchor="middle">1500</text>
+          <text class="pv-d" x="560.0" y="258" text-anchor="middle">2000</text>
+          <g opacity="0">
+          <line x1="142.4" y1="240" x2="142.4" y2="86.1" stroke="#f85149" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <circle cx="142.4" cy="86.1" r="6" fill="#3fb950"/>
+          <circle cx="142.4" cy="155.4" r="6" fill="#58a6ff"/>
+          <rect x="584" y="96" width="104" height="104" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">200 steps/s</text>
+          <text x="636" y="144" text-anchor="middle" font-size="12" fill="#9aa7b4">60 rpm</text>
+          <text x="636" y="168" text-anchor="middle" font-size="12" fill="#3fb950">torque 91%</text>
+          <text x="636" y="188" text-anchor="middle" font-size="12" fill="#58a6ff">starts 50%</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="9s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <line x1="235.2" y1="240" x2="235.2" y2="143.3" stroke="#f85149" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <circle cx="235.2" cy="143.3" r="6" fill="#3fb950"/>
+          <circle cx="235.2" cy="186.8" r="6" fill="#58a6ff"/>
+          <rect x="584" y="96" width="104" height="104" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">600 steps/s</text>
+          <text x="636" y="144" text-anchor="middle" font-size="12" fill="#9aa7b4">180 rpm</text>
+          <text x="636" y="168" text-anchor="middle" font-size="12" fill="#3fb950">torque 57%</text>
+          <text x="636" y="188" text-anchor="middle" font-size="12" fill="#58a6ff">starts 31%</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="9s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <line x1="351.2" y1="240" x2="351.2" y2="187.8" stroke="#f85149" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <circle cx="351.2" cy="187.8" r="6" fill="#3fb950"/>
+          <circle cx="351.2" cy="211.3" r="6" fill="#58a6ff"/>
+          <rect x="584" y="96" width="104" height="104" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">1100 steps/s</text>
+          <text x="636" y="144" text-anchor="middle" font-size="12" fill="#9aa7b4">330 rpm</text>
+          <text x="636" y="168" text-anchor="middle" font-size="12" fill="#3fb950">torque 31%</text>
+          <text x="636" y="188" text-anchor="middle" font-size="12" fill="#58a6ff">starts 17%</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="9s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <line x1="490.4" y1="240" x2="490.4" y2="211.4" stroke="#f85149" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <circle cx="490.4" cy="211.4" r="6" fill="#3fb950"/>
+          <circle cx="490.4" cy="224.3" r="6" fill="#58a6ff"/>
+          <rect x="584" y="96" width="104" height="104" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="122" text-anchor="middle" font-size="14" font-weight="700" fill="#e6edf3">1700 steps/s</text>
+          <text x="636" y="144" text-anchor="middle" font-size="12" fill="#9aa7b4">510 rpm</text>
+          <text x="636" y="168" text-anchor="middle" font-size="12" fill="#3fb950">torque 17%</text>
+          <text x="636" y="188" text-anchor="middle" font-size="12" fill="#58a6ff">starts 9%</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="9s" repeatCount="indefinite"/></g>
+          <text class="pv-d" x="96" y="286">Between the two curves the motor can only work if it is accelerated with a ramp. Above the green one, it loses steps.</text>
+          <text class="pv-d" x="96" y="306">Values are for a typical 200-step-per-revolution motor; each model has its own curve in the datasheet.</text>
+          </svg>
+        <figcaption><b>Figure 2.</b> Torque-speed curve, animated. Torque falls with speed because the
+        coil's inductance prevents the current from building up. Below the start curve the
+        motor can start abruptly; between the two curves, only if it accelerates with a ramp.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Three datasheet concepts</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Holding torque</b>: the torque it resists with the coils energized and the motor
+          stationary. It is the big number listed in the catalog.</li>
+          <li><b>Pull-in torque</b>: up to what frequency it can start <b>without a ramp</b>.</li>
+          <li><b>Pull-out torque</b>: how far it can keep turning if it is accelerated gradually. If
+          it is exceeded, the motor <b>loses steps</b>.</li>
+        </ul>
+        <p style="margin-top:10px">Hence the golden rule: <b>always accelerate and decelerate with a ramp</b>. Demanding
+        the final speed all at once is the number one cause of lost steps.</p>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · Speed and pulse frequency</div>
+        <p>A 1.8° motor (200 steps) on a lead screw of 8 mm per revolution, with 1/16 microstepping:</p>
+        <ul>
+          <li>Steps per revolution = 200 × 16 = <b>3200</b>.</li>
+          <li>Theoretical resolution = 8/3200 = <b>0.0025 mm</b> per microstep.</li>
+          <li>To advance at 20 mm/s: 20/8 = 2.5 rev/s → 2.5 × 3200 = <b>8000 pulses per
+          second</b>.</li>
+          <li>At 2.5 revolutions per second the motor turns at 150 rpm, where the torque is already well below the
+          holding torque: it must be checked on the curve.</li>
+        </ul>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Resonance</div>
+        <p>Around a certain frequency —typically between 100 and 300 steps per second— the motor enters
+        <b>mechanical resonance</b>: it vibrates, makes noise and can lose steps even with no load. It is solved with
+        microstepping, with damping in the coupling or simply by <b>passing quickly</b> through that speed
+        range.</p>
+      </div>
+    </section>
+
+    <section id="fallas">
+      <h2><span class="n">06</span>Typical faults and troubleshooting</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Probable cause</th><th>How to check</th></tr></thead>
+          <tbody>
+            <tr><td>Vibrates in place and does not turn</td><td>A wire of one coil reversed or broken</td><td>Measure continuity of each coil and check the connection order</td></tr>
+            <tr><td>Turns the wrong way</td><td>One coil reversed</td><td>Swap the two wires of <b>just one</b> coil</td></tr>
+            <tr><td>Loses steps under load</td><td>Current set incorrectly, excessive speed or no ramp</td><td>Measure V<sub>ref</sub>, lower the speed and add acceleration</td></tr>
+            <tr><td>Gets very hot while stationary</td><td>Normal up to a point: the coils are energized. If it burns, the current is too high</td><td>Measure the current and the case temperature</td></tr>
+            <tr><td>The driver cuts out every so often</td><td>Thermal protection: missing heat sink or ventilation</td><td>Touch the driver, measure its temperature</td></tr>
+            <tr><td>Noise and vibration at a certain speed</td><td>Resonance</td><td>Change the speed and see if it disappears</td></tr>
+            <tr><td>The motor “loses” position over time</td><td>Accumulated lost steps: it is open loop and nobody corrects it</td><td>Re-home against a limit switch every so often</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Never disconnect the motor while the driver is powered</div>
+        <p>Interrupting the current in a coil generates an overvoltage that destroys the driver
+        immediately. Power is cut <b>before</b> touching the motor wires. It is the mistake that burns the most
+        drivers in the workshop and in 3D printers.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Identifying the motor</div>
+        <p>With scrap motors from printers and scanners, use the ohmmeter to determine whether they are unipolar or
+        bipolar, how many coils they have and which wire is which. Note the phase resistance. Then
+        turn them by hand and feel the detent torque.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Hand-driven sequence</div>
+        <p>With four switches or four outputs of a microcontroller at a very low frequency (2 steps per second),
+        run through the full-step sequence and observe how the shaft advances. Mark the shaft and count 200 steps:
+        it must make exactly one revolution. Reverse the sequence and check the change of direction.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · Torque-speed curve</div>
+        <p>With a simple friction brake, measure at what load the motor starts to lose steps for three
+        different speeds. Plot the results. Repeat with the driver current halved and compare the two
+        curves.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Microstepping and ramps</div>
+        <p>Compare the same movement in full step and in 1/16: listen to the noise and observe the vibration.
+        Then demand the final speed all at once and with an acceleration ramp, checking in both cases whether the
+        final position matches the starting one on returning.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Mistake</th><th>Consequence</th></tr></thead>
+          <tbody>
+            <tr><td>Demanding the final speed with no ramp</td><td>The motor does not start or loses steps from the very first moment.</td></tr>
+            <tr><td>Setting the current “by eye”</td><td>Too low, it loses steps; too high, motor and driver overheat.</td></tr>
+            <tr><td>Expecting microsteps to be accurate</td><td>The real resolution is limited by the motor's mechanics, not by the driver.</td></tr>
+            <tr><td>Disconnecting the motor with the driver on</td><td>Destroyed driver.</td></tr>
+            <tr><td>Using a unipolar motor as bipolar without checking</td><td>It may work, but with half the winding and less torque if wired incorrectly.</td></tr>
+            <tr><td>Trusting the position after hours of operation</td><td>It is open loop: lost steps accumulate. The reference must be redone.</td></tr>
+            <tr><td>Choosing a stepper for a very demanding axis</td><td>Torque is lost at speed and there is no error warning: that is where a servo belongs.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Self-assessment</h2>
+
+      <details class="q"><summary>How many steps per revolution does a 1.8° motor have, and how many with 1/8 microstepping?</summary>
+        <div class="a"><p>360/1.8 = <b>200 steps</b> per revolution; with 1/8 microstepping, 200 × 8 =
+        <b>1600</b>.</p></div></details>
+
+      <details class="q"><summary>How do you tell a unipolar motor from a bipolar one?</summary>
+        <div class="a"><p>By the number of wires and the continuity: the <b>unipolar</b> has 5 or 6 and includes a
+        center tap; the <b>bipolar</b> has 4, in two pairs with no continuity between them.</p></div></details>
+
+      <details class="q"><summary>Why does a bipolar motor give more torque than the same motor in unipolar mode?</summary>
+        <div class="a"><p>Because it uses the <b>whole coil</b>, whereas the unipolar mode energizes only half
+        at a time. The difference is about 30%.</p></div></details>
+
+      <details class="q"><summary>What advantage does a current driver have over a voltage driver?</summary>
+        <div class="a"><p>It feeds the coil with much more voltage and <b>chops</b> the current to the desired
+        value: the current builds up much faster and the motor retains torque at high
+        speed.</p></div></details>
+
+      <details class="q"><summary>An A4988 with R<sub>sense</sub> = 0.1 Ω for 1.5 A: what V<sub>ref</sub> must be set?</summary>
+        <div class="a"><p>V<sub>ref</sub> = 1.5 × 8 × 0.1 = <b>1.2 V</b>.</p></div></details>
+
+      <details class="q"><summary>What does it mean that a stepper works in open loop?</summary>
+        <div class="a"><p>That <b>nobody checks</b> that the rotor moved: the controller counts pulses and assumes
+        the motor followed them. If it loses steps from overload, the real position is shifted and the system
+        does not find out.</p></div></details>
+
+      <details class="q"><summary>Why does torque fall as speed increases?</summary>
+        <div class="a"><p>Because the coils' <b>inductance</b> prevents the current from building up
+        in the short time each step lasts. With less current there is less torque.</p></div></details>
+
+      <details class="q"><summary>What is the difference between pull-in torque and pull-out torque?</summary>
+        <div class="a"><p>The <b>pull-in</b> torque determines up to what frequency the motor can start abruptly; the
+        <b>pull-out</b> torque determines how far it can keep turning if accelerated with a ramp. Between the two
+        curves, motion is only possible by accelerating gradually.</p></div></details>
+
+      <details class="q"><summary>8 mm lead screw, 200-step motor, 1/16: how many pulses per second to advance at 15 mm/s?</summary>
+        <div class="a"><p>3200 microsteps per revolution; 15/8 = 1.875 rev/s → 1.875 × 3200 = <b>6000 pulses
+        per second</b>.</p></div></details>
+
+      <details class="q"><summary>Why must you not disconnect the motor while the driver is powered?</summary>
+        <div class="a"><p>Because interrupting the current in a coil generates an <b>overvoltage</b> that
+        destroys the driver's output stage.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/sensores-actuadores">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Sensors, actuators and transducers</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/higiene-seguridad">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Occupational health and safety</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Stepper motors”</b> of <b>Industrial Electronics I</b> (Year 6), following the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Modality, Secondary Education –
+  Electronics”, Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

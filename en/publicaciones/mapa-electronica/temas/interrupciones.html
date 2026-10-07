@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interrupts · Digital Electronics IV · Catto</title>
+<meta name="description" content="Handling interrupts in a microcontroller: vector and vector table, latency, context, priorities and nesting, request flags, shared variables and volatile, critical sections, interrupt-driven debouncing and typical mistakes inside an interrupt service routine. A topic of Digital Electronics IV, Year 7.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/interrupciones">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/interrupciones">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/interrupciones">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/interrupciones">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Digital Electronics IV</a>
+    <span class="anio">Year 7</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Electronics IV</span> · 120 h · Topic 3 of 6</div>
+    <h1>Interrupts</h1>
+    <p class="lead">A program that keeps asking “did anything happen?” wastes the processor and arrives
+    late. An interrupt reverses the relationship: the hardware gives notice, the program drops what it was
+    doing, handles the event and returns exactly where it was.</p>
+    <div class="chips">
+      <span class="chip hi">Vector</span>
+      <span class="chip">Latency</span>
+      <span class="chip">Priorities</span>
+      <span class="chip">volatile</span>
+    </div>
+    <hr class="rule">
+
+    <section id="mecanismo">
+      <h2><span class="n">01</span>What exactly happens</h2>
+      <figure>
+        <svg viewBox="0 0 700 326" role="img" aria-label="Sequence of servicing an interrupt" class="svg-t" data-anim><style>.in-t{fill:#e6edf3;font-size:12px;font-weight:700}.in-k{fill:#7d8a99;font-size:10px}.in-c{fill:#9aa7b4;font-size:10.5px}.in-s{fill:#7d8a99;font-size:9.5px;text-anchor:middle}</style><text class="in-k" x="26" y="86">main</text><text class="in-k" x="26" y="100">program</text><text class="in-k" x="26" y="206">interrupt</text><text class="in-k" x="26" y="220">routine</text><rect x="100" y="108" width="132" height="20" rx="4" fill="#58a6ff" fill-opacity="0.35" stroke="#58a6ff" stroke-width="1.2"/><rect x="506" y="108" width="158" height="20" rx="4" fill="#58a6ff" fill-opacity="0.35" stroke="#58a6ff" stroke-width="1.2"/><rect x="268" y="176" width="202" height="20" rx="4" fill="#d29922" fill-opacity="0.35" stroke="#d29922" stroke-width="1.2"/><path d="M232 118 L268 186" stroke="#7d8a99" stroke-width="1.6" stroke-dasharray="4 3"/><path d="M470 186 L506 118" stroke="#7d8a99" stroke-width="1.6" stroke-dasharray="4 3"/><text class="in-s" x="166" y="122">normal code</text><text class="in-s" x="585" y="122">resumes where it left off</text><text class="in-s" x="369" y="190">interrupt routine</text><path d="M214 62 L214 108" stroke="#f85149" stroke-width="1.8"/><path d="M214 62 l-4 8 h8 z" fill="#f85149"/><text class="in-s" x="214" y="54" fill="#f85149">event</text><path d="M214 218 L268 218" stroke="#bc8cff" stroke-width="1.4"/><path d="M214 218 l6 -4 v8 z M268 218 l-6 -4 v8 z" fill="#bc8cff"/><text class="in-s" x="241" y="236" fill="#bc8cff">latency</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0" dur="15s" repeatCount="indefinite"/><circle cx="214" cy="118" r="7" fill="#f85149"/><text class="in-t" x="26" y="252" fill="#f85149">1. The peripheral sets its request flag</text><text class="in-c" x="26" y="278">The event occurred. The flag stays set even if the interrupt is not serviced yet.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0" dur="15s" repeatCount="indefinite"/><circle cx="232" cy="118" r="7" fill="#7d8a99"/><text class="in-t" x="26" y="252" fill="#7d8a99">2. The core finishes the current instruction</text><text class="in-c" x="26" y="278">An instruction is never interrupted halfway: it is completed first.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0" dur="15s" repeatCount="indefinite"/><circle cx="250" cy="118" r="7" fill="#bc8cff"/><text class="in-t" x="26" y="252" fill="#bc8cff">3. It saves the context on the stack</text><text class="in-c" x="26" y="278">Return address and processor state, so it can come back to exactly the same point.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0" dur="15s" repeatCount="indefinite"/><circle cx="268" cy="118" r="7" fill="#58a6ff"/><text class="in-t" x="26" y="252" fill="#58a6ff">4. It jumps to that interrupt’s vector</text><text class="in-c" x="26" y="278">It looks up the routine’s address in the vector table and jumps there.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0" dur="15s" repeatCount="indefinite"/><circle cx="369" cy="186" r="7" fill="#d29922"/><text class="in-t" x="26" y="252" fill="#d29922">5. The routine runs, kept short</text><text class="in-c" x="26" y="278">It sets a flag or stores a piece of data. In many families the request must be cleared by hand.</text><text class="in-c" x="26" y="296"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1" dur="15s" repeatCount="indefinite"/><circle cx="506" cy="118" r="7" fill="#3fb950"/><text class="in-t" x="26" y="252" fill="#3fb950">6. It restores the context and continues</text><text class="in-c" x="26" y="278">The return instruction puts everything back as it was: the main program never notices.</text><text class="in-c" x="26" y="296"></text></g><text class="in-c" x="26" y="320" fill="#7d8a99">Latency grows enormously if another routine is running or a critical section is open: that is why routines must be short.</text></svg>
+        <figcaption><b>Figure 1.</b> The complete sequence, animated. Between the event and the first
+        instruction of the interrupt service routine some time passes —the <b>latency</b>— which you need to know when
+        timing matters.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Step</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>1</b></td><td>The peripheral detects the event and sets its <b>request flag</b>.</td></tr>
+            <tr><td class="c"><b>2</b></td><td>If that interrupt is enabled and the global interrupts are too, the core finishes the current instruction.</td></tr>
+            <tr><td class="c"><b>3</b></td><td>It saves the return address and the processor state on the stack: this is the <b>context</b>.</td></tr>
+            <tr><td class="c"><b>4</b></td><td>It looks up the address of the interrupt service routine in the <b>vector table</b> and jumps there.</td></tr>
+            <tr><td class="c"><b>5</b></td><td>The routine runs. In many families you have to <b>clear the flag</b> by hand.</td></tr>
+            <tr><td class="c"><b>6</b></td><td>The return instruction restores the context and the program carries on as if nothing had happened.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Latency</div>
+        <p>It is the time between the event and the first instruction of the routine. It is made up of what remains
+        to finish the current instruction, saving the context and the jump: typically between
+        <b>4 and 20 cycles</b>. At 16 MHz that is on the order of a microsecond.</p>
+        <p style="margin-top:8px">But the real latency can be <b>vastly longer</b> if at that moment
+        another interrupt service routine is running, or a critical section with interrupts disabled.
+        That is the reason why routines must be short.</p>
+      </div>
+    </section>
+
+    <section id="fuentes">
+      <h2><span class="n">02</span>Where they come from</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Source</th><th>What it is used for</th></tr></thead>
+          <tbody>
+            <tr><td><b>External, on a pin</b></td><td>A pushbutton, a limit switch, a sensor. Configurable for rising edge, falling edge, both, or level.</td></tr>
+            <tr><td><b>Pin change on a port</b></td><td>A single vector for a whole group of pins: the routine has to find out which one changed.</td></tr>
+            <tr><td><b>Timer</b></td><td>Overflow or compare: it is the basis of every periodic task and of the system timebases.</td></tr>
+            <tr><td><b>Serial communication</b></td><td>Byte received or transmit register empty. It avoids losing data without having to keep watching.</td></tr>
+            <tr><td><b>A/D converter</b></td><td>Conversion complete: the program does not wait, it gets notified.</td></tr>
+            <tr><td><b>Input capture</b></td><td>Stores the exact value of the timer when an edge occurs. It is the precise way to measure periods and pulse widths.</td></tr>
+            <tr><td><b>Watchdog</b></td><td>If the program hangs and does not refresh it, it resets the device.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="prioridades">
+      <h2><span class="n">03</span>Priorities and nesting</h2>
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Nested and non-nested interrupts" class="svg-t" data-anim><style>.pd-t{fill:#e6edf3;font-size:11.5px;font-weight:700}.pd-k{fill:#7d8a99;font-size:10px}.pd-c{fill:#9aa7b4;font-size:10.5px}.pd-s{fill:#7d8a99;font-size:9.5px;text-anchor:middle}</style><path d="M116 226 L664 226" stroke="#9aa7b4" stroke-width="1.2"/><text class="pd-k" x="618" y="244">time</text><text class="pd-k" x="18" y="204">main</text><path d="M116 210 L664 210" stroke="#2a3140" stroke-width="0.8" stroke-dasharray="3 5"/><text class="pd-k" x="18" y="166">low priority</text><path d="M116 172 L664 172" stroke="#2a3140" stroke-width="0.8" stroke-dasharray="3 5"/><text class="pd-k" x="18" y="128">high priority</text><path d="M116 134 L664 134" stroke="#2a3140" stroke-width="0.8" stroke-dasharray="3 5"/><path d="M225.6 62 L225.6 208" stroke="#d29922" stroke-width="1.4" stroke-dasharray="4 3"/><text class="pd-s" x="225.6" y="56" fill="#d29922">A arrives</text><path d="M302.3 62 L302.3 208" stroke="#f85149" stroke-width="1.4" stroke-dasharray="4 3"/><text class="pd-s" x="302.3" y="56" fill="#f85149">B arrives</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0" dur="9s" repeatCount="indefinite"/><rect x="116.0" y="190" width="109.6" height="20" rx="4" fill="#58a6ff" fill-opacity="0.42" stroke="#58a6ff" stroke-width="1.2"/><text class="pd-s" x="170.8" y="204">main</text><rect x="225.6" y="152" width="175.4" height="20" rx="4" fill="#d29922" fill-opacity="0.42" stroke="#d29922" stroke-width="1.2"/><text class="pd-s" x="313.3" y="166">routine A</text><rect x="401.0" y="114" width="109.6" height="20" rx="4" fill="#f85149" fill-opacity="0.42" stroke="#f85149" stroke-width="1.2"/><text class="pd-s" x="455.8" y="128">routine B</text><rect x="510.6" y="190" width="153.4" height="20" rx="4" fill="#58a6ff" fill-opacity="0.42" stroke="#58a6ff" stroke-width="1.2"/><text class="pd-s" x="587.3" y="204">main</text><path d="M302.3 98 L401.0 98" stroke="#f85149" stroke-width="1.4" stroke-dasharray="3 3"/><text class="pd-s" x="351.6" y="92" fill="#f85149">B waits</text><text class="pd-t" x="18" y="38" fill="#d29922">Without nesting</text><text class="pd-c" x="18" y="272">B arrives while A is running and has to wait for A to finish. If A is long, B is served late or lost.</text><text class="pd-c" x="18" y="290"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1" dur="9s" repeatCount="indefinite"/><rect x="116.0" y="190" width="109.6" height="20" rx="4" fill="#58a6ff" fill-opacity="0.42" stroke="#58a6ff" stroke-width="1.2"/><text class="pd-s" x="170.8" y="204">main</text><rect x="225.6" y="152" width="76.7" height="20" rx="4" fill="#d29922" fill-opacity="0.42" stroke="#d29922" stroke-width="1.2"/><text class="pd-s" x="264.0" y="166">A</text><rect x="302.3" y="114" width="109.6" height="20" rx="4" fill="#f85149" fill-opacity="0.42" stroke="#f85149" stroke-width="1.2"/><text class="pd-s" x="357.1" y="128">routine B</text><rect x="411.9" y="152" width="98.6" height="20" rx="4" fill="#d29922" fill-opacity="0.42" stroke="#d29922" stroke-width="1.2"/><text class="pd-s" x="461.2" y="166">A continues</text><rect x="510.6" y="190" width="153.4" height="20" rx="4" fill="#58a6ff" fill-opacity="0.42" stroke="#58a6ff" stroke-width="1.2"/><text class="pd-s" x="587.3" y="204">main</text><text class="pd-t" x="18" y="38" fill="#3fb950">With nesting</text><text class="pd-c" x="18" y="272">B interrupts A because it has higher priority, and A resumes afterwards. Better response, more stack and harder</text><text class="pd-c" x="18" y="290">to reason about.</text></g><text class="pd-c" x="18" y="314" fill="#7d8a99">In simple 8-bit micros, priority is set by position in the vector table; on ARM it is configurable.</text></svg>
+        <figcaption><b>Figure 2.</b> Two interrupts that arrive almost together, animated. With nesting, the
+        higher-priority one interrupts the lower-priority one; without nesting, it waits for the other to
+        finish.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">How ties are resolved</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>In simple 8-bit microcontrollers, priority is given by the <b>position in the vector
+            table</b>: it is not configurable, and there is no nesting unless you enable it by hand.</li>
+            <li>On ARM Cortex-M, the interrupt controller lets you assign a <b>numeric
+            priority</b> to each source, and nesting is automatic: lower number, higher priority.</li>
+            <li>Nesting gives a better response to urgent events, but it uses more stack and makes it much harder
+            to reason about the program.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">How they are assigned</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>Highest</b>: safety. Emergency stop, overcurrent, power failure.</li>
+            <li><b>High</b>: whatever is lost if it arrives late. Edge capture, high-speed serial
+            reception.</li>
+            <li><b>Medium</b>: timebases and periodic control.</li>
+            <li><b>Low</b>: user interface, logging, non-critical communication.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="compartidas">
+      <h2><span class="n">04</span>The problem with shared variables</h2>
+      <p>An interrupt can occur <b>between any two instructions</b> of the main program.
+      Everything that both of them touch is a potential source of errors that show up once in a thousand times, and only with
+      the equipment in production.</p>
+
+      <pre class="code"><span class="c-com">/* BAD: the compiler may keep 'listo' in a register and never reread it */</span>
+<span class="c-ty">uint8_t</span> listo = <span class="c-num">0</span>;
+<span class="c-fn">ISR</span>(INT0_vect) { listo = <span class="c-num">1</span>; }
+<span class="c-kw">while</span> (!listo) { }          <span class="c-com">/* may hang forever */</span>
+
+<span class="c-com">/* GOOD: volatile forces it to be read from memory on every pass */</span>
+<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> listo = <span class="c-num">0</span>;
+
+<span class="c-com">/* BAD: 'pulsos' is 32 bits; on an 8-bit micro it is read in four steps */</span>
+<span class="c-kw">volatile</span> <span class="c-ty">uint32_t</span> pulsos;
+total = pulsos;            <span class="c-com">/* if the interrupt falls in the middle, an impossible value comes out */</span>
+
+<span class="c-com">/* GOOD: critical section, as short as possible */</span>
+<span class="c-fn">cli</span>();                     <span class="c-com">/* disables interrupts */</span>
+total = pulsos;
+<span class="c-fn">sei</span>();                     <span class="c-com">/* enables them again */</span></pre>
+
+      <div class="box ojo">
+        <div class="bt">The two rules that prevent 90% of the problems</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>Every variable shared between an interrupt routine and the main program is declared
+          <b>volatile</b>.</li>
+          <li>Every access to a variable wider than the processor’s word size is done inside a
+          <b>critical section</b>, as short as possible.</li>
+        </ol>
+        <p style="margin-top:8px">And a third one, more important than the other two: <b>the interrupt service routine does
+        the bare minimum</b>. It sets a flag, stores a piece of data, and the heavy work is done by the main
+        program.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">What never goes inside an interrupt service routine</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Waits and delays</b>. They block the whole system.</li>
+          <li><b>Writing to the serial port or to a display</b>. These are slow operations.</li>
+          <li><b>Floating-point calculations</b> on a microcontroller without a floating-point unit.</li>
+          <li><b>Allocating dynamic memory</b>.</li>
+          <li>Waiting for another interrupt: if they are disabled, it will never arrive.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="patron">
+      <h2><span class="n">05</span>The pattern worth using every time</h2>
+      <pre class="code"><span class="c-com">/* Pushbutton debouncing by interrupt + timer */</span>
+<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span>  evento = <span class="c-num">0</span>;
+<span class="c-kw">volatile</span> <span class="c-ty">uint16_t</span> t_ultimo = <span class="c-num">0</span>;
+
+<span class="c-fn">ISR</span>(INT0_vect)              <span class="c-com">/* falling edge on the pushbutton */</span>
+{
+    <span class="c-ty">uint16_t</span> ahora = <span class="c-fn">ms_actual</span>();
+    <span class="c-kw">if</span> ((<span class="c-ty">uint16_t</span>)(ahora - t_ultimo) &gt; <span class="c-num">30</span>) {   <span class="c-com">/* 30 ms of bounce */</span>
+        evento   = <span class="c-num">1</span>;
+        t_ultimo = ahora;
+    }
+}                            <span class="c-com">/* the routine finishes in microseconds */</span>
+
+<span class="c-kw">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>)
+{
+    <span class="c-fn">inicializar</span>();
+    <span class="c-kw">while</span> (<span class="c-num">1</span>) {
+        <span class="c-kw">if</span> (evento) {
+            <span class="c-fn">cli</span>(); evento = <span class="c-num">0</span>; <span class="c-fn">sei</span>();   <span class="c-com">/* the event is consumed without losing another one */</span>
+            <span class="c-fn">atender_pulsador</span>();          <span class="c-com">/* here it is fine to take a while */</span>
+        }
+        <span class="c-fn">otras_tareas</span>();
+    }
+}</pre>
+
+      <div class="box key">
+        <div class="bt">Why this pattern works</div>
+        <p>The routine is short and deterministic, the debouncing does not burn waiting time, and the heavy work
+        happens in the main loop, where it can take as long as it needs without affecting anyone. The detail of the
+        subtraction with an explicit cast keeps the count correct <b>when the millisecond counter
+        wraps around</b>, which is the bug that shows up after 65 seconds of operation and baffles
+        everybody.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Polling versus interrupt</div>
+        <p>Detect a pushbutton in two ways: by polling in the main loop and by interrupt, with the
+        program also doing a long task. Use the oscilloscope to measure the time between the edge and the
+        response in each case, and compare the worst case of the two.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Measuring the latency</div>
+        <p>Set a pin high as the first instruction of the interrupt service routine and observe on the
+        oscilloscope the distance to the edge that triggered it. Repeat with another interrupt active and with
+        a long critical section in the main program: you can see the latency grow.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · Reproducing the volatile bug</div>
+        <p>Write the wait loop <b>without</b> volatile and compile with optimization enabled. Verify
+        that it hangs. Look at the assembly listing to see that the variable is not even reread.
+        Add volatile and check the difference. It is the best way to make sure you never forget it again.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Measuring frequency by capture</div>
+        <p>Use the input capture interrupt to measure the period of a signal, and compare the
+        accuracy with measuring it by polling. With capture, the timer value is taken by hardware
+        at the instant of the edge: the difference in accuracy is remarkable.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Usual cause</th></tr></thead>
+          <tbody>
+            <tr><td>The interrupt fires nonstop</td><td>The request flag is not cleared inside the routine.</td></tr>
+            <tr><td>The interrupt never fires</td><td>It has not been enabled individually, or the global interrupts have not been enabled, or the vector name is misspelled.</td></tr>
+            <tr><td>The program hangs in a wait loop</td><td>The shared variable is not declared <b>volatile</b>.</td></tr>
+            <tr><td>A multi-byte counter gives absurd values</td><td>It is read without a critical section and the interrupt lands in the middle of the read.</td></tr>
+            <tr><td>A pushbutton generates several events</td><td>Mechanical bounce. Filter it by time, not by adding waits inside the routine.</td></tr>
+            <tr><td>The system becomes erratic when interrupts are added</td><td>Stack overflow caused by nesting, or routines that are too long.</td></tr>
+            <tr><td>It fails at exactly 65 seconds</td><td>A 16-bit millisecond counter overflows and is compared incorrectly.</td></tr>
+            <tr><td>Everything stops for moments</td><td>There is a wait, a serial write or a heavy calculation inside an interrupt service routine.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Self-assessment</h2>
+
+      <details class="q"><summary>What does the processor save when it services an interrupt?</summary>
+        <div class="a"><p>The <b>return address</b> and the processor state —the context— on the stack,
+        so it can continue exactly where it was when the routine finishes.</p></div></details>
+
+      <details class="q"><summary>What is the vector table?</summary>
+        <div class="a"><p>A table in memory where each interrupt source has the address of its
+        interrupt service routine. The core consults it to know where to jump.</p></div></details>
+
+      <details class="q"><summary>What is latency and what does it depend on?</summary>
+        <div class="a"><p>The time between the event and the first instruction of the routine. It depends on the
+        current instruction, on saving the context and, above all, on whether another routine is running or
+        a critical section is open.</p></div></details>
+
+      <details class="q"><summary>Why must a shared variable be declared volatile?</summary>
+        <div class="a"><p>Because without that keyword the compiler may keep it in a register and not read it
+        from memory again. Since the interrupt modifies it “from outside,” the main program never
+        finds out about the change.</p></div></details>
+
+      <details class="q"><summary>What is a critical section and when is it needed?</summary>
+        <div class="a"><p>A stretch of code with interrupts disabled. It is needed when reading or writing
+        variables wider than the processor’s word size, so that the interrupt does not land in the middle of
+        the operation.</p></div></details>
+
+      <details class="q"><summary>Name three things that must not go inside an interrupt service routine.</summary>
+        <div class="a"><p>Waits or delays, slow writes such as the serial port or a display, and
+        heavy calculations or dynamic memory allocation.</p></div></details>
+
+      <details class="q"><summary>How is pushbutton bounce handled with interrupts?</summary>
+        <div class="a"><p>By comparing the current instant with that of the last valid event and discarding the ones that
+        arrive within about 20 to 50 ms. Never with a wait inside the routine.</p></div></details>
+
+      <details class="q"><summary>What advantage does the capture interrupt have over measuring by polling?</summary>
+        <div class="a"><p>The timer value is taken <b>by hardware</b> at the exact instant of the
+        edge, so the measurement does not depend on when the program gets around to reading it.</p></div></details>
+
+      <details class="q"><summary>How are priorities assigned in a real system?</summary>
+        <div class="a"><p>Highest for safety —emergency stops, overcurrent—, high for whatever
+        is lost if it arrives late, medium for the timebases, and low for the user interface and
+        logging.</p></div></details>
+
+      <details class="q"><summary>Why must interrupt service routines be short?</summary>
+        <div class="a"><p>Because while one is running, the others wait: every long routine increases the
+        latency of all the others and can cause events to be lost.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/buses-serie">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Serial communication buses</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/aplicaciones-control">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Control applications</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Interrupts”</b> of <b>Digital Electronics IV</b> (Year 7), based on the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

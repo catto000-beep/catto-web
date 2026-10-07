@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microwave links · Telecommunications I · Catto</title>
+<meta name="description" content="Calculating point-to-point radio links: line of sight, Fresnel zone and clearance, link budget with gains and losses, fade margin, rain attenuation, availability, terrain profile and installation. A topic of Telecommunications I, Year 6.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/enlaces-microondas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/enlaces-microondas">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/enlaces-microondas">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/enlaces-microondas">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Telecommunications I</a>
+    <span class="anio">Year 6</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Telecommunications I</span> · 144 h · Topic 5 of 9</div>
+    <h1>Microwave links</h1>
+    <p class="lead">A radio link joins two fixed points with antennas aimed at each other. Calculating it means adding
+    gains and subtracting losses to see whether enough signal reaches the receiver, and checking that the
+    path is <b>really</b> clear.</p>
+    <div class="chips">
+      <span class="chip hi">Antennas</span>
+      <span class="chip">Modulation</span>
+      <span class="chip">Fresnel</span>
+      <span class="chip">Link budget</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que-es">
+      <h2><span class="n">01</span>Where a radio link is used</h2>
+      <div class="g3">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Replacing cable</div>
+          <p>Joining two buildings, a plant with its office, a town with the fiber node. It is installed in
+          days and does not depend on right-of-way permits.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Backhaul</div>
+          <p>Carrying the traffic of a cell tower to the core network, or connecting radio
+          and TV repeaters.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Rural areas</div>
+          <p>It is the realistic way to bring internet to a farm or a remote settlement: a chain of links between
+          hills, with low-cost equipment in license-exempt bands.</p>
+        </div>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Band</th><th class="c">Typical range</th><th>Characteristics</th></tr></thead>
+          <tbody>
+          <tr><td class="c"><b>2.4 GHz</b> (unlicensed)</td><td class="c">10 to 30 km</td><td>Very congested in cities. Large antennas for the same gain.</td></tr>
+          <tr><td class="c"><b>5 GHz</b> (unlicensed)</td><td class="c">10 to 50 km</td><td>The usual choice for low-cost links: less crowded and good small antennas.</td></tr>
+          <tr><td class="c"><b>7 to 15 GHz</b> (licensed)</td><td class="c">10 to 60 km</td><td>Professional links with interference protection.</td></tr>
+          <tr><td class="c"><b>18 to 38 GHz</b></td><td class="c">1 to 10 km</td><td>A lot of capacity, short hops: <b>rain</b> becomes the dominant factor.</td></tr>
+          <tr><td class="c"><b>60 to 80 GHz</b></td><td class="c">&lt; 2 km</td><td>Gigabit capacity. Oxygen in the air absorbs strongly at 60 GHz.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="fresnel">
+      <h2><span class="n">02</span>Line of sight and the Fresnel zone</h2>
+      <p>Seeing the other end with your eyes is <b>not enough</b>. The wave does not travel along a line but through a
+      volume shaped like an ellipsoid: the <b>first Fresnel zone</b>. If an obstacle enters it,
+      attenuation appears even though there is a direct view.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 330" role="img" aria-label="Fresnel zone on a point-to-point link" class="svg-t" data-anim><style>.fr-t{fill:#e6edf3;font-size:12px;font-weight:700}.fr-k{fill:#7d8a99;font-size:10.5px}.fr-c{fill:#9aa7b4;font-size:10.5px}.fr-s{fill:#7d8a99;font-size:9.5px;text-anchor:middle}</style><path d="M26 258 L674 258" stroke="#9aa7b4" stroke-width="2"/><path d="M92 258 L92 128" stroke="#e6edf3" stroke-width="2.6"/><path d="M92 128 l-12 10 M92 128 l12 10" stroke="#e6edf3" stroke-width="2"/><path d="M616 258 L616 128" stroke="#e6edf3" stroke-width="2.6"/><path d="M616 128 l-12 10 M616 128 l12 10" stroke="#e6edf3" stroke-width="2"/><text class="fr-s" x="92" y="278">Tx</text><text class="fr-s" x="616" y="278">Rx</text><text class="fr-s" x="350" y="292">10 km &#183; 5.8 GHz &#183; antennas at 20 m</text><path d="M92.0 128.0 L100.7 112.1 L109.5 105.7 L118.2 101.0 L126.9 97.1 L135.7 93.7 L144.4 90.8 L153.1 88.2 L161.9 85.8 L170.6 83.7 L179.3 81.8 L188.1 80.0 L196.8 78.4 L205.5 76.9 L214.3 75.6 L223.0 74.3 L231.7 73.2 L240.5 72.1 L249.2 71.2 L257.9 70.3 L266.7 69.5 L275.4 68.9 L284.1 68.2 L292.9 67.7 L301.6 67.3 L310.3 66.9 L319.1 66.6 L327.8 66.3 L336.5 66.1 L345.3 66.0 L354.0 66.0 L362.7 66.0 L371.5 66.1 L380.2 66.3 L388.9 66.6 L397.7 66.9 L406.4 67.3 L415.1 67.7 L423.9 68.2 L432.6 68.9 L441.3 69.5 L450.1 70.3 L458.8 71.2 L467.5 72.1 L476.3 73.2 L485.0 74.3 L493.7 75.6 L502.5 76.9 L511.2 78.4 L519.9 80.0 L528.7 81.8 L537.4 83.7 L546.1 85.8 L554.9 88.2 L563.6 90.8 L572.3 93.7 L581.1 97.1 L589.8 101.0 L598.5 105.7 L607.3 112.1 L616.0 128.0 L616.0 128.0 L607.3 143.9 L598.5 150.3 L589.8 155.0 L581.1 158.9 L572.3 162.3 L563.6 165.2 L554.9 167.8 L546.1 170.2 L537.4 172.3 L528.7 174.2 L519.9 176.0 L511.2 177.6 L502.5 179.1 L493.7 180.4 L485.0 181.7 L476.3 182.8 L467.5 183.9 L458.8 184.8 L450.1 185.7 L441.3 186.5 L432.6 187.1 L423.9 187.8 L415.1 188.3 L406.4 188.7 L397.7 189.1 L388.9 189.4 L380.2 189.7 L371.5 189.9 L362.7 190.0 L354.0 190.0 L345.3 190.0 L336.5 189.9 L327.8 189.7 L319.1 189.4 L310.3 189.1 L301.6 188.7 L292.9 188.3 L284.1 187.8 L275.4 187.1 L266.7 186.5 L257.9 185.7 L249.2 184.8 L240.5 183.9 L231.7 182.8 L223.0 181.7 L214.3 180.4 L205.5 179.1 L196.8 177.6 L188.1 176.0 L179.3 174.2 L170.6 172.3 L161.9 170.2 L153.1 167.8 L144.4 165.2 L135.7 162.3 L126.9 158.9 L118.2 155.0 L109.5 150.3 L100.7 143.9 L92.0 128.0" fill="#58a6ff" fill-opacity="0.10" stroke="#58a6ff" stroke-width="1.4"/><path d="M92.0 128.0 L100.7 118.5 L109.5 114.6 L118.2 111.8 L126.9 109.4 L135.7 107.4 L144.4 105.7 L153.1 104.1 L161.9 102.7 L170.6 101.4 L179.3 100.3 L188.1 99.2 L196.8 98.2 L205.5 97.3 L214.3 96.5 L223.0 95.8 L231.7 95.1 L240.5 94.5 L249.2 93.9 L257.9 93.4 L266.7 92.9 L275.4 92.5 L284.1 92.1 L292.9 91.8 L301.6 91.6 L310.3 91.3 L319.1 91.1 L327.8 91.0 L336.5 90.9 L345.3 90.8 L354.0 90.8 L362.7 90.8 L371.5 90.9 L380.2 91.0 L388.9 91.1 L397.7 91.3 L406.4 91.6 L415.1 91.8 L423.9 92.1 L432.6 92.5 L441.3 92.9 L450.1 93.4 L458.8 93.9 L467.5 94.5 L476.3 95.1 L485.0 95.8 L493.7 96.5 L502.5 97.3 L511.2 98.2 L519.9 99.2 L528.7 100.3 L537.4 101.4 L546.1 102.7 L554.9 104.1 L563.6 105.7 L572.3 107.4 L581.1 109.4 L589.8 111.8 L598.5 114.6 L607.3 118.5 L616.0 128.0 L616.0 128.0 L607.3 137.5 L598.5 141.4 L589.8 144.2 L581.1 146.6 L572.3 148.6 L563.6 150.3 L554.9 151.9 L546.1 153.3 L537.4 154.6 L528.7 155.7 L519.9 156.8 L511.2 157.8 L502.5 158.7 L493.7 159.5 L485.0 160.2 L476.3 160.9 L467.5 161.5 L458.8 162.1 L450.1 162.6 L441.3 163.1 L432.6 163.5 L423.9 163.9 L415.1 164.2 L406.4 164.4 L397.7 164.7 L388.9 164.9 L380.2 165.0 L371.5 165.1 L362.7 165.2 L354.0 165.2 L345.3 165.2 L336.5 165.1 L327.8 165.0 L319.1 164.9 L310.3 164.7 L301.6 164.4 L292.9 164.2 L284.1 163.9 L275.4 163.5 L266.7 163.1 L257.9 162.6 L249.2 162.1 L240.5 161.5 L231.7 160.9 L223.0 160.2 L214.3 159.5 L205.5 158.7 L196.8 157.8 L188.1 156.8 L179.3 155.7 L170.6 154.6 L161.9 153.3 L153.1 151.9 L144.4 150.3 L135.7 148.6 L126.9 146.6 L118.2 144.2 L109.5 141.4 L100.7 137.5 L92.0 128.0" fill="none" stroke="#d29922" stroke-width="1.3" stroke-dasharray="5 4"/><path d="M92 128 L616 128" stroke="#e6edf3" stroke-width="1.6"/><text class="fr-k" x="360" y="58" fill="#58a6ff">1st zone: r = 11.4 m</text><text class="fr-k" x="360" y="212" fill="#d29922">60 % clearance: 6.8 m</text><g><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 -0.0;0 -28.0;0 -62.0" dur="12s" repeatCount="indefinite"/><path d="M308 258 L354 190 L400 190 Z" fill="#3fb950" fill-opacity="0.35" stroke="#3fb950" stroke-width="1.4"/><path d="M308 190 L400 190" stroke="#3fb950" stroke-width="2"/></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0" dur="12s" repeatCount="indefinite"/><text class="fr-t" x="26" y="44" fill="#3fb950">12 m tree stand</text><text class="fr-k" x="212" y="44">Clearance below the line:</text><text class="fr-t" x="368" y="44" fill="#3fb950">8.0 m clearance</text><text class="fr-c" x="26" y="316">The Fresnel zone is clear over more than 60 %: the link works with margin.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0" dur="12s" repeatCount="indefinite"/><text class="fr-t" x="26" y="44" fill="#d29922">15 m tree stand</text><text class="fr-k" x="212" y="44">Clearance below the line:</text><text class="fr-t" x="368" y="44" fill="#d29922">5.0 m clearance</text><text class="fr-c" x="26" y="316">It already enters the critical 60 %: a few dB of attenuation appear and the link becomes unstable.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1" dur="12s" repeatCount="indefinite"/><text class="fr-t" x="26" y="44" fill="#f85149">19 m tree stand</text><text class="fr-k" x="212" y="44">Clearance below the line:</text><text class="fr-t" x="368" y="44" fill="#f85149">1.0 m clearance</text><text class="fr-c" x="26" y="316">Severe obstruction even though there is still a direct view: the link practically does not close.</text></g><text class="fr-c" x="26" y="70" fill="#7d8a99">r = 17.32 &#183; &#8730;(d&#8321;&#183;d&#8322; / f&#183;D)   with distances in km and frequency in GHz</text></svg>
+        <figcaption><b>Figure 1.</b> Fresnel zone, animated. The radius is greatest in the middle of the span and
+        narrows toward the ends. The practical rule: at least <b>60 %</b> of that
+        zone must be cleared.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><mi>r</mi><mo>=</mo><mn>17.32</mn><msqrt><mfrac><mrow><msub><mi>d</mi><mn>1</mn></msub><mo>·</mo><msub><mi>d</mi><mn>2</mn></msub></mrow><mrow><mi>f</mi><mo>·</mo><mi>D</mi></mrow></mfrac></msqrt></mrow></math>
+        <span class="cap">r in meters, d₁ and d₂ the distances from each end to the obstacle in km, D the
+        total distance in km and f the frequency in GHz.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Worked example · Does it clear that stand of trees?</div>
+        <p>A <b>10 km</b> link at <b>5.8 GHz</b>, with a 12 m tall stand of trees right in the
+        <b>middle</b> of the span. The antennas are 20 m above the terrain, which is flat.</p>
+        <ol style="margin:8px 0 0;padding-left:20px">
+        <li>Radius of the first zone at the midpoint: r = 17.32 × √(5 × 5/(5.8 × 10)) =
+        17.32 × √0.431 = <b>11.4 m</b>.</li>
+        <li>Required clearance, 60 %: <b>6.8 m</b> below the straight line.</li>
+        <li>The straight line between the two antennas passes 20 m above the ground at the middle of the span. The treetops
+        are at 12 m: <b>8 m</b> remain clear.</li>
+        <li>8 m &gt; 6.8 m: <b>the link passes</b>, although with little margin. If the trees grow two
+        more meters, it no longer passes.</li>
+        </ol>
+        <p>That last point is real and always forgotten: trees grow and buildings appear. A
+        link is calculated with the terrain <b>of the coming years</b>.</p>
+      </div>
+    </section>
+
+    <section id="presupuesto">
+      <h2><span class="n">03</span>The link budget</h2>
+      <p>It is an addition and subtraction of decibels, from end to end. If the result exceeds the receiver
+      sensitivity with enough margin, the link works.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 344" role="img" aria-label="Radio link budget" class="svg-t" data-anim><style>.bl-t{fill:#e6edf3;font-size:11.5px;font-weight:700}.bl-k{fill:#7d8a99;font-size:9.5px;text-anchor:middle}.bl-c{fill:#9aa7b4;font-size:10.5px}.bl-v{fill:#e6edf3;font-size:13px;font-weight:700}</style><path d="M44 76.0 L662 76.0" stroke="#2a3140" stroke-width="1" /><text class="bl-c" x="8" y="80.0" fill="#7d8a99">50 dBm</text><path d="M44 136.0 L662 136.0" stroke="#2a3140" stroke-width="1" /><text class="bl-c" x="8" y="140.0" fill="#7d8a99">0</text><path d="M44 196.0 L662 196.0" stroke="#2a3140" stroke-width="1" /><text class="bl-c" x="8" y="200.0" fill="#7d8a99">-50</text><path d="M44 235.6 L662 235.6" stroke="#d29922" stroke-width="1" stroke-dasharray="6 4"/><text class="bl-c" x="8" y="239.6" fill="#d29922">-83</text><path d="M44 250.0 L662 250.0" stroke="#2a3140" stroke-width="1" /><text class="bl-c" x="8" y="254.0" fill="#7d8a99">-95 dBm</text><text class="bl-c" x="470" y="229.6" fill="#d29922">receiver sensitivity: -83 dBm</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;1;1;1;1;1;1" dur="14s" repeatCount="indefinite"/><rect x="60.0" y="112.0" width="62" height="24.0" rx="3" fill="#3fb950" fill-opacity="0.45" stroke="#3fb950" stroke-width="1.2"/><path d="M60.0 112.0 L122.0 112.0" stroke="#e6edf3" stroke-width="2"/><text class="bl-k" x="91.0" y="268.0" fill="#9aa7b4">Tx</text><text class="bl-k" x="91.0" y="282.0" fill="#3fb950">+20 dBm</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;1;1;1;1;1" dur="14s" repeatCount="indefinite"/><rect x="144.0" y="112.0" width="62" height="3.0" rx="3" fill="#f85149" fill-opacity="0.45" stroke="#f85149" stroke-width="1.2"/><path d="M144.0 113.2 L206.0 113.2" stroke="#e6edf3" stroke-width="2"/><text class="bl-k" x="175.0" y="268.0" fill="#9aa7b4">cable</text><text class="bl-k" x="175.0" y="282.0" fill="#f85149">-1 dB</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;1;1;1;1" dur="14s" repeatCount="indefinite"/><rect x="228.0" y="84.4" width="62" height="28.8" rx="3" fill="#3fb950" fill-opacity="0.45" stroke="#3fb950" stroke-width="1.2"/><path d="M228.0 84.4 L290.0 84.4" stroke="#e6edf3" stroke-width="2"/><text class="bl-k" x="259.0" y="268.0" fill="#9aa7b4">antenna</text><text class="bl-k" x="259.0" y="282.0" fill="#3fb950">+24 dBi</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;1;1;1" dur="14s" repeatCount="indefinite"/><rect x="312.0" y="84.4" width="62" height="157.4" rx="3" fill="#f85149" fill-opacity="0.45" stroke="#f85149" stroke-width="1.2"/><path d="M312.0 241.8 L374.0 241.8" stroke="#e6edf3" stroke-width="2"/><text class="bl-k" x="343.0" y="268.0" fill="#9aa7b4">15 km</text><text class="bl-k" x="343.0" y="282.0" fill="#f85149">-131.2 dB</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;1;1" dur="14s" repeatCount="indefinite"/><rect x="396.0" y="213.0" width="62" height="28.8" rx="3" fill="#3fb950" fill-opacity="0.45" stroke="#3fb950" stroke-width="1.2"/><path d="M396.0 213.0 L458.0 213.0" stroke="#e6edf3" stroke-width="2"/><text class="bl-k" x="427.0" y="268.0" fill="#9aa7b4">antenna</text><text class="bl-k" x="427.0" y="282.0" fill="#3fb950">+24 dBi</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1;1" dur="14s" repeatCount="indefinite"/><rect x="480.0" y="213.0" width="62" height="3.0" rx="3" fill="#f85149" fill-opacity="0.45" stroke="#f85149" stroke-width="1.2"/><path d="M480.0 214.2 L542.0 214.2" stroke="#e6edf3" stroke-width="2"/><text class="bl-k" x="511.0" y="268.0" fill="#9aa7b4">cable</text><text class="bl-k" x="511.0" y="282.0" fill="#f85149">-1 dB</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;1" dur="14s" repeatCount="indefinite"/><path d="M572.0 214.2 L572.0 235.6" stroke="#58a6ff" stroke-width="1.6"/><path d="M572.0 214.2 l-4 6 M572.0 214.2 l4 6" stroke="#58a6ff" stroke-width="1.6"/><text class="bl-k" x="595.0" y="268.0" fill="#58a6ff">margin</text><text class="bl-k" x="595.0" y="282.0" fill="#58a6ff">17.8 dB</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0;0" dur="14s" repeatCount="indefinite"/><text class="bl-c" x="26" y="318">Transmitter power: 100 mW.</text><text class="bl-t" x="26" y="46" fill="#3fb950">Tx &#160;&#183;&#160; cumulative level: 20 dBm</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0;0" dur="14s" repeatCount="indefinite"/><text class="bl-c" x="26" y="318">Loss of the pigtail and connectors on the transmitter side.</text><text class="bl-t" x="26" y="46" fill="#f85149">Cable &#160;&#183;&#160; cumulative level: 19 dBm</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0;0" dur="14s" repeatCount="indefinite"/><text class="bl-c" x="26" y="318">Antenna gain: it concentrates the energy toward the other end.</text><text class="bl-t" x="26" y="46" fill="#3fb950">Antenna &#160;&#183;&#160; cumulative level: 43 dBm</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0;0" dur="14s" repeatCount="indefinite"/><text class="bl-c" x="26" y="318">Free-space loss: by far the dominant term.</text><text class="bl-t" x="26" y="46" fill="#f85149">15 km &#160;&#183;&#160; cumulative level: -88.2 dBm</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0;0" dur="14s" repeatCount="indefinite"/><text class="bl-c" x="26" y="318">Receiving antenna gain, identical to the transmitting one.</text><text class="bl-t" x="26" y="46" fill="#3fb950">Antenna &#160;&#183;&#160; cumulative level: -64.2 dBm</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1;0" dur="14s" repeatCount="indefinite"/><text class="bl-c" x="26" y="318">Loss on the receiver side. What finally arrives: -65.2 dBm.</text><text class="bl-t" x="26" y="46" fill="#f85149">Cable &#160;&#183;&#160; cumulative level: -65.2 dBm</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;0;1" dur="14s" repeatCount="indefinite"/><text class="bl-c" x="26" y="318">The receiver sensitivity is -83 dBm: almost 18 dB of margin to spare.</text><text class="bl-t" x="26" y="46" fill="#58a6ff">Margin &#160;&#183;&#160; cumulative level: -65.2 dBm</text></g><text class="bl-c" x="26" y="340" fill="#7d8a99">It is all adding and subtracting decibels. If the result exceeds the sensitivity with margin, the link works.</text></svg>
+        <figcaption><b>Figure 2.</b> The complete budget, animated. Each link in the chain adds or subtracts decibels: what
+        reaches the receiver is the algebraic sum, and the <b>margin</b> is what separates that figure from the
+        sensitivity.</figcaption>
+      </figure>
+
+      <div class="box ejem">
+        <div class="bt">Worked example · A 15 km link at 5.8 GHz</div>
+        <div class="tw" style="margin:10px 0 0">
+          <table class="tab">
+            <thead><tr><th>Item</th><th class="c">Value</th><th class="c">Cumulative</th></tr></thead>
+            <tbody>
+            <tr><td>Transmitter power</td><td class="c">+20 dBm</td><td class="c">20</td></tr>
+            <tr><td>Cable and connector loss (Tx)</td><td class="c">−1 dB</td><td class="c">19</td></tr>
+            <tr><td>Antenna gain (Tx)</td><td class="c">+24 dBi</td><td class="c">43</td></tr>
+            <tr><td><b>Free-space loss</b> (15 km, 5.8 GHz)</td><td class="c">−131.2 dB</td><td class="c">−88.2</td></tr>
+            <tr><td>Antenna gain (Rx)</td><td class="c">+24 dBi</td><td class="c">−64.2</td></tr>
+            <tr><td>Cable and connector loss (Rx)</td><td class="c">−1 dB</td><td class="c"><b>−65.2 dBm</b></td></tr>
+            <tr><td>Receiver sensitivity</td><td class="c">−83 dBm</td><td class="c">—</td></tr>
+            <tr><td><b>Margin</b></td><td class="c" colspan="2"><b>17.8 dB</b></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:12px">FSPL = 32.44 + 20·log(5800) + 20·log(15) = 32.44 + 75.27 + 23.52 =
+        <b>131.2 dB</b>. A margin of almost 18 dB is a <b>healthy</b> link: it withstands rain, misalignment and
+        equipment aging.</p>
+      </div>
+
+      <div class="box key">
+        <div class="bt">How much margin is needed</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+        <li><b>Less than 10 dB</b>: fragile link. It works on a nice day and drops with rain or wind.</li>
+        <li><b>15 to 20 dB</b>: reasonable for a service link.</li>
+        <li><b>More than 25 dB</b>: critical links, or high bands where rain hits hard.</li>
+        <li>And the <b>fade margin</b> due to multipath must also be subtracted, which on long
+        spans over reflective terrain —water, salt flats, flat fields— can be 20 dB.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="clima">
+      <h2><span class="n">04</span>Rain, availability and fading</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Rain attenuation</div>
+          <p>It depends enormously on the frequency. Below <b>6 GHz</b> it is almost negligible; at 11 GHz
+          it already matters; at 23 GHz or more, it is <b>the dominant factor</b> in the design: a heavy storm can
+          add tens of dB.</p>
+          <p style="margin-top:8px">That is why high-band links are short hops, and why in
+          areas of intense rainfall it is preferable to move down a band even if it costs bandwidth.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Availability</div>
+          <p>It is expressed as a percentage of the year:</p>
+          <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>99.9 %</b> → up to 8.8 hours per year out of service.</li>
+          <li><b>99.99 %</b> → 53 minutes per year.</li>
+          <li><b>99.999 %</b> → 5 minutes per year.</li>
+          </ul>
+          <p style="margin-top:8px">Every extra nine costs margin, and margin costs bigger antennas or
+          taller towers.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Ground reflection</div>
+        <p>On long spans over smooth surfaces, part of the signal is reflected and reaches the receiver
+        out of phase. If it arrives in antiphase, it cancels. It is fought with <b>space diversity</b> —two antennas
+        separated vertically by a few meters— or by choosing heights that put the reflection outside the critical
+        zone. It is the reason why two identical links can behave very differently.</p>
+      </div>
+    </section>
+
+    <section id="montaje">
+      <h2><span class="n">05</span>From calculation to installation</h2>
+      <div class="box key">
+        <div class="bt">The complete procedure</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+        <li><b>Survey both ends</b>: coordinates, available height, obstacles, power supply and access.</li>
+        <li><b>Plot the terrain profile</b> between them, with contour lines or with a profile
+        tool, and include the curvature of the Earth.</li>
+        <li><b>Check Fresnel</b> at the critical points and define the tower heights.</li>
+        <li><b>Choose the band and equipment</b>, and calculate the link budget with margin.</li>
+        <li><b>Install and aim</b>: with a compass and GPS for the coarse work, then fine-tuning with the
+        equipment's own level indicator, moving a little at a time and waiting for the reading.</li>
+        <li><b>Document</b>: azimuth, elevation, received level, SWR, photos of the alignment and of the
+        sealing.</li>
+        </ol>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Tower work</div>
+        <p>It is one of the most dangerous tasks in the trade: height, electrical storms, radiation from other
+        active antennas on the same structure. <b>Never climb alone</b>, use a harness with a double
+        lanyard, check the condition of the tower and of the guy wires, and ask for the <b>nearby transmitters
+        to be switched off</b> before working in front of their antennas. With wind or a storm in sight,
+        do not climb.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Calculating a real link</div>
+        <p>Choose two real points in the city or the area, obtain their coordinates and heights, plot the
+        profile and calculate the Fresnel zone at the most critical point. Determine the minimum height of the
+        antennas and make the link budget with specific commercial equipment and its prices.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Fresnel in miniature</div>
+        <p>With two WiFi devices and directional antennas, set up a 100 to 200 m link inside the
+        school and measure the received level. Then place a metal surface at different points
+        —near one end and in the middle— and note the drop. The attenuation is much greater when the
+        obstacle is <b>in the middle</b>: that is where the Fresnel zone is widest.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · Fine aiming</div>
+        <p>With the link established, misalign one antenna one degree at a time and note the drop in level.
+        Plot level against angle: you obtain the antenna's radiation pattern and see how
+        critical aiming is for high-gain antennas.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Margin and rain</div>
+        <p>Record the received level of the link over several days, including a rainy day. Compare
+        the drop with what is expected for that band. With 5 GHz equipment the drop is small, and that observation
+        —made with your own data— explains why that band is chosen.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Usual cause</th></tr></thead>
+          <tbody>
+          <tr><td>There is a direct view and the link performs poorly</td><td>The Fresnel zone is obstructed even though the other end can be seen.</td></tr>
+          <tr><td>The link degrades over the years</td><td>Trees grew or a building appeared along the span.</td></tr>
+          <tr><td>It drops in the rain</td><td>Insufficient margin for the chosen band. In high bands, rain dominates.</td></tr>
+          <tr><td>It works in the morning and drops at noon</td><td>Fading due to multipath or atmospheric refraction, typical over flat terrain or water.</td></tr>
+          <tr><td>Received level far below the calculated one</td><td>Coarse aiming, crossed polarization, or actual cable loss greater than assumed.</td></tr>
+          <tr><td>The antenna was aimed at a side lobe</td><td>When the antenna is moved, several maxima appear: look for the <b>highest</b>, not the first one that shows up.</td></tr>
+          <tr><td>Interference in an unlicensed band</td><td>Another user on the same channel. The spectrum has to be surveyed <b>before</b> choosing the channel.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Self-assessment</h2>
+
+      <details class="q"><summary>Why is a line of sight not enough?</summary>
+      <div class="a"><p>Because the wave occupies a <b>volume</b>, the Fresnel zone. An obstacle inside
+      it attenuates the signal even if it does not block the direct view. The practical rule is to clear <b>60 %</b> of the
+      first zone.</p></div></details>
+
+      <details class="q"><summary>An 8 km link at 5 GHz with an obstacle in the middle: what is the radius of the first zone?</summary>
+      <div class="a"><p>r = 17.32 × √(4 × 4/(5 × 8)) = 17.32 × √0.4 = <b>10.95 m</b>. At least
+      6.6 m must be cleared.</p></div></details>
+
+      <details class="q"><summary>Where is the Fresnel zone widest?</summary>
+      <div class="a"><p>In the <b>middle</b> of the span. That is why an obstacle at the center is much more of a nuisance
+      than one near either antenna.</p></div></details>
+
+      <details class="q"><summary>What margin is considered healthy on a service link?</summary>
+      <div class="a"><p>On the order of <b>15 to 20 dB</b>. Below 10 dB the link drops with rain,
+      wind or any degradation.</p></div></details>
+
+      <details class="q"><summary>Calculate the free-space loss for 20 km at 5.8 GHz.</summary>
+      <div class="a"><p>FSPL = 32.44 + 20·log(5800) + 20·log(20) = 32.44 + 75.27 + 26.02 =
+      <b>133.7 dB</b>.</p></div></details>
+
+      <details class="q"><summary>Why are 23 GHz links short hops?</summary>
+      <div class="a"><p>Because <b>rain</b> attenuates enormously at those frequencies: a storm can
+      add tens of dB. It is compensated by shortening the span and increasing the margin.</p></div></details>
+
+      <details class="q"><summary>What does an availability of 99.99 % mean?</summary>
+      <div class="a"><p>That the link can be out of service for up to <b>53 minutes per year</b>. Every additional
+      “nine” requires more margin, and therefore bigger antennas or taller
+      towers.</p></div></details>
+
+      <details class="q"><summary>How is fading from ground reflection fought?</summary>
+      <div class="a"><p>With <b>space diversity</b>: two antennas separated vertically, so that
+      when one is in a null the other is not. Also by choosing heights that shift the
+      reflection point.</p></div></details>
+
+      <details class="q"><summary>When aiming, several signal maxima appear. Which one is the correct one?</summary>
+      <div class="a"><p>The <b>absolute maximum</b>: the others are side lobes. Aiming at a side
+      lobe gives a link that works but with many dB less, and drops with any
+      degradation.</p></div></details>
+
+      <details class="q"><summary>What must be documented when the installation is finished?</summary>
+      <div class="a"><p>Azimuth and elevation of each antenna, received level, SWR, configured channel and power,
+      photos of the alignment and of the connector sealing. Without that, the next intervention
+      starts from scratch.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/antenas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Antennas and radiating systems</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/telefonia-celular">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Telephony and cellular telephony</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Microwave links”</b> of <b>Telecommunications I</b> (Year 6), based on the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

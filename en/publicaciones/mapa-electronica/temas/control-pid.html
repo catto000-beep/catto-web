@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PID controllers · Industrial Electronics II · Catto</title>
+<meta name="description" content="Proportional, integral and derivative action, steady-state error, overshoot and settling time, Ziegler-Nichols tuning in open and closed loop, manual tuning, integrator saturation and how to limit it, PID in the PLC, scaling, sampling time, and on-off control versus PID. A topic of Industrial Electronics II, Year 7.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/control-pid">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/control-pid">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/control-pid">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/control-pid">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Industrial Electronics II</a>
+    <span class="anio">Year 7</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Industrial Electronics II</span> · 120 h · Topic 8 of 8</div>
+    <h1>PID controllers</h1>
+    <p class="lead">Three actions that look at the error in three different ways: the <b>proportional</b> action looks at
+    how much error there is right now, the <b>integral</b> at how much error has built up, and the <b>derivative</b> at where
+    it is heading. These three control the vast majority of industrial processes.</p>
+    <div class="chips">
+      <span class="chip hi">P I D</span>
+      <span class="chip">Tuning</span>
+      <span class="chip">Ziegler-Nichols</span>
+      <span class="chip">Anti wind-up</span>
+    </div>
+    <hr class="rule">
+
+    <section id="acciones">
+      <h2><span class="n">01</span>The three actions</h2>
+      <figure>
+        <svg viewBox="0 0 700 330" role="img" aria-label="Response of a loop with P, PI and PID" class="svg-t" data-anim><style>.pi-t{fill:#e6edf3;font-size:12px;font-weight:700}.pi-k{fill:#7d8a99;font-size:10px}.pi-c{fill:#9aa7b4;font-size:10.5px}</style><path d="M96 58 L96 236 L664 236" fill="none" stroke="#9aa7b4" stroke-width="1.2"/><path d="M96 114.6 L664 114.6" stroke="#d29922" stroke-width="1.4" stroke-dasharray="6 4"/><text class="pi-k" x="602" y="108.6" fill="#d29922">setpoint</text><text class="pi-k" x="30" y="70">variable</text><text class="pi-k" x="614" y="256">time</text><path d="M96.0 236.0 L100.7 226.0 L105.5 217.1 L110.2 209.2 L114.9 202.0 L119.7 195.6 L124.4 189.9 L129.1 184.8 L133.9 180.2 L138.6 176.1 L143.3 172.5 L148.1 169.2 L152.8 166.3 L157.5 163.6 L162.3 161.3 L167.0 159.2 L171.7 157.3 L176.5 155.6 L181.2 154.1 L185.9 152.8 L190.7 151.5 L195.4 150.5 L200.1 149.5 L204.9 148.6 L209.6 147.9 L214.3 147.2 L219.1 146.6 L223.8 146.0 L228.5 145.5 L233.3 145.1 L238.0 144.7 L242.7 144.3 L247.5 144.0 L252.2 143.7 L256.9 143.5 L261.7 143.2 L266.4 143.0 L271.1 142.8 L275.9 142.7 L280.6 142.5 L285.3 142.4 L290.1 142.3 L294.8 142.2 L299.5 142.1 L304.3 142.0 L309.0 141.9 L313.7 141.9 L318.5 141.8 L323.2 141.7 L327.9 141.7 L332.7 141.7 L337.4 141.6 L342.1 141.6 L346.9 141.5 L351.6 141.5 L356.3 141.5 L361.1 141.5 L365.8 141.5 L370.5 141.4 L375.3 141.4 L380.0 141.4 L384.7 141.4 L389.5 141.4 L394.2 141.4 L398.9 141.4 L403.7 141.4 L408.4 141.3 L413.1 141.3 L417.9 141.3 L422.6 141.3 L427.3 141.3 L432.1 141.3 L436.8 141.3 L441.5 141.3 L446.3 141.3 L451.0 141.3 L455.7 141.3 L460.5 141.3 L465.2 141.3 L469.9 141.3 L474.7 141.3 L479.4 141.3 L484.1 141.3 L488.9 141.3 L493.6 141.3 L498.3 141.3 L503.1 141.3 L507.8 141.3 L512.5 141.3 L517.3 141.3 L522.0 141.3 L526.7 141.3 L531.5 141.3 L536.2 141.3 L540.9 141.3 L545.7 141.3 L550.4 141.3 L555.1 141.3 L559.9 141.3 L564.6 141.3 L569.3 141.3 L574.1 141.3 L578.8 141.3 L583.5 141.3 L588.3 141.3 L593.0 141.3 L597.7 141.3 L602.5 141.3 L607.2 141.3 L611.9 141.3 L616.7 141.3 L621.4 141.3 L626.1 141.3 L630.9 141.3 L635.6 141.3 L640.3 141.3 L645.1 141.3 L649.8 141.3 L654.5 141.3 L659.3 141.3 L664.0 141.3" fill="none" stroke="#d29922" stroke-width="1.1" opacity="0.30"/><path d="M96.0 236.0 L100.7 233.9 L105.5 227.8 L110.2 218.7 L114.9 207.1 L119.7 193.9 L124.4 179.7 L129.1 165.3 L133.9 151.0 L138.6 137.5 L143.3 125.0 L148.1 113.9 L152.8 104.4 L157.5 96.5 L162.3 90.4 L167.0 86.0 L171.7 83.2 L176.5 81.9 L181.2 81.9 L185.9 83.1 L190.7 85.2 L195.4 88.1 L200.1 91.5 L204.9 95.2 L209.6 99.1 L214.3 103.0 L219.1 106.8 L223.8 110.3 L228.5 113.4 L233.3 116.2 L238.0 118.5 L242.7 120.4 L247.5 121.8 L252.2 122.8 L256.9 123.3 L261.7 123.4 L266.4 123.2 L271.1 122.8 L275.9 122.1 L280.6 121.2 L285.3 120.3 L290.1 119.2 L294.8 118.2 L299.5 117.1 L304.3 116.2 L309.0 115.3 L313.7 114.5 L318.5 113.8 L323.2 113.2 L327.9 112.8 L332.7 112.5 L337.4 112.3 L342.1 112.2 L346.9 112.2 L351.6 112.3 L356.3 112.4 L361.1 112.7 L365.8 112.9 L370.5 113.2 L375.3 113.5 L380.0 113.8 L384.7 114.0 L389.5 114.3 L394.2 114.5 L398.9 114.7 L403.7 114.9 L408.4 115.0 L413.1 115.1 L417.9 115.2 L422.6 115.2 L427.3 115.2 L432.1 115.2 L436.8 115.2 L441.5 115.1 L446.3 115.1 L451.0 115.0 L455.7 114.9 L460.5 114.8 L465.2 114.8 L469.9 114.7 L474.7 114.6 L479.4 114.6 L484.1 114.5 L488.9 114.5 L493.6 114.4 L498.3 114.4 L503.1 114.4 L507.8 114.4 L512.5 114.4 L517.3 114.4 L522.0 114.4 L526.7 114.4 L531.5 114.5 L536.2 114.5 L540.9 114.5 L545.7 114.5 L550.4 114.5 L555.1 114.6 L559.9 114.6 L564.6 114.6 L569.3 114.6 L574.1 114.6 L578.8 114.6 L583.5 114.6 L588.3 114.6 L593.0 114.6 L597.7 114.6 L602.5 114.6 L607.2 114.6 L611.9 114.6 L616.7 114.6 L621.4 114.6 L626.1 114.6 L630.9 114.6 L635.6 114.6 L640.3 114.6 L645.1 114.6 L649.8 114.6 L654.5 114.6 L659.3 114.6 L664.0 114.6" fill="none" stroke="#58a6ff" stroke-width="1.1" opacity="0.30"/><path d="M96.0 236.0 L100.7 233.6 L105.5 227.1 L110.2 217.8 L114.9 206.7 L119.7 194.6 L124.4 182.4 L129.1 170.5 L133.9 159.3 L138.6 149.1 L143.3 140.0 L148.1 132.2 L152.8 125.5 L157.5 120.1 L162.3 115.8 L167.0 112.4 L171.7 110.0 L176.5 108.4 L181.2 107.4 L185.9 106.9 L190.7 106.8 L195.4 107.1 L200.1 107.6 L204.9 108.2 L209.6 109.0 L214.3 109.7 L219.1 110.5 L223.8 111.3 L228.5 112.0 L233.3 112.6 L238.0 113.1 L242.7 113.6 L247.5 114.0 L252.2 114.3 L256.9 114.6 L261.7 114.8 L266.4 114.9 L271.1 115.0 L275.9 115.0 L280.6 115.1 L285.3 115.1 L290.1 115.0 L294.8 115.0 L299.5 115.0 L304.3 114.9 L309.0 114.9 L313.7 114.8 L318.5 114.8 L323.2 114.7 L327.9 114.7 L332.7 114.7 L337.4 114.6 L342.1 114.6 L346.9 114.6 L351.6 114.6 L356.3 114.6 L361.1 114.5 L365.8 114.5 L370.5 114.5 L375.3 114.5 L380.0 114.5 L384.7 114.5 L389.5 114.5 L394.2 114.5 L398.9 114.6 L403.7 114.6 L408.4 114.6 L413.1 114.6 L417.9 114.6 L422.6 114.6 L427.3 114.6 L432.1 114.6 L436.8 114.6 L441.5 114.6 L446.3 114.6 L451.0 114.6 L455.7 114.6 L460.5 114.6 L465.2 114.6 L469.9 114.6 L474.7 114.6 L479.4 114.6 L484.1 114.6 L488.9 114.6 L493.6 114.6 L498.3 114.6 L503.1 114.6 L507.8 114.6 L512.5 114.6 L517.3 114.6 L522.0 114.6 L526.7 114.6 L531.5 114.6 L536.2 114.6 L540.9 114.6 L545.7 114.6 L550.4 114.6 L555.1 114.6 L559.9 114.6 L564.6 114.6 L569.3 114.6 L574.1 114.6 L578.8 114.6 L583.5 114.6 L588.3 114.6 L593.0 114.6 L597.7 114.6 L602.5 114.6 L607.2 114.6 L611.9 114.6 L616.7 114.6 L621.4 114.6 L626.1 114.6 L630.9 114.6 L635.6 114.6 L640.3 114.6 L645.1 114.6 L649.8 114.6 L654.5 114.6 L659.3 114.6 L664.0 114.6" fill="none" stroke="#3fb950" stroke-width="1.1" opacity="0.30"/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0" dur="12s" repeatCount="indefinite"/><path d="M96.0 236.0 L100.7 226.0 L105.5 217.1 L110.2 209.2 L114.9 202.0 L119.7 195.6 L124.4 189.9 L129.1 184.8 L133.9 180.2 L138.6 176.1 L143.3 172.5 L148.1 169.2 L152.8 166.3 L157.5 163.6 L162.3 161.3 L167.0 159.2 L171.7 157.3 L176.5 155.6 L181.2 154.1 L185.9 152.8 L190.7 151.5 L195.4 150.5 L200.1 149.5 L204.9 148.6 L209.6 147.9 L214.3 147.2 L219.1 146.6 L223.8 146.0 L228.5 145.5 L233.3 145.1 L238.0 144.7 L242.7 144.3 L247.5 144.0 L252.2 143.7 L256.9 143.5 L261.7 143.2 L266.4 143.0 L271.1 142.8 L275.9 142.7 L280.6 142.5 L285.3 142.4 L290.1 142.3 L294.8 142.2 L299.5 142.1 L304.3 142.0 L309.0 141.9 L313.7 141.9 L318.5 141.8 L323.2 141.7 L327.9 141.7 L332.7 141.7 L337.4 141.6 L342.1 141.6 L346.9 141.5 L351.6 141.5 L356.3 141.5 L361.1 141.5 L365.8 141.5 L370.5 141.4 L375.3 141.4 L380.0 141.4 L384.7 141.4 L389.5 141.4 L394.2 141.4 L398.9 141.4 L403.7 141.4 L408.4 141.3 L413.1 141.3 L417.9 141.3 L422.6 141.3 L427.3 141.3 L432.1 141.3 L436.8 141.3 L441.5 141.3 L446.3 141.3 L451.0 141.3 L455.7 141.3 L460.5 141.3 L465.2 141.3 L469.9 141.3 L474.7 141.3 L479.4 141.3 L484.1 141.3 L488.9 141.3 L493.6 141.3 L498.3 141.3 L503.1 141.3 L507.8 141.3 L512.5 141.3 L517.3 141.3 L522.0 141.3 L526.7 141.3 L531.5 141.3 L536.2 141.3 L540.9 141.3 L545.7 141.3 L550.4 141.3 L555.1 141.3 L559.9 141.3 L564.6 141.3 L569.3 141.3 L574.1 141.3 L578.8 141.3 L583.5 141.3 L588.3 141.3 L593.0 141.3 L597.7 141.3 L602.5 141.3 L607.2 141.3 L611.9 141.3 L616.7 141.3 L621.4 141.3 L626.1 141.3 L630.9 141.3 L635.6 141.3 L640.3 141.3 L645.1 141.3 L649.8 141.3 L654.5 141.3 L659.3 141.3 L664.0 141.3" fill="none" stroke="#d29922" stroke-width="2.4"/><circle r="5" fill="#d29922"><animateMotion path="M96.0 236.0 L100.7 226.0 L105.5 217.1 L110.2 209.2 L114.9 202.0 L119.7 195.6 L124.4 189.9 L129.1 184.8 L133.9 180.2 L138.6 176.1 L143.3 172.5 L148.1 169.2 L152.8 166.3 L157.5 163.6 L162.3 161.3 L167.0 159.2 L171.7 157.3 L176.5 155.6 L181.2 154.1 L185.9 152.8 L190.7 151.5 L195.4 150.5 L200.1 149.5 L204.9 148.6 L209.6 147.9 L214.3 147.2 L219.1 146.6 L223.8 146.0 L228.5 145.5 L233.3 145.1 L238.0 144.7 L242.7 144.3 L247.5 144.0 L252.2 143.7 L256.9 143.5 L261.7 143.2 L266.4 143.0 L271.1 142.8 L275.9 142.7 L280.6 142.5 L285.3 142.4 L290.1 142.3 L294.8 142.2 L299.5 142.1 L304.3 142.0 L309.0 141.9 L313.7 141.9 L318.5 141.8 L323.2 141.7 L327.9 141.7 L332.7 141.7 L337.4 141.6 L342.1 141.6 L346.9 141.5 L351.6 141.5 L356.3 141.5 L361.1 141.5 L365.8 141.5 L370.5 141.4 L375.3 141.4 L380.0 141.4 L384.7 141.4 L389.5 141.4 L394.2 141.4 L398.9 141.4 L403.7 141.4 L408.4 141.3 L413.1 141.3 L417.9 141.3 L422.6 141.3 L427.3 141.3 L432.1 141.3 L436.8 141.3 L441.5 141.3 L446.3 141.3 L451.0 141.3 L455.7 141.3 L460.5 141.3 L465.2 141.3 L469.9 141.3 L474.7 141.3 L479.4 141.3 L484.1 141.3 L488.9 141.3 L493.6 141.3 L498.3 141.3 L503.1 141.3 L507.8 141.3 L512.5 141.3 L517.3 141.3 L522.0 141.3 L526.7 141.3 L531.5 141.3 L536.2 141.3 L540.9 141.3 L545.7 141.3 L550.4 141.3 L555.1 141.3 L559.9 141.3 L564.6 141.3 L569.3 141.3 L574.1 141.3 L578.8 141.3 L583.5 141.3 L588.3 141.3 L593.0 141.3 L597.7 141.3 L602.5 141.3 L607.2 141.3 L611.9 141.3 L616.7 141.3 L621.4 141.3 L626.1 141.3 L630.9 141.3 L635.6 141.3 L640.3 141.3 L645.1 141.3 L649.8 141.3 L654.5 141.3 L659.3 141.3 L664.0 141.3" dur="4s" repeatCount="indefinite"/></circle><path d="M607.2 141.3 L607.2 114.6" stroke="#f85149" stroke-width="1.4"/><text class="pi-k" x="615.2" y="127.9" fill="#f85149">error</text><text class="pi-t" x="26" y="46" fill="#d29922">P only</text><text class="pi-c" x="26" y="280">Steady-state error remains: the system settles where the residual error produces just the action</text><text class="pi-c" x="26" y="298">that offsets the losses.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0" dur="12s" repeatCount="indefinite"/><path d="M96.0 236.0 L100.7 233.9 L105.5 227.8 L110.2 218.7 L114.9 207.1 L119.7 193.9 L124.4 179.7 L129.1 165.3 L133.9 151.0 L138.6 137.5 L143.3 125.0 L148.1 113.9 L152.8 104.4 L157.5 96.5 L162.3 90.4 L167.0 86.0 L171.7 83.2 L176.5 81.9 L181.2 81.9 L185.9 83.1 L190.7 85.2 L195.4 88.1 L200.1 91.5 L204.9 95.2 L209.6 99.1 L214.3 103.0 L219.1 106.8 L223.8 110.3 L228.5 113.4 L233.3 116.2 L238.0 118.5 L242.7 120.4 L247.5 121.8 L252.2 122.8 L256.9 123.3 L261.7 123.4 L266.4 123.2 L271.1 122.8 L275.9 122.1 L280.6 121.2 L285.3 120.3 L290.1 119.2 L294.8 118.2 L299.5 117.1 L304.3 116.2 L309.0 115.3 L313.7 114.5 L318.5 113.8 L323.2 113.2 L327.9 112.8 L332.7 112.5 L337.4 112.3 L342.1 112.2 L346.9 112.2 L351.6 112.3 L356.3 112.4 L361.1 112.7 L365.8 112.9 L370.5 113.2 L375.3 113.5 L380.0 113.8 L384.7 114.0 L389.5 114.3 L394.2 114.5 L398.9 114.7 L403.7 114.9 L408.4 115.0 L413.1 115.1 L417.9 115.2 L422.6 115.2 L427.3 115.2 L432.1 115.2 L436.8 115.2 L441.5 115.1 L446.3 115.1 L451.0 115.0 L455.7 114.9 L460.5 114.8 L465.2 114.8 L469.9 114.7 L474.7 114.6 L479.4 114.6 L484.1 114.5 L488.9 114.5 L493.6 114.4 L498.3 114.4 L503.1 114.4 L507.8 114.4 L512.5 114.4 L517.3 114.4 L522.0 114.4 L526.7 114.4 L531.5 114.5 L536.2 114.5 L540.9 114.5 L545.7 114.5 L550.4 114.5 L555.1 114.6 L559.9 114.6 L564.6 114.6 L569.3 114.6 L574.1 114.6 L578.8 114.6 L583.5 114.6 L588.3 114.6 L593.0 114.6 L597.7 114.6 L602.5 114.6 L607.2 114.6 L611.9 114.6 L616.7 114.6 L621.4 114.6 L626.1 114.6 L630.9 114.6 L635.6 114.6 L640.3 114.6 L645.1 114.6 L649.8 114.6 L654.5 114.6 L659.3 114.6 L664.0 114.6" fill="none" stroke="#58a6ff" stroke-width="2.4"/><circle r="5" fill="#58a6ff"><animateMotion path="M96.0 236.0 L100.7 233.9 L105.5 227.8 L110.2 218.7 L114.9 207.1 L119.7 193.9 L124.4 179.7 L129.1 165.3 L133.9 151.0 L138.6 137.5 L143.3 125.0 L148.1 113.9 L152.8 104.4 L157.5 96.5 L162.3 90.4 L167.0 86.0 L171.7 83.2 L176.5 81.9 L181.2 81.9 L185.9 83.1 L190.7 85.2 L195.4 88.1 L200.1 91.5 L204.9 95.2 L209.6 99.1 L214.3 103.0 L219.1 106.8 L223.8 110.3 L228.5 113.4 L233.3 116.2 L238.0 118.5 L242.7 120.4 L247.5 121.8 L252.2 122.8 L256.9 123.3 L261.7 123.4 L266.4 123.2 L271.1 122.8 L275.9 122.1 L280.6 121.2 L285.3 120.3 L290.1 119.2 L294.8 118.2 L299.5 117.1 L304.3 116.2 L309.0 115.3 L313.7 114.5 L318.5 113.8 L323.2 113.2 L327.9 112.8 L332.7 112.5 L337.4 112.3 L342.1 112.2 L346.9 112.2 L351.6 112.3 L356.3 112.4 L361.1 112.7 L365.8 112.9 L370.5 113.2 L375.3 113.5 L380.0 113.8 L384.7 114.0 L389.5 114.3 L394.2 114.5 L398.9 114.7 L403.7 114.9 L408.4 115.0 L413.1 115.1 L417.9 115.2 L422.6 115.2 L427.3 115.2 L432.1 115.2 L436.8 115.2 L441.5 115.1 L446.3 115.1 L451.0 115.0 L455.7 114.9 L460.5 114.8 L465.2 114.8 L469.9 114.7 L474.7 114.6 L479.4 114.6 L484.1 114.5 L488.9 114.5 L493.6 114.4 L498.3 114.4 L503.1 114.4 L507.8 114.4 L512.5 114.4 L517.3 114.4 L522.0 114.4 L526.7 114.4 L531.5 114.5 L536.2 114.5 L540.9 114.5 L545.7 114.5 L550.4 114.5 L555.1 114.6 L559.9 114.6 L564.6 114.6 L569.3 114.6 L574.1 114.6 L578.8 114.6 L583.5 114.6 L588.3 114.6 L593.0 114.6 L597.7 114.6 L602.5 114.6 L607.2 114.6 L611.9 114.6 L616.7 114.6 L621.4 114.6 L626.1 114.6 L630.9 114.6 L635.6 114.6 L640.3 114.6 L645.1 114.6 L649.8 114.6 L654.5 114.6 L659.3 114.6 L664.0 114.6" dur="4s" repeatCount="indefinite"/></circle><text class="pi-t" x="26" y="46" fill="#58a6ff">PI</text><text class="pi-c" x="26" y="280">The integral action removes the steady-state error, but overshoot appears and settling takes longer.</text><text class="pi-c" x="26" y="298"></text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1" dur="12s" repeatCount="indefinite"/><path d="M96.0 236.0 L100.7 233.6 L105.5 227.1 L110.2 217.8 L114.9 206.7 L119.7 194.6 L124.4 182.4 L129.1 170.5 L133.9 159.3 L138.6 149.1 L143.3 140.0 L148.1 132.2 L152.8 125.5 L157.5 120.1 L162.3 115.8 L167.0 112.4 L171.7 110.0 L176.5 108.4 L181.2 107.4 L185.9 106.9 L190.7 106.8 L195.4 107.1 L200.1 107.6 L204.9 108.2 L209.6 109.0 L214.3 109.7 L219.1 110.5 L223.8 111.3 L228.5 112.0 L233.3 112.6 L238.0 113.1 L242.7 113.6 L247.5 114.0 L252.2 114.3 L256.9 114.6 L261.7 114.8 L266.4 114.9 L271.1 115.0 L275.9 115.0 L280.6 115.1 L285.3 115.1 L290.1 115.0 L294.8 115.0 L299.5 115.0 L304.3 114.9 L309.0 114.9 L313.7 114.8 L318.5 114.8 L323.2 114.7 L327.9 114.7 L332.7 114.7 L337.4 114.6 L342.1 114.6 L346.9 114.6 L351.6 114.6 L356.3 114.6 L361.1 114.5 L365.8 114.5 L370.5 114.5 L375.3 114.5 L380.0 114.5 L384.7 114.5 L389.5 114.5 L394.2 114.5 L398.9 114.6 L403.7 114.6 L408.4 114.6 L413.1 114.6 L417.9 114.6 L422.6 114.6 L427.3 114.6 L432.1 114.6 L436.8 114.6 L441.5 114.6 L446.3 114.6 L451.0 114.6 L455.7 114.6 L460.5 114.6 L465.2 114.6 L469.9 114.6 L474.7 114.6 L479.4 114.6 L484.1 114.6 L488.9 114.6 L493.6 114.6 L498.3 114.6 L503.1 114.6 L507.8 114.6 L512.5 114.6 L517.3 114.6 L522.0 114.6 L526.7 114.6 L531.5 114.6 L536.2 114.6 L540.9 114.6 L545.7 114.6 L550.4 114.6 L555.1 114.6 L559.9 114.6 L564.6 114.6 L569.3 114.6 L574.1 114.6 L578.8 114.6 L583.5 114.6 L588.3 114.6 L593.0 114.6 L597.7 114.6 L602.5 114.6 L607.2 114.6 L611.9 114.6 L616.7 114.6 L621.4 114.6 L626.1 114.6 L630.9 114.6 L635.6 114.6 L640.3 114.6 L645.1 114.6 L649.8 114.6 L654.5 114.6 L659.3 114.6 L664.0 114.6" fill="none" stroke="#3fb950" stroke-width="2.4"/><circle r="5" fill="#3fb950"><animateMotion path="M96.0 236.0 L100.7 233.6 L105.5 227.1 L110.2 217.8 L114.9 206.7 L119.7 194.6 L124.4 182.4 L129.1 170.5 L133.9 159.3 L138.6 149.1 L143.3 140.0 L148.1 132.2 L152.8 125.5 L157.5 120.1 L162.3 115.8 L167.0 112.4 L171.7 110.0 L176.5 108.4 L181.2 107.4 L185.9 106.9 L190.7 106.8 L195.4 107.1 L200.1 107.6 L204.9 108.2 L209.6 109.0 L214.3 109.7 L219.1 110.5 L223.8 111.3 L228.5 112.0 L233.3 112.6 L238.0 113.1 L242.7 113.6 L247.5 114.0 L252.2 114.3 L256.9 114.6 L261.7 114.8 L266.4 114.9 L271.1 115.0 L275.9 115.0 L280.6 115.1 L285.3 115.1 L290.1 115.0 L294.8 115.0 L299.5 115.0 L304.3 114.9 L309.0 114.9 L313.7 114.8 L318.5 114.8 L323.2 114.7 L327.9 114.7 L332.7 114.7 L337.4 114.6 L342.1 114.6 L346.9 114.6 L351.6 114.6 L356.3 114.6 L361.1 114.5 L365.8 114.5 L370.5 114.5 L375.3 114.5 L380.0 114.5 L384.7 114.5 L389.5 114.5 L394.2 114.5 L398.9 114.6 L403.7 114.6 L408.4 114.6 L413.1 114.6 L417.9 114.6 L422.6 114.6 L427.3 114.6 L432.1 114.6 L436.8 114.6 L441.5 114.6 L446.3 114.6 L451.0 114.6 L455.7 114.6 L460.5 114.6 L465.2 114.6 L469.9 114.6 L474.7 114.6 L479.4 114.6 L484.1 114.6 L488.9 114.6 L493.6 114.6 L498.3 114.6 L503.1 114.6 L507.8 114.6 L512.5 114.6 L517.3 114.6 L522.0 114.6 L526.7 114.6 L531.5 114.6 L536.2 114.6 L540.9 114.6 L545.7 114.6 L550.4 114.6 L555.1 114.6 L559.9 114.6 L564.6 114.6 L569.3 114.6 L574.1 114.6 L578.8 114.6 L583.5 114.6 L588.3 114.6 L593.0 114.6 L597.7 114.6 L602.5 114.6 L607.2 114.6 L611.9 114.6 L616.7 114.6 L621.4 114.6 L626.1 114.6 L630.9 114.6 L635.6 114.6 L640.3 114.6 L645.1 114.6 L649.8 114.6 L654.5 114.6 L659.3 114.6 L664.0 114.6" dur="4s" repeatCount="indefinite"/></circle><text class="pi-t" x="26" y="46" fill="#3fb950">PID</text><text class="pi-c" x="26" y="280">The derivative action damps and speeds up: less overshoot and a faster approach to the setpoint.</text><text class="pi-c" x="26" y="298"></text></g><text class="pi-c" x="26" y="322" fill="#7d8a99">P does most of the work, I removes the steady-state error and D damps. In noisy processes D is set to zero.</text></svg>
+        <figcaption><b>Figure 1.</b> Step response, animated. With P alone a steady-state error remains;
+        adding I makes that error disappear but overshoot appears; D damps and speeds up the
+        settling.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><mi>u</mi><mo>(</mo><mi>t</mi><mo>)</mo><mo>=</mo><msub><mi>K</mi><mi>p</mi></msub><mrow><mo>[</mo><mi>e</mi><mo>(</mo><mi>t</mi><mo>)</mo><mo>+</mo><mfrac><mn>1</mn><msub><mi>T</mi><mi>i</mi></msub></mfrac><mo>∫</mo><mi>e</mi><mspace width="3px"/><mi>dt</mi><mo>+</mo><msub><mi>T</mi><mi>d</mi></msub><mfrac><mrow><mi>d</mi><mi>e</mi></mrow><mrow><mi>d</mi><mi>t</mi></mrow></mfrac><mo>]</mo></mrow></mrow></math>
+        <span class="cap">e is the error, the difference between the setpoint and the measurement. T<sub>i</sub> is the
+        integral time and T<sub>d</sub> the derivative time, both in seconds.</span>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Action</th><th>What it does</th><th>If overdone</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>P</b></td><td>Corrects in proportion to the current error. It is the main action: the one that does most of the work.</td><td>Sustained oscillation; the system becomes unstable.</td></tr>
+            <tr><td class="c"><b>I</b></td><td>Accumulates the error over time and keeps acting as long as any is left. It is the only action that <b>eliminates steady-state error</b>.</td><td>Sluggishness, large overshoot and long-period oscillations.</td></tr>
+            <tr><td class="c"><b>D</b></td><td>Reacts to the <b>rate of change</b> of the error: it anticipates and damps. It lets you raise P without oscillation.</td><td>Amplifies measurement noise and produces abrupt jumps in the output.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Why P alone leaves a steady-state error</div>
+        <p>Because the output is proportional to the error: <b>if the error were zero, the output would be zero</b>, and
+        then the furnace would not heat at all. The system settles exactly at the point where the residual
+        error produces just the power that offsets the losses. The higher the gain, the smaller
+        that error, but also the closer to oscillation.</p>
+        <p style="margin-top:8px">Integral action solves that: as long as any error remains, it keeps summing and
+        raising the output, however tiny the error. That is why any control that must reach the
+        setpoint exactly needs <b>I</b>.</p>
+      </div>
+    </section>
+
+    <section id="sintonia">
+      <h2><span class="n">02</span>Tuning</h2>
+      <figure>
+        <svg viewBox="0 0 700 326" role="img" aria-label="Effect of the proportional gain" class="svg-t" data-anim><style>.si-t{fill:#e6edf3;font-size:12px;font-weight:700}.si-k{fill:#7d8a99;font-size:10px}.si-v{fill:#e6edf3;font-size:14px;font-weight:700}.si-c{fill:#9aa7b4;font-size:10.5px}</style><path d="M96 54 L96 232 L664 232" fill="none" stroke="#9aa7b4" stroke-width="1.2"/><path d="M96 137.6 L664 137.6" stroke="#d29922" stroke-width="1.4" stroke-dasharray="6 4"/><text class="si-k" x="602" y="131.6" fill="#d29922">setpoint</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0" dur="12s" repeatCount="indefinite"/><path d="M96.0 232.0 L100.1 228.0 L104.1 224.2 L108.2 220.6 L112.2 217.1 L116.3 213.8 L120.3 210.6 L124.4 207.5 L128.5 204.6 L132.5 201.8 L136.6 199.1 L140.6 196.5 L144.7 194.0 L148.7 191.7 L152.8 189.4 L156.9 187.2 L160.9 185.1 L165.0 183.1 L169.0 181.2 L173.1 179.4 L177.1 177.6 L181.2 176.0 L185.3 174.3 L189.3 172.8 L193.4 171.3 L197.4 169.9 L201.5 168.5 L205.5 167.2 L209.6 166.0 L213.7 164.8 L217.7 163.7 L221.8 162.6 L225.8 161.5 L229.9 160.5 L233.9 159.6 L238.0 158.6 L242.1 157.7 L246.1 156.9 L250.2 156.1 L254.2 155.3 L258.3 154.6 L262.3 153.9 L266.4 153.2 L270.5 152.5 L274.5 151.9 L278.6 151.3 L282.6 150.7 L286.7 150.2 L290.7 149.6 L294.8 149.1 L298.9 148.6 L302.9 148.2 L307.0 147.7 L311.0 147.3 L315.1 146.9 L319.1 146.5 L323.2 146.1 L327.3 145.8 L331.3 145.4 L335.4 145.1 L339.4 144.8 L343.5 144.5 L347.5 144.2 L351.6 143.9 L355.7 143.6 L359.7 143.4 L363.8 143.1 L367.8 142.9 L371.9 142.7 L375.9 142.5 L380.0 142.3 L384.1 142.1 L388.1 141.9 L392.2 141.7 L396.2 141.5 L400.3 141.4 L404.3 141.2 L408.4 141.0 L412.5 140.9 L416.5 140.8 L420.6 140.6 L424.6 140.5 L428.7 140.4 L432.7 140.2 L436.8 140.1 L440.9 140.0 L444.9 139.9 L449.0 139.8 L453.0 139.7 L457.1 139.6 L461.1 139.6 L465.2 139.5 L469.3 139.4 L473.3 139.3 L477.4 139.2 L481.4 139.2 L485.5 139.1 L489.5 139.0 L493.6 139.0 L497.7 138.9 L501.7 138.9 L505.8 138.8 L509.8 138.7 L513.9 138.7 L517.9 138.7 L522.0 138.6 L526.1 138.6 L530.1 138.5 L534.2 138.5 L538.2 138.4 L542.3 138.4 L546.3 138.4 L550.4 138.3 L554.5 138.3 L558.5 138.3 L562.6 138.2 L566.6 138.2 L570.7 138.2 L574.7 138.2 L578.8 138.1 L582.9 138.1 L586.9 138.1 L591.0 138.1 L595.0 138.0 L599.1 138.0 L603.1 138.0 L607.2 138.0 L611.3 138.0 L615.3 137.9 L619.4 137.9 L623.4 137.9 L627.5 137.9 L631.5 137.9 L635.6 137.9 L639.7 137.9 L643.7 137.8 L647.8 137.8 L651.8 137.8 L655.9 137.8 L659.9 137.8 L664.0 137.8" fill="none" stroke="#3fb950" stroke-width="2.4"/><circle r="5" fill="#3fb950"><animateMotion path="M96.0 232.0 L100.1 228.0 L104.1 224.2 L108.2 220.6 L112.2 217.1 L116.3 213.8 L120.3 210.6 L124.4 207.5 L128.5 204.6 L132.5 201.8 L136.6 199.1 L140.6 196.5 L144.7 194.0 L148.7 191.7 L152.8 189.4 L156.9 187.2 L160.9 185.1 L165.0 183.1 L169.0 181.2 L173.1 179.4 L177.1 177.6 L181.2 176.0 L185.3 174.3 L189.3 172.8 L193.4 171.3 L197.4 169.9 L201.5 168.5 L205.5 167.2 L209.6 166.0 L213.7 164.8 L217.7 163.7 L221.8 162.6 L225.8 161.5 L229.9 160.5 L233.9 159.6 L238.0 158.6 L242.1 157.7 L246.1 156.9 L250.2 156.1 L254.2 155.3 L258.3 154.6 L262.3 153.9 L266.4 153.2 L270.5 152.5 L274.5 151.9 L278.6 151.3 L282.6 150.7 L286.7 150.2 L290.7 149.6 L294.8 149.1 L298.9 148.6 L302.9 148.2 L307.0 147.7 L311.0 147.3 L315.1 146.9 L319.1 146.5 L323.2 146.1 L327.3 145.8 L331.3 145.4 L335.4 145.1 L339.4 144.8 L343.5 144.5 L347.5 144.2 L351.6 143.9 L355.7 143.6 L359.7 143.4 L363.8 143.1 L367.8 142.9 L371.9 142.7 L375.9 142.5 L380.0 142.3 L384.1 142.1 L388.1 141.9 L392.2 141.7 L396.2 141.5 L400.3 141.4 L404.3 141.2 L408.4 141.0 L412.5 140.9 L416.5 140.8 L420.6 140.6 L424.6 140.5 L428.7 140.4 L432.7 140.2 L436.8 140.1 L440.9 140.0 L444.9 139.9 L449.0 139.8 L453.0 139.7 L457.1 139.6 L461.1 139.6 L465.2 139.5 L469.3 139.4 L473.3 139.3 L477.4 139.2 L481.4 139.2 L485.5 139.1 L489.5 139.0 L493.6 139.0 L497.7 138.9 L501.7 138.9 L505.8 138.8 L509.8 138.7 L513.9 138.7 L517.9 138.7 L522.0 138.6 L526.1 138.6 L530.1 138.5 L534.2 138.5 L538.2 138.4 L542.3 138.4 L546.3 138.4 L550.4 138.3 L554.5 138.3 L558.5 138.3 L562.6 138.2 L566.6 138.2 L570.7 138.2 L574.7 138.2 L578.8 138.1 L582.9 138.1 L586.9 138.1 L591.0 138.1 L595.0 138.0 L599.1 138.0 L603.1 138.0 L607.2 138.0 L611.3 138.0 L615.3 137.9 L619.4 137.9 L623.4 137.9 L627.5 137.9 L631.5 137.9 L635.6 137.9 L639.7 137.9 L643.7 137.8 L647.8 137.8 L651.8 137.8 L655.9 137.8 L659.9 137.8 L664.0 137.8" dur="4s" repeatCount="indefinite"/></circle><text class="si-t" x="26" y="44" fill="#3fb950">Low Kp</text><text class="si-v" x="150" y="44" fill="#3fb950">Kp = 1.0</text><text class="si-c" x="26" y="276">Slow, safe response: it takes a long time to get there, but does not oscillate.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0" dur="12s" repeatCount="indefinite"/><path d="M96.0 232.0 L100.1 230.3 L104.1 226.4 L108.2 220.8 L112.2 213.7 L116.3 205.8 L120.3 197.2 L124.4 188.4 L128.5 179.6 L132.5 171.0 L136.6 162.9 L140.6 155.4 L144.7 148.6 L148.7 142.6 L152.8 137.3 L156.9 133.0 L160.9 129.4 L165.0 126.6 L169.0 124.5 L173.1 123.2 L177.1 122.4 L181.2 122.1 L185.3 122.3 L189.3 122.9 L193.4 123.8 L197.4 124.9 L201.5 126.2 L205.5 127.6 L209.6 129.0 L213.7 130.5 L217.7 131.9 L221.8 133.2 L225.8 134.5 L229.9 135.6 L233.9 136.6 L238.0 137.5 L242.1 138.2 L246.1 138.8 L250.2 139.3 L254.2 139.6 L258.3 139.9 L262.3 140.0 L266.4 140.1 L270.5 140.0 L274.5 140.0 L278.6 139.8 L282.6 139.6 L286.7 139.4 L290.7 139.2 L294.8 139.0 L298.9 138.7 L302.9 138.5 L307.0 138.3 L311.0 138.1 L315.1 137.9 L319.1 137.7 L323.2 137.6 L327.3 137.5 L331.3 137.4 L335.4 137.3 L339.4 137.2 L343.5 137.2 L347.5 137.2 L351.6 137.1 L355.7 137.1 L359.7 137.2 L363.8 137.2 L367.8 137.2 L371.9 137.2 L375.9 137.3 L380.0 137.3 L384.1 137.4 L388.1 137.4 L392.2 137.4 L396.2 137.5 L400.3 137.5 L404.3 137.5 L408.4 137.5 L412.5 137.6 L416.5 137.6 L420.6 137.6 L424.6 137.6 L428.7 137.6 L432.7 137.6 L436.8 137.6 L440.9 137.6 L444.9 137.6 L449.0 137.6 L453.0 137.6 L457.1 137.6 L461.1 137.6 L465.2 137.6 L469.3 137.6 L473.3 137.6 L477.4 137.6 L481.4 137.6 L485.5 137.6 L489.5 137.6 L493.6 137.6 L497.7 137.6 L501.7 137.6 L505.8 137.5 L509.8 137.5 L513.9 137.5 L517.9 137.5 L522.0 137.5 L526.1 137.5 L530.1 137.5 L534.2 137.5 L538.2 137.5 L542.3 137.5 L546.3 137.5 L550.4 137.5 L554.5 137.5 L558.5 137.6 L562.6 137.6 L566.6 137.6 L570.7 137.6 L574.7 137.6 L578.8 137.6 L582.9 137.6 L586.9 137.6 L591.0 137.6 L595.0 137.6 L599.1 137.6 L603.1 137.6 L607.2 137.6 L611.3 137.6 L615.3 137.6 L619.4 137.6 L623.4 137.6 L627.5 137.6 L631.5 137.6 L635.6 137.6 L639.7 137.6 L643.7 137.6 L647.8 137.6 L651.8 137.6 L655.9 137.6 L659.9 137.6 L664.0 137.6" fill="none" stroke="#58a6ff" stroke-width="2.4"/><circle r="5" fill="#58a6ff"><animateMotion path="M96.0 232.0 L100.1 230.3 L104.1 226.4 L108.2 220.8 L112.2 213.7 L116.3 205.8 L120.3 197.2 L124.4 188.4 L128.5 179.6 L132.5 171.0 L136.6 162.9 L140.6 155.4 L144.7 148.6 L148.7 142.6 L152.8 137.3 L156.9 133.0 L160.9 129.4 L165.0 126.6 L169.0 124.5 L173.1 123.2 L177.1 122.4 L181.2 122.1 L185.3 122.3 L189.3 122.9 L193.4 123.8 L197.4 124.9 L201.5 126.2 L205.5 127.6 L209.6 129.0 L213.7 130.5 L217.7 131.9 L221.8 133.2 L225.8 134.5 L229.9 135.6 L233.9 136.6 L238.0 137.5 L242.1 138.2 L246.1 138.8 L250.2 139.3 L254.2 139.6 L258.3 139.9 L262.3 140.0 L266.4 140.1 L270.5 140.0 L274.5 140.0 L278.6 139.8 L282.6 139.6 L286.7 139.4 L290.7 139.2 L294.8 139.0 L298.9 138.7 L302.9 138.5 L307.0 138.3 L311.0 138.1 L315.1 137.9 L319.1 137.7 L323.2 137.6 L327.3 137.5 L331.3 137.4 L335.4 137.3 L339.4 137.2 L343.5 137.2 L347.5 137.2 L351.6 137.1 L355.7 137.1 L359.7 137.2 L363.8 137.2 L367.8 137.2 L371.9 137.2 L375.9 137.3 L380.0 137.3 L384.1 137.4 L388.1 137.4 L392.2 137.4 L396.2 137.5 L400.3 137.5 L404.3 137.5 L408.4 137.5 L412.5 137.6 L416.5 137.6 L420.6 137.6 L424.6 137.6 L428.7 137.6 L432.7 137.6 L436.8 137.6 L440.9 137.6 L444.9 137.6 L449.0 137.6 L453.0 137.6 L457.1 137.6 L461.1 137.6 L465.2 137.6 L469.3 137.6 L473.3 137.6 L477.4 137.6 L481.4 137.6 L485.5 137.6 L489.5 137.6 L493.6 137.6 L497.7 137.6 L501.7 137.6 L505.8 137.5 L509.8 137.5 L513.9 137.5 L517.9 137.5 L522.0 137.5 L526.1 137.5 L530.1 137.5 L534.2 137.5 L538.2 137.5 L542.3 137.5 L546.3 137.5 L550.4 137.5 L554.5 137.5 L558.5 137.6 L562.6 137.6 L566.6 137.6 L570.7 137.6 L574.7 137.6 L578.8 137.6 L582.9 137.6 L586.9 137.6 L591.0 137.6 L595.0 137.6 L599.1 137.6 L603.1 137.6 L607.2 137.6 L611.3 137.6 L615.3 137.6 L619.4 137.6 L623.4 137.6 L627.5 137.6 L631.5 137.6 L635.6 137.6 L639.7 137.6 L643.7 137.6 L647.8 137.6 L651.8 137.6 L655.9 137.6 L659.9 137.6 L664.0 137.6" dur="4s" repeatCount="indefinite"/></circle><text class="si-t" x="26" y="44" fill="#58a6ff">Suitable Kp</text><text class="si-v" x="150" y="44" fill="#58a6ff">Kp = 2.4</text><text class="si-c" x="26" y="276">Gets there quickly with a small overshoot and settles in a few cycles.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1" dur="12s" repeatCount="indefinite"/><path d="M96.0 232.0 L100.1 230.3 L104.1 225.6 L108.2 217.9 L112.2 207.5 L116.3 194.9 L120.3 180.3 L124.4 164.4 L128.5 147.6 L132.5 130.6 L136.6 113.8 L140.6 97.8 L144.7 83.2 L148.7 70.4 L152.8 62.0 L156.9 62.0 L160.9 62.0 L165.0 62.0 L169.0 62.0 L173.1 62.0 L177.1 62.0 L181.2 66.9 L185.3 79.0 L189.3 92.9 L193.4 108.3 L197.4 124.7 L201.5 141.4 L205.5 158.0 L209.6 173.8 L213.7 188.4 L217.7 201.3 L221.8 212.0 L225.8 220.3 L229.9 225.7 L233.9 228.2 L238.0 227.7 L242.1 224.2 L246.1 217.8 L250.2 208.7 L254.2 197.3 L258.3 183.9 L262.3 169.0 L266.4 153.1 L270.5 136.8 L274.5 120.4 L278.6 104.7 L282.6 90.2 L286.7 77.2 L290.7 66.3 L294.8 62.0 L298.9 62.0 L302.9 62.0 L307.0 62.0 L311.0 62.0 L315.1 62.0 L319.1 66.0 L323.2 76.8 L327.3 89.6 L331.3 104.0 L335.4 119.4 L339.4 135.4 L343.5 151.5 L347.5 167.0 L351.6 181.6 L355.7 194.6 L359.7 205.7 L363.8 214.5 L367.8 220.7 L371.9 224.2 L375.9 224.7 L380.0 222.4 L384.1 217.2 L388.1 209.4 L392.2 199.2 L396.2 187.0 L400.3 173.1 L404.3 158.1 L408.4 142.5 L412.5 126.7 L416.5 111.4 L420.6 96.9 L424.6 83.8 L428.7 72.5 L432.7 63.5 L436.8 62.0 L440.9 62.0 L444.9 62.0 L449.0 62.0 L453.0 62.0 L457.1 65.6 L461.1 75.2 L465.2 86.8 L469.3 100.1 L473.3 114.7 L477.4 129.9 L481.4 145.4 L485.5 160.6 L489.5 175.0 L493.6 188.1 L497.7 199.5 L501.7 208.8 L505.8 215.7 L509.8 220.0 L513.9 221.5 L517.9 220.2 L522.0 216.2 L526.1 209.6 L530.1 200.6 L534.2 189.5 L538.2 176.7 L542.3 162.7 L546.3 147.8 L550.4 132.6 L554.5 117.6 L558.5 103.3 L562.6 90.2 L566.6 78.7 L570.7 69.2 L574.7 62.0 L578.8 62.0 L582.9 62.0 L586.9 62.0 L591.0 62.0 L595.0 65.6 L599.1 74.0 L603.1 84.5 L607.2 96.8 L611.3 110.4 L615.3 124.9 L619.4 139.7 L623.4 154.5 L627.5 168.6 L631.5 181.7 L635.6 193.3 L639.7 203.0 L643.7 210.5 L647.8 215.6 L651.8 218.0 L655.9 217.8 L659.9 214.9 L664.0 209.4" fill="none" stroke="#f85149" stroke-width="2.4"/><circle r="5" fill="#f85149"><animateMotion path="M96.0 232.0 L100.1 230.3 L104.1 225.6 L108.2 217.9 L112.2 207.5 L116.3 194.9 L120.3 180.3 L124.4 164.4 L128.5 147.6 L132.5 130.6 L136.6 113.8 L140.6 97.8 L144.7 83.2 L148.7 70.4 L152.8 62.0 L156.9 62.0 L160.9 62.0 L165.0 62.0 L169.0 62.0 L173.1 62.0 L177.1 62.0 L181.2 66.9 L185.3 79.0 L189.3 92.9 L193.4 108.3 L197.4 124.7 L201.5 141.4 L205.5 158.0 L209.6 173.8 L213.7 188.4 L217.7 201.3 L221.8 212.0 L225.8 220.3 L229.9 225.7 L233.9 228.2 L238.0 227.7 L242.1 224.2 L246.1 217.8 L250.2 208.7 L254.2 197.3 L258.3 183.9 L262.3 169.0 L266.4 153.1 L270.5 136.8 L274.5 120.4 L278.6 104.7 L282.6 90.2 L286.7 77.2 L290.7 66.3 L294.8 62.0 L298.9 62.0 L302.9 62.0 L307.0 62.0 L311.0 62.0 L315.1 62.0 L319.1 66.0 L323.2 76.8 L327.3 89.6 L331.3 104.0 L335.4 119.4 L339.4 135.4 L343.5 151.5 L347.5 167.0 L351.6 181.6 L355.7 194.6 L359.7 205.7 L363.8 214.5 L367.8 220.7 L371.9 224.2 L375.9 224.7 L380.0 222.4 L384.1 217.2 L388.1 209.4 L392.2 199.2 L396.2 187.0 L400.3 173.1 L404.3 158.1 L408.4 142.5 L412.5 126.7 L416.5 111.4 L420.6 96.9 L424.6 83.8 L428.7 72.5 L432.7 63.5 L436.8 62.0 L440.9 62.0 L444.9 62.0 L449.0 62.0 L453.0 62.0 L457.1 65.6 L461.1 75.2 L465.2 86.8 L469.3 100.1 L473.3 114.7 L477.4 129.9 L481.4 145.4 L485.5 160.6 L489.5 175.0 L493.6 188.1 L497.7 199.5 L501.7 208.8 L505.8 215.7 L509.8 220.0 L513.9 221.5 L517.9 220.2 L522.0 216.2 L526.1 209.6 L530.1 200.6 L534.2 189.5 L538.2 176.7 L542.3 162.7 L546.3 147.8 L550.4 132.6 L554.5 117.6 L558.5 103.3 L562.6 90.2 L566.6 78.7 L570.7 69.2 L574.7 62.0 L578.8 62.0 L582.9 62.0 L586.9 62.0 L591.0 62.0 L595.0 65.6 L599.1 74.0 L603.1 84.5 L607.2 96.8 L611.3 110.4 L615.3 124.9 L619.4 139.7 L623.4 154.5 L627.5 168.6 L631.5 181.7 L635.6 193.3 L639.7 203.0 L643.7 210.5 L647.8 215.6 L651.8 218.0 L655.9 217.8 L659.9 214.9 L664.0 209.4" dur="4s" repeatCount="indefinite"/></circle><path d="M235.2 78 L374.3 78" stroke="#f85149" stroke-width="1.4"/><path d="M235.2 78 l6 -4 v8 z M374.3 78 l-6 -4 v8 z" fill="#f85149"/><text class="si-k" x="304.7" y="72" fill="#f85149">Tu</text><text class="si-t" x="26" y="44" fill="#f85149">Critical Kp</text><text class="si-v" x="150" y="44" fill="#f85149">Kp = 4.0</text><text class="si-c" x="26" y="276">Sustained oscillation that does not damp out: this is the critical gain Ku, and its period is Tu.</text></g><text class="si-c" x="26" y="302" fill="#7d8a99">Ziegler-Nichols starts from there: with Ku and Tu measured, a PID comes out as Kp = 0.6 Ku, Ti = Tu/2 and Td = Tu/8.</text><text class="si-c" x="26" y="320" fill="#7d8a99">It is an aggressive starting point: if the process cannot tolerate overshoot, lower Kp and lengthen Ti.</text></svg>
+        <figcaption><b>Figure 2.</b> Effect of the gain, animated. With a low Kp the response is slow but
+        safe; raising it speeds things up; past the critical point, the system oscillates without damping and no longer
+        controls anything.</figcaption>
+      </figure>
+
+      <div class="box key">
+        <div class="bt">Ziegler-Nichols in closed loop</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>Disable I and D: proportional action only.</li>
+          <li>Raise K<sub>p</sub> gradually until the system oscillates with <b>constant</b> amplitude. That
+          gain is the <b>critical</b> gain, K<sub>u</sub>, and the period of that oscillation is T<sub>u</sub>.</li>
+          <li>Apply the table and then fine-tune by hand according to the result.</li>
+        </ol>
+        <div class="tw" style="margin:12px 0 0">
+          <table class="tab">
+          <thead><tr><th class="c">Controller</th><th class="c">K<sub>p</sub></th><th class="c">T<sub>i</sub></th><th class="c">T<sub>d</sub></th></tr></thead>
+            <tbody>
+              <tr><td class="c"><b>P</b></td><td class="c">0.50 · K<sub>u</sub></td><td class="c">—</td><td class="c">—</td></tr>
+              <tr><td class="c"><b>PI</b></td><td class="c">0.45 · K<sub>u</sub></td><td class="c">T<sub>u</sub>/1.2</td><td class="c">—</td></tr>
+              <tr><td class="c"><b>PID</b></td><td class="c">0.60 · K<sub>u</sub></td><td class="c">T<sub>u</sub>/2</td><td class="c">T<sub>u</sub>/8</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Worked example · Tuning a furnace</div>
+        <p>With proportional action only, the furnace starts to oscillate steadily at
+        <b>K<sub>u</sub> = 4.0</b> and a period of <b>T<sub>u</sub> = 20 s</b>.</p>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>PI</b>: K<sub>p</sub> = 0.45 × 4.0 = <b>1.8</b>; T<sub>i</sub> = 20/1.2 =
+          <b>16.7 s</b>.</li>
+          <li><b>PID</b>: K<sub>p</sub> = 0.60 × 4.0 = <b>2.4</b>; T<sub>i</sub> = 20/2 = <b>10 s</b>;
+          T<sub>d</sub> = 20/8 = <b>2.5 s</b>.</li>
+        </ul>
+        <p style="margin-top:10px">These values are a <b>starting point</b>, not a final result:
+        Ziegler-Nichols aims for a fairly aggressive response, with overshoot on the order of 25%. If
+        the process cannot tolerate that —a vat of product, for example— lower K<sub>p</sub> and lengthen
+        T<sub>i</sub> until you get a smooth response.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Manual tuning, which is what is used on the plant floor</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>P only. Raise K<sub>p</sub> until a slight oscillation appears, and then <b>cut it back to
+          half</b>.</li>
+          <li>Add I: shorten T<sub>i</sub> until the steady-state error disappears in a reasonable time. If slow
+          oscillations appear, lengthen it.</li>
+          <li>Add D only if damping is needed, and with small values. In processes with a noisy measurement
+          —flow, pressure— it is often left at zero: most industrial loops are
+          <b>PI</b>.</li>
+          <li>Check with a real disturbance, not just a setpoint change.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="plc">
+      <h2><span class="n">03</span>The PID inside the PLC</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Aspect</th><th>What has to be solved</th></tr></thead>
+          <tbody>
+            <tr><td><b>Sampling time</b></td><td>The block must run at <b>fixed</b> intervals, in a periodic task. As a rule, 5 to 20 times faster than the process time constant.</td></tr>
+            <tr><td><b>Scaling</b></td><td>Input and output in <b>engineering units</b> or in percent, not in converter counts. Changing the transmitter range should not force you to retune.</td></tr>
+            <tr><td><b>Output limits</b></td><td>The output is clamped to the actuator's real range: 0 to 100%, or the minimum the valve needs so as not to close completely.</td></tr>
+            <tr><td><b>Anti wind-up</b></td><td>Freeze the integrator when the output is saturated. Without this, the PID pointlessly accumulates error and then takes a very long time to recover.</td></tr>
+            <tr><td><b>Manual and automatic</b></td><td>With <b>bumpless</b> transfer: when switching to automatic, the PID starts from the output the manual mode had.</td></tr>
+            <tr><td><b>Direct or reverse action</b></td><td>Heating and cooling require opposite signs. Getting it wrong produces a loop that runs to the extreme immediately.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Integrator saturation</div>
+        <p>It is the most common failure of a poorly implemented PID. If the process cannot reach the setpoint
+        —the heating element is burnt out, the valve is closed, the lid is open— the error persists and the
+        integrator <b>keeps accumulating</b> long after the output is already at 100%. When the
+        situation returns to normal, the controller holds the output at maximum for minutes until it discharges
+        everything it accumulated, and the process overshoots the setpoint by a wide margin.</p>
+        <p style="margin-top:8px">It is solved by freezing the integrator while the output is saturated. The PID
+        blocks of modern PLCs already do this; home-made ones almost never do.</p>
+      </div>
+    </section>
+
+    <section id="cuando">
+      <h2><span class="n">04</span>When to use PID and when not to</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">On-off, with hysteresis</div>
+          <p>Switches on when the variable falls below one limit and off when it exceeds another. Simple, cheap and sufficient when the
+          process has a lot of inertia and a wide tolerance band: a room thermostat, a tank
+          level, a refrigerator.</p>
+          <p style="margin-top:8px"><b>Hysteresis</b> is not a defect: it is what keeps the actuator from
+          switching a hundred times a minute. In exchange, the variable always oscillates within the band.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">PID</div>
+          <p>When you need to hold the variable <b>at</b> the setpoint and not around it, when the actuator
+          allows continuous regulation —proportional valve, drive, phase-angle power control— and when
+          disturbances are frequent.</p>
+          <p style="margin-top:8px">If the actuator is a contactor that can only open and close, a pure PID makes
+          no sense: it is combined with slow pulse-width modulation, switching on a fraction of the
+          time of each cycle.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Before tuning, check the process</div>
+        <p>No PID adjustment compensates for a badly placed sensor, an oversized valve that works
+        always at 5% of its travel, an enormous transport delay or a noisy measurement. When a
+        loop “won't let itself be tuned,” the problem is almost never in the parameters: it is in the
+        <b>process</b> or in the <b>instrumentation</b>. That is where to look first.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Seeing the three actions</div>
+        <p>On a teaching temperature or level plant, apply a setpoint step and record
+        the response with P only, with PI and with PID. In each case measure steady-state error, overshoot and
+        settling time, and put together a comparison table.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Ziegler-Nichols</div>
+        <p>Determine K<sub>u</sub> and T<sub>u</sub> experimentally, calculate the parameters with the table and
+        apply them. Record the response and compare it with that of manual tuning. Discuss which is preferable
+        depending on what the process tolerates.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · Provoking integrator saturation</div>
+        <p>Set an unreachable setpoint —for example with the lid open— for several minutes, and
+        then close it. Observe how long the controller takes to recover and how far it overshoots. Enable
+        anti wind-up and repeat: the difference is remarkable.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Disturbance rejection</div>
+        <p>With the loop stable at the setpoint, introduce a real disturbance: open a leak, add
+        cold load, change the flow. Measure how far the variable deviates and how long it takes to return. It is the
+        test that truly tells you whether the tuning is any good.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Usual cause</th></tr></thead>
+          <tbody>
+            <tr><td>A steady-state error remains</td><td>Integral action is missing, or T<sub>i</sub> is too long.</td></tr>
+            <tr><td>Fast, sustained oscillation</td><td>K<sub>p</sub> too high.</td></tr>
+            <tr><td>Slow, long-period oscillation</td><td>Integral action too strong: T<sub>i</sub> too short.</td></tr>
+            <tr><td>The output jumps abruptly</td><td>Derivative action on a noisy measurement. Filter it or disable D.</td></tr>
+            <tr><td>Huge overshoot after a long stop</td><td>Integrator saturation without anti wind-up.</td></tr>
+            <tr><td>Jump in the output when switching from manual to automatic</td><td>Transfer without initialization from the manual value.</td></tr>
+            <tr><td>The loop runs to the extreme as soon as it is enabled</td><td>Wrong direct or reverse action.</td></tr>
+            <tr><td>The PID cannot be tuned no matter what</td><td>Badly placed sensor, oversized valve or large transport delay: the problem is in the process.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">07</span>Self-assessment</h2>
+
+      <details class="q"><summary>What does each of the three actions look at?</summary>
+        <div class="a"><p><b>P</b> looks at the current error, <b>I</b> at the accumulated error and <b>D</b> at the
+        rate at which the error is changing.</p></div></details>
+
+      <details class="q"><summary>Why does a proportional-only control leave a steady-state error?</summary>
+        <div class="a"><p>Because its output is proportional to the error: if the error were zero, the output
+        would be too, and the process would receive no action. It settles where the residual error produces just the
+        action that offsets the losses.</p></div></details>
+
+      <details class="q"><summary>Which action eliminates the steady-state error?</summary>
+        <div class="a"><p>The <b>integral</b>: as long as any error remains, it keeps accumulating and changing the output,
+        however small it is.</p></div></details>
+
+      <details class="q"><summary>With Ku = 6 and Tu = 12 s, what parameters does Ziegler-Nichols give for a PID?</summary>
+        <div class="a"><p>K<sub>p</sub> = 0.6 × 6 = <b>3.6</b>; T<sub>i</sub> = 12/2 = <b>6 s</b>;
+        T<sub>d</sub> = 12/8 = <b>1.5 s</b>.</p></div></details>
+
+      <details class="q"><summary>Why is D set to zero in many industrial loops?</summary>
+        <div class="a"><p>Because it amplifies measurement noise and produces abrupt jumps in the output. In
+        flow and pressure, which are noisy measurements, most loops are <b>PI</b>.</p></div></details>
+
+      <details class="q"><summary>What is integrator saturation and how is it avoided?</summary>
+        <div class="a"><p>The accumulation of error while the output is already at maximum and the process cannot
+        respond. It is avoided by <b>freezing the integrator</b> when the output is saturated.</p></div></details>
+
+      <details class="q"><summary>What is bumpless transfer?</summary>
+        <div class="a"><p>When switching from manual to automatic, the PID starts from the output the manual mode had,
+        so the variable does not jump.</p></div></details>
+
+      <details class="q"><summary>How often must the PID block run?</summary>
+        <div class="a"><p>At <b>fixed</b> intervals, in a periodic task, 5 to 20 times faster than
+        the process time constant.</p></div></details>
+
+      <details class="q"><summary>When is on-off control enough?</summary>
+        <div class="a"><p>When the process has a lot of inertia and the variable is allowed to oscillate within
+        a band, and when the actuator can only open and close.</p></div></details>
+
+      <details class="q"><summary>A loop cannot be tuned no matter what. What do you check?</summary>
+        <div class="a"><p>The <b>process and the instrumentation</b>: sensor location, valve sizing,
+        transport delay and measurement noise. It is almost never a matter of
+        parameters.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/comunicaciones-industriales">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Industrial communications</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/teorema-muestreo">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Sampling theorem</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“PID controllers”</b> of <b>Industrial Electronics II</b> (Year 7), based on the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

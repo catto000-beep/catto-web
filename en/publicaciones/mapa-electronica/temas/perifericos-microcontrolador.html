@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peripherals · Digital Electronics III · Catto</title>
+<meta name="description" content="Temporizadores y preescaler, interrupciones, modo PWM y ciclo de trabajo, módulos de captura y comparación, y conversor A/D interno de un microcontrolador, con los cálculos de tiempo y resolución. Eje temático de Electrónica Digital III, 6° año.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Digital Electronics III</a>
+    <span class="anio">Year 6</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Electronics III</span> · 144 h · Topic 3 of 7</div>
+    <h1>Peripherals</h1>
+    <p class="lead">Peripherals are <b>hardware that works on its own</b>, in parallel with the CPU. A
+    timer counts while the program does something else; a PWM module holds an output without anyone
+    tending to it. Understanding them changes the way you write programs: you stop waiting.</p>
+    <div class="chips">
+      <span class="chip hi">Microcontrollers</span>
+      <span class="chip">Timers</span>
+      <span class="chip">Interrupts</span>
+      <span class="chip">PWM</span>
+      <span class="chip">A/D converter</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>Stop waiting</h2>
+      <p>Everyone’s first program blinks an LED with a delay. The problem appears with the
+      second requirement: <b>while it waits, the program can’t do anything else</b>. Not read a
+      pushbutton, not service the serial port, not measure a temperature.</p>
+
+      <pre class="code"><code><span class="c-com">// NOT like this: while the delay lasts, the micro is stuck</span>
+<span class="c-kw">while</span> (<span class="c-num">1</span>) {
+    led_on();  _delay_ms(<span class="c-num">500</span>);
+    led_off(); _delay_ms(<span class="c-num">500</span>);      <span class="c-com">// a button pressed here goes undetected</span>
+}
+
+<span class="c-com">// Like THIS: the timer counts on its own and signals; the loop stays free</span>
+<span class="c-kw">while</span> (<span class="c-num">1</span>) {
+    <span class="c-kw">if</span> (bandera_500ms) { bandera_500ms = <span class="c-num">0</span>; led_toggle(); }
+    atender_pulsadores();
+    atender_puerto_serie();
+}</code></pre>
+      <p class="codecap">The second scheme —a main loop that never blocks, plus flags set by
+      interrupts— is the structure of almost every serious embedded program.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Peripheral</th><th>What it does on its own</th><th>Typical example</th></tr></thead>
+          <tbody>
+            <tr><td><b>Timer / counter</b></td><td>Counts clock pulses or external events</td><td>Timebase, measuring frequency, generating delays</td></tr>
+            <tr><td><b>PWM</b></td><td>Holds a square wave with an adjustable duty cycle</td><td>LED brightness, motor speed, servo</td></tr>
+            <tr><td><b>Capture (CCP)</b></td><td>Saves the counter value when an edge arrives</td><td>Measuring a pulse width, a period, an ultrasonic sensor</td></tr>
+            <tr><td><b>Compare</b></td><td>Triggers an event when the counter reaches a value</td><td>Exact periodic interrupt, generating frequencies</td></tr>
+            <tr><td><b>A/D converter</b></td><td>Converts a voltage into a number</td><td>Sensors, potentiometers, battery measurement</td></tr>
+            <tr><td><b>USART, SPI, I²C</b></td><td>Builds and decodes frames</td><td><a href="/en/publicaciones/mapa-electronica/temas/comunicacion-serie">Communication module</a></td></tr>
+            <tr><td><b>Watchdog</b></td><td>Watches that the program doesn’t hang</td><td>Safety in unattended equipment</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="timers">
+      <h2><span class="n">02</span>Timers</h2>
+      <p>A timer is a <b>binary counter</b> —the same thing covered in
+      <a href="/en/publicaciones/mapa-electronica/temas/contadores-programables">programmable counters</a>—
+      fed by the system clock through a <b>prescaler</b>, which is simply a divider.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Counter in CTC mode with its compare value" class="svg-t" data-anim>
+          <style>.tm-d{fill:#7d8a99;font-size:10.5px}.tm-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="96" y1="244" x2="612" y2="244" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="96" y1="244" x2="96" y2="60" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="96" y1="137.3" x2="612" y2="137.3" stroke="#f85149" stroke-width="1.4" stroke-dasharray="6 4"/>
+          <text class="tm-d" x="102" y="129.3" fill="#f85149">OCR = 249 · compare</text>
+          <line x1="96" y1="74.0" x2="612" y2="74.0" stroke="#2a3140" stroke-width="1" stroke-dasharray="4 5"/>
+          <text class="tm-d" x="102" y="66.0">overflow (255)</text>
+          <path d="M96.00,244.00 L253.92,137.33 L253.92,244.00 M264.00,244.00 L421.92,137.33 L421.92,244.00 M432.00,244.00 L589.92,137.33 L589.92,244.00 " fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <path d="M96.00,288.00 L253.92,288.00 L253.92,266.00 L264.00,266.00 L421.92,266.00 L421.92,288.00 L432.00,288.00 L589.92,288.00 L589.92,266.00 L600.00,266.00" fill="none" stroke="#58a6ff" stroke-width="2.2"/>
+          <text class="tm-d" x="88" y="282" text-anchor="end">output</text>
+          <circle cx="96.00" cy="244.00" r="5" fill="#ffa657"><animate attributeName="cx" values="96.00;101.26;106.53;111.79;117.06;122.32;127.58;132.85;138.11;143.38;148.64;153.90;159.17;164.43;169.70;174.96;180.22;185.49;190.75;196.02;201.28;206.54;211.81;217.07;222.34;227.60;232.86;238.13;243.39;248.66;264.00;269.26;274.53;279.79;285.06;290.32;295.58;300.85;306.11;311.38;316.64;321.90;327.17;332.43;337.70;342.96;348.22;353.49;358.75;364.02;369.28;374.54;379.81;385.07;390.34;395.60;400.86;406.13;411.39;416.66;432.00;437.26;442.53;447.79;453.06;458.32;463.58;468.85;474.11;479.38;484.64;489.90;495.17;500.43;505.70;510.96;516.22;521.49;526.75;532.02;537.28;542.54;547.81;553.07;558.34;563.60;568.86;574.13;579.39;584.66" dur="8s" repeatCount="indefinite"/><animate attributeName="cy" values="244.00;240.44;236.89;233.33;229.78;226.22;222.67;219.11;215.56;212.00;208.44;204.89;201.33;197.78;194.22;190.67;187.11;183.56;180.00;176.44;172.89;169.33;165.78;162.22;158.67;155.11;151.56;148.00;144.44;140.89;244.00;240.44;236.89;233.33;229.78;226.22;222.67;219.11;215.56;212.00;208.44;204.89;201.33;197.78;194.22;190.67;187.11;183.56;180.00;176.44;172.89;169.33;165.78;162.22;158.67;155.11;151.56;148.00;144.44;140.89;244.00;240.44;236.89;233.33;229.78;226.22;222.67;219.11;215.56;212.00;208.44;204.89;201.33;197.78;194.22;190.67;187.11;183.56;180.00;176.44;172.89;169.33;165.78;162.22;158.67;155.11;151.56;148.00;144.44;140.89" dur="8s" repeatCount="indefinite"/></circle>
+          <text class="tm-l" x="102" y="52">counter value</text>
+          <text class="tm-l" x="612" y="264" text-anchor="end">time</text>
+          <text class="tm-d" x="36" y="314">In CTC mode the counter resets on reaching OCR: the period stays fixed and exact.</text>
+          </svg>
+        <figcaption><b>Figure 1.</b> The counter and its two events, animated. When it reaches the value loaded
+        in the <b>compare</b> register an event occurs and —if it is in CTC mode— the counter
+        resets. If nothing stops it, it keeps going until <b>overflow</b> and returns to zero by itself.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><msub><mi>t</mi><mrow><mi>t</mi><mi>i</mi><mi>c</mi><mi>k</mi></mrow></msub><mo>=</mo><mfrac><mi>N</mi><msub><mi>f</mi><mrow><mi>o</mi><mi>s</mi><mi>c</mi></mrow></msub></mfrac><mspace width="26px"/><mi>O</mi><mi>C</mi><mi>R</mi><mo>=</mo><mfrac><mrow><msub><mi>f</mi><mrow><mi>o</mi><mi>s</mi><mi>c</mi></mrow></msub><mo>·</mo><mi>t</mi></mrow><mi>N</mi></mfrac><mo>−</mo><mn>1</mn></mrow></math>
+        <span class="cap">N is the prescaler (1, 8, 64, 256, 1024). The “−1” is there because the counter
+        starts at zero: if you want 250 counts, the compare value is 249.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Worked example · One interrupt every millisecond</div>
+        <p><b>16 MHz</b> crystal, 8-bit timer in CTC mode:</p>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li>With a prescaler of <b>64</b>, each count lasts 64/16,000,000 = <b>4 µs</b>.</li>
+          <li>For 1 ms you need 1000/4 = <b>250 counts</b>.</li>
+          <li>Load OCR = 250 − 1 = <b>249</b>. Since it fits in 8 bits (maximum 255), it works.</li>
+          <li>Check: (249 + 1) × 4 µs = exactly <b>1000 µs</b>. No error, because 16 MHz is a multiple
+          of 64 × 1000.</li>
+        </ol>
+        <p style="margin-top:10px">With a prescaler of 8 you would need 2000 counts: it <b>doesn’t fit</b> in 8 bits and
+        you have to use the 16-bit timer. That is the complete reasoning: choose the smallest prescaler
+        whose result fits in the counter, because the smaller the prescaler, the better the
+        resolution.</p>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The modes you need to know</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Normal</b>: counts up to the maximum and overflows. Simple, but the period is fixed by the
+          prescaler.</li>
+          <li><b>CTC</b> (clear timer on compare): counts up to OCR and resets. It is the mode for <b>exact
+          timebases</b>.</li>
+          <li><b>Fast PWM</b> and <b>phase-correct PWM</b>: the output changes on its own according to the compare
+          value. See the PWM section.</li>
+          <li><b>External event counter</b>: instead of the internal clock it counts edges on a pin. It is
+          a frequency counter in two lines of code.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="interrupciones">
+      <h2><span class="n">03</span>Interrupts</h2>
+      <p>An interrupt is an <b>automatic detour</b>: when the peripheral raises its flag, the CPU
+      finishes the current instruction, saves where it was and jumps to a special routine. When it is done,
+      it returns to exactly the same place. The main program doesn’t even notice.</p>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">What you gain</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>Immediate</b> response to an event, without having to keep asking.</li>
+            <li>The main loop stays free.</li>
+            <li>It lets you put the micro to sleep and wake it only when something happens.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--hot)">The rules of an ISR</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>Very short.</b> Set a flag, read a piece of data, and get out. No delays, long calculations
+            or sending characters over the serial port.</li>
+            <li>The variables it shares with the main loop are declared <b>volatile</b>, or the
+            compiler optimizes them and the program stops seeing the changes.</li>
+            <li>If the shared variable is more than one byte, it has to be read with interrupts
+            <b>disabled</b>: otherwise you can read the old half and the new half.</li>
+            <li>The flag clears itself or has to be cleared by hand depending on the peripheral: if it isn’t cleared,
+            the interrupt fires forever.</li>
+          </ul>
+        </div>
+      </div>
+
+      <pre class="code"><code><span class="c-com">// 1 ms timebase with the timer in CTC mode</span>
+<span class="c-ty">volatile</span> <span class="c-ty">uint16_t</span> ms = <span class="c-num">0</span>;      <span class="c-com">// volatile: modified by an interrupt</span>
+
+ISR(TIMER0_COMPA_vect) {          <span class="c-com">// runs every 1 ms</span>
+    ms++;                         <span class="c-com">// and nothing else: the ISR ends here</span>
+}
+
+<span class="c-kw">int</span> <span class="c-fn">main</span>(<span class="c-kw">void</span>) {
+    TCCR0A = (<span class="c-num">1</span> &lt;&lt; WGM01);                    <span class="c-com">// CTC mode</span>
+    TCCR0B = (<span class="c-num">1</span> &lt;&lt; CS01) | (<span class="c-num">1</span> &lt;&lt; CS00);      <span class="c-com">// prescaler 64</span>
+    OCR0A  = <span class="c-num">249</span>;                            <span class="c-com">// 250 counts of 4 µs = 1 ms</span>
+    TIMSK0 = (<span class="c-num">1</span> &lt;&lt; OCIE0A);                   <span class="c-com">// enable the interrupt</span>
+    sei();                                     <span class="c-com">// enable globally</span>
+    <span class="c-kw">while</span> (<span class="c-num">1</span>) { <span class="c-com">/* the loop stays free for everything else */</span> }
+}</code></pre>
+
+      <div class="box ojo">
+        <div class="bt">Latency and priorities</div>
+        <p>Between the event occurring and the ISR starting, a few microseconds go by: the CPU finishes the
+        current instruction and saves the context. If <b>another interrupt is also running</b>, you have to
+        wait for it. That is why long ISRs ruin the response of the whole system: one that takes 2 ms
+        makes all the others lose pulses. On small micros the priorities are fixed and are listed in the
+        vector table of the datasheet.</p>
+      </div>
+    </section>
+
+    <section id="pwm">
+      <h2><span class="n">04</span>PWM: pulse-width modulation</h2>
+      <p>An output that switches quickly between 0 and V<sub>CC</sub>, with an adjustable <b>high time</b>. The
+      average value is proportional to that time, and with it power is regulated <b>without dissipating</b>: the
+      transistor is saturated or cut off, never in between.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Duty cycle of a PWM signal" class="svg-t" data-anim>
+          <style>.pw-d{fill:#7d8a99;font-size:10.5px}.pw-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="86" y1="200" x2="570" y2="200" stroke="#2a3140" stroke-width="1.3"/>
+          <text class="pw-d" x="82" y="204" text-anchor="end">0 V</text>
+          <text class="pw-d" x="82" y="112" text-anchor="end">5 V</text>
+          <g opacity="0">
+          <path d="M96.00,108.00 L103.73,108.00 L103.73,200.00 L173.33,200.00 L173.33,108.00 L181.07,108.00 L181.07,200.00 L250.67,200.00 L250.67,108.00 L258.40,108.00 L258.40,200.00 L328.00,200.00 L328.00,108.00 L335.73,108.00 L335.73,200.00 L405.33,200.00 L405.33,108.00 L413.07,108.00 L413.07,200.00 L482.67,200.00 L482.67,108.00 L490.40,108.00 L490.40,200.00 L560.00,200.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="96" y1="190.80" x2="570" y2="190.80" stroke="#ffa657" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="pw-d" x="576" y="194.80" fill="#ffa657">average = 0.50 V</text>
+          <text x="350" y="266" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">duty cycle = 10%</text>
+          <circle cx="620" cy="120" r="26" fill="#ffa657" opacity="0.21" stroke="#9aa7b4" stroke-width="1.6"/>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <path d="M96.00,108.00 L123.07,108.00 L123.07,200.00 L173.33,200.00 L173.33,108.00 L200.40,108.00 L200.40,200.00 L250.67,200.00 L250.67,108.00 L277.73,108.00 L277.73,200.00 L328.00,200.00 L328.00,108.00 L355.07,108.00 L355.07,200.00 L405.33,200.00 L405.33,108.00 L432.40,108.00 L432.40,200.00 L482.67,200.00 L482.67,108.00 L509.73,108.00 L509.73,200.00 L560.00,200.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="96" y1="167.80" x2="570" y2="167.80" stroke="#ffa657" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="pw-d" x="576" y="171.80" fill="#ffa657">average = 1.75 V</text>
+          <text x="350" y="266" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">duty cycle = 35%</text>
+          <circle cx="620" cy="120" r="26" fill="#ffa657" opacity="0.43" stroke="#9aa7b4" stroke-width="1.6"/>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <path d="M96.00,108.00 L146.27,108.00 L146.27,200.00 L173.33,200.00 L173.33,108.00 L223.60,108.00 L223.60,200.00 L250.67,200.00 L250.67,108.00 L300.93,108.00 L300.93,200.00 L328.00,200.00 L328.00,108.00 L378.27,108.00 L378.27,200.00 L405.33,200.00 L405.33,108.00 L455.60,108.00 L455.60,200.00 L482.67,200.00 L482.67,108.00 L532.93,108.00 L532.93,200.00 L560.00,200.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="96" y1="140.20" x2="570" y2="140.20" stroke="#ffa657" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="pw-d" x="576" y="144.20" fill="#ffa657">average = 3.25 V</text>
+          <text x="350" y="266" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">duty cycle = 65%</text>
+          <circle cx="620" cy="120" r="26" fill="#ffa657" opacity="0.69" stroke="#9aa7b4" stroke-width="1.6"/>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <path d="M96.00,108.00 L165.60,108.00 L165.60,200.00 L173.33,200.00 L173.33,108.00 L242.93,108.00 L242.93,200.00 L250.67,200.00 L250.67,108.00 L320.27,108.00 L320.27,200.00 L328.00,200.00 L328.00,108.00 L397.60,108.00 L397.60,200.00 L405.33,200.00 L405.33,108.00 L474.93,108.00 L474.93,200.00 L482.67,200.00 L482.67,108.00 L552.27,108.00 L552.27,200.00 L560.00,200.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="96" y1="117.20" x2="570" y2="117.20" stroke="#ffa657" stroke-width="2" stroke-dasharray="7 5"/>
+          <text class="pw-d" x="576" y="121.20" fill="#ffa657">average = 4.50 V</text>
+          <text x="350" y="266" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">duty cycle = 90%</text>
+          <circle cx="620" cy="120" r="26" fill="#ffa657" opacity="0.91" stroke="#9aa7b4" stroke-width="1.6"/>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="10s" repeatCount="indefinite"/></g>
+          <text class="pw-d" x="620" y="164" text-anchor="middle">brightness</text>
+          <text class="pw-l" x="86" y="296">The frequency doesn’t change: what changes is how long the output stays high.</text>
+          <text class="pw-l" x="86" y="42">The transistor is saturated or cut off: it dissipates nothing, so power is regulated without heating.</text>
+          </svg>
+        <figcaption><b>Figure 2.</b> Duty cycle, animated. The frequency doesn’t change; what changes is
+        how long the output stays high. The dashed line is the <b>average value</b>, which is what a
+        lamp, a motor or an R-C filter sees.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><mi>D</mi><mo>=</mo><mfrac><msub><mi>t</mi><mrow><mi>h</mi><mi>i</mi><mi>g</mi><mi>h</mi></mrow></msub><mi>T</mi></mfrac><mo>·</mo><mn>100</mn><mspace width="24px"/><msub><mi>V</mi><mrow><mi>a</mi><mi>v</mi><mi>g</mi></mrow></msub><mo>=</mo><mi>D</mi><mo>·</mo><msub><mi>V</mi><mrow><mi>C</mi><mi>C</mi></mrow></msub><mspace width="24px"/><msub><mi>f</mi><mrow><mi>P</mi><mi>W</mi><mi>M</mi></mrow></msub><mo>=</mo><mfrac><msub><mi>f</mi><mrow><mi>o</mi><mi>s</mi><mi>c</mi></mrow></msub><mrow><mi>N</mi><mo>·</mo><msup><mn>2</mn><mi>n</mi></msup></mrow></mfrac></mrow></math>
+        <span class="cap">With 16 MHz, a prescaler of 64 and 8 bits of resolution: f = 16,000,000/(64 × 256) =
+        <b>976.6 Hz</b>. Raising the resolution lowers the frequency, and vice versa: it is the central trade-off of
+        PWM.</span>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Application</th><th class="c">Suitable frequency</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><b>LED brightness</b></td><td class="c">&gt; 100 Hz</td><td>Below that the flicker is visible, especially when moving your eyes.</td></tr>
+            <tr><td><b>DC motor</b></td><td class="c">1 to 20 kHz</td><td>Below 20 kHz the whine is audible; above it, switching losses grow.</td></tr>
+            <tr><td><b>Heater or thermal load</b></td><td class="c">&lt; 10 Hz</td><td>Thermal inertia averages by itself: there is no need to switch fast.</td></tr>
+            <tr><td><b>Servo motor</b></td><td class="c">Exactly 50 Hz</td><td>It doesn’t regulate by average value: the angle is set by the pulse <b>width</b>, between 1 and 2 ms.</td></tr>
+            <tr><td><b>Analog output (with R-C filter)</b></td><td class="c">High, with a slow filter</td><td>The higher the frequency, the smaller the remaining ripple.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · A servo with the 16-bit timer</div>
+        <p>16 MHz crystal, prescaler <b>8</b> → each count lasts 0.5 µs.</p>
+        <ul>
+          <li>A 20 ms period (50 Hz) = 20,000 µs / 0.5 = <b>40,000 counts</b>: it just fits in 16 bits.</li>
+          <li>A 1 ms pulse (0°) = <b>2000 counts</b>. A 2 ms pulse (180°) = <b>4000 counts</b>.</li>
+          <li>Each degree is (4000 − 2000)/180 = <b>11.1 counts</b>: there is resolution to spare.</li>
+        </ul>
+        <p>With the 8-bit timer this can’t be done: there aren’t enough counts for 20 ms with
+        useful resolution. Choosing the right timer is part of the problem.</p>
+      </div>
+    </section>
+
+    <section id="ccp">
+      <h2><span class="n">05</span>Capture and compare</h2>
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Capture</div>
+          <p>When an edge arrives at a pin, the module <b>copies the counter value</b> into a register and
+          signals. The CPU doesn’t have to be watching: the instant is recorded with the precision of the
+          timer.</p>
+          <p style="margin-top:8px">With two captures —rising and falling edge— you measure the <b>width of
+          a pulse</b>. It is the right way to read an HC-SR04 ultrasonic sensor, a remote-control
+          receiver or the signal from a flow meter.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Compare</div>
+          <p>The other way around: when the counter <b>reaches</b> a loaded value, it triggers an event —an interrupt,
+          a pin change, a counter reset—. It is what lies underneath CTC mode and PWM.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · Measuring distance with ultrasound</div>
+        <p>The sensor returns a pulse whose width is proportional to the round-trip time of the sound.</p>
+        <ul>
+          <li>With a prescaler of 8 at 16 MHz, each count is 0.5 µs.</li>
+          <li>The two edges are captured and subtracted: if the difference is 2320 counts, the pulse lasted
+          2320 × 0.5 = <b>1160 µs</b>.</li>
+          <li>Sound travels at 343 m/s: it covered 0.001160 × 343 = 0.398 m, <b>round trip</b>. The distance
+          is half: <b>19.9 cm</b>.</li>
+        </ul>
+        <p>If you measure the same thing with a busy-wait loop, any interrupt that occurs in the middle ruins the
+        measurement. With capture, it doesn’t.</p>
+      </div>
+    </section>
+
+    <section id="adc">
+      <h2><span class="n">06</span>The internal A/D converter</h2>
+      <p>It is almost always a <b>successive-approximation</b> type, 10 or 12 bits, with a multiplexer that lets you
+      choose among several pins. All the concepts are in
+      <a href="/en/publicaciones/mapa-electronica/temas/conversores-ad-da">A/D and D/A converters</a>; here
+      what matters are the four parameters you have to configure.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>What you choose</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td><b>Channel</b></td><td>Which pin is measured. There is only one multiplexer: one channel is measured at a time, and you have to wait between changes.</td></tr>
+            <tr><td><b>Reference</b></td><td>The supply, an internal reference (1.1 V typical) or an external one through AREF. <b>It defines the full scale</b> and with it the resolution.</td></tr>
+            <tr><td><b>Converter clock</b></td><td>With its own prescaler: it should fall between <b>50 and 200 kHz</b> for maximum accuracy. At 16 MHz with a prescaler of 128 it gives 125 kHz, and one conversion takes about <b>104 µs</b>.</td></tr>
+            <tr><td><b>Alignment and trigger</b></td><td>Whether the result is left-aligned (useful for reading only 8 bits) and whether the conversion starts by software or by a timer event.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The three mistakes that ruin an analog measurement</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Noisy reference</b>: if V<sub>CC</sub> is used as the reference and the supply has
+          ripple, the reading fluctuates even though the input is still. Use an internal or a filtered external reference.</li>
+          <li><b>High-impedance source</b>: the sample &amp; hold capacitor doesn’t get a chance to charge. The
+          datasheet asks for less than 10 kΩ; with more, you need a follower with an
+          <a class="ref" href="/publicaciones/amplificadores-operacionales" hreflang="es">op amp</a>.</li>
+          <li><b>Digital noise</b>: the micro’s own switching coupled into the input. You average, separate the
+          grounds and, on micros that have it, use the <b>noise reduction</b> mode
+          that puts the CPU to sleep during the conversion.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · An exact timebase</div>
+        <p>Configure the timer in CTC mode for an interrupt every 1 ms and toggle a pin on each
+        interrupt. Measure with the <a href="/en/publicaciones/mapa-electronica/temas/osciloscopio">oscilloscope</a>:
+        you should get exactly 500 Hz. Then change the prescaler without changing OCR and see how the
+        frequency shifts. That makes the formula clear.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Non-blocking blinking</div>
+        <p>Write the same blink in two ways: with <code>_delay_ms()</code> and with the interrupt-driven
+        timebase. In both, add a pushbutton that turns on another LED. With the delay, the pushbutton
+        responds late or not at all; with the interrupt, it always responds. It is the lab that justifies this whole
+        topic.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · PWM and average value</div>
+        <p>Generate PWM at 1 kHz and vary the duty cycle with a potentiometer read by the A/D. Measure the pulse
+        width with the oscilloscope and, with the multimeter on DC, the <b>average value</b>. Verify
+        that V<sub>avg</sub> = D × V<sub>CC</sub>. Then add an R-C filter and compare the filtered output
+        with the raw one.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Servo</div>
+        <p>With the 16-bit timer, move a servo from 0° to 180° according to the potentiometer. Measure the pulse
+        width at the extremes and verify that they are 1 and 2 ms. Note what happens if the frequency is not
+        50 Hz.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 5 · Measuring a pulse with capture</div>
+        <p>Generate a pulse of known width with a <a class="ref" href="/publicaciones/simulador-555" hreflang="es">555</a>
+        and measure it with the capture module. Compare with the oscilloscope measurement. Repeat after adding an
+        interrupt that consumes time: the capture measurement <b>doesn’t change</b>, and that is the point.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Usual cause</th></tr></thead>
+          <tbody>
+            <tr><td>The interrupt fires non-stop</td><td>The peripheral’s flag wasn’t cleared, or was cleared incorrectly.</td></tr>
+            <tr><td>The main program doesn’t see a variable change</td><td><code>volatile</code> is missing: the compiler kept it in a register and doesn’t re-read it.</td></tr>
+            <tr><td>A 16-bit counter gives absurd values now and then</td><td>It was read while the interrupt was modifying it. It has to be read with interrupts disabled.</td></tr>
+            <tr><td>The system responds slowly or loses pulses</td><td>An ISR that is too long. Move everything that isn’t essential out to the main loop.</td></tr>
+            <tr><td>The timer’s timing doesn’t match the calculation</td><td>The “−1” in the compare register was forgotten, or the actual clock isn’t the assumed one (fuses, divide-by-8 enabled).</td></tr>
+            <tr><td>The PWM-driven LED visibly flickers</td><td>Frequency too low: raise it above 100 Hz.</td></tr>
+            <tr><td>The PWM-driven motor squeals</td><td>Frequency within the audible band. Raise it above 18 to 20 kHz.</td></tr>
+            <tr><td>The servo jitters or doesn’t reach the extremes</td><td>A period other than 20 ms, or widths outside the model’s range. Each servo has its own.</td></tr>
+            <tr><td>The A/D reading jumps by several counts</td><td>Reference with ripple, high-impedance source or noise. Average and check all three causes.</td></tr>
+            <tr><td>After changing channels, the first reading is wrong</td><td>The acquisition time after moving the multiplexer wasn’t waited for. The first conversion is discarded.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Self-assessment</h2>
+
+      <details class="q"><summary>What concrete advantage does a timer have over a delay loop?</summary>
+        <div class="a"><p>It counts <b>on its own</b>, in parallel with the CPU. The program doesn’t get blocked and
+        can handle other things; besides, the timing doesn’t depend on what the program is doing.</p></div></details>
+
+      <details class="q"><summary>With 8 MHz and a prescaler of 256, how long does one count last, and how long does an 8-bit overflow take?</summary>
+        <div class="a"><p>Each count lasts 256/8,000,000 = <b>32 µs</b>; the overflow occurs every 256 × 32 =
+        <b>8.192 ms</b>.</p></div></details>
+
+      <details class="q"><summary>You want an interrupt every 2 ms with 16 MHz and a prescaler of 64. What compare value?</summary>
+        <div class="a"><p>Each count is 4 µs; 2000/4 = 500 counts → OCR = <b>499</b>. Since it doesn’t fit in
+        8 bits, you have to use the <b>16-bit</b> timer (or a prescaler of 256, with OCR = 124).</p></div></details>
+
+      <details class="q"><summary>Why is a variable shared with an ISR declared volatile?</summary>
+        <div class="a"><p>Because the compiler, seeing nobody else modify it, may keep it in a
+        register and never re-read it from memory. <code>volatile</code> forbids that optimization and forces
+        it to be read every time.</p></div></details>
+
+      <details class="q"><summary>What should an interrupt service routine do —and not do?</summary>
+        <div class="a"><p>It <b>should</b>: read the data or set a flag and get out. It <b>should not</b>: use
+        delays, do long calculations, send over the serial port or refresh the watchdog.</p></div></details>
+
+      <details class="q"><summary>With 8-bit PWM, a prescaler of 8 and 16 MHz, what is the frequency?</summary>
+        <div class="a"><p>f = 16,000,000/(8 × 256) = <b>7812.5 Hz</b>. It works for a motor —it is below
+        the annoyingly audible range yet switches fast— and is more than enough for an LED.</p></div></details>
+
+      <details class="q"><summary>Why isn’t a servo controlled by average value?</summary>
+        <div class="a"><p>Because its internal electronics measure the <b>pulse width</b>, not the average: between
+        1 and 2 ms within a 20 ms period. Two signals with the same average value and different width give
+        different angles.</p></div></details>
+
+      <details class="q"><summary>What is the capture module for?</summary>
+        <div class="a"><p>To record the <b>exact instant</b> an edge arrives, copying the counter value
+        without CPU intervention. With two captures you measure the width of a pulse or a period
+        without other tasks affecting the measurement.</p></div></details>
+
+      <details class="q"><summary>You are measuring a voltage that barely varies and the A/D reading jumps ±3 counts. What do you check?</summary>
+        <div class="a"><p>The <b>reference</b> (supply ripple), the <b>source impedance</b>
+        (too high for the sample &amp; hold) and the coupled <b>digital noise</b>. It also helps to
+        average several readings.</p></div></details>
+
+      <details class="q"><summary>Why is it a good idea to discard the first conversion after changing channels?</summary>
+        <div class="a"><p>Because the hold capacitor still has the charge from the previous channel and
+        needs an acquisition time to take on the new value. The first reading is contaminated by
+        the previous measurement.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/comunicacion-serie">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Communication module</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/control-temperatura-iluminacion">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Control with devices</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Peripherals”</b> of <b>Digital Electronics III</b> (Year 6), based on the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLC programming · Industrial Electronics II · Catto</title>
+<meta name="description" content="Languages standardized by IEC 61131-3: instruction list, ladder diagram, function block diagram, structured text and Grafcet (SFC). Ladder rules, seal-in circuits, interlocks, the trap of the physical NC contact, and a method for going from the flowchart to the program. A topic of Industrial Electronics II, Year 7.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/programacion-plc">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/programacion-plc">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/programacion-plc">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/programacion-plc">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Industrial Electronics II</a>
+    <span class="anio">Year 7</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Industrial Electronics II</span> · 120 h · Topic 4 of 8</div>
+    <h1>PLC programming</h1>
+    <p class="lead">The IEC 61131-3 standard defines five languages. They do not compete with one another: each
+    is convenient for a class of problem, and in a real project they usually coexist. What does not change
+    is the method: <b>first you understand the process, then you write the program</b>.</p>
+    <div class="chips">
+      <span class="chip hi">Ladder</span>
+      <span class="chip">Grafcet</span>
+      <span class="chip">Seal-in</span>
+      <span class="chip">IEC 61131-3</span>
+    </div>
+    <hr class="rule">
+
+    <section id="lenguajes">
+      <h2><span class="n">01</span>The five languages</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Language</th><th class="c">Type</th><th>What it is good for</th></tr></thead>
+          <tbody>
+            <tr><td><b>Ladder diagram (LD)</b></td><td class="c">graphical</td><td>Combinational and control logic. Any electrician can read it. By far the most widely used.</td></tr>
+            <tr><td><b>Function block diagram (FBD)</b></td><td class="c">graphical</td><td>Processes built from chained blocks: PID, filters, scaling, communication.</td></tr>
+            <tr><td><b>Instruction list (IL)</b></td><td class="c">textual</td><td>Compact and very close to the machine. Being phased out, but still found on older equipment.</td></tr>
+            <tr><td><b>Structured text (ST)</b></td><td class="c">textual</td><td>Calculations, loops, table handling and everything that becomes unreadable in ladder.</td></tr>
+            <tr><td><b>Grafcet or SFC</b></td><td class="c">graphical</td><td><b>Sequences</b>: steps, transitions and actions. The one that truly brings order to a machine that works in steps.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">How to choose</div>
+        <p>Rule of thumb: if the problem is described as “when this <b>and</b> that happen, activate
+        that,” it goes in <b>ladder</b>. If it is described as “first this, then that, and if it fails go
+        back to the start,” it goes in <b>Grafcet</b>. If calculations are involved, it goes in
+        <b>structured text</b>. Forcing everything into ladder produces two-hundred-rung programs that
+        nobody can read.</p>
+      </div>
+    </section>
+
+    <section id="ladder">
+      <h2><span class="n">02</span>Ladder diagram</h2>
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Ladder diagram rung in operation" class="svg-t" data-anim><style>.ld-t{fill:#e6edf3;font-size:11.5px;font-weight:700}.ld-k{fill:#7d8a99;font-size:9.5px;text-anchor:middle}.ld-c{fill:#9aa7b4;font-size:10.5px}</style><path d="M60 84 L60 200" stroke="#9aa7b4" stroke-width="2"/><path d="M640 84 L640 200" stroke="#9aa7b4" stroke-width="2"/><path d="M120 110 l0 -14 l0 28 M146 110 l0 -14 l0 28" stroke="#9aa7b4" stroke-width="2"/><text class="ld-k" x="133" y="88">start</text><path d="M260 110 l0 -14 l0 28 M286 110 l0 -14 l0 28" stroke="#9aa7b4" stroke-width="2"/><path d="M258 118 l30 -20" stroke="#9aa7b4" stroke-width="1.6"/><text class="ld-k" x="273" y="88">stop</text><path d="M400 110 l0 -14 l0 28 M426 110 l0 -14 l0 28" stroke="#9aa7b4" stroke-width="2"/><text class="ld-k" x="413" y="88">estop_ok</text><path d="M540 110 a 14 16 0 1 0 0 -1 M566 110 a 14 16 0 1 1 0 -1" fill="none" stroke="#9aa7b4" stroke-width="2"/><text class="ld-k" x="553" y="72">motor</text><path d="M120 168 l0 -14 l0 28 M146 168 l0 -14 l0 28" stroke="#9aa7b4" stroke-width="2"/><text class="ld-k" x="133" y="146">motor</text><path d="M60 110 L120 110 M146 110 L260 110" stroke="#9aa7b4" stroke-width="1.6"/><path d="M286 110 L400 110 M426 110 L540 110 M566 110 L640 110" stroke="#9aa7b4" stroke-width="1.6"/><path d="M60 110 L60 168 M60 168 L120 168 M146 168 L246 168 M246 168 L246 110" stroke="#9aa7b4" stroke-width="1.6"/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0" dur="12s" repeatCount="indefinite"/><path d="M60 110 L120 110" stroke="#3fb950" stroke-width="2.6"/><path d="M60 110 L60 168 L120 168" stroke="#3fb950" stroke-width="2.6"/><text class="ld-t" x="26" y="60" fill="#7d8a99">Idle</text><text class="ld-t" x="200" y="60" fill="#7d8a99">motor stopped</text><text class="ld-c" x="26" y="246">Nobody presses start and the motor is stopped: there is no complete path.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0" dur="12s" repeatCount="indefinite"/><path d="M60 110 L120 110" stroke="#3fb950" stroke-width="2.6"/><path d="M60 110 L60 168 L120 168" stroke="#3fb950" stroke-width="2.6"/><path d="M120 110 L146 110" stroke="#3fb950" stroke-width="2.6"/><path d="M120 168 L146 168 L246 168 L246 110" stroke="#3fb950" stroke-width="2.6"/><path d="M146 110 L260 110" stroke="#3fb950" stroke-width="2.6"/><path d="M286 110 L400 110" stroke="#3fb950" stroke-width="2.6"/><path d="M426 110 L540 110" stroke="#3fb950" stroke-width="2.6"/><circle cx="553" cy="110" r="20" fill="#3fb950" fill-opacity="0.30"/><text class="ld-t" x="26" y="60" fill="#3fb950">Start pressed</text><text class="ld-t" x="200" y="60" fill="#3fb950">motor running</text><text class="ld-c" x="26" y="246">The path closes through the pushbutton and the coil energizes.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0" dur="12s" repeatCount="indefinite"/><path d="M60 110 L120 110" stroke="#3fb950" stroke-width="2.6"/><path d="M60 110 L60 168 L120 168" stroke="#3fb950" stroke-width="2.6"/><path d="M120 168 L146 168 L246 168 L246 110" stroke="#3fb950" stroke-width="2.6"/><path d="M146 110 L260 110" stroke="#3fb950" stroke-width="2.6"/><path d="M286 110 L400 110" stroke="#3fb950" stroke-width="2.6"/><path d="M426 110 L540 110" stroke="#3fb950" stroke-width="2.6"/><circle cx="553" cy="110" r="20" fill="#3fb950" fill-opacity="0.30"/><text class="ld-t" x="26" y="60" fill="#3fb950">Start released</text><text class="ld-t" x="200" y="60" fill="#3fb950">motor running</text><text class="ld-c" x="26" y="246">The motor’s own contact holds the rung: this is the seal-in.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1" dur="12s" repeatCount="indefinite"/><path d="M60 110 L120 110" stroke="#3fb950" stroke-width="2.6"/><path d="M60 110 L60 168 L120 168" stroke="#3fb950" stroke-width="2.6"/><text class="ld-t" x="26" y="60" fill="#f85149">Stop pressed</text><text class="ld-t" x="200" y="60" fill="#7d8a99">motor stopped</text><text class="ld-c" x="26" y="246">The stop contact opens the path and the coil drops out, even with the seal-in present.</text></g><text class="ld-c" x="26" y="276" fill="#7d8a99">The motor’s own contact in parallel with start is the seal-in: it holds the rung once the pushbutton is released.</text><text class="ld-c" x="26" y="296" fill="#7d8a99">Note: the stop pushbutton is NC on the panel, and for that reason it is represented in the program by an open contact.</text></svg>
+        <figcaption><b>Figure 1.</b> A ladder rung in operation, animated. The imaginary “current”
+        flows from left to right: if it finds a complete path of closed contacts, the coil
+        energizes.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Element</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td><b>Normally open contact</b></td><td>Conducts when the bit is 1. Read as “if the signal is active.”</td></tr>
+            <tr><td><b>Normally closed contact</b></td><td>Conducts when the bit is 0. Read as “if the signal is <b>not</b> active.”</td></tr>
+            <tr><td><b>Coil</b></td><td>Writes the result of the rung to a bit: an output or a memory flag.</td></tr>
+            <tr><td><b>Set and Reset coils</b></td><td>Turn a bit on or off permanently until the other one acts. Useful, but easy to leave without their counterpart.</td></tr>
+            <tr><td><b>Edge detection</b></td><td>Gives a one-scan pulse when the signal changes. Essential for counting and for triggering actions only once.</td></tr>
+            <tr><td><b>Series and parallel</b></td><td>Contacts in series form a logical <b>AND</b>; in parallel, a logical <b>OR</b>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Start and stop with seal-in</div>
+        <p>This is the fundamental circuit from which almost all the others derive. In ladder:</p>
+        <pre class="code" style="margin-top:8px">   start         stop_nc        estop_ok         motor
+ ---| |----+------|/|------------| |--------------( )---
+           |
+   motor   |
+ ---| |----+
+</pre>
+        <p style="margin-top:10px">The <b>motor</b> contact in parallel with the start pushbutton is the
+        <b>seal-in (holding contact)</b>: once started, the rung sustains itself even if the pushbutton is
+        released. The stop, in series, breaks that path.</p>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">The NC contact trap</div>
+        <p>The physical stop pushbutton is <b>normally closed</b>: at rest it delivers a 1 to the input.
+        Therefore, in the program it is represented by a <b>normally open</b> contact, not a
+        normally closed one. Using an NC contact in the program for a physical NC pushbutton inverts the
+        logic: the machine never starts or, worse, starts when the stop is pressed.</p>
+        <p style="margin-top:8px">The rule that avoids the mistake: <b>the program is written according to what
+        the input delivers</b>, not according to what the button is called. And it is always verified in
+        online monitoring, looking at the real state of each bit.</p>
+      </div>
+    </section>
+
+    <section id="grafcet">
+      <h2><span class="n">03</span>Grafcet: thinking in sequences</h2>
+      <figure>
+        <svg viewBox="0 0 700 340" role="img" aria-label="Grafcet of a two-cylinder sequence" class="svg-t" data-anim><style>.gf-t{fill:#e6edf3;font-size:11.5px;font-weight:700}.gf-k{fill:#7d8a99;font-size:9.5px}.gf-c{fill:#9aa7b4;font-size:10.5px}.gf-n{fill:#e6edf3;font-size:12px;font-weight:700;text-anchor:middle}</style><rect x="150" y="62" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><rect x="146" y="58" width="54" height="42" rx="5" fill="none" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="173" y="85" fill="#7d8a99">0</text><path d="M196 79 L236 79" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="66" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="83" fill="#7d8a99" font-size="11px">idle</text><path d="M173 96 L173 114" stroke="#2a3140" stroke-width="1.4"/><path d="M159 106 L187 106" stroke="#2a3140" stroke-width="2"/><text class="gf-k" x="194" y="110">cycle and both retracted</text><rect x="150" y="114" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><text class="gf-n" x="173" y="137" fill="#7d8a99">1</text><path d="M196 131 L236 131" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="118" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="135" fill="#7d8a99" font-size="11px">A+</text><path d="M173 148 L173 166" stroke="#2a3140" stroke-width="1.4"/><path d="M159 158 L187 158" stroke="#2a3140" stroke-width="2"/><text class="gf-k" x="194" y="162">sensor A extended</text><rect x="150" y="166" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><text class="gf-n" x="173" y="189" fill="#7d8a99">2</text><path d="M196 183 L236 183" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="170" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="187" fill="#7d8a99" font-size="11px">B+</text><path d="M173 200 L173 218" stroke="#2a3140" stroke-width="1.4"/><path d="M159 210 L187 210" stroke="#2a3140" stroke-width="2"/><text class="gf-k" x="194" y="214">sensor B extended</text><rect x="150" y="218" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><text class="gf-n" x="173" y="241" fill="#7d8a99">3</text><path d="M196 235 L236 235" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="222" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="239" fill="#7d8a99" font-size="11px">A-</text><path d="M173 252 L173 270" stroke="#2a3140" stroke-width="1.4"/><path d="M159 262 L187 262" stroke="#2a3140" stroke-width="2"/><text class="gf-k" x="194" y="266">sensor A retracted</text><rect x="150" y="270" width="46" height="34" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.4"/><text class="gf-n" x="173" y="293" fill="#7d8a99">4</text><path d="M196 287 L236 287" stroke="#2a3140" stroke-width="1.4"/><rect x="236" y="274" width="86" height="26" rx="4" fill="#1c2230" stroke="#2a3140" stroke-width="1.2"/><text class="gf-n" x="279" y="291" fill="#7d8a99" font-size="11px">B-</text><path d="M173 304 L173 336 L88 336 L88 79" fill="none" stroke="#2a3140" stroke-width="1.4"/><path d="M88 79 L150 79" stroke="#2a3140" stroke-width="1.4"/><text class="gf-k" x="194" y="318">sensor B retracted</text><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="62" width="46" height="34" rx="4" fill="#9aa7b4" fill-opacity="0.32" stroke="#9aa7b4" stroke-width="2"/><circle cx="173" cy="79" r="6" fill="#9aa7b4"/><rect x="236" y="66" width="86" height="26" rx="4" fill="#9aa7b4" fill-opacity="0.26" stroke="#9aa7b4" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#9aa7b4">Step 0 active</text><text class="gf-c" x="330" y="148">action: idle</text><text class="gf-c" x="330" y="172">moves on to the next when:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">cycle and both retracted</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="114" width="46" height="34" rx="4" fill="#3fb950" fill-opacity="0.32" stroke="#3fb950" stroke-width="2"/><circle cx="173" cy="131" r="6" fill="#3fb950"/><rect x="236" y="118" width="86" height="26" rx="4" fill="#3fb950" fill-opacity="0.26" stroke="#3fb950" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#3fb950">Step 1 active</text><text class="gf-c" x="330" y="148">action: A+</text><text class="gf-c" x="330" y="172">moves on to the next when:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">sensor A extended</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="166" width="46" height="34" rx="4" fill="#58a6ff" fill-opacity="0.32" stroke="#58a6ff" stroke-width="2"/><circle cx="173" cy="183" r="6" fill="#58a6ff"/><rect x="236" y="170" width="86" height="26" rx="4" fill="#58a6ff" fill-opacity="0.26" stroke="#58a6ff" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#58a6ff">Step 2 active</text><text class="gf-c" x="330" y="148">action: B+</text><text class="gf-c" x="330" y="172">moves on to the next when:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">sensor B extended</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="218" width="46" height="34" rx="4" fill="#d29922" fill-opacity="0.32" stroke="#d29922" stroke-width="2"/><circle cx="173" cy="235" r="6" fill="#d29922"/><rect x="236" y="222" width="86" height="26" rx="4" fill="#d29922" fill-opacity="0.26" stroke="#d29922" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#d29922">Step 3 active</text><text class="gf-c" x="330" y="148">action: A-</text><text class="gf-c" x="330" y="172">moves on to the next when:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">sensor A retracted</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1" dur="12.5s" repeatCount="indefinite"/><rect x="150" y="270" width="46" height="34" rx="4" fill="#bc8cff" fill-opacity="0.32" stroke="#bc8cff" stroke-width="2"/><circle cx="173" cy="287" r="6" fill="#bc8cff"/><rect x="236" y="274" width="86" height="26" rx="4" fill="#bc8cff" fill-opacity="0.26" stroke="#bc8cff" stroke-width="1.6"/><text class="gf-t" x="330" y="120" fill="#bc8cff">Step 4 active</text><text class="gf-c" x="330" y="148">action: B-</text><text class="gf-c" x="330" y="172">moves on to the next when:</text><text class="gf-c" x="330" y="192" fill="#e6edf3">sensor B retracted</text></g><rect x="316" y="96" width="356" height="112" rx="7" fill="none" stroke="#2a3140" stroke-width="1"/><text class="gf-c" x="330" y="242" fill="#7d8a99">Only one step active at a time.</text><text class="gf-c" x="330" y="262" fill="#7d8a99">A transition fires when the</text><text class="gf-c" x="330" y="282" fill="#7d8a99">preceding step is active and its</text><text class="gf-c" x="330" y="302" fill="#7d8a99">condition is true.</text><text class="gf-c" x="26" y="330" fill="#7d8a99">Written this way, the cycle cannot skip a step.</text></svg>
+        <figcaption><b>Figure 2.</b> A Grafcet in operation, animated. Only one step is active at a
+        time; the transition fires when its condition is true, and then the token advances to the next
+        step.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">Its five rules</div>
+          <ol style="margin:8px 0 0;padding-left:20px">
+            <li>The <b>initial step</b> is activated at start-up.</li>
+            <li>A transition fires if it is <b>enabled</b>—the preceding step is active—and its
+            <b>receptivity</b> (transition condition) is true.</li>
+            <li>When it fires, the next step is activated and the preceding one is deactivated, <b>at the same time</b>.</li>
+            <li>Several transitions that can fire simultaneously all fire.</li>
+            <li>If a step receives the order to be activated and deactivated at the same instant, it stays
+            <b>active</b>.</li>
+          </ol>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">Structures</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>Linear sequence</b>: one step after another.</li>
+            <li><b>OR divergence</b>: two possible paths, one is taken depending on the condition.</li>
+            <li><b>AND divergence</b>: two branches that run <b>in parallel</b> and synchronize at the end.</li>
+            <li><b>Jump and loop</b>: to repeat or skip steps.</li>
+          </ul>
+          <p style="margin-top:8px">It translates to ladder mechanically: one flag (memory bit) per step, with Set and
+          Reset driven by the transitions. Many PLCs accept it directly as SFC.</p>
+        </div>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · Two-cylinder sequence</div>
+        <p>Classic cycle <b>A+ B+ A− B−</b>: cylinder A extends, B extends, A retracts, B retracts.</p>
+        <div class="tw" style="margin:10px 0 0">
+          <table class="tab">
+            <thead><tr><th class="c">Step</th><th>Action</th><th>Transition to the next</th></tr></thead>
+            <tbody>
+              <tr><td class="c"><b>0</b></td><td>Idle, everything retracted.</td><td>Cycle pushbutton <b>and</b> both retraction sensors active.</td></tr>
+              <tr><td class="c"><b>1</b></td><td>Extend A.</td><td>A-extended sensor.</td></tr>
+              <tr><td class="c"><b>2</b></td><td>Extend B.</td><td>B-extended sensor.</td></tr>
+              <tr><td class="c"><b>3</b></td><td>Retract A.</td><td>A-retracted sensor.</td></tr>
+              <tr><td class="c"><b>4</b></td><td>Retract B.</td><td>B-retracted sensor, and it returns to step 0.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="margin-top:12px">Written this way, the program <b>cannot</b> skip a step or stall
+        halfway without it being noticed. Written directly in ladder, with loose flags and no structure,
+        is where you get cycles that jam and nobody understands why.</p>
+      </div>
+    </section>
+
+    <section id="metodo">
+      <h2><span class="n">04</span>From the process to the program</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Step</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>1</b></td><td>Write in words what the machine does, including what happens on each fault and how it is reset.</td></tr>
+            <tr><td class="c"><b>2</b></td><td>List inputs and outputs with symbolic name, type and address: this is the <b>I/O assignment table</b>.</td></tr>
+            <tr><td class="c"><b>3</b></td><td>Draw the Grafcet or the flowchart of the sequence, with its conditions.</td></tr>
+            <tr><td class="c"><b>4</b></td><td>Write the program in blocks: safety, modes, sequence, outputs, signaling.</td></tr>
+            <tr><td class="c"><b>5</b></td><td>Simulate or test with no load, forcing inputs from the programming terminal.</td></tr>
+            <tr><td class="c"><b>6</b></td><td>Test with the machine, first in manual and step-by-step mode, then in automatic.</td></tr>
+            <tr><td class="c"><b>7</b></td><td>Document: commented program, assignment table, Grafcet and operating manual.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The structure that is always worth using</div>
+        <p>Separate the program into blocks in a fixed order: <b>safety and general conditions</b>,
+        <b>mode selection</b> (manual, automatic, step-by-step), <b>sequence</b>, <b>output
+        control</b> and <b>signaling</b>. Each physical output is written in <b>one place only</b>, at the end,
+        combining the sequence conditions with the safety ones.</p>
+        <p style="margin-top:8px">That last rule—one output, one place—eliminates at the root the mistake of
+        outputs written twice, which is the one that wastes the most time during commissioning.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Start and stop</div>
+        <p>Program the seal-in circuit with start, NC stop and emergency stop, and verify it online
+        by watching the state of each bit. Then deliberately invert the stop contact in the program and
+        analyze exactly what happens and why.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Reversing with interlocks</div>
+        <p>Program the direction reversal of a motor with an interlock between both directions and a waiting
+        delay when reversing. Verify that no order of button presses manages to energize both contactors
+        at the same time, and also add the <b>mechanical and electrical</b> interlock in the panel.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · Grafcet to ladder</div>
+        <p>Draw the Grafcet of the A+ B+ A− B− sequence and translate it to ladder with one flag per step.
+        Implement it on the pneumatic trainer. Then add an OR divergence for an alternative cycle
+        and check how much simpler the change turns out to be with the step structure.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Document and hand over</div>
+        <p>Hand another group the program with its assignment table and its Grafcet, and ask them to make
+        a functional modification with no explanations. The time they take is the real measure of the
+        quality of the documentation.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Mistake</th><th>Consequence</th></tr></thead>
+          <tbody>
+            <tr><td>NC contact in the program for a physical NC pushbutton</td><td>Inverted logic: the machine does not start, or starts when the stop is pressed.</td></tr>
+            <tr><td>Same output written in several rungs</td><td>Only the last one counts: the output seems not to respond.</td></tr>
+            <tr><td>Set without its matching Reset</td><td>Bits that stay active forever and states that cannot be left.</td></tr>
+            <tr><td>Counting without edge detection</td><td>The counter increments once per scan while the signal is active: absurd counts.</td></tr>
+            <tr><td>Programming the sequence with loose flags</td><td>Cycles that jam or skip steps, with no clear way to diagnose them.</td></tr>
+            <tr><td>Everything in ladder, including calculations</td><td>Unreadable rungs where structured text would have taken three lines.</td></tr>
+            <tr><td>No manual or step-by-step mode</td><td>Impossible to tune the machine or recover it after a fault.</td></tr>
+            <tr><td>Program without comments</td><td>Nobody can maintain it, and the program was the machine’s documentation.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">07</span>Self-assessment</h2>
+
+      <details class="q"><summary>Name the five languages of IEC 61131-3.</summary>
+        <div class="a"><p>Ladder diagram, function block diagram, instruction list, structured
+        text and Grafcet or SFC.</p></div></details>
+
+      <details class="q"><summary>When is Grafcet preferable to ladder?</summary>
+        <div class="a"><p>When the problem is a <b>sequence</b>: first this, then that. Ladder
+        is better for combinational and control logic.</p></div></details>
+
+      <details class="q"><summary>What is a seal-in (holding contact) and how is it implemented?</summary>
+        <div class="a"><p>A contact of the output itself in <b>parallel</b> with the start pushbutton, so
+        that the rung sustains itself when the pushbutton is released. The stop goes in series and breaks that
+        path.</p></div></details>
+
+      <details class="q"><summary>A physical NC stop pushbutton: which contact does it get in the program?</summary>
+        <div class="a"><p>A <b>normally open</b> one, because at rest the input is 1. The program is
+        written according to what the input delivers, not according to what the button is called.</p></div></details>
+
+      <details class="q"><summary>Why is edge detection needed for counting?</summary>
+        <div class="a"><p>Because without it the counter increments <b>on every scan</b> while the signal is
+        active. The edge gives a one-scan pulse for each change.</p></div></details>
+
+      <details class="q"><summary>State the Grafcet evolution rule.</summary>
+        <div class="a"><p>A transition fires if it is <b>enabled</b>—the preceding step is active—and its
+        <b>receptivity</b> (transition condition) is true. When it fires, the next step is activated and the
+        preceding one is deactivated simultaneously.</p></div></details>
+
+      <details class="q"><summary>What is the difference between OR divergence and AND divergence?</summary>
+        <div class="a"><p>In the OR, <b>one</b> of the paths is taken depending on the condition; in the AND, the
+        branches run <b>in parallel</b> and synchronize at the end.</p></div></details>
+
+      <details class="q"><summary>In what order is the program organized?</summary>
+        <div class="a"><p>Safety and general conditions, mode selection, sequence, output control
+        and signaling.</p></div></details>
+
+      <details class="q"><summary>Why must each physical output be written in only one place?</summary>
+        <div class="a"><p>Because the PLC executes in order and only the last write counts. Concentrating it at
+        the end, combining sequence and safety, eliminates that error at the root.</p></div></details>
+
+      <details class="q"><summary>What is step-by-step mode for?</summary>
+        <div class="a"><p>For tuning the machine and for recovering it after a fault, advancing the
+        sequence one step at a time under an operator’s supervision.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/mando-senalizacion">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Control and signaling units</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/aplicaciones-plc">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Basic programming applications</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“PLC instructions and programming”</b> of <b>Industrial Electronics II</b>
+  (Year 7), based on the “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary
+  Education – Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

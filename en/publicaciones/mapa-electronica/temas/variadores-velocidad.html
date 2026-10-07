@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variable-speed drives · Industrial Electronics I · Catto</title>
+<meta name="description" content="Variable-frequency drives: rectifier, DC bus and PWM inverter, volts-per-hertz control, vector control, commissioning parameters, braking, harmonics and installation precautions. A topic of Industrial Electronics I, Year 6.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/variadores-velocidad">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/variadores-velocidad">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/variadores-velocidad">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/variadores-velocidad">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Industrial Electronics I</a>
+    <span class="anio">Year 6</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Industrial Electronics I</span> · 144 h · Topic 7 of 10</div>
+    <h1>Variable-speed drives</h1>
+    <p class="lead">An induction motor turns at the speed imposed by the mains <b>frequency</b>. If the
+    frequency is changed, the speed changes. The whole drive exists to generate that
+    frequency at will, and to do so without destroying the motor.</p>
+    <div class="chips">
+      <span class="chip hi">Power</span>
+      <span class="chip">Control</span>
+      <span class="chip">Volts per hertz</span>
+      <span class="chip">Motors</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que">
+      <h2><span class="n">01</span>Why vary the frequency</h2>
+      <p>In <a href="/en/publicaciones/mapa-electronica/temas/motores-ca">AC motors</a> it was established
+      that the synchronous speed is n<sub>s</sub> = 120 f/p. With 50 Hz and four poles, that is 1500 rpm, and there is no
+      way to change it: the mains is in charge.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Method</th><th>Range</th><th>Problem</th></tr></thead>
+          <tbody>
+            <tr><td><b>Valve or damper</b></td><td>Whole flow range</td><td>The motor keeps drawing the same power: the outlet is throttled and the energy is thrown away.</td></tr>
+            <tr><td><b>Pulleys and gearboxes</b></td><td>Fixed</td><td>It can't be adjusted while running.</td></tr>
+            <tr><td><b>Pole changing</b></td><td>Two or three speeds</td><td>Special motors only, in steps.</td></tr>
+            <tr><td><b>Variable-frequency drive</b></td><td><b>Continuous</b>, from 0 to over 50 Hz</td><td>Equipment cost and harmonics on the mains.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · Why it pays for itself on a pump</div>
+        <p>In a centrifugal pump, the flow is proportional to the speed, but the <b>power goes with the
+        cube</b> of the speed.</p>
+        <ul>
+          <li>At 80 % speed, the power consumed is 0.8³ = <b>51 %</b>.</li>
+          <li>At 50 %, it is 0.5³ = <b>12.5 %</b>.</li>
+        </ul>
+        <p>Throttling with a valve, on the other hand, barely lowers the consumption. That is why on pumps and
+        fans the drive pays for itself within months, and it is the main reason they are
+        everywhere.</p>
+      </div>
+    </section>
+
+    <section id="partes">
+      <h2><span class="n">02</span>What is inside</h2>
+      <figure>
+        <svg viewBox="0 0 700 300" role="img" aria-label="Stages of a variable-frequency drive" class="svg-t" data-anim>
+          <style>.vr-b{fill:#1c2230;stroke:#58a6ff;stroke-width:2}.vr-n{fill:#e6edf3;font-size:11.5px;text-anchor:middle;font-weight:600}.vr-s{fill:#9aa7b4;font-size:10px;text-anchor:middle}.vr-d{fill:#7d8a99;font-size:10.5px}</style>
+          <rect class="vr-b" x="60" y="110" width="150" height="70" rx="10"/>
+          <text class="vr-n" x="135" y="140">Rectifier</text>
+          <text class="vr-s" x="135" y="160">diode bridge</text>
+          <rect class="vr-b" x="250" y="110" width="150" height="70" rx="10"/>
+          <text class="vr-n" x="325" y="140">DC bus</text>
+          <text class="vr-s" x="325" y="160">capacitors · 537 V</text>
+          <rect class="vr-b" x="440" y="110" width="150" height="70" rx="10"/>
+          <text class="vr-n" x="515" y="140">Inverter</text>
+          <text class="vr-s" x="515" y="160">six IGBTs · PWM</text>
+          <line x1="210" y1="145" x2="250" y2="145" stroke="#9aa7b4" stroke-width="1.8"/>
+          <line x1="400" y1="145" x2="440" y2="145" stroke="#9aa7b4" stroke-width="1.8"/>
+          <line x1="77" y1="244" x2="193" y2="244" stroke="#2a3140" stroke-width="1"/>
+          <polyline points="80.00,244.00 81.38,242.27 82.75,240.56 84.12,238.86 85.50,237.20 86.88,235.58 88.25,234.01 89.62,232.51 91.00,231.07 92.38,229.71 93.75,228.44 95.12,227.27 96.50,226.20 97.88,225.24 99.25,224.40 100.62,223.67 102.00,223.08 103.38,222.61 104.75,222.27 106.12,222.07 107.50,222.00 108.88,222.07 110.25,222.27 111.62,222.61 113.00,223.08 114.38,223.67 115.75,224.40 117.12,225.24 118.50,226.20 119.88,227.27 121.25,228.44 122.62,229.71 124.00,231.07 125.38,232.51 126.75,234.01 128.12,235.58 129.50,237.20 130.88,238.86 132.25,240.56 133.62,242.27 135.00,244.00 136.38,245.73 137.75,247.44 139.12,249.14 140.50,250.80 141.88,252.42 143.25,253.99 144.62,255.49 146.00,256.93 147.38,258.29 148.75,259.56 150.12,260.73 151.50,261.80 152.88,262.76 154.25,263.60 155.62,264.33 157.00,264.92 158.38,265.39 159.75,265.73 161.12,265.93 162.50,266.00 163.88,265.93 165.25,265.73 166.62,265.39 168.00,264.92 169.38,264.33 170.75,263.60 172.12,262.76 173.50,261.80 174.88,260.73 176.25,259.56 177.62,258.29 179.00,256.93 180.38,255.49 181.75,253.99 183.12,252.42 184.50,250.80 185.88,249.14 187.25,247.44 188.62,245.73 190.00,244.00" fill="none" stroke="#3fb950" stroke-width="1.8"/>
+          <text class="vr-s" x="135" y="284">mains AC · 50 Hz</text>
+          <line x1="267" y1="244" x2="383" y2="244" stroke="#2a3140" stroke-width="1"/>
+          <polyline points="270.00,228.16 271.38,227.66 272.75,227.27 274.12,227.07 275.50,227.11 276.88,227.38 278.25,227.82 279.62,228.33 281.00,228.81 282.38,229.14 283.75,229.26 285.12,229.14 286.50,228.81 287.88,228.33 289.25,227.82 290.62,227.38 292.00,227.11 293.38,227.07 294.75,227.27 296.12,227.66 297.50,228.16 298.88,228.66 300.25,229.05 301.62,229.25 303.00,229.21 304.38,228.94 305.75,228.50 307.12,227.99 308.50,227.51 309.88,227.18 311.25,227.06 312.62,227.18 314.00,227.51 315.38,227.99 316.75,228.50 318.12,228.94 319.50,229.21 320.88,229.25 322.25,229.05 323.62,228.66 325.00,228.16 326.38,227.66 327.75,227.27 329.12,227.07 330.50,227.11 331.88,227.38 333.25,227.82 334.62,228.33 336.00,228.81 337.38,229.14 338.75,229.26 340.12,229.14 341.50,228.81 342.88,228.33 344.25,227.82 345.62,227.38 347.00,227.11 348.38,227.07 349.75,227.27 351.12,227.66 352.50,228.16 353.88,228.66 355.25,229.05 356.62,229.25 358.00,229.21 359.38,228.94 360.75,228.50 362.12,227.99 363.50,227.51 364.88,227.18 366.25,227.06 367.62,227.18 369.00,227.51 370.38,227.99 371.75,228.50 373.12,228.94 374.50,229.21 375.88,229.25 377.25,229.05 378.62,228.66 380.00,228.16" fill="none" stroke="#3fb950" stroke-width="1.8"/>
+          <text class="vr-s" x="325" y="284">DC</text>
+          <line x1="457" y1="244" x2="573" y2="244" stroke="#2a3140" stroke-width="1"/>
+          <polyline points="460.00,224.20 461.38,224.20 462.75,224.20 464.12,263.80 465.50,263.80 466.88,263.80 468.25,224.20 469.62,224.20 471.00,224.20 472.38,224.20 473.75,224.20 475.12,224.20 476.50,224.20 477.88,263.80 479.25,224.20 480.62,224.20 482.00,224.20 483.38,224.20 484.75,224.20 486.12,224.20 487.50,224.20 488.88,224.20 490.25,263.80 491.62,224.20 493.00,224.20 494.38,224.20 495.75,224.20 497.12,224.20 498.50,224.20 499.88,224.20 501.25,224.20 502.62,263.80 504.00,263.80 505.38,224.20 506.75,224.20 508.12,224.20 509.50,224.20 510.88,224.20 512.25,224.20 513.62,263.80 515.00,263.80 516.38,263.80 517.75,263.80 519.12,224.20 520.50,224.20 521.88,224.20 523.25,263.80 524.62,263.80 526.00,263.80 527.38,263.80 528.75,263.80 530.12,263.80 531.50,263.80 532.88,224.20 534.25,263.80 535.62,263.80 537.00,263.80 538.38,263.80 539.75,263.80 541.12,263.80 542.50,263.80 543.88,263.80 545.25,224.20 546.62,263.80 548.00,263.80 549.38,263.80 550.75,263.80 552.12,263.80 553.50,263.80 554.88,263.80 556.25,263.80 557.62,224.20 559.00,224.20 560.38,263.80 561.75,263.80 563.12,263.80 564.50,263.80 565.88,263.80 567.25,263.80 568.62,224.20 570.00,224.20" fill="none" stroke="#3fb950" stroke-width="1.8"/>
+          <text class="vr-s" x="515" y="284">variable-frequency PWM</text>
+          <line x1="20" y1="145" x2="60" y2="145" stroke="#9aa7b4" stroke-width="1.8"/>
+          <text class="vr-d" x="16" y="136">mains</text>
+          <line x1="590" y1="145" x2="640" y2="145" stroke="#9aa7b4" stroke-width="1.8"/>
+          <circle cx="662" cy="145" r="22" fill="#1c2230" stroke="#9aa7b4" stroke-width="1.8"/>
+          <text class="vr-n" x="662" y="150">M</text>
+          <g><circle r="6" fill="#ffa657"/><animateMotion path="M20,145 H210 M250,145 H400 M440,145 H640" dur="9s" repeatCount="indefinite"/></g>
+          <text class="vr-d" x="20" y="72">The mains comes in fixed at 50 Hz and an AC comes out at whatever frequency is needed: that is the whole drive.</text>
+          <text class="vr-d" x="250" y="196" fill="#f85149">stays charged for minutes after power is cut</text>
+          </svg>
+        <figcaption><b>Figure 1.</b> The three stages, animated. The mains enters the <b>rectifier</b>, is
+        stored in the <b>DC bus</b> and the <b>inverter</b> builds an AC again, but with the
+        frequency and voltage that are needed.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Stage</th><th>What it does</th><th>Practical detail</th></tr></thead>
+          <tbody>
+            <tr><td><b>Rectifier</b></td><td>Converts the mains AC into DC</td><td>Three-phase diode bridge: on 380 V it gives about <b>537 V</b> DC.</td></tr>
+            <tr><td><b>DC bus</b></td><td>Stores energy in large capacitors</td><td>They stay charged above 500 V for <b>minutes after disconnection</b>. It is the greatest hazard of the equipment.</td></tr>
+            <tr><td><b>Inverter</b></td><td>Six IGBTs that build the output AC by PWM</td><td>2 to 16 kHz carrier (<a href="/en/publicaciones/mapa-electronica/temas/fuentes-conmutadas">power supplies</a>).</td></tr>
+            <tr><td><b>Control</b></td><td>Microcontroller or DSP that computes the modulation</td><td>Holds the parameters, the protections and the communications.</td></tr>
+            <tr><td><b>Braking</b></td><td>Resistor or return to the mains</td><td>When braking, the motor <b>generates</b> and raises the bus voltage: that energy has to be burned off or returned.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="vhz">
+      <h2><span class="n">03</span>The volts-per-hertz law</h2>
+      <p>It is the central concept of the topic. If the frequency is lowered without lowering the voltage, the <b>magnetic flux
+      of the motor grows</b> until it saturates the iron: the current shoots up and the motor burns out.</p>
+
+      <div class="form">
+        <math display="block"><mrow><mi>Φ</mi><mo>∝</mo><mfrac><mi>V</mi><mi>f</mi></mfrac><mspace width="30px"/><mfrac><mi>V</mi><mi>f</mi></mfrac><mo>=</mo><mtext>constant</mtext></mrow></math>
+        <span class="cap">For 380 V and 50 Hz, the ratio is <b>7.6 volts per hertz</b>. 25 Hz corresponds to
+        190 V; 10 Hz, to 76 V.</span>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Voltage versus frequency curve of a drive" class="svg-t" data-anim>
+          <style>.vh-d{fill:#7d8a99;font-size:10.5px}.vh-l{fill:#9aa7b4;font-size:11px}</style>
+          <line x1="96" y1="240" x2="574" y2="240" stroke="#2a3140" stroke-width="1.3"/>
+          <line x1="96" y1="240" x2="96" y2="54" stroke="#2a3140" stroke-width="1.3"/>
+          <path d="M96.0,240.0 L328.0,78.5 L560.0,78.5" fill="none" stroke="#3fb950" stroke-width="2.6"/>
+          <line x1="328.0" y1="78.5" x2="328.0" y2="240" stroke="#2a3140" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <text class="vh-d" x="328.0" y="258" text-anchor="middle">50 Hz</text>
+          <text class="vh-d" x="560.0" y="258" text-anchor="middle">100 Hz</text>
+          <text class="vh-d" x="88" y="82.5" text-anchor="end">380 V</text>
+          <text class="vh-l" x="100" y="48">output voltage</text>
+          <text class="vh-l" x="574" y="276" text-anchor="end">frequency</text>
+          <rect x="96.0" y="70.0" width="232.0" height="170.0" fill="#3fb950" opacity=".08"/>
+          <rect x="328.0" y="70.0" width="232.0" height="170.0" fill="#d29922" opacity=".08"/>
+          <text class="vh-d" x="212.0" y="66" text-anchor="middle" fill="#3fb950">constant torque</text>
+          <text class="vh-d" x="444.0" y="66" text-anchor="middle" fill="#d29922">constant power</text>
+          <g opacity="0">
+          <circle cx="142.4" cy="207.7" r="7" fill="#58a6ff"/>
+          <line x1="142.4" y1="207.7" x2="142.4" y2="240" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="3 3"/>
+          <rect x="584" y="100" width="104" height="110" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#58a6ff">10 Hz</text>
+          <text x="636" y="150" text-anchor="middle" font-size="12.5" fill="#9aa7b4">76 V</text>
+          <text x="636" y="174" text-anchor="middle" font-size="12.5" fill="#9aa7b4">300 rpm</text>
+          <text x="636" y="198" text-anchor="middle" font-size="12.5" fill="#3fb950">torque 100 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="212.0" cy="159.2" r="7" fill="#58a6ff"/>
+          <line x1="212.0" y1="159.2" x2="212.0" y2="240" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="3 3"/>
+          <rect x="584" y="100" width="104" height="110" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#58a6ff">25 Hz</text>
+          <text x="636" y="150" text-anchor="middle" font-size="12.5" fill="#9aa7b4">190 V</text>
+          <text x="636" y="174" text-anchor="middle" font-size="12.5" fill="#9aa7b4">750 rpm</text>
+          <text x="636" y="198" text-anchor="middle" font-size="12.5" fill="#3fb950">torque 100 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="328.0" cy="78.5" r="7" fill="#58a6ff"/>
+          <line x1="328.0" y1="78.5" x2="328.0" y2="240" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="3 3"/>
+          <rect x="584" y="100" width="104" height="110" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#58a6ff">50 Hz</text>
+          <text x="636" y="150" text-anchor="middle" font-size="12.5" fill="#9aa7b4">380 V</text>
+          <text x="636" y="174" text-anchor="middle" font-size="12.5" fill="#9aa7b4">1500 rpm</text>
+          <text x="636" y="198" text-anchor="middle" font-size="12.5" fill="#3fb950">torque 100 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="444.0" cy="78.5" r="7" fill="#58a6ff"/>
+          <line x1="444.0" y1="78.5" x2="444.0" y2="240" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="3 3"/>
+          <rect x="584" y="100" width="104" height="110" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#58a6ff">75 Hz</text>
+          <text x="636" y="150" text-anchor="middle" font-size="12.5" fill="#9aa7b4">380 V</text>
+          <text x="636" y="174" text-anchor="middle" font-size="12.5" fill="#9aa7b4">2250 rpm</text>
+          <text x="636" y="198" text-anchor="middle" font-size="12.5" fill="#d29922">torque 67 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0" dur="10s" repeatCount="indefinite"/></g>
+          <g opacity="0">
+          <circle cx="560.0" cy="78.5" r="7" fill="#58a6ff"/>
+          <line x1="560.0" y1="78.5" x2="560.0" y2="240" stroke="#58a6ff" stroke-width="1.2" stroke-dasharray="3 3"/>
+          <rect x="584" y="100" width="104" height="110" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <text x="636" y="126" text-anchor="middle" font-size="15" font-weight="700" fill="#58a6ff">100 Hz</text>
+          <text x="636" y="150" text-anchor="middle" font-size="12.5" fill="#9aa7b4">380 V</text>
+          <text x="636" y="174" text-anchor="middle" font-size="12.5" fill="#9aa7b4">3000 rpm</text>
+          <text x="636" y="198" text-anchor="middle" font-size="12.5" fill="#d29922">torque 50 %</text>
+          <animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1" dur="10s" repeatCount="indefinite"/></g>
+          <text class="vh-d" x="96" y="296">Constant V/f keeps the flux, and with it the available torque. Above rated frequency there is no more voltage.</text>
+          </svg>
+        <figcaption><b>Figure 2.</b> The V/f curve, animated. Up to the rated frequency, voltage and frequency
+        rise together and the <b>available torque is maintained</b>. Above that there is no more voltage: the motor enters
+        the <b>constant-power</b> region and the torque falls.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Below rated: constant torque</div>
+          <p>V and f rise proportionally, the flux is maintained and the motor can deliver its rated torque at
+          any speed. It is the usual working region.</p>
+          <p style="margin-top:8px">At very low frequency a <b>voltage boost</b> is needed
+          to compensate for the drop across the winding resistance, which at 2 or 3 Hz eats up almost all the
+          voltage.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--warn)">Above rated: constant power</div>
+          <p>The voltage cannot exceed the mains voltage, so V/f drops, the flux drops and <b>the torque falls in
+          inverse proportion</b> to the frequency. At 100 Hz the motor gives half the torque.</p>
+          <p style="margin-top:8px">The mechanical limit must also be checked: bearings, balancing and the
+          motor's own ventilation.</p>
+        </div>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">Motor cooling also drops with speed</div>
+        <p>The fan of a self-ventilated motor is mounted on its own shaft: at half speed it
+        ventilates much less, yet the motor can keep delivering the same torque and the same current. That is why
+        prolonged operation at low speed with rated torque calls for <b>independent forced ventilation</b>
+        or an oversized motor. It is one of the most common causes of burnt-out motors in installations
+        with drives.</p>
+      </div>
+    </section>
+
+    <section id="control">
+      <h2><span class="n">04</span>Types of control</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Control</th><th>How it works</th><th>When it is used</th></tr></thead>
+          <tbody>
+            <tr><td><b>Scalar V/f</b></td><td>Applies the V/f curve without measuring anything from the motor</td><td>Pumps, fans, conveyors: loads that don't demand torque at zero speed. It is the simplest and cheapest.</td></tr>
+            <tr><td><b>Sensorless vector</b></td><td>Estimates the flux position from the measured currents</td><td>When torque is needed at low speed and good dynamic response: elevators, extruders.</td></tr>
+            <tr><td><b>Closed-loop vector</b></td><td>Uses an <b>encoder</b> on the shaft</td><td>Positioning and exact torque at zero speed: machine tools, cranes.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The parameters that must always be entered</div>
+        <ol style="margin:8px 0 0;padding-left:20px">
+          <li><b>Motor nameplate data</b>: voltage, current, frequency, speed, cos φ. Without this the
+          drive cannot protect it.</li>
+          <li><b>Acceleration and deceleration ramps</b>: if they are too short, the drive trips on
+          overcurrent or on DC bus overvoltage.</li>
+          <li><b>Minimum and maximum frequency</b>.</li>
+          <li><b>Current limit</b> and thermal protection.</li>
+          <li><b>Command source</b>: keypad, terminal block, communication.</li>
+          <li><b>Carrier frequency</b>: the higher it is, the quieter the motor and the more heat in the
+          drive.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="instalacion">
+      <h2><span class="n">05</span>Installation: what ruins a drive</h2>
+      <div class="g2">
+        <div class="box peligro">
+          <div class="bt">Never between the drive and the motor</div>
+          <p><b>No</b> switching device —contactor, switch, compensation capacitors— is placed
+          between the drive output and the motor. Opening that circuit while the drive is delivering current
+          destroys the output stage. If isolation is needed, it is done with the drive stopped and with an
+          auxiliary contact that signals the drive.</p>
+        </div>
+        <div class="box ojo">
+          <div class="bt">Shielded cable and grounds</div>
+          <p>The PWM output has nanosecond edges: it radiates a great deal. The cable to the motor must be
+          <b>shielded</b>, with the shield grounded <b>at both ends</b> and over 360°, not with a
+          “pigtail.” Without that, faults appear in sensors, in communications and even in neighboring
+          equipment.</p>
+        </div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Other precautions</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Bearing currents</b>: the switching induces voltages on the shaft that discharge
+          through the bearing and pit it. With long cables or large motors, insulated bearings
+          or shaft grounding brushes are used.</li>
+          <li><b>Harmonics toward the mains</b>: the input rectifier draws current in peaks. It is corrected
+          with a line or DC-bus reactor, and in large installations with filters
+          (<a href="/en/publicaciones/mapa-electronica/temas/potencia-ca">AC power</a>).</li>
+          <li><b>Enclosure ventilation</b>: the drive dissipates 2 to 4 % of the power it handles.
+          A 15 kW unit can be giving off 500 W inside the cabinet.</li>
+          <li><b>Distance to the motor</b>: long cables produce reflections that double the voltage at the motor
+          terminals. Beyond a few tens of meters an output filter is needed.</li>
+        </ul>
+      </div>
+
+      <div class="box peligro">
+        <div class="bt">Before opening a drive</div>
+        <p>Cut the power, wait the time the manufacturer indicates —typically <b>5 to 15 minutes</b>— and
+        <b>verify with an instrument</b> that the DC bus voltage has dropped below 50 V. The
+        bus capacitors store enough energy to kill long after the equipment has been disconnected,
+        and a dark front panel means nothing.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Parameterize and start</div>
+        <p>With a training drive and a small motor, enter the nameplate data and the ramps, and start
+        from the keypad. Use a tachometer to measure the speed at 10, 25, 50 and 60 Hz and compare it with
+        n = 120 f/p. Note the slip at each point.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · The V/f curve, measured</div>
+        <p>Use a True RMS multimeter to measure the output voltage at different frequencies and build the table of V
+        versus f. Verify that the ratio stays constant up to the rated frequency and that after that the voltage
+        flattens out. Plot it.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · Ramps and protections</div>
+        <p>Shorten the acceleration ramp until the drive trips on overcurrent, and the braking ramp
+        until it trips on DC bus overvoltage. Note the limit values and explain each trip. It is the
+        best way to understand what each parameter protects.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · Carrier and noise</div>
+        <p>Change the carrier frequency between 2 and 12 kHz and listen to the motor: the characteristic whine
+        changes pitch until it becomes inaudible. Measure the drive's temperature in each case: silence
+        is paid for with heat.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Usual cause</th></tr></thead>
+          <tbody>
+            <tr><td>Trips on overcurrent at start-up</td><td>Ramp too short for the inertia, or current limit set wrong.</td></tr>
+            <tr><td>Trips on overvoltage when braking</td><td>The motor returns energy and the bus voltage rises. Lengthen the ramp or add a braking resistor.</td></tr>
+            <tr><td>The motor heats up at low speed</td><td>Insufficient self-ventilation. Forced ventilation is needed.</td></tr>
+            <tr><td>No strength at low frequency</td><td>Voltage boost missing, or the application requires vector control.</td></tr>
+            <tr><td>Faults in sensors and communications when the motor starts</td><td>Output cable unshielded or shield badly connected.</td></tr>
+            <tr><td>Bearings pitted after a few months</td><td>Shaft currents induced by the switching.</td></tr>
+            <tr><td>The drive was destroyed when an output contactor opened</td><td>Never disconnect between drive and motor while the equipment is running.</td></tr>
+            <tr><td>The motor vibrates and makes odd noise</td><td>Low carrier, or mechanical resonance at a certain frequency: solved with “skip frequencies” in the parameter setup.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Self-assessment</h2>
+
+      <details class="q"><summary>Why does the voltage have to be lowered when the frequency is lowered?</summary>
+        <div class="a"><p>Because the magnetic flux is proportional to V/f: if f drops and V doesn't, the flux
+        grows, the iron <b>saturates</b> and the magnetizing current shoots up, burning out the
+        motor.</p></div></details>
+
+      <details class="q"><summary>A 380 V, 50 Hz motor runs at 30 Hz. What voltage should the drive apply?</summary>
+        <div class="a"><p>The ratio is 380/50 = 7.6 V/Hz, so 7.6 × 30 = <b>228 V</b> —plus the boost
+        that compensates for the resistive drop—.</p></div></details>
+
+      <details class="q"><summary>What happens above the rated frequency?</summary>
+        <div class="a"><p>The voltage cannot rise any further, so V/f falls: the flux drops and the <b>available torque
+        decreases</b>. The motor enters the constant-power region and its mechanical
+        limit must also be checked.</p></div></details>
+
+      <details class="q"><summary>Why does a pump with a drive save so much energy?</summary>
+        <div class="a"><p>Because the power of a centrifugal pump varies with the <b>cube</b> of the
+        speed: at 80 % speed it consumes 51 %, and at 50 %, barely 12.5 %. Throttling with a
+        valve does not lower the consumption.</p></div></details>
+
+      <details class="q"><summary>What are the three stages of a drive?</summary>
+        <div class="a"><p><b>Rectifier</b> (mains to DC), <b>DC bus</b> with its capacitors, and
+        <b>inverter</b> of six IGBTs that builds the output AC by PWM.</p></div></details>
+
+      <details class="q"><summary>Why isn't a contactor placed between the drive and the motor?</summary>
+        <div class="a"><p>Because opening it while the drive is delivering current <b>destroys the output
+        stage</b>: an inductive current is abruptly interrupted. If isolation is needed, it is done with
+        the drive stopped.</p></div></details>
+
+      <details class="q"><summary>What is the difference between V/f control and vector control?</summary>
+        <div class="a"><p>V/f applies a curve without measuring the state of the motor: it is simple and sufficient for
+        pumps and fans. <b>Vector</b> control estimates or measures the flux position and controls the torque
+        directly, giving strength at low speed and better response.</p></div></details>
+
+      <details class="q"><summary>Why must the cable to the motor be shielded?</summary>
+        <div class="a"><p>Because the PWM output has nanosecond edges that radiate a lot of
+        interference. The shield, grounded at <b>both ends</b> and over 360°, contains it and prevents
+        faults in sensors, communications and neighboring equipment.</p></div></details>
+
+      <details class="q"><summary>What precaution must be taken before opening a drive?</summary>
+        <div class="a"><p>Cut the power, wait the indicated time —5 to 15 minutes— and <b>verify with an
+        instrument</b> that the DC bus is below 50 V. The capacitors keep more than
+        500 V long after the power is cut.</p></div></details>
+
+      <details class="q"><summary>A motor runs at 30 % speed with rated torque and burns out. What was missing?</summary>
+        <div class="a"><p><b>Forced ventilation</b>. The motor's own fan turns with the shaft: at low speed
+        it barely cools, while the current is still the rated one.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/diagnostico-fallas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Fault diagnosis and detection</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/sensores-actuadores">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Sensors, actuators and transducers</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Variable-speed drives”</b> of <b>Industrial Electronics I</b> (Year 6), based on the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

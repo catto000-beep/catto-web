@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Communication module · Digital Electronics III · Catto</title>
+<meta name="description" content="Comunicación serie en microcontroladores: USART asincrónica, trama, cálculo del baudaje y su error, comunicación sincrónica SPI e I2C, niveles eléctricos, y cuándo conviene cada bus. Eje temático de Electrónica Digital III, 6° año.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/comunicacion-serie">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-electronica/temas/comunicacion-serie">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-electronica/temas/comunicacion-serie">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-electronica/temas/comunicacion-serie">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-electronica">Topic Map · Digital Electronics III</a>
+    <span class="anio">Year 6</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Electronics III</span> · 144 h · Topic 2 of 7</div>
+    <h1>Communication module</h1>
+    <p class="lead">A microcontroller on its own is good for very little: almost always it has to talk to a sensor,
+    a display, another micro or a computer. All of that is solved with two or three wires and a
+    peripheral that is configured in five lines.</p>
+    <div class="chips">
+      <span class="chip hi">Microcontrollers</span>
+      <span class="chip">USART</span>
+      <span class="chip">SPI</span>
+      <span class="chip">I²C</span>
+      <span class="chip">Baud rate</span>
+    </div>
+    <hr class="rule">
+
+    <section id="serie-paralelo">
+      <h2><span class="n">01</span>Why serial and not parallel</h2>
+      <p>Sending a byte over eight wires at once seems faster, and it is over short distances. But as soon as
+      you have to leave the circuit board, <b>serial</b> communication wins by a landslide.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th>Parallel</th><th>Serial</th></tr></thead>
+          <tbody>
+            <tr><td><b>Wires</b></td><td>8, 16 or more, plus ground</td><td>1 to 4</td></tr>
+            <tr><td><b>Connector and cable cost</b></td><td>High</td><td>Low</td></tr>
+            <tr><td><b>Micro pins</b></td><td>A whole port</td><td>Two or three</td></tr>
+            <tr><td><b>Distance</b></td><td>Centimeters</td><td>Meters, or kilometers with <a href="/en/publicaciones/mapa-electronica/temas/conversores-ad-da">RS485</a></td></tr>
+            <tr><td><b>Its own problem</b></td><td><i>Skew</i>: the bits don’t all arrive together</td><td>Both ends have to agree on the speed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">Synchronous and asynchronous</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>Synchronous</b>: there is a <b>clock</b> wire. The sender says, besides the data,
+          when to read it. That is SPI, that is I²C, and that is the USART in synchronous mode. Fast and free of
+          speed errors, at the cost of one more wire.</li>
+          <li><b>Asynchronous</b>: there is no clock. Both ends have to be configured at the
+          <b>same speed</b> beforehand, and the frame carries start and end marks to
+          synchronize on every byte. It is the good old serial port.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="uart">
+      <h2><span class="n">02</span>The asynchronous USART: the frame</h2>
+      <p>The idle line is <b>high</b>. To send a byte, the line is pulled to zero for one bit time
+      —the <b>start bit</b>—, and that tells the receiver to start counting. Then come the
+      eight data bits, <b>least significant first</b>, optionally a parity bit, and at
+      least one <b>stop bit</b> at high.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="Asynchronous serial frame, 8N1" class="svg-t" data-anim>
+          <style>.tr-d{fill:#7d8a99;font-size:10px;text-anchor:middle}.tr-l{fill:#9aa7b4;font-size:11px}</style>
+          <text class="tr-d" x="93.75" y="206" fill="#7d8a99">idle</text>
+          <line x1="117.50" y1="80" x2="117.50" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="141.25" y="206" fill="#f85149">start</text>
+          <line x1="165.00" y1="80" x2="165.00" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="188.75" y="206" fill="#58a6ff">b0</text>
+          <text class="tr-d" x="188.75" y="74" font-size="13" font-weight="700" fill="#58a6ff">1</text>
+          <line x1="212.50" y1="80" x2="212.50" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="236.25" y="206" fill="#58a6ff">b1</text>
+          <text class="tr-d" x="236.25" y="74" font-size="13" font-weight="700" fill="#58a6ff">0</text>
+          <line x1="260.00" y1="80" x2="260.00" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="283.75" y="206" fill="#58a6ff">b2</text>
+          <text class="tr-d" x="283.75" y="74" font-size="13" font-weight="700" fill="#58a6ff">0</text>
+          <line x1="307.50" y1="80" x2="307.50" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="331.25" y="206" fill="#58a6ff">b3</text>
+          <text class="tr-d" x="331.25" y="74" font-size="13" font-weight="700" fill="#58a6ff">0</text>
+          <line x1="355.00" y1="80" x2="355.00" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="378.75" y="206" fill="#58a6ff">b4</text>
+          <text class="tr-d" x="378.75" y="74" font-size="13" font-weight="700" fill="#58a6ff">0</text>
+          <line x1="402.50" y1="80" x2="402.50" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="426.25" y="206" fill="#58a6ff">b5</text>
+          <text class="tr-d" x="426.25" y="74" font-size="13" font-weight="700" fill="#58a6ff">0</text>
+          <line x1="450.00" y1="80" x2="450.00" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="473.75" y="206" fill="#58a6ff">b6</text>
+          <text class="tr-d" x="473.75" y="74" font-size="13" font-weight="700" fill="#58a6ff">1</text>
+          <line x1="497.50" y1="80" x2="497.50" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="521.25" y="206" fill="#58a6ff">b7</text>
+          <text class="tr-d" x="521.25" y="74" font-size="13" font-weight="700" fill="#58a6ff">0</text>
+          <line x1="545.00" y1="80" x2="545.00" y2="190" stroke="#2a3140" stroke-width="1" opacity=".6"/>
+          <text class="tr-d" x="568.75" y="206" fill="#ffa657">stop</text>
+          <text class="tr-d" x="616.25" y="206" fill="#7d8a99">idle</text>
+          <line x1="60" y1="176" x2="650" y2="176" stroke="#2a3140" stroke-width="1.2"/>
+          <path d="M70.00,96.00 L117.50,96.00 L117.50,150.00 L165.00,150.00 L165.00,96.00 L212.50,96.00 L212.50,150.00 L260.00,150.00 L307.50,150.00 L355.00,150.00 L402.50,150.00 L450.00,150.00 L450.00,96.00 L497.50,96.00 L497.50,150.00 L545.00,150.00 L545.00,96.00 L592.50,96.00 L640.00,96.00" fill="none" stroke="#3fb950" stroke-width="2.4"/>
+          <line x1="188.75" y1="176" x2="188.75" y2="90" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="188.75" cy="96.00" r="3.4" fill="#a371f7"/>
+          <line x1="236.25" y1="176" x2="236.25" y2="90" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="236.25" cy="150.00" r="3.4" fill="#a371f7"/>
+          <line x1="283.75" y1="176" x2="283.75" y2="90" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="283.75" cy="150.00" r="3.4" fill="#a371f7"/>
+          <line x1="331.25" y1="176" x2="331.25" y2="90" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="331.25" cy="150.00" r="3.4" fill="#a371f7"/>
+          <line x1="378.75" y1="176" x2="378.75" y2="90" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="378.75" cy="150.00" r="3.4" fill="#a371f7"/>
+          <line x1="426.25" y1="176" x2="426.25" y2="90" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="426.25" cy="150.00" r="3.4" fill="#a371f7"/>
+          <line x1="473.75" y1="176" x2="473.75" y2="90" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="473.75" cy="96.00" r="3.4" fill="#a371f7"/>
+          <line x1="521.25" y1="176" x2="521.25" y2="90" stroke="#a371f7" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="521.25" cy="150.00" r="3.4" fill="#a371f7"/>
+          <g><line x1="188.75" y1="66" x2="188.75" y2="194" stroke="#f85149" stroke-width="1.4"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;47.50 0;95.00 0;142.50 0;190.00 0;237.50 0;285.00 0;332.50 0" dur="11s" repeatCount="indefinite"/></g>
+          <rect x="248" y="228" width="204" height="46" rx="9" fill="#11161e" stroke="#2a3140"/>
+          <clipPath id="tr-w"><rect x="249" y="229" width="202" height="44"/></clipPath>
+          <g clip-path="url(#tr-w)"><g>
+          <text x="350" y="258" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">byte built: 00000001</text>
+          <text x="350" y="304" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">byte built: 00000001</text>
+          <text x="350" y="350" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">byte built: 00000001</text>
+          <text x="350" y="396" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">byte built: 00000001</text>
+          <text x="350" y="442" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">byte built: 00000001</text>
+          <text x="350" y="488" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">byte built: 00000001</text>
+          <text x="350" y="534" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">byte built: 01000001</text>
+          <text x="350" y="580" text-anchor="middle" font-size="15" font-weight="700" fill="#3fb950">byte built: 01000001</text>
+          <animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0 0;0 -46;0 -92;0 -138;0 -184;0 -230;0 -276;0 -322" dur="11s" repeatCount="indefinite"/>
+          </g></g>
+          <text class="tr-l" x="30" y="300">The least significant bit goes first: 0100 0001 is 0x41, the letter “A.”</text>
+          <text class="tr-l" x="30" y="26">The line idles high · the falling edge of the start bit synchronizes the receiver</text>
+          <text class="tr-d" x="355" y="52" fill="#a371f7">sampled at the center of each bit</text>
+          </svg>
+        <figcaption><b>Figure 1.</b> An 8N1 frame, animated. The receiver detects the falling edge of the start
+        bit, waits half a bit time and from then on <b>samples at the center</b> of each bit.
+        That is why a speed difference of more than 2% ruins reception.</figcaption>
+      </figure>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Item</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td><b>Baud rate</b></td><td>Bits per second on the line. The classic values: 9600, 19200, 38400, 57600, 115200.</td></tr>
+            <tr><td><b>8N1</b></td><td>The usual configuration: <b>8</b> data bits, <b>N</b>o parity, <b>1</b> stop bit. Both ends have to match on all three.</td></tr>
+            <tr><td><b>Parity</b></td><td>A bit that makes the number of ones even or odd. It detects a one-bit error, doesn’t correct it, and misses double errors. Today it is hardly used: a <b>checksum</b> over the whole message is preferred.</td></tr>
+            <tr><td><b>Stop bits</b></td><td>One or two. They guarantee that the line returns to idle so the next start can be detected.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Example · How long a byte takes</div>
+        <p>In 8N1, each byte actually takes up <b>10 bits</b>: start + 8 data + stop.</p>
+        <ul>
+          <li>At <b>9600 baud</b>: 1/9600 = 104 µs per bit → <b>1.04 ms per byte</b> → about 960 bytes per
+          second.</li>
+          <li>At <b>115,200</b>: 8.68 µs per bit → <b>86.8 µs per byte</b> → about 11,500 bytes per
+          second.</li>
+          <li>Sending a 20 × 4 character screen (80 bytes) at 9600 takes <b>83 ms</b>: it is noticeable to
+          the naked eye. That calculation often decides the speed of the project.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="baudaje">
+      <h2><span class="n">03</span>Setting the baud rate: the calculation you need to know</h2>
+      <p>The module generates its bit time by dividing the system clock. An integer is loaded into a
+      register (SPBRG on PIC, UBRR on AVR) and the actual speed comes out of that, which is <b>almost never</b>
+      exactly the one requested.</p>
+
+      <div class="form">
+        <math display="block"><mrow><mi>U</mi><mi>B</mi><mi>R</mi><mi>R</mi><mo>=</mo><mfrac><msub><mi>f</mi><mrow><mi>o</mi><mi>s</mi><mi>c</mi></mrow></msub><mrow><mn>16</mn><mo>·</mo><mi>baud</mi></mrow></mfrac><mo>−</mo><mn>1</mn><mspace width="26px"/><mi>baud</mi><mo>=</mo><mfrac><msub><mi>f</mi><mrow><mi>o</mi><mi>s</mi><mi>c</mi></mrow></msub><mrow><mn>16</mn><mo>·</mo><mo>(</mo><mi>U</mi><mi>B</mi><mi>R</mi><mi>R</mi><mo>+</mo><mn>1</mn><mo>)</mo></mrow></mfrac></mrow></math>
+        <span class="cap">Formula for normal asynchronous mode. The register only accepts <b>integers</b>: that is
+        where the error appears.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Worked example · The baud rate error, with numbers</div>
+        <p><b>A case that works.</b> 16 MHz crystal, 9600 baud:</p>
+        <ul>
+          <li>UBRR = 16,000,000 / (16 × 9600) − 1 = 104.17 − 1 = 103.17 → load <b>103</b></li>
+          <li>Actual speed = 16,000,000 / (16 × 104) = <b>9615 baud</b></li>
+          <li>Error = (9615 − 9600)/9600 = <b>+0.16%</b>. Perfect.</li>
+        </ul>
+        <p style="margin-top:10px"><b>A case that doesn’t work.</b> 8 MHz crystal, 115,200 baud:</p>
+        <ul>
+          <li>UBRR = 8,000,000 / (16 × 115,200) − 1 = 4.34 − 1 = 3.34 → load <b>3</b></li>
+          <li>Actual speed = 8,000,000 / (16 × 4) = <b>125,000 baud</b></li>
+          <li>Error = <b>+8.5%</b>. Reception fails: you get wrong characters or garbage.</li>
+        </ul>
+        <p style="margin-top:10px">The rule of thumb: the total error between the two ends must not exceed
+        <b>2%</b>. That is why oddly specific crystals exist —<b>7.3728 MHz</b>, 11.0592 MHz,
+        14.7456 MHz—: they are exact multiples of the standard baud rates. With 7.3728 MHz and 9600 baud,
+        UBRR = 47 and the error is <b>zero</b>.</p>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">The internal oscillator isn’t good enough for 115,200</div>
+        <p>Internal RC oscillators have a tolerance of <b>1 to 10%</b> depending on the chip and the
+        temperature, uncalibrated. Added to the division error, the error budget is used up. For
+        reliable serial communication: an external crystal, or self-calibration of the internal oscillator against a
+        reference. It is exactly what was covered in
+        <a href="/en/publicaciones/mapa-electronica/temas/osciladores">oscillators</a> regarding stability.</p>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The flags to watch</div>
+        <ul style="margin:8px 0 0;padding-left:18px">
+          <li><b>TXIF / UDRE</b>: the transmitter is free. You have to wait for it <b>before</b> loading the
+          next byte.</li>
+          <li><b>RCIF / RXC</b>: a byte has arrived. It is read from the receive register and the flag
+          clears itself.</li>
+          <li><b>OERR / DOR</b> — <i>overrun</i>: a new byte arrived before the previous one was read. It is
+          the typical failure of a program that does something else while receiving. On PIC you have to
+          <b>clear it by hand</b> by turning the receiver off and on, or the module stays mute.</li>
+          <li><b>FERR / FE</b> — <i>framing error</i>: the stop bit didn’t appear where it should have. It is almost
+          always a wrong baud rate or noise.</li>
+        </ul>
+      </div>
+
+      <pre class="code"><code><span class="c-com">// Minimal transmit and receive, no libraries (AVR)</span>
+<span class="c-kw">void</span> <span class="c-fn">serie_init</span>(<span class="c-ty">uint16_t</span> ubrr) {
+    UBRR0H = (<span class="c-ty">uint8_t</span>)(ubrr &gt;&gt; <span class="c-num">8</span>);
+    UBRR0L = (<span class="c-ty">uint8_t</span>) ubrr;
+    UCSR0B = (<span class="c-num">1</span> &lt;&lt; TXEN0) | (<span class="c-num">1</span> &lt;&lt; RXEN0);      <span class="c-com">// enable Tx and Rx</span>
+    UCSR0C = (<span class="c-num">1</span> &lt;&lt; UCSZ01) | (<span class="c-num">1</span> &lt;&lt; UCSZ00);    <span class="c-com">// 8 data bits</span>
+}
+
+<span class="c-kw">void</span> <span class="c-fn">serie_enviar</span>(<span class="c-ty">uint8_t</span> dato) {
+    <span class="c-kw">while</span> (!(UCSR0A &amp; (<span class="c-num">1</span> &lt;&lt; UDRE0)));           <span class="c-com">// wait for the buffer to become free</span>
+    UDR0 = dato;
+}
+
+<span class="c-ty">uint8_t</span> <span class="c-fn">serie_recibir</span>(<span class="c-kw">void</span>) {
+    <span class="c-kw">while</span> (!(UCSR0A &amp; (<span class="c-num">1</span> &lt;&lt; RXC0)));            <span class="c-com">// wait for something to arrive</span>
+    <span class="c-kw">return</span> UDR0;
+}</code></pre>
+      <p class="codecap">The two <code>while</code> loops are <b>blocking</b>: the program does nothing else
+      while it waits. As soon as the project has to attend to something else, this is replaced by
+      interrupts and a circular buffer, which is a Year 7 topic.</p>
+    </section>
+
+    <section id="spi">
+      <h2><span class="n">04</span>SPI: the fast synchronous bus</h2>
+      <p>Four wires, one master and as many slaves as needed. The master generates the clock and
+      there is <b>always</b> an exchange: for every bit that goes out on MOSI, one comes in on MISO.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 320" role="img" aria-label="SPI transfer of one byte" class="svg-t" data-anim>
+          <style>.sp-d{fill:#7d8a99;font-size:10px;text-anchor:middle}.sp-l{fill:#9aa7b4;font-size:11px;text-anchor:end;font-weight:600}</style>
+          <text class="sp-l" x="104" y="66">SS</text>
+          <path d="M80,32 H104 V62 H636 V32 H660" fill="none" stroke="#f85149" stroke-width="2.2"/>
+          <text class="sp-d" x="370" y="82" fill="#f85149">the master selects the slave</text>
+          <text class="sp-l" x="104" y="126">SCK</text>
+          <path d="M80,122 L120.00,122.00 L120.00,92.00 L151.25,92.00 L151.25,122.00 L182.50,122.00 L182.50,92.00 L213.75,92.00 L213.75,122.00 L245.00,122.00 L245.00,92.00 L276.25,92.00 L276.25,122.00 L307.50,122.00 L307.50,92.00 L338.75,92.00 L338.75,122.00 L370.00,122.00 L370.00,92.00 L401.25,92.00 L401.25,122.00 L432.50,122.00 L432.50,92.00 L463.75,92.00 L463.75,122.00 L495.00,122.00 L495.00,92.00 L526.25,92.00 L526.25,122.00 L557.50,122.00 L557.50,92.00 L588.75,92.00 L588.75,122.00 L660,122" fill="none" stroke="#58a6ff" stroke-width="2.2"/>
+          <text class="sp-l" x="104" y="186">MOSI</text>
+          <text class="sp-d" x="151.25" y="144" fill="#3fb950" font-size="12" font-weight="700">1</text>
+          <text class="sp-d" x="213.75" y="144" fill="#3fb950" font-size="12" font-weight="700">0</text>
+          <text class="sp-d" x="276.25" y="144" fill="#3fb950" font-size="12" font-weight="700">1</text>
+          <text class="sp-d" x="338.75" y="144" fill="#3fb950" font-size="12" font-weight="700">1</text>
+          <text class="sp-d" x="401.25" y="144" fill="#3fb950" font-size="12" font-weight="700">0</text>
+          <text class="sp-d" x="463.75" y="144" fill="#3fb950" font-size="12" font-weight="700">0</text>
+          <text class="sp-d" x="526.25" y="144" fill="#3fb950" font-size="12" font-weight="700">1</text>
+          <text class="sp-d" x="588.75" y="144" fill="#3fb950" font-size="12" font-weight="700">0</text>
+          <path d="M120.00,152.00 L182.50,152.00 L182.50,182.00 L245.00,182.00 L245.00,152.00 L307.50,152.00 L370.00,152.00 L370.00,182.00 L432.50,182.00 L495.00,182.00 L495.00,152.00 L557.50,152.00 L557.50,182.00 L620.00,182.00" fill="none" stroke="#3fb950" stroke-width="2.2"/>
+          <text class="sp-d" x="664" y="186" fill="#3fb950">0xB2</text>
+          <text class="sp-l" x="104" y="246">MISO</text>
+          <text class="sp-d" x="151.25" y="204" fill="#a371f7" font-size="12" font-weight="700">0</text>
+          <text class="sp-d" x="213.75" y="204" fill="#a371f7" font-size="12" font-weight="700">1</text>
+          <text class="sp-d" x="276.25" y="204" fill="#a371f7" font-size="12" font-weight="700">0</text>
+          <text class="sp-d" x="338.75" y="204" fill="#a371f7" font-size="12" font-weight="700">0</text>
+          <text class="sp-d" x="401.25" y="204" fill="#a371f7" font-size="12" font-weight="700">1</text>
+          <text class="sp-d" x="463.75" y="204" fill="#a371f7" font-size="12" font-weight="700">1</text>
+          <text class="sp-d" x="526.25" y="204" fill="#a371f7" font-size="12" font-weight="700">0</text>
+          <text class="sp-d" x="588.75" y="204" fill="#a371f7" font-size="12" font-weight="700">1</text>
+          <path d="M120.00,242.00 L182.50,242.00 L182.50,212.00 L245.00,212.00 L245.00,242.00 L307.50,242.00 L370.00,242.00 L370.00,212.00 L432.50,212.00 L495.00,212.00 L495.00,242.00 L557.50,242.00 L557.50,212.00 L620.00,212.00" fill="none" stroke="#a371f7" stroke-width="2.2"/>
+          <text class="sp-d" x="664" y="246" fill="#a371f7">0x4D</text>
+          <line x1="120.00" y1="36" x2="120.00" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <line x1="182.50" y1="36" x2="182.50" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <line x1="245.00" y1="36" x2="245.00" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <line x1="307.50" y1="36" x2="307.50" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <line x1="370.00" y1="36" x2="370.00" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <line x1="432.50" y1="36" x2="432.50" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <line x1="495.00" y1="36" x2="495.00" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <line x1="557.50" y1="36" x2="557.50" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <line x1="620.00" y1="36" x2="620.00" y2="264" stroke="#2a3140" stroke-width="1" opacity=".45"/>
+          <text class="sp-d" x="151.25" y="284">1</text>
+          <text class="sp-d" x="213.75" y="284">2</text>
+          <text class="sp-d" x="276.25" y="284">3</text>
+          <text class="sp-d" x="338.75" y="284">4</text>
+          <text class="sp-d" x="401.25" y="284">5</text>
+          <text class="sp-d" x="463.75" y="284">6</text>
+          <text class="sp-d" x="526.25" y="284">7</text>
+          <text class="sp-d" x="588.75" y="284">8</text>
+          <text class="sp-d" x="104" y="284" text-anchor="end">pulse</text>
+          <g><line x1="151.25" y1="36" x2="151.25" y2="272" stroke="#f85149" stroke-width="1.4"/><animateTransform attributeName="transform" type="translate" calcMode="discrete" values="0.00 0;62.50 0;125.00 0;187.50 0;250.00 0;312.50 0;375.00 0;437.50 0" dur="9s" repeatCount="indefinite"/></g>
+          <text class="sp-d" x="350" y="24" fill="#9aa7b4">Eight clock pulses: on each one a bit goes out on MOSI and one comes in on MISO</text>
+          <text class="sp-d" x="350" y="308" fill="#7d8a99">When finished, the two shift registers have swapped their contents</text>
+          </svg>
+        <figcaption><b>Figure 2.</b> SPI transfer, animated. The master pulls SS̄ low to select the
+        slave, generates eight clock pulses and on each one a bit is shifted in each direction. When finished,
+        the two registers have swapped their contents.</figcaption>
+      </figure>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">The four lines</div>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li><b>SCK</b> — clock, generated by the master.</li>
+            <li><b>MOSI</b> — master to slave.</li>
+            <li><b>MISO</b> — slave to master.</li>
+            <li><b>SS̄ / CS̄</b> — select, active low. <b>One per slave</b>: that is the cost of
+            adding devices.</li>
+          </ul>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--violet)">The four modes</div>
+          <p>Two bits are combined: <b>CPOL</b> (whether the clock idles high or low) and <b>CPHA</b> (whether the
+          data is sampled on the first edge or the second). That gives modes 0 to 3.</p>
+          <p style="margin-top:8px">Each chip specifies its own in the datasheet. If it doesn’t match, you read
+          garbage or the data appears shifted by one bit: it is the first thing to check when an SPI device
+          “doesn’t respond.”</p>
+        </div>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Where SPI shows up</div>
+        <p>Serial Flash and EEPROM memories, SD cards, graphic and OLED displays, external multi-bit A/D
+        converters, fast sensors, radio modules (nRF24, LoRa), 74HC595 shift registers
+        for expanding outputs. When you need <b>speed</b> —tens of megahertz— SPI is the
+        answer.</p>
+      </div>
+    </section>
+
+    <section id="i2c">
+      <h2><span class="n">05</span>I²C: two wires for everyone</h2>
+      <p>Two lines —<b>SDA</b> (data) and <b>SCL</b> (clock)— shared by all devices, each
+      with its own <b>address</b>. The outputs are open-collector: any device can pull the line to
+      zero, and it is the <b>pull-up resistors</b> that bring it back to one.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Detail</th><th>Value</th><th>Why it matters</th></tr></thead>
+          <tbody>
+            <tr><td><b>Pull-ups</b></td><td>4.7 kΩ typical (1.5 to 10 k)</td><td><b>Without them the bus doesn’t work.</b> They go once on the whole bus, not one per device.</td></tr>
+            <tr><td><b>Speed</b></td><td>100 kHz standard · 400 kHz fast · 1 MHz</td><td>Much slower than SPI, and enough for sensors.</td></tr>
+            <tr><td><b>Addresses</b></td><td>7 bits → 112 usable</td><td>Two devices with the same address collide. Many modules come with jumpers to change it.</td></tr>
+            <tr><td><b>ACK</b></td><td>One bit per byte</td><td>The receiver <b>acknowledges</b>. If nobody answers, the master knows the address doesn’t exist: it is the basis of the “I²C scanner.”</td></tr>
+            <tr><td><b>Bus capacitance</b></td><td>400 pF maximum</td><td>Limits the length to a few tens of centimeters. For more distance there are repeaters, or you change buses.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">The scanner: the first diagnostic tool</div>
+        <p>A twenty-line program that goes through all 112 addresses and notes which ones respond with ACK.
+        Before struggling with a sensor that “doesn’t work,” the scanner tells you in two seconds whether the device is
+        alive, whether its address is the one the manual says, and whether the wiring is good. If nothing shows up, 90% of
+        the time the pull-up resistors are missing or SDA and SCL are swapped.</p>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th></th><th class="c">UART</th><th class="c">SPI</th><th class="c">I²C</th></tr></thead>
+          <tbody>
+            <tr><td><b>Wires</b></td><td class="c">2 (+ ground)</td><td class="c">3 + 1 per slave</td><td class="c">2 (+ ground)</td></tr>
+            <tr><td><b>Clock</b></td><td class="c">No</td><td class="c">Yes</td><td class="c">Yes</td></tr>
+            <tr><td><b>Typical speed</b></td><td class="c">9.6 to 115.2 kbps</td><td class="c">1 to 50 Mbps</td><td class="c">100 to 400 kbps</td></tr>
+            <tr><td><b>How many devices</b></td><td class="c">2 (or a network with RS485)</td><td class="c">Many, with one select line each</td><td class="c">Up to 112, no extra wires</td></tr>
+            <tr><td><b>Acknowledges reception</b></td><td class="c">No</td><td class="c">No</td><td class="c">Yes (ACK)</td></tr>
+            <tr><td><b>Used for</b></td><td class="c">PC, GPS, modules, debugging</td><td class="c">Displays, memories, SD, radio</td><td class="c">Sensors, RTC, EEPROM, expanders</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="niveles">
+      <h2><span class="n">06</span>Electrical levels: what you can’t see in the program</h2>
+      <div class="box peligro">
+        <div class="bt">3.3 V and 5 V must not be connected directly</div>
+        <p>A 3.3 V micro connected to a 5 V output receives a voltage above its maximum and gets damaged,
+        sometimes slowly. The usual solutions: a resistive divider if the signal is slow and one-way,
+        a MOSFET level shifter for I²C (which is bidirectional), or a translator IC.
+        <b>Always check the operating voltage of each module before wiring.</b></p>
+      </div>
+
+      <div class="g2">
+        <div class="box">
+          <div class="bt" style="color:var(--accent)">TTL versus RS232</div>
+          <p>The micro’s serial port works with <b>0 and 5 V</b> (or 3.3). A PC RS232 port uses
+          <b>inverted ±12 V</b>. Between the two goes a MAX232 or a USB-serial cable, never a direct
+          connection: the micro’s pin gets destroyed.</p>
+        </div>
+        <div class="box">
+          <div class="bt" style="color:var(--ok)">Common ground</div>
+          <p>Two devices communicating serially need to share the <b>ground</b>. It is the most frequent
+          oversight when each one has its own power supply, and it produces intermittent communication that looks like a
+          software problem. If the grounds can’t be joined, you have to isolate with optocouplers or move to
+          <a href="/en/publicaciones/mapa-electronica/temas/conversores-ad-da">RS485</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+
+      <div class="box lab">
+        <div class="bt">Lab 1 · Serial hello world</div>
+        <p>Configure the USART at 9600 8N1 and send a text once per second to the computer with a USB-serial
+        adapter. Verify on the <a href="/en/publicaciones/mapa-electronica/temas/osciloscopio">oscilloscope</a>
+        that the bit time is 104 µs and <b>read the frame by eye</b>: identify the start bit, the eight bits
+        —least significant first— and the stop bit. Compare the byte read on screen with the character
+        sent.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 2 · Causing a baud rate error</div>
+        <p>With the transmitter at 9600 and the receiver at 19,200, observe what arrives. Then try small
+        differences: 9600 against 9800 (2%) and against 10,400 (8%). Note at what error it starts to fail.
+        It is the experimental check of the 2% rule.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 3 · SPI with a 74HC595</div>
+        <p>Drive eight LEDs with a shift register using hardware SPI. With a two-channel oscilloscope measure
+        SCK and MOSI, and verify on which edge the data changes. Then change the micro’s
+        SPI mode and check that it <b>stops working</b>: it is the best way to understand CPOL and
+        CPHA.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 4 · I²C scanner</div>
+        <p>With a sensor or an RTC module on the bus, run the scanner and write down the address found.
+        Then <b>remove the pull-up resistors</b> and run it again: nothing shows up. See on the
+        oscilloscope the difference between a line with a pull-up and a floating one.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Lab 5 · Two micros talking</div>
+        <p>Connect TX of one to RX of the other and vice versa, <b>with the grounds joined</b>, and set up a minimal
+        protocol: one command byte and one response byte. Then disconnect the common ground and observe the
+        result. Finally, add a checksum and cause errors by touching the wire.</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Symptom</th><th>Usual cause</th></tr></thead>
+          <tbody>
+            <tr><td>Strange but consistent characters arrive</td><td>Different baud rate at the two ends, or a division error greater than 2%.</td></tr>
+            <tr><td>The first byte arrives and then nothing</td><td>Overrun: the receive register wasn’t read in time. On PIC you have to clear OERR by hand.</td></tr>
+            <tr><td>Works with a short cable and fails with a long one</td><td>TTL levels over too great a distance. Move to RS485 or lower the speed.</td></tr>
+            <tr><td>Intermittent communication between two devices</td><td>The common ground is missing, or there is a potential difference between grounds.</td></tr>
+            <tr><td>The SPI device doesn’t respond</td><td>Wrong mode (CPOL/CPHA), SS̄ that doesn’t go low, or MISO and MOSI swapped.</td></tr>
+            <tr><td>The I²C bus is always at zero</td><td>Pull-ups are missing, or a device got stuck holding SDA. It is freed by pulsing the clock by hand nine times.</td></tr>
+            <tr><td>Two I²C devices and only one shows up</td><td>They share an address. Change it with the module’s jumpers or use two buses.</td></tr>
+            <tr><td>A 3.3 V module stopped working</td><td>It was connected to 5 V signals. A level translator is needed.</td></tr>
+            <tr><td>Bytes are lost when the program does other things</td><td>Polled reception. Switch to interrupt-driven with a circular buffer.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">09</span>Self-assessment</h2>
+
+      <details class="q"><summary>How many bits does a byte really take in 8N1, and how long does it take at 19,200 baud?</summary>
+        <div class="a"><p><b>10 bits</b>: start, eight data and stop. At 19,200, each bit lasts
+        52.1 µs → <b>521 µs per byte</b>, about 1920 bytes per second.</p></div></details>
+
+      <details class="q"><summary>16 MHz crystal and 19,200 baud: what value goes in UBRR and what error is left?</summary>
+        <div class="a"><p>UBRR = 16,000,000/(16 × 19,200) − 1 = 52.08 − 1 = 51.08 → load <b>51</b>.
+        Actual speed = 16,000,000/(16 × 52) = <b>19,231</b> baud: error <b>+0.16%</b>.</p></div></details>
+
+      <details class="q"><summary>Why do 7.3728 MHz crystals exist?</summary>
+        <div class="a"><p>Because they are <b>exact multiples</b> of the standard baud rates: 7,372,800/(16 × 9600)
+        = exactly 48, so the baud rate error is <b>zero</b>. With “round” crystals there is always a
+        remainder.</p></div></details>
+
+      <details class="q"><summary>What is an overrun and how is it avoided?</summary>
+        <div class="a"><p>A new byte arrived before the program read the previous one, and it was lost. It is
+        avoided by handling reception by <b>interrupt</b> and storing the data in a circular buffer, instead
+        of waiting by polling.</p></div></details>
+
+      <details class="q"><summary>In SPI, what happens on MISO while the master sends on MOSI?</summary>
+        <div class="a"><p>The exchange is <b>simultaneous</b>: for every clock pulse one bit goes out on MOSI and
+        one comes in on MISO. After eight pulses, the two shift registers have swapped their
+        contents.</p></div></details>
+
+      <details class="q"><summary>What are CPOL and CPHA for?</summary>
+        <div class="a"><p>They define the <b>SPI mode</b>: at what level the clock idles (CPOL) and on which of the
+        two edges the data is sampled (CPHA). If the master’s mode doesn’t match the slave’s, the
+        data comes out shifted or simply meaningless.</p></div></details>
+
+      <details class="q"><summary>Why does I²C need pull-up resistors?</summary>
+        <div class="a"><p>Because the outputs are <b>open-collector</b>: they can only pull the line to
+        zero. The logic one is produced by the resistor. Without pull-ups, the lines float and the bus doesn’t
+        work.</p></div></details>
+
+      <details class="q"><summary>How many devices fit on an I²C bus and what limits them?</summary>
+        <div class="a"><p>Up to <b>112</b> because of the 7-bit addresses, but in practice the <b>total bus
+        capacitance</b> rules: 400 pF at most, which limits the number of modules and the
+        wiring length to a few tens of centimeters.</p></div></details>
+
+      <details class="q"><summary>When is SPI better and when is I²C?</summary>
+        <div class="a"><p><b>SPI</b> when speed matters —displays, memories, SD cards— and pins are to spare.
+        <b>I²C</b> when there are many slow devices and wires need to be saved: sensors, real-time
+        clock, port expanders.</p></div></details>
+
+      <details class="q"><summary>Two devices connected by TX/RX can’t understand each other even though the baud rate matches. What should you check first?</summary>
+        <div class="a"><p>The <b>common ground</b> and the crossing of the lines: TX of one must go to RX of the other.
+        Then, the levels: if one is TTL and the other RS232, an adapter is needed.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-electronica/temas/familia-microcontroladores">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">The microcontroller family</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Peripherals</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Communication module”</b> of <b>Digital Electronics III</b> (Year 6), based on the
+  “Curriculum Proposal – Second Cycle of the Technical-Vocational Track, Secondary Education –
+  Electronics,” Ministry of Education of the Province of Córdoba, DGETyFP.
+  <a href="/en/publicaciones/mapa-electronica">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
