@@ -250,4 +250,11 @@
 
   window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, pendientes: pendientes, exigir: exigir, listaTemas: listaTemas, subirImagen: subirImagen, subirVideo: subirVideo, enlaceYoutube: enlaceYoutube, borrarMisImagenes: borrarMisImagenes };
   document.addEventListener('DOMContentLoaded', barra);
+
+  /* botón de modo claro / oscuro (el foro no carga el selector de idioma) */
+  if (!window.CATTO_MODO) {
+    var sm = document.createElement('script');
+    sm.src = '/assets/js/modo.js?v=1'; sm.defer = true;
+    document.head.appendChild(sm);
+  }
 })();

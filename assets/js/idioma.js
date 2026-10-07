@@ -21,6 +21,13 @@
   if (window.CATTO_IDIOMA) return;
   window.CATTO_IDIOMA = true;
 
+  /* el botón de modo claro / oscuro va al lado de este selector */
+  if (!window.CATTO_MODO) {
+    var sm = document.createElement('script');
+    sm.src = '/assets/js/modo.js?v=1'; sm.defer = true;
+    document.head.appendChild(sm);
+  }
+
   /* páginas traducidas (dirección en castellano, sin .html) */
   /* <<lista-en>> */
   var EN = [
@@ -124,6 +131,8 @@
     '.idioma.flotante{position:fixed;top:10px;right:12px;z-index:300}' +
     /* portada: que el menú no se parta en dos líneas por el selector; achica el buscador */
     '@media (min-width:1240px){header.site nav.main{flex-shrink:0}}' +
+    /* portada en el teléfono: el selector y el botón de modo comparten el último renglón del menú */
+    '@media (max-width:640px){header.site .idioma>button svg,header.site .idioma>button .fl{display:none}header.site .idioma>button{padding:0 9px}header.site nav.main .modo{margin-left:6px}}' +
     /* páginas de tema en el teléfono: botón mínimo, que el lugar es para la materia */
     '@media (max-width:600px){.tbar .idioma>button svg,.tbar .idioma>button .fl{display:none}.tbar .idioma>button{padding:0 7px;height:28px;font-size:12px}' +
     /* y del «Catto» queda solo el chanchito, que sigue llevando al inicio */
@@ -182,7 +191,18 @@
        páginas de tema, o flotando arriba a la derecha si no hay ninguna */
     var nav = document.querySelector('header.site nav.main');
     var tbar = document.querySelector('.tbar .in');
-    var volver = document.getElementById('cattoBack');      /* barra de las publicaciones interactivas */
+    /* barra de las publicaciones interactivas (un div#cattoBack) o el enlace
+       «Volver a catto.ar» de los mapas (un a#cattoBack o el primer enlace a /):
+       si es un enlace, el selector va al lado y no adentro, o el clic navegaría */
+    var volver = document.getElementById('cattoBack') || document.querySelector('header.top > a[href="/"]');
+    if (volver && volver.tagName === 'A') {
+      var fila = document.createElement('div');
+      fila.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px';
+      volver.parentNode.insertBefore(fila, volver);
+      fila.appendChild(volver);
+      volver.style.marginBottom = '0';
+      volver = fila;
+    }
     if (nav) {
       /* en la computadora va a la derecha del menú; en el teléfono, adentro del
          renglón del menú y contra el margen derecho: arriba el lugar depende de si
