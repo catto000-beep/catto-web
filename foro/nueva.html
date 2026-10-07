@@ -10,12 +10,12 @@
 <link rel="stylesheet" href="/assets/css/base.css?v=12">
 <link rel="stylesheet" href="/assets/css/papel.css?v=8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
-<link rel="stylesheet" href="/foro/foro.css?v=7">
+<link rel="stylesheet" href="/foro/foro.css?v=9">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script src="/aula/assets/vendor/supabase.js"></script>
 <script src="/aula/assets/config.js"></script>
-<script src="/foro/foro.js?v=5"></script>
+<script src="/foro/foro.js?v=6"></script>
 </head>
 <body>
 <header class="site">
@@ -53,14 +53,20 @@
       <button type="button" data-w="[|](https://)" title="Enlace">🔗</button>
       <button type="button" id="bImg" title="Agregar una imagen" style="padding:0 10px">🖼 Imagen</button>
       <input type="file" id="fImg" accept="image/jpeg,image/png,image/webp" hidden>
+      <button type="button" id="bVid" title="Agregar un video" aria-expanded="false" aria-controls="panVid" style="padding:0 10px">🎬 Video</button>
+      <input type="file" id="fVid" accept="video/mp4,video/webm,video/quicktime" hidden>
       <span class="sep"></span>
       <button type="button" id="bEsc" style="padding:0 10px">Escribir</button>
       <button type="button" id="bPrev" style="padding:0 10px">Vista previa</button>
     </div>
+    <div class="f-panel-vid" id="panVid" hidden>
+      <p><button type="button" class="f-btn" id="bVidArch">Subir un video</button> MP4, WebM o MOV, hasta 20 MB y 60 segundos (lo que graba el celular en unos 20 o 30 segundos).</p>
+      <div class="f-fila"><input type="url" id="ytUrl" placeholder="o pegá un enlace de YouTube: https://youtu.be/…" autocomplete="off"><button type="button" class="f-btn" id="bYt">Agregar enlace</button></div>
+    </div>
     <textarea id="cue" maxlength="10000" placeholder="Tengo un pasabajos RC con R = 1 kΩ y C = 100 nF. Calculé $f_c = 1/(2\pi RC) \approx 1{,}59$ kHz, pero no entiendo por qué la pendiente es de 20 dB por década."></textarea>
     <div class="f-prev f-cuerpo" id="prev" hidden></div>
     <p class="f-pagina" id="estImg" style="color:var(--soft)" aria-live="polite"></p>
-    <p class="f-pagina" style="color:var(--soft)">Formato: **negrita**, *cursiva*, `código`, fórmulas entre $ … $ (o $$ … $$ en su propia línea) y enlaces [texto](https://…). Las imágenes —un esquema, una medición, una captura— se agregan con el botón o pegándolas con Ctrl+V; no subas fotos donde aparezcan personas. Las consultas con imágenes las revisa un moderador antes de publicarse.</p>
+    <p class="f-pagina" style="color:var(--soft)">Formato: **negrita**, *cursiva*, `código`, fórmulas entre $ … $ (o $$ … $$ en su propia línea) y enlaces [texto](https://…). Las imágenes —un esquema, una medición, una captura— se agregan con el botón o pegándolas con Ctrl+V. Con «Video» podés subir un video corto o pegar un enlace de YouTube: un osciloscopio en funcionamiento, un circuito que no responde. No subas fotos ni videos donde aparezcan personas o se escuchen voces. Las consultas con imágenes o videos las revisa un moderador antes de publicarse.</p>
     <p class="f-err" id="err"></p>
     <p class="f-fila" style="margin-top:14px"><button class="f-btn pri" type="submit" id="enviar">Publicar consulta</button></p>
   </form>
@@ -148,6 +154,40 @@
       F.$('estImg').textContent = F.error(e);
     }).then(function () { F.$('bImg').disabled = false; F.$('fImg').value = ''; });
   }
+  /* Videos: un archivo corto o un enlace de YouTube */
+  function avisoVid(txt, mal) {
+    F.$('estImg').style.color = mal ? '#ad2436' : 'var(--soft)';
+    F.$('estImg').textContent = txt;
+  }
+  F.$('bVid').onclick = function () {
+    var p = F.$('panVid'); p.hidden = !p.hidden;
+    this.setAttribute('aria-expanded', p.hidden ? 'false' : 'true');
+  };
+  F.$('bVidArch').onclick = function () { F.$('fVid').click(); };
+  F.$('fVid').onchange = function () {
+    var file = this.files[0];
+    if (!file) return;
+    modo(false);
+    avisoVid('Subiendo el video… puede tardar un poco si es largo.');
+    F.$('bVid').disabled = F.$('bVidArch').disabled = true;
+    F.subirVideo(file).then(function (url) {
+      insertar('![video](' + url + ')');
+      F.$('panVid').hidden = true; F.$('bVid').setAttribute('aria-expanded', 'false');
+      avisoVid('Video agregado. Podés verlo con «Vista previa».');
+    }).catch(function (e) { avisoVid(F.error(e), true); })
+      .then(function () { F.$('bVid').disabled = F.$('bVidArch').disabled = false; F.$('fVid').value = ''; });
+  };
+  F.$('bYt').onclick = function () {
+    var url = F.enlaceYoutube(F.$('ytUrl').value);
+    if (!url) { avisoVid('Ese enlace no parece de un video de YouTube.', true); return; }
+    modo(false);
+    insertar('![video](' + url + ')');
+    F.$('ytUrl').value = '';
+    F.$('panVid').hidden = true; F.$('bVid').setAttribute('aria-expanded', 'false');
+    avisoVid('Video de YouTube agregado. Podés verlo con «Vista previa».');
+  };
+  F.$('ytUrl').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); F.$('bYt').click(); } });
+
   F.$('bImg').onclick = function () { F.$('fImg').click(); };
   F.$('fImg').onchange = function () { if (this.files[0]) subir(this.files[0]); };
   cue.addEventListener('paste', function (e) {
@@ -176,7 +216,7 @@
         if (r.error) { F.$('err').textContent = F.error(r.error); return; }
         if (r.data === 'pendiente' && tema.estado === 'publicado') {
           F.$('form').hidden = true; F.$('listo').hidden = false;
-          F.$('listo').innerHTML = '<div class="f-aviso">Cambios guardados. Como agregaste una imagen nueva, la consulta vuelve a revisión antes de verse en el foro.</div>' +
+          F.$('listo').innerHTML = '<div class="f-aviso">Cambios guardados. Como agregaste una imagen o un video nuevo, la consulta vuelve a revisión antes de verse en el foro.</div>' +
             '<p><a href="/foro/tema?id=' + editar + '">Ver mi consulta</a></p>';
           return;
         }

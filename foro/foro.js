@@ -23,6 +23,11 @@
   /* Solo se muestran imágenes guardadas en el almacenamiento del foro */
   var BASE_IMG = C.SUPABASE_URL + '/storage/v1/object/public/foro/';
   var IMG = new RegExp('!\\[([^\\]\\n]*)\\]\\((' + BASE_IMG.replace(/[.\/]/g, '\\$&') + '[A-Za-z0-9\\/_.-]+)\\)', 'g');
+  /* Videos: los subidos al foro (MP4, WebM, MOV) y los de YouTube, que se
+     muestran con el reproductor sin cookies. Usan la misma marca ![…](…)
+     que las imágenes, así la base los manda a revisión igual que a ellas. */
+  var VID = new RegExp('!\\[([^\\]\\n]*)\\]\\((' + BASE_IMG.replace(/[.\/]/g, '\\$&') + '[A-Za-z0-9\\/_.-]+\\.(?:mp4|webm|mov))\\)', 'gi');
+  var YT = /!\[[^\]\n]*\]\(https:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})[^)\s]*\)/g;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -37,7 +42,9 @@
     s = s.replace(/\$([^$\n]+?)\$/g, function (m) { formulas.push(m); return '\u0000' + (formulas.length - 1) + '\u0000'; });
     var bloques = [];
     s = s.replace(/```\n?([\s\S]*?)```/g, function (m, c) { bloques.push('<pre><code>' + c.replace(/\n$/, '') + '</code></pre>'); return '\u0001' + (bloques.length - 1) + '\u0001'; });
-    s = s.replace(IMG, '<a href="$2" target="_blank" rel="noopener"><img src="$2" alt="$1" loading="lazy"></a>')
+    s = s.replace(VID, '<video src="$2" controls preload="metadata" playsinline></video>')
+         .replace(YT, '<span class="f-video"><iframe src="https://www.youtube-nocookie.com/embed/$1" title="Video de YouTube" loading="lazy" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></span>')
+         .replace(IMG, '<a href="$2" target="_blank" rel="noopener"><img src="$2" alt="$1" loading="lazy"></a>')
          .replace(/`([^`\n]+)`/g, '<code>$1</code>')
          .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
          .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
@@ -79,8 +86,9 @@
     if (/Failed to fetch|NetworkError/.test(m)) return 'No hay conexión con el servidor. Probá de nuevo en un momento.';
     if (/Bucket not found/i.test(m)) return 'Las imágenes todavía no están habilitadas.';
     if (/foro_editar_tema/.test(m) && /Could not find|does not exist/.test(m)) return 'La edición todavía no está habilitada.';
-    if (/row-level security/i.test(m)) return 'No se pudo subir la imagen: puede que se haya alcanzado el límite de 10 imágenes por hora.';
-    if (/exceeded the maximum allowed size|Payload too large/i.test(m)) return 'La imagen pesa más de 2 MB.';
+    if (/row-level security/i.test(m)) return 'No se pudo subir el archivo: puede que se haya alcanzado el límite de 10 imágenes o videos por hora.';
+    if (/mime type|invalid_mime/i.test(m)) return 'Ese tipo de archivo todavía no está habilitado en el foro.';
+    if (/exceeded the maximum allowed size|Payload too large/i.test(m)) return 'El archivo supera el tamaño permitido (2 MB las imágenes, 20 MB los videos).';
     return m;
   }
 
@@ -182,7 +190,41 @@
       });
     });
   }
-  /* Borra todas las imágenes propias (antes de borrar la cuenta) */
+  /* Videos: no se pueden achicar en el navegador, así que se controla el
+     peso (20 MB) y la duración (60 s) antes de subirlos tal cual. */
+  var MAX_VID = 20 * 1024 * 1024, SEG_VID = 60;
+  function duracion(file) {
+    return new Promise(function (ok, mal) {
+      var u = URL.createObjectURL(file), v = document.createElement('video');
+      v.preload = 'metadata'; v.muted = true;
+      v.onloadedmetadata = function () { URL.revokeObjectURL(u); ok(v.duration); };
+      v.onerror = function () { URL.revokeObjectURL(u); mal(new Error('Este navegador no puede leer ese video. Probá con un MP4.')); };
+      v.src = u;
+    });
+  }
+  function subirVideo(file) {
+    if (!file || !/^video\/(mp4|webm|quicktime)$/.test(file.type)) return Promise.reject(new Error('Elegí un video MP4, WebM o MOV.'));
+    if (file.size > MAX_VID) return Promise.reject(new Error('El video pesa ' + Math.ceil(file.size / 1048576) + ' MB y el máximo es 20 MB. Recortalo, o subilo a YouTube y pegá el enlace.'));
+    return estado().then(function (s) {
+      if (!s.usuario) throw new Error('Hace falta ingresar para subir videos.');
+      return duracion(file).then(function (d) {
+        if (isFinite(d) && d > SEG_VID + 0.5) throw new Error('El video dura ' + Math.round(d) + ' s y el máximo es ' + SEG_VID + ' s. Recortalo, o subilo a YouTube y pegá el enlace.');
+        var ext = file.type === 'video/webm' ? '.webm' : file.type === 'video/quicktime' ? '.mov' : '.mp4';
+        var nombre = s.usuario.id + '/' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) + ext;
+        return sb.storage.from('foro').upload(nombre, file, { contentType: file.type, upsert: false }).then(function (x) {
+          if (x.error) throw x.error;
+          return sb.storage.from('foro').getPublicUrl(nombre).data.publicUrl;
+        });
+      });
+    });
+  }
+  /* Un enlace de YouTube en cualquiera de sus formas → la dirección normal del video */
+  function enlaceYoutube(txt) {
+    var m = /^\s*https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:[^#\s]*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/.exec(txt || '');
+    return m ? 'https://www.youtube.com/watch?v=' + m[1] : null;
+  }
+
+  /* Borra todas las imágenes y videos propios (antes de borrar la cuenta) */
   function borrarMisImagenes(uid) {
     return sb.storage.from('foro').list(uid, { limit: 1000 }).then(function (r) {
       if (r.error || !r.data || !r.data.length) return;
@@ -206,6 +248,6 @@
     }).join('') + '</ul>';
   }
 
-  window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, pendientes: pendientes, exigir: exigir, listaTemas: listaTemas, subirImagen: subirImagen, borrarMisImagenes: borrarMisImagenes };
+  window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, pendientes: pendientes, exigir: exigir, listaTemas: listaTemas, subirImagen: subirImagen, subirVideo: subirVideo, enlaceYoutube: enlaceYoutube, borrarMisImagenes: borrarMisImagenes };
   document.addEventListener('DOMContentLoaded', barra);
 })();
