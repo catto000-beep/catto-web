@@ -96,11 +96,41 @@
     if (!S.perfil) { el.innerHTML = '<p style="margin-top:18px"><a class="f-btn pri" href="/foro/perfil">Completar el perfil para responder</a></p>'; return; }
     if (el.dataset.listo) return;
     el.dataset.listo = '1';
-    el.innerHTML = '<form class="f-form" id="fR"><label for="tR">Tu respuesta</label><textarea id="tR" maxlength="10000" style="min-height:130px" placeholder="Explicá el razonamiento, no solo el resultado. Las fórmulas van entre $ … $."></textarea>' +
-      '<div class="f-prev f-cuerpo" id="pR" hidden></div><p class="f-err" id="eR"></p>' +
+    el.innerHTML = '<form class="f-form" id="fR"><label for="tR">Tu respuesta</label>' +
+      '<div class="f-barra-ed"><button type="button" id="bImgR" title="Agregar una imagen" style="padding:0 10px">🖼 Imagen</button>' +
+      '<input type="file" id="fImgR" accept="image/jpeg,image/png,image/webp" hidden></div>' +
+      '<textarea id="tR" maxlength="10000" style="min-height:130px" placeholder="Explicá el razonamiento, no solo el resultado. Las fórmulas van entre $ … $. Podés sumar un esquema o una captura con «Imagen» o pegándola con Ctrl+V."></textarea>' +
+      '<div class="f-prev f-cuerpo" id="pR" hidden></div><p class="f-pagina" id="iR" style="color:var(--soft)" aria-live="polite"></p><p class="f-err" id="eR"></p>' +
       '<p class="f-fila" style="margin-top:10px"><button class="f-btn pri" type="submit">Responder</button><button class="f-btn" type="button" id="vR">Vista previa</button></p></form>';
     var t = F.$('tR'), p = F.$('pR');
     t.oninput = function () { F.$('eR').textContent = ''; };
+
+    /* Imágenes en la respuesta: botón o pegar desde el portapapeles.
+       Como en las consultas, una respuesta con imagen va siempre a revisión. */
+    function insertar(txt) {
+      var a = t.selectionStart, v = t.value, antes = a > 0 && v[a - 1] !== '\n' ? '\n' : '';
+      t.value = v.slice(0, a) + antes + txt + '\n' + v.slice(a);
+      t.focus(); t.selectionStart = t.selectionEnd = a + antes.length + txt.length + 1;
+    }
+    function subir(file) {
+      if (!p.hidden) F.$('vR').click();
+      F.$('iR').style.color = 'var(--soft)';
+      F.$('iR').textContent = 'Subiendo la imagen…';
+      F.$('bImgR').disabled = true;
+      F.subirImagen(file).then(function (url) {
+        insertar('![imagen](' + url + ')');
+        F.$('iR').textContent = 'Imagen agregada. Podés verla con «Vista previa». La respuesta la revisa un moderador antes de publicarse.';
+      }).catch(function (e) {
+        F.$('iR').style.color = '#ad2436';
+        F.$('iR').textContent = F.error(e);
+      }).then(function () { F.$('bImgR').disabled = false; F.$('fImgR').value = ''; });
+    }
+    F.$('bImgR').onclick = function () { F.$('fImgR').click(); };
+    F.$('fImgR').onchange = function () { if (this.files[0]) subir(this.files[0]); };
+    t.addEventListener('paste', function (e) {
+      var it = e.clipboardData && e.clipboardData.files && e.clipboardData.files[0];
+      if (it && /^image\//.test(it.type)) { e.preventDefault(); subir(it); }
+    });
     F.$('vR').onclick = function () {
       var ver = p.hidden; p.hidden = !ver; t.hidden = ver; F.$('vR').textContent = ver ? 'Seguir escribiendo' : 'Vista previa';
       if (ver) { p.innerHTML = F.md(t.value); F.formulas(p); }
@@ -111,8 +141,10 @@
       if (txt.length < 2) { F.$('eR').textContent = 'Escribí una respuesta.'; return; }
       F.sb.from('foro_respuesta').insert({ tema_id: id, cuerpo: txt }).select('estado').single().then(function (r) {
         if (r.error) { F.$('eR').textContent = F.error(r.error); return; }
-        t.value = ''; p.hidden = true; t.hidden = false;
-        if (r.data.estado === 'pendiente') F.$('eR').innerHTML = '<span class="f-ok">Respuesta enviada. Como es tu primera publicación, la revisa un moderador antes de que se vea.</span>';
+        var conImagen = /!\[[^\]]*\]\(/.test(txt);
+        t.value = ''; p.hidden = true; t.hidden = false; F.$('vR').textContent = 'Vista previa'; F.$('iR').textContent = '';
+        if (r.data.estado === 'pendiente') F.$('eR').innerHTML = '<span class="f-ok">Respuesta enviada. ' +
+          (conImagen ? 'Como lleva una imagen, la revisa un moderador antes de que se vea.' : 'Como es tu primera publicación, la revisa un moderador antes de que se vea.') + '</span>';
         cargar();
       });
     };
