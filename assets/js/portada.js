@@ -95,7 +95,8 @@
      materia, y si tampoco, centra el tema. */
   function mostrar(li, a) {
     var cab = document.querySelector("header.site");
-    var alto = cab ? cab.getBoundingClientRect().bottom : 0;
+    /* en el teléfono el encabezado se esconde al bajar: no hay que dejarle lugar */
+    var alto = !cab || (window.matchMedia && window.matchMedia("(max-width:640px)").matches) ? 0 : cab.getBoundingClientRect().bottom;
     var r = a.getBoundingClientRect(), y0 = window.pageYOffset;
     var col = li.closest ? li.closest("section.anio") : null;
     var y = null;
@@ -208,5 +209,29 @@
     document.getElementById("seguirMat").textContent =
       [dato.m, dato.a].filter(Boolean).join(" · ");
     caja.hidden = false;
+  })();
+  /* ------------------------------------------- encabezado en el teléfono
+     En el teléfono el encabezado ocupa casi un tercio de la pantalla (logo,
+     fecha, buscador y menú en tres renglones). Se ve solo con la página
+     arriba de todo y se esconde al bajar, como en los mapas de temas. Son
+     dos marcas y no una a propósito: entre ellas queda una zona muerta, así
+     el rebote del scroll del celular no lo hace aparecer y desaparecer. */
+  (function () {
+    var cab = document.querySelector("header.site");
+    if (!cab || !window.matchMedia) return;
+    var tel = window.matchMedia("(max-width:640px)");
+    var MOSTRAR = 8, OCULTAR = 56, oculto = false;
+    function revisar() {
+      var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+      var nuevo = oculto;
+      if (!tel.matches || y <= MOSTRAR) nuevo = false;
+      else if (y > OCULTAR) nuevo = true;
+      if (nuevo === oculto) return;
+      oculto = nuevo;
+      cab.className = oculto ? cab.className + " hd-hide" : cab.className.replace(/\s*hd-hide/g, "");
+    }
+    window.addEventListener("scroll", revisar, { passive: true });
+    if (tel.addEventListener) tel.addEventListener("change", revisar); else if (tel.addListener) tel.addListener(revisar);
+    revisar();
   })();
 })();
