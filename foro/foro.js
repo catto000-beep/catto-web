@@ -233,7 +233,10 @@
   }
 
   /* Lista de temas (portada, categoría, perfil) */
-  var SEL_TEMA = 'id,titulo,categoria,estado,resuelto,respuestas,actividad,pagina,autor:foro_perfil(alias)';
+  var SEL_TEMA = 'id,titulo,cuerpo,categoria,estado,resuelto,respuestas,actividad,pagina,autor:foro_perfil(alias)';
+  /* La primera foto de la consulta (no los videos), para la miniatura */
+  var FOTO = new RegExp('!\\[[^\\]\\n]*\\]\\((' + BASE_IMG.replace(/[.\/]/g, '\\$&') + '[A-Za-z0-9\\/_-]+\\.(?:webp|jpe?g|png))\\)', 'i');
+  function primeraFoto(cuerpo) { var m = FOTO.exec(cuerpo || ''); return m ? m[1] : null; }
   function listaTemas(el, temas, nombres) {
     if (!temas || !temas.length) { el.innerHTML = '<p class="f-vacio">Todavía no hay consultas acá.</p>'; return; }
     el.innerHTML = '<ul class="f-lista">' + temas.map(function (t) {
@@ -242,7 +245,9 @@
       else if (t.estado === 'oculto') et = '<span class="f-et oc">oculta</span>';
       else if (t.resuelto) et = '<span class="f-et ok">resuelta</span>';
       var cat = nombres && nombres[t.categoria] ? esc(nombres[t.categoria]) + ' · ' : '';
-      return '<li><div class="n"><b>' + t.respuestas + '</b>resp.</div>' +
+      var foto = primeraFoto(t.cuerpo);
+      var mini = foto ? '<a class="mini" href="/foro/tema?id=' + t.id + '" tabindex="-1" aria-hidden="true"><img src="' + foto + '" alt="" loading="lazy" decoding="async"></a>' : '';
+      return '<li><div class="n"><b>' + t.respuestas + '</b>resp.</div>' + mini +
         '<div class="t"><a href="/foro/tema?id=' + t.id + '">' + esc(t.titulo) + '</a>' + et +
         '<div class="meta">' + cat + esc(t.autor ? t.autor.alias : '') + ' · ' + hace(t.actividad) + '</div></div></li>';
     }).join('') + '</ul>';
