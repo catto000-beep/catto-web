@@ -9,12 +9,12 @@
 <link rel="stylesheet" href="/assets/css/base.css?v=12">
 <link rel="stylesheet" href="/assets/css/papel.css?v=8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
-<link rel="stylesheet" href="/foro/foro.css?v=10">
+<link rel="stylesheet" href="/foro/foro.css?v=11">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script src="/aula/assets/vendor/supabase.js"></script>
 <script src="/aula/assets/config.js"></script>
-<script src="/foro/foro.js?v=8"></script>
+<script src="/foro/foro.js?v=9"></script>
 </head>
 <body>
 <header class="site">
@@ -49,6 +49,7 @@
       if (S.perfil.rol === 'moderador') {
         acc += m.estado !== 'publicado' ? '<button class="f-btn" data-mod="publicado" data-t="' + tipo + '" data-id="' + m.id + '">Publicar</button>' : '';
         acc += m.estado !== 'oculto' ? '<button class="f-btn peligro" data-mod="oculto" data-t="' + tipo + '" data-id="' + m.id + '">Ocultar</button>' : '';
+        acc += '<button class="f-btn peligro" data-borrar="' + tipo + '" data-id="' + m.id + '">Borrar</button>';
       }
       if (m.autor && m.autor.alias !== S.perfil.alias && m.estado === 'publicado') acc += '<button class="f-btn link" data-den="' + tipo + '" data-id="' + m.id + '">Denunciar</button>';
     }
@@ -153,7 +154,15 @@
   document.addEventListener('click', function (e) {
     var b = e.target.closest('button');
     if (!b) return;
-    if (b.dataset.mod) {
+    if (b.dataset.borrar) {
+      var t = b.dataset.borrar;
+      if (!confirm(t === 'tema' ? '¿Borrar para siempre esta consulta y todas sus respuestas? También se borran sus imágenes y videos. No se puede deshacer.'
+                                : '¿Borrar para siempre esta respuesta? También se borran sus imágenes y videos. No se puede deshacer.')) return;
+      b.disabled = true;
+      F.borrarMensaje(t, +b.dataset.id).then(function () {
+        if (t === 'tema') location.href = '/foro/moderar#historial'; else cargar();
+      }, function (er) { b.disabled = false; alert(F.error(er)); });
+    } else if (b.dataset.mod) {
       F.sb.rpc('foro_moderar', { p_tipo: b.dataset.t, p_id: +b.dataset.id, p_estado: b.dataset.mod }).then(function (r) { if (r.error) alert(F.error(r.error)); else cargar(); });
     } else if (b.dataset.den) {
       var caja = document.getElementById(b.dataset.den + '-' + b.dataset.id).querySelector('.den');

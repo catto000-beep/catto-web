@@ -10,12 +10,12 @@
 <link rel="stylesheet" href="/assets/css/base.css?v=12">
 <link rel="stylesheet" href="/assets/css/papel.css?v=8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
-<link rel="stylesheet" href="/foro/foro.css?v=10">
+<link rel="stylesheet" href="/foro/foro.css?v=11">
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
 <script src="/aula/assets/vendor/supabase.js"></script>
 <script src="/aula/assets/config.js"></script>
-<script src="/foro/foro.js?v=8"></script>
+<script src="/foro/foro.js?v=9"></script>
 </head>
 <body>
 <header class="site">
@@ -32,123 +32,302 @@
 
 <main class="foro">
   <h1>Moderación</h1>
-  <p class="bajada">Al aprobar el primer mensaje de alguien, sus próximas publicaciones salen directo. Ocultar no borra: el mensaje deja de verse y se puede volver a publicar.</p>
+  <p class="bajada">Al aprobar el primer mensaje de alguien, sus próximas publicaciones salen directo. Ocultar no borra: el mensaje deja de verse y se puede volver a publicar desde «Ocultos». Borrar es definitivo.</p>
   <div id="sin" hidden><p class="f-err">Esta página es solo para moderadores.</p></div>
   <div id="panel" hidden>
-    <h2 class="f-grupo">Pendientes de aprobación</h2>
-    <div id="pend"></div>
-    <h2 class="f-grupo" style="margin-top:30px">Denuncias sin atender</h2>
-    <div id="dens"></div>
-    <h2 class="f-grupo" style="margin-top:30px">Suspender o rehabilitar una cuenta</h2>
-    <form class="f-form f-fila" id="fB">
-      <input type="text" id="aliasB" placeholder="alias" style="max-width:220px" autocomplete="off">
-      <button class="f-btn peligro" type="button" id="bloq">Suspender</button>
-      <button class="f-btn" type="button" id="desbloq">Rehabilitar</button>
-    </form>
-    <p class="f-err" id="eB"></p>
-    <h2 class="f-grupo" style="margin-top:30px">Registrados <span id="nReg"></span></h2>
-    <div id="regs"></div>
-    <h2 class="f-grupo" style="margin-top:30px">Últimas acciones</h2>
-    <div id="acc"></div>
+    <nav class="m-tabs" id="tabs" role="tablist">
+      <button type="button" role="tab" data-tab="pend">Pendientes<span class="m-n" id="nPend"></span></button>
+      <button type="button" role="tab" data-tab="dens">Denuncias<span class="m-n" id="nDens"></span></button>
+      <button type="button" role="tab" data-tab="ocultos">Ocultos<span class="m-n" id="nOcu"></span></button>
+      <button type="button" role="tab" data-tab="actividad">Actividad</button>
+      <button type="button" role="tab" data-tab="usuarios">Usuarios<span class="m-n" id="nReg"></span></button>
+      <button type="button" role="tab" data-tab="historial">Historial</button>
+    </nav>
+    <p class="f-err" id="eGen"></p>
+
+    <section class="m-sec" id="s-pend">
+      <p class="m-ayuda">Mensajes que esperan aprobación: la primera publicación de cada cuenta y todo lo que lleva imágenes o videos.</p>
+      <div id="pend"></div>
+    </section>
+
+    <section class="m-sec" id="s-dens" hidden>
+      <p class="m-ayuda">Denuncias que todavía nadie atendió. Ocultar o borrar el mensaje da la denuncia por atendida.</p>
+      <div id="dens"></div>
+    </section>
+
+    <section class="m-sec" id="s-ocultos" hidden>
+      <p class="m-ayuda">Lo que se ocultó sigue guardado y solo lo ve la moderación. Se puede volver a publicar o borrar para siempre, junto con sus imágenes y videos.</p>
+      <div id="ocultos"></div>
+    </section>
+
+    <section class="m-sec" id="s-actividad" hidden>
+      <p class="m-ayuda">Lo último publicado en el foro. Se puede filtrar por cuenta, ocultar, borrar o cambiar una consulta de categoría.</p>
+      <div class="f-fila m-filtro">
+        <input type="text" id="fAlias" placeholder="alias (vacío = todos)" autocomplete="off" list="lAlias">
+        <datalist id="lAlias"></datalist>
+        <select id="fTipo"><option value="">Consultas y respuestas</option><option value="tema">Solo consultas</option><option value="respuesta">Solo respuestas</option></select>
+        <button class="f-btn" type="button" id="bFiltrar">Filtrar</button>
+      </div>
+      <div id="actividad"></div>
+    </section>
+
+    <section class="m-sec" id="s-usuarios" hidden>
+      <p class="m-ayuda">«Con confianza» significa que publica sin revisión previa, salvo imágenes y videos, que siempre se revisan. Suspender impide publicar; lo ya publicado queda.</p>
+      <div id="regs"></div>
+    </section>
+
+    <section class="m-sec" id="s-historial" hidden>
+      <div id="acc"></div>
+      <p class="f-fila" style="margin-top:12px"><button class="f-btn" type="button" id="bMas" hidden>Ver más</button></p>
+    </section>
   </div>
 </main>
 
 <script>
 (function () {
-  var F = window.Foro;
-  function tarjeta(m, tipo, extra) {
-    var link = tipo === 'tema' ? '/foro/tema?id=' + m.id : '/foro/tema?id=' + m.tema_id + '#respuesta-' + m.id;
-    return '<div class="f-msg"><div class="cab"><b>' + F.esc(m.autor ? m.autor.alias : '') + '</b><span>' + F.esc(m.autor ? m.autor.curso : '') + '</span><span>· ' + F.hace(m.creado) + '</span>' +
-      '<span>· ' + (tipo === 'tema' ? 'consulta' : 'respuesta') + '</span> <a href="' + link + '">abrir</a></div>' +
-      (m.titulo ? '<b>' + F.esc(m.titulo) + '</b>' : '') + '<div class="f-cuerpo">' + F.md(m.cuerpo) + '</div>' + (extra || '') +
-      '<div class="acc"><button class="f-btn pri" data-t="' + tipo + '" data-id="' + m.id + '" data-e="publicado">Aprobar</button>' +
-      '<button class="f-btn peligro" data-t="' + tipo + '" data-id="' + m.id + '" data-e="oculto">Ocultar</button></div></div>';
+  var F = window.Foro, CATS = [], POR_ALIAS = {}, HIST = 0, PASO = 30;
+
+  /* ---------- utilidades ---------- */
+  function extracto(t, n) {
+    t = (t || '').replace(/!\[video\]\([^)]*\)/g, '[video] ').replace(/!\[[^\]]*\]\([^)]*\)/g, '[imagen] ')
+      .replace(/\$\$?[^$]*\$\$?/g, '[fórmula] ').replace(/[*_`#>]/g, '').replace(/\s+/g, ' ').trim();
+    return t.length > n ? t.slice(0, n - 1) + '…' : t;
   }
+  function enlace(tipo, m) { return tipo === 'tema' ? '/foro/tema?id=' + m.id : '/foro/tema?id=' + m.tema_id + '#respuesta-' + m.id; }
+  function boton(txt, attrs, cls) {
+    var a = ''; for (var k in attrs) a += ' data-' + k + '="' + F.esc(String(attrs[k])) + '"';
+    return '<button type="button" class="f-btn ch' + (cls ? ' ' + cls : '') + '"' + a + '>' + txt + '</button>';
+  }
+  function selCategoria(m) {
+    return '<select class="m-mover" data-tema="' + m.id + '" title="Cambiar de categoría" aria-label="Categoría">' + CATS.map(function (c) {
+      return '<option value="' + c.slug + '"' + (c.slug === m.categoria ? ' selected' : '') + '>' + F.esc(c.grupo === 'General' ? c.nombre : c.grupo + ' · ' + c.nombre) + '</option>';
+    }).join('') + '</select>';
+  }
+  function contador(id, n, alerta) {
+    var el = F.$(id); el.textContent = n ? n : ''; el.className = 'm-n' + (n && alerta ? ' alerta' : '');
+  }
+  function porFecha(a, b) { return a.m.creado < b.m.creado ? 1 : -1; }
+
+  /* Tarjeta completa: para decidir hay que leer el mensaje entero */
+  function tarjeta(m, tipo, acciones, previo, dato) {
+    return '<div class="f-msg">' + (previo || '') + '<div class="cab"><b>' + F.esc(m.autor ? m.autor.alias : '') + '</b><span>' + F.esc(m.autor ? m.autor.curso : '') + '</span>' +
+      '<span>· ' + (dato || F.hace(m.creado)) + '</span>' +
+      '<span>· ' + (tipo === 'tema' ? 'consulta' : 'respuesta' + (m.tema ? ' en «' + F.esc(m.tema.titulo) + '»' : '')) + '</span> <a href="' + enlace(tipo, m) + '">abrir</a></div>' +
+      (m.titulo ? '<b>' + F.esc(m.titulo) + '</b>' : '') + '<div class="f-cuerpo">' + F.md(m.cuerpo) + '</div>' +
+      '<div class="acc">' + acciones + '</div></div>';
+  }
+
+  /* ---------- carga ---------- */
   function cargar() {
-    Promise.all([
+    F.$('eGen').textContent = '';
+    var SR = '*,autor:foro_perfil(alias,curso),tema:foro_tema(id,titulo)';
+    return Promise.all([
       F.sb.from('foro_tema').select('*,autor:foro_perfil(alias,curso)').eq('estado', 'pendiente').order('creado'),
-      F.sb.from('foro_respuesta').select('*,autor:foro_perfil(alias,curso)').eq('estado', 'pendiente').order('creado'),
-      F.sb.from('foro_denuncia').select('*,autor:foro_perfil(alias),tema:foro_tema(id,titulo,cuerpo,estado,autor:foro_perfil(alias,curso)),resp:foro_respuesta(id,tema_id,cuerpo,estado,autor:foro_perfil(alias,curso))').eq('atendida', false).order('creado'),
-      F.sb.from('foro_accion').select('*,moderador:foro_perfil(alias)').order('creado', { ascending: false }).limit(15),
+      F.sb.from('foro_respuesta').select(SR).eq('estado', 'pendiente').order('creado'),
+      F.sb.from('foro_denuncia').select('*,autor:foro_perfil(alias),tema:foro_tema(id,titulo,cuerpo,estado,creado,autor:foro_perfil(alias,curso)),resp:foro_respuesta(id,tema_id,cuerpo,estado,creado,autor:foro_perfil(alias,curso))').eq('atendida', false).order('creado'),
+      F.sb.from('foro_tema').select('*,autor:foro_perfil(alias,curso)').eq('estado', 'oculto').order('creado', { ascending: false }),
+      F.sb.from('foro_respuesta').select(SR).eq('estado', 'oculto').order('creado', { ascending: false }),
       F.sb.from('foro_perfil').select('id,alias,curso,rol,confiable,bloqueado,creado').order('creado', { ascending: false }),
       F.sb.from('foro_tema').select('autor'),
-      F.sb.from('foro_respuesta').select('autor')
+      F.sb.from('foro_respuesta').select('autor'),
+      CATS.length ? Promise.resolve({ data: CATS }) : F.sb.from('foro_categoria').select('slug,nombre,grupo,orden').order('orden')
     ]).then(function (r) {
-      registrados(r[4], r[5].data || [], r[6].data || []);
-      var p = (r[0].data || []).map(function (m) { return tarjeta(m, 'tema'); }).concat((r[1].data || []).map(function (m) { return tarjeta(m, 'respuesta'); }));
-      F.$('pend').innerHTML = p.length ? p.join('') : '<p class="f-vacio">No hay mensajes esperando aprobación.</p>';
-      var d = (r[2].data || []).map(function (x) {
-        var m = x.tema || x.resp, tipo = x.tema ? 'tema' : 'respuesta';
-        if (!m) return '';
-        var link = tipo === 'tema' ? '/foro/tema?id=' + m.id : '/foro/tema?id=' + m.tema_id;
-        return '<div class="f-msg"><div class="cab"><span>Denuncia de</span><b>' + F.esc(x.autor ? x.autor.alias : '') + '</b><span>· ' + F.hace(x.creado) + '</span> <a href="' + link + '">abrir</a></div>' +
-          '<p style="margin:0 0 8px"><em>«' + F.esc(x.motivo) + '»</em></p>' +
-          '<div class="cab"><span>Mensaje de</span><b>' + F.esc(m.autor ? m.autor.alias : '') + '</b><span>· ' + F.esc(m.estado) + '</span></div>' +
-          (m.titulo ? '<b>' + F.esc(m.titulo) + '</b>' : '') + '<div class="f-cuerpo">' + F.md(m.cuerpo) + '</div>' +
-          '<div class="acc"><button class="f-btn peligro" data-t="' + tipo + '" data-id="' + m.id + '" data-e="oculto" data-den="' + x.id + '">Ocultar el mensaje</button>' +
-          '<button class="f-btn" data-at="' + x.id + '">Descartar la denuncia</button></div></div>';
-      }).join('');
-      F.$('dens').innerHTML = d || '<p class="f-vacio">No hay denuncias pendientes.</p>';
-      F.$('acc').innerHTML = (r[3].data || []).length ? '<ul class="f-lista">' + r[3].data.map(function (a) {
-        return '<li><div class="t"><span class="meta">' + F.hace(a.creado) + ' · ' + F.esc(a.moderador ? a.moderador.alias : '') + ' · ' + F.esc(a.accion) + ' ' + F.esc(a.tipo) + ' ' + F.esc(a.objeto) + '</span></div></li>';
-      }).join('') + '</ul>' : '<p class="f-vacio">Todavía no hay acciones registradas.</p>';
-      F.formulas(F.$('pend')); F.formulas(F.$('dens'));
+      CATS = r[8].data || [];
+      POR_ALIAS = {};
+      (r[5].data || []).forEach(function (p) { POR_ALIAS[p.alias] = p; });
+      F.$('lAlias').innerHTML = (r[5].data || []).map(function (p) { return '<option value="' + F.esc(p.alias) + '">'; }).join('');
+      pendientes(r[0].data || [], r[1].data || []);
+      denuncias(r[2].data || []);
+      ocultos(r[3].data || [], r[4].data || []);
+      registrados(r[5], r[6].data || [], r[7].data || []);
       F.pendientes();
+      return Promise.all([actividad(), historial(true)]);
     });
   }
 
-  /* Lista de cuentas del foro: solo lo que hay en el perfil (alias y curso);
-     el correo vive en la cuenta de Google y el foro no lo guarda. */
+  function accionesPend(t, m) {
+    return boton('Aprobar', { act: 'estado', t: t, id: m.id, e: 'publicado' }, 'pri') +
+      boton('Ocultar', { act: 'estado', t: t, id: m.id, e: 'oculto' }, 'peligro') +
+      boton('Borrar', { act: 'borrar', t: t, id: m.id }, 'peligro');
+  }
+  function pendientes(t, re) {
+    var p = t.map(function (m) { return tarjeta(m, 'tema', accionesPend('tema', m)); })
+      .concat(re.map(function (m) { return tarjeta(m, 'respuesta', accionesPend('respuesta', m)); }));
+    contador('nPend', p.length, true);
+    F.$('pend').innerHTML = p.length ? p.join('') : '<p class="f-vacio">No hay mensajes esperando aprobación.</p>';
+    F.formulas(F.$('pend'));
+  }
+
+  function denuncias(lista) {
+    var d = lista.map(function (x) {
+      var m = x.tema || x.resp, tipo = x.tema ? 'tema' : 'respuesta';
+      if (!m) return '';
+      var previo = '<div class="cab"><span>Denuncia de</span><b>' + F.esc(x.autor ? x.autor.alias : '') + '</b><span>· ' + F.hace(x.creado) + '</span></div>' +
+        '<p style="margin:0 0 10px"><em>«' + F.esc(x.motivo) + '»</em></p>';
+      var acc = (m.estado !== 'oculto' ? boton('Ocultar el mensaje', { act: 'estado', t: tipo, id: m.id, e: 'oculto', den: x.id }, 'peligro') : '') +
+        boton('Borrar el mensaje', { act: 'borrar', t: tipo, id: m.id, den: x.id }, 'peligro') +
+        boton('Descartar la denuncia', { act: 'descartar', id: x.id });
+      return tarjeta(m, tipo, acc, previo, F.esc(m.estado));
+    }).filter(Boolean);
+    contador('nDens', d.length, true);
+    F.$('dens').innerHTML = d.length ? d.join('') : '<p class="f-vacio">No hay denuncias pendientes.</p>';
+    F.formulas(F.$('dens'));
+  }
+
+  function ocultos(t, re) {
+    var todo = t.map(function (m) { return { m: m, tipo: 'tema' }; })
+      .concat(re.map(function (m) { return { m: m, tipo: 'respuesta' }; })).sort(porFecha);
+    contador('nOcu', todo.length, false);
+    F.$('ocultos').innerHTML = todo.length ? todo.map(function (x) {
+      return tarjeta(x.m, x.tipo, boton('Volver a publicar', { act: 'estado', t: x.tipo, id: x.m.id, e: 'publicado' }) +
+        boton('Borrar para siempre', { act: 'borrar', t: x.tipo, id: x.m.id, n: x.tipo === 'tema' ? x.m.respuestas : 0 }, 'peligro'));
+    }).join('') : '<p class="f-vacio">No hay mensajes ocultos.</p>';
+    F.formulas(F.$('ocultos'));
+  }
+
+  /* ---------- actividad: lo último publicado ---------- */
+  function actividad() {
+    var alias = F.$('fAlias').value.trim().toLowerCase(), tipo = F.$('fTipo').value, el = F.$('actividad');
+    var p = alias ? POR_ALIAS[alias] : null;
+    if (alias && !p) { el.innerHTML = '<p class="f-err">No hay una cuenta con el alias «' + F.esc(alias) + '».</p>'; return Promise.resolve(); }
+    function q(tabla, sel) {
+      var x = F.sb.from(tabla).select(sel).eq('estado', 'publicado').order('creado', { ascending: false }).limit(40);
+      return p ? x.eq('autor', p.id) : x;
+    }
+    return Promise.all([
+      tipo === 'respuesta' ? { data: [] } : q('foro_tema', 'id,titulo,cuerpo,categoria,respuestas,creado,autor:foro_perfil(alias)'),
+      tipo === 'tema' ? { data: [] } : q('foro_respuesta', 'id,tema_id,cuerpo,creado,autor:foro_perfil(alias),tema:foro_tema(id,titulo)')
+    ]).then(function (r) {
+      var err = r[0].error || r[1].error;
+      if (err) { el.innerHTML = '<p class="f-err">' + F.esc(F.error(err)) + '</p>'; return; }
+      var todo = (r[0].data || []).map(function (m) { return { m: m, tipo: 'tema' }; })
+        .concat((r[1].data || []).map(function (m) { return { m: m, tipo: 'respuesta' }; })).sort(porFecha).slice(0, 40);
+      if (!todo.length) { el.innerHTML = '<p class="f-vacio">No hay mensajes publicados' + (p ? ' de ' + F.esc(p.alias) : '') + '.</p>'; return; }
+      el.innerHTML = '<ul class="f-lista m-act">' + todo.map(function (x) {
+        var m = x.m, t = x.tipo, al = m.autor ? m.autor.alias : '';
+        var tit = t === 'tema' ? F.esc(m.titulo) : F.esc(extracto(m.cuerpo, 140));
+        var meta = (t === 'tema' ? 'consulta · ' + m.respuestas + ' resp.' : 'respuesta en «' + F.esc(m.tema ? m.tema.titulo : '') + '»') +
+          ' · <a href="#" data-ver="' + F.esc(al) + '">' + F.esc(al) + '</a> · ' + F.hace(m.creado);
+        var acc = (t === 'tema' ? selCategoria(m) : '') +
+          boton('Ocultar', { act: 'estado', t: t, id: m.id, e: 'oculto' }, 'peligro') +
+          boton('Borrar', { act: 'borrar', t: t, id: m.id, n: t === 'tema' ? m.respuestas : 0 }, 'peligro');
+        return '<li><div class="t"><a href="' + enlace(t, m) + '">' + tit + '</a><div class="meta">' + meta + '</div>' +
+          (t === 'tema' ? '<div class="meta">' + F.esc(extracto(m.cuerpo, 160)) + '</div>' : '') + '</div><div class="m-acc">' + acc + '</div></li>';
+      }).join('') + '</ul>';
+    });
+  }
+
+  /* ---------- usuarios: solo lo que hay en el perfil (alias y curso);
+     el correo vive en la cuenta de Google y el foro no lo guarda ---------- */
   function registrados(rp, temas, resps) {
     if (rp.error) { F.$('regs').innerHTML = '<p class="f-err">' + F.esc(F.error(rp.error)) + '</p>'; return; }
     var nt = {}, nr = {};
     temas.forEach(function (t) { nt[t.autor] = (nt[t.autor] || 0) + 1; });
     resps.forEach(function (t) { nr[t.autor] = (nr[t.autor] || 0) + 1; });
     var u = rp.data || [];
-    F.$('nReg').textContent = '(' + u.length + ')';
+    contador('nReg', u.length, false);
     if (!u.length) { F.$('regs').innerHTML = '<p class="f-vacio">Todavía no hay cuentas.</p>'; return; }
-    F.$('regs').innerHTML = '<div class="f-tabla-c"><table class="f-tabla"><thead><tr><th>Alias</th><th>Curso</th><th>Alta</th><th class="num">Consultas</th><th class="num">Respuestas</th><th>Estado</th></tr></thead><tbody>' +
+    F.$('regs').innerHTML = '<div class="f-tabla-c"><table class="f-tabla"><thead><tr><th>Alias</th><th>Curso</th><th>Alta</th><th class="num">Consultas</th><th class="num">Respuestas</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>' +
       u.map(function (p) {
         var est = p.bloqueado ? '<span class="f-et oc">suspendida</span>'
           : p.rol === 'moderador' ? '<span class="f-et ok">moderador</span>'
-          : p.confiable ? '<span class="f-et">publica sin revisión</span>'
-          : '<span class="f-et pend">primera publicación con revisión</span>';
+          : p.confiable ? '<span class="f-et">con confianza</span>'
+          : '<span class="f-et pend">con revisión previa</span>';
+        var acc = boton('Actividad', { ver: p.alias });
+        if (p.rol !== 'moderador') {
+          acc += p.confiable ? boton('Quitar confianza', { act: 'conf', alias: p.alias, v: 0 }) : boton('Dar confianza', { act: 'conf', alias: p.alias, v: 1 });
+          acc += p.bloqueado ? boton('Rehabilitar', { act: 'bloq', alias: p.alias, v: 0 }) : boton('Suspender', { act: 'bloq', alias: p.alias, v: 1 }, 'peligro');
+        }
         return '<tr><td class="al">' + F.esc(p.alias) + '</td><td>' + F.esc(p.curso) + '</td><td title="' + F.esc(new Date(p.creado).toLocaleString('es-AR')) + '">' +
-          F.esc(new Date(p.creado).toLocaleDateString('es-AR')) + '</td><td class="num">' + (nt[p.id] || 0) + '</td><td class="num">' + (nr[p.id] || 0) + '</td><td>' + est + '</td></tr>';
+          F.esc(new Date(p.creado).toLocaleDateString('es-AR')) + '</td><td class="num">' + (nt[p.id] || 0) + '</td><td class="num">' + (nr[p.id] || 0) + '</td><td>' + est + '</td><td><div class="m-acc">' + acc + '</div></td></tr>';
       }).join('') + '</tbody></table></div>';
   }
+
+  /* ---------- historial de la moderación ---------- */
+  var VERBO = { publicado: 'publicó', oculto: 'ocultó', borrar: 'borró', bloquear: 'suspendió', desbloquear: 'rehabilitó',
+    atender: 'atendió', confiar: 'dio confianza a', revisar: 'quitó la confianza a', mover: 'movió' };
+  var OBJ = { tema: 'la consulta', respuesta: 'la respuesta', usuario: 'la cuenta', denuncia: 'la denuncia' };
+  function historial(desdeCero) {
+    if (desdeCero) HIST = 0;
+    return F.sb.from('foro_accion').select('*,moderador:foro_perfil(alias)').order('creado', { ascending: false }).range(HIST, HIST + PASO - 1).then(function (r) {
+      var el = F.$('acc'), a = r.data || [];
+      if (r.error) { el.innerHTML = '<p class="f-err">' + F.esc(F.error(r.error)) + '</p>'; return; }
+      var html = a.map(function (x) {
+        var obj = F.esc(x.objeto), num = /^\d+/.exec(x.objeto || '');
+        if (num && x.tipo === 'tema' && x.accion !== 'borrar') obj = '<a href="/foro/tema?id=' + num[0] + '">' + obj + '</a>';
+        return '<li><div class="t"><span class="meta">' + F.hace(x.creado) + ' · <b>' + F.esc(x.moderador ? x.moderador.alias : '?') + '</b> ' +
+          (VERBO[x.accion] || F.esc(x.accion)) + ' ' + (OBJ[x.tipo] || F.esc(x.tipo)) + ' ' + obj + '</span></div></li>';
+      }).join('');
+      if (desdeCero) el.innerHTML = html ? '<ul class="f-lista">' + html + '</ul>' : '<p class="f-vacio">Todavía no hay acciones registradas.</p>';
+      else if (html) el.querySelector('ul').insertAdjacentHTML('beforeend', html);
+      HIST += a.length;
+      F.$('bMas').hidden = a.length < PASO;
+    });
+  }
+  F.$('bMas').onclick = function () { historial(false); };
+
+  /* ---------- pestañas ---------- */
+  function abrir(t, sinHash) {
+    if (!F.$('s-' + t)) t = 'pend';
+    [].forEach.call(document.querySelectorAll('.m-sec'), function (s) { s.hidden = s.id !== 's-' + t; });
+    [].forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      var on = b.dataset.tab === t; b.className = on ? 'on' : ''; b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    if (!sinHash) history.replaceState(null, '', '#' + t);
+  }
+  F.$('tabs').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) abrir(b.dataset.tab); });
+  function verCuenta(alias) { F.$('fAlias').value = alias; F.$('fTipo').value = ''; abrir('actividad'); actividad(); window.scrollTo(0, 0); }
+  F.$('bFiltrar').onclick = function () { actividad(); };
+  F.$('fAlias').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); actividad(); } });
+  F.$('fTipo').onchange = function () { actividad(); };
 
   F.exigir(true).then(function (s) {
     if (!s) return;
     if (s.perfil.rol !== 'moderador') { F.$('sin').hidden = false; return; }
     F.$('panel').hidden = false;
+    abrir((location.hash || '').slice(1) || 'pend', true);
     cargar();
   });
 
+  /* ---------- acciones ---------- */
+  function fallo(e) { var m = F.error(e); F.$('eGen').textContent = m; alert(m); }
+  document.addEventListener('change', function (e) {
+    var s = e.target.closest('select.m-mover'); if (!s) return;
+    var c = CATS.filter(function (x) { return x.slug === s.value; })[0];
+    if (!confirm('¿Mover la consulta a «' + (c ? (c.grupo === 'General' ? c.nombre : c.grupo + ' · ' + c.nombre) : s.value) + '»?')) { actividad(); return; }
+    F.sb.rpc('foro_mover', { p_tema: +s.dataset.tema, p_categoria: s.value }).then(function (r) {
+      if (r.error) { fallo(r.error); actividad(); } else historial(true);
+    });
+  });
   document.addEventListener('click', function (e) {
-    var b = e.target.closest('button');
+    var v = e.target.closest('[data-ver]');
+    if (v) { e.preventDefault(); verCuenta(v.dataset.ver); return; }
+    var b = e.target.closest('button[data-act]');
     if (!b) return;
-    if (b.dataset.e) {
-      F.sb.rpc('foro_moderar', { p_tipo: b.dataset.t, p_id: +b.dataset.id, p_estado: b.dataset.e }).then(function (r) {
-        if (r.error) { alert(F.error(r.error)); return; }
-        if (b.dataset.den) F.sb.rpc('foro_atender_denuncia', { p_id: +b.dataset.den }).then(cargar); else cargar();
+    var d = b.dataset;
+    var hecho = function (r) { if (r && r.error) { b.disabled = false; fallo(r.error); return; } cargar(); };
+    var atender = function () { return d.den ? F.sb.rpc('foro_atender_denuncia', { p_id: +d.den }) : Promise.resolve(); };
+    b.disabled = true;
+    if (d.act === 'estado') {
+      F.sb.rpc('foro_moderar', { p_tipo: d.t, p_id: +d.id, p_estado: d.e }).then(function (r) {
+        if (r.error) { b.disabled = false; fallo(r.error); return; }
+        atender().then(function () { cargar(); });
       });
-    } else if (b.dataset.at) {
-      F.sb.rpc('foro_atender_denuncia', { p_id: +b.dataset.at }).then(function (r) { if (r.error) alert(F.error(r.error)); else cargar(); });
+    } else if (d.act === 'borrar') {
+      var aviso = d.t === 'tema'
+        ? '¿Borrar para siempre esta consulta' + (+d.n ? ' y sus ' + d.n + ' respuestas' : ' y sus respuestas') + '? También se borran sus imágenes y videos. No se puede deshacer.'
+        : '¿Borrar para siempre esta respuesta? También se borran sus imágenes y videos. No se puede deshacer.';
+      if (!confirm(aviso)) { b.disabled = false; return; }
+      F.borrarMensaje(d.t, +d.id).then(function () { cargar(); }, function (er) { b.disabled = false; fallo(er); });
+    } else if (d.act === 'descartar') {
+      F.sb.rpc('foro_atender_denuncia', { p_id: +d.id }).then(hecho);
+    } else if (d.act === 'bloq') {
+      if (+d.v && !confirm('¿Suspender a ' + d.alias + '? No va a poder publicar hasta que se la rehabilite.')) { b.disabled = false; return; }
+      F.sb.rpc('foro_bloquear', { p_alias: d.alias, p_valor: !!+d.v }).then(hecho);
+    } else if (d.act === 'conf') {
+      F.sb.rpc('foro_confianza', { p_alias: d.alias, p_valor: !!+d.v }).then(hecho);
     }
   });
-
-  function bloquear(v) {
-    var a = F.$('aliasB').value.trim();
-    F.$('eB').textContent = '';
-    if (!a) { F.$('eB').textContent = 'Escribí el alias.'; return; }
-    F.sb.rpc('foro_bloquear', { p_alias: a, p_valor: v }).then(function (r) {
-      if (r.error) { F.$('eB').textContent = F.error(r.error); return; }
-      F.$('eB').innerHTML = '<span class="f-ok">' + (v ? 'Cuenta suspendida.' : 'Cuenta rehabilitada.') + '</span>'; cargar();
-    });
-  }
-  F.$('bloq').onclick = function () { bloquear(true); };
-  F.$('desbloq').onclick = function () { bloquear(false); };
 })();
 </script>
 </body>

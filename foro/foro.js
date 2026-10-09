@@ -86,6 +86,7 @@
     if (/Failed to fetch|NetworkError/.test(m)) return 'No hay conexión con el servidor. Probá de nuevo en un momento.';
     if (/Bucket not found/i.test(m)) return 'Las imágenes todavía no están habilitadas.';
     if (/foro_editar_tema/.test(m) && /Could not find|does not exist/.test(m)) return 'La edición todavía no está habilitada.';
+    if (/foro_(borrar|confianza|mover)/.test(m) && /Could not find|does not exist/.test(m)) return 'Esta herramienta todavía no está habilitada: falta correr foro/db/07-moderacion.sql en Supabase.';
     if (/row-level security/i.test(m)) return 'No se pudo subir el archivo: puede que se haya alcanzado el límite de 10 imágenes o videos por hora.';
     if (/mime type|invalid_mime/i.test(m)) return 'Ese tipo de archivo todavía no está habilitado en el foro.';
     if (/exceeded the maximum allowed size|Payload too large/i.test(m)) return 'El archivo supera el tamaño permitido (2 MB las imágenes, 20 MB los videos).';
@@ -232,6 +233,29 @@
     });
   }
 
+  /* Moderación: borra para siempre un mensaje (una consulta arrastra sus
+     respuestas) y después las imágenes y videos que usaba. Primero se
+     leen los textos, porque una vez borrado no queda de dónde sacarlos. */
+  var ARCHIVO = new RegExp(BASE_IMG.replace(/[.\/]/g, '\\$&') + '([A-Za-z0-9\\/_.-]+)', 'g');
+  function borrarMensaje(tipo, id) {
+    var leer = tipo === 'tema'
+      ? Promise.all([sb.from('foro_tema').select('cuerpo').eq('id', id), sb.from('foro_respuesta').select('cuerpo').eq('tema_id', id)])
+      : Promise.all([sb.from('foro_respuesta').select('cuerpo').eq('id', id)]);
+    return leer.then(function (r) {
+      var rutas = [];
+      r.forEach(function (x) {
+        (x.data || []).forEach(function (m) {
+          var a; ARCHIVO.lastIndex = 0;
+          while ((a = ARCHIVO.exec(m.cuerpo || ''))) if (rutas.indexOf(a[1]) < 0) rutas.push(a[1]);
+        });
+      });
+      return sb.rpc('foro_borrar', { p_tipo: tipo, p_id: id }).then(function (x) {
+        if (x.error) throw x.error;
+        if (rutas.length) return sb.storage.from('foro').remove(rutas).then(function () {}, function () {});
+      });
+    });
+  }
+
   /* Lista de temas (portada, categoría, perfil) */
   var SEL_TEMA = 'id,titulo,cuerpo,categoria,estado,resuelto,respuestas,actividad,pagina,autor:foro_perfil(alias)';
   /* La primera foto de la consulta (no los videos), para la miniatura */
@@ -253,7 +277,7 @@
     }).join('') + '</ul>';
   }
 
-  window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, pendientes: pendientes, exigir: exigir, listaTemas: listaTemas, subirImagen: subirImagen, subirVideo: subirVideo, enlaceYoutube: enlaceYoutube, borrarMisImagenes: borrarMisImagenes };
+  window.Foro = { sb: sb, CURSOS: CURSOS, SEL_TEMA: SEL_TEMA, $: $, esc: esc, q: q, md: md, formulas: formulas, hace: hace, error: error, estado: estado, barra: barra, pendientes: pendientes, exigir: exigir, listaTemas: listaTemas, subirImagen: subirImagen, subirVideo: subirVideo, enlaceYoutube: enlaceYoutube, borrarMisImagenes: borrarMisImagenes, borrarMensaje: borrarMensaje };
   document.addEventListener('DOMContentLoaded', barra);
 
   /* botón de modo claro / oscuro (el foro no carga el selector de idioma) */
