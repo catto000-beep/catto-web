@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peripheral control and communication · Computer Science II · Catto</title>
+<meta name="description" content="Serial communication from the computer, frame protocols, ports and buffers, reading sensors and controlling actuators from a program, with an interactive protocol lab. Content of Computer Science II, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/control-perifericos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/control-perifericos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/control-perifericos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/control-perifericos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science II</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science II</span> · 120 h · Topic 4 of 8</div>
+    <h1>Peripheral control and communication</h1>
+    <p class="lead">A program stops being an exercise when it lights a real LED. At the other end of the cable a microcontroller is waiting for bytes, and you have to agree on what each one means.</p>
+    <div class="chips">
+      <span class="chip hi">Serial port</span>
+      <span class="chip">Frames</span>
+      <span class="chip">Checksum</span>
+      <span class="chip">Buffers</span>
+      <span class="chip">Protocol</span>
+    </div>
+    <hr class="rule">
+
+    <section id="puerto">
+      <h2><span class="n">01</span>From the program to the physical world</h2>
+      <p>A program that only prints to the screen does not need to know anything about the hardware. As soon as you have to light
+      an LED or read a sensor, three questions appear: where does the data go out, how fast, and what
+      does each byte mean.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Interface</th><th>Typical speed</th><th>Where it is used</th></tr></thead>
+        <tbody>
+          <tr><td>Asynchronous serial (UART/USB-serial)</td><td>9600 to 921,600 baud</td><td>The most common link between a PC and a microcontroller</td></tr>
+          <tr><td>I²C</td><td>100 kHz to 1 MHz</td><td>Sensors and peripherals within a board</td></tr>
+          <tr><td>SPI</td><td>1 to 50 MHz</td><td>Memories, displays, fast converters</td></tr>
+          <tr><td>Native USB</td><td>12 to 480 Mbit/s</td><td>Instruments and data acquisition</td></tr>
+          <tr><td>Ethernet / TCP-IP</td><td>10 to 1000 Mbit/s</td><td>Networked equipment, industry</td></tr>
+        </tbody>
+      </table></div>
+      <p>On the computer, the serial port is opened as if it were a file: you configure it, write to it and read from it.
+      In Python with <code>pyserial</code> it takes three lines; in C, with <code>termios</code> on Linux or
+      <code>CreateFile</code> on Windows, a few more, but the idea is the same.</p>
+      <div class="form">
+        <code>import serial<br>
+        p = serial.Serial("COM3", 115200, timeout=0.2)<br>
+        p.write(b"\xAA\x02\x01\x64\x67")<br>
+        response = p.read(5)</code>
+      </div>
+    </section>
+
+    <section id="parametros">
+      <h2><span class="n">02</span>The parameters that must be agreed on</h2>
+      <p>Both ends have to be configured the same way or they will not understand each other. With 8N1 —eight data bits, no
+      parity, one stop bit— each byte travels in <b>ten</b> bits:</p>
+      <div class="form">
+        \[ t_{byte} = \frac{10}{\text{baud}} \quad\Longrightarrow\quad
+           \text{maximum throughput} = \frac{\text{baud}}{10} \ \text{bytes/s} \]
+        <span class="cap">At 115,200 baud that is 11,520 bytes per second, and each byte takes 87 µs.</span>
+      </div>
+      <ul>
+        <li><b>Speed</b> in baud: 9600, 19,200, 38,400, 57,600, 115,200…</li>
+        <li><b>Data bits</b>, almost always 8.</li>
+        <li><b>Parity</b>: none, even or odd. It detects one flipped bit, not two.</li>
+        <li><b>Stop bits</b>: 1 or 2.</li>
+        <li><b>Flow control</b>: hardware (RTS/CTS) or none.</li>
+      </ul>
+      <div class="box peligro"><div class="bt">Electrical levels</div>
+        <p>A microcontroller’s UART works at <b>3.3 or 5 V</b>; a true RS-232 port uses ±12 V with
+        inverted logic. Connecting them directly burns out the microcontroller. In between goes an adapter
+        —a MAX232 or a USB-serial converter— and, if the voltages differ, a level shifter.</p></div>
+    </section>
+
+    <section id="trama">
+      <h2><span class="n">03</span>Inventing a protocol</h2>
+      <p>The port carries loose bytes; the meaning is supplied by the protocol. A minimal scheme that works
+      in practice has four parts:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Field</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td>Start byte</td><td>Marks where the frame begins, so that it can resynchronize</td></tr>
+          <tr><td>Command and length</td><td>What is requested and how many data bytes follow</td></tr>
+          <tr><td>Data</td><td>The content</td></tr>
+          <tr><td>Check</td><td>Detects whether something arrived wrong: sum, XOR or CRC</td></tr>
+        </tbody>
+      </table></div>
+      <div class="lw" id="tr">
+        <div class="lt">Lab · building and checking a frame</div>
+        <p class="ls">Change the command and the data, choose the check method and try corrupting a byte to see whether the receiver notices.</p>
+        <div class="fila">
+          <select id="trC">
+            <option value="1">0x01 · turn output on</option>
+            <option value="2">0x02 · turn output off</option>
+            <option value="3">0x03 · read sensor</option>
+            <option value="4">0x04 · set PWM</option>
+          </select>
+          <select id="trV">
+            <option value="suma">Sum check</option>
+            <option value="xor">XOR check</option>
+            <option value="crc">CRC-8 (polynomial 0x07)</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="trD">Data <b id="trDv">100</b></label>
+          <input type="range" id="trD" min="0" max="255" step="1" value="100">
+        </div>
+        <div class="fila">
+          <label for="trE">Corrupt byte no. <b id="trEv">none</b></label>
+          <input type="range" id="trE" min="0" max="6" step="1" value="0">
+        </div>
+        <canvas id="trLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:2.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="trDatos" style="margin-top:8px"></div>
+        <div class="nota" id="trNota"></div>
+      </div>
+    </section>
+
+    <section id="verificacion">
+      <h2><span class="n">04</span>Sum, XOR and CRC</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Method</th><th>How it is calculated</th><th>What it detects</th></tr></thead>
+        <tbody>
+          <tr><td>Checksum</td><td>\( \sum b_i \bmod 256 \)</td><td>One changed byte; not the order</td></tr>
+          <tr><td>XOR</td><td>\( b_1 \oplus b_2 \oplus \cdots \oplus b_n \)</td><td>One flipped bit per column; fails with two</td></tr>
+          <tr><td>CRC-8</td><td>Binary division by a polynomial</td><td>All bursts of up to 8 bits</td></tr>
+          <tr><td>CRC-16 / CRC-32</td><td>The same, with a longer polynomial</td><td>What is used in Modbus, USB and Ethernet</td></tr>
+        </tbody>
+      </table></div>
+      <p>The sum is the easiest to write and the weakest: if two bytes change in compensating ways, it does not
+      notice. The CRC is a division of polynomials in binary arithmetic and detects practically any real
+      transmission error; that is why every serious protocol uses it. It is implemented with a 256-entry
+      table and is extremely fast, even on a small microcontroller.</p>
+    </section>
+
+    <section id="bloqueo">
+      <h2><span class="n">05</span>Waiting without getting stuck</h2>
+      <p>The most common mistake when communicating with a device is to wait forever. There are three
+      strategies, and it is worth knowing all three:</p>
+      <ul>
+        <li><b>Read with a timeout.</b> <code>timeout</code> on the port: if the device does not answer within
+        200 ms, the read returns empty and the program decides what to do. It is the bare minimum.</li>
+        <li><b>Dedicated thread.</b> One thread reads the port and deposits the frames in a
+        <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">queue</a>; the main
+        program consumes it when it can. This is the producer-consumer scheme.</li>
+        <li><b>Asynchronous input/output.</b> The system signals when data is available, with nobody waiting.</li>
+      </ul>
+      <div class="box ojo"><div class="bt">On the other end of the cable</div>
+        <p>The microcontroller has the same problem in reverse: if it services the port inside the main
+        loop, it loses bytes while it does something else. That is why reception is done in the UART
+        <b>interrupt</b>, which stores each byte in a circular buffer, and the main program processes the frame when it
+        is complete.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Echo and timing measurements</div>
+        <p>Program the microcontroller to send back every byte it receives. From the computer, measure the
+        round-trip time at 9600 and at 115,200 baud, and compare with 10 bits per byte.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · A protocol of your own</div>
+        <p>Define and implement the protocol of this page at both ends: turn an output on and off,
+        set a PWM and read an analog channel. Document the frame in a table.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Causing errors</div>
+        <p>Unplug the cable in the middle of a transmission, or lower the speed on one side. Check that the
+        receiver discards malformed frames and resynchronizes on the start byte, instead of
+        hanging.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Different speeds at each end.</b> Bytes arrive, but with garbage.</li>
+        <li><b>Reading without a timeout</b> and leaving the program hung forever.</li>
+        <li><b>Assuming that one read returns the whole frame.</b> It may come back split: you have to accumulate
+        until you have the declared length.</li>
+        <li><b>Connecting 5 V to a 3.3 V input.</b></li>
+        <li><b>Forgetting the common ground</b> between the two devices.</li>
+        <li><b>Trusting that the channel is perfect</b> and not checking anything.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>How many bytes per second come in at 115,200 baud in 8N1?</summary>
+        <div class="a"><p>Each byte takes up 10 bits, so <b>11,520 bytes/s</b>, about 87 µs per byte.</p></div></details>
+      <details class="q"><summary>What is the start byte of a frame for?</summary>
+        <div class="a"><p>To be able to resynchronize: if a byte was lost, the receiver discards data until it finds
+        the next start byte instead of interpreting garbage.</p></div></details>
+      <details class="q"><summary>Why is the CRC better than the sum?</summary>
+        <div class="a"><p>Because it detects bursts of errors and combinations that the sum does not see, such as two bytes
+        that change in compensating ways.</p></div></details>
+      <details class="q"><summary>Where is it best to receive the bytes on the microcontroller?</summary>
+        <div class="a"><p>In the UART interrupt, storing them in a circular buffer. In the main
+        loop they would be lost while the program does something else.</p></div></details>
+      <details class="q"><summary>What happens if a 3.3 V UART and an RS-232 port are connected?</summary>
+        <div class="a"><p>RS-232 uses ±12 V with inverted logic: it burns out the input. You need an adapter
+        such as the MAX232.</p></div></details>
+      <details class="q"><summary>A read returned 3 bytes of a 6-byte frame. What should be done?</summary>
+        <div class="a"><p>Accumulate them and keep reading until the declared length is complete, or discard on
+        timeout. A serial read does not guarantee delivering the whole frame at once.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Jan Axelson.</span> <span class="ti">Serial Port Complete</span>.
+          <span class="ed">2nd ed., Lakeview Research, 2007.</span>
+          <span class="pq">Everything about serial ports, USB-serial and programming them on the PC.</span></li>
+        <li><span class="au">Michael Barr and Anthony Massa.</span> <span class="ti">Programming Embedded Systems in C and C++</span>.
+          <span class="ed">2nd ed., O'Reilly, 2006.</span>
+          <span class="pq">The microcontroller side: interrupts, buffers and peripheral drivers.</span></li>
+        <li><span class="au">pySerial documentation.</span> <span class="ti">pySerial Documentation</span>.
+          <span class="ed">Current version.</span>
+          <span class="pq">The standard library for talking to a serial port from Python.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/construccion-software">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Software build tools</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/interfaces-graficas">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Graphical user interfaces</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Peripheral control and communication”</b> of <b>Computer Science II</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Building a serial frame: header, command, length, data and check.
+   It is drawn byte by byte and one byte can be corrupted to see whether the receiver
+   detects it with the chosen method. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("trLienzo"), ctx = cv.getContext("2d");
+  var CMD = { 1:"turn output on", 2:"turn output off", 3:"read sensor", 4:"set PWM" };
+  var ARRANQUE = 0xAA;
+
+  function hex(b){ return "0x" + (b < 16 ? "0" : "") + b.toString(16).toUpperCase(); }
+  function bin(b){
+    var s = b.toString(2);
+    while(s.length < 8) s = "0" + s;
+    return s;
+  }
+  function crc8(bytes){
+    var crc = 0x00, i, j;
+    for(i = 0; i < bytes.length; i++){
+      crc ^= bytes[i];
+      for(j = 0; j < 8; j++)
+        crc = (crc & 0x80) ? ((crc << 1) ^ 0x07) & 0xFF : (crc << 1) & 0xFF;
+    }
+    return crc;
+  }
+  function verificar(bytes, modo){
+    var i, v = 0;
+    if(modo === "suma"){
+      for(i = 0; i < bytes.length; i++) v = (v + bytes[i]) & 0xFF;
+      return v;
+    }
+    if(modo === "xor"){
+      for(i = 0; i < bytes.length; i++) v ^= bytes[i];
+      return v;
+    }
+    return crc8(bytes);
+  }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    var cmd = +$("trC").value, dato = +$("trD").value, modo = $("trV").value;
+    var cual = +$("trE").value;
+    $("trDv").textContent = dato;
+
+    /* the frame as the sender builds it */
+    var cuerpo = [ARRANQUE, cmd, 1, dato];
+    var ver = verificar(cuerpo, modo);
+    var trama = cuerpo.concat([ver]);
+    var NOM = ["start", "command", "length", "data", "check"];
+    var compensado = cual === 6;
+    $("trEv").textContent = cual === 0 ? "none"
+                          : compensado ? "two bytes that offset each other"
+                          : cual + " (" + NOM[cual - 1] + ")";
+
+    /* what arrives: with one bit flipped if corruption was requested. Case 6
+       changes two bytes so that the total sum does not vary, which is the classic
+       hole of the checksum */
+    var recibida = trama.slice();
+    if(compensado){
+      recibida[1] = (recibida[1] + 1) & 0xFF;
+      recibida[3] = (recibida[3] - 1 + 256) & 0xFF;
+    } else if(cual > 0){
+      recibida[cual - 1] = recibida[cual - 1] ^ 0x20;
+    }
+
+    var okArranque = recibida[0] === ARRANQUE;
+    var recalculada = verificar(recibida.slice(0, 4), modo);
+    var okVer = recalculada === recibida[4];
+    var detectado = cual > 0 && (!okArranque || !okVer);
+
+    ctx.clearRect(0, 0, W, H);
+    var mg = 10, n = trama.length;
+    var ancho = (W - 2 * mg) / n - 6, alto = Math.min(52, H * 0.42);
+    var y = H * 0.3;
+    for(i = 0; i < n; i++){
+      var x = mg + i * (ancho + 6);
+      var malo = compensado ? (i === 1 || i === 3) : (cual === i + 1);
+      ctx.strokeStyle = malo ? "#f85149" : (i === 4 ? "#f2cc60" : "#58a6ff");
+      ctx.fillStyle = malo ? "rgba(248,81,73,.16)" :
+                      (i === 4 ? "rgba(242,204,96,.12)" : "rgba(88,166,255,.10)");
+      ctx.lineWidth = malo ? 2.2 : 1.6;
+      ctx.beginPath(); ctx.rect(x, y, ancho, alto); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+      var et = NOM[i], we = ctx.measureText(et).width;
+      ctx.fillText(et, x + Math.max(0, (ancho - we) / 2), y - 7);
+      ctx.fillStyle = malo ? "#f85149" : "#e6edf3";
+      ctx.font = "600 14px Consolas, monospace";
+      var t = hex(recibida[i]), wt = ctx.measureText(t).width;
+      ctx.fillText(t, x + (ancho - wt) / 2, y + alto / 2 + 2);
+      ctx.fillStyle = "#6b7484"; ctx.font = "9.5px Consolas, monospace";
+      var b = bin(recibida[i]), wb = ctx.measureText(b).width;
+      if(wb < ancho) ctx.fillText(b, x + (ancho - wb) / 2, y + alto - 7);
+    }
+    /* the result of the check, below */
+    ctx.font = "12px system-ui, sans-serif";
+    ctx.fillStyle = cual === 0 ? "#7ee787" : (detectado ? "#f2cc60" : "#f85149");
+    var msg = cual === 0 ? "✓ frame intact: the receiver accepts it"
+            : detectado ? "⚠ the receiver detects the error and discards the frame"
+                        : "✗ the error goes unnoticed: the receiver accepts false data";
+    ctx.fillText(msg, mg, y + alto + 26);
+
+    $("trDatos").innerHTML =
+      "<span>Frame sent</span><b>" + trama.map(hex).join(" ") + "</b>" +
+      "<span>Frame received</span><b>" + recibida.map(hex).join(" ") + "</b>" +
+      "<hr><span>Command</span><b>" + hex(cmd) + " · " + CMD[cmd] + "</b>" +
+      "<span>Check sent</span><b>" + hex(ver) + "</b>" +
+      "<span>Check recalculated</span><b>" + hex(recalculada) + "</b>" +
+      "<span>Result</span><b style=\"color:" +
+        (cual === 0 ? "#7ee787" : detectado ? "#f2cc60" : "#f85149") + "\">" +
+        (cual === 0 ? "accepted" : detectado ? "rejected, as it should be" : "accepted with false data") +
+      "</b>";
+
+    var txt = "The frame is five bytes: start, command, length, data and check. ";
+    if(modo === "suma")
+      txt += "The <b>sum</b> of the first four, truncated to 8 bits, gives " + hex(ver) + ". ";
+    else if(modo === "xor")
+      txt += "The <b>XOR</b> of the first four gives " + hex(ver) + ": each column of bits ends up with " +
+             "even parity. ";
+    else
+      txt += "The <b>CRC-8</b> treats the bytes as a polynomial and divides it by x⁸+x²+x+1; the remainder is " +
+             hex(ver) + ". ";
+    if(cual === 0)
+      txt += "Move the last slider to flip a bit in one of the bytes and see whether the chosen method " +
+             "detects it. The last position tests the interesting case: two bytes that change " +
+             "offsetting each other.";
+    else if(compensado && !detectado)
+      txt += "Here is the weakness of the <b>sum</b>: the command went up by one and the data went down by one, so the " +
+             "total did not change and the error <b>goes unnoticed</b>. The receiver accepts a command different " +
+             "from the one that was sent —off instead of on— and has no way of knowing. Try the same " +
+             "case with <b>CRC-8</b>, which detects it, and with <b>XOR</b>, which also catches it here but not always: if both bytes change the same bits, XOR misses it.";
+    else if(compensado)
+      txt += "Two bytes changed offsetting each other: one went up and the other went down. The <b>sum</b> does not see that error, " +
+             "because the total is the same to it, but this method does, because it does not add: XOR works bit by bit and the " +
+             "CRC divides, and in both cases the position of each byte matters too.";
+    else if(!okArranque)
+      txt += "The <b>start byte</b> was corrupted: the receiver does not even recognize the beginning of the " +
+             "frame, discards it and keeps waiting for the next 0xAA. That is precisely what it is there for.";
+    else if(detectado)
+      txt += "Byte " + cual + " arrived changed, the recalculated check gives " + hex(recalculada) +
+             " and does not match the one that came with it, " + hex(recibida[4]) + ": <b>the receiver detects it</b> and " +
+             "discards the frame. The right thing is to ask for it to be repeated.";
+    else
+      txt += "Here the error <b>is not detected</b>: the chosen method is not enough for this case and the receiver " +
+             "accepts wrong data as if it were good. Try the same error with CRC-8.";
+    $("trNota").innerHTML = txt;
+  }
+  ["trC","trV","trD","trE"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

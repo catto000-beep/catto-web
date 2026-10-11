@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graphical user interfaces · Computer Science II · Catto</title>
+<meta name="description" content="Event-driven programming, the event loop, widgets and containers, separating interface from logic, and design criteria for an instrumentation interface. Content of Computer Science II, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/interfaces-graficas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/interfaces-graficas">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/interfaces-graficas">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/interfaces-graficas">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science II</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science II</span> · 120 h · Topic 5 of 8</div>
+    <h1>Graphical user interfaces</h1>
+    <p class="lead">A graphical interface inverts control: the program no longer commands, it waits. That change of mindset —from the sequential program to the event loop— is what you have to understand first.</p>
+    <div class="chips">
+      <span class="chip hi">Events</span>
+      <span class="chip">Widgets</span>
+      <span class="chip">Event loop</span>
+      <span class="chip">Callbacks</span>
+      <span class="chip">Design</span>
+    </div>
+    <hr class="rule">
+
+    <section id="inversion">
+      <h2><span class="n">01</span>The program stops being in charge</h2>
+      <p>A console program is in charge: it asks for a value, calculates, prints, ends. A graphical interface reverses
+      that relationship. The program starts, draws the window and <b>waits</b>; the one who decides what happens
+      is the user.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Sequential program</th><th>Event-driven program</th></tr></thead>
+        <tbody>
+          <tr><td>The code controls the order</td><td>The user controls the order</td></tr>
+          <tr><td><code>scanf</code> blocks until there is data</td><td>Nothing blocks: you are notified when something happens</td></tr>
+          <tr><td>Starts and ends</td><td>Lives in a loop until the window is closed</td></tr>
+          <tr><td>A single line of execution</td><td>Many handlers, each one short</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">The event loop</div>
+        <p>Underneath every graphical interface there is the same loop, whatever it is called:</p>
+        <div class="form">
+          <code>while the window is open:<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;event = get_from_queue()   # waits if there is none<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;handler = find_handler_for(event)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;handler(event)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;redraw_what_changed()</code>
+        </div>
+        <p>The operating system deposits every click, every key press and every mouse movement into that <b>queue</b>.
+        The program takes them out one at a time and calls the corresponding handler.</p></div>
+      <div class="lw" id="ev">
+        <div class="lt">Lab · the event loop, in slow motion</div>
+        <p class="ls">Use the controls below: each action queues an event. Process them one at a time and see which handler runs.</p>
+        <div class="fila">
+          <button id="evBoton" class="pri">Press the button</button>
+          <label class="chk"><input type="checkbox" id="evCasilla"> Checkbox</label>
+          <select id="evSel"><option>Option A</option><option>Option B</option><option>Option C</option></select>
+        </div>
+        <div class="fila">
+          <label for="evSlider">Slider <b id="evSliderV">50</b></label>
+          <input type="range" id="evSlider" min="0" max="100" step="1" value="50">
+        </div>
+        <div class="fila">
+          <button id="evPaso">Process the next event</button>
+          <label class="chk"><input type="checkbox" id="evAuto"> Automatic loop</label>
+        </div>
+        <canvas id="evLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:1.8/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="evDatos" style="margin-top:8px"></div>
+        <div class="nota" id="evNota"></div>
+      </div>
+    </section>
+
+    <section id="widgets">
+      <h2><span class="n">02</span>Widgets and containers</h2>
+      <p>An interface is built from <b>widgets</b> —the controls— placed inside <b>containers</b> that
+      decide how they are arranged. The container tree is what lets the window adapt when it is
+      resized, instead of having everything in fixed coordinates.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Widget</th><th>What it is for</th><th>Event it generates</th></tr></thead>
+        <tbody>
+          <tr><td>Button</td><td>Triggering an action</td><td>click</td></tr>
+          <tr><td>Text field</td><td>Typing a value</td><td>change, key, focus</td></tr>
+          <tr><td>Checkbox and radio button</td><td>Choosing between alternatives</td><td>state change</td></tr>
+          <tr><td>Slider</td><td>A continuous value</td><td>change, many times per second</td></tr>
+          <tr><td>List and table</td><td>Showing and choosing records</td><td>selection</td></tr>
+          <tr><td>Canvas</td><td>Free drawing</td><td>redraw, mouse</td></tr>
+        </tbody>
+      </table></div>
+      <p>There are two approaches to arranging them: <b>absolute positions</b> —quick to do, but they break as soon as
+      the size or the font changes— and <b>layout managers</b> by rows, columns or grid, which is
+      always the better choice.</p>
+    </section>
+
+    <section id="separar">
+      <h2><span class="n">03</span>Separating the interface from the logic</h2>
+      <p>The rule that prevents the most problems: <b>a button’s handler does not do the work</b>, it only calls
+      whatever does. If the calculation, the measurement or the access to the device is written inside the handler,
+      it cannot be tested without opening the window, nor reused from a script.</p>
+      <div class="form">
+        <code>def on_press_measure():          # handler: three lines<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;v = instrument.measure_voltage()   # the logic, separate<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;label.config(text=f"{v:.3f} V")<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;chart.add(v)</code>
+      </div>
+      <p>That is the core of the patterns studied under their own names —model-view-controller and its
+      variants—: the <b>model</b> holds the data and the rules, the <b>view</b> displays them and the
+      <b>controller</b> translates events into calls to the model.</p>
+      <div class="box peligro"><div class="bt">Never block the loop</div>
+        <p>If a handler takes two seconds, the window is frozen for two seconds: it does not redraw, does not
+        respond and the system marks it as “not responding”. Anything that takes time —reading a port, downloading,
+        heavy calculation— goes in <b>another thread</b>, and when it finishes it notifies the interface. The rule is strict:
+        <b>only the interface thread may touch the widgets</b>; the others send it the result through a
+        queue or through the mechanism the library provides.</p></div>
+    </section>
+
+    <section id="instrumentacion">
+      <h2><span class="n">04</span>An instrumentation interface</h2>
+      <p>In electronics, the interface almost always accompanies a piece of equipment: a measurement bench, a process
+      control, a recorder. What is expected of it:</p>
+      <ul>
+        <li><b>Visible status.</b> Connected or not, on which port, since when.</li>
+        <li><b>Continuous reading without blocking.</b> One thread reads the instrument; the interface refreshes every 100 or
+        200 ms, not at 60 frames per second.</li>
+        <li><b>Units and significant figures.</b> Show 3.7 V, not 3.700000001.</li>
+        <li><b>Logging and export.</b> Saving the series as CSV is the first thing anyone using it will ask for.</li>
+        <li><b>Errors in plain sight.</b> If the equipment was disconnected, say so; do not leave the last value
+        frozen.</li>
+        <li><b>Confirmation of anything dangerous.</b> A power output is not turned on with a careless
+        click.</li>
+      </ul>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Toolkit</th><th>Language</th><th>Where it fits</th></tr></thead>
+        <tbody>
+          <tr><td>Tkinter</td><td>Python</td><td>Comes with Python; ideal for getting started and for internal tools</td></tr>
+          <tr><td>Qt (PyQt / Qt in C++)</td><td>Python or C++</td><td>Large, cross-platform applications with graphics</td></tr>
+          <tr><td>Dear ImGui</td><td>C++</td><td>Debugging panels and lab tools</td></tr>
+          <tr><td>Local web interface</td><td>Any + browser</td><td>The device serves a page; it is used from any machine</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Logging the events</div>
+        <p>Build a window with a button, a field and a slider, and make each handler print to the
+        console which event arrived. Move the slider and count how many events a single drag generates.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Freezing the window on purpose</div>
+        <p>Put a <code>sleep(3)</code> inside a button’s handler and check that the interface goes
+        dead. Then move that work to a thread and verify that the window stays alive.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · A panel for the microcontroller</div>
+        <p>Using the protocol from the previous page, build an interface that turns an output on and off, sets a
+        PWM with a slider and shows the sensor reading on a scrolling chart.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Doing heavy work in the handler</b> and freezing the window.</li>
+        <li><b>Touching widgets from another thread.</b> It is the cause of the hardest crashes to reproduce.</li>
+        <li><b>Mixing the logic with the interface</b> and being left with no way to test anything.</li>
+        <li><b>Positioning everything in absolute coordinates</b> and having it break when the size changes.</li>
+        <li><b>Redrawing the entire chart at 60 frames per second</b> when the data changes ten times per
+        second.</li>
+        <li><b>Not reporting the error</b> and leaving the last value on screen as if it were current.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What is the event loop?</summary>
+        <div class="a"><p>The cycle that takes events from the queue, calls the corresponding handler and redraws.
+        Every graphical interface has one.</p></div></details>
+      <details class="q"><summary>Why does a window freeze?</summary>
+        <div class="a"><p>Because a handler is taking a long time and the loop cannot keep processing events or
+        redrawing.</p></div></details>
+      <details class="q"><summary>Can a worker thread update a label directly?</summary>
+        <div class="a"><p>No: only the interface thread may touch the widgets. The worker thread sends it
+        the result through a queue or through the mechanism the library provides.</p></div></details>
+      <details class="q"><summary>How many events does dragging a slider generate?</summary>
+        <div class="a"><p>Many, one for each change of value. That is why a slider’s handler has to be
+        cheap, or the real work has to be spaced out.</p></div></details>
+      <details class="q"><summary>What advantage does a layout manager have over fixed coordinates?</summary>
+        <div class="a"><p>The window adapts when the size, resolution or font changes, without the controls
+        overlapping.</p></div></details>
+      <details class="q"><summary>What does the model-view-controller pattern separate?</summary>
+        <div class="a"><p>The data and rules (model), what is displayed (view) and the translation of events
+        into actions (controller). It allows testing the logic without opening the window.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Mark Summerfield.</span> <span class="ti">Rapid GUI Programming with Python and Qt</span>.
+          <span class="ed">Prentice Hall, 2007.</span>
+          <span class="pq">Events, threads and interface design with a real-application mindset.</span></li>
+        <li><span class="au">Official Python documentation.</span> <span class="ti">tkinter — Interface to Tcl/Tk</span>.
+          <span class="ed">Python Software Foundation.</span>
+          <span class="pq">The library that comes already installed: enough for most lab tools.</span></li>
+        <li><span class="au">Jakob Nielsen.</span> <span class="ti">Usability Engineering</span>.
+          <span class="ed">Morgan Kaufmann, 1993.</span>
+          <span class="pq">The classic heuristics: visibility of status, error prevention, user control.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/control-perifericos">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Peripheral control and communication</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/calculo-numerico">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Applied numerical computation</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Graphical user interfaces”</b> of <b>Computer Science II</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* The event loop in slow motion: each user action queues an
+   event and the loop takes them out one at a time, shows which handler runs and
+   redraws. With the loop stopped you can watch the queue grow, which is exactly
+   what happens when a handler takes too long. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("evLienzo"), ctx = cv.getContext("2d");
+  var cola = [], ultimo = null, contador = 0, procesados = 0, reloj = null;
+  var estado = { casilla:false, slider:50, opcion:"Option A", pulsos:0 };
+
+  function encolar(tipo, widget, detalle, color){
+    contador++;
+    cola.push({ n:contador, tipo:tipo, widget:widget, detalle:detalle, color:color, t:Date.now() });
+    if(cola.length > 40) cola.shift();
+    pintar();
+  }
+  function procesar(){
+    if(!cola.length){ pintar(); return; }
+    var e = cola.shift();
+    procesados++;
+    /* the handler: short, as it should be */
+    if(e.widget === "button") estado.pulsos++;
+    if(e.widget === "checkbox") estado.casilla = e.valor;
+    if(e.widget === "slider") estado.slider = e.valor;
+    if(e.widget === "dropdown") estado.opcion = e.valor;
+    ultimo = e;
+    pintar();
+  }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    ctx.clearRect(0, 0, W, H);
+
+    var mg = 12, colW = (W - 3 * mg) / 2;
+    /* ---- the queue, on the left ---- */
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("event queue (" + cola.length + " waiting)", mg, 16);
+    var altoF = 22, visibles = Math.min(cola.length, Math.floor((H - 38) / altoF));
+    for(i = 0; i < visibles; i++){
+      var e = cola[i], y = 26 + i * altoF;
+      ctx.strokeStyle = e.color; ctx.fillStyle = e.color.replace("rgb", "rgba").replace(")", ",.12)");
+      ctx.lineWidth = i === 0 ? 2 : 1.2;
+      ctx.beginPath(); ctx.rect(mg, y, colW, altoF - 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#e6edf3"; ctx.font = "11.5px system-ui, sans-serif";
+      ctx.fillText("#" + e.n + "  " + e.tipo + " · " + e.widget, mg + 7, y + 13);
+    }
+    if(!cola.length){
+      ctx.fillStyle = "#6b7484"; ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText("empty: the loop waits", mg + 4, 44);
+    }
+    if(cola.length > visibles){
+      ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+      ctx.fillText("… and " + (cola.length - visibles) + " more", mg + 4, 26 + visibles * altoF + 12);
+    }
+
+    /* ---- the handler, on the right ---- */
+    var x2 = mg * 2 + colW;
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("handler running", x2, 16);
+    ctx.strokeStyle = ultimo ? ultimo.color : "#2a3140"; ctx.lineWidth = 1.6;
+    ctx.fillStyle = ultimo ? ultimo.color.replace("rgb", "rgba").replace(")", ",.10)") : "rgba(107,116,132,.05)";
+    ctx.beginPath(); ctx.rect(x2, 26, colW, 74); ctx.fill(); ctx.stroke();
+    if(ultimo){
+      ctx.fillStyle = "#e6edf3"; ctx.font = "600 12.5px Consolas, monospace";
+      ctx.fillText("on_" + ultimo.tipo + "_" + ultimo.widget.replace(/[^a-z]/g, "") + "()", x2 + 8, 46);
+      ctx.fillStyle = "#6b7484"; ctx.font = "11.5px system-ui, sans-serif";
+      ctx.fillText("event #" + ultimo.n, x2 + 8, 66);
+      ctx.fillText(ultimo.detalle, x2 + 8, 84);
+    } else {
+      ctx.fillStyle = "#6b7484"; ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText("nothing yet", x2 + 8, 62);
+    }
+    /* the state the application keeps */
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("application state", x2, 122);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.rect(x2, 132, colW, Math.max(30, H - 146)); ctx.stroke();
+    ctx.fillStyle = "#e6edf3"; ctx.font = "11.5px Consolas, monospace";
+    [["presses", estado.pulsos], ["checkbox", estado.casilla ? "yes" : "no"],
+     ["slider", estado.slider], ["option", estado.opcion]].forEach(function(p, k){
+      if(148 + k * 17 < H - 4) ctx.fillText(p[0] + ": " + p[1], x2 + 8, 148 + k * 17);
+    });
+
+    $("evDatos").innerHTML =
+      "<span>Events generated</span><b>" + contador + "</b>" +
+      "<span>Processed</span><b>" + procesados + "</b>" +
+      "<span>In the queue</span><b>" + cola.length + "</b>" +
+      "<span>Loop</span><b>" + ($("evAuto").checked ? "running" : "stopped") + "</b>";
+
+    var txt;
+    if(!$("evAuto").checked && cola.length > 3)
+      txt = "With the loop stopped, the queue <b>grows</b>: the system keeps depositing events and nobody " +
+            "serves them. That is exactly what you see when a window is “not responding”: the clicks were not lost, " +
+            "they are waiting for the previous handler to finish.";
+    else if(cola.length)
+      txt = "There " + (cola.length === 1 ? "is 1 event waiting" : "are " + cola.length + " events waiting") +
+            ". The loop takes out the first one, finds who serves it, runs that handler and starts over. " +
+            "Handlers are short precisely so that the queue does not pile up.";
+    else if(ultimo)
+      txt = "The queue is empty and the loop waits. Notice that the application <b>state</b> is changed by the " +
+            "handler, not by the widget: the control only reports what happened, and the program decides what to do with it.";
+    else
+      txt = "Touch the controls above: each action deposits an event in the queue. Then process them one at a " +
+            "time with the button, or turn on the automatic loop to watch it run by itself.";
+    $("evNota").innerHTML = txt;
+  }
+
+  /* --- the controls generate events, they do not execute anything --- */
+  $("evBoton").addEventListener("click", function(){
+    encolar("click", "button", "the user pressed the button", "rgb(88,166,255)");
+  });
+  $("evCasilla").addEventListener("change", function(){
+    var e = { valor:this.checked };
+    encolar("change", "checkbox", "now it is " + (this.checked ? "yes" : "no"), "rgb(126,231,135)");
+    cola[cola.length - 1].valor = e.valor;
+  });
+  $("evSel").addEventListener("change", function(){
+    encolar("change", "dropdown", "chose " + this.value, "rgb(210,168,255)");
+    cola[cola.length - 1].valor = this.value;
+  });
+  $("evSlider").addEventListener("input", function(){
+    $("evSliderV").textContent = this.value;
+    encolar("change", "slider", "moved to " + this.value, "rgb(242,204,96)");
+    cola[cola.length - 1].valor = +this.value;
+  });
+  $("evPaso").addEventListener("click", procesar);
+  $("evAuto").addEventListener("change", function(){
+    if(reloj){ clearInterval(reloj); reloj = null; }
+    if(this.checked) reloj = setInterval(procesar, 420);
+    pintar();
+  });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

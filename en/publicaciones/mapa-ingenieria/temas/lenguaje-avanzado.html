@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction to an advanced language · Computer Science II · Catto</title>
+<meta name="description" content="Objects, classes and encapsulation, abstract data types, exception handling, standard libraries and the parallel between C++ and Python for instrumentation and data processing. Content of Computer Science II, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/lenguaje-avanzado">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/lenguaje-avanzado">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/lenguaje-avanzado">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/lenguaje-avanzado">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science II</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science II</span> · 120 h · Topic 7 of 8</div>
+    <h1>Introduction to an advanced language</h1>
+    <p class="lead">After C, a language with objects lets you think in pieces that fit together. It is not a fad: it is how a ten-thousand-line project stays understandable.</p>
+    <div class="chips">
+      <span class="chip hi">Objects</span>
+      <span class="chip">Classes</span>
+      <span class="chip">Encapsulation</span>
+      <span class="chip">Exceptions</span>
+      <span class="chip">Libraries</span>
+    </div>
+    <hr class="rule">
+
+    <section id="porque">
+      <h2><span class="n">01</span>Why functions are not enough</h2>
+      <p>In C a program grows as a list of functions that pass structures to each other. It works until the
+      project reaches a few thousand lines and three problems appear: anyone can touch any field,
+      the same piece of data is validated in twenty places, and adding a case forces you to hunt down all the
+      scattered <code>if</code>s.</p>
+      <div class="box key"><div class="bt">The three ideas that solve this</div>
+        <ul>
+          <li><b>Encapsulation.</b> The data and the operations that touch it live together, and from outside
+          you only see what was chosen to be shown. If the state can only be changed through methods, it is always
+          valid.</li>
+          <li><b>Inheritance.</b> A class starts from another and adds or changes what it needs, without repeating what is
+          common.</li>
+          <li><b>Polymorphism.</b> The same method is called on different objects and each one does its own thing.
+          It is what lets you add a new instrument without touching the code that uses them.</li>
+        </ul></div>
+      <p>It is neither a fad nor an obligation: it is a way to keep a ten-thousand-line project
+      understandable. For a two-hundred-line firmware, C and a structure remain the right
+      answer.</p>
+    </section>
+
+    <section id="clases">
+      <h2><span class="n">02</span>From structure to class</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>In C</th><th>In C++ or Python</th></tr></thead>
+        <tbody>
+          <tr><td><code>struct Channel</code> with its fields</td><td>The class, with the same private fields</td></tr>
+          <tr><td><code>channel_init(&amp;c, ...)</code></td><td>The constructor</td></tr>
+          <tr><td><code>channel_read(&amp;c)</code></td><td>A method: the object is the implicit first parameter</td></tr>
+          <tr><td><code>channel_free(&amp;c)</code></td><td>The destructor, or the <code>with</code> block</td></tr>
+          <tr><td>A function pointer in the structure</td><td>A virtual method</td></tr>
+        </tbody>
+      </table></div>
+      <div class="form">
+        <code>class Channel:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;def __init__(self, name, scale):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self.name = name<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;self._scale = scale      # the underscore says “do not touch me”<br><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;def read(self):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return self._raw() * self._scale</code>
+      </div>
+      <p>That explicit <code>self</code> in Python is the same as the implicit <code>this</code> in C++ and the same
+      pointer to the structure that was passed by hand in C. The syntax changes, not the mechanism.</p>
+      <div class="lw" id="po">
+        <div class="lt">Lab · inheritance and polymorphism</div>
+        <p class="ls">The same code calls <code>measure()</code> on different objects. Choose which one it is and see which implementation runs.</p>
+        <div class="fila">
+          <select id="poO">
+            <option value="base">Instrument (base class)</option>
+            <option value="multi">Multimeter</option>
+            <option value="osc">Oscilloscope</option>
+            <option value="fuente">Power supply</option>
+          </select>
+          <select id="poM">
+            <option value="measure">measure()</option>
+            <option value="describe">describe()</option>
+            <option value="connect">connect()</option>
+          </select>
+        </div>
+        <canvas id="poLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:1.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="poDatos" style="margin-top:8px"></div>
+        <div class="nota" id="poNota"></div>
+      </div>
+    </section>
+
+    <section id="polimorfismo">
+      <h2><span class="n">03</span>Dynamic dispatch</h2>
+      <p>When a method is called on an object, the language has to decide <b>which</b> of the
+      implementations to run. If that decision is made at compile time, it is static dispatch; if it is made
+      at run time, by looking at the object’s real type, it is <b>dynamic</b>, and that is what makes
+      polymorphism possible.</p>
+      <div class="form">
+        <code>for device in bench:          # multimeter, oscilloscope, power supply…<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;print(device.describe())&nbsp;&nbsp;# each one answers in its own way</code>
+      </div>
+      <p>The loop does not know and does not care what is inside the list. Adding a new instrument does not force you to
+      touch it: it is enough for the new class to implement the same methods. That is what you gain.</p>
+      <div class="box ojo"><div class="bt">How it works inside</div>
+        <p>In C++, each class with virtual methods has a <b>virtual function table</b>, and each object
+        stores a pointer to its class’s table. Calling a virtual method means reading that pointer, looking up the
+        entry and jumping: two more indirections than an ordinary call. In Python it is even more dynamic —the
+        name is looked up in a dictionary— and that is why it is more flexible and slower.</p></div>
+    </section>
+
+    <section id="abstractos">
+      <h2><span class="n">04</span>Abstract types and exceptions</h2>
+      <p>An <b>abstract data type</b> is defined by what can be done with it, not by how it is built.
+      A stack is “push, pop and look at the top”, regardless of whether inside there is an array or a linked
+      list. The standard library is exactly that: tested containers that no longer have to be written.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Need</th><th>C++</th><th>Python</th></tr></thead>
+        <tbody>
+          <tr><td>A sequence that grows</td><td><code>std::vector</code></td><td><code>list</code></td></tr>
+          <tr><td>Look up by key</td><td><code>std::map</code>, <code>unordered_map</code></td><td><code>dict</code></td></tr>
+          <tr><td>No duplicates</td><td><code>std::set</code></td><td><code>set</code></td></tr>
+          <tr><td>Double-ended queue</td><td><code>std::deque</code></td><td><code>collections.deque</code></td></tr>
+          <tr><td>Memory that frees itself</td><td><code>unique_ptr</code>, <code>shared_ptr</code></td><td>Garbage collector</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Exceptions</h3>
+      <p>In C, a function reports an error by returning a code that almost nobody checks. Exceptions
+      separate the normal path from the error path:</p>
+      <div class="form">
+        <code>try:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;v = instrument.measure()<br>
+        except TimeoutError:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;log("the device did not respond")<br>
+        finally:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;instrument.close()      # this runs no matter what</code>
+      </div>
+      <p>Three rules: <b>catch only what you know how to handle</b> —an empty <code>except</code> hides programming
+      errors—, <b>always release</b> with <code>finally</code> or with <code>with</code>, and <b>do not use
+      exceptions for normal flow</b>, because they are expensive and confusing.</p>
+    </section>
+
+    <section id="cual">
+      <h2><span class="n">05</span>Which one to use in electronics</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Job</th><th>Reasonable tool</th></tr></thead>
+        <tbody>
+          <tr><td>Firmware for a small microcontroller</td><td>C, and C++ without exceptions or dynamic allocation</td></tr>
+          <tr><td>Large firmware, with layers</td><td>Modern C++: classes, templates, <code>constexpr</code></td></tr>
+          <tr><td>Lab tool, interface, analysis</td><td>Python, for how quickly it can be written</td></tr>
+          <tr><td>Processing measurements and plotting</td><td>Python with NumPy and Matplotlib</td></tr>
+          <tr><td>Whatever has to fly</td><td>C or C++, or the critical part in C called from Python</td></tr>
+        </tbody>
+      </table></div>
+      <p>The most useful combination for an electronics engineer is to know both: <b>C or C++ for the device</b> and
+      <b>Python for everything around it</b> —automating the bench, processing the measurements, putting together the
+      report—. They do not compete: they are used in different layers of the same project.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · The same thing, twice</div>
+        <p>Implement a stack in C with a structure and functions, and in C++ or Python as a class. Compare how many
+        ways there are to misuse it in each case.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · An instrument bench</div>
+        <p>Define a base class <code>Instrument</code> with <code>connect</code>, <code>measure</code> and
+        <code>describe</code>, and three derived classes. Traverse a mixed list calling the same methods, and
+        then add a fourth class without touching the loop.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Errors that cannot be ignored</div>
+        <p>Write a function that reads the serial port and raises an exception if the device does not respond. Check
+        with <code>finally</code> that the port ends up closed even when it fails.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Making classes for everything.</b> If there is no state to protect, a function is enough.</li>
+        <li><b>Deep inheritance.</b> Four levels are harder to follow than a little repetition.</li>
+        <li><b>Exposing every attribute</b> and losing the one guarantee that encapsulation gave.</li>
+        <li><b>Catching <code>Exception</code> and carrying on</b> as if nothing had happened, hiding real errors.</li>
+        <li><b>Using exceptions for normal flow</b>, such as exiting a loop.</li>
+        <li><b>Assuming that Python is slow at everything:</b> what is slow is the hand-written loop; with NumPy the
+        calculation runs in C.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>What is encapsulation and what does it guarantee?</summary>
+        <div class="a"><p>Keeping the data and the operations together, and exposing only what is necessary. It guarantees
+        that the state changes only through validated paths.</p></div></details>
+      <details class="q"><summary>What does polymorphism allow that would otherwise be costly?</summary>
+        <div class="a"><p>Adding a new type without touching the code that uses it: the loop that traverses the list
+        of instruments stays the same.</p></div></details>
+      <details class="q"><summary>How does C++ resolve a call to a virtual method?</summary>
+        <div class="a"><p>Through the virtual function table: the object stores a pointer to its class’s table
+        and the call jumps to the corresponding entry, at run time.</p></div></details>
+      <details class="q"><summary>Why is <code>except: pass</code> wrong?</summary>
+        <div class="a"><p>Because it catches everything, including programming errors, and hides them. You should
+        catch only the exceptions you know how to handle.</p></div></details>
+      <details class="q"><summary>What does <code>finally</code> do?</summary>
+        <div class="a"><p>It runs that block whether or not there is an exception: it is where the port, the file or the
+        connection is closed.</p></div></details>
+      <details class="q"><summary>Is it a good idea to use objects on a microcontroller with 2 kB of RAM?</summary>
+        <div class="a"><p>Simple classes, yes; exceptions and dynamic allocation, no. The tool is chosen for
+        the problem, not out of habit.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Bjarne Stroustrup.</span> <span class="ti">A Tour of C++</span>.
+          <span class="ed">3rd ed., Addison-Wesley, 2022.</span>
+          <span class="pq">Modern C++ in two hundred pages, written by its creator.</span></li>
+        <li><span class="au">Mark Lutz.</span> <span class="ti">Learning Python</span>.
+          <span class="ed">5th ed., O'Reilly, 2013.</span>
+          <span class="pq">Thorough and careful about the language’s object model.</span></li>
+        <li><span class="au">Erich Gamma et al.</span> <span class="ti">Design Patterns</span>.
+          <span class="ed">Addison-Wesley, 1994.</span>
+          <span class="pq">The classic patterns. It is best read after having suffered the problems they solve.</span></li>
+        <li><span class="au">Robert C. Martin.</span> <span class="ti">Clean Code</span>.
+          <span class="ed">Prentice Hall, 2008.</span>
+          <span class="pq">Debatable on several points, but it installs the right question: will this still be understood a year from now.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/calculo-numerico">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Applied numerical computation</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/sistemas-operativos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Operating system fundamentals</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Introduction to an advanced language”</b> of <b>Computer Science II</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Inheritance and dynamic dispatch: the hierarchy is drawn and, when a
+   method is called, the lookup chain is highlighted up to the implementation that
+   actually runs. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("poLienzo"), ctx = cv.getContext("2d");
+  /* each class: what it inherits from and which methods it defines on its own */
+  var C = {
+    base:   { n:"Instrument", padre:null, nivel:0,
+              def:{ describe:'return f"{self.brand} at {self.port}"',
+                    connect:'self.port.open()',
+                    measure:'raise NotImplementedError' },
+              t:"The base class defines what is common. <code>measure()</code> has no possible implementation here: " +
+                "each instrument measures its own thing. That is why it raises an exception, which is the way to say " +
+                "“this must be written by whoever inherits”." },
+    multi:  { n:"Multimeter", padre:"base", nivel:1,
+              def:{ measure:'return self._read_dc() * self.scale',
+                    describe:'return "Multimeter " + super().describe()' },
+              t:"The multimeter <b>overrides</b> measure and describe. Notice that describe calls " +
+                "<code>super()</code>: it reuses what the base class has and adds its own part, instead of copying it." },
+    osc:    { n:"Oscilloscope", padre:"base", nivel:1,
+              def:{ measure:'return self._capture(self.points)' },
+              t:"The oscilloscope only overrides measure. It inherits <code>describe()</code> and <code>connect()</code> " +
+                "as they are: there is not a single repeated line." },
+    fuente: { n:"PowerSupply", padre:"base", nivel:1,
+              def:{ measure:'return self.set_voltage, self.current_limit',
+                    connect:'super().connect(); self.output_off()' },
+              t:"The power supply overrides connect to add a precaution: on connecting, it leaves the output " +
+                "off. It first calls <code>super().connect()</code> and then adds its own part." }
+  };
+  var METODOS = ["measure", "describe", "connect"];
+
+  function cadena(clave){
+    /* from the class up to the ancestor: the order in which the method is looked up */
+    var c = [], k = clave;
+    while(k){ c.push(k); k = C[k].padre; }
+    return c;
+  }
+  function resuelve(clave, metodo){
+    var cad = cadena(clave), i;
+    for(i = 0; i < cad.length; i++)
+      if(C[cad[i]].def[metodo] !== undefined) return cad[i];
+    return null;
+  }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    var obj = $("poO").value, met = $("poM").value;
+    var quien = resuelve(obj, met), cad = cadena(obj);
+
+    ctx.clearRect(0, 0, W, H);
+    /* the hierarchy: the base on top and the derived classes below */
+    var derivadas = Object.keys(C).filter(function(k){ return C[k].padre; });
+    var wB = Math.min(150, W * 0.34), hB = 34;
+    var xBase = (W - wB) / 2, yBase = 16;
+    function caja(x, y, w, h, clave, activa, esMarcada){
+      ctx.strokeStyle = esMarcada ? "#7ee787" : activa ? "#58a6ff" : "rgba(107,116,132,.5)";
+      ctx.fillStyle = esMarcada ? "rgba(126,231,135,.16)" :
+                      activa ? "rgba(88,166,255,.12)" : "rgba(107,116,132,.06)";
+      ctx.lineWidth = esMarcada ? 2.4 : activa ? 1.8 : 1.2;
+      ctx.beginPath(); ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = activa || esMarcada ? "#e6edf3" : "#6b7484";
+      ctx.font = (esMarcada ? "600 " : "") + "12.5px system-ui, sans-serif";
+      var t = C[clave].n, wt = ctx.measureText(t).width;
+      ctx.fillText(t, x + (w - wt) / 2, y + 22);
+    }
+    caja(xBase, yBase, wB, hB, "base", cad.indexOf("base") >= 0, quien === "base");
+    var anchoD = Math.min(120, (W - 24) / derivadas.length - 8);
+    derivadas.forEach(function(k, j){
+      var x = 12 + j * ((W - 24) / derivadas.length) + ((W - 24) / derivadas.length - anchoD) / 2;
+      var y = yBase + hB + 34;
+      /* the inheritance line */
+      ctx.strokeStyle = cad.indexOf(k) >= 0 ? "rgba(88,166,255,.7)" : "rgba(107,116,132,.35)";
+      ctx.lineWidth = cad.indexOf(k) >= 0 ? 1.8 : 1;
+      ctx.beginPath();
+      ctx.moveTo(x + anchoD / 2, y); ctx.lineTo(x + anchoD / 2, y - 16);
+      ctx.lineTo(xBase + wB / 2, y - 16); ctx.lineTo(xBase + wB / 2, yBase + hB);
+      ctx.stroke();
+      caja(x, y, anchoD, hB, k, cad.indexOf(k) >= 0, quien === k);
+      /* which methods each one defines */
+      ctx.font = "10px system-ui, sans-serif";
+      METODOS.forEach(function(m, mi){
+        var tiene = C[k].def[m] !== undefined;
+        ctx.fillStyle = !tiene ? "rgba(107,116,132,.45)"
+                      : (m === met && quien === k) ? "#7ee787" : "rgba(230,237,243,.7)";
+        ctx.fillText((tiene ? "• " : "· ") + m, x + 6, y + hB + 15 + mi * 13);
+      });
+    });
+    /* the base's methods */
+    ctx.font = "10px system-ui, sans-serif";
+    METODOS.forEach(function(m, mi){
+      ctx.fillStyle = (m === met && quien === "base") ? "#7ee787" : "rgba(230,237,243,.6)";
+      ctx.fillText("• " + m, xBase + wB + 10, yBase + 12 + mi * 13);
+    });
+    /* the code that runs */
+    var yc = H - 54;
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("executes:", 12, yc - 6);
+    ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 1.4;
+    ctx.fillStyle = "rgba(126,231,135,.08)";
+    ctx.beginPath(); ctx.rect(12, yc, W - 24, 42); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#e6edf3"; ctx.font = "11.5px Consolas, monospace";
+    var linea = quien ? C[quien].n + "." + met + "(): " + C[quien].def[met] : "— does not exist —";
+    if(ctx.measureText(linea).width > W - 40) ctx.font = "10px Consolas, monospace";
+    ctx.fillText(linea, 20, yc + 26);
+
+    $("poDatos").innerHTML =
+      "<span>Object</span><b>" + C[obj].n + "</b>" +
+      "<span>Call</span><b>object." + met + "()</b>" +
+      "<span>Lookup chain</span><b>" + cad.map(function(k){ return C[k].n; }).join(" → ") + "</b>" +
+      "<hr><span>Resolved by</span><b style=\"color:#7ee787\">" + (quien ? C[quien].n : "none") + "</b>" +
+      "<span>Inherited?</span><b>" + (quien === obj ? "no: the class itself defines it" :
+        quien ? "yes, it comes from " + C[quien].n : "—") + "</b>";
+
+    var txt = "";
+    if(quien === obj)
+      txt = "The class <b>" + C[obj].n + "</b> defines <code>" + met + "()</code> on its own, so the " +
+            "lookup ends at the first step. ";
+    else if(quien)
+      txt = "<b>" + C[obj].n + "</b> does not define <code>" + met + "()</code>, so the language goes up the " +
+            "inheritance chain and uses the one from <b>" + C[quien].n + "</b>. That is what <b>inheriting</b> means: there is not a " +
+            "single repeated line. ";
+    txt += C[obj].t + " <b>The important point:</b> whoever writes " +
+           "<code>for device in bench: device." + met + "()</code> does not need to know anything about this. The call is " +
+           "always the same and each object answers in its own way; that is dynamic dispatch.";
+    $("poNota").innerHTML = txt;
+  }
+  ["poO","poM"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

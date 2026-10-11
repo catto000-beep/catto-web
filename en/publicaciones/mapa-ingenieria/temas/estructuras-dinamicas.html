@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic data structures · Computer Science II · Catto</title>
+<meta name="description" content="Singly and doubly linked lists, stacks and queues, binary trees, and the criteria for choosing between an array and a list, with an interactive lab for inserting and deleting nodes. Content of Computer Science II, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science II</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science II</span> · 120 h · Topic 2 of 8</div>
+    <h1>Dynamic data structures</h1>
+    <p class="lead">When you do not know in advance how much data is going to arrive, the array gets in the way. The linked list grows and shrinks by following pointers, and with that mechanism you build queues, stacks and trees.</p>
+    <div class="chips">
+      <span class="chip hi">Linked list</span>
+      <span class="chip">Nodes</span>
+      <span class="chip">Stack</span>
+      <span class="chip">Queue</span>
+      <span class="chip">Binary tree</span>
+    </div>
+    <hr class="rule">
+
+    <section id="porque">
+      <h2><span class="n">01</span>When the array is not enough</h2>
+      <p>An array is fast and simple, but its size is fixed, decided before the program runs. If
+      more data arrives than expected, it overflows; if less arrives, memory is wasted. A
+      <b>dynamic structure</b> grows and shrinks during execution, allocating one node per item of data.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operation</th><th>Array</th><th>Linked list</th></tr></thead>
+        <tbody>
+          <tr><td>Access element i</td><td><b>O(1)</b>: direct calculation</td><td>O(n): you have to traverse</td></tr>
+          <tr><td>Insert at the beginning</td><td>O(n): shift everything</td><td><b>O(1)</b>: change two pointers</td></tr>
+          <tr><td>Insert at the end</td><td>O(1) if there is room</td><td>O(n), or O(1) with a pointer to the tail</td></tr>
+          <tr><td>Delete from the middle</td><td>O(n): shift everything</td><td><b>O(1)</b> if you already have the previous node</td></tr>
+          <tr><td>Memory per item</td><td>Only the data</td><td>The data plus a pointer</td></tr>
+          <tr><td>Cache locality</td><td><b>Excellent</b>: contiguous</td><td>Poor: scattered nodes</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box ojo"><div class="bt">Which one to choose</div>
+        <p>There is no winner: there is judgment. If you know the size and access by index, use an array. If there are
+        many insertions and deletions at arbitrary positions, use a list. And in practice, for a few elements the
+        array often wins anyway, because contiguous memory flies in the processor’s cache.</p></div>
+    </section>
+
+    <section id="lista">
+      <h2><span class="n">02</span>The linked list</h2>
+      <p>Each node holds the data and the address of the next one. The last one points to NULL, and an external variable
+      —the head— holds the address of the first:</p>
+      <div class="form">
+        <code>typedef struct node {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;int data;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;struct node *next;<br>
+        } Node;<br><br>
+        Node *head = NULL;</code>
+      </div>
+      <p>The structure refers to itself: that is why the name <code>struct node</code> is needed inside its
+      own definition. Inserting at the beginning takes three lines:</p>
+      <div class="form">
+        <code>Node *n = malloc(sizeof(Node));<br>
+        n-&gt;data = x;<br>
+        n-&gt;next = head;<br>
+        head = n;</code>
+      </div>
+      <div class="box peligro"><div class="bt">Order matters</div>
+        <p>If you do <code>head = n</code> <b>before</b> <code>n-&gt;next = head</code>, the node points to
+        itself and the whole list is lost. In linked structures, the order of pointer assignments
+        is the most frequent error and the hardest to spot by reading.</p></div>
+      <div class="lw" id="ls">
+        <div class="lt">Lab · linked list</div>
+        <p class="ls">Insert and delete nodes, and watch how the pointers rearrange and how many steps each operation costs.</p>
+        <div class="fila">
+          <label for="lsV">Value <b id="lsVv">25</b></label>
+          <input type="range" id="lsV" min="1" max="99" step="1" value="25">
+        </div>
+        <div class="fila">
+          <button id="lsIni" class="pri">Insert at head</button>
+          <button id="lsFin">Insert at tail</button>
+          <button id="lsOrd">Insert in order</button>
+        </div>
+        <div class="fila">
+          <button id="lsDelIni">Delete the first</button>
+          <button id="lsDelVal">Delete that value</button>
+          <button id="lsBuscar">Search</button>
+          <button id="lsVaciar">Clear</button>
+        </div>
+        <canvas id="lsLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:1.9/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="lsDatos" style="margin-top:8px"></div>
+        <div class="nota" id="lsNota"></div>
+      </div>
+    </section>
+
+    <section id="variantes">
+      <h2><span class="n">03</span>Variants and derived structures</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Structure</th><th>What it is like</th><th>What it is for</th></tr></thead>
+        <tbody>
+          <tr><td>Doubly linked list</td><td>Each node points to the next and the previous</td><td>Traversing in both directions, deleting without searching for the previous node</td></tr>
+          <tr><td>Circular list</td><td>The last one points to the first</td><td>Round-robin schedulers, buffers</td></tr>
+          <tr><td>Stack (LIFO)</td><td>The last item in is taken out</td><td>Function calls, undo, evaluating expressions</td></tr>
+          <tr><td>Queue (FIFO)</td><td>The first item in is taken out</td><td>Communication buffers, event queues</td></tr>
+          <tr><td>Circular queue</td><td>Fixed array with indices that wrap around</td><td>UART buffers in microcontrollers</td></tr>
+          <tr><td>Binary search tree</td><td>Each node has two children, in order</td><td>Search in O(log n) if balanced</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">The stack you have already been using</div>
+        <p>Each function call pushes its frame —local variables and return address— and pops it on
+        return. That is why a recursion without a base case ends in a <i>stack overflow</i>: the data structure
+        that overflows is, literally, a stack.</p></div>
+    </section>
+
+    <section id="arboles">
+      <h2><span class="n">04</span>Binary trees</h2>
+      <p>In a binary search tree, everything smaller than a node is in its left subtree and everything
+      larger is in the right one. Searching means walking down comparing, and if the tree is balanced each comparison
+      <b>discards half</b> of the remaining data: 20 comparisons are enough for a million elements.</p>
+      <ul>
+        <li><b>In-order traversal</b> —left, node, right— returns the data sorted from smallest to
+        largest.</li>
+        <li><b>Preorder</b> —node, left, right— is used to copy the structure.</li>
+        <li><b>Postorder</b> —left, right, node— to free it, because it destroys the children before
+        the parent.</li>
+      </ul>
+      <p>The problem is imbalance: if the data arrives already sorted, the tree degenerates into a list and
+      search goes back to O(n). This is the origin of self-balancing trees, such as AVL and
+      red-black trees.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">05</span>Where they are used in a device</h2>
+      <ul>
+        <li><b>UART circular buffer.</b> The receive interrupt writes to the queue and the main program
+        reads: it is the most widely used structure in embedded systems.</li>
+        <li><b>Event queue.</b> A graphical interface, a real-time operating system and firmware with a
+        state machine all use the same producer-consumer scheme.</li>
+        <li><b>A scheduler’s task list.</b> Ordered by priority or by deadline.</li>
+        <li><b>Sample history.</b> A sliding window for averaging or filtering signals is implemented
+        with a circular queue.</li>
+        <li><b>Device table.</b> An operating system kernel maintains linked lists of
+        open processes, files and drivers.</li>
+      </ul>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · A complete linked list</div>
+        <p>Implement in C insertion at the head, at the tail and in order, deletion by value, search, counting and
+        freeing the whole list. Check with valgrind that no memory is leaked.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Circular buffer</div>
+        <p>Write a fixed-size circular queue with read and write indices, and use it to receive
+        data from a serial port without losing bytes while the program does something else.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Comparing costs by measuring</div>
+        <p>Insert a hundred thousand elements at the beginning of an array and of a list, and measure the time of each
+        one. Repeat accessing by index. Contrast the numbers with the table in the first section.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Losing the head of the list</b> by reassigning pointers in the wrong order.</li>
+        <li><b>Freeing a node before saving its <code>next</code></b>, and being left with no way to reach the
+        rest.</li>
+        <li><b>Not handling the empty list</b> or the deletion of the first node, which are the two edge
+        cases.</li>
+        <li><b>Forgetting to set the <code>next</code> of the last node to NULL.</b></li>
+        <li><b>Using a list where an array was the better choice</b>, only because it sounds more sophisticated.</li>
+        <li><b>Traversing with the same pointer that is used to free</b>, without an auxiliary variable.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>How much does it cost to insert at the beginning of a linked list?</summary>
+        <div class="a"><p><b>O(1)</b>: allocate the node and change two pointers, no matter how many elements
+        there are.</p></div></details>
+      <details class="q"><summary>Why is accessing element 500 of a list slow?</summary>
+        <div class="a"><p>Because you have to follow 500 pointers: the address cannot be calculated, you have to
+        traverse.</p></div></details>
+      <details class="q"><summary>Which structure suits a UART’s receive buffer?</summary>
+        <div class="a"><p>A <b>circular queue</b> on a fixed array: it needs no malloc, its size is
+        known and an interrupt can use it safely.</p></div></details>
+      <details class="q"><summary>Which traversal of a binary search tree returns the data in order?</summary>
+        <div class="a"><p>The <b>in-order</b> traversal: left, node, right.</p></div></details>
+      <details class="q"><summary>What happens if already sorted data is inserted into a simple binary tree?</summary>
+        <div class="a"><p>It degenerates into a list: each node has only one child and the search goes from O(log n) to
+        O(n).</p></div></details>
+      <details class="q"><summary>Why does infinite recursion end in a “stack overflow”?</summary>
+        <div class="a"><p>Because each call pushes a frame with its local variables, and the program’s stack
+        has a limited size.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Thomas H. Cormen et al.</span> <span class="ti">Introduction to Algorithms</span>.
+          <span class="ed">4th ed., MIT Press, 2022.</span>
+          <span class="pq">The reference on data structures and their cost analysis.</span></li>
+        <li><span class="au">Mark Allen Weiss.</span> <span class="ti">Estructuras de datos en C</span>.
+          <span class="ed">Addison-Wesley, 1995 (in Spanish).</span>
+          <span class="pq">Complete implementations in C, at exactly the level of the course.</span></li>
+        <li><span class="au">Brian W. Kernighan and Dennis M. Ritchie.</span> <span class="ti">The C Programming Language</span>.
+          <span class="ed">2nd ed. (Spanish edition, “El lenguaje de programación C”), Pearson, 1991.</span>
+          <span class="pq">Chapter 6 builds a symbol table with linked structures, as a capstone example.</span></li>
+        <li><span class="au">Robert Sedgewick.</span> <span class="ti">Algorithms in C</span>.
+          <span class="ed">3rd ed., Addison-Wesley, 1998.</span>
+          <span class="pq">Very graphic, with good explanations of trees and their balancing.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/programacion-avanzada">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Advanced programming in C</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/construccion-software">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Software build tools</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Dynamic data structures”</b> of <b>Computer Science II</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Linked list: the nodes are drawn with their simulated address and their pointer
+   to the next one, and each operation reports how many steps it cost, which is what
+   is later written as O(1) or O(n). */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("lsLienzo"), ctx = cv.getContext("2d");
+  var lista = [], proxDir = 0x8A10, ultima = "", pasos = 0, marcado = -1;
+
+  function nuevo(v){
+    var n = { v:v, dir:proxDir };
+    proxDir += 0x18;
+    return n;
+  }
+  function hex(d){ return "0x" + d.toString(16).toUpperCase(); }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height;
+    ctx.clearRect(0, 0, W, H);
+
+    var porFila = Math.max(2, Math.floor((W - 60) / 104));
+    var anchoN = 84, altoN = 42, sepX = 20, sepY = 46;
+    var filas = Math.ceil((lista.length + 1) / porFila);
+    var oy = Math.max(30, (H - (filas * (altoN + sepY) - sepY)) / 2);
+
+    /* the head */
+    ctx.fillStyle = "#f2cc60"; ctx.font = "600 12px system-ui, sans-serif";
+    ctx.fillText("head", 12, oy - 10);
+    ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 1.6;
+    ctx.strokeRect(12, oy, 46, altoN);
+    ctx.font = "11px Consolas, monospace"; ctx.fillStyle = "#f2cc60";
+    var txtC = lista.length ? hex(lista[0].dir) : "NULL";
+    ctx.fillText(txtC, 14, oy + altoN / 2 + 4);
+
+    function pos(i){
+      var f = Math.floor((i + 1) / porFila), c = (i + 1) % porFila;
+      return { x:12 + c * (anchoN + sepX), y:oy + f * (altoN + sepY) };
+    }
+    /* nodes */
+    lista.forEach(function(n, i){
+      var p = pos(i), act = i === marcado;
+      ctx.strokeStyle = act ? "#f2cc60" : "#58a6ff";
+      ctx.fillStyle = act ? "rgba(242,204,96,.16)" : "rgba(88,166,255,.10)";
+      ctx.lineWidth = act ? 2.2 : 1.6;
+      ctx.beginPath(); ctx.rect(p.x, p.y, anchoN, altoN); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(p.x + anchoN * 0.58, p.y); ctx.lineTo(p.x + anchoN * 0.58, p.y + altoN); ctx.stroke();
+      ctx.fillStyle = "#e6edf3"; ctx.font = "600 14px system-ui, sans-serif";
+      ctx.fillText(String(n.v), p.x + 12, p.y + altoN / 2 + 5);
+      ctx.fillStyle = "#6b7484"; ctx.font = "9.5px Consolas, monospace";
+      ctx.fillText(hex(n.dir), p.x + 2, p.y - 4);
+      var sig = i + 1 < lista.length ? "next" : "NULL";
+      ctx.fillStyle = i + 1 < lista.length ? "#d2a8ff" : "#6b7484";
+      ctx.font = "10px Consolas, monospace";
+      ctx.fillText(sig, p.x + anchoN * 0.58 + 6, p.y + altoN / 2 + 4);
+      /* arrow to the next node */
+      if(i + 1 < lista.length){
+        var q = pos(i + 1);
+        ctx.strokeStyle = "#d2a8ff"; ctx.fillStyle = "#d2a8ff"; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        if(q.y === p.y){
+          ctx.moveTo(p.x + anchoN, p.y + altoN / 2); ctx.lineTo(q.x - 5, q.y + altoN / 2);
+          ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(q.x, q.y + altoN / 2);
+          ctx.lineTo(q.x - 8, q.y + altoN / 2 - 4); ctx.lineTo(q.x - 8, q.y + altoN / 2 + 4);
+        } else {
+          ctx.moveTo(p.x + anchoN, p.y + altoN / 2);
+          ctx.lineTo(p.x + anchoN + 8, p.y + altoN / 2);
+          ctx.lineTo(p.x + anchoN + 8, p.y + altoN + 18);
+          ctx.lineTo(q.x + anchoN / 2, p.y + altoN + 18);
+          ctx.lineTo(q.x + anchoN / 2, q.y - 5);
+          ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(q.x + anchoN / 2, q.y);
+          ctx.lineTo(q.x + anchoN / 2 - 4, q.y - 8); ctx.lineTo(q.x + anchoN / 2 + 4, q.y - 8);
+        }
+        ctx.closePath(); ctx.fill();
+      }
+    });
+    /* arrow from the head to the first node */
+    if(lista.length){
+      var p0 = pos(0);
+      ctx.strokeStyle = "#f2cc60"; ctx.fillStyle = "#f2cc60"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(58, oy + altoN / 2); ctx.lineTo(p0.x - 5, p0.y + altoN / 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(p0.x, p0.y + altoN / 2);
+      ctx.lineTo(p0.x - 8, p0.y + altoN / 2 - 4); ctx.lineTo(p0.x - 8, p0.y + altoN / 2 + 4);
+      ctx.closePath(); ctx.fill();
+    } else {
+      ctx.fillStyle = "#6b7484"; ctx.font = "12px system-ui, sans-serif";
+      ctx.fillText("the list is empty: head is NULL", 72, oy + altoN / 2 + 4);
+    }
+
+    var mem = lista.length * 24;
+    $("lsDatos").innerHTML =
+      "<span>Nodes in the list</span><b>" + lista.length + "</b>" +
+      "<span>Heap memory</span><b>" + mem + " bytes (" + lista.length + " × 24)</b>" +
+      "<span>Last operation</span><b>" + (ultima || "—") + "</b>" +
+      "<span>Pointers followed</span><b>" + pasos + "</b>";
+  }
+  function nota(t){ $("lsNota").innerHTML = t; }
+
+  function valor(){ return +$("lsV").value; }
+  $("lsV").addEventListener("input", function(){ $("lsVv").textContent = valor(); });
+
+  $("lsIni").addEventListener("click", function(){
+    lista.unshift(nuevo(valor())); pasos = 0; marcado = 0;
+    ultima = "insert at head";
+    nota("Three assignments and done: the new node points to the old head and the head now points to it. " +
+         "<b>Nothing was traversed</b>, so the cost is O(1) no matter how long the list is. That is why a stack " +
+         "is always implemented by inserting and removing at the head.");
+    pintar();
+  });
+  $("lsFin").addEventListener("click", function(){
+    pasos = lista.length; marcado = lista.length;
+    lista.push(nuevo(valor()));
+    ultima = "insert at tail";
+    nota("To reach the last node it was necessary to follow <b>" + pasos + "</b> pointers: the cost is O(n). " +
+         "If the structure also kept a pointer to the tail, it would be O(1); that is the trick a queue uses.");
+    pintar();
+  });
+  $("lsOrd").addEventListener("click", function(){
+    var v = valor(), i = 0;
+    while(i < lista.length && lista[i].v < v) i++;
+    pasos = i; marcado = i;
+    lista.splice(i, 0, nuevo(v));
+    ultima = "insert in order";
+    nota("<b>" + pasos + "</b> nodes were traversed to find the place, and there the new node was hooked in " +
+         "by changing two pointers. In an array, all the later elements would have had to be <b>shifted</b>; " +
+         "here no data moved.");
+    pintar();
+  });
+  $("lsDelIni").addEventListener("click", function(){
+    if(!lista.length){ nota("The list is already empty. Deleting from an empty list is one of the two edge cases that must always be handled."); return; }
+    var n = lista.shift(); pasos = 0; marcado = -1;
+    ultima = "delete the first";
+    nota("The <code>next</code> was saved in an auxiliary variable, the head was moved and only then was " +
+         "node " + hex(n.dir) + " freed. <b>This order is mandatory:</b> freeing first would leave the list " +
+         "unreachable. Cost O(1).");
+    pintar();
+  });
+  $("lsDelVal").addEventListener("click", function(){
+    var v = valor(), i = lista.findIndex(function(n){ return n.v === v; });
+    if(i < 0){ pasos = lista.length; marcado = -1; ultima = "delete " + v;
+      nota("There is no node with value " + v + ". The whole list was traversed —" + pasos + " pointers— to " +
+           "confirm it: in a list there is no way to know without searching."); pintar(); return; }
+    pasos = i; lista.splice(i, 1); marcado = -1;
+    ultima = "delete " + v;
+    nota("The node was at position " + i + ". Finding it cost " + pasos + " steps, but <b>unlinking " +
+         "it cost just one</b>: the previous node now points to the next one. That asymmetry is what makes the " +
+         "doubly linked list useful, since there is no need to remember the previous node.");
+    pintar();
+  });
+  $("lsBuscar").addEventListener("click", function(){
+    var v = valor(), i = lista.findIndex(function(n){ return n.v === v; });
+    pasos = i < 0 ? lista.length : i + 1; marcado = i;
+    ultima = "search " + v;
+    nota(i < 0 ? "Not found. All " + lista.length + " nodes had to be traversed to know: searching a " +
+                 "list is O(n) and there is no shortcut, because the nodes are not ordered in memory."
+               : "Found at position " + i + " after following " + pasos + " pointers. In a sorted " +
+                 "array you could search by bisection in O(log n), but not in a list: you cannot " +
+                 "jump to the middle element without traversing.");
+    pintar();
+  });
+  $("lsVaciar").addEventListener("click", function(){
+    pasos = lista.length; marcado = -1; ultima = "clear";
+    nota(pasos + (pasos === 1 ? " node was" : " nodes were") + " freed, one by one and always <b>saving the next one before freeing " +
+         "the current one</b>. Forgetting that detail is the most common memory leak with lists: access to the " +
+         "rest of the chain is lost.");
+    lista = [];
+    pintar();
+  });
+
+  window.addEventListener("resize", pintar);
+  /* starts with three nodes so there is something to see */
+  [12, 25, 40].forEach(function(v){ lista.push(nuevo(v)); });
+  ultima = "initial list";
+  nota("Three linked nodes. Each one holds its data and the address of the next; the last one points to NULL. " +
+       "Try the operations and see how many pointers have to be followed in each one.");
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

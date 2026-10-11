@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Applied numerical computation · Computer Science II · Catto</title>
+<meta name="description" content="Floating-point representation and error, roots by bisection and Newton-Raphson, numerical integration, curve fitting by least squares and solving systems, with an interactive convergence lab. Content of Computer Science II, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/calculo-numerico">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/calculo-numerico">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/calculo-numerico">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/calculo-numerico">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science II</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science II</span> · 120 h · Topic 6 of 8</div>
+    <h1>Applied numerical computation</h1>
+    <p class="lead">The computer does not calculate with real numbers but with approximations, and that difference has consequences. Numerical methods solve what has no analytical solution, always with an error that you must know how to bound.</p>
+    <div class="chips">
+      <span class="chip hi">Floating point</span>
+      <span class="chip">Bisection</span>
+      <span class="chip">Newton</span>
+      <span class="chip">Least squares</span>
+      <span class="chip">Error</span>
+    </div>
+    <hr class="rule">
+
+    <section id="flotante">
+      <h2><span class="n">01</span>The computer does not calculate with real numbers</h2>
+      <p>A <code>double</code> stores 64 bits: one sign bit, 11 of exponent and 52 of mantissa. With that it represents
+      about 16 significant decimal digits and nothing more. Everything else is rounded.</p>
+      <div class="form">
+        \[ x = (-1)^s \cdot 1.m \cdot 2^{e-1023} \]
+        <span class="cap">The same IEEE 754 format studied in Computer Science I, now seen from its consequences.</span>
+      </div>
+      <div class="box peligro"><div class="bt">Three consequences that bite</div>
+        <ul>
+          <li><b>0.1 + 0.2 does not give 0.3.</b> It gives 0.30000000000000004, because 0.1 does not exist exactly in binary.
+          Floats are never compared with <code>==</code>: you compare \( |a-b| \lt \varepsilon \).</li>
+          <li><b>Catastrophic cancellation.</b> Subtracting two similar numbers destroys the significant
+          digits: if each has 16 good digits and they agree in 15, the subtraction leaves just one.</li>
+          <li><b>Order matters.</b> Adding a million small numbers to a large one loses the small ones; adding
+          from smallest to largest preserves more.</li>
+        </ul></div>
+      <p>The <b>machine epsilon</b> is the smallest number that, added to 1, gives something different from 1: about
+      \( 2.2 \times 10^{-16} \) in double precision. It sets the floor of the relative error of any calculation.</p>
+    </section>
+
+    <section id="error">
+      <h2><span class="n">02</span>Error, convergence and stopping criterion</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Type of error</th><th>Where it comes from</th></tr></thead>
+        <tbody>
+          <tr><td>Round-off</td><td>From the machine’s finite arithmetic</td></tr>
+          <tr><td>Truncation</td><td>From cutting off an infinite process: a series, a limit</td></tr>
+          <tr><td>In the data</td><td>From the measurement that went into the calculation</td></tr>
+        </tbody>
+      </table></div>
+      <div class="form">
+        \[ \varepsilon_{abs} = |x - \tilde{x}| \qquad
+           \varepsilon_{rel} = \frac{|x - \tilde{x}|}{|x|} \]
+      </div>
+      <p>A method <b>converges linearly</b> if each step multiplies the error by a constant, and
+      <b>quadratically</b> if it squares it: in that case the correct digits double with each
+      iteration. Since the exact answer is almost never known, the practical stopping criterion combines three
+      things: the change between iterations is small, the residual \( |f(x)| \) is small, and an
+      <b>iteration limit</b> so as not to keep spinning if it does not converge.</p>
+      <div class="lw" id="nu">
+        <div class="lt">Lab · finding a root, step by step</div>
+        <p class="ls">Choose the function and the method, and advance iteration by iteration watching the error fall.</p>
+        <div class="fila">
+          <select id="nuF">
+            <option value="raiz2">f(x) = x² − 2 · root at √2</option>
+            <option value="cos">f(x) = cos x − x</option>
+            <option value="cubica">f(x) = x³ − x − 2</option>
+            <option value="expo">f(x) = e^x − 3x</option>
+          </select>
+          <select id="nuM">
+            <option value="bisec">Bisection</option>
+            <option value="newton">Newton-Raphson</option>
+            <option value="secante">Secant</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="nuK">Iteration <b id="nuKv">0</b></label>
+          <input type="range" id="nuK" min="0" max="14" step="1" value="0">
+        </div>
+        <canvas id="nuLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:1.5/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="nuDatos" style="margin-top:8px"></div>
+        <div class="nota" id="nuNota"></div>
+      </div>
+    </section>
+
+    <section id="raices">
+      <h2><span class="n">03</span>Roots of an equation</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Method</th><th>Iteration</th><th>Convergence</th><th>Requires</th></tr></thead>
+        <tbody>
+          <tr><td>Bisection</td><td>\( x_{k+1} = \dfrac{a_k + b_k}{2} \)</td><td>Linear, one bit per step</td><td>A sign change</td></tr>
+          <tr><td>Newton-Raphson</td><td>\( x_{k+1} = x_k - \dfrac{f(x_k)}{f'(x_k)} \)</td><td>Quadratic</td><td>The derivative</td></tr>
+          <tr><td>Secant</td><td>\( x_{k+1} = x_k - f(x_k)\dfrac{x_k - x_{k-1}}{f(x_k) - f(x_{k-1})} \)</td><td>Order 1.618</td><td>Two starting points</td></tr>
+          <tr><td>Fixed point</td><td>\( x_{k+1} = g(x_k) \)</td><td>Linear, if \( |g'| \lt 1 \)</td><td>Rewriting the equation</td></tr>
+        </tbody>
+      </table></div>
+      <p>Bisection <b>never fails</b> if there is a sign change, but it is slow: each step gains one bit, so
+      about 50 iterations are needed to exhaust a <code>double</code>. Newton flies —it doubles the correct
+      digits at each step— but it can go anywhere if the derivative is small or the starting point is
+      far away. In practice they are combined: bisection to get close, Newton to finish.</p>
+    </section>
+
+    <section id="otros">
+      <h2><span class="n">04</span>The other three calculations that always show up</h2>
+      <h3>Numerical integration</h3>
+      <div class="form">
+        \[ \int_a^b f \approx h\left(\frac{f_0}{2} + f_1 + \cdots + f_{n-1} + \frac{f_n}{2}\right)
+           \qquad \int_a^b f \approx \frac{h}{3}\left(f_0 + 4f_1 + 2f_2 + \cdots + f_n\right) \]
+        <span class="cap">Trapezoidal rule, with error \( O(h^2) \), and Simpson’s rule, with error \( O(h^4) \): for the same work, Simpson is far more accurate.</span>
+      </div>
+      <h3>Least-squares fitting</h3>
+      <p>For a line \( y = mx + b \) that passes as close as possible to \( n \) measured points:</p>
+      <div class="form">
+        \[ m = \frac{n\sum x_i y_i - \sum x_i \sum y_i}{n\sum x_i^2 - \left(\sum x_i\right)^2}
+           \qquad b = \frac{\sum y_i - m \sum x_i}{n} \]
+      </div>
+      <p>It is the calculation behind every sensor calibration: pairs are measured and the line is fitted
+      that converts converter counts into physical units.</p>
+      <h3>Systems of equations</h3>
+      <p>For a few nodes, <b>Gaussian elimination</b> with partial pivoting is enough —choosing as pivot the
+      largest element of the column— which avoids dividing by small numbers. For large, sparse systems,
+      such as those that come from a resistor network, the iterative Jacobi and
+      Gauss-Seidel methods are the better choice.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">05</span>Where it appears in electronics</h2>
+      <ul>
+        <li><b>Calibrating a sensor.</b> Least squares on the measured pairs.</li>
+        <li><b>Operating point of a nonlinear circuit.</b> Solving for the intersection of the load line with
+        the diode curve is exactly the problem of this page.</li>
+        <li><b>Simulation.</b> SPICE solves a nonlinear system at each step with Newton-Raphson, and advances in
+        time by integrating numerically.</li>
+        <li><b>Digital filtering.</b> Moving averages, median filters and accumulators, taking care not to
+        lose precision through the order of the sums.</li>
+        <li><b>Microcontrollers without a floating-point unit.</b> There you work in fixed point: faster,
+        but the scale has to be managed by hand.</li>
+      </ul>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Seeing the rounding</div>
+        <p>Print <code>0.1 + 0.2 == 0.3</code>, and then the value with twenty decimals. Calculate the machine
+        epsilon with a loop that divides by two until <code>1 + e == 1</code>.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Comparing methods</div>
+        <p>Solve \( x^2 = 2 \) by bisection and by Newton, tabulating the error at each iteration. Plot the
+        logarithm of the error: bisection gives a straight line and Newton, a curve that plunges.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Calibrating for real</div>
+        <p>With a temperature sensor and a reference thermometer, measure ten pairs of values, fit the line
+        by least squares and program that conversion into the microcontroller. Compare the error before and
+        after calibrating.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Comparing floats with <code>==</code>.</b></li>
+        <li><b>Subtracting similar quantities</b> without realizing that digits are lost.</li>
+        <li><b>Iterating without a limit</b> and ending up in an infinite loop when the method does not converge.</li>
+        <li><b>Using Newton with an arbitrary starting point</b> and ending up at another root, or diverging.</li>
+        <li><b>Confusing precision with accuracy:</b> printing fifteen decimals of a quantity measured with two
+        significant figures.</li>
+        <li><b>Not checking the result</b> by substituting it into the original equation.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>Why does 0.1 + 0.2 not give exactly 0.3?</summary>
+        <div class="a"><p>Because 0.1 and 0.2 have no finite binary representation: they are stored rounded and the
+        error shows up when adding.</p></div></details>
+      <details class="q"><summary>How many bisection iterations are needed to gain three decimals?</summary>
+        <div class="a"><p>Each iteration divides the interval by two, so it gains one bit. For a factor of 1000
+        about <b>10 iterations</b> are needed, because \( 2^{10} = 1024 \).</p></div></details>
+      <details class="q"><summary>What does it mean that Newton converges quadratically?</summary>
+        <div class="a"><p>That the new error is proportional to the square of the previous one: the correct digits
+        double at each step. From 2 to 4, from 4 to 8, from 8 to 16.</p></div></details>
+      <details class="q"><summary>When does Newton fail?</summary>
+        <div class="a"><p>When the derivative is small or zero near the point, when the starting point is far away, or
+        when the function oscillates: it can diverge or jump to another root.</p></div></details>
+      <details class="q"><summary>What error does Simpson’s rule have compared with the trapezoidal rule?</summary>
+        <div class="a"><p>\( O(h^4) \) versus \( O(h^2) \): when the step is halved, Simpson’s error
+        falls by a factor of 16 and the trapezoidal rule’s by 4.</p></div></details>
+      <details class="q"><summary>What is partial pivoting for in Gaussian elimination?</summary>
+        <div class="a"><p>To avoid dividing by a very small number, which would amplify the round-off error. The
+        largest element of the column is chosen as the pivot.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Richard L. Burden and J. Douglas Faires.</span> <span class="ti">Numerical Analysis</span>.
+          <span class="ed">10th ed. (Spanish edition, “Análisis numérico”), Cengage Learning, 2016.</span>
+          <span class="pq">The standard text for the subject, with algorithms and error analysis.</span></li>
+        <li><span class="au">Steven C. Chapra and Raymond P. Canale.</span> <span class="ti">Numerical Methods for Engineers</span>.
+          <span class="ed">7th ed. (Spanish edition, “Métodos numéricos para ingenieros”), McGraw-Hill, 2015.</span>
+          <span class="pq">Strongly application-oriented, with code and engineering cases.</span></li>
+        <li><span class="au">William H. Press et al.</span> <span class="ti">Numerical Recipes</span>.
+          <span class="ed">3rd ed., Cambridge University Press, 2007.</span>
+          <span class="pq">Real implementations, with honest comments on when each method fails.</span></li>
+        <li><span class="au">David Goldberg.</span> <span class="ti">What Every Computer Scientist Should Know About Floating-Point Arithmetic</span>.
+          <span class="ed">ACM Computing Surveys, 1991.</span>
+          <span class="pq">The article to read once in your life on floating point.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/interfaces-graficas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Graphical user interfaces</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/lenguaje-avanzado">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Introduction to an advanced language</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Applied numerical computation”</b> of <b>Computer Science II</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Root finding step by step. The iterations are really computed and
+   the table shows how the error falls: bisection gains one bit per step and
+   Newton doubles the correct digits. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("nuLienzo"), ctx = cv.getContext("2d");
+  var F = {
+    raiz2:  { f:function(x){ return x * x - 2; }, d:function(x){ return 2 * x; },
+              n:"x² − 2", a:0, b:2, x0:2, x1:1, raiz:Math.SQRT2, ex:"√2", lo:-0.5, hi:2.5 },
+    cos:    { f:function(x){ return Math.cos(x) - x; }, d:function(x){ return -Math.sin(x) - 1; },
+              n:"cos x − x", a:0, b:1.5, x0:1.5, x1:0.5, raiz:0.7390851332151607, ex:"0.739085…",
+              lo:-0.3, hi:1.8 },
+    cubica: { f:function(x){ return x * x * x - x - 2; }, d:function(x){ return 3 * x * x - 1; },
+              n:"x³ − x − 2", a:1, b:2, x0:2, x1:1.2, raiz:1.5213797068045676, ex:"1.521379…",
+              lo:0.6, hi:2.3 },
+    expo:   { f:function(x){ return Math.exp(x) - 3 * x; }, d:function(x){ return Math.exp(x) - 3; },
+              n:"eˣ − 3x", a:0, b:1, x0:0, x1:0.8, raiz:0.6190612867359450, ex:"0.619061…",
+              lo:-0.3, hi:1.6 }
+  };
+  function n(x, d){
+    if(d === undefined) d = 10;
+    if(!isFinite(x)) return "—";
+    return x.toFixed(d);
+  }
+  function iterar(d, metodo, tope){
+    /* returns the sequence of approximations, with its interval where applicable */
+    var pasos = [], a = d.a, b = d.b, x, i;
+    if(metodo === "bisec"){
+      for(i = 0; i <= tope; i++){
+        x = (a + b) / 2;
+        pasos.push({ x:x, a:a, b:b });
+        if(d.f(a) * d.f(x) <= 0) b = x; else a = x;
+      }
+    } else if(metodo === "newton"){
+      x = d.x0;
+      for(i = 0; i <= tope; i++){
+        pasos.push({ x:x, tang:true });
+        var dv = d.d(x);
+        if(Math.abs(dv) < 1e-14) break;
+        x = x - d.f(x) / dv;
+      }
+    } else {
+      var p = d.x0, q = d.x1;
+      for(i = 0; i <= tope; i++){
+        pasos.push({ x:q, prev:p });
+        var den = d.f(q) - d.f(p);
+        if(Math.abs(den) < 1e-14) break;
+        var nuevo = q - d.f(q) * (q - p) / den;
+        p = q; q = nuevo;
+      }
+    }
+    return pasos;
+  }
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    var d = F[$("nuF").value], metodo = $("nuM").value, k = +$("nuK").value;
+    $("nuKv").textContent = k;
+    var pasos = iterar(d, metodo, 14);
+    if(k >= pasos.length) k = pasos.length - 1;
+    var act = pasos[k];
+
+    /* scale */
+    var x0 = d.lo, x1 = d.hi, ymin = 0, ymax = 0;
+    for(i = 0; i <= 200; i++){
+      var y = d.f(x0 + i / 200 * (x1 - x0));
+      if(isFinite(y)){ ymin = Math.min(ymin, y); ymax = Math.max(ymax, y); }
+    }
+    var mg = 26;
+    function PX(x){ return mg + (x - x0) / (x1 - x0) * (W - 2 * mg); }
+    function PY(y){ return H - mg - (y - ymin) / (ymax - ymin || 1) * (H - 2 * mg); }
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(mg, PY(0)); ctx.lineTo(W - mg, PY(0)); ctx.stroke();
+    if(x0 < 0 && x1 > 0){ ctx.beginPath(); ctx.moveTo(PX(0), mg); ctx.lineTo(PX(0), H - mg); ctx.stroke(); }
+
+    /* the function */
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.2; ctx.beginPath();
+    for(i = 0; i <= 400; i++){
+      var xx = x0 + i / 400 * (x1 - x0), yy = d.f(xx);
+      if(i === 0) ctx.moveTo(PX(xx), PY(yy)); else ctx.lineTo(PX(xx), PY(yy));
+    }
+    ctx.stroke();
+    /* the true root */
+    ctx.strokeStyle = "rgba(126,231,135,.45)"; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(PX(d.raiz), mg); ctx.lineTo(PX(d.raiz), H - mg); ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* what is specific to each method */
+    if(metodo === "bisec" && act.a !== undefined){
+      ctx.fillStyle = "rgba(242,204,96,.13)";
+      ctx.fillRect(PX(act.a), mg, PX(act.b) - PX(act.a), H - 2 * mg);
+      ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 1.4;
+      [act.a, act.b].forEach(function(v){
+        ctx.beginPath(); ctx.moveTo(PX(v), mg); ctx.lineTo(PX(v), H - mg); ctx.stroke();
+      });
+    }
+    if(metodo === "newton"){
+      var pend = d.d(act.x), y0 = d.f(act.x);
+      if(Math.abs(pend) > 1e-12){
+        ctx.strokeStyle = "rgba(242,204,96,.85)"; ctx.lineWidth = 1.6;
+        var xa = x0, xb = x1;
+        ctx.beginPath();
+        ctx.moveTo(PX(xa), PY(y0 + pend * (xa - act.x)));
+        ctx.lineTo(PX(xb), PY(y0 + pend * (xb - act.x)));
+        ctx.stroke();
+      }
+    }
+    if(metodo === "secante" && act.prev !== undefined){
+      ctx.strokeStyle = "rgba(242,204,96,.85)"; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(PX(act.prev), PY(d.f(act.prev)));
+      ctx.lineTo(PX(act.x), PY(d.f(act.x))); ctx.stroke();
+    }
+    /* the approximations so far */
+    for(i = 0; i <= k; i++){
+      var p = pasos[i], viejo = i < k;
+      ctx.fillStyle = viejo ? "rgba(107,116,132,.55)" : "#f85149";
+      ctx.beginPath(); ctx.arc(PX(p.x), PY(0), viejo ? 3 : 5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("f(x) = " + d.n, mg, 16);
+    ctx.fillStyle = "rgba(126,231,135,.8)";
+    ctx.fillText("root " + d.ex, Math.min(PX(d.raiz) + 6, W - 80), H - 10);
+
+    /* convergence table */
+    var err = Math.abs(act.x - d.raiz);
+    var errPrev = k > 0 ? Math.abs(pasos[k - 1].x - d.raiz) : null;
+    var digitos = err > 0 ? Math.max(0, -Math.log(err) / Math.LN10) : 16;
+    $("nuDatos").innerHTML =
+      "<span>Approximation x<sub>" + k + "</sub></span><b>" + n(act.x, 10) + "</b>" +
+      "<span>Exact value</span><b>" + n(d.raiz, 10) + "</b>" +
+      "<span>Residual f(x<sub>" + k + "</sub>)</span><b>" + (Math.abs(d.f(act.x)) < 1e-12 ? "≈ 0" : n(d.f(act.x), 10)) + "</b>" +
+      "<hr><span>Absolute error</span><b>" + (err === 0 ? "0" : err.toExponential(2)) + "</b>" +
+      "<span>Correct digits</span><b>" + Math.floor(digitos) + "</b>" +
+      (errPrev ? "<span>Previous error / current</span><b>" +
+         (err > 0 ? (errPrev / err).toFixed(1) + " times smaller" : "exact") + "</b>" : "");
+
+    var txt = "";
+    if(metodo === "bisec")
+      txt = "<b>Bisection</b> splits the interval in half and keeps the part where the function " +
+            "changes sign. Each step gains <b>one bit</b>: the error is divided by two, no more and no less. " +
+            "It is slow but infallible as long as there is a sign change, which is why it is used to get started.";
+    else if(metodo === "newton")
+      txt = "<b>Newton</b> draws the tangent at the point and goes to where that line crosses the axis. When it works " +
+            "well, it <b>doubles the correct digits</b> at each step: watch the error go from 10⁻¹ to 10⁻² " +
+            "to 10⁻⁴ to 10⁻⁸. The price is that it needs the derivative and a reasonable starting point.";
+    else
+      txt = "The <b>secant</b> method is Newton without a derivative: it uses the line through the last two points. It converges with " +
+            "order 1.618 —the golden ratio— so it is almost as fast as Newton and is useful when the derivative " +
+            "is unknown or expensive to compute.";
+    if(k === 0)
+      txt += " Move the slider to advance iteration by iteration.";
+    else if(err < 1e-14)
+      txt += " It has already reached the limit of double precision: iterating further adds nothing, it only wastes time. " +
+             "That is the moment to stop.";
+    $("nuNota").innerHTML = txt;
+  }
+  ["nuF","nuM","nuK"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probability · Probability and Statistics · Catto</title>
+<meta name="description" content="Sample space and axioms, conditional probability and independence, the law of total probability and Bayes’ theorem, applied to quality control and fault diagnosis, with an interactive lab on tests with false positives. Content of Probability and Statistics, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/probabilidad">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/probabilidad">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/probabilidad">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/probabilidad">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Probability and Statistics</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Probability and Statistics</span> · 72 h · Topic 2 of 6</div>
+    <h1>Probability</h1>
+    <p class="lead">A test that is right 99 % of the time, applied to a batch with 1 % defective parts, gives one good part for every bad part among those it flags as defective. It is not a flaw in the test: it is Bayes.</p>
+    <div class="chips">
+      <span class="chip hi">Sample space</span>
+      <span class="chip">Conditional</span>
+      <span class="chip">Independence</span>
+      <span class="chip">Bayes</span>
+      <span class="chip">False positives</span>
+    </div>
+    <hr class="rule">
+
+    <section id="axiomas">
+      <h2><span class="n">01</span>Three axioms and nothing more</h2>
+      <p>The whole theory is built on three rules. A <b>random experiment</b> has a set of possible
+      outcomes —the sample space \( S \)—, and every subset of that space, called an
+      <b>event</b>, is assigned a number between 0 and 1:</p>
+      <div class="form">
+        \[ 0 \le P(A) \le 1 \qquad P(S) = 1 \qquad
+           P(A\cup B) = P(A) + P(B) \ \text{ if they are mutually exclusive} \]
+        <span class="cap">Everything else follows from these three by deduction, including the general rule \( P(A\cup B) = P(A)+P(B)-P(A\cap B) \): when you add separately, the intersection is counted twice and you have to subtract it once.</span>
+      </div>
+      <div class="form">
+        \[ P(A\mid B) = \frac{P(A\cap B)}{P(B)} \qquad\qquad
+           A \perp B \iff P(A\cap B) = P(A)\,P(B) \]
+        <span class="cap"><b>Conditional</b> probability shrinks the sample space to the cases in which \( B \) occurred. Two events are <b>independent</b> when knowing that one occurred does not change the probability of the other.</span>
+      </div>
+      <div class="box ojo"><div class="bt">Independent is not the same as mutually exclusive</div>
+        <p>They get confused all the time, and they are almost opposites. Two <b>mutually exclusive</b> events
+        cannot occur together, so knowing that one occurred tells you with certainty that the other did not: that
+        is maximum dependence. Two <b>independent</b> events, on the other hand, can occur together, and the
+        probability that both occur is precisely the product of the two.</p></div>
+    </section>
+
+    <section id="confiabilidad">
+      <h2><span class="n">02</span>Independence and reliability</h2>
+      <p>The most direct application in engineering is to calculate whether a system works from whether its
+      parts work. With components that fail independently:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Configuration</th><th>Works if</th><th>Reliability</th></tr></thead>
+        <tbody>
+          <tr><td><b>Series</b></td><td><b>All</b> work</td><td>\( R = R_1 R_2 \cdots R_n \)</td></tr>
+          <tr><td><b>Parallel</b></td><td><b>At least one</b> works</td><td>\( R = 1 - (1-R_1)\cdots(1-R_n) \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>The first row is relentless: a hundred components in series, each with 99.9 % reliability, give a
+      system with 90.5 %. That is why equipment with many parts needs each one to be much better than the
+      whole. And the second row is the basis of <b>redundancy</b>: two units in parallel with 95 %
+      each give 99.75 %.</p>
+      <div class="box peligro"><div class="bt">Independence is almost never completely true</div>
+        <p>Redundancy works as long as the failures are independent, and often they are not: two
+        redundant power supplies fed from the same line go down together if that line is cut, and two
+        identical boards share the same design flaw. This is called a <b>common-cause failure</b>, and it is the
+        reason why critical systems require <b>diverse</b> redundancy: not the same thing twice,
+        but two different solutions.</p></div>
+    </section>
+
+    <section id="bayes">
+      <h2><span class="n">03</span>Bayes’ theorem</h2>
+      <p>The theorem lets you flip a conditional probability: to go from “how often the test comes out
+      positive when the part is defective” to what you actually want to know, “how often the part is
+      defective when the test came out positive.”</p>
+      <div class="form">
+        \[ P(A\mid B) = \frac{P(B\mid A)\,P(A)}{P(B)}
+           \qquad\qquad
+           P(B) = P(B\mid A)P(A) + P(B\mid \bar{A})P(\bar{A}) \]
+        <span class="cap">The second one is the <b>law of total probability</b>: the denominator is built by adding up all the ways of arriving at \( B \). It is what makes the result depend on how frequent \( A \) is to begin with.</span>
+      </div>
+      <div class="lw" id="ba">
+        <div class="lt">Lab · a test with false positives</div>
+        <p class="ls">A quality-control test with its sensitivity and specificity, applied to a batch. You move the proportion of defective parts and watch what happens to the confidence in a positive result.</p>
+        <div class="fila">
+          <label for="baP">Parts that are actually defective = <b id="baPv">1 %</b></label>
+          <input type="range" id="baP" min="0" max="1000" step="1" value="541">
+        </div>
+        <div class="fila">
+          <label for="baS">Sensitivity · detects a defective part = <b id="baSv">99 %</b></label>
+          <input type="range" id="baS" min="500" max="999" step="1" value="990">
+        </div>
+        <div class="fila">
+          <label for="baE">Specificity · passes a good part = <b id="baEv">99 %</b></label>
+          <input type="range" id="baE" min="500" max="999" step="1" value="990">
+        </div>
+        <canvas id="baLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.5/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="baDatos" style="margin-top:8px"></div>
+        <div class="nota" id="baNota"></div>
+      </div>
+      <div class="box key"><div class="bt">The result that baffles everyone</div>
+        <p>A test that is right 99 % of the time, applied to a batch with 1 % defective parts,
+        produces as many false positives as true positives: of every two parts it flags as bad,
+        one is fine. The test is not badly made. What happens is that the good parts are <b>ninety-nine
+        times more numerous</b>, so their 1 % error contributes as many cases as the 99 % accuracy
+        on a tiny group. The practical conclusion is that <b>in populations where the defect is rare,
+        every positive has to be confirmed</b>.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Frequency and probability</div>
+        <p>Roll a die two hundred times recording the results, and plot the relative frequency of each
+        face against the number of rolls. Observe how it approaches 1/6 and estimate how many rolls
+        are needed to be within 1 %.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Reliability of a chain</div>
+        <p>Calculate the reliability of a piece of equipment with twenty components in series, each with 99.5 %.
+        Add redundancy to the weakest component and recalculate. Discuss how much it would cost to improve each
+        one instead of duplicating one.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Building the Bayes table</div>
+        <p>For an imaginary batch of ten thousand parts with 2 % defective and a test with 95 %
+        sensitivity and 90 % specificity, build the table of the four possible cases and calculate the
+        positive predictive value by counting parts, without using the formula.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Common mistakes</h2>
+      <ul>
+        <li><b>Confusing \( P(A\mid B) \) with \( P(B\mid A) \).</b> It is the mistake that makes Bayes
+        necessary.</li>
+        <li><b>Taking independent for mutually exclusive.</b> They are almost opposites.</li>
+        <li><b>Multiplying probabilities of dependent events.</b> The product holds only if they are
+        independent.</li>
+        <li><b>Ignoring the base rate.</b> Without knowing how frequent the defect is, a positive does not
+        mean anything.</li>
+        <li><b>Assuming that redundancy always multiplies reliability.</b> It does not, if there is a
+        common-cause failure.</li>
+        <li><b>Believing that after many heads it is “due” to come up tails.</b> The coin has no
+        memory.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">06</span>Self-assessment</h2>
+      <details class="q"><summary>When are two events independent?</summary>
+        <div class="a"><p>When \( P(A\cap B) = P(A)P(B) \): knowing that one occurred does not change the
+        probability of the other.</p></div></details>
+      <details class="q"><summary>What is the reliability of a hundred components in series at 99.9 %?</summary>
+        <div class="a"><p>\( 0.999^{100} = 90.5\ \% \). In series, the reliability of the whole is
+        always worse than that of the worst part.</p></div></details>
+      <details class="q"><summary>What is Bayes’ theorem for?</summary>
+        <div class="a"><p>To invert a conditional: to go from the probability of the result given the
+        state, to that of the state given the result.</p></div></details>
+      <details class="q"><summary>Why does a 99 % test give so many false positives?</summary>
+        <div class="a"><p>Because if the good parts are ninety-nine times more numerous, their 1 % of
+        error contributes as many cases as the 99 % accuracy on the few defective ones.</p></div></details>
+      <details class="q"><summary>What is a common-cause failure?</summary>
+        <div class="a"><p>One that takes down the redundant units at the same time, such as a shared
+        power supply or a repeated design flaw.</p></div></details>
+      <details class="q"><summary>What reliability do two 95 % units in parallel give?</summary>
+        <div class="a"><p>99.75 %: the system fails only if both fail, and \( 0.05^2 = 0.0025 \).</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">07</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Douglas C. Montgomery and George C. Runger.</span>
+          <span class="ti">Applied Statistics and Probability for Engineers</span>.
+          <span class="ed">7th ed. (Spanish edition, “Probabilidad y estadística aplicadas a la ingeniería”), Wiley, 2018.</span>
+          <span class="pq">All of Chapter 2: axioms, conditional probability, independence and Bayes with engineering problems.</span></li>
+        <li><span class="au">Sheldon Ross.</span>
+          <span class="ti">Introduction to Probability and Statistics for Engineers and Scientists</span>.
+          <span class="ed">5th ed. (Spanish edition, “Introducción a la probabilidad y estadística para ingenieros”), Elsevier, 2018.</span>
+          <span class="pq">A more formal treatment, with good exercises on total probability and compound events.</span></li>
+        <li><span class="au">Patrick D. T. O'Connor and Andre Kleyner.</span>
+          <span class="ti">Practical Reliability Engineering</span>.
+          <span class="ed">5th ed., Wiley, 2012.</span>
+          <span class="pq">System reliability, redundancy and common-cause failures applied to real equipment.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/estadistica-descriptiva">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Descriptive statistics</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/distribuciones">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Random variables and distributions</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Probability”</b> of <b>Probability and Statistics</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Bayes applied to a quality-control test. The drawing is a grid of
+   ten thousand parts: each one is a dot, and the four possible cases are
+   painted. Counting dots gives the same result as the formula, and that
+   is precisely the idea: the positive predictive value is understood much better
+   by counting parts than by solving for conditionals.
+
+   The case the page wants to show is prevalence 1 % with a 99/99 test:
+   there the true positives and the false positives are almost equal. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("baLienzo"), ctx = cv.getContext("2d");
+  var TOT = 10000;
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+  function pc(v){
+    if(v >= 0.1) return n(v * 100, 2) + " %";
+    if(v >= 0.001) return n(v * 100, 3) + " %";
+    return n(v * 100, 4) + " %";
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, j;
+    /* prevalence from 0.01 % to 50 %, on a logarithmic scale */
+    var prev = Math.pow(10, -4 + 3.7 * parseFloat($("baP").value) / 1000);
+    var sens = parseFloat($("baS").value) / 1000;
+    var espe = parseFloat($("baE").value) / 1000;
+
+    /* the four cases, out of ten thousand parts */
+    var falladas = TOT * prev, buenas = TOT - falladas;
+    var VP = falladas * sens;            /* defective and the test detects it */
+    var FN = falladas * (1 - sens);      /* defective and the test lets it through */
+    var VN = buenas * espe;              /* good and the test passes it */
+    var FP = buenas * (1 - espe);        /* good and the test rejects it */
+    var positivos = VP + FP;
+    var vpp = positivos > 0 ? VP / positivos : 0;     /* positive predictive value */
+    var vpn = (VN + FN) > 0 ? VN / (VN + FN) : 0;
+
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* the grid of parts: 100 x 100 cells */
+    var lado = Math.min(Wd * 0.48, Hd - 46);
+    var gx = 14, gy = 30, cel = lado / 100;
+    /* they are sorted by category so the blocks show up: first the
+       detected defective parts, then the defective parts that got through, the false
+       positives and finally the good parts that were passed */
+    var cats = [
+      { c:"#f85149", k:Math.round(VP), n:"defective, detected" },
+      { c:"#bf6fff", k:Math.round(FN), n:"defective, <b>missed</b>" },
+      { c:"#f2cc60", k:Math.round(FP), n:"good, <b>wrongly rejected</b>" },
+      { c:"rgba(126,231,135,.35)", k:0, n:"good, passed" }
+    ];
+    cats[3].k = TOT - cats[0].k - cats[1].k - cats[2].k;
+    var idx = 0;
+    cats.forEach(function(q){
+      var p;
+      for(p = 0; p < q.k; p++){
+        var fx = idx % 100, fy = Math.floor(idx / 100);
+        ctx.fillStyle = q.c;
+        ctx.fillRect(gx + fx * cel, gy + fy * cel, Math.max(cel - 0.3, 0.6),
+                     Math.max(cel - 0.3, 0.6));
+        idx++;
+      }
+    });
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.strokeRect(gx, gy, lado, lado);
+    ctx.fillStyle = "#8b93a3"; ctx.font = "600 9px system-ui, sans-serif";
+    ctx.fillText("ten thousand parts, one per small square", gx, 20);
+
+    /* the legend and the bar of the positives, on the right */
+    var rx = gx + lado + 18, rw = Wd - rx - 12;
+    var ry = 30;
+    cats.forEach(function(q, k){
+      ctx.fillStyle = q.c;
+      ctx.fillRect(rx, ry + k * 17, 10, 10);
+      ctx.fillStyle = "#8b93a3"; ctx.font = "9px system-ui, sans-serif";
+      /* the label goes without the bold tags, which are not interpreted here */
+      ctx.fillText(q.n.replace(/<\/?b>/g, "") + ": " + n(q.k, 0), rx + 15, ry + k * 17 + 9);
+    });
+
+    /* of what the test flags as bad, how much really is */
+    var by = ry + 4 * 17 + 18, bh = 26;
+    ctx.fillStyle = "#cdd5e0"; ctx.font = "600 9px system-ui, sans-serif";
+    ctx.fillText("of everything the test rejects:", rx, by - 6);
+    var anchoVP = positivos > 0 ? rw * vpp : 0;
+    ctx.fillStyle = "#f85149";
+    ctx.fillRect(rx, by, anchoVP, bh);
+    ctx.fillStyle = "#f2cc60";
+    ctx.fillRect(rx + anchoVP, by, rw - anchoVP, bh);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.strokeRect(rx, by, rw, bh);
+    ctx.fillStyle = "#0b0f16"; ctx.font = "600 10px system-ui, sans-serif";
+    if(anchoVP > 34) ctx.fillText(n(vpp * 100, 0) + " %", rx + 5, by + 17);
+    if(rw - anchoVP > 34) ctx.fillText(n((1 - vpp) * 100, 0) + " %", rx + anchoVP + 5, by + 17);
+    ctx.fillStyle = "#8b93a3"; ctx.font = "9px system-ui, sans-serif";
+    ctx.fillText("red: was bad   ·   yellow: was fine", rx, by + bh + 12);
+
+    /* --------------------------------------------------------- the data */
+    $("baPv").textContent = pc(prev) + "   ·   " + n(falladas, 0) + " of " + TOT;
+    $("baSv").textContent = n(sens * 100, 1) + " %";
+    $("baEv").textContent = n(espe * 100, 1) + " %";
+
+    $("baDatos").innerHTML =
+      "<span>Out of " + TOT + " parts</span><b>" + n(falladas, 0) + " defective   ·   " +
+        n(buenas, 0) + " good</b>" +
+      '<hr><span style="color:#f85149">Defective parts the test detects</span><b>' + n(VP, 0) +
+        "   ·   these are the true positives</b>" +
+      '<span style="color:#f2cc60">Good parts the test rejects</span><b>' + n(FP, 0) +
+        "   ·   these are the <b>false positives</b></b>" +
+      '<span style="color:#bf6fff">Defective parts the test lets through</span><b>' + n(FN, 0) +
+        "   ·   these are the false negatives</b>" +
+      "<hr><span>The test rejects in total</span><b>" + n(positivos, 0) + " parts</b>" +
+      '<span style="color:#7ee787">Of the rejected parts, those really defective</span><b>' +
+        n(vpp * 100, 1) + " %   ·   positive predictive value</b>" +
+      "<span>Of the passed parts, those really good</span><b>" + n(vpn * 100, 3) +
+        " %</b>" +
+      "<hr><span>For every bad part it rejects, it throws away</span><b>" +
+        (VP > 0 ? n(FP / VP, 2) + (Math.abs(FP / VP - 1) < 0.005 ? " good one" : " good ones")
+                : "all the ones it rejects are fine") + "</b>";
+
+    var txt;
+    if(vpp < 0.55 && prev < 0.05)
+      txt = "<b>This is the result that baffles.</b> The test is right " + n(sens * 100, 0) +
+            " % of the time and yet, of every hundred parts it rejects, only " + n(vpp * 100, 0) +
+            " are really defective. It is not badly made: what happens is that the good parts " +
+            "are <b>" + n(buenas / Math.max(falladas, 1), 0) + " times more numerous</b>, so " +
+            "their small error percentage contributes as many cases as the accuracy on a tiny " +
+            "group. That is why, when the defect is rare, every positive has to be confirmed.";
+    else if(prev > 0.2)
+      txt = "With such a high proportion of defective parts, the same test becomes much more " +
+            "reliable: " + n(vpp * 100, 0) + " % of its rejections are correct. <b>The test did not " +
+            "change</b>; the population it is applied to did. Lower the " +
+            "prevalence to 1 % and watch it collapse.";
+    else if(espe > 0.995)
+      txt = "Note that raising the <b>specificity</b> —the ability to pass what is fine— is " +
+            "what rescues the test when the defect is rare. Raising the sensitivity barely helps: the " +
+            "problem is not in the few defective parts but in the enormous group of good ones.";
+    else
+      txt = "Move the proportion of defective parts and follow the bar at the lower right. The " +
+            "test is always the same; what changes the confidence in a positive result is " +
+            "<b>how frequent the defect is to begin with</b>. That is exactly what Bayes says.";
+    $("baNota").innerHTML = txt;
+  }
+
+  ["baP", "baS", "baE"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

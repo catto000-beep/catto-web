@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced programming in C · Computer Science II · Catto</title>
+<meta name="description" content="Pointers and addresses, pointer arithmetic, arrays and strings, pass by reference, dynamic memory with malloc and free, and splitting a program into several files, with an interactive memory viewer. Content of Computer Science II, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/programacion-avanzada">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/programacion-avanzada">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/programacion-avanzada">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/programacion-avanzada">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science II</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science II</span> · 120 h · Topic 1 of 8</div>
+    <h1>Advanced programming in C</h1>
+    <p class="lead">In C you program knowing where things are. The pointer is not an oddity of the language: it is the memory address, and understanding it is the difference between fighting the compiler and driving the hardware.</p>
+    <div class="chips">
+      <span class="chip hi">Pointers</span>
+      <span class="chip">Addresses</span>
+      <span class="chip">Arrays</span>
+      <span class="chip">malloc</span>
+      <span class="chip">Modularization</span>
+    </div>
+    <hr class="rule">
+
+    <section id="direcciones">
+      <h2><span class="n">01</span>Every variable has an address</h2>
+      <p>A variable is a name for a place in memory. That place has an <b>address</b>, and C
+      lets you work with it directly, something most languages hide.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operator</th><th>Reads as</th><th>What it gives</th></tr></thead>
+        <tbody>
+          <tr><td><code>&amp;x</code></td><td>address of x</td><td>Where x is stored</td></tr>
+          <tr><td><code>*p</code></td><td>contents of p</td><td>The value at the address that p holds</td></tr>
+          <tr><td><code>int *p;</code></td><td>p is a pointer to int</td><td>Declares a variable that holds addresses</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">A pointer is just another variable</div>
+        <p>It takes up space in memory, has its own address and can be assigned a value. The only special thing
+        is that this value <b>is an address</b>, and that the type says how big the pointed-to object is: that is what makes
+        <code>p++</code> advance 4 bytes on an <code>int*</code> and 1 byte on a <code>char*</code>.</p></div>
+      <div class="lw" id="pu">
+        <div class="lt">Lab · memory, step by step</div>
+        <p class="ls">Walk through the program with the slider and watch what happens in memory on each line.</p>
+        <div class="fila">
+          <select id="puE">
+            <option value="arr">Array and pointer arithmetic</option>
+            <option value="ref">Pass by reference: swapping two variables</option>
+            <option value="din">Dynamic memory with malloc and free</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="puP">Step <b id="puPv">0</b></label>
+          <input type="range" id="puP" min="0" max="7" step="1" value="0">
+        </div>
+        <div class="caja" id="puCod" style="margin:8px 0;font-family:Consolas,'Cascadia Mono',monospace;font-size:12.5px;line-height:1.55;white-space:pre;overflow-x:auto"></div>
+        <canvas id="puLienzo" style="display:block;width:100%;max-width:520px;aspect-ratio:1.25/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="puDatos" style="margin-top:8px"></div>
+        <div class="nota" id="puNota"></div>
+      </div>
+    </section>
+
+    <section id="arreglos">
+      <h2><span class="n">02</span>Arrays, strings and pointers</h2>
+      <p>In C the name of an array <b>is</b> the address of its first element. That is why these four
+      expressions mean the same thing:</p>
+      <div class="form">
+        <code>v[i] &nbsp;≡&nbsp; *(v + i) &nbsp;≡&nbsp; *(i + v) &nbsp;≡&nbsp; i[v]</code>
+      </div>
+      <p>The last one is a curiosity best left unused, but it shows how far the square brackets are merely
+      a convenient notation for pointer arithmetic.</p>
+      <div class="box peligro"><div class="bt">The array does not know its own size</div>
+        <p>C <b>does not check bounds</b>. Writing to <code>v[10]</code> of a 5-element array compiles without
+        complaint and overwrites whatever is next to it: another variable, the function’s return address, anything
+        at all. That is the cause of half the security flaws in the history of software, and it is why
+        you must always pass the size along with the pointer.</p></div>
+      <p>A <b>string</b> is an array of <code>char</code> ended by a zero byte. That zero is not
+      decorative: it is the only thing that tells <code>strlen</code> or <code>printf</code> where the
+      text ends.</p>
+    </section>
+
+    <section id="funciones">
+      <h2><span class="n">03</span>Pass by value and pass by reference</h2>
+      <p>C <b>always</b> passes arguments by value: the function receives a copy. If something in the caller
+      has to be modified, you pass its address:</p>
+      <div class="form">
+        <code>void double_it(int *x) { *x = *x * 2; }<br>
+        …<br>
+        double_it(&amp;a);   /* a is now twice as large */</code>
+      </div>
+      <p>Arrays seem to be an exception, but they are not: what gets passed is the address of the first
+      element, so the function can modify the contents. That is why <code>void f(int v[])</code> and
+      <code>void f(int *v)</code> are exactly the same thing to the compiler.</p>
+      <div class="box ojo"><div class="bt">Function pointers</div>
+        <p>You can also store the address of a function and call it through that address. This is how
+        dispatch tables, <i>callbacks</i> and state machines are built, and it is the mechanism behind a
+        microcontroller’s interrupt vectors.</p></div>
+    </section>
+
+    <section id="dinamica">
+      <h2><span class="n">04</span>Dynamic memory</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Region</th><th>Who manages it</th><th>Lives until</th></tr></thead>
+        <tbody>
+          <tr><td>Global and static variables</td><td>The compiler</td><td>The program ends</td></tr>
+          <tr><td>Stack (local variables)</td><td>Automatic</td><td>The function returns</td></tr>
+          <tr><td>Heap (malloc)</td><td><b>The programmer</b></td><td>Someone calls free</td></tr>
+        </tbody>
+      </table></div>
+      <div class="form">
+        <code>int *v = malloc(n * sizeof(int));<br>
+        if (v == NULL) { /* out of memory */ }<br>
+        …<br>
+        free(v);<br>
+        v = NULL;</code>
+      </div>
+      <p>The three rules that prevent almost all problems: <b>always check</b> that malloc did not return
+      NULL, <b>free exactly once</b> whatever was allocated, and <b>set the pointer to NULL</b> after
+      freeing it so that a later use fails immediately instead of silently corrupting memory.</p>
+      <div class="box peligro"><div class="bt">The four classic errors</div>
+        <ul>
+          <li><b>Memory leak:</b> allocating and not freeing. The program grows until the system kills
+          it.</li>
+          <li><b>Dangling pointer:</b> using memory that has already been freed.</li>
+          <li><b>Double free:</b> calling free twice with the same pointer.</li>
+          <li><b>Uninitialized pointer:</b> using a pointer that never received a valid address.</li>
+        </ul>
+        <p>In an embedded device that runs for months without restarting, a memory leak of a few bytes per hour
+        ends in a failure after weeks. That is why many embedded projects flatly forbid malloc
+        after startup.</p></div>
+    </section>
+
+    <section id="modular">
+      <h2><span class="n">05</span>Modularizing</h2>
+      <p>A serious program does not live in a single file. The criterion is to separate <b>interface</b> from
+      <b>implementation</b>:</p>
+      <ul>
+        <li><code>sensor.h</code>: what can be used —prototypes, types and constants—, protected against
+        multiple inclusion with <code>#ifndef SENSOR_H</code>.</li>
+        <li><code>sensor.c</code>: how it is built. Whatever is not declared in the header is marked
+        <code>static</code> and stays private to the file.</li>
+        <li>Each <code>.c</code> is compiled separately and the linker joins the object files.</li>
+      </ul>
+      <p>That organization is what lets you replace one sensor module with another without touching the rest, and it is
+      the basis of the libraries used in
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/construccion-software">building
+      software</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Seeing the addresses for real</div>
+        <p>Write a program that prints, with <code>%p</code>, the addresses of a global variable, a
+        local one, one allocated with malloc and a string constant. Sort them and deduce the memory map of the
+        process.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Implementing strlen and strcpy</div>
+        <p>Write them using only pointers, without square brackets. Compare with the standard library versions and measure
+        times with long strings.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Hunting a memory leak</div>
+        <p>Compile a program with a malloc and no free and run it under <code>valgrind</code>. Interpret the
+        report, fix the program and check again that no memory is leaked.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Confusing <code>*p</code> with <code>p</code>.</b> One is the contents; the other, the address.</li>
+        <li><b>Returning the address of a local variable.</b> Once the function returns, that memory is no longer
+        valid.</li>
+        <li><b>Forgetting the zero byte</b> when building a string by hand.</li>
+        <li><b>Allocating the wrong size:</b> <code>malloc(n)</code> instead of
+        <code>malloc(n * sizeof(int))</code>.</li>
+        <li><b>Comparing strings with <code>==</code></b>, which compares addresses and not contents: you have to use
+        <code>strcmp</code>.</li>
+        <li><b>Using <code>sizeof</code> on a pointer</b> expecting the size of the array: it gives the size of the
+        pointer.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>If <code>int v[5]</code> starts at 0x1000, what address is <code>v + 2</code>?</summary>
+        <div class="a"><p>0x1008: pointer arithmetic advances in steps of <code>sizeof(int)</code>, that is,
+        4 bytes per element.</p></div></details>
+      <details class="q"><summary>What is the difference between <code>char s[] = "data"</code> and <code>char *s = "data"</code>?</summary>
+        <div class="a"><p>The first is a modifiable 5-byte array, a copy of the text. The second is a
+        pointer to a read-only constant: writing to it is undefined behavior.</p></div></details>
+      <details class="q"><summary>Why can’t <code>void f(int x)</code> modify the caller’s variable?</summary>
+        <div class="a"><p>Because it receives a copy. You have to pass the address: <code>void f(int *x)</code>.</p></div></details>
+      <details class="q"><summary>What happens if you call <code>free</code> twice with the same pointer?</summary>
+        <div class="a"><p>Undefined behavior: in general it corrupts the allocator’s internal
+        structures. Setting the pointer to NULL after freeing it prevents this, because <code>free(NULL)</code> is
+        safe.</p></div></details>
+      <details class="q"><summary>What is the value of <code>sizeof(v)</code> inside <code>void f(int v[])</code>?</summary>
+        <div class="a"><p>The size of a pointer —4 or 8 bytes—, not that of the array. The size has to be passed
+        as a separate parameter.</p></div></details>
+      <details class="q"><summary>What is the point of declaring a function <code>static</code> in a .c file?</summary>
+        <div class="a"><p>To make it private to that file and keep it out of linking: it avoids name
+        clashes and makes clear what is interface and what is implementation.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Brian W. Kernighan and Dennis M. Ritchie.</span> <span class="ti">The C Programming Language</span>.
+          <span class="ed">2nd ed. (Spanish edition, “El lenguaje de programación C”), Pearson, 1991.</span>
+          <span class="pq">Chapter 5, on pointers and arrays, is still the best written explanation of the subject.</span></li>
+        <li><span class="au">Randal E. Bryant and David R. O'Hallaron.</span> <span class="ti">Computer Systems: A Programmer's Perspective</span>.
+          <span class="ed">3rd ed., Pearson, 2015.</span>
+          <span class="pq">What really happens in memory when a C program runs.</span></li>
+        <li><span class="au">Peter van der Linden.</span> <span class="ti">Expert C Programming: Deep C Secrets</span>.
+          <span class="ed">Prentice Hall, 1994.</span>
+          <span class="pq">The traps of the language explained with humor and real cases.</span></li>
+        <li><span class="au">Herbert Schildt.</span> <span class="ti">C: The Complete Reference</span>.
+          <span class="ed">4th ed. (Spanish edition, “C: manual de referencia”), McGraw-Hill, 2001.</span>
+          <span class="pq">A quick reference to the standard library, handy to keep next to the keyboard.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a class="ph" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">← Back</div>
+        <div class="tt">Engineering Topic Map</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Dynamic data structures</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Advanced programming in C”</b> of <b>Computer Science II</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Memory viewer: steps through a C program and draws the cells with their
+   address, their value and the pointer arrows. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("puLienzo"), ctx = cv.getContext("2d");
+  function hex(d){ return "0x" + d.toString(16).toUpperCase(); }
+
+  var E = {
+    arr: {
+      cod:["int v[4] = {10, 20, 30, 40};",
+           "int *p;",
+           "p = v;              /* or p = &v[0] */",
+           "p++;                /* advances 4 bytes */",
+           "*p = 99;            /* writes to v[1] */",
+           "p += 2;             /* jumps to v[3] */",
+           "printf(\"%d\\n\", *p);   /* prints 40 */"],
+      celdas:[ { nom:"v[0]", dir:0x1000, g:0 }, { nom:"v[1]", dir:0x1004, g:0 },
+               { nom:"v[2]", dir:0x1008, g:0 }, { nom:"v[3]", dir:0x100C, g:0 },
+               { nom:"p", dir:0x1010, g:0, ptr:true } ],
+      pasos:[
+        { v:[10, 20, 30, 40, null], n:"The array is allocated on the stack: four consecutive integers of 4 bytes each, starting at 0x1000. The initial values are written into those cells." },
+        { v:[10, 20, 30, 40, "?"], n:"The pointer is just another variable and takes up its own space, but it has not been initialized yet: it contains garbage. Using it now would be a serious error." },
+        { v:[10, 20, 30, 40, 0x1000], n:"The name of the array <b>is</b> the address of its first element, so p = v stores 0x1000. From now on *p is 10." },
+        { v:[10, 20, 30, 40, 0x1004], n:"p++ does not add 1: it adds <b>sizeof(int)</b>, that is, 4 bytes, because p is a pointer to int. It now points to v[1]." },
+        { v:[10, 99, 30, 40, 0x1004], n:"*p = 99 writes to the cell being pointed to. The array changed without naming v: that is exactly what a function that receives a pointer does." },
+        { v:[10, 99, 30, 40, 0x100C], n:"p += 2 advances two elements, that is, 8 bytes. It reached v[3]. If it added one more, it would point outside the array and C would say nothing." },
+        { v:[10, 99, 30, 40, 0x100C], n:"*p is 40. Notice that the whole traversal was done without writing a single square bracket: v[i] and *(v + i) are the same thing." }
+      ]
+    },
+    ref: {
+      cod:["int a = 5, b = 8;",
+           "int *pa = &a, *pb = &b;",
+           "int t = *pa;        /* copies the value */",
+           "*pa = *pb;",
+           "*pb = t;",
+           "/* a and b have been swapped */"],
+      celdas:[ { nom:"a", dir:0x2000, g:0 }, { nom:"b", dir:0x2004, g:0 },
+               { nom:"t", dir:0x2008, g:0 },
+               { nom:"pa", dir:0x200C, g:0, ptr:true }, { nom:"pb", dir:0x2010, g:0, ptr:true } ],
+      pasos:[
+        { v:[5, 8, null, null, null], n:"Two ordinary variables, side by side on the stack." },
+        { v:[5, 8, "?", 0x2000, 0x2004], n:"Each pointer holds the address of its variable. &a is 0x2000 and &b is 0x2004." },
+        { v:[5, 8, 5, 0x2000, 0x2004], n:"t takes a copy of the value pointed to by pa. It is a copy: changing t afterward would not touch a." },
+        { v:[8, 8, 5, 0x2000, 0x2004], n:"*pa = *pb writes the value of b into a. Both are 8: if t had not been saved, the original value would have been lost." },
+        { v:[8, 5, 5, 0x2000, 0x2004], n:"*pb = t completes the swap. This is exactly the swap function written with pointers, and the reason why C needs the &." },
+        { v:[8, 5, 5, 0x2000, 0x2004], n:"They have been swapped. Without pointers there would be no way: a function that received a and b by value would only swap its copies." }
+      ]
+    },
+    din: {
+      cod:["int *v = malloc(3 * sizeof(int));",
+           "if (v == NULL) return 1;",
+           "v[0] = 7;",
+           "v[1] = 14;",
+           "v[2] = 21;",
+           "free(v);",
+           "v = NULL;"],
+      celdas:[ { nom:"v", dir:0x3000, g:0, ptr:true },
+               { nom:"[0]", dir:0x7A00, g:1 }, { nom:"[1]", dir:0x7A04, g:1 },
+               { nom:"[2]", dir:0x7A08, g:1 } ],
+      pasos:[
+        { v:[0x7A00, "?", "?", "?"], n:"malloc allocates 12 bytes on the <b>heap</b>, far from the stack, and returns its address. The contents are garbage: malloc does not initialize anything.", libre:false },
+        { v:[0x7A00, "?", "?", "?"], n:"The check is not optional: if there were no memory, malloc would return NULL and the first use would crash the program.", libre:false },
+        { v:[0x7A00, 7, "?", "?"], n:"v[0] is syntactic sugar for *(v + 0). The heap block is used just like an array.", libre:false },
+        { v:[0x7A00, 7, 14, "?"], n:"Second element written. The block is still 12 bytes: writing to v[3] would overwrite the allocator’s internal data.", libre:false },
+        { v:[0x7A00, 7, 14, 21], n:"The block is now full. Unlike a local variable, this memory survives the function’s return: it lives until someone frees it.", libre:false },
+        { v:[0x7A00, "—", "—", "—"], n:"free gives the block back to the system. <b>Watch out:</b> v still holds 0x7A00, but that memory no longer belongs to the program. Using it now is a <b>dangling pointer</b>.", libre:true },
+        { v:[0, "—", "—", "—"], n:"Setting v to NULL is the line that prevents the previous error: a later use fails immediately and visibly, instead of silently corrupting memory.", libre:true }
+      ]
+    }
+  };
+
+  function pintar(){
+    var e = E[$("puE").value], s = $("puP");
+    if(s.dataset.rol !== $("puE").value){
+      s.max = e.pasos.length - 1; s.value = 0; s.dataset.rol = $("puE").value;
+    }
+    var k = Math.min(+s.value, e.pasos.length - 1);
+    $("puPv").textContent = (k + 1) + " of " + e.pasos.length;
+    var p = e.pasos[k];
+
+    /* code with the current line highlighted */
+    var html = "";
+    e.cod.forEach(function(l, i){
+      var act = i === k;
+      html += '<div style="padding:1px 6px;border-radius:4px;' +
+              (act ? 'background:rgba(88,166,255,.16);color:var(--txt)' : 'color:var(--muted)') + '">' +
+              (act ? "▶ " : "&nbsp;&nbsp;") + l.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</div>";
+    });
+    $("puCod").innerHTML = html;
+
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height;
+    ctx.clearRect(0, 0, W, H);
+
+    var grupos = [[], []];
+    e.celdas.forEach(function(c, i){ grupos[c.g || 0].push({ c:c, i:i }); });
+    var hayDos = grupos[1].length > 0;
+    var anchoCol = hayDos ? W * 0.42 : W * 0.6;
+    var colX = hayDos ? [W * 0.06, W * 0.54] : [(W - anchoCol) / 2];
+    var altoC = Math.min(34, (H - 54) / Math.max(grupos[0].length, grupos[1].length));
+    var pos = {};
+
+    grupos.forEach(function(g, gi){
+      if(!g.length) return;
+      var x = colX[gi], y0 = 34;
+      ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+      ctx.fillText(gi === 0 ? "stack" : "heap", x, 20);
+      g.forEach(function(o, j){
+        var y = y0 + j * (altoC + 4), val = p.v[o.i];
+        var liberado = p.libre && o.c.g === 1;
+        ctx.strokeStyle = liberado ? "rgba(107,116,132,.45)" :
+                          o.c.ptr ? "#d2a8ff" : "#58a6ff";
+        ctx.fillStyle = liberado ? "rgba(107,116,132,.08)" :
+                        o.c.ptr ? "rgba(210,168,255,.12)" : "rgba(88,166,255,.10)";
+        ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.rect(x, y, anchoCol, altoC); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.font = "10px Consolas, monospace";
+        ctx.fillText(hex(o.c.dir), x + 6, y + altoC / 2 + 3.5);
+        ctx.fillStyle = liberado ? "#6b7484" : "#e6edf3"; ctx.font = "600 12px system-ui, sans-serif";
+        ctx.fillText(o.c.nom, x + 64, y + altoC / 2 + 4);
+        var txt = val === null ? "" : (typeof val === "number" && o.c.ptr) ? (val === 0 ? "NULL" : hex(val)) : String(val);
+        ctx.fillStyle = liberado ? "#6b7484" : (o.c.ptr ? "#d2a8ff" : "#7ee787");
+        ctx.font = "600 12.5px Consolas, monospace";
+        ctx.fillText(txt, x + anchoCol - 12 - ctx.measureText(txt).width, y + altoC / 2 + 4.5);
+        pos[o.c.dir] = { x:x, y:y + altoC / 2, w:anchoCol };
+      });
+    });
+
+    /* pointer arrows */
+    e.celdas.forEach(function(c, i){
+      if(!c.ptr) return;
+      var val = p.v[i];
+      if(typeof val !== "number" || val === 0 || !pos[val]) return;
+      var desde = pos[c.dir], hasta = pos[val];
+      if(!desde) return;
+      ctx.strokeStyle = "#d2a8ff"; ctx.fillStyle = "#d2a8ff"; ctx.lineWidth = 1.6;
+      var x1 = desde.x + desde.w, y1 = desde.y, x2 = hasta.x + hasta.w, y2 = hasta.y;
+      var salida = Math.max(x1, x2) + 16;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(salida, y1); ctx.lineTo(salida, y2); ctx.lineTo(x2 + 4, y2);
+      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 + 8, y2 - 4); ctx.lineTo(x2 + 8, y2 + 4); ctx.closePath(); ctx.fill();
+    });
+
+    /* panel */
+    var filas = "";
+    e.celdas.forEach(function(c, i){
+      var val = p.v[i];
+      if(val === null) return;
+      var txt = (typeof val === "number" && c.ptr) ? (val === 0 ? "NULL" : hex(val)) : String(val);
+      filas += "<span>" + c.nom + " · " + hex(c.dir) + "</span><b>" + txt + "</b>";
+    });
+    /* what each pointer points to */
+    var extra = "";
+    e.celdas.forEach(function(c, i){
+      if(!c.ptr) return;
+      var val = p.v[i];
+      if(typeof val !== "number" || val === 0) return;
+      var destino = e.celdas.filter(function(d){ return d.dir === val; })[0];
+      if(destino){
+        var vd = p.v[e.celdas.indexOf(destino)];
+        extra += "<span>*" + c.nom + "</span><b>" + (vd === null ? "—" : vd) + " (in " + destino.nom + ")</b>";
+      }
+    });
+    $("puDatos").innerHTML = filas + (extra ? "<hr>" + extra : "");
+    $("puNota").innerHTML = p.n;
+  }
+  ["puE","puP"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

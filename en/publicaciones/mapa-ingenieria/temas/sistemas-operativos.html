@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operating system fundamentals · Computer Science II · Catto</title>
+<meta name="description" content="Processes and threads, scheduling, virtual memory, the file system, system calls, concurrency and mutual exclusion, and what changes in a real-time operating system. Content of Computer Science II, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/sistemas-operativos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-operativos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/sistemas-operativos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-operativos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science II</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science II</span> · 120 h · Topic 8 of 8</div>
+    <h1>Operating system fundamentals</h1>
+    <p class="lead">The operating system is what shares out the processor, the memory and the peripherals among programs that believe they own the machine. Understanding how it does so explains almost every odd behavior of a program.</p>
+    <div class="chips">
+      <span class="chip hi">Processes</span>
+      <span class="chip">Threads</span>
+      <span class="chip">Scheduling</span>
+      <span class="chip">Virtual memory</span>
+      <span class="chip">Real time</span>
+    </div>
+    <hr class="rule">
+
+    <section id="reparte">
+      <h2><span class="n">01</span>The one that shares out the machine</h2>
+      <p>A program is written as if it owned the processor, the memory and the peripherals. It does not:
+      dozens are running at once. The operating system maintains that illusion and shares out what there is.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Resource</th><th>What the program sees</th><th>What is really there</th></tr></thead>
+        <tbody>
+          <tr><td>Processor</td><td>One all to itself</td><td>A few cores shared out in slices of milliseconds</td></tr>
+          <tr><td>Memory</td><td>A continuous space starting at address zero</td><td>Pages scattered in RAM, and some on disk</td></tr>
+          <tr><td>Disk</td><td>Files and folders</td><td>Numbered blocks on a device</td></tr>
+          <tr><td>Peripherals</td><td>A file that is opened and read</td><td>Hardware registers and interrupts</td></tr>
+        </tbody>
+      </table></div>
+      <p>To sustain that illusion the processor has <b>two modes</b>: user mode, where programs run and certain
+      instructions are forbidden, and kernel mode, where the operating system runs. Switching from one to the other is done by a
+      <b>system call</b>, which is a deliberate interrupt. Every
+      <code>open</code>, <code>read</code> or <code>write</code> crosses that border, and that is why they cost much more
+      than an ordinary function.</p>
+    </section>
+
+    <section id="procesos">
+      <h2><span class="n">02</span>Processes and threads</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>Process</th><th>Thread</th></tr></thead>
+        <tbody>
+          <tr><td>Memory</td><td>Its own, isolated</td><td>Shares the process’s</td></tr>
+          <tr><td>Cost to create one</td><td>Considerable</td><td>Little</td></tr>
+          <tr><td>If it fails</td><td>Only it dies</td><td>It takes the whole process down with it</td></tr>
+          <tr><td>Communication</td><td>Through pipes, sockets, shared memory</td><td>Common variables, with care</td></tr>
+        </tbody>
+      </table></div>
+      <p>Each process goes through a few states: <b>ready</b> when it can run, <b>running</b> when it
+      has the processor, and <b>blocked</b> when it is waiting for something —data from the disk, a byte from the serial port—.
+      That third state is the key: a blocked process uses no processor, and that is why a machine can have
+      hundreds of programs open without breaking a sweat.</p>
+    </section>
+
+    <section id="planificacion">
+      <h2><span class="n">03</span>Scheduling</h2>
+      <p>When there are more ready processes than cores, someone decides who goes next. That policy is the
+      <b>scheduler</b>, and two conflicting numbers depend on it: the <b>turnaround time</b>
+      —how long a job takes from start to finish— and the <b>response</b>, which is what the person sitting
+      in front of the machine perceives.</p>
+      <div class="form">
+        \[ t_{wait} = t_{start} - t_{arrival} \qquad
+           t_{turnaround} = t_{end} - t_{arrival} \]
+      </div>
+      <div class="lw" id="so">
+        <div class="lt">Lab · process scheduler</div>
+        <p class="ls">The same four processes, shared out under different policies. Look at the diagram and compare the averages.</p>
+        <div class="fila">
+          <select id="soA">
+            <option value="fifo">FIFO · first come, first served</option>
+            <option value="sjf">Shortest job first</option>
+            <option value="rr">Round-Robin · by turns</option>
+            <option value="prio">By priority</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="soQ">Round-Robin quantum <b id="soQv">2</b></label>
+          <input type="range" id="soQ" min="1" max="6" step="1" value="2">
+        </div>
+        <canvas id="soLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:2.1/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="soDatos" style="margin-top:8px"></div>
+        <div class="nota" id="soNota"></div>
+      </div>
+      <div class="box ojo"><div class="bt">A context switch is not free</div>
+        <p>Every time the scheduler switches processes, all the registers of the outgoing one have to be saved and
+        those of the incoming one loaded: a few microseconds, plus the invisible cost of the cache being full of
+        someone else’s data. With a very small quantum the machine spends the day switching context instead of
+        working; with a very large quantum, interactive response is lost.</p></div>
+    </section>
+
+    <section id="memoria">
+      <h2><span class="n">04</span>Virtual memory</h2>
+      <p>Each process sees addresses that are not those of the RAM. The processor’s memory management unit
+      translates each virtual address into a physical one by consulting a page table, and three valuable things
+      come out of that:</p>
+      <ul>
+        <li><b>Isolation.</b> A process cannot touch another’s memory, because its table does not even
+        name it. That is why a program that hangs does not drag down the whole machine.</li>
+        <li><b>Memory larger than RAM.</b> Pages that are not in use go down to disk. If the program
+        touches them again, a <b>page fault</b> occurs and the system brings them back.</li>
+        <li><b>Sharing without copying.</b> Two processes that use the same library point to the same physical
+        pages.</li>
+      </ul>
+      <div class="box peligro"><div class="bt">When the disk becomes RAM</div>
+        <p>If programs ask for more active memory than there is, the system spends its time swapping pages in and
+        out: this is <b>thrashing</b>. The machine seems dead but the processor is almost
+        idle; what is saturated is the disk. It is recognized right away because the disk activity indicator
+        never stops.</p></div>
+    </section>
+
+    <section id="concurrencia">
+      <h2><span class="n">05</span>Concurrency</h2>
+      <p>Two threads that touch the same variable without coordinating produce the hardest error to find in
+      all of programming. <code>counter++</code> is not an atomic operation: it is three —read, add,
+      store— and between them the scheduler can switch threads.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Tool</th><th>What it is for</th></tr></thead>
+        <tbody>
+          <tr><td>Mutual exclusion (mutex)</td><td>So that only one thread at a time enters the critical section</td></tr>
+          <tr><td>Semaphore</td><td>Counting available resources; synchronizing producer and consumer</td></tr>
+          <tr><td>Condition variable</td><td>Waiting for something to happen, without using the processor</td></tr>
+          <tr><td>Atomic operations</td><td>A shared counter, without blocking</td></tr>
+          <tr><td>Queue between threads</td><td>The safest way: nobody shares state, messages are passed</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box peligro"><div class="bt">Deadlock</div>
+        <p>Two threads, each holding a lock, waiting for the other’s: neither ever advances. Four
+        conditions are needed at once, and breaking one is enough to avoid it. The practical rule is to <b>always take the
+        locks in the same order</b> throughout the program.</p></div>
+    </section>
+
+    <section id="tiemporeal">
+      <h2><span class="n">06</span>What changes in real time</h2>
+      <p>An ordinary operating system aims for everything to run fast on average. A <b>real-time</b> one aims
+      for something different: for a response to <b>always</b> occur before a deadline. An excellent average with an
+      unpredictable worst case is no good for controlling a motor.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>General purpose</th><th>Real time</th></tr></thead>
+        <tbody>
+          <tr><td>Goal</td><td>Good average</td><td>Bounded worst case</td></tr>
+          <tr><td>Scheduling</td><td>Fairness and response</td><td>By priority, with preemption</td></tr>
+          <tr><td>Interrupt latency</td><td>Variable</td><td>Guaranteed, in microseconds</td></tr>
+          <tr><td>Examples</td><td>Linux, Windows</td><td>FreeRTOS, Zephyr, QNX</td></tr>
+        </tbody>
+      </table></div>
+      <p>On a microcontroller, a system like FreeRTOS provides prioritized tasks, queues and semaphores in
+      a few kilobytes. <b>Priority inversion</b> —a low-priority task holding a
+      lock that a high-priority one needs— is the classic problem, and it is solved with priority inheritance.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Watching the system work</div>
+        <p>With <code>top</code> or the task manager, observe states, memory and processor usage.
+        Launch an infinite loop and see what changes; then one that only waits for input and compare.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · The race condition, live</div>
+        <p>Two threads that each increment a shared counter a million times. Verify that the result
+        is <b>not</b> two million, and then fix it with a mutex.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Two tasks in FreeRTOS</div>
+        <p>One task that blinks an LED every 500 ms and another that reads the serial port, communicating through a queue.
+        Use an oscilloscope to check whether the blinking shifts when data arrives: that is the latency.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <ul>
+        <li><b>Believing that <code>counter++</code> is atomic.</b></li>
+        <li><b>Taking locks in different orders</b> in different parts of the program: deadlock guaranteed.</li>
+        <li><b>Waiting with an empty loop</b> instead of blocking: it burns an entire core doing nothing.</li>
+        <li><b>Assuming that more threads is faster.</b> If the work is disk or network bound, it is not.</li>
+        <li><b>Confusing concurrency with parallelism.</b> Concurrent means they advance in turns; parallel, that they
+        run at the same time on different cores.</li>
+        <li><b>Using an ordinary system where a real-time one is needed</b>, and finding out in the field.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Self-assessment</h2>
+      <details class="q"><summary>What is the difference between a process and a thread?</summary>
+        <div class="a"><p>A process has its own isolated memory; the threads of a process share it. Creating a
+        thread costs much less, but if one corrupts the memory it takes all of them down.</p></div></details>
+      <details class="q"><summary>Why does a system call cost more than an ordinary function?</summary>
+        <div class="a"><p>Because it crosses from user mode to kernel mode: the context has to be switched, the
+        parameters validated, and then it returns.</p></div></details>
+      <details class="q"><summary>What happens with a quantum that is too small in Round-Robin?</summary>
+        <div class="a"><p>The system spends more time switching context than executing: useful work
+        drops even though the response seems good.</p></div></details>
+      <details class="q"><summary>What is a page fault?</summary>
+        <div class="a"><p>An access to a page that is not in RAM. The system brings it from disk and resumes the
+        process, which notices nothing except the delay.</p></div></details>
+      <details class="q"><summary>How is a deadlock avoided in practice?</summary>
+        <div class="a"><p>By always taking the locks in the same order throughout the program, and using timeouts
+        when trying to take them.</p></div></details>
+      <details class="q"><summary>What does a real-time operating system guarantee that Linux does not?</summary>
+        <div class="a"><p>A bounded <b>worst case</b>: the response always occurs before the deadline, not just
+        on average.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Abraham Silberschatz, Peter Galvin and Greg Gagne.</span> <span class="ti">Operating System Concepts</span>.
+          <span class="ed">10th ed. (Spanish edition, “Fundamentos de sistemas operativos”), Wiley, 2018.</span>
+          <span class="pq">The classic text for the subject: processes, scheduling, memory and concurrency.</span></li>
+        <li><span class="au">Remzi and Andrea Arpaci-Dusseau.</span> <span class="ti">Operating Systems: Three Easy Pieces</span>.
+          <span class="ed">Arpaci-Dusseau Books. Free online.</span>
+          <span class="pq">It explains virtualization, concurrency and persistence better than any other, and it is free.</span></li>
+        <li><span class="au">Andrew S. Tanenbaum.</span> <span class="ti">Modern Operating Systems</span>.
+          <span class="ed">4th ed. (Spanish edition, “Sistemas operativos modernos”), Pearson, 2014.</span>
+          <span class="pq">Rigorous and complete, with good chapters on embedded systems.</span></li>
+        <li><span class="au">FreeRTOS documentation.</span> <span class="ti">Mastering the FreeRTOS Real Time Kernel</span>.
+          <span class="ed">Real Time Engineers Ltd.</span>
+          <span class="pq">Real time applied to the microcontroller, with examples you can run.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/lenguaje-avanzado">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Introduction to an advanced language</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Operating system fundamentals”</b> of <b>Computer Science II</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Process scheduler: the same four processes shared out under four
+   policies, with their Gantt chart and the average wait and turnaround
+   computed from the simulation, not written by hand. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("soLienzo"), ctx = cv.getContext("2d");
+  /* arrival, duration, priority (1 is the highest) */
+  var P = [
+    { id:"P1", lleg:0, dur:7, pri:2, col:"#58a6ff" },
+    { id:"P2", lleg:2, dur:4, pri:1, col:"#7ee787" },
+    { id:"P3", lleg:4, dur:1, pri:3, col:"#f2cc60" },
+    { id:"P4", lleg:5, dur:4, pri:2, col:"#d2a8ff" }
+  ];
+  function n(x){ return (Math.round(x * 100) / 100).toString(); }
+
+  function simular(alg, q){
+    var rest = {}, tramos = [], fin = {}, comienzo = {}, t = 0, i;
+    P.forEach(function(p){ rest[p.id] = p.dur; });
+    var pendientes = P.length;
+    var cola = [];            /* for round-robin */
+    var ultimo = null;
+    var tope = 200;
+    while(pendientes > 0 && tope-- > 0){
+      /* those that have already arrived and have not finished */
+      var listos = P.filter(function(p){ return p.lleg <= t && rest[p.id] > 0; });
+      if(!listos.length){ t++; continue; }
+      var elegido;
+      if(alg === "fifo") elegido = listos.sort(function(a, b){ return a.lleg - b.lleg; })[0];
+      else if(alg === "sjf") elegido = listos.sort(function(a, b){
+        return rest[a.id] - rest[b.id] || a.lleg - b.lleg; })[0];
+      else if(alg === "prio") elegido = listos.sort(function(a, b){
+        return a.pri - b.pri || a.lleg - b.lleg; })[0];
+      else {
+        /* round robin: the queue is built in order of arrival and rotates */
+        P.forEach(function(p){
+          if(p.lleg <= t && rest[p.id] > 0 && cola.indexOf(p.id) === -1 && p.id !== (ultimo && ultimo.id))
+            cola.push(p.id);
+        });
+        if(ultimo && rest[ultimo.id] > 0 && cola.indexOf(ultimo.id) === -1) cola.push(ultimo.id);
+        var sig = cola.shift();
+        elegido = P.filter(function(p){ return p.id === sig; })[0];
+        if(!elegido){ t++; continue; }
+      }
+      /* how long it runs without interruption */
+      var corre;
+      if(alg === "rr") corre = Math.min(q, rest[elegido.id]);
+      else corre = rest[elegido.id];
+      if(comienzo[elegido.id] === undefined) comienzo[elegido.id] = t;
+      tramos.push({ id:elegido.id, ini:t, fin:t + corre, col:elegido.col });
+      rest[elegido.id] -= corre;
+      t += corre;
+      if(rest[elegido.id] === 0){ fin[elegido.id] = t; pendientes--; ultimo = null; }
+      else ultimo = elegido;
+    }
+    return { tramos:tramos, fin:fin, comienzo:comienzo, total:t };
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    var alg = $("soA").value, q = +$("soQ").value;
+    $("soQv").textContent = q;
+    var s = simular(alg, q);
+
+    ctx.clearRect(0, 0, W, H);
+    var mg = 34, esc = (W - mg - 14) / Math.max(s.total, 1);
+    var yG = 26, hG = Math.min(40, H * 0.26);
+    /* the Gantt chart */
+    s.tramos.forEach(function(tr){
+      var x = mg + tr.ini * esc, w = (tr.fin - tr.ini) * esc;
+      ctx.fillStyle = tr.col.replace("#", "rgba(").length ? tr.col : tr.col;
+      ctx.globalAlpha = 0.22; ctx.fillStyle = tr.col;
+      ctx.fillRect(x, yG, w, hG); ctx.globalAlpha = 1;
+      ctx.strokeStyle = tr.col; ctx.lineWidth = 1.6;
+      ctx.strokeRect(x, yG, w, hG);
+      ctx.fillStyle = "#e6edf3"; ctx.font = "600 11.5px system-ui, sans-serif";
+      var wt = ctx.measureText(tr.id).width;
+      if(w > wt + 6) ctx.fillText(tr.id, x + (w - wt) / 2, yG + hG / 2 + 4);
+    });
+    /* the time scale */
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(mg, yG + hG); ctx.lineTo(mg + s.total * esc, yG + hG); ctx.stroke();
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    for(i = 0; i <= s.total; i++){
+      if(s.total > 20 && i % 2) continue;
+      ctx.beginPath(); ctx.moveTo(mg + i * esc, yG + hG); ctx.lineTo(mg + i * esc, yG + hG + 4); ctx.stroke();
+      var e = String(i), we = ctx.measureText(e).width;
+      ctx.fillText(e, mg + i * esc - we / 2, yG + hG + 15);
+    }
+    ctx.fillText("time", mg, 16);
+
+    /* one row per process with its arrival and its end */
+    var y0 = yG + hG + 26, alto = Math.min(17, (H - y0 - 6) / P.length);
+    P.forEach(function(p, k){
+      var y = y0 + k * alto;
+      ctx.fillStyle = p.col; ctx.font = "11px system-ui, sans-serif";
+      ctx.fillText(p.id, 6, y + 10);
+      ctx.strokeStyle = "rgba(107,116,132,.35)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(mg + p.lleg * esc, y + 6); ctx.lineTo(mg + s.fin[p.id] * esc, y + 6); ctx.stroke();
+      /* arrival */
+      ctx.fillStyle = "rgba(230,237,243,.75)";
+      ctx.beginPath(); ctx.arc(mg + p.lleg * esc, y + 6, 3, 0, Math.PI * 2); ctx.fill();
+      /* end */
+      ctx.fillStyle = p.col;
+      ctx.beginPath(); ctx.arc(mg + s.fin[p.id] * esc, y + 6, 3.5, 0, Math.PI * 2); ctx.fill();
+    });
+
+    /* the numbers */
+    var esperas = 0, retornos = 0, respuestas = 0;
+    var filas = "";
+    P.forEach(function(p){
+      var ret = s.fin[p.id] - p.lleg, esp = ret - p.dur, resp = s.comienzo[p.id] - p.lleg;
+      esperas += esp; retornos += ret; respuestas += resp;
+      filas += '<span style="color:' + p.col + '">' + p.id + " · arrives " + p.lleg + ", lasts " + p.dur +
+               (alg === "prio" ? ", priority " + p.pri : "") + "</span><b>wait " + esp +
+               " · turnaround " + ret + "</b>";
+    });
+    $("soDatos").innerHTML = filas +
+      "<hr><span>Average wait</span><b>" + n(esperas / P.length) + "</b>" +
+      "<span>Average turnaround</span><b>" + n(retornos / P.length) + "</b>" +
+      "<span>Average first response</span><b>" + n(respuestas / P.length) + "</b>" +
+      "<span>Context switches</span><b>" + Math.max(0, s.tramos.length - 1) + "</b>";
+
+    var txt;
+    if(alg === "fifo")
+      txt = "<b>FIFO</b> serves in order of arrival and interrupts nobody. It is fair and simple, but P1, which " +
+            "lasts 7, makes everyone who arrived later wait: this is the <b>convoy effect</b>, a long " +
+            "job in front and a line of short ones behind.";
+    else if(alg === "sjf")
+      txt = "<b>Shortest job first</b> gives the minimum average wait; no policy can improve on it. The problem " +
+            "is twofold: you have to know in advance how long each job will last —and you do not— and a long " +
+            "process can be postponed forever if short ones keep arriving.";
+    else if(alg === "rr")
+      txt = "<b>Round-Robin</b> gives each one a quantum of " + q + " and rotates. The average wait gets worse, but " +
+            "the <b>first response</b> improves enormously: no process is left unattended. That is why it is the " +
+            "basis of interactive systems. Raise and lower the quantum: with a small one there are more context " +
+            "switches —here " + Math.max(0, s.tramos.length - 1) + "— and with a large one it looks more and more like FIFO.";
+    else
+      txt = "<b>By priority</b>: the most urgent first. This is what a real-time system uses, where " +
+            "the task that controls the motor cannot wait for the one that writes the log. The risk is " +
+            "<b>starvation</b>: a low-priority task may never run if the high-priority ones leave no gap.";
+    txt += " The numbers below come from simulating the policy, they are not written by hand: change the algorithm " +
+           "and compare the average wait.";
+    $("soNota").innerHTML = txt;
+  }
+  ["soA","soQ"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

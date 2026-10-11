@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Software build tools · Computer Science II · Catto</title>
+<meta name="description" content="Preprocessor, compiler, assembler and linker, object files and libraries, make and its rules, version control with git, and debugging with gdb, with an interactive lab on the compilation process. Content of Computer Science II, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/construccion-software">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/construccion-software">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/construccion-software">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/construccion-software">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science II</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science II</span> · 120 h · Topic 3 of 8</div>
+    <h1>Software build tools</h1>
+    <p class="lead">Between the text file and the running program there are four stages, and each one throws its own errors. Knowing which one failed saves half of the debugging time.</p>
+    <div class="chips">
+      <span class="chip hi">Preprocessor</span>
+      <span class="chip">Compiler</span>
+      <span class="chip">Linker</span>
+      <span class="chip">make</span>
+      <span class="chip">git</span>
+    </div>
+    <hr class="rule">
+
+    <section id="etapas">
+      <h2><span class="n">01</span>The four stages</h2>
+      <p>Typing <code>gcc main.c -o program</code> looks like a single step, but it is four programs
+      chained together. Knowing which one failed is half of debugging:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Stage</th><th>Input</th><th>Output</th><th>Typical error</th></tr></thead>
+        <tbody>
+          <tr><td>Preprocessor</td><td>.c</td><td>.i</td><td>Cannot find a header</td></tr>
+          <tr><td>Compiler</td><td>.i</td><td>.s (assembly)</td><td>Syntax or type error</td></tr>
+          <tr><td>Assembler</td><td>.s</td><td>.o (object)</td><td>Rarely fails</td></tr>
+          <tr><td>Linker</td><td>.o and libraries</td><td>Executable</td><td>Undefined reference</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">How to tell a compile error from a link error</div>
+        <p>A compile error mentions a <b>file and line</b>: the compiler is reading your code. A
+        link error says <code>undefined reference to 'something'</code> and points to no line: the code compiled
+        fine, but the body of a function is missing. It is almost always a library that was not added —the classic
+        <code>-lm</code> for the math functions— or a file that was left out of the build.</p></div>
+      <div class="lw" id="co">
+        <div class="lt">Lab · what each stage does</div>
+        <p class="ls">Walk through the four stages and see what the file turns into, along with the command that runs each one.</p>
+        <div class="fila">
+          <label for="coP">Stage <b id="coPv">1 of 4</b></label>
+          <input type="range" id="coP" min="0" max="3" step="1" value="0">
+        </div>
+        <canvas id="coLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:3.4/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="caja" id="coTexto" style="margin-top:10px;font-family:Consolas,'Cascadia Mono',monospace;font-size:12.5px;line-height:1.5;white-space:pre;overflow-x:auto"></div>
+        <div class="datos" id="coDatos" style="margin-top:8px"></div>
+        <div class="nota" id="coNota"></div>
+      </div>
+    </section>
+
+    <section id="modulos">
+      <h2><span class="n">02</span>Separate compilation and libraries</h2>
+      <p>Each <code>.c</code> is compiled separately into its own <code>.o</code>, and the linker joins them. The
+      advantage is concrete: if you touch a single file, only that one is recompiled.</p>
+      <div class="form">
+        <code>gcc -c main.c      →  main.o<br>
+        gcc -c sensor.c    →  sensor.o<br>
+        gcc main.o sensor.o -o program -lm</code>
+      </div>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Library type</th><th>File</th><th>How it is used</th></tr></thead>
+        <tbody>
+          <tr><td>Static</td><td>.a on Linux, .lib on Windows</td><td>Copied into the executable at link time</td></tr>
+          <tr><td>Dynamic</td><td>.so on Linux, .dll on Windows</td><td>Loaded at run time; shared between programs</td></tr>
+        </tbody>
+      </table></div>
+      <p>A static library gives a self-contained, larger executable; a dynamic one, a small executable that depends on the
+      library being installed. For an embedded device the static one is almost always the better choice: fewer surprises in
+      the field.</p>
+    </section>
+
+    <section id="make">
+      <h2><span class="n">03</span>make</h2>
+      <p>Once there are more than three files, recompiling by hand is impractical. <b>make</b> reads a file of rules and
+      rebuilds only what is out of date, by comparing modification times:</p>
+      <div class="form">
+        <code>CC = gcc<br>
+        CFLAGS = -Wall -Wextra -O2<br><br>
+        program: main.o sensor.o<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;$(CC) main.o sensor.o -o program -lm<br><br>
+        main.o: main.c sensor.h<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;$(CC) $(CFLAGS) -c main.c<br><br>
+        clean:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;rm -f *.o program</code>
+      </div>
+      <p>Each rule has a <b>target</b>, its <b>dependencies</b> and the <b>commands</b> to build it,
+      which are indented with a real tab character. If <code>sensor.h</code> changes, make knows that
+      <code>main.o</code> is stale and rebuilds it; if nothing changed, it does nothing.</p>
+      <div class="box ojo"><div class="bt">Flags worth always using</div>
+        <p><code>-Wall -Wextra</code> turn on warnings, and you have to read them: most run-time errors
+        were first an ignored warning. <code>-g</code> adds information for
+        the debugger, <code>-O2</code> optimizes, and <code>-std=c11</code> fixes the language version so that
+        the program behaves the same on another machine.</p></div>
+    </section>
+
+    <section id="git">
+      <h2><span class="n">04</span>Version control</h2>
+      <p>A version control system keeps the history of the project: what changed, when and why. With
+      <b>git</b>, the basic cycle is short:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><code>git init</code></td><td>Creates the repository</td></tr>
+          <tr><td><code>git status</code></td><td>What changed since the last commit</td></tr>
+          <tr><td><code>git add file</code></td><td>Marks what will go into the next commit</td></tr>
+          <tr><td><code>git commit -m "…"</code></td><td>Saves a version with its explanation</td></tr>
+          <tr><td><code>git log</code></td><td>The history</td></tr>
+          <tr><td><code>git diff</code></td><td>The exact differences, line by line</td></tr>
+          <tr><td><code>git checkout -b branch</code></td><td>Opens a parallel line of work</td></tr>
+        </tbody>
+      </table></div>
+      <p>Three rules of thumb that matter more than the list of commands: <b>small commits</b> that do one thing only,
+      <b>messages that explain the why</b> and not the what —the diff already says what changed—, and a
+      <code>.gitignore</code> that leaves out whatever is generated: the <code>.o</code> files, the executable and temporary
+      files are not versioned.</p>
+    </section>
+
+    <section id="depurar">
+      <h2><span class="n">05</span>Debugging</h2>
+      <ul>
+        <li><b>printf.</b> Rudimentary but effective, especially in embedded systems where there is no
+        debugger.</li>
+        <li><b>gdb.</b> Compiling with <code>-g</code>: <code>break</code> to set a breakpoint,
+        <code>run</code>, <code>next</code> and <code>step</code> to advance, <code>print</code> to see a
+        variable and <code>backtrace</code> to find out how execution got there. With a program that crashed,
+        <code>backtrace</code> on the core dump often solves the case in a minute.</li>
+        <li><b>valgrind.</b> Detects out-of-bounds accesses, use of uninitialized memory and memory
+        leaks. A program that seems to run fine can be full of errors that valgrind reveals.</li>
+        <li><b>Sanitizers.</b> <code>-fsanitize=address</code> instruments the program so that it aborts at the
+        exact moment of the invalid access, with the line pointed out.</li>
+      </ul>
+      <div class="box peligro"><div class="bt">The error that cannot be reproduced</div>
+        <p>A program that fails “sometimes” almost always has misused memory: an overflowed array or a
+        dangling pointer. The symptom appears far from the cause, which is why analysis tools are worth
+        more than hours of reading the code.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Seeing each stage</div>
+        <p>With a ten-line program, run <code>gcc -E</code>, <code>-S</code> and <code>-c</code> and
+        look at the intermediate files. Count how many lines the <code>.i</code> has after including
+        <code>stdio.h</code>.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · A Makefile of your own</div>
+        <p>Set up a three-file project with its Makefile, with targets <code>all</code>,
+        <code>clean</code> and <code>debug</code>. Check that when you touch a single <code>.c</code> only
+        that one is recompiled.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Causing and reading errors</div>
+        <p>Deliberately produce one error from each stage: a nonexistent <code>#include</code>, a missing
+        semicolon and a function that is declared but not defined. Write down exactly what each message says and
+        learn to recognize them.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Confusing a compile error with a link error.</b></li>
+        <li><b>Forgetting <code>-lm</code></b> when using math functions.</li>
+        <li><b>Indenting the commands of a Makefile with spaces</b> instead of a tab.</li>
+        <li><b>Ignoring the compiler’s warnings.</b></li>
+        <li><b>Versioning generated files</b> —objects, executables, build folders— and cluttering the
+        history.</li>
+        <li><b>Debugging a binary compiled without <code>-g</code></b> and not even seeing variable names.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>What exactly does the preprocessor do?</summary>
+        <div class="a"><p>It manipulates text: it pastes in the included files, replaces macros and resolves
+        conditional compilation. It does not understand C.</p></div></details>
+      <details class="q"><summary><code>undefined reference to 'sqrt'</code> appears. Which stage failed?</summary>
+        <div class="a"><p>The <b>linking</b>. You need to add <code>-lm</code>: the prototype was in
+        <code>math.h</code>, but the body of the function is in the math library.</p></div></details>
+      <details class="q"><summary>What are the <code>#ifndef</code> guards in a header for?</summary>
+        <div class="a"><p>To keep the contents from being included twice in the same translation unit, which
+        would cause duplicate definitions.</p></div></details>
+      <details class="q"><summary>How does make know what to recompile?</summary>
+        <div class="a"><p>By comparing modification times: if a dependency is newer than the target,
+        it rebuilds that target.</p></div></details>
+      <details class="q"><summary>What is the difference between a static and a dynamic library?</summary>
+        <div class="a"><p>A static library is copied into the executable at link time; a dynamic one is loaded at
+        run time and shared between programs.</p></div></details>
+      <details class="q"><summary>What should go in a commit message?</summary>
+        <div class="a"><p>The <b>why</b> of the change. The diff already shows the what.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Brian W. Kernighan and Rob Pike.</span> <span class="ti">The Practice of Programming</span>.
+          <span class="ed">Addison-Wesley, 1999.</span>
+          <span class="pq">Debugging, testing and tools, with the judgment of two authors who worked on Unix.</span></li>
+        <li><span class="au">Scott Chacon and Ben Straub.</span> <span class="ti">Pro Git</span>.
+          <span class="ed">2nd ed., Apress, 2014. Available online and in Spanish.</span>
+          <span class="pq">The git book, from the basics to the team workflow.</span></li>
+        <li><span class="au">John Graham-Cumming.</span> <span class="ti">The GNU Make Book</span>.
+          <span class="ed">No Starch Press, 2015.</span>
+          <span class="pq">For when the Makefile grows and starts to have logic of its own.</span></li>
+        <li><span class="au">Randal E. Bryant and David R. O'Hallaron.</span> <span class="ti">Computer Systems: A Programmer's Perspective</span>.
+          <span class="ed">3rd ed., Pearson, 2015.</span>
+          <span class="pq">Chapter 7 explains linking in a level of detail found nowhere else.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/estructuras-dinamicas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Dynamic data structures</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/control-perifericos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Peripheral control and communication</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Software build tools”</b> of <b>Computer Science II</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* The four stages of building an executable: the chain of files is drawn
+   at the top and below it shows what the code turned into at each step,
+   with the command that does it. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("coLienzo"), ctx = cv.getContext("2d");
+  var ARCH = ["main.c", "main.i", "main.s", "main.o", "program"];
+  var E = [
+    { n:"Preprocessor", cmd:"gcc -E main.c -o main.i", herr:"cpp",
+      txt:"/* main.c, what was written: */\n" +
+          "#include <stdio.h>\n#include <math.h>\n#define VALUE 2.0\n\n" +
+          "int main(void)\n{\n" +
+          "    printf(\"%f\\n\", sqrt(VALUE));\n" +
+          "    return 0;\n}\n\n" +
+          "/* main.i, what comes out of the preprocessor: */\n" +
+          "/* ... ~700 lines of stdio.h and math.h\n   were pasted in here ... */\n" +
+          "extern int printf(const char *, ...);\n" +
+          "extern double sqrt(double);\n\n" +
+          "int main(void)\n{\n" +
+          "    printf(\"%f\\n\", sqrt(2.0));   /* the macro has already been replaced */\n" +
+          "    return 0;\n}",
+      d:[["What it does", "pastes in the #include files and replaces the macros"],
+         ["Understands C", "no: it only manipulates text"],
+         ["The file grows", "from 10 lines to more than 700"]],
+      n2:"The preprocessor knows nothing about C: it copies the contents of each <code>#include</code> where the " +
+         "line was, replaces each <code>#define</code> with its text and resolves the <code>#ifdef</code>s. That is why " +
+         "a macro error produces baffling messages: the compiler sees the text <b>after replacement</b>. " +
+         "If it fails, it is because it could not find a header." },
+    { n:"Compiler", cmd:"gcc -S main.i -o main.s", herr:"cc1",
+      txt:"# main.s: the same program, in x86-64 assembly\n\n" +
+          "main:\n" +
+          "    push    rbp\n" +
+          "    mov     rbp, rsp\n" +
+          "    movsd   xmm0, QWORD PTR .LC0[rip]\n" +
+          "    call    sqrt\n" +
+          "    lea     rdi, .LC1[rip]\n" +
+          "    call    printf\n" +
+          "    mov     eax, 0\n" +
+          "    pop     rbp\n" +
+          "    ret",
+      d:[["What it does", "translates to processor instructions"],
+         ["Checks", "syntax, types and declarations"],
+         ["Optimizes", "yes, from -O0 to -O3"]],
+      n2:"This is where the errors and warnings that mention a file and line appear. The compiler " +
+         "checks types, resolves calls and translates to processor instructions: the same <code>.c</code> " +
+         "gives a different <code>.s</code> for x86 than for ARM. <b>Read the warnings:</b> almost all of them " +
+         "point to a real error that will only show up at run time." },
+    { n:"Assembler", cmd:"gcc -c main.s -o main.o", herr:"as",
+      txt:"main.o: 64-bit ELF object file\n\n" +
+          "Sections:\n" +
+          "  .text    48 bytes   machine code\n" +
+          "  .rodata  16 bytes   the text constants\n" +
+          "  .data     0 bytes\n\n" +
+          "Symbols:\n" +
+          "  00000000 T main        <- defined here\n" +
+          "           U printf      <- undefined: the linker resolves it\n" +
+          "           U sqrt        <- undefined",
+      d:[["What it does", "converts the assembly to machine code"],
+         ["What comes out", "an object file, not yet executable"],
+         ["Pending symbols", "printf and sqrt remain unresolved"]],
+      n2:"The object file is already machine code, but it cannot be run yet: the calls to functions in other " +
+         "files are left as <b>undefined symbols</b>, marked with U. With <code>nm main.o</code> you " +
+         "can see that table at any time, and it is the best way to understand a link error." },
+    { n:"Linker", cmd:"gcc main.o -o program -lm", herr:"ld",
+      txt:"$ gcc main.o -o program\n" +
+          "main.o: undefined reference to `sqrt'\n" +
+          "collect2: error: ld returned 1 exit status\n\n" +
+          "$ gcc main.o -o program -lm      # with the library\n" +
+          "$ ./program\n" +
+          "1.414214",
+      d:[["What it does", "joins objects and libraries"],
+         ["Resolves", "the symbols that were left undefined"],
+         ["Typical error", "undefined reference, with no line number"]],
+      n2:"The linker pastes the objects together and looks in the libraries for the body of each pending symbol. " +
+         "<b>The error from this stage mentions no line</b>, and that is precisely the clue: the code " +
+         "was written correctly, the body of a function is missing. Here the fix is to add <code>-lm</code>, " +
+         "the math library, which is not linked automatically." }
+  ];
+  function pintar(){
+    var k = +$("coP").value, e = E[k];
+    $("coPv").textContent = (k + 1) + " of 4";
+
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height;
+    ctx.clearRect(0, 0, W, H);
+
+    var mg = 8, n = ARCH.length;
+    var ancho = (W - 2 * mg) / (n + (n - 1) * 0.42);
+    var sep = ancho * 0.42, alto = Math.min(40, H * 0.4), y = H * 0.46 - alto / 2;
+    ARCH.forEach(function(a, i){
+      var x = mg + i * (ancho + sep);
+      var usado = i <= k + 1, act = i === k || i === k + 1;
+      ctx.strokeStyle = act ? "#58a6ff" : usado ? "rgba(88,166,255,.45)" : "rgba(107,116,132,.4)";
+      ctx.fillStyle = act ? "rgba(88,166,255,.16)" : "rgba(107,116,132,.06)";
+      ctx.lineWidth = act ? 2 : 1.3;
+      ctx.beginPath(); ctx.rect(x, y, ancho, alto); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = act ? "#e6edf3" : "#6b7484";
+      ctx.font = (act ? "600 " : "") + Math.min(12.5, ancho / 5.6) + "px Consolas, monospace";
+      var tw = ctx.measureText(a).width;
+      ctx.fillText(a, x + (ancho - tw) / 2, y + alto / 2 + 4.5);
+      /* arrow and tool name */
+      if(i < n - 1){
+        var xa = x + ancho, xb = x + ancho + sep, act2 = i === k;
+        ctx.strokeStyle = act2 ? "#7ee787" : "rgba(107,116,132,.4)";
+        ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth = act2 ? 2 : 1.2;
+        ctx.beginPath(); ctx.moveTo(xa + 2, y + alto / 2); ctx.lineTo(xb - 6, y + alto / 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(xb - 1, y + alto / 2);
+        ctx.lineTo(xb - 8, y + alto / 2 - 4); ctx.lineTo(xb - 8, y + alto / 2 + 4);
+        ctx.closePath(); ctx.fill();
+        if(act2){
+          ctx.font = "10px Consolas, monospace";
+          var t2 = E[i].herr, w2 = ctx.measureText(t2).width;
+          ctx.fillText(t2, xa + (sep - w2) / 2 + 2, y + alto / 2 - 9);
+        }
+      }
+    });
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText(e.n, mg + 2, 15);
+
+    $("coTexto").textContent = e.txt;
+    var html = "<span>Stage</span><b>" + e.n + "</b>" +
+               "<span>Command</span><b>" + e.cmd + "</b>";
+    e.d.forEach(function(f){ html += "<span>" + f[0] + "</span><b>" + f[1] + "</b>"; });
+    $("coDatos").innerHTML = html;
+    $("coNota").innerHTML = e.n2;
+  }
+  $("coP").addEventListener("input", pintar);
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
