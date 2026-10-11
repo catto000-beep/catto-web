@@ -126,6 +126,12 @@
     "/publicaciones/mapa-electronica/temas/transistores-bipolares",
     "/publicaciones/mapa-electronica/temas/variadores-velocidad",
     "/publicaciones/mapa-ingenieria",
+    "/publicaciones/mapa-ingenieria/temas/algoritmos",
+    "/publicaciones/mapa-ingenieria/temas/bajo-nivel",
+    "/publicaciones/mapa-ingenieria/temas/datos-complejos",
+    "/publicaciones/mapa-ingenieria/temas/programacion-estructurada",
+    "/publicaciones/mapa-ingenieria/temas/sistema-computacional",
+    "/publicaciones/mapa-ingenieria/temas/sistemas-numeracion",
     "/publicaciones/simulador-instrumental",
     "/taller"
   ];

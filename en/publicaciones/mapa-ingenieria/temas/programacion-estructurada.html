@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Structured programming language · Computer Science I · Catto</title>
+<meta name="description" content="Structured programming in C: stages of compilation, types and conversions, control structures, functions and parameter passing, the call stack step by step, modules with .h and .c files, and standard input/output. Content of Computer Science I, Level 1 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/programacion-estructurada">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/programacion-estructurada">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/programacion-estructurada">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/programacion-estructurada">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science I</a>
+    <span class="anio">Level 1</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science I</span> · 120 h · Topic 4 of 6</div>
+    <h1>Structured programming language</h1>
+    <p class="lead">Three control structures, functions that can be understood separately and a compiler that translates all of it into machine instructions. C is the language where you can see both at once.</p>
+    <div class="chips">
+      <span class="chip hi">C</span>
+      <span class="chip">Compilation</span>
+      <span class="chip">Functions</span>
+      <span class="chip">Call stack</span>
+      <span class="chip">Modules</span>
+    </div>
+    <hr class="rule">
+
+    <section id="paradigma">
+      <h2><span class="n">01</span>From jumps to blocks</h2>
+      <p>The first programs were written with jumps: “if such-and-such happens, go to line 340.” They worked, but
+      beyond a certain size nobody could follow the thread, because any line could be reached from
+      any other. In 1968 Edsger Dijkstra published a letter with a title that became famous,
+      <i>Go To Statement Considered Harmful</i>: the unrestricted jump makes it impossible to reason about a program.</p>
+      <p><b>Structured programming</b> is the answer: write everything with the three structures of
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/algoritmos">Böhm and Jacopini</a>, each with a single
+      entry and a single exit, and split the problem into <b>functions</b> that can be understood, tested and reused
+      separately. The program reads from top to bottom and each block can be replaced by a black box.</p>
+      <div class="box key"><div class="bt">Why C</div>
+        <p>C, created by Dennis Ritchie at Bell Labs between 1969 and 1973 to write Unix, is a structured language
+        that also lets you see the machine: addresses, bits and sizes. That is why it is the language of
+        operating systems and microcontrollers, and why it is taught in electronic engineering. The
+        basic elements of the language are covered in
+        <a class="ref" href="/en/publicaciones/mapa-electronica/temas/lenguaje-c">basic elements of the C language</a>;
+        here the focus is on how to think about a structured program and what the machine does with it.</p></div>
+    </section>
+
+    <section id="compilar">
+      <h2><span class="n">02</span>From source to executable, hands-on</h2>
+      <p>The <code>gcc</code> compiler lets you stop at each stage. It is worth doing once to lose the fear of
+      error messages, which tell you at which stage they failed:</p>
+      <pre class="code"><code>gcc -E hello.c -o hello.i     <span class="c-com"># preprocess only: see what is left of the #include lines</span>
+gcc -S hello.c -o hello.s     <span class="c-com"># compile to assembly</span>
+gcc -c hello.c -o hello.o     <span class="c-com"># assemble: object code</span>
+gcc hello.o -o hello          <span class="c-com"># link with the standard library</span>
+gcc -Wall -Wextra -std=c11 hello.c -o hello   <span class="c-com"># all in one, with warnings</span></code></pre>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Message</th><th>Stage</th><th>Typical cause</th></tr></thead>
+        <tbody>
+          <tr><td><code>fatal error: stdio.h: No such file</code></td><td>Preprocessor</td><td>Header name misspelled</td></tr>
+          <tr><td><code>expected ';' before …</code></td><td>Compiler</td><td>A semicolon is missing on the <b>previous</b> line</td></tr>
+          <tr><td><code>implicit declaration of function</code></td><td>Compiler</td><td>A function is used without a prototype or <code>#include</code></td></tr>
+          <tr><td><code>undefined reference to 'sqrt'</code></td><td>Linker</td><td>The library is missing: add <code>-lm</code></td></tr>
+        </tbody>
+      </table></div>
+      <div class="box ojo"><div class="bt">Warnings are errors that have not blown up yet</div>
+        <p>Always compile with <code>-Wall -Wextra</code> and do not leave any warning without understanding it. An
+        <code>if (x = 5)</code> compiles, but the compiler warns: it is an assignment, not a comparison.</p></div>
+    </section>
+
+    <section id="expresiones">
+      <h2><span class="n">03</span>Types and expressions: what C does without warning</h2>
+      <p>In C every expression has a type, and the type decides the operation. <code>7 / 2</code> is an
+      <b>integer</b> division and gives 3, because both operands are integers; <code>7.0 / 2</code> gives 3.5. The result does not
+      depend on where it is stored: <code>double x = 7 / 2;</code> stores 3.0, because the division was done first.</p>
+      <p>When types are mixed, C applies the <b>usual arithmetic conversions</b>: types smaller than
+      <code>int</code> are promoted to <code>int</code>, and in an operation between two different types the “smaller” one is
+      converted to the “larger” one. The best-known trap:</p>
+      <pre class="code"><code><span class="c-ty">int</span> a = -1;
+<span class="c-ty">unsigned int</span> b = <span class="c-num">1</span>;
+<span class="c-kw">if</span> (a &lt; b)                      <span class="c-com">// false!</span>
+    <span class="c-fn">printf</span>(<span class="c-str">"logical"</span>);</code></pre>
+      <p>When an <code>int</code> is compared with an <code>unsigned int</code>, −1 is converted to unsigned and becomes
+      4,294,967,295 (with 32 bits), which is greater than 1. The bits did not change: the reading changed, exactly
+      as in <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/sistemas-numeracion">number systems</a>.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operators, from highest to lowest precedence</th><th>Associativity</th></tr></thead>
+        <tbody>
+          <tr><td><code>()  []  -&gt;  .</code>  and the postfix <code>++ --</code></td><td>left to right</td></tr>
+          <tr><td><code>!  ~  -  *  &amp;  sizeof</code>, prefix operators and casts <code>(type)</code></td><td>right to left</td></tr>
+          <tr><td><code>*  /  %</code></td><td>left to right</td></tr>
+          <tr><td><code>+  -</code></td><td>left to right</td></tr>
+          <tr><td><code>&lt;&lt;  &gt;&gt;</code></td><td>left to right</td></tr>
+          <tr><td><code>&lt;  &lt;=  &gt;  &gt;=</code>, then <code>==  !=</code></td><td>left to right</td></tr>
+          <tr><td><code>&amp;</code>, then <code>^</code>, then <code>|</code></td><td>left to right</td></tr>
+          <tr><td><code>&amp;&amp;</code>, then <code>||</code></td><td>left to right</td></tr>
+          <tr><td><code>?:</code> and the assignments <code>=  +=  -=</code> …</td><td>right to left</td></tr>
+        </tbody>
+      </table></div>
+      <p>There is a surprise in the table: <code>&amp;</code> has lower precedence than <code>==</code>. That is why
+      <code>if (x &amp; 0x08 == 0)</code> does not do what it seems to; write <code>if ((x &amp; 0x08) == 0)</code>.
+      When in doubt, use parentheses.</p>
+    </section>
+
+    <section id="control">
+      <h2><span class="n">04</span>Control structures in C</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Structure</th><th>Pseudocode</th><th>C</th></tr></thead>
+        <tbody>
+          <tr><td>Simple or double selection</td><td><i>If … then … else</i></td><td><code>if (c) { … } else { … }</code></td></tr>
+          <tr><td>Multiple selection</td><td><i>Case</i></td><td><code>switch (x) { case 1: … break; default: … }</code></td></tr>
+          <tr><td>Iteration with a pre-test condition</td><td><i>While</i></td><td><code>while (c) { … }</code></td></tr>
+          <tr><td>Iteration with a post-test condition</td><td><i>Repeat … until</i></td><td><code>do { … } while (c);</code> (note: the condition is one for continuing, not for stopping)</td></tr>
+          <tr><td>Iteration with a counter</td><td><i>For</i></td><td><code>for (i = 0; i &lt; n; i++) { … }</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>In C any nonzero value is true. <code>break</code> exits the loop or the
+      <code>switch</code> and <code>continue</code> jumps to the next iteration: they break the single-exit rule,
+      but in a controlled way, and they are accepted when they simplify things. <code>goto</code> exists; in structured
+      code it is only tolerated for leaving several nested levels when an error occurs.</p>
+      <div class="box ojo"><div class="bt">The switch falls through</div>
+        <p>If a <code>case</code> does not end with <code>break</code>, execution continues into the next one. Sometimes this is
+        done on purpose to group cases; almost always it is an oversight.</p></div>
+    </section>
+
+    <section id="funciones">
+      <h2><span class="n">05</span>Functions and parameter passing</h2>
+      <p>A function is an algorithm with a name, inputs (parameters) and an output (return value). In C
+      <b>all parameters are passed by value</b>: the function receives a copy and cannot modify the
+      original variable. To let it do so, you pass the variable’s <b>address</b>, a pointer:</p>
+      <pre class="code"><code><span class="c-ty">void</span> <span class="c-fn">swap</span>(<span class="c-ty">int</span> *p, <span class="c-ty">int</span> *q)
+{
+    <span class="c-ty">int</span> aux = *p;       <span class="c-com">// what is at address p</span>
+    *p = *q;
+    *q = aux;
+}
+...
+<span class="c-fn">swap</span>(&amp;x, &amp;y);    <span class="c-com">// the addresses of x and y are passed</span></code></pre>
+      <p>For the same reason <code>scanf("%d", &amp;n)</code> takes <code>&amp;</code>: it needs to know
+      <b>where</b> to write. Pointers are covered in
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/datos-complejos">complex data containers</a>.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Variable</th><th>Scope (where it is visible)</th><th>Lifetime (how long it lives)</th></tr></thead>
+        <tbody>
+          <tr><td>Local</td><td>The block where it is declared</td><td>While the block executes: it is created and destroyed on each call</td></tr>
+          <tr><td>Local <code>static</code></td><td>The block where it is declared</td><td>The whole program: it keeps its value between calls</td></tr>
+          <tr><td>Global</td><td>The whole file (and others, with <code>extern</code>)</td><td>The whole program</td></tr>
+          <tr><td>Global <code>static</code></td><td>Only its own file</td><td>The whole program</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="pila">
+      <h2><span class="n">06</span>The call stack: where local variables live</h2>
+      <p>How can a function have “its own” <code>n</code> if it calls itself? Each call creates in memory a
+      <b>frame</b> (also called a <i>stack frame</i>) with its parameters, its local variables and the address to which it must
+      return. Frames are stacked: the last one in is the first one out. On return, the frame is discarded and
+      its variables cease to exist. Follow the execution of a recursive factorial:</p>
+      <div class="lw" id="stk">
+        <div class="lt">Lab · the call stack, live</div>
+        <div class="fila">
+          <label>fact( <input type="number" id="stN" value="4" min="0" max="7" style="width:60px"> )</label>
+          <button class="pri" id="stPaso">Next step</button>
+          <button id="stAtras">Step back</button>
+          <button id="stReset">Reset</button>
+        </div>
+        <div class="g2">
+          <div class="codigo" id="stCod"></div>
+          <div class="caja"><h5>Stack (the top frame is the one being executed)</h5><div id="stPila"></div>
+            <h5 style="margin-top:10px">Screen output</h5><div class="mono" id="stOut" style="color:#3fb950;min-height:20px"></div></div>
+        </div>
+        <div class="nota" id="stNota"></div>
+      </div>
+      <div class="box peligro"><div class="bt">Never return the address of a local</div>
+        <p>Since the frame is discarded on return, a function that returns <code>&amp;local</code> hands over the address of
+        something that no longer exists. The program may work by chance and fail later, far from the error. And a
+        recursion without a base case stacks frames until the stack is exhausted: this is the <i>stack overflow</i>. On a
+        microcontroller, with 2 KiB of RAM, the stack runs out much sooner.</p></div>
+    </section>
+
+    <section id="modulos">
+      <h2><span class="n">07</span>Programs in several files</h2>
+      <p>A structured program grows split into <b>modules</b>: a <code>.c</code> file with the code and a
+      <code>.h</code> file with what the rest of the program needs to know about it, namely the prototypes, types and
+      constants.</p>
+      <pre class="code"><code><span class="c-com">/* resistors.h — the interface: what the module offers */</span>
+<span class="c-pp">#ifndef RESISTORS_H</span>        <span class="c-com">// guard against double inclusion</span>
+<span class="c-pp">#define RESISTORS_H</span>
+<span class="c-ty">double</span> <span class="c-fn">parallel</span>(<span class="c-kw">const</span> <span class="c-ty">double</span> r[], <span class="c-ty">int</span> n);
+<span class="c-ty">double</span> <span class="c-fn">series</span>(<span class="c-kw">const</span> <span class="c-ty">double</span> r[], <span class="c-ty">int</span> n);
+<span class="c-pp">#endif</span>
+
+<span class="c-com">/* resistors.c — the implementation: how it does it */</span>
+<span class="c-pp">#include</span> <span class="c-str">"resistors.h"</span>
+<span class="c-kw">static</span> <span class="c-ty">int</span> <span class="c-fn">has_short</span>(<span class="c-kw">const</span> <span class="c-ty">double</span> r[], <span class="c-ty">int</span> n);   <span class="c-com">// private to the module</span>
+...</code></pre>
+      <p>It is compiled with <code>gcc main.c resistors.c -o calc</code>. Separating interface from implementation allows
+      changing the <i>how</i> without touching whoever uses the module: it is the same idea as layered abstraction, at
+      the scale of a program.</p>
+    </section>
+
+    <section id="es">
+      <h2><span class="n">08</span>Standard input and output</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Specifier</th><th>Type</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><code>%d</code> / <code>%u</code></td><td><code>int</code> / <code>unsigned</code></td><td><code>printf("%d", -5)</code></td></tr>
+          <tr><td><code>%ld</code></td><td><code>long</code></td><td><code>printf("%ld", 100000L)</code></td></tr>
+          <tr><td><code>%f</code> in printf, <code>%lf</code> in scanf</td><td><code>double</code></td><td><code>printf("%.2f", 3.14159)</code> → 3.14</td></tr>
+          <tr><td><code>%e</code> / <code>%g</code></td><td><code>double</code>, scientific or automatic</td><td><code>printf("%e", 4.7e-9)</code></td></tr>
+          <tr><td><code>%x</code> / <code>%o</code></td><td>integer in hexadecimal / octal</td><td><code>printf("0x%02X", 12)</code> → 0x0C</td></tr>
+          <tr><td><code>%c</code> / <code>%s</code></td><td>character / string</td><td><code>printf("%s", "hello")</code></td></tr>
+        </tbody>
+      </table></div>
+      <p><code>scanf</code> returns how many items it managed to read. A robust program checks it:
+      <code>if (scanf("%lf", &amp;r) != 1)</code> means that the user typed something that is not a number.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · A modular resistor calculator</div>
+        <p>Program the equivalent resistance example from the topic on
+        <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/algoritmos">algorithms</a> in three files
+        (<code>main.c</code>, <code>resistors.c</code>, <code>resistors.h</code>), with input validation
+        and the unusual cases. Check the results with the site’s
+        <a class="ref" href="/publicaciones/calculadora-resistores" hreflang="es">resistor calculator</a> to
+        read off the values of real components.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Seeing the stack with the debugger</div>
+        <p>Compile the factorial with <code>gcc -g</code> and run it in <code>gdb</code> (or in the VS Code
+        debugger). Set a breakpoint at the base case and use <code>bt</code> (<i>backtrace</i>) to see all
+        the stacked frames, with the value of <code>n</code> in each one.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Reading the assembly</div>
+        <p>Compile a function that adds two integers with <code>gcc -S -O1</code> and locate in the <code>.s</code> file the
+        add instruction and the return. Repeat with <code>-O0</code> and compare the length. Development
+        environments are covered in <a class="ref" href="/en/publicaciones/mapa-electronica/temas/entornos-c-cpp">C and C++
+        development environments</a>.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Common mistakes</h2>
+      <ul>
+        <li><b><code>=</code> instead of <code>==</code></b> inside an <code>if</code>.</li>
+        <li><b>A semicolon after the <code>for</code></b>: <code>for (i = 0; i &lt; n; i++);</code> runs an empty loop.</li>
+        <li><b>Forgetting the <code>&amp;</code> in <code>scanf</code></b>: the program writes to an arbitrary address.</li>
+        <li><b>Unintended integer division</b>: <code>1/2 * x</code> is always 0.</li>
+        <li><b>Uninitialized local variables</b>: they are not zero; they hold whatever was on the stack.</li>
+        <li><b>Using <code>%d</code> for a <code>double</code></b> or <code>%f</code> for an <code>int</code>: it prints garbage without warning.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">11</span>Self-assessment</h2>
+      <details class="q"><summary>What is the value of <code>double x = 5 / 2;</code>?</summary>
+        <div class="a"><p>2.0. The integer division is done first and gives 2; only afterward is it converted to double.</p></div></details>
+      <details class="q"><summary>Why does <code>scanf</code> need <code>&amp;n</code> while <code>printf</code> needs only <code>n</code>?</summary>
+        <div class="a"><p>Because C passes everything by value. printf only needs the value; scanf has to modify the
+        variable and for that it needs its address.</p></div></details>
+      <details class="q"><summary>How many frames are on the stack at most when computing fact(5) called from main?</summary>
+        <div class="a"><p>Six: main’s and five of fact’s, with n = 5, 4, 3, 2 and 1.</p></div></details>
+      <details class="q"><summary>What is the difference between an ordinary local variable and a <code>static</code> one?</summary>
+        <div class="a"><p>Both are visible only in their block, but the static one lives for the whole program and keeps its value
+        between calls; the ordinary one is created and destroyed on each call.</p></div></details>
+      <details class="q"><summary>Which stage gives the error <code>undefined reference</code> and what does it mean?</summary>
+        <div class="a"><p>The linker: the function was declared, but it cannot find its code in any object file or library.</p></div></details>
+      <details class="q"><summary>What does <code>if (-1 &lt; 1u) printf("a"); else printf("b");</code> print?</summary>
+        <div class="a"><p>b. The −1 is converted to unsigned and becomes the maximum value.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">12</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Brian W. Kernighan and Dennis M. Ritchie.</span> <span class="ti">The C Programming Language</span>.
+          <span class="ed">2nd ed. (Spanish edition, “El lenguaje de programación C”), Prentice Hall Hispanoamericana, 1991.</span>
+          <span class="pq">By the creators of the language. Brief, dense and with exercises that teach you to think in C.</span></li>
+        <li><span class="au">Harvey M. Deitel and Paul J. Deitel.</span> <span class="ti">Cómo programar en C/C++ y Java</span>.
+          <span class="ed">4th ed., Pearson Educación, 2004 (in Spanish).</span>
+          <span class="pq">Step by step, with a great many complete examples and good practices.</span></li>
+        <li><span class="au">Luis Joyanes Aguilar and Ignacio Zahonero Martínez.</span> <span class="ti">Programación en C.
+          Metodología, algoritmos y estructura de datos</span>. <span class="ed">2nd ed., McGraw-Hill, 2005 (in Spanish).</span>
+          <span class="pq">Connects the pseudocode of the previous topic with the language, in Spanish.</span></li>
+        <li><span class="au">K. N. King.</span> <span class="ti">C Programming: A Modern Approach</span>.
+          <span class="ed">2nd ed., W. W. Norton, 2008.</span>
+          <span class="pq">The best modern C textbook: rigorous about the standard and very clear.</span></li>
+        <li><span class="au">Edsger W. Dijkstra.</span> <span class="ti">Go To Statement Considered Harmful</span>.
+          <span class="ed">Communications of the ACM, 11(3), 1968.</span>
+          <span class="pq">A page and a half that changed the way people program.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/algoritmos">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Problem solving and algorithm representation</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/datos-complejos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Complex data containers</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Structured programming language”</b> of <b>Computer Science I</b> (Level 1), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Pila de llamadas de un factorial recursivo. La ejecución se simula entera
+   al principio y se guarda una foto por paso, así se puede ir y volver. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  function cod(N){
+    return ["#include &lt;stdio.h&gt;", "", "int fact(int n)", "{", "    if (n &lt;= 1)", "        return 1;",
+            "    return n * fact(n - 1);", "}", "", "int main(void)", "{", "    int r = fact(" + N + ");",
+            "    printf(\"%d\\n\", r);", "    return 0;", "}"];
+  }
+  var pasos, k, N;
+  function simular(){
+    N = Math.max(0, Math.min(7, parseInt($("stN").value, 10) || 0));
+    $("stN").value = N;
+    pasos = []; var pila = [], out = "";
+    function foto(l, nota){
+      pasos.push({ l:l, pila:pila.map(function(m){ return { fn:m.fn, vars:Object.assign({}, m.vars), vuelve:m.vuelve }; }), out:out, nota:nota });
+    }
+    function fact(n){
+      pila.push({ fn:"fact", vars:{ n:n }, vuelve:n === N ? "to line 12 of main" : "to line 7 of fact(" + (n + 1) + ")" });
+      foto(2, "A new frame is created for fact with <b>n = " + n + "</b>. It is a different n from the ones below it.");
+      foto(4, "Is n &lt;= 1? " + n + " &lt;= 1 is " + (n <= 1 ? "true: this is the base case." : "false."));
+      if(n <= 1){
+        foto(5, "It returns 1. Its frame is discarded and control returns " + pila[pila.length - 1].vuelve + ".");
+        pila.pop(); return 1;
+      }
+      foto(6, "To compute n * fact(" + (n - 1) + ") we first need to know fact(" + (n - 1) + "). This frame is left <b>waiting</b>.");
+      var v = fact(n - 1);
+      pila[pila.length - 1].vars["fact(" + (n - 1) + ")"] = v;
+      foto(6, "fact(" + (n - 1) + ") returned " + v + ". Now we can: " + n + " × " + v + " = <b>" + (n * v) + "</b>, which is returned.");
+      pila.pop(); return n * v;
+    }
+    pila.push({ fn:"main", vars:{ r:"?" }, vuelve:"to the operating system" });
+    foto(9, "The program starts at main. Its variable r has no value yet: it holds whatever was in memory.");
+    foto(11, "main calls fact(" + N + ").");
+    var r = fact(N);
+    pila[0].vars.r = r;
+    foto(11, "The returned value is stored in r = <b>" + r + "</b>. Only main is left on the stack.");
+    out = String(r);
+    foto(12, "printf displays r on the screen.");
+    foto(13, "main returns 0 to the operating system: it finished without errors.");
+    k = 0; pintar();
+  }
+  function pintar(){
+    var p = pasos[k];
+    $("stCod").innerHTML = cod(N).map(function(t, i){
+      return "<div" + (i === p.l ? ' class="act"' : "") + '><span class="ln">' + (i + 1) + "</span>" + t + "</div>";
+    }).join("");
+    $("stPila").innerHTML = p.pila.slice().reverse().map(function(m, i){
+      var vs = Object.keys(m.vars).map(function(v){ return v + " = <b>" + m.vars[v] + "</b>"; }).join(" · ");
+      return '<div class="celda' + (i === 0 ? " act" : "") + '" style="grid-template-columns:1fr;margin-bottom:4px">' +
+        "<span><b>" + m.fn + "</b> · " + vs + '</span><span class="dir">returns ' + m.vuelve + "</span></div>";
+    }).join("");
+    $("stOut").textContent = p.out;
+    $("stNota").innerHTML = "Step " + (k + 1) + " of " + pasos.length + ". " + p.nota;
+    $("stPaso").disabled = k >= pasos.length - 1;
+    $("stAtras").disabled = k <= 0;
+  }
+  $("stPaso").onclick = function(){ if(k < pasos.length - 1){ k++; pintar(); } };
+  $("stAtras").onclick = function(){ if(k > 0){ k--; pintar(); } };
+  $("stReset").onclick = simular;
+  $("stN").onchange = simular;
+  simular();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

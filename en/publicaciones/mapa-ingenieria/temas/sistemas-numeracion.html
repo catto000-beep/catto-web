@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number systems and binary arithmetic · Computer Science I · Catto</title>
+<meta name="description" content="Positional systems, binary, octal and hexadecimal, conversions, binary arithmetic, two’s complement, carry and overflow, fixed point and IEEE 754 floating point, BCD and ASCII. Content of Computer Science I, Level 1 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/sistemas-numeracion">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-numeracion">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/sistemas-numeracion">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-numeracion">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science I</a>
+    <span class="anio">Level 1</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science I</span> · 120 h · Topic 2 of 6</div>
+    <h1>Number systems and binary arithmetic</h1>
+    <p class="lead">Inside the machine everything is bits. What changes is how they are read: the same byte can be an unsigned number, a negative one, a character or an instruction.</p>
+    <div class="chips">
+      <span class="chip hi">Binary</span>
+      <span class="chip">Hexadecimal</span>
+      <span class="chip">Two’s complement</span>
+      <span class="chip">Overflow</span>
+      <span class="chip">IEEE 754</span>
+    </div>
+    <hr class="rule">
+
+    <section id="posicional">
+      <h2><span class="n">01</span>A number is not its notation</h2>
+      <p>Thirteen sheep are thirteen sheep, whether written <code>13</code>, <code>XIII</code>, <code>1101</code> or
+      <code>D</code>. The number is the quantity; what changes is the system used to write it down. The systems
+      used in computing are <b>positional</b>: each digit weighs according to the place it occupies, and the weight of each
+      place is a power of the <b>base</b> <i>b</i>.</p>
+      <div class="form">
+        \[ N = \sum_{i = -m}^{n -1} d_i \cdot b^i \quad 0 \le d_i \lt b \]
+        <span class="cap">n integer digits and m fractional digits. With b = 10 it is everyday arithmetic; with b = 2, the machine’s.</span>
+      </div>
+      <p>For example, 1101.1<sub>2</sub> = 1·2<sup>3</sup> + 1·2<sup>2</sup> + 0·2<sup>1</sup> + 1·2<sup>0</sup> + 1·2<sup>−1</sup> = 8 + 4 + 1 + 0.5 = 13.5.</p>
+
+      <div class="box key">
+        <div class="bt">Why binary</div>
+        <p>A circuit that only has to tell two states apart, conducting or not conducting, is cheap, fast and highly
+        immune to noise: a voltage of 4.3 V instead of 5 V is still a “1” beyond any doubt. Telling ten
+        levels apart on a single wire would be far more fragile. Base 2 is not a mathematical choice but an electrical one.</p>
+      </div>
+
+      <p>Programmers read binary in groups. <b>Hexadecimal</b> (base 16, digits 0–9 and A–F) condenses
+      four bits into one digit and <b>octal</b> (base 8) condenses three. <code>1001 1100</code> reads as <code>9C</code>
+      at a glance; that is why memory dumps and addresses are written in hexadecimal.</p>
+    </section>
+
+    <section id="bits">
+      <h2><span class="n">02</span>One byte, many readings</h2>
+      <p>The same eight bits mean different things depending on who reads them. Tap the bits: the pattern stays the same,
+      and the interpretations change all at once. The leftmost bit (b7) is the one with the greatest weight.</p>
+      <div class="lw" id="byte">
+        <div class="lt">Lab · the same byte, six meanings</div>
+        <p class="ls">Click each bit to flip it. In two’s complement, bit 7 weighs −128.</p>
+        <div class="bits" id="byBits" style="margin-bottom:24px"></div>
+        <div class="fila">
+          <button id="byNot">Invert all (~)</button><button id="byNeg">Change sign (−x)</button>
+          <button id="byShl">Shift left (&lt;&lt; 1)</button><button id="byShr">Shift right (&gt;&gt; 1)</button>
+          <button id="by0">Set to zero</button>
+        </div>
+        <div class="tw" style="margin:10px 0 0"><table class="tab" id="byTab"></table></div>
+        <div class="nota" id="byNota"></div>
+      </div>
+      <p>The reading is not in the bits: it is in the program. In C it is decided by the variable’s <b>type</b>, and
+      converting from one type to another often does not touch a single bit; it only changes the reading.</p>
+    </section>
+
+    <section id="conversiones">
+      <h2><span class="n">03</span>How to convert between bases</h2>
+      <h3>From decimal to another base: successive divisions</h3>
+      <p>Divide by the base and keep the remainder; the quotient is divided again, until it reaches zero. The
+      remainders, read <b>from bottom to top</b>, are the digits.</p>
+      <div class="box ejem"><div class="bt">156 to binary</div>
+        <p>156 ÷ 2 = 78 remainder <b>0</b> · 78 ÷ 2 = 39 remainder <b>0</b> · 39 ÷ 2 = 19 remainder <b>1</b> ·
+        19 ÷ 2 = 9 remainder <b>1</b> · 9 ÷ 2 = 4 remainder <b>1</b> · 4 ÷ 2 = 2 remainder <b>0</b> ·
+        2 ÷ 2 = 1 remainder <b>0</b> · 1 ÷ 2 = 0 remainder <b>1</b>.</p>
+        <p>From bottom to top: 156 = <b>1001 1100<sub>2</sub></b> = <b>9C<sub>16</sub></b> = <b>234<sub>8</sub></b>.
+        Check: 128 + 16 + 8 + 4 = 156.</p></div>
+      <h3>The fractional part: successive multiplications</h3>
+      <p>Multiply by the base; the integer part that appears is the next digit, and you continue with what remains
+      after the radix point.</p>
+      <div class="box ejem"><div class="bt">0.625 and 0.1 to binary</div>
+        <p>0.625 · 2 = <b>1</b>.25 → 0.25 · 2 = <b>0</b>.5 → 0.5 · 2 = <b>1</b>.0. It terminates: 0.625 = 0.101<sub>2</sub>.</p>
+        <p>0.1 · 2 = <b>0</b>.2 → <b>0</b>.4 → <b>0</b>.8 → <b>1</b>.6 → <b>1</b>.2 → <b>0</b>.4 → … and 0.4 appears
+        again. 0.1 = 0.0<span style="text-decoration:overline">0011</span><sub>2</sub>, repeating.</p></div>
+      <div class="box ojo"><div class="bt">0.1 + 0.2 does not equal 0.3</div>
+        <p>A fraction has a finite expansion in base 2 only if its denominator is a power of 2. Decimal
+        0.1 is not, so in the machine it is stored rounded. That is why in almost any language
+        <code>0.1 + 0.2 == 0.3</code> is false. Real numbers are never compared with <code>==</code>: you compare
+        the difference against a tolerance.</p></div>
+      <h3>Between binary, octal and hexadecimal: grouping</h3>
+      <p>Since 16 = 2<sup>4</sup> and 8 = 2<sup>3</sup>, there is no need to go through decimal: the bits are grouped in
+      fours or threes starting from the radix point and each group is replaced. <code>1011 0110 1111</code> = <code>B6F</code>;
+      <code>101 101 101 111</code> = <code>5557</code>.</p>
+    </section>
+
+    <section id="aritmetica">
+      <h2><span class="n">04</span>Binary arithmetic</h2>
+      <p>It works just like decimal, with much shorter tables. In addition, 1 + 1 = 10: you write 0 and
+      carry 1. Multiplication reduces to <b>shift and add</b>, because each digit of the multiplier is 0
+      or 1: either nothing is added or the shifted multiplicand is added.</p>
+      <pre class="code"><code>    1011   (11)           1011
+  + 0110   ( 6)         ×  101
+  ------                ------
+   10001   (17)           1011    ← 1011 · 1
+                         0000     ← 1011 · 0, shifted 1
+                        1011      ← 1011 · 1, shifted 2
+                        ------
+                        110111    (55 = 11 · 5)</code></pre>
+      <p>Shifting a number <i>k</i> places to the left multiplies it by 2<sup>k</sup>; to the right it divides it
+      by 2<sup>k</sup>, discarding the remainder. Compilers replace <code>x * 8</code> with
+      <code>x &lt;&lt; 3</code> when it suits them. The adders that do this in hardware are covered in
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/logica-combinacional">combinational logic</a>.</p>
+    </section>
+
+    <section id="signo">
+      <h2><span class="n">05</span>Negative numbers: two’s complement</h2>
+      <p>The machine has no place for the minus sign: everything is bits. There were three solutions, and the one that won is the one that
+      lets you use <b>the same adder</b> for signed and unsigned numbers.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Representation</th><th class="c">−5 in 8 bits</th><th class="c">Range with 8 bits</th><th>Problem</th></tr></thead>
+        <tbody>
+          <tr><td>Sign and magnitude</td><td class="c"><code>1000 0101</code></td><td class="c">−127 … +127</td><td>Two zeros (+0 and −0) and a different addition circuit for each combination of signs</td></tr>
+          <tr><td>One’s complement</td><td class="c"><code>1111 1010</code></td><td class="c">−127 … +127</td><td>It also has two zeros; addition needs to add the end-around carry</td></tr>
+          <tr><td><b>Two’s complement</b></td><td class="c"><code>1111 1011</code></td><td class="c">−128 … +127</td><td>None: a single zero and ordinary addition works</td></tr>
+        </tbody>
+      </table></div>
+      <p>In two’s complement the most significant bit has a <b>negative</b> weight. With <i>n</i> bits:</p>
+      <div class="form">
+        \[ N = -d_{n -1} \cdot 2^{n -1} + \sum_{i = 0}^{n -2} d_i \cdot 2^i \quad -2^{n -1} \le N \le 2^{n -1} -1 \]
+        <span class="cap">To change sign: invert all the bits and add 1. −x = ~x + 1.</span>
+      </div>
+      <p>One way to see it without formulas: 8-bit numbers form a <b>clock with 256 positions</b>. Subtracting 5
+      is the same as moving forward 251, because 251 + 5 = 256 wraps around and returns to zero. In two’s complement,
+      position 251 (<code>1111 1011</code>) is called −5. That is why the adder does not need to know whether there is a sign: the
+      count on the clock is the same.</p>
+      <div class="box ojo"><div class="bt">Sign extension</div>
+        <p>When a signed number is widened to more bits, the sign bit is copied to the left: −5 in 16 bits is
+        <code>1111 1111 1111 1011</code>, not <code>0000 0000 1111 1011</code> (which is +251).</p></div>
+    </section>
+
+    <section id="desborde">
+      <h2><span class="n">06</span>Carry and overflow: the flags</h2>
+      <p>The result of an 8-bit addition always fits in 8 bits plus a carry. What can fail is the
+      <b>interpretation</b>, and the ALU signals it with flags, without knowing which of the two readings the program cares about:</p>
+      <ul>
+        <li><b>C (carry):</b> the <b>unsigned</b> result did not fit. 200 + 100 = 300 &gt; 255.</li>
+        <li><b>V (overflow):</b> the <b>signed</b> result did not fit. It happens only when adding two numbers of the same
+        sign and getting one of the opposite sign: 100 + 100 gives −56.</li>
+        <li><b>N (negative)</b> copies bit 7 and <b>Z (zero)</b> indicates whether the result is 0.</li>
+      </ul>
+      <div class="lw" id="alu">
+        <div class="lt">Lab · an 8-bit ALU</div>
+        <p class="ls">Enter the operands in decimal (−128 to 255). The ALU stores them as 8 bits and computes the flags.</p>
+        <div class="fila">
+          <label>A = <input type="number" id="aluA" value="100" style="width:80px"></label>
+          <select id="aluOp"><option value="+">A + B</option><option value="-">A − B</option></select>
+          <label>B = <input type="number" id="aluB" value="100" style="width:80px"></label>
+        </div>
+        <div class="tw" style="margin:10px 0 0"><table class="tab" id="aluTab"></table></div>
+        <div class="nota" id="aluNota"></div>
+      </div>
+    </section>
+
+    <section id="reales">
+      <h2><span class="n">07</span>Real numbers: fixed point and floating point</h2>
+      <p>In <b>fixed point</b> it is decided in advance how many bits go after the radix point. In the Q8.8 format, for
+      example, a 16-bit integer represents the number divided by 256. It is fast, uses only the integer ALU and
+      is the usual choice in microcontrollers without a floating-point unit; in exchange, the range is small.</p>
+      <p><b>Floating point</b> does the same as scientific notation: it stores a sign, an exponent and a mantissa. The
+      single-precision <b>IEEE 754</b> standard uses 32 bits:</p>
+      <div class="form">
+        \[ x = {\left(-1 \right)}^s \cdot 1.f \cdot 2^{e -127} \]
+        <span class="cap">1 sign bit s · 8 exponent bits e with bias 127 · 23 fraction bits f. The leading “1.” is not stored: it is implicit.</span>
+      </div>
+      <div class="box ejem"><div class="bt">−6.25 in IEEE 754 single precision</div>
+        <p>6.25 = 110.01<sub>2</sub> = 1.1001<sub>2</sub> · 2<sup>2</sup>. Sign 1; exponent 2 + 127 = 129 =
+        <code>1000 0001</code>; fraction <code>1001 0000 …</code>.</p>
+        <p><code>1 10000001 10010000000000000000000</code> = <b><code>0xC0C80000</code></b>.</p></div>
+      <p>With a 24-bit mantissa the relative precision is 2<sup>−23</sup> ≈ 1.2·10<sup>−7</sup>: about seven decimal
+      digits. Adding 1 to 100,000,000 in a <code>float</code> changes nothing, because the 1 falls below the last
+      digit that is stored. For engineering calculations <code>double</code> is used, with 64 bits and about 16 digits.</p>
+    </section>
+
+    <section id="codigos">
+      <h2><span class="n">08</span>Codes: when bits are not quantities</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Code</th><th>What it represents</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><b>BCD</b></td><td>Each decimal digit in 4 bits. Used by clocks, displays and instruments</td><td>59 = <code>0101 1001</code></td></tr>
+          <tr><td><b>ASCII</b></td><td>Characters in 7 bits: letters, digits, symbols and control codes</td><td>'A' = 65 = <code>0x41</code>; '0' = 48</td></tr>
+          <tr><td><b>UTF-8</b></td><td>All of Unicode in 1 to 4 bytes; the first 128 coincide with ASCII</td><td>'ñ' = <code>0xC3 0xB1</code></td></tr>
+          <tr><td><b>Gray</b></td><td>Consecutive numbers differ in a single bit. Avoids false readings in encoders</td><td>3 = <code>010</code>, 4 = <code>110</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>The digit '7' is not the number 7: it is worth 55. To convert a digit character into its value, subtract
+      <code>'0'</code>. The codes used by converters are covered in
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/conversores-ad-da">A/D and D/A converters</a>.</p>
+      <a class="pub" href="/publicaciones/logica-digital" hreflang="es">
+        <span class="ic">🔢</span>
+        <span><span class="pn">Interactive digital logic course</span>
+        <span class="pd">The first tab is a binary converter with the weight of each bit in view; the
+        following ones take those bits to gates, Karnaugh maps and flip-flops.</span></span>
+        <span class="go">›</span>
+      </a>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Seeing the bits in C</div>
+        <p>Write a function <code>void binary(uint8_t x)</code> that prints the 8 bits using
+        <code>(x &gt;&gt; i) &amp; 1</code>. Use it to print 5, −5 stored in an <code>int8_t</code>, and 251.
+        Explain why the last two coincide.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Overflow is real</div>
+        <p>Declare <code>uint8_t a = 200, b = 100;</code> and store <code>a + b</code> in a <code>uint8_t</code>.
+        Predict the result before printing it (44). Repeat with <code>int8_t</code> and 100 + 100.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · A float has a limited number of digits</div>
+        <p>Add 0.1f ten times in a <code>float</code> and compare with 1.0f using <code>==</code>. Print with
+        <code>%.10f</code>. Repeat with <code>double</code> and propose a correct comparison with a tolerance.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Common mistakes</h2>
+      <ul>
+        <li><b>Reading the remainders from top to bottom</b> in successive divisions: this gives the number mirrored.</li>
+        <li><b>Grouping the bits from the left</b> when converting to hexadecimal. Grouping starts from the radix point.</li>
+        <li><b>Forgetting the “+1”</b> of two’s complement, which is the one’s complement.</li>
+        <li><b>Confusing carry with overflow.</b> One matters for unsigned numbers and the other for signed ones.</li>
+        <li><b>Padding with zeros</b> a negative number when widening it, instead of extending the sign.</li>
+        <li><b>Comparing real numbers with ==</b>.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">11</span>Self-assessment</h2>
+      <details class="q"><summary>Convert 45 to binary, octal and hexadecimal.</summary>
+        <div class="a"><p>45 = 10 1101<sub>2</sub> = 55<sub>8</sub> = 2D<sub>16</sub>.</p></div></details>
+      <details class="q"><summary>What is the value of <code>1110 0110</code> unsigned and in two’s complement?</summary>
+        <div class="a"><p>Unsigned, 230. In two’s complement, 230 − 256 = −26.</p></div></details>
+      <details class="q"><summary>What is the range of a 16-bit integer in two’s complement?</summary>
+        <div class="a"><p>From −32,768 to +32,767.</p></div></details>
+      <details class="q"><summary>When adding <code>0111 0000</code> + <code>0101 0000</code>, which flags are set?</summary>
+        <div class="a"><p>112 + 80 = 192 = <code>1100 0000</code>. C = 0 (unsigned, it fits), V = 1 (two positives gave
+        a negative: −64), N = 1, Z = 0.</p></div></details>
+      <details class="q"><summary>Why is 0.5 stored exactly in a float and 0.2 is not?</summary>
+        <div class="a"><p>0.5 = 2<sup>−1</sup> has a finite binary expansion. 0.2 = 1/5 has a 5 in the
+        denominator, which is not a power of 2, and its binary expansion is repeating.</p></div></details>
+      <details class="q"><summary>What number does <code>0x41200000</code> represent in IEEE 754 single precision?</summary>
+        <div class="a"><p>Sign 0; exponent <code>1000 0010</code> = 130 → 2<sup>3</sup>; fraction <code>0100…</code>
+        = 0.25. x = 1.25 · 8 = <b>10</b>.</p></div></details>
+      <details class="q"><summary>How do you obtain the numeric value of the character '8'?</summary>
+        <div class="a"><p>By subtracting '0': '8' − '0' = 56 − 48 = 8.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">12</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Thomas L. Floyd.</span> <span class="ti">Digital Fundamentals</span>.
+          <span class="ed">9th ed. (Spanish edition, “Fundamentos de sistemas digitales”), Pearson Prentice Hall, 2006.</span>
+          <span class="pq">Chapter 2 covers number systems, two’s complement, BCD and codes with a great many exercises.</span></li>
+        <li><span class="au">M. Morris Mano.</span> <span class="ti">Digital Design</span>.
+          <span class="ed">3rd ed. (Spanish edition, “Diseño digital”), Pearson Educación, 2003.</span>
+          <span class="pq">More formal: bases, complements and binary codes as the starting point of logic design.</span></li>
+        <li><span class="au">Randal E. Bryant and David R. O'Hallaron.</span> <span class="ti">Computer Systems: A Programmer's
+          Perspective</span>. <span class="ed">3rd ed., Pearson, 2016.</span>
+          <span class="pq">Chapter 2 is the best explanation of how C represents integers and floats, with their pitfalls.</span></li>
+        <li><span class="au">David Goldberg.</span> <span class="ti">What Every Computer Scientist Should Know About
+          Floating-Point Arithmetic</span>. <span class="ed">ACM Computing Surveys, 23(1), 1991.</span>
+          <span class="pq">The classic paper on why floating point behaves the way it does.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/sistema-computacional">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Structure of a computer system</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/algoritmos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Problem solving and algorithm representation</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Number systems and binary arithmetic”</b> of <b>Computer Science I</b> (Level 1), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  function b8(v){ var s = (v & 255).toString(2).padStart(8, "0"); return s.slice(0, 4) + " " + s.slice(4); }
+  function hx(v){ return (v & 255).toString(16).toUpperCase().padStart(2, "0"); }
+  function s8(v){ v &= 255; return v >= 128 ? v - 256 : v; }
+  /* el menos tipografico, para que se lea igual que en el texto */
+  function ms(n){ return String(n).replace("-", "−"); }
+
+  /* ---- el mismo byte, seis lecturas ---- */
+  var x = 0x9C, nota = "";
+  function ascii(v){
+    if(v < 32) return "control character";
+    if(v === 32) return "space";
+    if(v === 127) return "DEL (control)";
+    if(v > 127) return "outside ASCII (in UTF-8 it is part of a multi-byte character)";
+    return "'" + String.fromCharCode(v) + "'";
+  }
+  function pintarByte(){
+    var h = "";
+    for(var i = 7; i >= 0; i--){
+      var u = (x >> i) & 1;
+      h += '<button class="bit' + (u ? " uno" : "") + (i === 7 ? " signo" : "") + '" data-i="' + i + '">' + u +
+           "<small>" + (i === 7 ? "−128/128" : (1 << i)) + "</small></button>";
+      if(i === 4) h += '<span class="bits-sep"></span>';
+    }
+    $("byBits").innerHTML = h;
+    var hi = x >> 4, lo = x & 15;
+    var bcd = hi < 10 && lo < 10 ? String(hi) + String(lo) : "not valid BCD: a nibble is greater than 9";
+    $("byTab").innerHTML =
+      "<tbody><tr><td>Unsigned (<code>uint8_t</code>)</td><td><b>" + x + "</b></td></tr>" +
+      "<tr><td>Two’s complement (<code>int8_t</code>)</td><td><b>" + ms(s8(x)) + "</b></td></tr>" +
+      "<tr><td>Hexadecimal</td><td><b><code>0x" + hx(x) + "</code></b></td></tr>" +
+      "<tr><td>Octal</td><td><b><code>0" + x.toString(8) + "</code></b></td></tr>" +
+      "<tr><td>Packed BCD</td><td><b>" + bcd + "</b></td></tr>" +
+      "<tr><td>ASCII character</td><td><b>" + ascii(x) + "</b></td></tr></tbody>";
+    $("byNota").innerHTML = nota;
+  }
+  $("byBits").addEventListener("click", function(ev){
+    var b = ev.target.closest(".bit"); if(!b) return;
+    x ^= 1 << (+b.dataset.i); nota = ""; pintarByte();
+  });
+  $("byNot").onclick = function(){ var a = x; x = (~x) & 255; nota = "~" + b8(a) + " = " + b8(x) + ". Inverting is the one’s complement: unsigned it gives 255 − " + a + " = " + x + "."; pintarByte(); };
+  $("byNeg").onclick = function(){
+    var a = x; x = (-x) & 255;
+    nota = "−x = ~x + 1: " + b8((~a) & 255) + " + 1 = " + b8(x) + ". Signed, " + ms(s8(a)) + " becomes " + ms(s8(x)) +
+      (a === 128 ? ". Note: −(−128) does not fit in 8 bits and gives −128 again." : a === 0 ? ": zero is its own negative." : ".");
+    pintarByte();
+  };
+  $("byShl").onclick = function(){ var a = x; x = (x << 1) & 255; nota = "Shifted left: " + a + " × 2 = " + (a * 2) + (a * 2 > 255 ? ", which does not fit: the bit that shifts out is lost and " + x + " remains." : "."); pintarByte(); };
+  $("byShr").onclick = function(){ var a = x; x = x >> 1; nota = "Logical shift right: " + a + " ÷ 2 = " + x + ", discarding the remainder" + (a & 1 ? " (a 1 was lost)." : "."); pintarByte(); };
+  $("by0").onclick = function(){ x = 0; nota = ""; pintarByte(); };
+  pintarByte();
+
+  /* ---- ALU de 8 bits ---- */
+  function leer(id){ var v = parseInt($(id).value, 10); if(isNaN(v)) v = 0; return Math.max(-128, Math.min(255, v)); }
+  function alu(){
+    var a = leer("aluA") & 255, b = leer("aluB") & 255, resta = $("aluOp").value === "-";
+    var bb = resta ? ((~b) & 255) : b, cin = resta ? 1 : 0;
+    var t = a + bb + cin, r = t & 255;
+    var C = t > 255 ? 1 : 0;
+    var V = ((a ^ r) & (bb ^ r) & 128) ? 1 : 0;
+    var N = r >> 7, Z = r === 0 ? 1 : 0;
+    var ue = resta ? a - b : a + b, se = resta ? s8(a) - s8(b) : s8(a) + s8(b);
+    function fila(n, v, s){ return "<tr><td>" + n + "</td><td><code>" + v + "</code></td><td>" + s + "</td></tr>"; }
+    $("aluTab").innerHTML = "<thead><tr><th></th><th>Bits</th><th>Readings: unsigned · signed</th></tr></thead><tbody>" +
+      fila("A", b8(a), a + " · " + ms(s8(a))) +
+      fila("B", b8(b), b + " · " + ms(s8(b))) +
+      (resta ? fila("~B + 1", b8(bb) + " + 1", "subtraction is adding the negative") : "") +
+      fila("<b>Result</b>", b8(r), "<b>" + r + " · " + ms(s8(r)) + "</b>") +
+      "<tr><td>Flags</td><td colspan='2'><code>C=" + C + "  V=" + V + "  N=" + N + "  Z=" + Z + "</code></td></tr></tbody>";
+    var sinSigno = resta ? (a < b ? "unsigned " + a + " − " + b + " is negative and cannot be represented (in subtraction, C = 0 indicates a borrow)"
+                                  : "unsigned, the result " + ue + " is correct")
+                         : (C ? "unsigned " + a + " + " + b + " = " + ue + " does not fit in 8 bits: C = 1 signals it"
+                              : "unsigned, the result " + ue + " is correct");
+    var conSigno = V ? "signed " + ms(s8(a)) + (resta ? " − " : " + ") + ms(s8(b)) + " = " + ms(se) + " does not fit in −128…127: V = 1 signals it and what remains (" + ms(s8(r)) + ") is garbage"
+                     : "signed, the result " + ms(se) + " is correct";
+    $("aluNota").innerHTML = "The ALU did a single calculation. Read as " + sinSigno + "; read as " + conSigno + ".";
+  }
+  ["aluA", "aluB", "aluOp"].forEach(function(id){ $(id).addEventListener("input", alu); });
+  alu();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

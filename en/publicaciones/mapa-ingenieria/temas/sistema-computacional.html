@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Structure of a computer system · Computer Science I · Catto</title>
+<meta name="description" content="The layers of abstraction of a computer, the von Neumann model, the instruction cycle step by step with a toy CPU, the memory hierarchy, input/output and the performance equation. Content of Computer Science I, Level 1 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/sistema-computacional">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistema-computacional">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/sistema-computacional">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistema-computacional">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science I</a>
+    <span class="anio">Level 1</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science I</span> · 120 h · Topic 1 of 6</div>
+    <h1>Structure of a computer system</h1>
+    <p class="lead">Before writing a line of code, it pays to know what machine you are writing for: what parts it has, how it fetches and executes each instruction, where it keeps its data and what makes it fast.</p>
+    <div class="chips">
+      <span class="chip hi">Von Neumann</span>
+      <span class="chip">Instruction cycle</span>
+      <span class="chip">Memory</span>
+      <span class="chip">Buses</span>
+      <span class="chip">Performance</span>
+    </div>
+    <hr class="rule">
+
+    <section id="capas">
+      <h2><span class="n">01</span>A computer is a stack of machines</h2>
+      <p>Nobody programs a computer “as a whole.” You program the machine that the layer below offers.
+      Someone writing in C sees a machine that understands functions and variables; the compiler translates it into
+      the machine that understands instructions; the processor executes each instruction with digital
+      circuits, and those circuits are transistors that switch. Each layer hides the details of the
+      next one and offers something easier to use. This idea is called <b>abstraction</b>, and it is the
+      most important tool in all of computing.</p>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Layer</th><th>What is visible from there</th><th>Who works on it</th></tr></thead>
+          <tbody>
+            <tr><td><b>Application</b></td><td>Windows, files, the problem’s data</td><td>The user and the application programmer</td></tr>
+            <tr><td><b>High-level language</b></td><td>Variables, functions, structures (C, Python)</td><td>The programmer</td></tr>
+            <tr><td><b>Operating system</b></td><td>Processes, virtual memory, files, devices</td><td>The system kernel</td></tr>
+            <tr><td><b>Instruction set architecture (ISA)</b></td><td>Registers, instructions, addressing modes</td><td>The compiler and the assembler</td></tr>
+            <tr><td><b>Microarchitecture</b></td><td>Control unit, ALU, cache, pipelining</td><td>The processor designer</td></tr>
+            <tr><td><b>Digital logic</b></td><td>Gates, flip-flops, registers, adders</td><td>Digital design</td></tr>
+            <tr><td><b>Devices</b></td><td>MOS transistors that switch</td><td>Electronics</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box key">
+        <div class="bt">The most important boundary</div>
+        <p>The <b>instruction set architecture</b> (<i>ISA</i>)
+        is the contract between software and hardware: the list of instructions, the visible registers and the
+        way memory is accessed. Everything above it can change without touching the processor, and the processor
+        can be redesigned internally without breaking the software, as long as the contract is respected. That is why a program
+        compiled for x86 twenty years ago still runs on a current processor.</p>
+      </div>
+
+      <p>This course works in the middle layers: how data is represented, how an
+      algorithm is conceived and how to write in C while knowing what the machine does with it. The lower layers are covered in
+      more detail in <a class="ref" href="/en/publicaciones/mapa-electronica/temas/logica-combinacional">combinational
+      logic</a> and in <a class="ref" href="/en/publicaciones/mapa-electronica/temas/arquitectura-microprocesadores">microprocessor
+      architecture</a>.</p>
+    </section>
+
+    <section id="von-neumann">
+      <h2><span class="n">02</span>The von Neumann model</h2>
+      <p>In 1945 John von Neumann described, in the first draft report on the EDVAC, the organization that
+      almost all computers still use. The central idea is the <b>stored program</b>: instructions
+      are not wired in; they are kept in the same memory as the data, as numbers. Changing programs
+      means changing the contents of memory.</p>
+
+      <figure>
+        <svg viewBox="0 0 640 300" role="img" aria-label="Diagram of the von Neumann model: a CPU with a control unit, ALU and registers, connected to the memory and to input/output by the address, data and control buses">
+          <rect x="20" y="20" width="250" height="170" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+          <text x="145" y="44" fill="#58a6ff" font-size="14" font-weight="700" text-anchor="middle">CPU</text>
+          <rect x="36" y="58" width="104" height="54" rx="8" fill="#1c2230" stroke="#a371f7"/>
+          <text x="88" y="81" fill="#e6edf3" font-size="12" text-anchor="middle">Control</text>
+          <text x="88" y="97" fill="#e6edf3" font-size="12" text-anchor="middle">unit</text>
+          <rect x="150" y="58" width="104" height="54" rx="8" fill="#1c2230" stroke="#3fb950"/>
+          <text x="202" y="81" fill="#e6edf3" font-size="12" text-anchor="middle">ALU</text>
+          <text x="202" y="97" fill="#9aa7b4" font-size="10.5" text-anchor="middle">arithmetic &amp; logic</text>
+          <rect x="36" y="122" width="218" height="54" rx="8" fill="#1c2230" stroke="#d29922"/>
+          <text x="145" y="145" fill="#e6edf3" font-size="12" text-anchor="middle">Registers</text>
+          <text x="145" y="162" fill="#9aa7b4" font-size="10.5" text-anchor="middle">PC · IR · accumulator · flags</text>
+          <rect x="400" y="20" width="220" height="80" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+          <text x="510" y="52" fill="#e6edf3" font-size="14" font-weight="700" text-anchor="middle">Memory</text>
+          <text x="510" y="72" fill="#9aa7b4" font-size="11" text-anchor="middle">instructions and data together</text>
+          <rect x="400" y="120" width="220" height="70" rx="12" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+          <text x="510" y="150" fill="#e6edf3" font-size="14" font-weight="700" text-anchor="middle">Input / output</text>
+          <text x="510" y="170" fill="#9aa7b4" font-size="11" text-anchor="middle">keyboard, display, ports</text>
+          <line x1="40" y1="222" x2="600" y2="222" stroke="#58a6ff" stroke-width="3"/>
+          <line x1="40" y1="250" x2="600" y2="250" stroke="#3fb950" stroke-width="3"/>
+          <line x1="40" y1="278" x2="600" y2="278" stroke="#d29922" stroke-width="3"/>
+          <text x="200" y="226" fill="#58a6ff" font-size="11" dy="-7">address bus</text>
+          <text x="200" y="254" fill="#3fb950" font-size="11" dy="-7">data bus</text>
+          <text x="200" y="282" fill="#d29922" font-size="11" dy="-7">control bus</text>
+          <line x1="110" y1="190" x2="110" y2="278" stroke="#9aa7b4" stroke-width="1.5"/>
+          <line x1="180" y1="190" x2="180" y2="278" stroke="#9aa7b4" stroke-width="1.5"/>
+          <line x1="470" y1="100" x2="470" y2="278" stroke="#9aa7b4" stroke-width="1.5"/>
+          <line x1="560" y1="190" x2="560" y2="278" stroke="#9aa7b4" stroke-width="1.5"/>
+          <circle cx="110" cy="222" r="3.5" fill="#58a6ff"/><circle cx="110" cy="250" r="3.5" fill="#3fb950"/><circle cx="110" cy="278" r="3.5" fill="#d29922"/>
+          <circle cx="470" cy="222" r="3.5" fill="#58a6ff"/><circle cx="470" cy="250" r="3.5" fill="#3fb950"/><circle cx="470" cy="278" r="3.5" fill="#d29922"/>
+          <circle cx="560" cy="222" r="3.5" fill="#58a6ff"/><circle cx="560" cy="250" r="3.5" fill="#3fb950"/><circle cx="560" cy="278" r="3.5" fill="#d29922"/>
+        </svg>
+        <figcaption>The three von Neumann blocks and the three buses that join them. The CPU
+        puts an address on the address bus, indicates on the control bus whether it is reading or writing, and the data
+        travels on the data bus.</figcaption>
+      </figure>
+
+      <ul>
+        <li><b>Central processing unit (CPU).</b> The <b>control unit</b> fetches the instructions and
+        interprets them; the <b>arithmetic logic unit</b> (ALU) does the calculations; the <b>registers</b> are
+        the internal memory, small and very fast.</li>
+        <li><b>Main memory.</b> An array of numbered cells. The number of each cell is its
+        <b>address</b> and what it stores is its <b>contents</b>: two things that must never be confused.</li>
+        <li><b>Input/output.</b> The paths to the outside world.</li>
+        <li><b>Buses.</b> Sets of shared lines. The address bus always runs from the CPU outward;
+        the data bus is bidirectional.</li>
+      </ul>
+
+      <div class="box ojo">
+        <div class="bt">Von Neumann and Harvard</div>
+        <p>Sharing one memory for instructions and data is simple, but it creates a bottleneck: the CPU cannot
+        fetch the next instruction and a data item at the same time. The <b>Harvard architecture</b> uses two
+        memories with separate buses. AVR and PIC microcontrollers are Harvard: the program lives in flash and
+        the data in RAM. PC processors are von Neumann on the outside, but inside they have separate
+        instruction and data caches, which is a form of Harvard.</p>
+      </div>
+    </section>
+
+    <section id="ciclo">
+      <h2><span class="n">03</span>The instruction cycle, step by step</h2>
+      <p>The CPU always repeats the same thing, billions of times per second:</p>
+      <ol>
+        <li><b>Fetch</b> (also called <i>instruction fetch</i>): it copies the value of the program counter (PC) into the memory address register (MAR),
+        reads that cell and stores the instruction in the instruction register (IR).
+        Then it increments the PC so that it points to the next one.</li>
+        <li><b>Decode</b>: the control unit splits the IR into the operation code (what to do) and the
+        operand (what to do it with).</li>
+        <li><b>Execute</b>: it performs the operation. It may read or write memory, operate in the ALU or change the PC,
+        which is what a jump does.</li>
+      </ol>
+      <p>The machine below is an 8-bit accumulator CPU with 16 memory cells. Each instruction takes up
+      one byte: the upper 4 bits are the operation code and the lower 4 are the address. It has a program loaded
+      that <b>multiplies A × B by adding A as many times as B says</b>, because this CPU does not know how to multiply.
+      Step through one phase at a time and watch how the data moves.</p>
+
+      <div class="lw" id="cpu">
+        <div class="lt">Lab · a toy CPU</div>
+        <p class="ls">Green: the cell being read. Yellow: the one being written. Blue: where the PC points.</p>
+        <div class="fila">
+          <label>A = <input type="number" id="cpuA" value="3" min="0" max="20" style="width:64px"></label>
+          <label>B = <input type="number" id="cpuB" value="4" min="1" max="20" style="width:64px"></label>
+          <button class="pri" id="cpuPaso">Next phase</button>
+          <button id="cpuInst">Full instruction</button>
+          <button id="cpuRun">▶ Run</button>
+          <button id="cpuReset">Reset</button>
+        </div>
+        <div class="fila"><span class="fase" id="cf0">Fetch</span><span class="fase" id="cf1">Decode</span><span class="fase" id="cf2">Execute</span>
+          <span style="margin-left:auto;font-size:12.5px;color:var(--soft)">Instruction cycles: <b id="cpuCic" style="color:var(--txt)">0</b></span></div>
+        <div class="g2">
+          <div class="caja"><h5>Memory</h5><div class="celdas" id="cpuMem"></div></div>
+          <div>
+            <div class="caja"><h5>CPU registers</h5><div id="cpuReg"></div></div>
+            <div class="caja" style="margin-top:10px"><h5>Instruction set</h5>
+              <div class="celdas" style="font-size:12px">
+                <div>0x1a LOAD a · ACC ← M[a]</div><div>0x2a STORE a · M[a] ← ACC</div>
+                <div>0x3a ADD a · ACC ← ACC + M[a]</div><div>0x4a SUB a · ACC ← ACC − M[a]</div>
+                <div>0x5a JMP a · PC ← a</div><div>0x6a JZ a · if Z, PC ← a</div><div>0x70 HALT · stop</div>
+              </div></div>
+          </div>
+        </div>
+        <div class="nota" id="cpuNota"></div>
+      </div>
+
+      <div class="box key">
+        <div class="bt">What the machine shows</div>
+        <p>An instruction and a data item are indistinguishable in memory: cell 1 contains <code>0x3B</code> and the CPU
+        treats it as “ADD 11” only because the PC went through there. If the PC were to reach cell 11, which contains the number 3,
+        it would execute it as the instruction <code>0x03</code>. A jump with the wrong address does not raise an error: it executes garbage.</p>
+      </div>
+    </section>
+
+    <section id="memoria">
+      <h2><span class="n">04</span>Memory and its hierarchy</h2>
+      <p>The unit is the <b>bit</b>; eight bits make a <b>byte</b>, which is the smallest addressable quantity in almost
+      all processors. The <b>word</b> is the size the CPU works with at once: 8 bits in an
+      AVR, 32 in an ARM Cortex-M, 64 in a PC.</p>
+      <p>With <i>n</i> address lines, 2<sup>n</sup> positions can be distinguished:</p>
+      <div class="form">
+        \[ \text{positions} = 2^n \quad 2^{16} = 65 536 \quad 2^{32} = 4 294 967 296 \]
+        <span class="cap">A 16-bit bus addresses 64 KiB; a 32-bit one, 4 GiB. That is why 32-bit systems could not use more than 4 GiB of RAM.</span>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">kilo is not kibi</div>
+        <p>In the International System, kilo is 1000. But memory grows in powers of 2, so
+        “kilobyte” was used for 1024 bytes for decades. The IEC separated the two: <b>kB = 1000 B</b> and
+        <b>KiB = 1024 B</b>; MiB = 2<sup>20</sup>, GiB = 2<sup>30</sup>. A “1 TB” disk has 10<sup>12</sup> bytes,
+        which is 931 GiB: nothing is missing, it is measured in a different unit. The
+        <a class="ref" href="/publicaciones/conversor-si" hreflang="es">SI prefix converter</a> helps with the decimal ones.</p>
+      </div>
+
+      <p>No memory is large, fast and cheap all at once. The solution is a <b>hierarchy</b>: a few very
+      fast cells close to the CPU and many slow ones far away. It works because programs have <b>locality</b>: they use
+      the same data several times (temporal locality) and neighboring data (spatial locality).</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Level</th><th class="c">Typical size</th><th class="c">Access time</th><th>Technology</th></tr></thead>
+          <tbody>
+            <tr><td>Registers</td><td class="c">hundreds of bytes</td><td class="c">&lt; 1 ns</td><td>Flip-flops in the CPU</td></tr>
+            <tr><td>L1 cache</td><td class="c">32–64 KiB</td><td class="c">≈ 1 ns</td><td>SRAM</td></tr>
+            <tr><td>L2 and L3 cache</td><td class="c">MiB</td><td class="c">3–20 ns</td><td>SRAM</td></tr>
+            <tr><td>Main memory</td><td class="c">GiB</td><td class="c">60–100 ns</td><td>DRAM</td></tr>
+            <tr><td>Solid-state drive</td><td class="c">hundreds of GB</td><td class="c">tens of µs</td><td>NAND flash</td></tr>
+            <tr><td>Hard disk drive</td><td class="c">TB</td><td class="c">5–10 ms</td><td>Magnetic</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>These are orders of magnitude, not data from a specific model. What matters is the scale: between a register and a hard
+      disk drive there is a factor of ten million. If a register access took one second, reading the disk would take
+      four months. The types of memory are covered in
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/memorias-dispositivos-programables">memories
+      and programmable devices</a>.</p>
+    </section>
+
+    <section id="es">
+      <h2><span class="n">05</span>Input and output</h2>
+      <p>To the CPU, a peripheral is a group of <b>registers</b>: one for data, one for status and one for control.
+      There are two ways to reach them. In <b>memory-mapped I/O</b> the registers occupy addresses in the
+      same space as RAM and are read and written with ordinary instructions; this is what
+      microcontrollers do. In <b>isolated I/O</b> there is a separate space with its own instructions, such as
+      <code>IN</code> and <code>OUT</code> on x86.</p>
+      <p>And there are three ways to find out when the peripheral has something:</p>
+      <div class="g3">
+        <div class="box"><div class="bt">Polling</div><p>The CPU reads the status register over and over
+        again. Simple, but it keeps the processor busy waiting.</p></div>
+        <div class="box"><div class="bt">Interrupts</div><p>The peripheral signals it; the CPU drops what it is
+        doing, services it and returns. See <a class="ref" href="/en/publicaciones/mapa-electronica/temas/interrupciones">interrupts</a>.</p></div>
+        <div class="box"><div class="bt">Direct memory access (DMA)</div><p>A controller moves blocks between the
+        peripheral and memory without going through the CPU, which only receives the “done” notification.</p></div>
+      </div>
+    </section>
+
+    <section id="software">
+      <h2><span class="n">06</span>From source code to execution</h2>
+      <p>The CPU only executes machine code. A C program goes through this path before it runs:</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Stage</th><th>Input</th><th>Output</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><b>Preprocessor</b></td><td><code>.c</code></td><td><code>.i</code></td><td>Resolves <code>#include</code>, <code>#define</code> and conditional compilation</td></tr>
+            <tr><td><b>Compiler</b></td><td><code>.i</code></td><td><code>.s</code></td><td>Translates C into the assembly language of the target processor</td></tr>
+            <tr><td><b>Assembler</b></td><td><code>.s</code></td><td><code>.o</code></td><td>Translates each mnemonic into its machine code</td></tr>
+            <tr><td><b>Linker</b></td><td><code>.o</code> + libraries</td><td>executable</td><td>Joins the object files and fixes the final addresses</td></tr>
+            <tr><td><b>Loader</b></td><td>executable</td><td>process</td><td>The operating system copies it into memory and jumps to its first instruction</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The <b>operating system</b> is the program that manages the hardware and shares it among the other
+      programs: it decides who uses the CPU, gives each process its memory space and offers files and
+      devices through system calls. In a small microcontroller there is no operating system: the
+      program is the sole owner of the machine. The stages of compilation are practiced in the topic on
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/programacion-estructurada">structured programming</a>.</p>
+    </section>
+
+    <section id="rendimiento">
+      <h2><span class="n">07</span>What makes a computer fast?</h2>
+      <p>Clock frequency is not enough to compare processors. The time a program takes depends on
+      three factors, and the so-called <b>classic performance equation</b> combines them:</p>
+      <div class="form">
+        \[ T = \frac{N_i \cdot \operatorname{CPI}}{f} \]
+        <span class="cap">N<sub>i</sub>: instructions executed · CPI: average clock cycles per instruction · f: clock frequency.</span>
+      </div>
+      <div class="box ejem">
+        <div class="bt">Worked example</div>
+        <p>A program executes 2·10<sup>9</sup> instructions. On processor A, at 3 GHz, it averages 1.5 cycles per
+        instruction; on B, at 2.5 GHz, it averages 1.2.</p>
+        <p>T<sub>A</sub> = 2·10<sup>9</sup> · 1.5 / 3·10<sup>9</sup> = <b>1.00 s</b> and
+        T<sub>B</sub> = 2·10<sup>9</sup> · 1.2 / 2.5·10<sup>9</sup> = <b>0.96 s</b>.</p>
+        <p>B is faster with a clock that is 17% slower. The compiler affects N<sub>i</sub>, the
+        microarchitecture affects the CPI and the technology affects f: none of the three decides alone.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">08</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Inventory of a PC</div>
+        <p>On Windows, open the task manager (Performance tab) and on Linux run
+        <code>lscpu</code> and <code>free -h</code>. Write down cores, frequency, size of each cache and total RAM.
+        Locate each item in the hierarchy table. For the physical hardware, see
+        <a class="ref" href="/en/publicaciones/mapa-electronica/temas/mantenimiento-pc">PC maintenance</a>.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Programming the toy CPU</div>
+        <p>On paper, using the instruction set from section 3, write a program that computes A − B and leaves the
+        result in cell 13. Then one that computes the larger of two numbers. Encode each instruction in
+        hexadecimal and use the machine to check how many cycles it takes.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Measuring locality</div>
+        <p>Traverse a 4000 × 4000 integer matrix in C, first by rows and then by columns, measuring the
+        time with <code>clock()</code>. Explain the difference in terms of spatial locality and the way the
+        matrix is organized in memory, which is covered in <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/datos-complejos">complex
+        data containers</a>.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">09</span>Common mistakes</h2>
+      <ul>
+        <li><b>Confusing address and contents.</b> Cell 13 is not “worth 13”: it is worth whatever is stored in it.</li>
+        <li><b>Believing that more GHz is always faster.</b> The CPI and the number of instructions weigh as much as
+        the clock.</li>
+        <li><b>Mixing up kB and KiB</b> and concluding that “memory is missing.”</li>
+        <li><b>Thinking that RAM only stores data.</b> The program being executed is also there.</li>
+        <li><b>Forgetting that the PC has already been incremented</b> when the instruction executes: that is why a relative jump is
+        counted from the next instruction.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">10</span>Self-assessment</h2>
+      <details class="q"><summary>What is a stored program and what advantage did it bring?</summary>
+        <div class="a"><p>It means keeping the instructions in memory, as data. It allows changing programs without
+        rewiring the machine and makes it possible for one program (a compiler, a loader) to generate or load others.</p></div></details>
+      <details class="q"><summary>How many positions does a 20-bit bus address? How much memory is that, if each position is one byte?</summary>
+        <div class="a"><p>2<sup>20</sup> = 1,048,576 positions: 1 MiB. It was the limit of the original 8086.</p></div></details>
+      <details class="q"><summary>Which register changes in every fetch, without exception?</summary>
+        <div class="a"><p>The program counter, which is incremented to point to the next instruction. The IR
+        is also always loaded.</p></div></details>
+      <details class="q"><summary>How does the CPU implement a jump?</summary>
+        <div class="a"><p>By writing a new address into the PC during execution. The next fetch brings in the
+        instruction from there.</p></div></details>
+      <details class="q"><summary>Why does the memory hierarchy work?</summary>
+        <div class="a"><p>Because of the locality of programs: most accesses fall on data used recently or
+        close to it, which is already in the fast levels.</p></div></details>
+      <details class="q"><summary>A processor executes 5·10<sup>8</sup> instructions with a CPI of 2 at 1 GHz. How long does it take?</summary>
+        <div class="a"><p>T = 5·10<sup>8</sup> · 2 / 10<sup>9</sup> = 1 s.</p></div></details>
+      <details class="q"><summary>What distinguishes the Harvard architecture from the von Neumann one?</summary>
+        <div class="a"><p>Harvard has separate memories and buses for instructions and data, and can access
+        both at the same time. Von Neumann shares a single memory and a single path.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">11</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Andrew S. Tanenbaum and Todd Austin.</span> <span class="ti">Structured Computer
+          Organization</span>. <span class="ed">4th ed. (Spanish edition, “Organización de computadoras”), Pearson Educación, 2000.</span>
+          <span class="pq">The book of the “stack of machines”: it is organized layer by layer, from digital logic to the operating system.</span></li>
+        <li><span class="au">David A. Patterson and John L. Hennessy.</span> <span class="ti">Computer Organization and
+          Design: The Hardware/Software Interface</span>. <span class="ed">4th ed. (Spanish edition, “Estructura y diseño de computadores”), Reverté, 2011.</span>
+          <span class="pq">Chapter 1 develops the performance equation; the one on the memory hierarchy is the reference for the topic.</span></li>
+        <li><span class="au">William Stallings.</span> <span class="ti">Computer Organization and Architecture</span>.
+          <span class="ed">7th ed. (Spanish edition, “Organización y arquitectura de computadores”), Pearson Prentice Hall, 2006.</span>
+          <span class="pq">Buses, the instruction cycle and input/output in great detail.</span></li>
+        <li><span class="au">Charles Petzold.</span> <span class="ti">Code: The Hidden Language of Computer Hardware and
+          Software</span>. <span class="ed">2nd ed., Microsoft Press, 2022.</span>
+          <span class="pq">It builds a computer from relays and gates up to the stored program. It reads like a novel.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a class="ph" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">← Back</div>
+        <div class="tt">Engineering Topic Map</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/sistemas-numeracion">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Number systems and binary arithmetic</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Structure of a computer system”</b> of <b>Computer Science I</b> (Level 1), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* CPU de juguete: acumulador de 8 bits, 16 celdas, instrucción de un byte
+   (código de operación en el nibble alto, dirección en el bajo). */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var NOM = { 1:"LOAD", 2:"STORE", 3:"ADD", 4:"SUB", 5:"JMP", 6:"JZ", 7:"HALT" };
+  var QUE = {
+    1:function(a){ return "load the contents of cell " + a + " into the accumulator"; },
+    2:function(a){ return "store the accumulator in cell " + a; },
+    3:function(a){ return "add the contents of cell " + a + " to the accumulator"; },
+    4:function(a){ return "subtract the contents of cell " + a + " from the accumulator"; },
+    5:function(a){ return "jump to cell " + a; },
+    6:function(a){ return "jump to cell " + a + " if the last result was zero"; },
+    7:function(){ return "halt the machine"; }
+  };
+  var ROT = { 11:"A", 12:"B (count)", 13:"P (product)", 14:"constant 1" };
+  var PROG = [0x1D, 0x3B, 0x2D, 0x1C, 0x4E, 0x2C, 0x68, 0x50, 0x70];
+  var M, R, fase, fin, cic, lee, esc, cambio, corre = null;
+
+  function hex(v){ return "0x" + (v < 16 ? "0" : "") + v.toString(16).toUpperCase(); }
+  function reset(){
+    parar();
+    M = new Array(16).fill(0);
+    PROG.forEach(function(v, i){ M[i] = v; });
+    M[11] = Math.max(0, Math.min(20, parseInt($("cpuA").value, 10) || 0));
+    M[12] = Math.max(1, Math.min(20, parseInt($("cpuB").value, 10) || 1));
+    M[13] = 0; M[14] = 1;
+    R = { PC:0, MAR:0, MDR:0, IR:0, ACC:0, Z:0 };
+    fase = 0; fin = false; cic = 0; lee = -1; esc = -1; cambio = {};
+    pintar("Machine ready. The PC is 0: the first fetch brings in the instruction from cell 0.");
+  }
+  function desarmar(v, i){
+    if(i >= 11) return ROT[i] ? "data · " + ROT[i] : "";
+    if(i > 8) return "";
+    var op = v >> 4, a = v & 15;
+    return NOM[op] ? NOM[op] + (op === 7 ? "" : " " + a) : "";
+  }
+  function pintar(nota){
+    $("cpuMem").innerHTML = M.map(function(v, i){
+      var c = "celda" + (i === lee ? " lee" : i === esc ? " esc" : i === R.PC && !fin ? " act" : "");
+      return '<div class="' + c + '"><span class="dir">' + i.toString().padStart(2, " ") + "</span><span>" +
+        hex(v) + (i >= 11 ? " = " + v : "") + '  <span style="color:var(--soft)">' + desarmar(v, i) + "</span></span></div>";
+    }).join("");
+    $("cpuReg").innerHTML = [["PC","program counter"],["MAR","memory address"],["MDR","memory data"],
+      ["IR","instruction register"],["ACC","accumulator"],["Z","zero flag"]].map(function(r){
+      var v = R[r[0]];
+      return '<div class="reg' + (cambio[r[0]] ? " cambio" : "") + '"><span>' + r[0] + " · " + r[1] + "</span><b>" +
+        (r[0] === "Z" ? v : r[0] === "PC" || r[0] === "MAR" ? v : hex(v) + " = " + v) + "</b></div>";
+    }).join("");
+    for(var k = 0; k < 3; k++) $("cf" + k).className = "fase" + (!fin && fase === k ? " on" : "");
+    $("cpuCic").textContent = cic;
+    $("cpuNota").innerHTML = nota;
+    $("cpuPaso").disabled = $("cpuInst").disabled = fin;
+  }
+  function paso(){
+    if(fin) return;
+    lee = esc = -1; cambio = {};
+    var nota, op = R.IR >> 4, a = R.IR & 15;
+    if(fase === 0){
+      R.MAR = R.PC; R.MDR = M[R.MAR]; R.IR = R.MDR; lee = R.MAR; R.PC = (R.PC + 1) & 15;
+      cambio = { MAR:1, MDR:1, IR:1, PC:1 };
+      nota = "<b>Fetch.</b> MAR ← PC = " + R.MAR + "; cell " + R.MAR + " is read and the IR receives " + hex(R.IR) +
+             ". The PC now points to the next one: " + R.PC + ".";
+      fase = 1;
+    } else if(fase === 1){
+      op = R.IR >> 4; a = R.IR & 15;
+      nota = NOM[op] ? "<b>Decode.</b> IR = " + hex(R.IR) + ": code " + op + " = <b>" + NOM[op] +
+             "</b>" + (op === 7 ? "" : ", address " + a) + ". The task is to " + QUE[op](a) + "."
+           : "<b>Decode.</b> " + hex(R.IR) + " is not a valid instruction: the machine halts.";
+      if(!NOM[op]){ fin = true; }
+      fase = 2;
+    } else {
+      if(op === 1){ R.MAR = a; R.MDR = M[a]; R.ACC = R.MDR; lee = a; cambio = { MAR:1, MDR:1, ACC:1 }; }
+      else if(op === 2){ R.MAR = a; R.MDR = R.ACC; M[a] = R.ACC; esc = a; cambio = { MAR:1, MDR:1 }; }
+      else if(op === 3){ R.MAR = a; R.MDR = M[a]; R.ACC = (R.ACC + R.MDR) & 255; lee = a; cambio = { MAR:1, MDR:1, ACC:1 }; }
+      else if(op === 4){ R.MAR = a; R.MDR = M[a]; R.ACC = (R.ACC - R.MDR) & 255; lee = a; cambio = { MAR:1, MDR:1, ACC:1 }; }
+      else if(op === 5){ R.PC = a; cambio = { PC:1 }; }
+      else if(op === 6){ if(R.Z){ R.PC = a; cambio = { PC:1 }; } }
+      else if(op === 7){ fin = true; }
+      if(op === 1 || op === 3 || op === 4){ var z = R.ACC === 0 ? 1 : 0; if(z !== R.Z) cambio.Z = 1; R.Z = z; }
+      cic++;
+      if(op === 7) nota = "<b>Execute: HALT.</b> End of program. Cell 13 holds the product: <b>" + M[13] +
+        "</b> = " + M[11] + " × " + $("cpuB").value + ", in " + cic + " instruction cycles.";
+      else if(op === 5) nota = "<b>Execute.</b> The PC now holds " + a + ": the next fetch goes back to the start of the loop.";
+      else if(op === 6) nota = "<b>Execute.</b> Z = " + R.Z + (R.Z ? ": the count reached zero and the PC jumps to " + a + "."
+                                                                  : ": it is not zero yet, so the PC is left alone and stays at " + R.PC + ".");
+      else if(op === 2) nota = "<b>Execute.</b> The accumulator (" + R.ACC + ") is written to cell " + a + ".";
+      else nota = "<b>Execute.</b> ACC = " + R.ACC + (cambio.Z ? " and the Z flag changes to " + R.Z : "") + ".";
+      fase = 0;
+    }
+    pintar(nota);
+  }
+  function instruccion(){ do { paso(); } while(fase !== 0 && !fin); }
+  function parar(){ if(corre){ clearInterval(corre); corre = null; } if($("cpuRun")) $("cpuRun").textContent = "▶ Run"; }
+  $("cpuPaso").onclick = function(){ parar(); paso(); };
+  $("cpuInst").onclick = function(){ parar(); instruccion(); };
+  $("cpuRun").onclick = function(){
+    if(corre){ parar(); return; }
+    if(fin) reset();
+    this.textContent = "⏸ Pause";
+    corre = setInterval(function(){ paso(); if(fin) parar(); }, 450);
+  };
+  $("cpuReset").onclick = reset;
+  $("cpuA").onchange = reset; $("cpuB").onchange = reset;
+  reset();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

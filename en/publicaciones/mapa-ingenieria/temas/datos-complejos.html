@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Complex data containers · Computer Science I · Catto</title>
+<meta name="description" content="Arrays and matrices and address calculation, strings, pointers and pointer arithmetic, structures and alignment padding, dynamic memory, linked lists and files. Content of Computer Science I, Level 1 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/datos-complejos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/datos-complejos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/datos-complejos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/datos-complejos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science I</a>
+    <span class="anio">Level 1</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science I</span> · 120 h · Topic 5 of 6</div>
+    <h1>Complex data containers</h1>
+    <p class="lead">Memory is a row of numbered bytes. Arrays, matrices, structures and lists are different ways of arranging data in that row and of knowing where each item ended up.</p>
+    <div class="chips">
+      <span class="chip hi">Arrays</span>
+      <span class="chip">Pointers</span>
+      <span class="chip">Structures</span>
+      <span class="chip">Dynamic memory</span>
+      <span class="chip">Files</span>
+    </div>
+    <hr class="rule">
+
+    <section id="agrupar">
+      <h2><span class="n">01</span>Why group data</h2>
+      <p>Storing the 1000 samples of an oscilloscope in a thousand separate variables is impossible to manage. Storing
+      a measurement in three separate variables —voltage, current and time instant— forces you to always pass them together and
+      never mix them up. <b>Data containers</b> solve both problems: the <b>array</b> groups
+      many data of the same type and the <b>structure</b> groups different data that describe one and the same thing.</p>
+      <div class="box key"><div class="bt">A single idea behind the whole topic</div>
+        <p>Memory is a row of numbered bytes. An array, a matrix, a structure or a list are
+        ways of <b>placing data in that row</b> and of calculating where each item is. Whoever knows how to do that calculation
+        understands pointers, knows why C does not check indices and knows how much space each thing takes.</p></div>
+    </section>
+
+    <section id="arreglos">
+      <h2><span class="n">02</span>Arrays: data in a row</h2>
+      <p>An array occupies <b>contiguous</b> positions. If it starts at address <i>base</i> and each element takes up
+      <code>sizeof(T)</code> bytes, element <i>i</i> is at:</p>
+      <div class="form">
+        \[ \operatorname{addr} (v [ i ]) = \operatorname{base} + i \cdot \text{sizeof} (T) \]
+        <span class="cap">That is why the first index is 0: the first element is at distance zero from the base.</span>
+      </div>
+      <p>The calculation is one multiplication and one addition, regardless of the size of the array: accessing
+      <code>v[999]</code> takes the same time as accessing <code>v[0]</code>. And C does <b>not check</b> that the index is
+      within the array: <code>v[10]</code> in a 10-element array calculates the address and reads or writes
+      whatever is there, which is another variable.</p>
+      <p><b>Matrices</b> are also stored in a row, <b>row by row</b> (row-major order). For an
+      <i>R</i> × <i>C</i> matrix:</p>
+      <div class="form">
+        \[ \operatorname{addr} (m [ i ] [ j ]) = \operatorname{base} + (i \cdot C + j) \cdot \text{sizeof} (T) \]
+        <span class="cap">Traversing by rows reads neighboring bytes; traversing by columns jumps C elements at a time. With a cache, the difference is noticeable.</span>
+      </div>
+
+      <div class="lw" id="mem">
+        <div class="lt">Lab · where each item ends up</div>
+        <div class="fila">
+          <select id="mmModo">
+            <option value="v">Array: T v[8]</option>
+            <option value="m">Matrix: T m[3][4]</option>
+            <option value="s">Structure with padding</option>
+          </select>
+          <select id="mmTipo">
+            <option value="1">char (1 byte)</option><option value="2">int16_t (2 bytes)</option>
+            <option value="4" selected>int32_t or float (4 bytes)</option><option value="8">double (8 bytes)</option>
+          </select>
+          <label id="mmLi">i = <input type="number" id="mmI" value="2" min="0" style="width:58px"></label>
+          <label id="mmLj">j = <input type="number" id="mmJ" value="1" min="0" style="width:58px"></label>
+          <button id="mmOrden" class="on" style="display:none">Fields in declared order</button>
+        </div>
+        <div id="mmMapa" style="display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-top:8px"></div>
+        <div class="nota" id="mmNota"></div>
+      </div>
+    </section>
+
+    <section id="cadenas">
+      <h2><span class="n">03</span>Character strings</h2>
+      <p>C has no string type: a string is an array of <code>char</code> that ends with the null character
+      <code>'\0'</code> (value 0). All the functions in <code>&lt;string.h&gt;</code> scan until they find it;
+      that is why <code>char s[6]</code> is enough for <code>"Hello"</code> but not for <code>"Hello!"</code>.</p>
+      <pre class="code"><code><span class="c-ty">char</span> s[<span class="c-num">8</span>] = <span class="c-str">"R1=4k7"</span>;   <span class="c-com">// 'R' '1' '=' '4' 'k' '7' '\0' and one spare byte</span>
+<span class="c-fn">strlen</span>(s);                  <span class="c-com">// 6: it does not count the '\0'</span>
+<span class="c-kw">sizeof</span>(s);                  <span class="c-com">// 8: the whole array</span>
+<span class="c-fn">strcpy</span>(s, <span class="c-str">"R10=100k"</span>);     <span class="c-com">// 9 bytes into 8! overflow</span>
+<span class="c-fn">snprintf</span>(s, <span class="c-kw">sizeof</span> s, <span class="c-str">"%s"</span>, <span class="c-str">"R10=100k"</span>);  <span class="c-com">// copies 7 and terminates with '\0'</span></code></pre>
+      <div class="box peligro"><div class="bt">Buffer overflow</div>
+        <p>Writing beyond the end of an array overwrites whatever is next to it. It is the most exploited security flaw
+        in the history of computing. Never use <code>gets</code>; prefer the functions that take the size
+        of the destination (<code>fgets</code>, <code>snprintf</code>).</p></div>
+    </section>
+
+    <section id="punteros">
+      <h2><span class="n">04</span>Pointers: variables that store addresses</h2>
+      <p>A pointer is a variable whose contents are a memory address. Two operators handle everything:
+      <code>&amp;x</code> gives the address of <code>x</code> and <code>*p</code> gives what is at the address stored
+      in <code>p</code>.</p>
+      <pre class="code"><code><span class="c-ty">int</span> x = <span class="c-num">10</span>;
+<span class="c-ty">int</span> *p = &amp;x;     <span class="c-com">// p stores the address of x</span>
+*p = <span class="c-num">25</span>;          <span class="c-com">// writes to x: now x is 25</span>
+<span class="c-ty">int</span> v[<span class="c-num">4</span>] = {<span class="c-num">3</span>, <span class="c-num">1</span>, <span class="c-num">4</span>, <span class="c-num">1</span>};
+<span class="c-ty">int</span> *q = v;        <span class="c-com">// the array name is the address of v[0]</span>
+*(q + <span class="c-num">2</span>) == v[<span class="c-num">2</span>]    <span class="c-com">// true: v[i] is defined as *(v + i)</span></code></pre>
+      <p><b>Pointer arithmetic</b> counts in elements, not in bytes: <code>q + 2</code> advances
+      2 · <code>sizeof(int)</code> bytes. It is exactly the formula from section 2, and that is why in C arrays and
+      pointers are used almost interchangeably. A pointer that points to nothing is set to <code>NULL</code>, and
+      before using <code>*p</code> you must be sure that <code>p</code> points to something valid.</p>
+      <div class="box ojo"><div class="bt">An array passed to a function loses its size</div>
+        <p>When <code>v</code> is passed to a function, only the address of <code>v[0]</code> is passed. Inside,
+        <code>sizeof(v)</code> gives the size of a pointer, not that of the array. That is why functions that receive
+        arrays also receive the number of elements: <code>double parallel(const double r[], int n)</code>.</p></div>
+    </section>
+
+    <section id="estructuras">
+      <h2><span class="n">05</span>Structures: different data that belong together</h2>
+      <pre class="code"><code><span class="c-kw">typedef struct</span> {
+    <span class="c-ty">float</span>    voltage;   <span class="c-com">// V</span>
+    <span class="c-ty">float</span>    current;   <span class="c-com">// A</span>
+    <span class="c-ty">uint32_t</span> timestamp; <span class="c-com">// ms since startup</span>
+} <span class="c-ty">Measurement</span>;
+
+<span class="c-ty">Measurement</span> m = { <span class="c-num">4.98f</span>, <span class="c-num">0.021f</span>, <span class="c-num">1500</span> };
+<span class="c-ty">Measurement</span> table[<span class="c-num">100</span>];         <span class="c-com">// array of structures</span>
+table[<span class="c-num">3</span>].voltage = <span class="c-num">5.01f</span>;
+<span class="c-ty">Measurement</span> *pm = &amp;table[<span class="c-num">3</span>];
+pm-&gt;current = <span class="c-num">0.02f</span>;        <span class="c-com">// -&gt; is (*pm).current</span></code></pre>
+      <p>A structure can be copied with <code>=</code>, passed to a function and returned. Since it is passed by value,
+      with large structures it is better to pass a pointer, and <code>const</code> if the function does not modify it.</p>
+      <p>There is a detail that comes as a surprise: <b>padding</b>. Many processors read a 4-byte item faster, or
+      can only read it, if its address is a multiple of 4. The compiler adds empty bytes between fields to
+      align them. <code>struct { char a; int32_t b; }</code> takes up 8 bytes, not 5. In the lab above, the
+      <b>Structure with padding</b> option shows this, and it also shows that ordering the fields from largest to smallest
+      reduces the waste.</p>
+      <div class="g2">
+        <div class="box"><div class="bt">union</div><p>All the fields share the same memory: it takes up as much as the
+        largest field. It is useful for viewing the same bytes in two ways or for saving memory when only one of
+        the fields makes sense at a time.</p></div>
+        <div class="box"><div class="bt">enum</div><p>Gives names to integer values:
+        <code>enum state { OFF, ON, FAULT };</code>. It makes a state machine readable.</p></div>
+      </div>
+    </section>
+
+    <section id="dinamica">
+      <h2><span class="n">06</span>Dynamic memory</h2>
+      <p>Local variables live on the <b>stack</b> and have a fixed size, decided at compile time. When the amount
+      of data is only known at run time, memory is requested from the <b>heap</b> (also called the <i>free store</i>):</p>
+      <pre class="code"><code><span class="c-ty">int</span> n;
+<span class="c-fn">scanf</span>(<span class="c-str">"%d"</span>, &amp;n);
+<span class="c-ty">double</span> *samples = <span class="c-fn">malloc</span>(n * <span class="c-kw">sizeof</span> *samples);
+<span class="c-kw">if</span> (samples == NULL) { <span class="c-com">/* out of memory: report and exit */</span> }
+...                                 <span class="c-com">// used like an array: samples[i]</span>
+<span class="c-fn">free</span>(samples);                     <span class="c-com">// give it back when it is no longer needed</span>
+samples = NULL;</code></pre>
+      <p>What is requested with <code>malloc</code> lives until it is released with <code>free</code>, even if the function
+      that requested it has finished. Forgetting to release it is a <b>memory leak</b>; using the memory after
+      releasing it is an error that may not show up for weeks. On small microcontrollers dynamic
+      memory is avoided: with only a few KiB, fragmentation makes it unpredictable.</p>
+    </section>
+
+    <section id="enlazadas">
+      <h2><span class="n">07</span>Linked structures</h2>
+      <p>An array cannot grow or insert in the middle without shifting everything that follows. A <b>linked list</b>
+      stores each item in a separate node, requested with <code>malloc</code>, and each node has a pointer to the next:</p>
+      <pre class="code"><code><span class="c-kw">typedef struct</span> node {
+    <span class="c-ty">int</span> value;
+    <span class="c-kw">struct</span> node *next;       <span class="c-com">// NULL in the last one</span>
+} <span class="c-ty">Node</span>;
+
+<span class="c-com">/* insert at the beginning: O(1), no other data is moved */</span>
+<span class="c-ty">Node</span> *<span class="c-fn">insert</span>(<span class="c-ty">Node</span> *head, <span class="c-ty">int</span> v)
+{
+    <span class="c-ty">Node</span> *n = <span class="c-fn">malloc</span>(<span class="c-kw">sizeof</span> *n);
+    <span class="c-kw">if</span> (!n) <span class="c-kw">return</span> head;
+    n-&gt;value = v;
+    n-&gt;next = head;
+    <span class="c-kw">return</span> n;
+}</code></pre>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operation</th><th class="c">Array</th><th class="c">Linked list</th></tr></thead>
+        <tbody>
+          <tr><td>Access element i</td><td class="c">immediate, O(1)</td><td class="c">traverse, O(n)</td></tr>
+          <tr><td>Insert at the beginning</td><td class="c">shift everything, O(n)</td><td class="c">immediate, O(1)</td></tr>
+          <tr><td>Grow</td><td class="c">must reallocate</td><td class="c">one more node</td></tr>
+          <tr><td>Extra memory</td><td class="c">none</td><td class="c">one pointer per item</td></tr>
+        </tbody>
+      </table></div>
+      <p>Stacks, queues, trees and graphs are built with the same idea. No structure is better in general: you
+      choose according to which operation is performed most often.</p>
+    </section>
+
+    <section id="archivos">
+      <h2><span class="n">08</span>Files: the container that outlives the program</h2>
+      <p>Everything above disappears when the program ends. To save data, files are used, through a
+      pointer to <code>FILE</code>:</p>
+      <pre class="code"><code><span class="c-ty">FILE</span> *f = <span class="c-fn">fopen</span>(<span class="c-str">"measurements.csv"</span>, <span class="c-str">"w"</span>);
+<span class="c-kw">if</span> (f == NULL) { <span class="c-fn">perror</span>(<span class="c-str">"measurements.csv"</span>); <span class="c-kw">return</span> <span class="c-num">1</span>; }
+<span class="c-kw">for</span> (<span class="c-ty">int</span> i = <span class="c-num">0</span>; i &lt; n; i++)
+    <span class="c-fn">fprintf</span>(f, <span class="c-str">"%u;%.3f;%.4f\n"</span>, table[i].timestamp, table[i].voltage, table[i].current);
+<span class="c-fn">fclose</span>(f);</code></pre>
+      <p>A <b>text</b> file like that can be opened with any spreadsheet. A <b>binary</b> one, written
+      with <code>fwrite(table, sizeof(Measurement), n, f)</code>, takes less space and is read faster, but depends on the
+      size of the types, on padding and on the byte order of the machine that wrote it.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">09</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Printing addresses</div>
+        <p>Declare <code>int v[5]</code> and print <code>&amp;v[i]</code> with <code>%p</code> for each i. Check
+        that the difference between consecutive addresses is <code>sizeof(int)</code>. Repeat with <code>double</code>
+        and with an array of <code>Measurement</code>.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Measuring padding</div>
+        <p>Print the <code>sizeof</code> of <code>struct {char a; int b; char c;}</code> and of
+        <code>struct {int b; char a; char c;}</code>. Explain the difference using <code>offsetof</code> from
+        <code>&lt;stddef.h&gt;</code>.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · A data logger</div>
+        <p>Read voltage and current measurements until the user enters a negative value, store them in a
+        dynamic array that grows with <code>realloc</code>, compute the power of each one and save them to a CSV file.
+        Open it in a spreadsheet and plot it.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">10</span>Common mistakes</h2>
+      <ul>
+        <li><b>Traversing with <code>i &lt;= n</code></b> an array of n elements: the last valid index is n − 1.</li>
+        <li><b>Forgetting the space for the <code>'\0'</code></b> when sizing a string.</li>
+        <li><b>Comparing strings with <code>==</code></b>: it compares addresses. Use <code>strcmp</code>, which returns 0 if they are equal.</li>
+        <li><b>Using an uninitialized pointer</b> or one after <code>free</code>.</li>
+        <li><b>Computing the size of an array with sizeof inside a function</b> that received it as a parameter.</li>
+        <li><b>Assuming that the sizeof of a structure is the sum of its fields.</b></li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">11</span>Self-assessment</h2>
+      <details class="q"><summary>An array <code>double d[10]</code> starts at address 0x1000. Where is <code>d[7]</code>?</summary>
+        <div class="a"><p>0x1000 + 7 · 8 = 0x1000 + 56 = 0x1038.</p></div></details>
+      <details class="q"><summary>In <code>int m[3][4]</code> with base 0x2000 and 4-byte integers, where is <code>m[2][1]</code>?</summary>
+        <div class="a"><p>0x2000 + (2 · 4 + 1) · 4 = 0x2000 + 36 = 0x2024.</p></div></details>
+      <details class="q"><summary>What is the difference between <code>sizeof(s)</code> and <code>strlen(s)</code> for <code>char s[20] = "abc"</code>?</summary>
+        <div class="a"><p>sizeof gives 20, the size of the array; strlen gives 3, the characters before the '\0'.</p></div></details>
+      <details class="q"><summary>If <code>p</code> points to an <code>int32_t</code> at 0x100, where does <code>p + 3</code> point?</summary>
+        <div class="a"><p>To 0x10C: it advances 3 elements of 4 bytes.</p></div></details>
+      <details class="q"><summary>How much space does <code>struct { char a; double d; char c; }</code> take on a 64-bit PC?</summary>
+        <div class="a"><p>24 bytes: a at 0, 7 of padding, d at 8, c at 16 and 7 more of padding so that an array of
+        these structures keeps d aligned. Ordering them d, a, c it takes 16.</p></div></details>
+      <details class="q"><summary>When is a linked list preferable to an array?</summary>
+        <div class="a"><p>When there are many insertions and removals at arbitrary positions and items are almost never accessed by index.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">12</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Brian W. Kernighan and Dennis M. Ritchie.</span> <span class="ti">The C Programming Language</span>.
+          <span class="ed">2nd ed. (Spanish edition, “El lenguaje de programación C”), Prentice Hall Hispanoamericana, 1991.</span>
+          <span class="pq">Chapters 5 (pointers and arrays) and 6 (structures) are still the best short explanation.</span></li>
+        <li><span class="au">Luis Joyanes Aguilar and Ignacio Zahonero Martínez.</span> <span class="ti">Programación en C.
+          Metodología, algoritmos y estructura de datos</span>. <span class="ed">2nd ed., McGraw-Hill, 2005 (in Spanish).</span>
+          <span class="pq">Lists, stacks, queues and files implemented in C, in Spanish.</span></li>
+        <li><span class="au">Niklaus Wirth.</span> <span class="ti">Algorithms + Data Structures = Programs</span>.
+          <span class="ed">Spanish edition (“Algoritmos + estructuras de datos = programas”), Ediciones del Castillo, 1980.</span>
+          <span class="pq">The choice of data structure as part of algorithm design.</span></li>
+        <li><span class="au">Robert Sedgewick.</span> <span class="ti">Algorithms in C</span>.
+          <span class="ed">3rd ed., Addison-Wesley, 1998.</span>
+          <span class="pq">Data structures and algorithms implemented in C, with cost analysis.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/programacion-estructurada">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Structured programming language</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/bajo-nivel">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Using the language for low-level applications</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Complex data containers”</b> of <b>Computer Science I</b> (Level 1), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Mapa de memoria byte a byte: arreglo, matriz y estructura con relleno. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var BASE = 0x1000, ordenado = false;
+  var COLS = ["rgba(88,166,255,.16)", "rgba(163,113,247,.16)", "rgba(63,185,80,.14)", "rgba(210,153,34,.15)"];
+  var TIPO = { 1:"char", 2:"int16_t", 4:"int32_t", 8:"double" };
+  function hx(n){ return "0x" + n.toString(16).toUpperCase(); }
+
+  function celda(off, txt, fondo, borde, titulo){
+    return '<div title="' + (titulo || "") + '" style="border:1px solid ' + (borde || "var(--line)") + ";background:" + fondo +
+      ';border-radius:6px;padding:4px 2px;text-align:center;font:11px Consolas,monospace;min-width:0;overflow:hidden">' +
+      '<div style="color:var(--soft);font-size:9.5px">+' + off + "</div><div style=\"color:var(--txt);white-space:nowrap\">" + (txt || "&nbsp;") + "</div></div>";
+  }
+  function pintar(){
+    var modo = $("mmModo").value, T = +$("mmTipo").value, h = "", nota = "";
+    $("mmTipo").style.display = modo === "s" ? "none" : "";
+    $("mmLi").style.display = modo === "s" ? "none" : "";
+    $("mmLj").style.display = modo === "m" ? "" : "none";
+    $("mmOrden").style.display = modo === "s" ? "" : "none";
+    if(modo === "v" || modo === "m"){
+      var n = modo === "v" ? 8 : 12, C = 4;
+      var i = Math.max(0, parseInt($("mmI").value, 10) || 0), j = Math.max(0, parseInt($("mmJ").value, 10) || 0);
+      if(modo === "v" && i > 8) i = 8;
+      if(modo === "m"){ if(i > 2) i = 2; if(j > 3) j = 3; }
+      $("mmI").value = i; $("mmJ").value = j;
+      var k = modo === "v" ? i : i * C + j;
+      var extra = modo === "v" ? 1 : 0;
+      for(var e = 0; e < n + extra; e++){
+        for(var b = 0; b < T; b++){
+          var off = e * T + b, fuera = e >= n;
+          var nom = modo === "v" ? "v[" + e + "]" : "m[" + Math.floor(e / C) + "][" + (e % C) + "]";
+          var sel = e === k;
+          h += celda(off, b === 0 ? (fuera ? "other var." : nom) : "",
+            sel ? (fuera ? "rgba(248,81,73,.3)" : "rgba(88,166,255,.45)") : (fuera ? "rgba(248,81,73,.08)" : COLS[e % 2]),
+            sel ? (fuera ? "#f85149" : "#58a6ff") : "", hx(BASE + off));
+        }
+      }
+      var dir = BASE + k * T;
+      if(modo === "v"){
+        nota = "addr(v[" + i + "]) = " + hx(BASE) + " + " + i + " · " + T + " = <b>" + hx(dir) + "</b>. The array of " + n + " " + TIPO[T] +
+          " takes up " + (n * T) + " bytes.";
+        if(i === 8) nota += ' <b style="color:#f85149">v[8] does not exist:</b> C does the same calculation and lands on the variable next to it. No error is raised.';
+      } else {
+        nota = "addr(m[" + i + "][" + j + "]) = " + hx(BASE) + " + (" + i + " · 4 + " + j + ") · " + T + " = " + hx(BASE) + " + " + (k * T) +
+          " = <b>" + hx(dir) + "</b>. The rows follow one another: m[1][0] is right after m[0][3].";
+      }
+    } else {
+      var campos = ordenado ? [["d", 8], ["b", 4], ["a", 1], ["c", 1]] : [["a", 1], ["b", 4], ["c", 1], ["d", 8]];
+      var TIP = { a:"char", b:"int32_t", c:"char", d:"double" };
+      var off2 = 0, lay = [], maxal = 0, rel = 0;
+      campos.forEach(function(c){
+        var al = c[1]; maxal = Math.max(maxal, al);
+        while(off2 % al){ lay.push(null); off2++; rel++; }
+        for(var q = 0; q < c[1]; q++) lay.push({ c:c[0], p:q });
+        off2 += c[1];
+      });
+      while(off2 % maxal){ lay.push(null); off2++; rel++; }
+      var ci = {}; campos.forEach(function(c, x){ ci[c[0]] = x; });
+      lay.forEach(function(x, o){
+        h += x ? celda(o, x.p === 0 ? TIP[x.c] + " " + x.c : "", COLS[ci[x.c] % 4], "", "")
+               : celda(o, "padding", "repeating-linear-gradient(45deg,#1c2230 0 4px,#0f1520 4px 8px)", "#3a4456", "padding byte");
+      });
+      nota = "<code>struct { " + campos.map(function(c){ return TIP[c[0]] + " " + c[0] + ";"; }).join(" ") + " }</code>: " +
+        "the data add up to 14 bytes, but <b>sizeof = " + off2 + "</b>, with " + rel + " bytes of padding. " +
+        (ordenado ? "Ordering by decreasing alignment, the padding is left only at the end."
+                  : "Each field starts at a multiple of its size, and the total is a multiple of the largest (8) so that an array of these structures is also aligned.");
+      $("mmOrden").textContent = ordenado ? "Back to the original order" : "Sort the fields from largest to smallest";
+    }
+    $("mmMapa").innerHTML = h;
+    $("mmNota").innerHTML = nota;
+  }
+  ["mmModo", "mmTipo", "mmI", "mmJ"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  $("mmOrden").onclick = function(){ ordenado = !ordenado; pintar(); };
+  pintar();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

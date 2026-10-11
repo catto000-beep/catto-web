@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Using the language for low-level applications · Computer Science I · Catto</title>
+<meta name="description" content="Bit operators and masks, memory-mapped registers, volatile, fixed-width types from stdint.h, byte order, bit fields, interrupts and what the compiler generates. Content of Computer Science I, Level 1 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/bajo-nivel">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/bajo-nivel">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/bajo-nivel">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/bajo-nivel">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Computer Science I</a>
+    <span class="anio">Level 1</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Computer Science I</span> · 120 h · Topic 6 of 6</div>
+    <h1>Using the language for low-level applications</h1>
+    <p class="lead">The same C used to write a desktop program drives the pins of a microcontroller: all it takes is the bit operators, a pointer to a fixed address and knowing why volatile is needed.</p>
+    <div class="chips">
+      <span class="chip hi">Bit operators</span>
+      <span class="chip">Masks</span>
+      <span class="chip">volatile</span>
+      <span class="chip">stdint.h</span>
+      <span class="chip">Interrupts</span>
+    </div>
+    <hr class="rule">
+
+    <section id="bajo-nivel">
+      <h2><span class="n">01</span>What “low level” means</h2>
+      <p>A low-level program is one that talks directly to the hardware: it lights an LED by writing a bit into
+      a register, reads a sensor by waiting for a status bit to change, builds a frame bit by bit to send it over
+      a wire. In the <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/sistema-computacional">stack of layers</a>
+      from the first topic, it means working just above the instruction set architecture, with no operating system in between.</p>
+      <p>C is suited to this because it has three things that high-level languages hide: <b>bit operators</b>,
+      <b>pointers to fixed addresses</b> and <b>types of known size</b>. With them, the same language used to
+      write a spreadsheet takes control of the pins of a chip.</p>
+    </section>
+
+    <section id="bits">
+      <h2><span class="n">02</span>Bit operators and masks</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Operator</th><th>What it does</th><th>What it is used for</th></tr></thead>
+        <tbody>
+          <tr><td><code>a &amp; b</code></td><td>Bitwise AND</td><td>Setting bits to 0 and testing a bit</td></tr>
+          <tr><td><code>a | b</code></td><td>Bitwise OR</td><td>Setting bits to 1</td></tr>
+          <tr><td><code>a ^ b</code></td><td>Bitwise exclusive OR</td><td>Toggling bits</td></tr>
+          <tr><td><code>~a</code></td><td>Complement of all the bits</td><td>Building the mask for clearing</td></tr>
+          <tr><td><code>a &lt;&lt; n</code>, <code>a &gt;&gt; n</code></td><td>Shift</td><td>Building masks and extracting fields</td></tr>
+        </tbody>
+      </table></div>
+      <p>A <b>mask</b> is a number that has 1s in the bits you want to act on. <code>(1 &lt;&lt; 5)</code>
+      is <code>0010 0000</code>: only bit 5. With it, you get the four operations that are used all the time:</p>
+      <pre class="code"><code>reg |=  (<span class="c-num">1</span> &lt;&lt; n);     <span class="c-com">// set bit n to 1</span>
+reg &amp;= ~(<span class="c-num">1</span> &lt;&lt; n);     <span class="c-com">// clear bit n to 0</span>
+reg ^=  (<span class="c-num">1</span> &lt;&lt; n);     <span class="c-com">// toggle bit n</span>
+<span class="c-kw">if</span> (reg &amp; (<span class="c-num">1</span> &lt;&lt; n))   <span class="c-com">// is bit n set to 1?</span></code></pre>
+      <p>All four touch <b>only</b> the chosen bit and leave the others as they were. That is what matters when each bit
+      of a register controls a different pin: turning on one LED must not turn off the one next to it.</p>
+
+      <div class="lw" id="port">
+        <div class="lt">Lab · an 8-LED port</div>
+        <p class="ls">The PORTB register drives eight LEDs. Choose the operation and the bit, and look at the C line, the binary calculation and the result.</p>
+        <div class="leds" id="ptLeds"></div>
+        <div class="fila" style="margin-top:12px">
+          <select id="ptOp">
+            <option value="set">Set to 1:  |=  (1 &lt;&lt; n)</option>
+            <option value="clr">Clear to 0:  &amp;= ~(1 &lt;&lt; n)</option>
+            <option value="tog">Toggle:  ^=  (1 &lt;&lt; n)</option>
+            <option value="tst">Test:  &amp;  (1 &lt;&lt; n)</option>
+            <option value="asg">Assign (the mistake):  =  (1 &lt;&lt; n)</option>
+          </select>
+          <label>n = <select id="ptN"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option><option>6</option><option>7</option></select></label>
+          <button class="pri" id="ptDo">Run</button>
+          <button id="ptRst">PORTB = 0x96</button>
+        </div>
+        <pre class="codigo" id="ptCuenta" style="margin-top:8px"></pre>
+        <div class="nota" id="ptNota"></div>
+      </div>
+      <div class="box ojo"><div class="bt">Fields of more than one bit</div>
+        <p>To read a field, shift and mask: bits 4 to 6 of <code>reg</code> are
+        <code>(reg &gt;&gt; 4) &amp; 0x07</code>. To write it without touching the rest, first clear it and then
+        set it: <code>reg = (reg &amp; ~(0x07 &lt;&lt; 4)) | ((v &amp; 0x07) &lt;&lt; 4)</code>. This is how you configure,
+        for example, the clock divider of a timer or the channel of an A/D converter.</p></div>
+    </section>
+
+    <section id="registros">
+      <h2><span class="n">03</span>Registers at fixed addresses</h2>
+      <p>In a microcontroller, peripherals are controlled through registers located at <b>fixed memory
+      addresses</b>, published in the datasheet. In the ATmega328P (the one in the Arduino Uno), the output register of
+      port B is at data address <code>0x25</code>. In C it is reached with a pointer to that address:</p>
+      <pre class="code"><code><span class="c-pp">#include</span> <span class="c-str">&lt;stdint.h&gt;</span>
+<span class="c-pp">#define</span> PORTB (*(<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> *)<span class="c-num">0x25</span>)
+<span class="c-pp">#define</span> DDRB  (*(<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> *)<span class="c-num">0x24</span>)
+
+DDRB  |= (<span class="c-num">1</span> &lt;&lt; <span class="c-num">5</span>);    <span class="c-com">// PB5 as an output (the on-board LED)</span>
+PORTB |= (<span class="c-num">1</span> &lt;&lt; <span class="c-num">5</span>);    <span class="c-com">// and turned on</span></code></pre>
+      <p>Read from the inside out: <code>0x25</code> is a number; <code>(volatile uint8_t *)</code> turns it into
+      the address of a byte; the outer <code>*</code> accesses the byte that is there. From then on,
+      <code>PORTB</code> is used like any other variable. The manufacturer’s header files
+      (<code>&lt;avr/io.h&gt;</code>, the CMSIS ones on ARM) are built exactly this way.</p>
+      <div class="box key"><div class="bt">Why volatile</div>
+        <p>The compiler optimizes on the assumption that a variable only changes when the program writes it. A hardware
+        register changes on its own: the “data received” bit of a UART is set to 1 when a byte arrives. Without
+        <code>volatile</code>, a loop <code>while (!(UCSR0A &amp; (1 &lt;&lt; RXC0)));</code> may be compiled to read
+        the register just once and hang forever. <code>volatile</code> forces the real memory to be read and written
+        on every access. It is needed for hardware registers and for variables modified by an interrupt
+        service routine.</p></div>
+    </section>
+
+    <section id="tipos">
+      <h2><span class="n">04</span>Exact-width types</h2>
+      <p>The C standard only guarantees minimums: an <code>int</code> has at least 16 bits. On an AVR it has 16; on
+      a PC, 32. A program that assumes 32 bits breaks when ported to a microcontroller. For work with
+      hardware, the types from <code>&lt;stdint.h&gt;</code> are used, which state their size in the name:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Type</th><th class="c">Bits</th><th class="c">Range</th></tr></thead>
+        <tbody>
+          <tr><td><code>uint8_t</code> / <code>int8_t</code></td><td class="c">8</td><td class="c">0 … 255 / −128 … 127</td></tr>
+          <tr><td><code>uint16_t</code> / <code>int16_t</code></td><td class="c">16</td><td class="c">0 … 65,535 / −32,768 … 32,767</td></tr>
+          <tr><td><code>uint32_t</code> / <code>int32_t</code></td><td class="c">32</td><td class="c">0 … 4,294,967,295 / ±2,147,483,647</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box ejem"><div class="bt">Example: scaling an A/D converter reading</div>
+        <p>A 10-bit converter with a 5 V reference delivers 0 to 1023. To convert it to millivolts:
+        <code>uint32_t mv = (uint32_t)reading * 5000 / 1023;</code>. Without the conversion to 32 bits, on an AVR the
+        multiplication would be done in 16 bits: 1023 · 5000 = 5,115,000 does not fit in 65,535 and the result comes out wrong
+        with no warning. With the conversion, 1023 gives exactly 5000 mV. Converters are covered in
+        <a class="ref" href="/en/publicaciones/mapa-electronica/temas/conversores-ad-da">A/D and D/A converters</a>.</p></div>
+    </section>
+
+    <section id="orden">
+      <h2><span class="n">05</span>Byte order and bit fields</h2>
+      <p>A <code>uint32_t</code> takes up four bytes, but in what order? In a <b>little-endian</b> processor
+      (x86, almost all ARM, AVR) the least significant byte goes at the lowest address; in a
+      <b>big-endian</b> one, the other way around. The value <code>0x12345678</code> stored at 0x100 ends up like this:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Address</th><th class="c">0x100</th><th class="c">0x101</th><th class="c">0x102</th><th class="c">0x103</th></tr></thead>
+        <tbody>
+          <tr><td>Little-endian</td><td class="c"><code>78</code></td><td class="c"><code>56</code></td><td class="c"><code>34</code></td><td class="c"><code>12</code></td></tr>
+          <tr><td>Big-endian</td><td class="c"><code>12</code></td><td class="c"><code>34</code></td><td class="c"><code>56</code></td><td class="c"><code>78</code></td></tr>
+        </tbody>
+      </table></div>
+      <p>Inside a program it goes unnoticed. It shows up when sending data to another machine: network protocols use
+      big-endian, which is why <code>htons</code> and <code>ntohl</code> exist. The portable way is to build the bytes with
+      shifts, <code>b[0] = x &gt;&gt; 24; b[1] = x &gt;&gt; 16; …</code>, which gives the same result on
+      any processor. This applies to any frame of
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/comunicacion-serie">serial communication</a>.</p>
+      <p>C also allows declaring <b>bit fields</b> inside a structure, <code>unsigned mode : 3;</code>.
+      They are convenient, but the standard leaves the order of the bits within the byte to the compiler. To describe
+      hardware registers that must match the datasheet bit for bit, masks are safer.</p>
+    </section>
+
+    <section id="hardware">
+      <h2><span class="n">06</span>The program facing the hardware</h2>
+      <p>A program for a microcontroller never ends: it initializes the peripherals and enters an infinite
+      loop. Inside the loop it polls inputs and updates outputs; whatever is urgent is handled by an
+      <b>interrupt service routine</b>, which communicates with the main loop through
+      <code>volatile</code> variables:</p>
+      <pre class="code"><code><span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> data_ready = <span class="c-num">0</span>;
+<span class="c-kw">volatile</span> <span class="c-ty">uint8_t</span> data;
+
+<span class="c-fn">ISR</span>(USART_RX_vect)           <span class="c-com">// called by the hardware when a byte arrives</span>
+{
+    data = UDR0;
+    data_ready = <span class="c-num">1</span>;
+}
+
+<span class="c-ty">int</span> <span class="c-fn">main</span>(<span class="c-ty">void</span>)
+{
+    <span class="c-fn">init</span>();
+    <span class="c-kw">for</span> (;;) {
+        <span class="c-kw">if</span> (data_ready) {
+            data_ready = <span class="c-num">0</span>;
+            <span class="c-fn">process</span>(data);
+        }
+        <span class="c-com">/* rest of the work, without long delays */</span>
+    }
+}</code></pre>
+      <div class="box peligro"><div class="bt">Accesses that get cut in half</div>
+        <p>On an 8-bit processor, reading a <code>uint16_t</code> takes two instructions. If the interrupt
+        modifies it between the two, the program reads the old half and the new half. Such reads are done with
+        interrupts disabled for an instant (a <b>critical section</b>). It is an error that appears once
+        in a thousand runs and is not found by testing: it is avoided by knowing that it exists.</p></div>
+      <p>Interrupts and peripherals are covered in
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/interrupciones">interrupts</a> and in
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">microcontroller
+      peripherals</a>.</p>
+    </section>
+
+    <section id="ensamblador">
+      <h2><span class="n">07</span>What the compiler does with this</h2>
+      <p>The best way to convince yourself that C is close to the machine is to look at what it generates. For the AVR, with
+      optimization:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>C</th><th>AVR assembly</th><th>Comment</th></tr></thead>
+        <tbody>
+          <tr><td><code>PORTB |= (1 &lt;&lt; 5);</code></td><td><code>sbi 0x05, 5</code></td><td>One instruction that sets a bit of an I/O register to 1</td></tr>
+          <tr><td><code>PORTB &amp;= ~(1 &lt;&lt; 5);</code></td><td><code>cbi 0x05, 5</code></td><td>And another that clears it to 0</td></tr>
+          <tr><td><code>if (PINB &amp; (1 &lt;&lt; 0))</code></td><td><code>sbis 0x03, 0</code></td><td>Skips the next instruction if the bit is 1</td></tr>
+        </tbody>
+      </table></div>
+      <p>The <code>0x05</code> is the address of PORTB in the I/O space, which in the data space is the
+      <code>0x25</code> from the previous example: there is a difference of 0x20 because the first 32 bytes of the data
+      space are the working registers. One line of C, one machine instruction: that is why there is no need to
+      program in assembly to have fine control. Microcontrollers are covered in
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/arquitectura-microprocesadores">microprocessor
+      architecture</a> and the buses driven with these techniques, in
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/buses-serie">serial buses</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">08</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Blinking without libraries</div>
+        <p>On an Arduino Uno, blink the PB5 LED by writing directly to DDRB and PORTB, without
+        <code>pinMode</code> or <code>digitalWrite</code>. Use the oscilloscope to measure the maximum frequency
+        achieved with <code>PORTB ^= (1 &lt;&lt; 5)</code> in an empty loop and compare it with that of
+        <code>digitalWrite</code>. You can practice with the oscilloscope beforehand in the
+        <a class="ref" href="/en/publicaciones/simulador-instrumental">instrument simulator</a>.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Bit functions on the PC</div>
+        <p>Write and test on the PC <code>set_bit</code>, <code>clr_bit</code>, <code>toggle_bit</code>,
+        <code>get_field</code> and <code>set_field</code> on a <code>uint8_t</code>, printing each
+        result in binary. Test the extreme cases: bit 0, bit 7, a field that takes up the whole byte.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Discovering the byte order</div>
+        <p>Store <code>0x12345678</code> in a <code>uint32_t</code>, point a <code>uint8_t *</code> at it and print
+        the four bytes. Deduce whether the machine is little- or big-endian.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">09</span>Common mistakes</h2>
+      <ul>
+        <li><b><code>reg = (1 &lt;&lt; n)</code> instead of <code>reg |= (1 &lt;&lt; n)</code></b>: it turns one bit on and turns all the others off.</li>
+        <li><b><code>reg &amp;= (1 &lt;&lt; n)</code> to turn off</b>: without the <code>~</code> it clears all the bits except n.</li>
+        <li><b>Forgetting <code>volatile</code></b> on a register or on a variable shared with an interrupt.</li>
+        <li><b>Shifting by more bits than the type has</b>: <code>1 &lt;&lt; 31</code> with a 16-bit <code>int</code> is undefined; write <code>1UL &lt;&lt; 31</code>.</li>
+        <li><b>Confusing <code>&amp;&amp;</code> with <code>&amp;</code></b>: <code>4 &amp;&amp; 2</code> is 1; <code>4 &amp; 2</code> is 0.</li>
+        <li><b>Writing magic numbers bare</b>: <code>PORTB |= 0x20</code> works, but <code>(1 &lt;&lt; PB5)</code> is understandable.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">10</span>Self-assessment</h2>
+      <details class="q"><summary>Which line clears bits 2 and 3 of <code>reg</code> to 0 without touching the others?</summary>
+        <div class="a"><p><code>reg &amp;= ~((1 &lt;&lt; 2) | (1 &lt;&lt; 3));</code>, that is, <code>reg &amp;= ~0x0C;</code></p></div></details>
+      <details class="q"><summary>If <code>reg = 0xB4</code>, what is the value of bits 4 to 6?</summary>
+        <div class="a"><p>0xB4 = 1011 0100. (0xB4 &gt;&gt; 4) &amp; 0x07 = 1011 &amp; 111 = 011 = 3.</p></div></details>
+      <details class="q"><summary>Why does a loop that waits for a status bit need <code>volatile</code>?</summary>
+        <div class="a"><p>Because without it the compiler may read the register just once, assume it does not change and
+        turn the wait into an infinite loop.</p></div></details>
+      <details class="q"><summary>How is <code>0xA1B2</code> laid out in memory on a little-endian machine?</summary>
+        <div class="a"><p>First <code>B2</code> and then <code>A1</code>.</p></div></details>
+      <details class="q"><summary>Why can <code>reading * 5000</code> come out wrong on an AVR if <code>reading</code> is <code>uint16_t</code>?</summary>
+        <div class="a"><p>Because the calculation is done in <code>int</code>, which on an AVR has 16 bits, and the product exceeds
+        65,535. You have to convert to 32 bits before multiplying.</p></div></details>
+      <details class="q"><summary>What is a critical section?</summary>
+        <div class="a"><p>A stretch of code that cannot be interrupted halfway without leaving the data inconsistent.
+        On a microcontroller it is protected by disabling interrupts during that stretch.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">11</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Michael Barr and Anthony Massa.</span> <span class="ti">Programming Embedded Systems: With C and
+          GNU Development Tools</span>. <span class="ed">2nd ed., O'Reilly, 2006.</span>
+          <span class="pq">Registers, interrupts and peripherals in C, with examples on real hardware.</span></li>
+        <li><span class="au">Elecia White.</span> <span class="ti">Making Embedded Systems</span>.
+          <span class="ed">2nd ed., O'Reilly, 2024.</span>
+          <span class="pq">How to design the software of an embedded system from end to end, with an engineering mindset.</span></li>
+        <li><span class="au">Randal E. Bryant and David R. O'Hallaron.</span> <span class="ti">Computer Systems: A Programmer's
+          Perspective</span>. <span class="ed">3rd ed., Pearson, 2016.</span>
+          <span class="pq">Chapter 3 shows, line by line, what the compiler generates from C.</span></li>
+        <li><span class="au">Microchip Technology.</span> <span class="ti">ATmega328P Datasheet</span>.
+          <span class="ed">Official datasheet, on the manufacturer’s website.</span>
+          <span class="pq">The I/O register map and the instruction set that were used in this topic.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/datos-complejos">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Complex data containers</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Using the language for low-level applications”</b> of <b>Computer Science I</b> (Level 1), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Puerto de 8 bits: las cuatro operaciones con máscara, con la cuenta a la vista. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  function b8(v){ var s = (v & 255).toString(2).padStart(8, "0"); return s.slice(0, 4) + " " + s.slice(4); }
+  function hx(v){ return "0x" + (v & 255).toString(16).toUpperCase().padStart(2, "0"); }
+  var reg = 0x96;
+
+  function leds(){
+    var h = "";
+    for(var i = 7; i >= 0; i--)
+      h += '<div class="led' + ((reg >> i) & 1 ? " on" : "") + '"><i></i>PB' + i + "</div>";
+    $("ptLeds").innerHTML = h;
+  }
+  function linea(op, n){
+    if(op === "set") return "PORTB |=  (1 << " + n + ");";
+    if(op === "clr") return "PORTB &= ~(1 << " + n + ");";
+    if(op === "tog") return "PORTB ^=  (1 << " + n + ");";
+    if(op === "tst") return "if (PORTB & (1 << " + n + "))";
+    return "PORTB =   (1 << " + n + ");";
+  }
+  function ejecutar(){
+    var op = $("ptOp").value, n = +$("ptN").value, m = 1 << n, antes = reg, r, sig, nota;
+    if(op === "set"){ r = antes | m; sig = "|"; }
+    else if(op === "clr"){ r = antes & (~m & 255); sig = "&"; }
+    else if(op === "tog"){ r = antes ^ m; sig = "^"; }
+    else if(op === "tst"){ r = antes; sig = "&"; }
+    else { r = m; sig = "="; }
+    var oper = op === "clr" ? (~m & 255) : m;
+    var res = op === "tst" ? (antes & m) : r;
+    $("ptCuenta").innerHTML =
+      '<div>' + linea(op, n) + "</div><div>&nbsp;</div>" +
+      '<div>  PORTB   ' + b8(antes) + "   " + hx(antes) + "</div>" +
+      (op === "asg" ? "" : '<div>' + sig + " " + (op === "clr" ? "~(1<<" + n + ")" : " (1<<" + n + ")") + "  " + b8(oper) + "   " + hx(oper) + "</div>") +
+      '<div>  ' + "─".repeat(28) + "</div>" +
+      '<div>  ' + (op === "tst" ? "result  " : "PORTB   ") + " " + b8(res) + "   " + hx(res) + "</div>";
+    if(op === "tst")
+      nota = "The condition gives <b>" + (res ? "true" : "false") + "</b>: bit " + n + " is " + ((antes >> n) & 1) +
+        ". The register did not change and the result of the operation is " + hx(res) +
+        (res ? ", which is not 1 but in C any nonzero value is true." : ".");
+    else if(op === "asg")
+      nota = "<b>The classic mistake.</b> With <code>=</code> the whole register is overwritten: only PB" + n +
+        " is left on and the others were turned off; they used to be " + hx(antes) + ".";
+    else if(r === antes)
+      nota = "Bit " + n + " was already " + ((antes >> n) & 1) + ": the register did not change, and no other bit was touched either.";
+    else
+      nota = "Only bit " + n + " changed (" + ((antes >> n) & 1) + " → " + ((r >> n) & 1) + "). The other seven stayed as they were: " +
+        hx(antes) + " → " + hx(r) + ".";
+    reg = r;
+    leds();
+    $("ptNota").innerHTML = nota;
+  }
+  $("ptDo").onclick = ejecutar;
+  $("ptRst").onclick = function(){ reg = 0x96; leds(); $("ptNota").innerHTML = "PORTB returns to " + hx(reg) + " = " + b8(reg) + "."; };
+  $("ptLeds").addEventListener("click", function(ev){
+    var d = ev.target.closest(".led"); if(!d) return;
+    reg ^= 1 << (+d.textContent.replace("PB", "")); leds();
+  });
+  leds();
+  $("ptNota").innerHTML = "PORTB starts at " + hx(reg) + " = " + b8(reg) + ". You can also click each LED with the mouse.";
+  $("ptCuenta").textContent = "";
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
