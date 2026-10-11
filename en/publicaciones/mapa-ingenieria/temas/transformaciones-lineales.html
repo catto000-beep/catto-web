@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear transformations · Linear Algebra and Analytic Geometry · Catto</title>
+<meta name="description" content="Linear transformations, the associated matrix, kernel and image, the rank-nullity theorem, composition and inverse, and how to read them as systems and circuits. Content of Linear Algebra and Analytic Geometry, Level 1 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/transformaciones-lineales">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/transformaciones-lineales">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/transformaciones-lineales">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/transformaciones-lineales">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Linear Algebra and Analytic Geometry</a>
+    <span class="anio">Level 1</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Linear Algebra and Analytic Geometry</span> · 120 h · Topic 8 of 9</div>
+    <h1>Linear transformations</h1>
+    <p class="lead">A function that respects addition and scalar multiplication is determined by what it does to a basis, and that fits in a matrix.</p>
+    <div class="chips">
+      <span class="chip hi">Associated matrix</span>
+      <span class="chip">Kernel</span>
+      <span class="chip">Image</span>
+      <span class="chip">Rank-nullity theorem</span>
+      <span class="chip">Composition</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que-es">
+      <h2><span class="n">01</span>Functions that respect the structure</h2>
+      <p>A <b>linear transformation</b> is a function between vector spaces that plays well with the
+      two operations:</p>
+      <div class="form">
+        \[ T (\vec{u} + \vec{v}) = T (\vec{u}) + T (\vec{v}) \quad T (k \vec{u}) = k \, T (\vec{u}) \]
+        <span class="cap">The two conditions together boil down to one: T(a·u + b·v) = a·T(u) + b·T(v). It is <b>the superposition principle</b>.</span>
+      </div>
+      <p>From the second condition, with k = 0, it follows that <b>T(0) = 0</b>: every linear transformation sends the
+      zero vector to the zero vector. That rules out f(x) = x + 1 right away, which translates, and f(x) = x², which does not
+      respect scaling. Rotations, scalings, reflections, projections, the
+      derivative and the integral are linear.</p>
+      <div class="box key"><div class="bt">Why it matters to an electronics engineer</div>
+        <p>A circuit made of resistors, capacitors, inductors and linear controlled sources <b>is</b>
+        a linear transformation from input to output. That is why superposition holds: you turn off everything except
+        one source, solve, and then add the results. And that is why a linear circuit driven with
+        a sinusoid responds with a sinusoid of the same frequency: the amplitude and phase change, not the
+        shape.</p></div>
+    </section>
+
+    <section id="matriz">
+      <h2><span class="n">02</span>Every linear transformation fits in a matrix</h2>
+      <p>If you know what T does to the vectors of a basis, you already know what it does to any vector: you
+      write it as a linear combination of the basis and apply linearity. Writing the images of the basis
+      <b>as columns</b> gives the <b>associated matrix</b>:</p>
+      <div class="form">
+        \[ A = \left[ \begin{array}{cc} | &amp; | \\ T (\hat{i}) &amp; T (\hat{j}) \\ | &amp; | \end{array} \right] \quad T (X) = A \cdot X \]
+        <span class="cap">Applying the transformation is multiplying by the matrix. Two different objects —a function and a table of numbers— that turn out to be the same thing.</span>
+      </div>
+      <p>The matrix depends on the chosen bases. The same transformation, seen in another basis, has another matrix:
+      they are <b>similar matrices</b>, related by A′ = P<sup>−1</sup>AP. Choosing the right basis so that the
+      matrix ends up as simple as possible is the goal of diagonalization.</p>
+    </section>
+
+    <section id="galeria">
+      <h2><span class="n">03</span>The transformations of the plane, one by one</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Transformation</th><th>Matrix</th><th class="c">det</th><th>What it does to the plane</th></tr></thead>
+        <tbody>
+          <tr><td><b>Rotation by angle φ</b></td><td><code>[[cos φ, −sin φ], [sin φ, cos φ]]</code></td><td class="c">1</td><td>Turns everything without deforming it; preserves areas and angles</td></tr>
+          <tr><td><b>Scaling</b></td><td><code>[[k₁, 0], [0, k₂]]</code></td><td class="c">k₁k₂</td><td>Stretches each axis separately</td></tr>
+          <tr><td><b>Reflection across the x axis</b></td><td><code>[[1, 0], [0, −1]]</code></td><td class="c">−1</td><td>Mirrors; the negative sign indicates that it reverses orientation</td></tr>
+          <tr><td><b>Shear</b></td><td><code>[[1, k], [0, 1]]</code></td><td class="c">1</td><td>Slides the horizontal layers; preserves area but deforms angles</td></tr>
+          <tr><td><b>Projection onto the x axis</b></td><td><code>[[1, 0], [0, 0]]</code></td><td class="c">0</td><td>Flattens the plane onto a line: it loses a dimension and has no inverse</td></tr>
+        </tbody>
+      </table></div>
+      <div class="lw" id="tl">
+        <div class="lt">Lab · transforming the plane</div>
+        <p class="ls">The light figure is the original and the colored one is its image. The transformed grid shows what happens to the whole plane.</p>
+        <div class="fila">
+          <span class="mono">A =</span>
+          <input type="number" id="tlA" value="1" step="0.25" style="width:64px">
+          <input type="number" id="tlB" value="1" step="0.25" style="width:64px">
+          <span class="mono">;</span>
+          <input type="number" id="tlC" value="0" step="0.25" style="width:64px">
+          <input type="number" id="tlD" value="1" step="0.25" style="width:64px">
+        </div>
+        <div class="fila">
+          <button data-t="0.707,-0.707,0.707,0.707">Rotation 45°</button>
+          <button data-t="2,0,0,1.5">Scaling</button>
+          <button data-t="1,0,0,-1">Reflection</button>
+          <button data-t="1,1,0,1">Shear</button>
+          <button data-t="1,0,0,0">Projection</button>
+          <button data-t="1,0,0,1">Identity</button>
+        </div>
+        <canvas id="tlLienzo" style="display:block;width:100%;max-width:560px;aspect-ratio:1.15/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="nota" id="tlNota"></div>
+      </div>
+    </section>
+
+    <section id="nucleo-imagen">
+      <h2><span class="n">04</span>Kernel, image and the rank-nullity theorem</h2>
+      <div class="g2">
+        <div class="box key"><div class="bt">Kernel</div><p>The vectors that the transformation sends to
+        zero: Ker(T) = {X : A·X = 0}. It is the solution space of the homogeneous system. Its dimension is called the
+        <b>nullity</b>.</p></div>
+        <div class="box key"><div class="bt">Image</div><p>Everything the transformation can produce:
+        Im(T) = {A·X}. It is spanned by the columns of A, and its dimension is the <b>rank</b>.</p></div>
+      </div>
+      <div class="form">
+        \[ \dim (\operatorname{Ker}) + \dim (\operatorname{Im}) = \dim (V) \]
+        <span class="cap">Rank-nullity theorem: what is lost plus what survives equals what there was. It is the same count that appeared with the rank of a matrix.</span>
+      </div>
+      <p>The projection of the plane onto the x axis has a kernel of dimension 1 —the whole y axis is flattened to the
+      origin— and an image of dimension 1: 1 + 1 = 2 ✔. A transformation is <b>injective</b> exactly when
+      its kernel is only the zero vector, and in that case, if it also goes from one space to another of the same dimension,
+      it is an <b>isomorphism</b>: it has an inverse, and the matrix of the inverse is A<sup>−1</sup>.</p>
+    </section>
+
+    <section id="composicion">
+      <h2><span class="n">05</span>Composing is multiplying</h2>
+      <p>Applying T first and then S is equivalent to multiplying the matrices, <b>in the order in which they are applied,
+      from right to left</b>: the matrix of S ∘ T is A<sub>S</sub> · A<sub>T</sub>. That is the origin of the fact that
+      matrix multiplication is not commutative: rotating and then reflecting is not the same as reflecting and then
+      rotating.</p>
+      <p>It is exactly what happens with two stages of a circuit in cascade, which was seen in
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/matrices">matrices</a>: each stage is a
+      linear transformation and connecting them is composing them.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">06</span>Where they show up in electronics</h2>
+      <ul>
+        <li><b>Superposition.</b> It is linearity, nothing more. It holds only in linear circuits: a diode or a
+        transistor in large-signal operation breaks the property, and that is why you have to linearize around an operating
+        point before using it.</li>
+        <li><b>Filters.</b> A filter is a linear operator on signals. Its “matrix”, in the frequency
+        domain, is the transfer function, which multiplies each spectral component.</li>
+        <li><b>Discrete Fourier transform.</b> The N-point DFT is, literally, multiplication by an
+        N × N matrix whose elements are roots of unity. The FFT is the algorithm that does that product in
+        N log N operations instead of N².</li>
+        <li><b>Graphics and CAD.</b> Rotating, scaling and projecting a model on screen are chained
+        linear transformations: a single matrix summarizes the whole chain.</li>
+      </ul>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Building the matrix</div>
+        <p>Find the matrix of the transformation of R² that rotates by 90° and then doubles the x component. Apply it
+        to three vectors and verify with the lab above. Check that composing in the reverse order gives
+        a different matrix.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Kernel and image</div>
+        <p>For A = [[1, 2], [2, 4]], find the kernel by solving A·X = 0, describe the image and verify the
+        rank-nullity theorem. Explain what happens to the grid in the lab with that matrix.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Measured superposition</div>
+        <p>In a circuit with two sources, measure the output voltage with each source separately (the other
+        one turned off: the voltage source short-circuited, the current source open-circuited) and then with both together.
+        Check that the sum matches. Repeat adding a diode and explain why it no longer holds.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <ul>
+        <li><b>Believing that every function “with a simple formula” is linear.</b> f(x) = x + 1 is not: it does not send zero to zero.</li>
+        <li><b>Building the matrix with the images of the basis as rows</b> instead of columns.</li>
+        <li><b>Reversing the order when composing:</b> the matrix of S ∘ T is A<sub>S</sub>·A<sub>T</sub>.</li>
+        <li><b>Confusing kernel with image</b>, or their dimensions.</li>
+        <li><b>Applying superposition to a circuit with nonlinear elements.</b></li>
+        <li><b>Forgetting that the matrix depends on the basis</b>: two different matrices can be the same transformation.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Self-assessment</h2>
+      <details class="q"><summary>Is T(x, y) = (2x − y, 0) linear?</summary>
+        <div class="a"><p>Yes. Its matrix is [[2, −1], [0, 0]]: it satisfies both conditions and sends zero to zero.</p></div></details>
+      <details class="q"><summary>What is the matrix of the 90° counterclockwise rotation?</summary>
+        <div class="a"><p>[[0, −1], [1, 0]]: it sends î to (0,1) and ĵ to (−1,0).</p></div></details>
+      <details class="q"><summary>If A is 3 × 3 with rank 2, what is the dimension of the kernel?</summary>
+        <div class="a"><p>3 − 2 = <b>1</b>: a line of vectors ends up at the origin.</p></div></details>
+      <details class="q"><summary>When does a transformation from R<sup>n</sup> to R<sup>n</sup> have an inverse?</summary>
+        <div class="a"><p>When its kernel is only the zero vector, which is equivalent to det(A) ≠ 0 and to rank n.</p></div></details>
+      <details class="q"><summary>What does it mean for the determinant of the matrix to be −1?</summary>
+        <div class="a"><p>That it preserves areas but reverses orientation: there is a reflection.</p></div></details>
+      <details class="q"><summary>Why does superposition not hold with a transistor in switching operation?</summary>
+        <div class="a"><p>Because its behavior is not linear: doubling the input does not double the output, and the response
+        to the sum of two inputs is not the sum of the responses.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">David C. Lay.</span> <span class="ti">Linear Algebra and Its Applications</span>.
+          <span class="ed">5th ed. (Spanish edition, “Álgebra lineal y sus aplicaciones”), Pearson, 2016.</span>
+          <span class="pq">Develops linear transformations from the matrix, with many figures of the transformed plane.</span></li>
+        <li><span class="au">Stanley I. Grossman.</span> <span class="ti">Álgebra lineal</span>.
+          <span class="ed">6th ed., McGraw-Hill, 2008 (in Spanish).</span>
+          <span class="pq">Kernel, image, the rank-nullity theorem and similar matrices, with complete proofs.</span></li>
+        <li><span class="au">Gilbert Strang.</span> <span class="ti">Linear Algebra and Its Applications</span>.
+          <span class="ed">4th ed. (Spanish edition, “Álgebra lineal y sus aplicaciones”), Cengage Learning, 2007.</span>
+          <span class="pq">The “the matrix is the transformation” point of view, and the chapter on the Fourier transform as a change of basis.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/espacios-vectoriales">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Vector spaces</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/autovalores-autovectores">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Eigenvalues and eigenvectors</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Linear transformations”</b> of <b>Linear Algebra and Analytic Geometry</b> (Level 1), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* The plane transformed by a 2x2 matrix: grid, unit square and a
+   reference figure, before and after. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("tlLienzo"), ctx = cv.getContext("2d"), G = {};
+  /* an "F" so that the reflection and the rotation are noticeable */
+  var FIG = [[0,0],[0,3],[2,3],[2,2.4],[0.7,2.4],[0.7,1.8],[1.7,1.8],[1.7,1.2],[0.7,1.2],[0.7,0]];
+
+  function v(id){ var x = parseFloat($(id).value); return isNaN(x) ? 0 : x; }
+  function n(x, d){
+    if(d === undefined) d = 2;
+    if(Math.abs(x) < 1e-12) x = 0;
+    return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString().replace("-", "−");
+  }
+  function ajustar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return false;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    G.w = r.width; G.h = r.height; G.cx = r.width * 0.42; G.cy = r.height * 0.62;
+    G.u = Math.min(r.width, r.height) / 9;
+    return true;
+  }
+  function P(x, y){ return { x:G.cx + x * G.u, y:G.cy - y * G.u }; }
+  function poli(pts, trazo, relleno, ancho){
+    ctx.beginPath();
+    pts.forEach(function(p, i){ var q = P(p[0], p[1]); if(i) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y); });
+    ctx.closePath();
+    if(relleno){ ctx.fillStyle = relleno; ctx.fill(); }
+    if(trazo){ ctx.strokeStyle = trazo; ctx.lineWidth = ancho || 2; ctx.stroke(); }
+  }
+  function aplicar(M, p){ return [M[0] * p[0] + M[1] * p[1], M[2] * p[0] + M[3] * p[1]]; }
+
+  function dibujar(){
+    if(!ajustar()) return;
+    var M = [v("tlA"), v("tlB"), v("tlC"), v("tlD")];
+    var det = M[0] * M[3] - M[1] * M[2];
+    ctx.clearRect(0, 0, G.w, G.h);
+
+    /* original grid */
+    ctx.strokeStyle = "#161d29"; ctx.lineWidth = 1;
+    for(var i = -8; i <= 8; i++){
+      var a = P(i, -8), b = P(i, 8), c = P(-8, i), d = P(8, i);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.stroke();
+    }
+    /* transformed grid */
+    ctx.strokeStyle = Math.abs(det) < 1e-9 ? "rgba(248,81,73,.35)" : "rgba(88,166,255,.32)";
+    for(i = -8; i <= 8; i++){
+      var p1 = aplicar(M, [i, -8]), p2 = aplicar(M, [i, 8]);
+      var p3 = aplicar(M, [-8, i]), p4 = aplicar(M, [8, i]);
+      var q1 = P(p1[0], p1[1]), q2 = P(p2[0], p2[1]), q3 = P(p3[0], p3[1]), q4 = P(p4[0], p4[1]);
+      ctx.beginPath(); ctx.moveTo(q1.x, q1.y); ctx.lineTo(q2.x, q2.y); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(q3.x, q3.y); ctx.lineTo(q4.x, q4.y); ctx.stroke();
+    }
+    ctx.strokeStyle = "#3a4456"; ctx.lineWidth = 1.2;
+    var ex = P(-8, 0), ex2 = P(8, 0), ey = P(0, -8), ey2 = P(0, 8);
+    ctx.beginPath(); ctx.moveTo(ex.x, ex.y); ctx.lineTo(ex2.x, ex2.y); ctx.moveTo(ey.x, ey.y); ctx.lineTo(ey2.x, ey2.y); ctx.stroke();
+
+    /* original and transformed figure */
+    poli(FIG, "rgba(154,167,180,.7)", "rgba(154,167,180,.12)", 1.5);
+    poli(FIG.map(function(p){ return aplicar(M, p); }), "#58a6ff", "rgba(88,166,255,.22)", 2.4);
+
+    /* images of the unit vectors */
+    function flecha(p, col, et){
+      var o = P(0, 0), q = P(p[0], p[1]);
+      var an = Math.atan2(q.y - o.y, q.x - o.x), L = 10;
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(o.x, o.y); ctx.lineTo(q.x - Math.cos(an) * L * 0.7, q.y - Math.sin(an) * L * 0.7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(q.x, q.y);
+      ctx.lineTo(q.x - L * Math.cos(an - 0.38), q.y - L * Math.sin(an - 0.38));
+      ctx.lineTo(q.x - L * Math.cos(an + 0.38), q.y - L * Math.sin(an + 0.38));
+      ctx.closePath(); ctx.fill();
+      ctx.font = "600 12.5px 'Segoe UI',system-ui,sans-serif";
+      ctx.fillText(et, q.x + 7, q.y - 5);
+    }
+    flecha([M[0], M[2]], "#3fb950", "T(î)");
+    flecha([M[1], M[3]], "#a371f7", "T(ĵ)");
+
+    var msg = "The columns of A are the images of the unit vectors: T(î) = (" + n(M[0]) + ", " + n(M[2]) +
+      ") and T(ĵ) = (" + n(M[1]) + ", " + n(M[3]) + "). ";
+    if(Math.abs(det) < 1e-9)
+      msg += '<b style="color:#f85149">det = 0:</b> the entire plane is flattened onto a line. The transformation is not injective —there is a line of vectors that go to the origin, the kernel— and it has no inverse.';
+    else
+      msg += "det = <b>" + n(det) + "</b>: areas are multiplied by " + n(Math.abs(det)) +
+        (det < 0 ? " and the orientation is reversed (the figure is mirrored)." : " and the orientation is preserved.") +
+        " The kernel is only the zero vector, so there is an inverse.";
+    $("tlNota").innerHTML = msg;
+  }
+  ["tlA","tlB","tlC","tlD"].forEach(function(id){ $(id).addEventListener("input", dibujar); });
+  document.querySelectorAll("#tl button[data-t]").forEach(function(b){
+    b.onclick = function(){
+      var p = b.dataset.t.split(",");
+      ["tlA","tlB","tlC","tlD"].forEach(function(id, i){ $(id).value = p[i]; });
+      dibujar();
+    };
+  });
+  window.addEventListener("resize", dibujar);
+  dibujar();
+  setTimeout(dibujar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Differentiable functions · Calculus I · Catto</title>
+<meta name="description" content="The derivative as the limit of the difference quotient, its geometric and physical interpretation, differentiation rules, the chain rule, higher-order derivatives and the differential. Content of Calculus I, Level 1 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/derivada">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/derivada">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/derivada">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/derivada">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Calculus I</a>
+    <span class="anio">Level 1</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Calculus I</span> · 120 h · Topic 4 of 10</div>
+    <h1>Differentiable functions</h1>
+    <p class="lead">The derivative measures how fast something changes. In a circuit it is the current through a capacitor, the voltage across an inductor and the response speed of an amplifier.</p>
+    <div class="chips">
+      <span class="chip hi">Difference quotient</span>
+      <span class="chip">Tangent line</span>
+      <span class="chip">Rules</span>
+      <span class="chip">Chain rule</span>
+      <span class="chip">Differential</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>The slope at a point</h2>
+      <p>The slope of a line is computed from two points. What about the slope of a curve, at a single point? The way out is to
+      take two very close points, compute the slope of the line joining them —the <b>secant</b>— and see what
+      value it approaches as the points come together. That limit is the <b>derivative</b>:</p>
+      <div class="form">
+        \[ f' (a) = \lim_{h \to 0} \frac{f (a + h) -f (a)}{h} \quad = \; \lim_{\Delta x \to 0} \frac{\Delta y}{\Delta x} \]
+        <span class="cap">The difference quotient Δy/Δx is the slope of the secant. Its limit, when it exists, is the slope of the <b>tangent</b>: the derivative.</span>
+      </div>
+      <div class="box key"><div class="bt">Three readings of the same computation</div>
+        <p><b>Geometric:</b> the slope of the tangent line.<br>
+        <b>Physical:</b> the instantaneous rate of change: if x(t) is position, x′(t) is velocity.<br>
+        <b>Engineering:</b> sensitivity. How much the output changes for each unit the input changes,
+        right at that operating point.</p></div>
+      <p>If the limit exists, the function is <b>differentiable</b> at a. Every differentiable function is continuous, but the
+      converse is false: f(x) = |x| is continuous at 0 and not differentiable, because from the left the slope is −1 and
+      from the right +1. On a graph, the non-differentiable points are <b>corners</b>, vertical tangents and
+      discontinuities.</p>
+
+      <div class="lw" id="der">
+        <div class="lt">Lab · from the secant to the tangent</div>
+        <p class="ls">Shrink h and watch the secant lie down onto the tangent. The curve below is the derivative, point by point.</p>
+        <div class="fila">
+          <select id="drF">
+            <option value="cuad">f(x) = x²/2</option>
+            <option value="cubi">f(x) = x³/3 − x</option>
+            <option value="sen">f(x) = sin x</option>
+            <option value="exp">f(x) = eˣ/3</option>
+            <option value="abs">f(x) = |x|</option>
+            <option value="carga">Charging a capacitor: 3(1 − e<sup>−x</sup>)</option>
+          </select>
+          <label>a <input type="range" id="drA" min="-3" max="3" step="0.1" value="1"><b id="drAv">1</b></label>
+          <label>h <input type="range" id="drH" min="0.01" max="2" step="0.01" value="1.2"><b id="drHv">1.2</b></label>
+          <label class="chk"><input type="checkbox" id="drD" checked> Draw the derivative</label>
+        </div>
+        <canvas id="drLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.3/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="nota" id="drNota"></div>
+      </div>
+    </section>
+
+    <section id="reglas">
+      <h2><span class="n">02</span>The rules, which save you from taking the limit every time</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Function</th><th>Derivative</th><th>Function</th><th>Derivative</th></tr></thead>
+        <tbody>
+          <tr><td>k (constant)</td><td>0</td><td>sin x</td><td>cos x</td></tr>
+          <tr><td>x<sup>n</sup></td><td>\( n \, x^{n-1} \)</td><td>cos x</td><td>−sin x</td></tr>
+          <tr><td>e<sup>x</sup></td><td>e<sup>x</sup></td><td>tan x</td><td>\( \sec^2 x = 1 + \operatorname{tan}^2 x \)</td></tr>
+          <tr><td>a<sup>x</sup></td><td>\( a^x \ln a \)</td><td>arctan x</td><td>\( \dfrac{1}{1 + x^{2}} \)</td></tr>
+          <tr><td>ln x</td><td>\( \dfrac{1}{x} \)</td><td>\( \sqrt x \)</td><td>\( \dfrac{1}{2\sqrt x} \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>And the four combination rules:</p>
+      <div class="form">
+        \[ \begin{array}{ccc} (f \pm g) ' = f' \pm g' &amp; \quad &amp; (k f) ' = k f' \\ (f \cdot g) ' = f' g + f g' &amp; &amp; {\left(\frac{f}{g} \right)}' = \frac{f' g -f g'}{g^2} \end{array} \]
+        <span class="cap">The product rule is not the product of the derivatives, and the quotient rule has a fixed order: the derivative of the numerator comes first.</span>
+      </div>
+      <div class="box key"><div class="bt">The chain rule</div>
+        <p>For a composition, the derivatives are multiplied: <b>(g ∘ f)′(x) = g′(f(x)) · f′(x)</b>. You differentiate
+        the outer function evaluated at the inner one, and multiply by the derivative of the inner function.</p>
+        <p>Example: the derivative of e<sup>−t/RC</sup> is e<sup>−t/RC</sup> · (−1/RC). That factor that appears “from the
+        inside” is what makes the discharge current of a capacitor depend on the time constant.</p></div>
+    </section>
+
+    <section id="ejemplos">
+      <h2><span class="n">03</span>Derivatives used in electronics</h2>
+      <div class="box ejem"><div class="bt">The current through a capacitor</div>
+        <p>If v(t) = V·sin(ωt), then i = C·dv/dt = C·V·ω·cos(ωt).</p>
+        <p>Three conclusions from a single derivative: the current <b>leads by 90°</b> the voltage
+        (the cosine leads the sine), its amplitude is <b>proportional to the frequency</b> —hence capacitive
+        reactance is 1/(ωC)— and so a capacitor “lets through” fast signals better.</p></div>
+      <div class="box ejem"><div class="bt">Response speed</div>
+        <p>For a sinusoidal output v<sub>o</sub> = A·sin(2πft), the maximum slope is 2πfA, and it occurs at the
+        zero crossing. An op amp with <i>slew rate</i> SR can follow it only if 2πfA ≤ SR.</p>
+        <p>With SR = 0.5 V/µs and A = 10 V, the maximum undistorted frequency is
+        f = SR/(2πA) = 500,000/(2π·10) ≈ <b>7.96 kHz</b>. Above that, the sine comes out triangular.</p></div>
+      <p>The second derivative, f″, is the derivative of the derivative: it measures how the rate of change changes. In
+      mechanics it is acceleration; on a graph, the <b>concavity</b>.</p>
+    </section>
+
+    <section id="diferencial">
+      <h2><span class="n">04</span>The differential: the best linear approximation</h2>
+      <div class="form">
+        \[ \Delta y \approx d y = f' (a) \cdot d x \quad f (a + h) \approx f (a) + f' (a) h \]
+        <span class="cap">Near the point, the curve and its tangent are almost the same thing. The smaller the neighborhood, the better the approximation.</span>
+      </div>
+      <p>This is <b>linearizing</b>, and it is done all the time in electronics: the small-signal model
+      of a transistor is the tangent line to its characteristic at the operating point. The dynamic resistance
+      of a diode, r<sub>d</sub> = nV<sub>T</sub>/I, comes from differentiating its exponential equation and keeping the
+      slope at the Q point. All the linear analysis of a
+      <a class="ref" href="/en/publicaciones/mapa-electronica/temas/amplificadores-senal-debil">small-signal
+      amplifier</a> rests on that approximation.</p>
+      <p>The differential is also useful for <b>propagating errors</b>: if a quantity is computed from another
+      one measured with some uncertainty, the error is multiplied by the derivative.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Numerical derivative of a measurement</div>
+        <p>Record the charging of a capacitor with the oscilloscope, export the points and compute the numerical
+        derivative (v[i+1] − v[i])/Δt. Compare it with the current measured across a series resistor: they must be
+        proportional, with constant C.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Measuring the slew rate</div>
+        <p>Drive an op amp with a square wave and measure the maximum slope of the output.
+        Use it to compute the maximum frequency for a sine wave of 10 V peak, and check it by raising the
+        frequency until the output turns triangular.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Dynamic resistance of a diode</div>
+        <p>Measure the i-v curve of a diode point by point, plot it and estimate the slope at three different
+        operating points. Compare with r<sub>d</sub> = 26 mV / I and discuss the agreement.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Differentiating a product as the product of the derivatives.</b></li>
+        <li><b>Forgetting the chain-rule factor</b>, which is the costliest mistake and the quietest one.</li>
+        <li><b>Confusing f′(x) with f(x′)</b> or with the derivative evaluated at another point.</li>
+        <li><b>Believing that continuous implies differentiable:</b> the absolute value is the counterexample.</li>
+        <li><b>Differentiating sin x with x in degrees:</b> the formulas hold in radians.</li>
+        <li><b>Using the small-signal model far from the operating point</b>, where the tangent no longer approximates anything.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>Differentiate f(x) = 3x⁴ − 5x + 2.</summary>
+        <div class="a"><p>f′(x) = 12x³ − 5.</p></div></details>
+      <details class="q"><summary>Differentiate f(t) = e<sup>−t/τ</sup>.</summary>
+        <div class="a"><p>By the chain rule: f′(t) = −(1/τ)·e<sup>−t/τ</sup>.</p></div></details>
+      <details class="q"><summary>Differentiate f(x) = x²·sin x.</summary>
+        <div class="a"><p>Product rule: f′(x) = 2x·sin x + x²·cos x.</p></div></details>
+      <details class="q"><summary>Why is |x| not differentiable at 0?</summary>
+        <div class="a"><p>Because the difference quotient tends to −1 from the left and to +1 from the right: the limit does not
+        exist. There is a corner.</p></div></details>
+      <details class="q"><summary>A 100 nF capacitor has v(t) = 5·sin(2π·1000·t). What is the peak current?</summary>
+        <div class="a"><p>i = C·dv/dt has a peak of C·V·ω = 100·10<sup>−9</sup> · 5 · 2π·1000 ≈ <b>3.14 mA</b>.</p></div></details>
+      <details class="q"><summary>What does it mean for the derivative to be negative at a point?</summary>
+        <div class="a"><p>That the function is decreasing there: if the input increases a little, the output goes down.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">James Stewart.</span> <span class="ti">Single Variable Calculus: Early Transcendentals</span>.
+          <span class="ed">7th ed. (Spanish edition, “Cálculo de una variable. Trascendentes tempranas”), Cengage Learning, 2012.</span>
+          <span class="pq">Chapters 2 and 3 take you from the difference quotient to all the rules, with physical applications.</span></li>
+        <li><span class="au">Hebe Rabuffetti.</span> <span class="ti">Introducción al análisis matemático (Cálculo 1)</span> (in Spanish).
+          <span class="ed">El Ateneo.</span>
+          <span class="pq">Differentiability and continuity treated with care, and many differentiation exercises.</span></li>
+        <li><span class="au">Tom M. Apostol.</span> <span class="ti">Calculus, Volume 1</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Calculus, volumen 1”), Reverté.</span>
+          <span class="pq">For the rigorous approach, with complete proofs of each rule.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/funciones-continuas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Continuous functions</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/aplicaciones-derivada">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Applications of the derivative</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Differentiable functions”</b> of <b>Calculus I</b> (Level 1), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* From the secant to the tangent: difference quotient, tangent line and the
+   curve of the derivative. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("drLienzo"), ctx = cv.getContext("2d"), G = {};
+  var F = {
+    cuad:  { f:function(x){ return x * x / 2; },            d:function(x){ return x; },              n:"x²/2",        dn:"x" },
+    cubi:  { f:function(x){ return x * x * x / 3 - x; },     d:function(x){ return x * x - 1; },      n:"x³/3 − x",    dn:"x² − 1" },
+    sen:   { f:function(x){ return Math.sin(x); },           d:function(x){ return Math.cos(x); },    n:"sin x",       dn:"cos x" },
+    exp:   { f:function(x){ return Math.exp(x) / 3; },       d:function(x){ return Math.exp(x) / 3; },n:"eˣ/3",        dn:"eˣ/3" },
+    abs:   { f:function(x){ return Math.abs(x); },           d:function(x){ return x > 0 ? 1 : (x < 0 ? -1 : NaN); }, n:"|x|", dn:"±1" },
+    carga: { f:function(x){ return 3 * (1 - Math.exp(-x)); },d:function(x){ return 3 * Math.exp(-x); },n:"3(1 − e⁻ˣ)", dn:"3e⁻ˣ" }
+  };
+  function n(x, d){
+    if(d === undefined) d = 3;
+    if(!isFinite(x)) return "does not exist";
+    if(Math.abs(x) < 1e-12) x = 0;
+    return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString().replace("-", "−");
+  }
+  function ajustar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return false;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    G.w = r.width; G.h = r.height; G.x0 = -4; G.x1 = 4; G.y0 = -3; G.y1 = 3.6;
+    return true;
+  }
+  function PX(x){ return (x - G.x0) / (G.x1 - G.x0) * G.w; }
+  function PY(y){ return G.h - (y - G.y0) / (G.y1 - G.y0) * G.h; }
+  function curva(g, col, ancho, dash){
+    ctx.strokeStyle = col; ctx.lineWidth = ancho; if(dash) ctx.setLineDash(dash);
+    ctx.beginPath();
+    var previo = false;
+    for(var px = 0; px <= G.w; px += 1.5){
+      var x = G.x0 + px / G.w * (G.x1 - G.x0), y = g(x);
+      if(!isFinite(y) || y < G.y0 - 6 || y > G.y1 + 6){ previo = false; continue; }
+      if(previo) ctx.lineTo(px, PY(y)); else ctx.moveTo(px, PY(y));
+      previo = true;
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  function dibujar(){
+    if(!ajustar()) return;
+    var d = F[$("drF").value], a = parseFloat($("drA").value), h = parseFloat($("drH").value);
+    $("drAv").textContent = n(a, 2); $("drHv").textContent = n(h, 2);
+    ctx.clearRect(0, 0, G.w, G.h);
+    ctx.strokeStyle = "#161d29"; ctx.lineWidth = 1;
+    for(var i = -4; i <= 4; i++){ ctx.beginPath(); ctx.moveTo(PX(i), 0); ctx.lineTo(PX(i), G.h); ctx.stroke(); }
+    for(var j = -3; j <= 3; j++){ ctx.beginPath(); ctx.moveTo(0, PY(j)); ctx.lineTo(G.w, PY(j)); ctx.stroke(); }
+    ctx.strokeStyle = "#3a4456"; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.moveTo(0, PY(0)); ctx.lineTo(G.w, PY(0)); ctx.moveTo(PX(0), 0); ctx.lineTo(PX(0), G.h); ctx.stroke();
+
+    if($("drD").checked) curva(d.d, "rgba(163,113,247,.85)", 2, [6, 5]);
+    curva(d.f, "#58a6ff", 2.6);
+
+    var fa = d.f(a), fah = d.f(a + h), der = d.d(a);
+    var msec = (fah - fa) / h;
+    /* secant */
+    if(isFinite(msec)){
+      ctx.strokeStyle = "rgba(242,204,96,.9)"; ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(PX(G.x0), PY(fa + msec * (G.x0 - a)));
+      ctx.lineTo(PX(G.x1), PY(fa + msec * (G.x1 - a)));
+      ctx.stroke();
+      /* the difference-quotient triangle */
+      ctx.strokeStyle = "rgba(242,204,96,.55)"; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(PX(a), PY(fa)); ctx.lineTo(PX(a + h), PY(fa)); ctx.lineTo(PX(a + h), PY(fah));
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(242,204,96,.9)"; ctx.font = "11.5px 'Segoe UI',system-ui,sans-serif";
+      ctx.fillText("h", PX(a + h / 2) - 4, PY(fa) + 14);
+      ctx.fillText("Δy", PX(a + h) + 5, PY((fa + fah) / 2));
+    }
+    /* tangent */
+    if(isFinite(der)){
+      ctx.strokeStyle = "#3fb950"; ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(PX(G.x0), PY(fa + der * (G.x0 - a)));
+      ctx.lineTo(PX(G.x1), PY(fa + der * (G.x1 - a)));
+      ctx.stroke();
+    }
+    [[a, fa, "#f2cc60"], [a + h, fah, "rgba(242,204,96,.6)"]].forEach(function(p){
+      if(!isFinite(p[1])) return;
+      ctx.fillStyle = p[2];
+      ctx.beginPath(); ctx.arc(PX(p[0]), PY(p[1]), 5, 0, Math.PI * 2); ctx.fill();
+    });
+
+    var err = isFinite(der) && isFinite(msec) ? Math.abs(msec - der) : NaN;
+    $("drNota").innerHTML =
+      "f(x) = " + d.n + " and f′(x) = " + d.dn + ". At a = " + n(a, 2) + ": " +
+      "<b>difference quotient</b> = [f(" + n(a + h, 2) + ") − f(" + n(a, 2) + ")] / " + n(h, 2) + " = <b>" + n(msec) + "</b> " +
+      "(slope of the yellow secant) · <b>derivative</b> = <b style='color:#3fb950'>" + n(der) + "</b> (slope of the green tangent)." +
+      (isFinite(err) ? " The difference between the two is " + n(err) + ", and it tends to zero as h shrinks." :
+        " Here the derivative does not exist: the slopes from the left and from the right are different.") +
+      ($("drD").checked ? " The dotted violet curve is f′(x): its height at each x is the slope of f there." : "");
+  }
+  ["drF","drA","drH","drD"].forEach(function(id){ $(id).addEventListener("input", dibujar); });
+  window.addEventListener("resize", dibujar);
+  dibujar();
+  setTimeout(dibujar, 300);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

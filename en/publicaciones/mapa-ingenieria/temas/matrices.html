@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matrices · Linear Algebra and Analytic Geometry · Catto</title>
+<meta name="description" content="What a matrix is, its types, addition, scalar multiplication, matrix multiplication with an interactive lab, the inverse matrix, rank and what they are used for in electronics: the admittance matrix and cascaded two-port networks. Content of Linear Algebra and Analytic Geometry, Level 1 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/matrices">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/matrices">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/matrices">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/matrices">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Linear Algebra and Analytic Geometry</a>
+    <span class="anio">Level 1</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Linear Algebra and Analytic Geometry</span> · 120 h · Topic 1 of 9</div>
+    <h1>Matrices</h1>
+    <p class="lead">A matrix looks like a table of numbers, but it is the most compact way to write down an entire circuit, a rotation or the chaining of two amplifier stages.</p>
+    <div class="chips">
+      <span class="chip hi">Matrix multiplication</span>
+      <span class="chip">Inverse</span>
+      <span class="chip">Rank</span>
+      <span class="chip">Admittance matrix</span>
+      <span class="chip">Two-port networks</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que-es">
+      <h2><span class="n">01</span>A table that also does arithmetic</h2>
+      <p>A <b>matrix</b> is a rectangular array of numbers arranged in rows and columns. So far it is just a
+      table. What turns it into a tool is that operations are defined on that array —addition, multiplication,
+      inverse— and they stand for concrete things: solving a circuit, rotating a vector, chaining two stages of an
+      amplifier.</p>
+      <div class="form">
+        \[ A = \left[ \begin{array}{cccc} a_{11} &amp; a_{12} &amp; \cdots &amp; a_{1 n} \\ a_{21} &amp; a_{22} &amp; \cdots &amp; a_{2 n} \\ \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\ a_{m 1} &amp; a_{m 2} &amp; \cdots &amp; a_{m n} \end{array} \right] \]
+        <span class="cap">A has order m × n: m rows and n columns. The element a<sub>ij</sub> is in row i and column j, in that order.</span>
+      </div>
+      <div class="box key"><div class="bt">The order of the subscripts is not a whim</div>
+        <p>Row first, then column. All the notation that follows —the product, the transpose, the
+        determinant— depends on respecting it. A subscript error does not give a strange result: it gives a
+        different result that looks reasonable, which is worse.</p></div>
+      <p>Two matrices are <b>equal</b> if they have the same order and agree element by element. There is no
+      possible equality between a 2 × 3 matrix and a 3 × 2 matrix.</p>
+    </section>
+
+    <section id="tipos">
+      <h2><span class="n">02</span>Matrices with a name of their own</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Name</th><th>What it looks like</th><th>Where it shows up</th></tr></thead>
+        <tbody>
+          <tr><td><b>Row</b> and <b>column</b></td><td>\( 1 \times n \) and \( m \times 1 \)</td><td>A vector written as a matrix. In electronics, the vector of mesh currents</td></tr>
+          <tr><td><b>Square</b></td><td>\( m = n \)</td><td>It is the only kind that can have an inverse, a determinant and eigenvalues</td></tr>
+          <tr><td><b>Diagonal</b></td><td>\( a_{ij} = 0 \) if \( i \ne j \)</td><td>Multiplying by it scales each component separately</td></tr>
+          <tr><td><b>Identity I</b></td><td>Diagonal with ones</td><td>The “1” of matrix multiplication: \( A \cdot I = I \cdot A = A \)</td></tr>
+          <tr><td><b>Triangular</b></td><td>Zeros above or below the diagonal</td><td>This is what Gaussian elimination leads to; its determinant is the product of the diagonal</td></tr>
+          <tr><td><b>Transpose A<sup>T</sup></b></td><td>Rows and columns are swapped</td><td>\( (A \cdot B)^T = B^T \cdot A^T \), with the order reversed</td></tr>
+          <tr><td><b>Symmetric</b></td><td>\( A = A^T \)</td><td>The impedance matrix of a passive network, by the reciprocity theorem</td></tr>
+          <tr><td><b>Zero</b></td><td>All zeros</td><td>The identity element of addition. Careful: \( A \cdot B = 0 \) does not force A or B to be zero</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="suma">
+      <h2><span class="n">03</span>Addition and scalar multiplication</h2>
+      <p>The two easy operations are done <b>element by element</b>, and they require the matrices to have the
+      same order:</p>
+      <div class="form">
+        \[ {\mathrm{(A+B)}}_{i j} = a_{i j} + b_{i j} \quad {\mathrm{(λA)}}_{i j} = \lambda \cdot a_{i j} \]
+        <span class="cap">Addition is commutative and associative, has an identity element (the zero matrix) and an additive inverse (−A). Scalar multiplication distributes over both additions.</span>
+      </div>
+      <p>With those properties, the set of matrices of a fixed order is a <b>vector space</b>: the
+      structure that is studied in detail later in this same course.</p>
+    </section>
+
+    <section id="producto">
+      <h2><span class="n">04</span>The product: rows by columns</h2>
+      <p>Here intuition breaks down. The product is <b>not</b> element by element. The element c<sub>ij</sub> of the
+      product is the dot product of <b>row i of A</b> with <b>column j of B</b>:</p>
+      <div class="form">
+        \[ c_{i j} = \sum_{k = 1}^n a_{i k} \cdot b_{k j} \]
+        <span class="cap">A of m × n times B of n × p gives C of m × p. The inner dimensions have to match, and they are the ones that disappear.</span>
+      </div>
+      <p>Tap a cell of the result and the computation that produced it appears:</p>
+
+      <div class="lw" id="mm">
+        <div class="lt">Lab · matrix multiplication</div>
+        <p class="ls">Change the numbers and the dimensions. Tapping a cell of the result shows the row-by-column computation.</p>
+        <div class="fila">
+          <label>A: <select id="mmM"><option>2</option><option selected>3</option></select> ×
+            <select id="mmN"><option>2</option><option selected>3</option></select></label>
+          <label>B: <span id="mmN2">3</span> × <select id="mmP"><option>1</option><option>2</option><option selected>3</option></select></label>
+          <button id="mmSwap">Compute B · A</button>
+          <button id="mmAzar">Random numbers</button>
+        </div>
+        <div class="g2" style="margin-top:6px">
+          <div class="caja"><h5>A</h5><div id="mmA"></div></div>
+          <div class="caja"><h5>B</h5><div id="mmB"></div></div>
+        </div>
+        <div class="caja" style="margin-top:10px"><h5 id="mmTit">A · B</h5><div id="mmC"></div></div>
+        <div class="nota" id="mmNota"></div>
+      </div>
+
+      <div class="box ojo"><div class="bt">The product is not commutative</div>
+        <p>In general <b>A·B ≠ B·A</b>, and often B·A cannot even be computed. Try the button
+        “Compute B · A” in the lab. Associativity, A(BC) = (AB)C, and distributivity,
+        A(B + C) = AB + AC, do hold. What does not hold is cancellation: AB = AC does not imply B = C.</p></div>
+    </section>
+
+    <section id="inversa">
+      <h2><span class="n">05</span>The inverse matrix</h2>
+      <p>Dividing matrices does not exist. What exists is the <b>inverse</b>: the matrix that undoes what A does.</p>
+      <div class="form">
+        \[ A \cdot A^{-1} = A^{-1} \cdot A = I \]
+        <span class="cap">Only square matrices with a nonzero determinant have an inverse. These are called regular or nonsingular.</span>
+      </div>
+      <p>For 2 × 2 there is a direct formula: swap the entries on the main diagonal, change the sign of the
+      other two and divide by the determinant.</p>
+      <div class="form">
+        \[ A = \left[ \begin{array}{cc} a &amp; b \\ c &amp; d \end{array} \right] \quad \implies \quad A^{-1} = \frac{1}{a d -b c} \left[ \begin{array}{cc} d &amp; -b \\ -c &amp; a \end{array} \right] \]
+      </div>
+      <p>For larger orders you use <b>Gauss-Jordan elimination</b>: you write [A | I] and perform
+      row operations until you reach [I | A<sup>−1</sup>]. The method appears in full in the topic on
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/sistemas-ecuaciones">systems of linear equations</a>.</p>
+      <div class="box ejem"><div class="bt">Worked example</div>
+        <p>For A = [[2, 1], [5, 3]]: det = 2·3 − 1·5 = 1, so A<sup>−1</sup> = [[3, −1], [−5, 2]].</p>
+        <p>Check: A·A<sup>−1</sup> = [[2·3 + 1·(−5), 2·(−1) + 1·2], [5·3 + 3·(−5), 5·(−1) + 3·2]] = [[1, 0], [0, 1]]. ✔</p></div>
+      <p>Two properties that are used all the time: <b>(A·B)<sup>−1</sup> = B<sup>−1</sup>·A<sup>−1</sup></b>
+      —just like taking off your clothes: the last thing you put on comes off first— and (A<sup>−1</sup>)<sup>−1</sup> = A.</p>
+    </section>
+
+    <section id="rango">
+      <h2><span class="n">06</span>Rank: how much information there really is</h2>
+      <p>The <b>rank</b> of a matrix is the number of linearly independent rows, that is, how many rows
+      contribute new information. It is computed by bringing the matrix to row echelon form with elementary operations
+      (swapping two rows, multiplying a row by a nonzero scalar, adding to a row a multiple of
+      another) and counting the rows that did not end up zero.</p>
+      <div class="box ejem"><div class="bt">A row that contributed nothing</div>
+        <p>In [[1, 2, 3], [2, 4, 6], [1, 0, 1]], the second row is twice the first. Subtracting
+        2 times the first leaves it zero: the rank is 2, not 3. That means, for example, that the associated system of
+        equations has one equation too many, which adds no condition.</p></div>
+      <p>The rank decides almost everything that follows: whether a system has a solution and how many, whether a matrix is
+      invertible (an n × n matrix is invertible only if its rank is n) and what the dimension of the image of a
+      linear transformation is.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">07</span>What this is good for in electronics</h2>
+      <h3>An entire circuit in one equation</h3>
+      <p>Nodal analysis of a network of n nodes is written as <b>Y · V = I</b>, where Y is the admittance matrix,
+      V the vector of node voltages and I the vector of injected currents. The matrix is built almost without
+      thinking: on the diagonal, the sum of the admittances meeting at each node; off the diagonal, the
+      admittance between the two nodes, with its sign changed. Solving the circuit is solving the system.</p>
+      <div class="form">
+        \[ \left[ \begin{array}{cc} G_1 + G_2 &amp; -G_2 \\ -G_2 &amp; G_2 + G_3 \end{array} \right] \left[ \begin{array}{c} V_1 \\ V_2 \end{array} \right] = \left[ \begin{array}{c} I_1 \\ I_2 \end{array} \right] \]
+        <span class="cap">The admittance matrix of a passive network is symmetric: Y<sub>12</sub> = Y<sub>21</sub>. It is the reciprocity theorem written in matrix form.</span>
+      </div>
+      <h3>Cascaded stages: the product is the connection</h3>
+      <p>A two-port network —an amplifier stage, a filter, a section of transmission line— is described by
+      its matrix of <b>ABCD parameters</b>, which relates the input to the output. And here is the elegant part:
+      <b>connecting two stages in cascade means multiplying their matrices</b>, in the order in which the signal passes through them.</p>
+      <p>That is why it matters that the product is not commutative: swapping two stages of a circuit gives another
+      circuit, with a different response. The algebra is not an analogy, it is exactly what happens. The transmission
+      lines described this way appear in
+      <a class="ref" href="/en/publicaciones/carta-smith">the Smith chart</a>.</p>
+      <p>There is more: the rotation matrix turns a phasor by an angle φ, transition matrices describe state
+      machines and the truth tables of a digital system are, in the end, matrices of zeros and ones.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">08</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Building the matrix of a circuit</div>
+        <p>For a three-node network with five resistors of your choice, write the admittance matrix, verify
+        that it is symmetric and that the sum of each row gives the admittance to the reference node. Solve
+        V = Y<sup>−1</sup>·I with a calculator or with Octave, and check it with an LTspice simulation.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Checking that it does not commute</div>
+        <p>With any two 2 × 2 matrices, compute A·B and B·A by hand and verify that they differ. Then
+        look for two matrices that do commute (for example, two diagonal ones) and explain why.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · With software</div>
+        <p>In GNU Octave or Python with NumPy: create matrices, multiply them, invert them and time how long it takes to
+        invert a 500 × 500 one. Compare <code>A*B</code> (matrix product) with <code>A.*B</code>
+        (element by element) so you never confuse them again.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">09</span>Common mistakes</h2>
+      <ul>
+        <li><b>Multiplying element by element.</b> That is a different operation (the Hadamard product), and it is no use for solving systems.</li>
+        <li><b>Not checking the dimensions</b> before multiplying: if the inner ones do not match, the product does not exist.</li>
+        <li><b>Reversing the order</b> in (A·B)<sup>T</sup> or (A·B)<sup>−1</sup>.</li>
+        <li><b>Cancelling as with numbers:</b> A·B = A·C does not imply B = C, unless A is invertible.</li>
+        <li><b>Trying to invert a non-square matrix</b> or one with a zero determinant.</li>
+        <li><b>Confusing the zero matrix with the identity</b> as the identity element: the zero matrix is the one for addition, the identity for multiplication.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">10</span>Self-assessment</h2>
+      <details class="q"><summary>If A is 4 × 3 and B is 3 × 5, what is the order of A·B? And of B·A?</summary>
+        <div class="a"><p>A·B is 4 × 5. B·A does not exist: the inner dimensions (5 and 4) do not match.</p></div></details>
+      <details class="q"><summary>Compute [[1, 2], [0, 3]] · [[4, 0], [1, 5]].</summary>
+        <div class="a"><p>[[1·4 + 2·1, 1·0 + 2·5], [0·4 + 3·1, 0·0 + 3·5]] = [[6, 10], [3, 15]].</p></div></details>
+      <details class="q"><summary>When does a square matrix of order n have an inverse?</summary>
+        <div class="a"><p>When its determinant is nonzero, which is the same as saying that its rank is n or
+        that its rows are linearly independent.</p></div></details>
+      <details class="q"><summary>The inverse of [[3, 1], [2, 1]].</summary>
+        <div class="a"><p>det = 3 − 2 = 1, so the inverse is [[1, −1], [−2, 3]].</p></div></details>
+      <details class="q"><summary>What is the rank of [[1, 1], [2, 2]]?</summary>
+        <div class="a"><p>1: the second row is twice the first and vanishes when you reduce to echelon form. Therefore the
+        matrix has no inverse, and its determinant is zero.</p></div></details>
+      <details class="q"><summary>Why is the admittance matrix of a passive network symmetric?</summary>
+        <div class="a"><p>Because the admittance between nodes i and j is the same seen from either of the two:
+        this is the reciprocity theorem. It stops being symmetric if there are active elements, such as controlled sources.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">11</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Stanley I. Grossman.</span> <span class="ti">Álgebra lineal</span>.
+          <span class="ed">6th ed., McGraw-Hill, 2008 (in Spanish).</span>
+          <span class="pq">The most widely used text in Argentine engineering schools: matrices and determinants with many worked exercises.</span></li>
+        <li><span class="au">Gilbert Strang.</span> <span class="ti">Linear Algebra and Its Applications</span>.
+          <span class="ed">4th ed. (Spanish edition, “Álgebra lineal y sus aplicaciones”), Cengage Learning, 2007.</span>
+          <span class="pq">It treats matrices as transformations and as operations on columns. His lectures are free on MIT OCW.</span></li>
+        <li><span class="au">David C. Lay.</span> <span class="ti">Linear Algebra and Its Applications</span>.
+          <span class="ed">5th ed. (Spanish edition, “Álgebra lineal y sus aplicaciones”), Pearson, 2016.</span>
+          <span class="pq">Very clear on rank, linear independence and applications to electrical networks.</span></li>
+        <li><span class="au">Frank Ayres.</span> <span class="ti">Schaum’s Outline of Matrices</span>.
+          <span class="ed">(Spanish edition, “Matrices”, Schaum series), McGraw-Hill.</span>
+          <span class="pq">If what you need is practice: hundreds of worked exercises, short and to the point.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a class="ph" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">← Back</div>
+        <div class="tt">Engineering Topic Map</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/determinantes">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Determinants</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Matrices”</b> of <b>Linear Algebra and Analytic Geometry</b> (Level 1), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Matrix multiplication: two editable grids and the result, with the
+   row-by-column detail of the cell you tap. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var A = [[2,1,0],[1,3,1],[0,1,2]], B = [[1,0,2],[0,1,1],[3,1,0]], alReves = false, sel = null;
+
+  function dim(){ return { m:+$("mmM").value, n:+$("mmN").value, p:+$("mmP").value }; }
+  function ajustar(){
+    var d = dim();
+    function rehacer(M, f, c){
+      var N = [], i, j;
+      for(i = 0; i < f; i++){ N.push([]); for(j = 0; j < c; j++) N[i].push(M[i] && M[i][j] !== undefined ? M[i][j] : 0); }
+      return N;
+    }
+    A = rehacer(A, d.m, d.n); B = rehacer(B, d.n, d.p);
+    $("mmN2").textContent = d.n;
+  }
+  function grilla(id, M, nombre){
+    var h = '<div style="display:grid;gap:4px;grid-template-columns:repeat(' + M[0].length + ',minmax(0,52px))">';
+    M.forEach(function(fila, i){
+      fila.forEach(function(v, j){
+        h += '<input type="number" data-m="' + nombre + '" data-i="' + i + '" data-j="' + j + '" value="' + v +
+             '" style="width:100%;padding:5px 4px;text-align:center;font:13px Consolas,monospace">';
+      });
+    });
+    $(id).innerHTML = h + "</div>";
+  }
+  function multiplicar(X, Y){
+    var C = [], i, j, k;
+    if(X[0].length !== Y.length) return null;
+    for(i = 0; i < X.length; i++){
+      C.push([]);
+      for(j = 0; j < Y[0].length; j++){
+        var s = 0;
+        for(k = 0; k < Y.length; k++) s += X[i][k] * Y[k][j];
+        C[i].push(s);
+      }
+    }
+    return C;
+  }
+  function pintar(){
+    grilla("mmA", A, "A"); grilla("mmB", B, "B");
+    var X = alReves ? B : A, Y = alReves ? A : B;
+    var nX = alReves ? "B" : "A", nY = alReves ? "A" : "B";
+    $("mmTit").textContent = nX + " · " + nY;
+    var C = multiplicar(X, Y);
+    if(!C){
+      $("mmC").innerHTML = '<span style="color:#d29922">' + nX + " is " + X.length + " × " + X[0].length +
+        " and " + nY + " is " + Y.length + " × " + Y[0].length +
+        ": the product <b>does not exist</b>, because the inner dimensions do not match.</span>";
+      $("mmNota").innerHTML = "To multiply, the number of columns of the first has to equal the number of rows of the second.";
+      return;
+    }
+    var h = '<div style="display:grid;gap:4px;grid-template-columns:repeat(' + C[0].length + ',minmax(0,62px))">';
+    C.forEach(function(fila, i){
+      fila.forEach(function(v, j){
+        var act = sel && sel[0] === i && sel[1] === j;
+        h += '<button data-c="' + i + "," + j + '" style="padding:6px 4px;font:13px Consolas,monospace' +
+             (act ? ";background:#1f6feb;border-color:#58a6ff;color:#fff" : "") + '">' + v + "</button>";
+      });
+    });
+    $("mmC").innerHTML = h + "</div>";
+    if(!sel || sel[0] >= C.length || sel[1] >= C[0].length) sel = [0, 0];
+    var i = sel[0], j = sel[1], t = [], s = 0;
+    for(var k = 0; k < Y.length; k++){
+      t.push(X[i][k] + "·" + Y[k][j]);
+      s += X[i][k] * Y[k][j];
+    }
+    $("mmNota").innerHTML = "<b>c<sub>" + (i + 1) + (j + 1) + "</sub></b> = row " + (i + 1) + " of " + nX +
+      " times column " + (j + 1) + " of " + nY + " = " + t.join(" + ") + " = <b>" + s + "</b>. " +
+      "The result is " + C.length + " × " + C[0].length + ": it keeps the rows of the first and the columns of the second.";
+  }
+  document.addEventListener("input", function(ev){
+    var e = ev.target;
+    if(e.dataset && e.dataset.m){
+      var M = e.dataset.m === "A" ? A : B;
+      M[+e.dataset.i][+e.dataset.j] = parseFloat(e.value) || 0;
+      pintar();
+    }
+  });
+  $("mmC").addEventListener("click", function(ev){
+    var b = ev.target.closest("button[data-c]"); if(!b) return;
+    sel = b.dataset.c.split(",").map(Number); pintar();
+  });
+  ["mmM", "mmN", "mmP"].forEach(function(id){ $(id).onchange = function(){ ajustar(); sel = [0, 0]; pintar(); }; });
+  $("mmSwap").onclick = function(){ alReves = !alReves; this.textContent = alReves ? "Compute A · B" : "Compute B · A"; sel = [0, 0]; pintar(); };
+  $("mmAzar").onclick = function(){
+    function az(M){ M.forEach(function(f, i){ f.forEach(function(_, j){ M[i][j] = Math.floor(Math.random() * 7) - 2; }); }); }
+    az(A); az(B); pintar();
+  };
+  ajustar(); pintar();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
