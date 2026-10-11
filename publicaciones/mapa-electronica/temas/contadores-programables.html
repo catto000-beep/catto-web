@@ -142,7 +142,7 @@
         <table class="tab">
           <thead><tr><th>Etapas</th><th class="c">Cuenta hasta</th><th class="c">Módulo</th><th>División de frecuencia</th></tr></thead>
           <tbody>
-            <tr><td>4 (una década binaria)</td><td class="c">15</td><td class="c">16</td><td>f/16 en la última salida</td></tr>
+            <tr><td>4 (un nibble)</td><td class="c">15</td><td class="c">16</td><td>f/16 en la última salida</td></tr>
             <tr><td>8</td><td class="c">255</td><td class="c">256</td><td>f/256</td></tr>
             <tr><td>12</td><td class="c">4095</td><td class="c">4096</td><td>f/4096</td></tr>
             <tr><td>14 (CD4020)</td><td class="c">16383</td><td class="c">16384</td><td>f/16384</td></tr>
@@ -218,7 +218,8 @@
             <tr><td><b>CD4020 / 4040 / 4060</b></td><td class="c">Asincrónico</td><td class="c">2<sup>14</sup> / 2<sup>12</sup> / 2<sup>14</sup></td><td>Divisores largos. El 4060 trae además el oscilador a cristal adentro.</td></tr>
             <tr><td><b>CD4029</b></td><td class="c">Sincrónico</td><td class="c">10 o 16</td><td>Programable en todo: sentido, binario o BCD, con carga paralela. Muy usado en CMOS.</td></tr>
             <tr><td><b>CD4510 / 4516</b></td><td class="c">Sincrónico</td><td class="c">10 / 16</td><td>Los equivalentes CMOS del 74192/193.</td></tr>
-            <tr><td><b>CD4553 / 4026 / 4033</b></td><td class="c">Sincrónico</td><td class="c">10</td><td>Contador + decodificador de siete segmentos en el mismo chip. Frecuencímetros y cuentavueltas.</td></tr>
+            <tr><td><b>CD4553</b></td><td class="c">Sincrónico</td><td class="c">1000</td><td>Contador BCD de 3 dígitos con salidas multiplexadas (necesita un decodificador como el CD4511). Frecuencímetros y cuentavueltas.</td></tr>
+            <tr><td><b>CD4026 / 4033</b></td><td class="c">Sincrónico</td><td class="c">10</td><td>Contador + decodificador de siete segmentos en el mismo chip. Frecuencímetros y cuentavueltas.</td></tr>
           </tbody>
         </table>
       </div>
@@ -315,7 +316,7 @@
       </div>
 
       <h3>b) Por carga sincrónica: mucho más limpio</h3>
-      <p>Con un contador de carga y borrado <b>sincrónicos</b> (74163, o el 74193 usando su carga paralela),
+      <p>Con un contador de carga y borrado <b>sincrónicos</b> (como el 74163; el 74193, en cambio, los tiene asincrónicos),
       la corrección ocurre en el flanco de reloj, junto con todos los demás cambios. No hay estado fantasma
       ni pulso angosto.</p>
 
@@ -355,7 +356,7 @@
       encadenar es lo que distingue una cascada que funciona a 20 MHz de una que se cuelga a 2 MHz.</p>
 
       <figure>
-        <svg viewBox="0 0 680 250" role="img" aria-label="Cascada de dos contadores década con acarreo" class="svg-t" data-anim>
+        <svg viewBox="0 0 680 250" role="img" aria-label="Cascada de tres contadores década con acarreo" class="svg-t" data-anim>
           <style>.cs-bk{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
           .cs-n{fill:#e6edf3;font-size:12.5px;text-anchor:middle;font-weight:600}
           .cs-s{fill:#9aa7b4;font-size:10.5px;text-anchor:middle}
@@ -397,7 +398,7 @@
           <text class="cs-l" x="340" y="170" text-anchor="middle" fill="#d29922">1 cada 10</text>
           <text class="cs-l" x="550" y="170" text-anchor="middle" fill="#f85149">1 cada 100</text>
           <text class="cs-l" x="340" y="205" text-anchor="middle">Módulo total = 10 × 10 × 10 = 1000 · la última salida divide la frecuencia por mil</text>
-          <text class="cs-l" x="340" y="228" text-anchor="middle">El dígito menos significativo es el de la izquierda: así se conecta el display</text>
+          <text class="cs-l" x="340" y="228" text-anchor="middle">El dígito menos significativo es el de la izquierda (en este dibujo): así se conecta el display</text>
         </svg>
         <figcaption><b>Figura 3.</b> Cascada de tres décadas, animada. Cada acarreo es diez veces más lento
         que el anterior. Es el esqueleto de un frecuencímetro, de un cuentavueltas y del contador de
@@ -564,13 +565,13 @@
       <div class="box ejem">
         <div class="bt">Ejemplo resuelto · Cuentavueltas de un motor</div>
         <p>Un sensor óptico entrega un pulso por vuelta de un eje que gira a 1500 RPM. Se quiere mostrar las
-        vueltas por minuto en tres dígitos.</p>
+        vueltas por minuto en cuatro dígitos.</p>
         <ol style="margin:8px 0 0;padding-left:20px">
           <li>1500 RPM = 1500/60 = <b>25 pulsos por segundo</b>.</li>
           <li>Si se cuenta durante 1 s se leen 25: hay que mostrar RPM, no pulsos por segundo. Se cuenta
           entonces durante <b>60 s</b>, o se multiplica por 60 eligiendo una ventana de 1 s y contando
           pulsos de un disco de 60 ranuras.</li>
-          <li>Solución práctica: disco de <b>6 ranuras</b> y ventana de <b>1 s</b>. Se cuentan
+          <li>Solución práctica: disco de <b>6 ranuras</b> y ventana de <b>1 s</b> (con 60 ranuras se contarían 1500 pulsos y tres décadas no alcanzan). Se cuentan
           1500 × 6/60 = <b>150 pulsos</b>, y el display muestra directamente las centenas y decenas de RPM
           con una coma fija (150 → 1500 RPM con el último cero pintado en el frente).</li>
           <li>Hacen falta tres décadas en cascada (módulo 1000) y una compuerta de ventana. Con el resultado
@@ -595,7 +596,8 @@
         <div class="bt">Práctica 2 · Módulo a pedido</div>
         <p>Con un 74193 (o 4516) y una compuerta NAND de cuatro entradas, armar sucesivamente los módulos 5,
         7, 9 y 12 por reset. Verificar cada uno con LED en las cuatro salidas y el reloj bien lento (1 Hz de
-        un 555). Después repetir el módulo 12 por <b>carga paralela</b> y comparar en el osciloscopio la
+        un 555). Después repetir el módulo 12 por <b>carga paralela sincrónica</b>, con un 74163 (en el 74193
+        la carga también es asincrónica y no sirve para esta comparación), y comparar en el osciloscopio la
         salida Q3 en los dos casos: en la versión por reset se ve la púa del estado fantasma.</p>
       </div>
 

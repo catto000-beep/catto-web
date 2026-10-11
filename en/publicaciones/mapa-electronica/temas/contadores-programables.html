@@ -142,7 +142,7 @@
         <table class="tab">
           <thead><tr><th>Stages</th><th class="c">Counts up to</th><th class="c">Modulus</th><th>Frequency division</th></tr></thead>
           <tbody>
-            <tr><td>4 (a binary decade)</td><td class="c">15</td><td class="c">16</td><td>f/16 at the last output</td></tr>
+            <tr><td>4 (a nibble)</td><td class="c">15</td><td class="c">16</td><td>f/16 at the last output</td></tr>
             <tr><td>8</td><td class="c">255</td><td class="c">256</td><td>f/256</td></tr>
             <tr><td>12</td><td class="c">4095</td><td class="c">4096</td><td>f/4096</td></tr>
             <tr><td>14 (CD4020)</td><td class="c">16383</td><td class="c">16384</td><td>f/16384</td></tr>
@@ -218,7 +218,8 @@
             <tr><td><b>CD4020 / 4040 / 4060</b></td><td class="c">Asynchronous</td><td class="c">2<sup>14</sup> / 2<sup>12</sup> / 2<sup>14</sup></td><td>Long dividers. The 4060 also has the crystal oscillator built in.</td></tr>
             <tr><td><b>CD4029</b></td><td class="c">Synchronous</td><td class="c">10 or 16</td><td>Programmable in every respect: direction, binary or BCD, with parallel load. Widely used in CMOS.</td></tr>
             <tr><td><b>CD4510 / 4516</b></td><td class="c">Synchronous</td><td class="c">10 / 16</td><td>The CMOS equivalents of the 74192/193.</td></tr>
-            <tr><td><b>CD4553 / 4026 / 4033</b></td><td class="c">Synchronous</td><td class="c">10</td><td>Counter + seven-segment decoder on the same chip. Frequency counters and tachometers.</td></tr>
+            <tr><td><b>CD4553</b></td><td class="c">Synchronous</td><td class="c">1000</td><td>3-digit BCD counter with multiplexed outputs (needs a decoder such as the CD4511). Frequency counters and tachometers.</td></tr>
+            <tr><td><b>CD4026 / 4033</b></td><td class="c">Synchronous</td><td class="c">10</td><td>Counter + seven-segment decoder on the same chip. Frequency counters and tachometers.</td></tr>
           </tbody>
         </table>
       </div>
@@ -315,7 +316,7 @@
       </div>
 
       <h3>b) By synchronous load: much cleaner</h3>
-      <p>With a counter that has <b>synchronous</b> load and clear (74163, or the 74193 using its parallel load),
+      <p>With a counter that has <b>synchronous</b> load and clear (such as the 74163; the 74193, by contrast, has asynchronous ones),
       the correction happens on the clock edge, together with all the other changes. There is no phantom state
       and no narrow pulse.</p>
 
@@ -355,7 +356,7 @@
       chain them is what separates a cascade that works at 20 MHz from one that hangs at 2 MHz.</p>
 
       <figure>
-        <svg viewBox="0 0 680 250" role="img" aria-label="Cascade of two decade counters with carry" class="svg-t" data-anim>
+        <svg viewBox="0 0 680 250" role="img" aria-label="Cascade of three decade counters with carry" class="svg-t" data-anim>
           <style>.cs-bk{fill:#1c2230;stroke:#58a6ff;stroke-width:2}
           .cs-n{fill:#e6edf3;font-size:12.5px;text-anchor:middle;font-weight:600}
           .cs-s{fill:#9aa7b4;font-size:10.5px;text-anchor:middle}
@@ -397,7 +398,7 @@
           <text class="cs-l" x="340" y="170" text-anchor="middle" fill="#d29922">1 per 10</text>
           <text class="cs-l" x="550" y="170" text-anchor="middle" fill="#f85149">1 per 100</text>
           <text class="cs-l" x="340" y="205" text-anchor="middle">Total modulus = 10 × 10 × 10 = 1000 · the last output divides the frequency by a thousand</text>
-          <text class="cs-l" x="340" y="228" text-anchor="middle">The least significant digit is the one on the left: that is how the display is wired</text>
+          <text class="cs-l" x="340" y="228" text-anchor="middle">The least significant digit is the one on the left (in this drawing): that is how the display is wired</text>
         </svg>
         <figcaption><b>Figure 3.</b> A cascade of three decades, animated. Each carry is ten times slower
         than the previous one. It is the skeleton of a frequency counter, of a tachometer and of the counter in
@@ -564,13 +565,13 @@
       <div class="box ejem">
         <div class="bt">Worked example · A motor tachometer</div>
         <p>An optical sensor delivers one pulse per revolution of a shaft turning at 1500 RPM. You want to show
-        the revolutions per minute on three digits.</p>
+        the revolutions per minute on four digits.</p>
         <ol style="margin:8px 0 0;padding-left:20px">
           <li>1500 RPM = 1500/60 = <b>25 pulses per second</b>.</li>
           <li>If you count for 1 s you read 25: but you have to show RPM, not pulses per second. So you count
           for <b>60 s</b>, or you multiply by 60 by choosing a 1 s window and counting
           pulses from a 60-slot disc.</li>
-          <li>Practical solution: a <b>6-slot</b> disc and a <b>1 s</b> window. You count
+          <li>Practical solution: a <b>6-slot</b> disc and a <b>1 s</b> window (with 60 slots you would count 1500 pulses, and three decades are not enough). You count
           1500 × 6/60 = <b>150 pulses</b>, and the display directly shows the hundreds and tens of RPM
           with a fixed decimal position (150 → 1500 RPM, with the last zero printed on the front panel).</li>
           <li>Three decades in cascade (modulus 1000) and a window gate are needed. With the result
@@ -595,7 +596,8 @@
         <div class="bt">Lab 2 · Modulus on demand</div>
         <p>With a 74193 (or 4516) and a four-input NAND gate, build moduli 5,
         7, 9 and 12 in turn by reset. Check each one with LEDs on the four outputs and a very slow clock (1 Hz from
-        a 555). Then repeat modulus 12 by <b>parallel load</b> and compare on the oscilloscope the
+        a 555). Then repeat modulus 12 by <b>synchronous parallel load</b>, with a 74163 (on the 74193
+        the load is asynchronous too and does not work for this comparison), and compare on the oscilloscope the
         Q3 output in the two cases: in the reset version you can see the spike of the phantom state.</p>
       </div>
 
