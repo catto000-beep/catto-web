@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combinational logic: minimization and hazards · Digital Techniques I · Catto</title>
+<meta name="description" content="Minimization of logic functions with Karnaugh maps and don’t-cares, the Quine-McCluskey method, static hazards and the consensus term, delay and critical path, with an interactive lab on a four-variable Karnaugh map that finds the minimal expression and detects hazards. Content of Digital Techniques I, Level 3 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/combinacional-minimizacion">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/combinacional-minimizacion">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/combinacional-minimizacion">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/combinacional-minimizacion">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques I</a>
+    <span class="anio">Level 3</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques I</span> · 96 h · Topic 1 of 4</div>
+    <h1>Combinational logic: minimization and hazards</h1>
+    <p class="lead">The shortest expression is not always the best: it can let the output drop for a few nanoseconds when it should not. Minimizing well means finding the minimal expression and knowing when to add a term to it.</p>
+    <div class="chips">
+      <span class="chip hi">Karnaugh</span>
+      <span class="chip">Quine-McCluskey</span>
+      <span class="chip">Don’t-cares</span>
+      <span class="chip">Hazards</span>
+      <span class="chip">Critical path</span>
+    </div>
+    <hr class="rule">
+
+    <section id="minimizar">
+      <h2><span class="n">01</span>From the truth table to the minimal expression</h2>
+      <p>Gates, Boolean algebra and the step from a truth table to a circuit are covered in the page on
+      <a href="/en/publicaciones/mapa-electronica/temas/logica-combinacional">combinational logic in the
+      Electronics Technician program</a>. This unit starts from there and asks the engineering question:
+      among all the circuits that implement the same function, which one is the best?</p>
+      <p>Read straight from the table, any function comes out as a <b>canonical sum of products</b>: one AND
+      term for each row that equals 1, with all four variables. It is correct and almost always needlessly
+      expensive. Minimizing it reduces three things at once: the number of gates (the cost and the area on a
+      chip), the number of inputs per gate, and the depth of the circuit, which is what decides how fast it
+      responds.</p>
+      <div class="form">
+        \[ f = \sum m(0,2,3,5,6,7,8,9) + \sum d(10\ldots15) \]
+        \[ \Longrightarrow\; f = A + C + BD + \overline{B}\,\overline{D} \]
+        <span class="cap">Segment <i>a</i> of a seven-segment display driven in BCD: eight terms of four literals reduce to four terms, two of them with a single variable. Codes 10 to 15 do not exist in BCD and can be chosen as 0 or as 1: they are don’t-cares.</span>
+      </div>
+    </section>
+
+    <section id="karnaugh">
+      <h2><span class="n">02</span>The Karnaugh map</h2>
+      <p>The Karnaugh map rearranges the truth table into a grid where two neighboring cells differ in
+      <b>a single variable</b>. To achieve this, rows and columns are numbered in Gray code —00, 01, 11,
+      10— and opposite edges are neighbors too: the map is really a torus. Two neighboring ones can be
+      grouped because the variable that changes between them does not matter: \( AB + A\overline B = A \).</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Groups have 1, 2, 4, 8 or 16 cells</td><td>Each doubling eliminates exactly one variable</td></tr>
+          <tr><td>Groups are rectangles, and can wrap around the edges</td><td>Opposite edges differ in a single variable</td></tr>
+          <tr><td>The largest possible group is preferred</td><td>More cells, fewer literals in the term</td></tr>
+          <tr><td>Groups can overlap</td><td>A 1 covered twice does not change the function (\( X + X = X \))</td></tr>
+          <tr><td>Don’t-cares (X) are used only if they enlarge a group</td><td>They do not need to be covered</td></tr>
+        </tbody>
+      </table></div>
+      <p>Every group that is not contained in a larger one is a <b>prime implicant</b>. Those that cover
+      some 1 that no other group covers are <b>essential</b> and must be included; the rest are chosen to
+      complete the cover with the fewest possible terms.</p>
+    </section>
+
+    <section id="qm">
+      <h2><span class="n">03</span>Quine-McCluskey: the same method, for a computer</h2>
+      <p>The map works by eye up to five or six variables; beyond that it becomes impossible to read. The
+      <b>Quine-McCluskey</b> method does the same thing in tabular form: it combines in pairs the terms
+      that differ in one bit, repeats until nothing more can be combined, and what is left uncombined are
+      the prime implicants. It then solves a covering problem: choosing the smallest set of primes that
+      covers all the ones.</p>
+      <p>That second stage is a set-cover problem, and it grows explosively with the number of variables.
+      That is why real synthesis tools —from ESPRESSO in the 1980s to those that compile for an FPGA
+      today— use heuristics that find very good solutions without guaranteeing the optimal one. The lab on
+      this page applies the full Quine-McCluskey method, which with four variables is solved exactly.</p>
+      <div class="lw" id="km">
+        <div class="lt">Lab · four-variable Karnaugh map</div>
+        <p class="ls">Click or tap each cell to cycle it from 0 to 1, from 1 to don’t-care (X) and back to 0,
+        or choose an example. The lab finds the prime implicants with Quine-McCluskey, chooses the minimum
+        cover, draws it on the map and warns you if any static hazard remains.</p>
+        <div class="fila">
+          <select id="kmE">
+            <option value="">— choose an example —</option>
+            <option value="seg">segment a of a BCD display (with don’t-cares)</option>
+            <option value="may">four-input majority: at least three inputs at 1</option>
+            <option value="par">odd parity of four bits</option>
+            <option value="rie">a function with a static hazard</option>
+            <option value="nada">empty map</option>
+          </select>
+        </div>
+        <div id="kmMapa" style="margin:10px auto 0;max-width:360px"></div>
+        <div class="datos" id="kmDatos" style="margin-top:10px"></div>
+        <div class="nota" id="kmNota"></div>
+      </div>
+    </section>
+
+    <section id="riesgos">
+      <h2><span class="n">04</span>Hazards: when the minimal expression fails</h2>
+      <p>Boolean algebra assumes that signals change instantaneously. Real gates take time: a 74HC inverter
+      on the order of 10 ns. If the same variable reaches an OR gate by two paths with different delays
+      —one direct and one through an inverter—, during those nanoseconds the two terms that use it can
+      both be 0 at once, and the output, which should have stayed at 1, drops for an instant. That is a
+      <b>static-1 hazard</b>, and the spurious pulse it produces is called a <i>glitch</i>.</p>
+      <div class="form">
+        \[ f = \overline{B}D + BC \quad \text{(minimal, with hazard)} \]
+        \[ f = \overline{B}D + BC + CD \quad \text{(with the consensus term, hazard-free)} \]
+        <span class="cap">With \( C = D = 1 \), the output should be 1 no matter how \( B \) changes. The term \( CD \) adds no 1 to the map: it only covers the transition between the two groups, and that is enough to keep the output from dropping.</span>
+      </div>
+      <p>On the map, the hazard is easy to spot: it appears when two neighboring ones are covered by
+      different groups with no group containing both of them. In a combinational circuit that feeds
+      another combinational circuit the glitch usually does not matter; in one that drives the clock or
+      the reset of a flip-flop, or an enable line, it can cause an intermittent fault that is very hard to
+      find. That is why synchronous design —the subject of the next unit— samples the outputs only once
+      they have settled.</p>
+    </section>
+
+    <section id="retardo">
+      <h2><span class="n">05</span>Delay and critical path</h2>
+      <p>The output of a combinational circuit is valid only after the signal has traveled the slowest
+      path, the <b>critical path</b>. Minimizing gates and minimizing delay do not always go together, and
+      the adder shows this best.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>n-bit adder</th><th>How the carry propagates</th><th>Delay</th><th>Gates</th></tr></thead>
+        <tbody>
+          <tr><td><i>Ripple-carry</i> adder</td><td>Each stage waits for the carry from the previous one</td><td>Grows as \( n \)</td><td>Few</td></tr>
+          <tr><td><i>Carry-lookahead</i> adder</td><td>Computes all the carries in parallel with generate and propagate terms</td><td>Grows as \( \log n \)</td><td>Many more</td></tr>
+        </tbody>
+      </table></div>
+      <p>A 64-bit ripple-carry adder would need on the order of 128 gate delays; a carry-lookahead one, a
+      few levels. Every modern processor pays in area to gain speed right there.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">06</span>Where it shows up in electronics</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Case</th><th>What is used from this unit</th></tr></thead>
+        <tbody>
+          <tr><td>Seven-segment decoder</td><td>Don’t-cares: the BCD codes that do not exist simplify each segment</td></tr>
+          <tr><td>FPGA synthesis</td><td>The tool minimizes on its own, and then maps the result onto lookup tables</td></tr>
+          <tr><td>Memory enable logic</td><td>A glitch on the chip select can write data where it should not</td></tr>
+          <tr><td>ALU of a microprocessor</td><td>Carry lookahead to keep addition fast</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Seven segments, complete</div>
+        <p>Minimize the seven segments of a BCD decoder using the don’t-cares. Build one of them with 74HC
+        gates and verify it with the ten digits.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Hunting a glitch</div>
+        <p>Build \( \overline{B}D + BC \) with real gates, hold \( C = D = 1 \), toggle \( B \) with a
+        generator and look with the oscilloscope for the spurious pulse on the output. Add \( CD \) and
+        check that it disappears.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Quine-McCluskey by hand</div>
+        <p>Solve the four-variable majority function by tabulation and compare the prime implicants with
+        those the lab finds.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <ul>
+        <li><b>Numbering the map in ordinary binary.</b> With 00, 01, 10, 11 neighboring cells do not differ
+        in a single bit and the groups stop being valid.</li>
+        <li><b>Forgetting that the edges are neighbors.</b> The four corners of a four-variable map form a
+        group.</li>
+        <li><b>Making groups of three or six.</b> Only powers of two.</li>
+        <li><b>Covering the don’t-cares as if they were ones.</b> They are used if they help; they do not
+        need to be covered.</li>
+        <li><b>Believing the minimal expression is always the best.</b> It can have hazards that one with an
+        extra term does not have.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Self-assessment</h2>
+      <details class="q"><summary>Why is the Karnaugh map numbered in Gray code?</summary>
+        <div class="a"><p>So that two neighboring cells differ in a single variable, which is what makes it
+        possible to group them.</p></div></details>
+      <details class="q"><summary>What is an essential prime implicant?</summary>
+        <div class="a"><p>A prime implicant that covers at least one 1 that no other prime covers; it must
+        appear in every minimal expression.</p></div></details>
+      <details class="q"><summary>What does a don’t-care do on the map?</summary>
+        <div class="a"><p>It can be taken as 1 if it enlarges a group, or ignored if it does not: the
+        specification does not require any value for that combination.</p></div></details>
+      <details class="q"><summary>When is there a static-1 hazard?</summary>
+        <div class="a"><p>When two neighboring ones end up in different groups with no group covering both
+        of them: when the variable that separates them changes, the output can drop for an instant.</p></div></details>
+      <details class="q"><summary>Why is a carry-lookahead adder faster?</summary>
+        <div class="a"><p>Because it computes the carries in parallel instead of waiting for each stage to
+        pass its carry to the next.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">M. Morris Mano and Michael D. Ciletti.</span>
+          <span class="ti">Digital Design</span>.
+          <span class="ed">6th ed., Pearson, 2018.</span>
+          <span class="pq">Karnaugh maps, Quine-McCluskey and combinational blocks, with the classic approach of digital techniques courses.</span></li>
+        <li><span class="au">John F. Wakerly.</span>
+          <span class="ti">Digital Design: Principles and Practices</span>.
+          <span class="ed">5th ed., Pearson, 2018.</span>
+          <span class="pq">The most careful treatment of hazards and of the real delays of logic families.</span></li>
+        <li><span class="au">Robert K. Brayton et al.</span>
+          <span class="ti">Logic Minimization Algorithms for VLSI Synthesis</span>.
+          <span class="ed">Kluwer, 1984.</span>
+          <span class="pq">The ESPRESSO book: how a program minimizes when there are too many variables for Quine-McCluskey.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a class="ph" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">← Back</div>
+        <div class="tt">Engineering Topic Map</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/maquinas-estado">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Sequential logic: state machines and timing</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Combinational logic: minimization and hazards”</b> of <b>Digital Techniques I</b> (Level 3), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Mapa de Karnaugh de 4 variables con Quine-McCluskey exacto.
+   Minterm m = 8A + 4B + 2C + D; filas AB y columnas CD en codigo Gray.
+   Un implicante es {v, m}: m tiene en 1 los bits que no importan y v los
+   bits fijos (con 0 donde m es 1). Cubre x si (x & ~m) == v.
+   La cobertura minima se busca por tamano creciente (primero los
+   esenciales); con cuatro variables es exacta y rapida.
+   Los grupos no se dibujan como rectangulos -con los bordes que se tocan
+   serian dificiles de leer- sino como marcas de color en cada celda, con
+   el mismo color que el termino de la expresion. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var GRAY = [0, 1, 3, 2];
+  var COLS = ["#c9474c", "#1f5a94", "#2f6f41", "#8a5a10", "#5a4596", "#0f7b8a", "#a3478f", "#555c66"];
+  var VARS = ["A", "B", "C", "D"];
+  var EJ = {
+    seg: { unos: [0, 2, 3, 5, 6, 7, 8, 9], x: [10, 11, 12, 13, 14, 15] },
+    may: { unos: [7, 11, 13, 14, 15], x: [] },
+    par: { unos: [1, 2, 4, 7, 8, 11, 13, 14], x: [] },
+    rie: { unos: [1, 3, 6, 7, 9, 11, 14, 15], x: [] },
+    nada: { unos: [], x: [] }
+  };
+  var val = [];   /* 0, 1 o 2 (indiferente) */
+
+  function pop(n){ var c = 0; while(n){ c += n & 1; n >>= 1; } return c; }
+  function cubre(p, x){ return (x & ~p.m & 15) === p.v; }
+  function lits(p){ return 4 - pop(p.m); }
+  function termino(p){
+    if(p.m === 15) return "1";
+    var s = "";
+    for(var b = 3; b >= 0; b--){
+      if(p.m & (1 << b)) continue;
+      s += (p.v & (1 << b)) ? VARS[3 - b] : '<span style="text-decoration:overline">' + VARS[3 - b] + "</span>";
+    }
+    return s;
+  }
+
+  function primos(unos, xs){
+    var nivel = unos.concat(xs).map(function(x){ return { v: x, m: 0 }; });
+    var res = [];
+    while(nivel.length){
+      var usado = nivel.map(function(){ return false; });
+      var sig = {}, i, j;
+      for(i = 0; i < nivel.length; i++){
+        for(j = i + 1; j < nivel.length; j++){
+          var a = nivel[i], b = nivel[j];
+          if(a.m !== b.m) continue;
+          var d = a.v ^ b.v;
+          if(pop(d) !== 1) continue;
+          usado[i] = usado[j] = true;
+          var n = { v: a.v & ~d, m: a.m | d };
+          sig[n.v + "," + n.m] = n;
+        }
+      }
+      for(i = 0; i < nivel.length; i++) if(!usado[i]) res.push(nivel[i]);
+      nivel = Object.keys(sig).map(function(k){ return sig[k]; });
+    }
+    var vistos = {};
+    return res.filter(function(p){ var k = p.v + "," + p.m; if(vistos[k]) return false; vistos[k] = 1; return true; });
+  }
+
+  function cobertura(unos, ps){
+    var elegidos = [], faltan = unos.slice(), esenciales = [];
+    unos.forEach(function(x){
+      var qu = ps.filter(function(p){ return cubre(p, x); });
+      if(qu.length === 1 && esenciales.indexOf(qu[0]) < 0) esenciales.push(qu[0]);
+    });
+    elegidos = esenciales.slice();
+    faltan = unos.filter(function(x){ return !elegidos.some(function(p){ return cubre(p, x); }); });
+    if(!faltan.length) return { sel: elegidos, esen: esenciales };
+    var resto = ps.filter(function(p){ return elegidos.indexOf(p) < 0 && faltan.some(function(x){ return cubre(p, x); }); });
+    var mejor = null;
+    for(var k = 1; k <= resto.length && !mejor; k++){
+      combinar(resto, k, function(c){
+        if(!faltan.every(function(x){ return c.some(function(p){ return cubre(p, x); }); })) return;
+        var l = c.reduce(function(s, p){ return s + lits(p); }, 0);
+        if(!mejor || l < mejor.l) mejor = { c: c.slice(), l: l };
+      });
+    }
+    return { sel: elegidos.concat(mejor ? mejor.c : []), esen: esenciales };
+  }
+  function combinar(arr, k, f, ini, acc){
+    ini = ini || 0; acc = acc || [];
+    if(acc.length === k){ f(acc); return; }
+    for(var i = ini; i < arr.length; i++){ acc.push(arr[i]); combinar(arr, k, f, i + 1, acc); acc.pop(); }
+  }
+
+  function resolver(){
+    var unos = [], xs = [], i;
+    for(i = 0; i < 16; i++){ if(val[i] === 1) unos.push(i); else if(val[i] === 2) xs.push(i); }
+    var ps = unos.length ? primos(unos, xs) : [];
+    var cov = unos.length ? cobertura(unos, ps) : { sel: [], esen: [] };
+    cov.sel.sort(function(a, b){ return lits(a) - lits(b) || a.v - b.v; });
+    /* riesgos: unos vecinos sin un implicante elegido que los cubra a los dos */
+    var riesgos = [];
+    unos.forEach(function(x){
+      for(var b = 0; b < 4; b++){
+        var y = x ^ (1 << b);
+        if(y < x || val[y] !== 1) continue;
+        if(!cov.sel.some(function(p){ return cubre(p, x) && cubre(p, y); })){
+          var arreglo = ps.filter(function(p){ return cubre(p, x) && cubre(p, y); })
+                          .sort(function(a, c){ return lits(a) - lits(c); })[0];
+          riesgos.push({ x: x, y: y, p: arreglo });
+        }
+      }
+    });
+    return { unos: unos, xs: xs, ps: ps, sel: cov.sel, esen: cov.esen, riesgos: riesgos };
+  }
+
+  function pintar(){
+    var r = resolver(), i, j;
+    var riesgoCelda = {};
+    r.riesgos.forEach(function(z){ riesgoCelda[z.x] = riesgoCelda[z.y] = true; });
+    var h = '<table style="border-collapse:collapse;width:100%;table-layout:fixed;font-family:\'IBM Plex Mono\',Consolas,monospace">';
+    h += '<tr><th style="font-size:11px;color:var(--soft);font-weight:600;padding:4px">AB \\ CD</th>';
+    for(j = 0; j < 4; j++) h += '<th style="font-size:12px;color:var(--muted);padding:4px">' + ("0" + GRAY[j].toString(2)).slice(-2) + "</th>";
+    h += "</tr>";
+    for(i = 0; i < 4; i++){
+      h += '<tr><th style="font-size:12px;color:var(--muted);padding:4px">' + ("0" + GRAY[i].toString(2)).slice(-2) + "</th>";
+      for(j = 0; j < 4; j++){
+        var m = GRAY[i] * 4 + GRAY[j], v = val[m];
+        var marcas = r.sel.map(function(p, k){ return cubre(p, m) && v !== 0 ? '<i style="display:inline-block;width:8px;height:8px;border-radius:2px;margin:0 1px;background:' + COLS[k % COLS.length] + '"></i>' : ""; }).join("");
+        h += '<td style="padding:3px"><button type="button" data-m="' + m + '" style="width:100%;aspect-ratio:1/1;border-radius:4px;cursor:pointer;' +
+             'border:2px solid ' + (riesgoCelda[m] ? "#c9474c" : "var(--line)") + ';background:' + (v === 1 ? "var(--panel)" : v === 2 ? "var(--panel2)" : "transparent") + ';' +
+             'color:' + (v === 0 ? "var(--soft)" : "var(--txt)") + ';font:600 17px \'IBM Plex Mono\',Consolas,monospace;padding:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px">' +
+             (v === 2 ? "X" : v) + '<span style="line-height:8px;min-height:8px">' + marcas + '</span><small style="font-size:9px;color:var(--soft);font-weight:400">m' + m + "</small></button></td>";
+      }
+      h += "</tr>";
+    }
+    h += "</table>";
+    $("kmMapa").innerHTML = h;
+    [].forEach.call($("kmMapa").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ var m = +b.getAttribute("data-m"); val[m] = (val[m] + 1) % 3; $("kmE").value = ""; pintar(); });
+    });
+
+    var expr = !r.unos.length ? "0" : r.sel.map(function(p, k){
+      return '<span style="color:' + COLS[k % COLS.length] + '">' + termino(p) + "</span>"; }).join(" + ");
+    var litMin = r.sel.reduce(function(s, p){ return s + lits(p); }, 0);
+    $("kmDatos").innerHTML =
+      "<span>Ones · don’t-cares</span><b>" + r.unos.length + " · " + r.xs.length + "</b>" +
+      "<span>Prime implicants</span><b>" + r.ps.length + " (" + r.esen.length + " essential)</b>" +
+      "<hr><span>Minimal expression</span><b style=\"font-size:15px\">f = " + expr + "</b>" +
+      "<span>Terms · literals</span><b>" + r.sel.length + " · " + litMin + " (canonical: " + r.unos.length + " · " + (4 * r.unos.length) + ")</b>" +
+      "<hr><span>Static-1 hazards</span><b>" + (r.riesgos.length ? r.riesgos.length + " pair(s) of neighboring cells" : "none") + "</b>";
+
+    var nota;
+    if(r.riesgos.length){
+      var z = r.riesgos[0];
+      nota = "Cells m" + z.x + " and m" + z.y + " (red border) are neighbors but end up in different groups: when the variable that separates them changes, the output can drop for an instant. " +
+             (z.p ? "Adding the consensus term <b>" + termino(z.p) + "</b> prevents it, at the cost of one more gate." : "");
+    } else if(r.unos.length && r.sel.length === r.unos.length && r.unos.length > 1 && litMin === 4 * r.unos.length)
+      nota = "No pair of ones is neighboring: the function cannot be simplified. That is what happens with parity, and it is why it is implemented with XOR gates and not with a sum of products.";
+    else if(r.unos.length)
+      nota = "Each color is a prime implicant of the minimum cover; the marks in each cell tell which terms cover it.";
+    else nota = "Click or tap the cells to enter a function.";
+    $("kmNota").innerHTML = nota;
+  }
+
+  function cargar(k){
+    val = []; for(var i = 0; i < 16; i++) val.push(0);
+    EJ[k].unos.forEach(function(m){ val[m] = 1; });
+    EJ[k].x.forEach(function(m){ val[m] = 2; });
+    pintar();
+  }
+  $("kmE").addEventListener("input", function(){ if($("kmE").value) cargar($("kmE").value); });
+  $("kmE").value = "seg";
+  cargar("seg");
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

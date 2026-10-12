@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multijunction devices: thyristors and IGBTs · Electronic Devices · Catto</title>
+<meta name="description" content="The PNPN structure of the thyristor, the two-transistor model and latching, triggering methods and holding current, phase control, TRIAC, DIAC and GTO, latch-up as a parasitic thyristor and the IGBT with its conductivity modulation, with an interactive lab on phase control of a load at 220 V. Content of Electronic Devices, Level 3 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/multijunturas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/multijunturas">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/multijunturas">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/multijunturas">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Electronic Devices</a>
+    <span class="anio">Level 3</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electronic Devices</span> · 120 h · Topic 8 of 9</div>
+    <h1>Multijunction devices: thyristors and IGBTs</h1>
+    <p class="lead">A microsecond pulse on the gate and the thyristor keeps conducting by itself until the next zero crossing. It is the same mechanism that, when no one wants it, burns out a CMOS circuit in latch-up.</p>
+    <div class="chips">
+      <span class="chip hi">Thyristor</span>
+      <span class="chip">TRIAC</span>
+      <span class="chip">Phase control</span>
+      <span class="chip">IGBT</span>
+      <span class="chip">Latching</span>
+    </div>
+    <hr class="rule">
+
+    <section id="cuatro-capas">
+      <h2><span class="n">01</span>Four layers, three junctions</h2>
+      <p>A <b>thyristor</b> (or SCR, silicon-controlled rectifier) is a PNPN structure: a P anode, a wide, lightly doped N layer
+      that withstands the voltage, a P layer that carries the <b>gate</b> terminal, and an N cathode.
+      It has three junctions in series, and with the anode positive the middle one is reverse biased and blocks. So far
+      it looks like a diode that does not conduct in either direction. The trick is that, once it starts to
+      conduct, <b>it keeps conducting by itself</b>, even if the gate signal is removed.</p>
+      <p>It is a power device: there are ones of a few amperes for controlling a lamp and ones of several
+      kilovolts and thousands of amperes, made on an entire silicon wafer, for high-voltage
+      direct-current transmission stations.</p>
+    </section>
+
+    <section id="dos-transistores">
+      <h2><span class="n">02</span>The two-transistor model</h2>
+      <p>The PNPN structure can be cut into two interlocked transistors: a PNP formed by the first
+      three layers and an NPN by the last three. The collector of each one feeds the base of the other. With
+      common-base gains \( \alpha_1 \) and \( \alpha_2 \), the anode current becomes</p>
+      <div class="form">
+        \[ I_A = \frac{\alpha_2\, I_G + I_{CBO1} + I_{CBO2}}{1 - (\alpha_1 + \alpha_2)} \]
+        <span class="cap">The \( \alpha \) of the <a href="/en/publicaciones/mapa-ingenieria/temas/bjt-dispositivo">bipolar transistors</a> grow with the current. When their sum reaches 1, the denominator vanishes and the current is limited only by the external circuit.</span>
+      </div>
+      <p>That is positive feedback: a gate pulse makes the NPN conduct, its collector feeds the base of the
+      PNP, the PNP returns more base current to the NPN, and within microseconds both are saturated. From
+      that moment the gate no longer has control. The thyristor turns off by itself only when the anode current drops below the
+      <b>holding current</b> \( I_H \), which in alternating current happens by itself at every zero
+      crossing.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Triggering method</th><th>What happens</th></tr></thead>
+        <tbody>
+          <tr><td>Gate pulse</td><td>The normal, controlled way</td></tr>
+          <tr><td>Forward breakover voltage</td><td>The leakage current grows until \( \alpha_1 + \alpha_2 = 1 \)</td></tr>
+          <tr><td>Excessive \( dv/dt \)</td><td>The current that charges the capacitance of the central junction acts as gate current: an unwanted trigger</td></tr>
+          <tr><td>Temperature</td><td>Leakages and gains rise</td></tr>
+          <tr><td>Light</td><td>Pairs generated in the central junction; the thyristors of high-voltage valves are triggered by optical fiber</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="control-fase">
+      <h2><span class="n">03</span>Phase control</h2>
+      <p>On an AC mains, firing the thyristor with a delay \( \alpha \) relative to the zero crossing
+      lets through only the final part of each half-cycle. By varying the angle, the power delivered to
+      the load is regulated while dissipating almost nothing in the control. With a resistive load and full-wave control:</p>
+      <div class="form">
+        \[ V_{rms} = V_m \sqrt{\frac{1}{2\pi} \left( \pi - \alpha + \frac{\sin 2\alpha}{2} \right)} \]
+        \[ \frac{P}{P_{\max}} = \frac{1}{\pi} \left( \pi - \alpha + \frac{\sin 2\alpha}{2} \right) \]
+        <span class="cap">With a single thyristor, which conducts in one half-cycle, the power is halved and a DC component appears, \( \dfrac{V_m}{2\pi} (1 + \cos\alpha) \).</span>
+      </div>
+      <div class="lw" id="tf">
+        <div class="lt">Lab · phase control at 220 V</div>
+        <p class="ls">A 100 Ω resistive load on the 220 V, 50 Hz mains, controlled by a thyristor
+        (half-wave) or by a TRIAC (full-wave). You choose the firing angle: the plot shows the mains,
+        the voltage across the load and the gate pulses over one cycle.</p>
+        <div class="fila">
+          <select id="tfT">
+            <option value="triac" selected>TRIAC: conducts in both half-cycles</option>
+            <option value="scr">thyristor (SCR): only in the positive half-cycle</option>
+          </select>
+        </div>
+        <div class="fila"><label>Firing angle \( \alpha \) = <b id="tfAv"></b></label><input type="range" id="tfA" min="0" max="180" step="1" value="90"></div>
+        <canvas id="tfLienzo" style="display:block;width:100%;max-width:620px;height:260px;margin:6px auto 0"></canvas>
+        <div class="datos" id="tfDatos"></div>
+        <div class="nota" id="tfNota"></div>
+      </div>
+    </section>
+
+    <section id="familia">
+      <h2><span class="n">04</span>The four-layer family</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Device</th><th>Structure</th><th>Use</th></tr></thead>
+        <tbody>
+          <tr><td>TRIAC</td><td>Two thyristors in antiparallel with a common gate</td><td>Dimmers, speed control of universal motors, solid-state relays</td></tr>
+          <tr><td>DIAC</td><td>Triggers in both directions when about 30 V is exceeded, with no gate</td><td>Generates the TRIAC trigger pulse in a dimmer</td></tr>
+          <tr><td>GTO</td><td>Thyristor that can be turned off with a large negative gate current</td><td>Electric traction and large converters, now almost replaced</td></tr>
+          <tr><td>TRIAC optocoupler</td><td>An LED that triggers a TRIAC by light, isolated</td><td>Drives a power TRIAC from a microcontroller</td></tr>
+        </tbody>
+      </table></div>
+      <p>The same four layers appear unintentionally in CMOS circuits: the <b>latch-up</b> of the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/inversor-cmos">CMOS inverter</a> is a parasitic thyristor
+      that triggers and short-circuits the supply, and the two-transistor model explains why it is avoided
+      by placing substrate contacts close to every transistor: they lower the parasitic gains.</p>
+    </section>
+
+    <section id="igbt">
+      <h2><span class="n">05</span>The IGBT</h2>
+      <p>The insulated-gate bipolar transistor (IGBT) combines a MOSFET at the input with a PNP bipolar at
+      the output: the gate is driven by voltage, with almost no current, like a MOS, and the main current
+      is conducted by a bipolar structure. It also has four layers, but it is designed so that the parasitic
+      thyristor <b>never</b> triggers.</p>
+      <p>Its advantage is <b>conductivity modulation</b>: when conducting, the P collector layer injects holes
+      into the lightly doped N region that withstands the voltage and fills it with carriers, greatly lowering its resistance.
+      A 1200 V MOSFET has to have that lightly doped region thick and it conducts poorly; the IGBT, with the same
+      region flooded with carriers, drops only about 1.5 to 2 V. The cost is the <b>tail current</b> at
+      turn-off, while those carriers recombine, which limits the frequency to tens of kilohertz.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>Power MOSFET</th><th>IGBT</th><th>Thyristor</th></tr></thead>
+        <tbody>
+          <tr><td>Control</td><td>Voltage</td><td>Voltage</td><td>Current pulse; it cannot be turned off through the gate</td></tr>
+          <tr><td>Typical range</td><td>Up to a few hundred volts</td><td>600 V to 6.5 kV</td><td>Up to more than 8 kV</td></tr>
+          <tr><td>Frequency</td><td>Hundreds of kilohertz</td><td>Up to tens of kilohertz</td><td>That of the mains</td></tr>
+          <tr><td>Use</td><td>Switching power supplies</td><td>Motor inverters, welders, induction cooktops</td><td>Phase control, high-voltage transmission</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box peligro"><div class="bt">Mains voltage</div>
+        <p>Activities with 220 V are carried out with an isolation transformer, with the circuit mounted in an
+        enclosure and under the supervision of the instructor. The oscilloscope is not connected directly to the mains: differential
+        probes are used.</p></div>
+      <div class="box lab"><div class="bt">Activity 1 · Latching</div>
+        <p>With a thyristor, a 12 V DC source and a 12 V lamp, trigger it with a pushbutton on the
+        gate and verify that the lamp stays on when the button is released. Lower the voltage until it goes off
+        and estimate the holding current.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · The two-transistor model</div>
+        <p>Build a thyristor with a BC548 and a BC558 connected according to the model, and verify that it latches
+        just like the integrated device.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · A dimmer</div>
+        <p>With a commercial TRIAC and DIAC dimmer powered from a low-voltage isolation transformer,
+        use the oscilloscope to observe the voltage across the load and measure the firing angle for three
+        potentiometer positions.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Expecting the thyristor to turn off when the gate is removed.</b> It stays latched until the
+        current drops below \( I_H \).</li>
+        <li><b>Using an ordinary thyristor in direct current without planning how to turn it off.</b> In DC the
+        current never passes through zero.</li>
+        <li><b>Forgetting the snubber network.</b> Without an RC in parallel, the \( dv/dt \) of the mains or of the inductive load
+        triggers the device unintentionally.</li>
+        <li><b>Measuring with the oscilloscope referenced to earth on the mains.</b> The probe ground short-circuits the
+        circuit.</li>
+        <li><b>Confusing the IGBT with a large MOSFET.</b> It conducts with a nearly fixed drop, not with a
+        resistance, and it has tail current at turn-off.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>Why does the thyristor keep conducting without gate current?</summary>
+        <div class="a"><p>Because each of the two transistors of the model supplies base current to the other;
+        with \( \alpha_1 + \alpha_2 = 1 \) the feedback sustains itself.</p></div></details>
+      <details class="q"><summary>How is a thyristor turned off in an AC circuit?</summary>
+        <div class="a"><p>By itself: at every zero crossing the current drops below the holding current.</p></div></details>
+      <details class="q"><summary>With a TRIAC and \( \alpha = 90° \), what fraction of the maximum power does
+        a resistive load receive?</summary>
+        <div class="a"><p>Half: \( (\pi - \pi/2 + 0)/\pi = 0.5 \).</p></div></details>
+      <details class="q"><summary>What is conductivity modulation in the IGBT?</summary>
+        <div class="a"><p>The flooding of the drift region with carriers injected by the P collector,
+        which lowers its resistance when conducting.</p></div></details>
+      <details class="q"><summary>What is the relationship between the thyristor and latch-up?</summary>
+        <div class="a"><p>Latch-up is the triggering of a parasitic thyristor formed by the P and N regions of
+        a CMOS circuit.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">B. Jayant Baliga.</span>
+          <span class="ti">Fundamentals of Power Semiconductor Devices</span>.
+          <span class="ed">2nd ed., Springer, 2019.</span>
+          <span class="pq">The reference on thyristors, IGBTs and power MOSFETs, written by the inventor of the IGBT.</span></li>
+        <li><span class="au">Muhammad H. Rashid.</span>
+          <span class="ti">Power Electronics: Devices, Circuits, and Applications</span>.
+          <span class="ed">4th ed., Pearson, 2014.</span>
+          <span class="pq">Phase control and trigger circuits, with many worked examples.</span></li>
+        <li><span class="au">Ned Mohan, Tore M. Undeland and William P. Robbins.</span>
+          <span class="ti">Power Electronics: Converters, Applications, and Design</span>.
+          <span class="ed">3rd ed., Wiley, 2003.</span>
+          <span class="pq">The devices seen from the converter: what each application demands.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/memorias-cmos">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">CMOS memories</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/optoelectronica">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Photonics and optoelectronics</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Multijunction devices: thyristors and IGBTs”</b> of <b>Electronic Devices</b> (Level 3), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Phase control with a resistive load, 220 V rms mains at 50 Hz.
+   TRIAC (full wave): Vrms = Vm sqrt((pi - a + sin(2a)/2) / (2 pi))
+   SCR (half wave):   Vrms = Vm sqrt((pi - a + sin(2a)/2) / (4 pi)),
+                      Vmean = Vm (1 + cos a) / (2 pi)
+   P = Vrms^2 / R, R = 100 ohm -> Pmax = 484 W.
+   Check: TRIAC 90 degrees -> 155.6 V and 50 %; 60 degrees -> 197.3 V (also
+   verified by numerical integration); SCR 60 -> 139.5 V, 74.3 V
+   DC. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("tfLienzo"), ctx = cv.getContext("2d");
+  var VEF = 220, VM = VEF * Math.SQRT2, R = 100;
+  function coma(v, d){ return v.toFixed(d); }
+
+  function pintar(){
+    var triac = $("tfT").value === "triac", gr = +$("tfA").value, a = gr * Math.PI / 180;
+    $("tfAv").textContent = gr + "° (" + coma(gr / 180 * 10, 1) + " ms after the zero crossing)";
+    var f = Math.max(0, Math.PI - a + Math.sin(2 * a) / 2);
+    var vef = VM * Math.sqrt(f / (triac ? 2 * Math.PI : 4 * Math.PI));
+    var vmed = triac ? 0 : VM * (1 + Math.cos(a)) / (2 * Math.PI);
+    var p = vef * vef / R, pmax = VEF * VEF / R;
+    var conduce = function(th){ var ph = th % (2 * Math.PI); return ph < Math.PI ? ph >= a : triac && ph - Math.PI >= a; };
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 44, x1 = W - 20, y0 = 12, y1 = H - 52, ym = (y0 + y1) / 2;
+      var X = function(th){ return x0 + th / (2 * Math.PI) * (x1 - x0); };
+      var Y = function(v){ return ym - v / (VM * 1.08) * (y1 - y0) / 2; };
+      ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      var k;
+      for(k = 0; k <= 4; k++){
+        var th = k * Math.PI / 2;
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(X(th), y0); ctx.lineTo(X(th), y1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; ctx.fillText(k * 5 + " ms", X(th), y1 + 14);
+      }
+      [-300, -150, 0, 150, 300].forEach(function(v){
+        ctx.strokeStyle = v === 0 ? "#3a4456" : "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText((v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v) + " V", x0 - 5, Y(v) + 3);
+      });
+
+      /* voltage across the load, filled */
+      ctx.fillStyle = "rgba(242,204,96,.28)"; ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 2.4;
+      var N = 360, j;
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0));
+      for(j = 0; j <= N; j++){
+        var t = 2 * Math.PI * j / N;
+        ctx.lineTo(X(t), Y(conduce(t) ? VM * Math.sin(t) : 0));
+      }
+      ctx.lineTo(X(2 * Math.PI), Y(0)); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      for(j = 0; j <= N; j++){
+        var t2 = 2 * Math.PI * j / N, v2 = conduce(t2) ? VM * Math.sin(t2) : 0;
+        if(j) ctx.lineTo(X(t2), Y(v2)); else ctx.moveTo(X(t2), Y(v2));
+      }
+      ctx.stroke();
+      /* the mains, dotted */
+      ctx.strokeStyle = "rgba(160,172,186,.6)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]); ctx.beginPath();
+      for(j = 0; j <= N; j++){ var t3 = 2 * Math.PI * j / N; if(j) ctx.lineTo(X(t3), Y(VM * Math.sin(t3))); else ctx.moveTo(X(t3), Y(VM * Math.sin(t3))); }
+      ctx.stroke(); ctx.setLineDash([]);
+
+      /* gate pulses, at the bottom */
+      var yp = H - 17;
+      ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, yp); ctx.lineTo(x1, yp); ctx.stroke();
+      ctx.fillStyle = "#7ee787";
+      [a, triac ? Math.PI + a : null].forEach(function(th){
+        if(th === null || gr >= 180) return;
+        ctx.fillRect(X(th) - 2, yp - 9, 4, 9);
+      });
+      ctx.fillStyle = "#9aa7b4"; ctx.textAlign = "left"; ctx.font = "10px system-ui, sans-serif";
+      ctx.fillText("gate pulses", x0 + 4, yp + 13);
+      ctx.textAlign = "right"; ctx.fillStyle = "#f2cc60"; ctx.font = "600 11px system-ui, sans-serif";
+      ctx.fillText("voltage across the load", x1 - 4, y0 + 12);
+      ctx.textAlign = "left";
+    }
+
+    var d = "<span>rms voltage across the load</span><b>" + coma(vef, 1) + " V</b>" +
+            "<span>rms current</span><b>" + coma(vef / R, 2) + " A</b>" +
+            "<span>power in the load</span><b>" + coma(p, 0) + " W of " + coma(pmax, 0) + " W</b>" +
+            "<span>fraction of the maximum power</span><b>" + coma(p / pmax * 100, 1) + " %</b>";
+    if(!triac) d += "<span>DC component</span><b>" + coma(vmed, 1) + " V</b>";
+    $("tfDatos").innerHTML = d;
+
+    var nota;
+    if(gr >= 180) nota = "At 180° the pulse arrives when the half-cycle has already ended: the device does not conduct and the load is left without voltage.";
+    else if(!triac) nota = "With a single thyristor the load receives at most half of the power, and the voltage has a DC component of " + coma(vmed, 1) + " V: unacceptable for a transformer or an AC motor, which would saturate. That is why a TRIAC or two thyristors in antiparallel are used to control AC loads.";
+    else if(gr <= 30) nota = "Firing close to the zero crossing, the load receives almost all of the power: the first few degrees of each half-cycle contribute little because the voltage is still small.";
+    else nota = "The relationship between angle and power is not linear: at 90° exactly half is delivered, between 0° and 30° the power hardly changes and between 60° and 120° it falls from 80 to 20 %. The abrupt turn-on in the middle of the half-cycle produces harmonics and interference; that is why dimmers include a filter with an inductor.";
+    $("tfNota").innerHTML = nota;
+  }
+  ["tfT", "tfA"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

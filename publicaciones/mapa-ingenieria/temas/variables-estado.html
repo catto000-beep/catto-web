@@ -13,6 +13,12 @@
 <link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
 <link rel="stylesheet" href="/assets/css/papel.css?v=8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/variables-estado">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/variables-estado">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/variables-estado">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
 </head>
 <body>
 <div class="starfield" aria-hidden="true"
@@ -90,7 +96,7 @@
       de tiempo \( h \). El método más simple, el de <b>Euler</b>, usa la derivada actual para dar el paso:</p>
       <div class="form">
         \[ \mathbf{x}_{k+1} = \mathbf{x}_k + h\,(\mathbf{A}\mathbf{x}_k + \mathbf{B}u_k) \]
-        <span class="cap">Euler es estable para un polo \( \lambda \) solo si \( |1 + h\lambda| < 1 \). Para el RLC eso exige \( h < 2\zeta/\omega_n \): con poco amortiguamiento, el paso tiene que ser muy chico o la solución numérica crece sin límite aunque el circuito real sea estable.</span>
+        <span class="cap">Euler es estable para un polo \( \lambda \) solo si \( |1 + h\lambda| < 1 \). Para el RLC con polos complejos (ζ menor que 1) eso exige \( h < 2\zeta/\omega_n \): con poco amortiguamiento, el paso tiene que ser muy chico o la solución numérica crece sin límite aunque el circuito real sea estable.</span>
       </div>
       <div class="lw" id="ve">
         <div class="lt">Laboratorio · el mismo RLC, integrado paso a paso</div>
@@ -341,16 +347,19 @@
     if(pts.length < 80){ ctx.fillStyle = "#58a6ff"; pts.forEach(function(p){ ctx.beginPath(); ctx.arc(TX(p[0]), TY(p[1]), 2.2, 0, Math.PI * 2); ctx.fill(); }); }
     ctx.restore();
 
-    var lim = 2 * ex.z;
+    /* con polos complejos el límite de Euler es 2ζ/ωn; con polos reales lo fija el polo más
+       rápido, |p| = ωn·(ζ + √(ζ² − 1)), y es h < 2/|p| */
+    var lim = ex.z < 1 ? 2 * ex.z : 2 / (ex.z + Math.sqrt(ex.z * ex.z - 1));
     var estable = met === "euler" ? hk < lim : hk < 2.78;
     $("veDatos").innerHTML =
       "<span>ζ · autovalores de A (polos)</span><b>" + n(ex.z, 2) + " · " + ex.polos + "</b>" +
       "<span>Método · paso · cantidad de pasos</span><b>" + (met === "euler" ? "Euler" : "RK4") + " · " + n(h * 1e6, 2) + " µs · " + (pts.length - 1) + "</b>" +
-      "<hr><span>Límite de estabilidad de Euler, 2ζ/ωn</span><b>" + n(lim * 10, 2) + " µs</b>" +
+      "<hr><span>Límite de estabilidad de Euler, " + (ex.z < 1 ? "2ζ/ωn" : "2/|p| del polo más rápido") + "</span><b>" + n(lim * 10, 2) + " µs</b>" +
       "<span>Error máximo en v_C</span><b>" + (diverge ? "la solución numérica diverge" : err >= 1 ? n(err, 1) + " V" : n(err * 1000, err < 0.01 ? 3 : 1) + " mV") + "</b>";
 
     var nota;
-    if(diverge || (met === "euler" && hk >= lim)) nota = "Paso por encima del límite de Euler: la solución numérica crece en vez de asentarse, aunque el circuito real es perfectamente estable. El error no es del circuito, es del método.";
+    if(diverge && met !== "euler") nota = "Paso por encima del límite de estabilidad de RK4 (h·|p| cerca de 2,8): RK4 también tiene uno, solo que mucho más amplio que el de Euler.";
+    else if(diverge || (met === "euler" && hk >= lim)) nota = "Paso por encima del límite de Euler: la solución numérica crece en vez de asentarse, aunque el circuito real es perfectamente estable. El error no es del circuito, es del método.";
     else if(err > 0.1) nota = "Euler es estable con este paso, pero impreciso: la espiral numérica no sigue a la exacta. Achicá el paso o pasá a RK4.";
     else nota = "La solución numérica sigue a la exacta. Fijate cuántos pasos hicieron falta: RK4 logra la misma precisión con pasos mucho más grandes que Euler.";
     $("veNota").innerHTML = nota;

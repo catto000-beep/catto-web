@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signals in circuit theory · Circuit Theory I · Catto</title>
+<meta name="description" content="How to classify a signal before analyzing it, the elementary signals that build all of circuit theory (step, impulse, ramp, exponential, sinusoid), average value and RMS value, and the difference between energy signals and power signals, with an interactive lab that computes the exact RMS of three waveforms. Content of Circuit Theory I, Level 3 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/senales-circuitos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/senales-circuitos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/senales-circuitos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/senales-circuitos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Circuit Theory I</a>
+    <span class="anio">Level 3</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Circuit Theory I</span> · 144 h · Topic 2 of 13</div>
+    <h1>Signals in circuit theory</h1>
+    <p class="lead">An ordinary multimeter measures almost any signal other than a pure sinusoid wrongly, and most signals in power electronics are not pure sinusoids. The difference between average value and RMS value explains why.</p>
+    <div class="chips">
+      <span class="chip hi">Signal classification</span>
+      <span class="chip">Elementary signals</span>
+      <span class="chip">RMS value</span>
+      <span class="chip">Form factor</span>
+      <span class="chip">Energy and power signals</span>
+    </div>
+    <hr class="rule">
+
+    <section id="clasificar">
+      <h2><span class="n">01</span>Classifying a signal before analyzing it</h2>
+      <p>Before solving any circuit you need to know what kind of signal is exciting it, because each kind
+      allows different tools. Four classifications organize almost everything that follows in this
+      course:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Classification</th><th>Distinguishes</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Continuous-time / discrete-time</td><td>Whether it is defined for every instant of time, or only at isolated instants</td>
+              <td>The voltage of a generator (continuous-time) versus the samples of an A/D converter (discrete-time)</td></tr>
+          <tr><td>Periodic / aperiodic</td><td>Whether it repeats exactly every \( T \) seconds, forever</td>
+              <td>A mains sinusoid (periodic) versus a single turn-on pulse (aperiodic)</td></tr>
+          <tr><td>Deterministic / random</td><td>Whether its future value can be predicted exactly, or only on average</td>
+              <td>A generated sinusoid (deterministic) versus the thermal noise of a resistor (random)</td></tr>
+          <tr><td>Causal / non-causal</td><td>Whether it is zero for all \( t<0 \)</td>
+              <td>The response of a real circuit to a switch that closes at \( t=0 \) is always causal</td></tr>
+        </tbody>
+      </table></div>
+      <p>Unless stated otherwise, this course works with <b>deterministic</b> signals. The treatment of
+      random signals —noise, in particular— belongs to later courses, but it is worth having the
+      distinction clear from now on: no real circuit is completely free of the second class.</p>
+    </section>
+
+    <section id="elementales">
+      <h2><span class="n">02</span>The elementary signals that build everything else</h2>
+      <p>A handful of signals appear over and over, because any more complicated signal can be built by
+      combining them —an idea that is exploited fully in the transient response unit—.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Signal</th><th>Definition</th><th>What it is for in this course</th></tr></thead>
+        <tbody>
+          <tr><td>Step \( u(t) \)</td><td>0 for \( t<0 \), 1 for \( t \geq 0 \)</td>
+              <td>Models a switch that closes: “the source is connected at \( t=0 \)”</td></tr>
+          <tr><td>Impulse \( \delta(t) \)</td><td>Unit area concentrated at one instant, zero at every other</td>
+              <td>Models an instantaneous discharge of energy; it is the derivative of the step</td></tr>
+          <tr><td>Ramp \( r(t) = t\,u(t) \)</td><td>Grows linearly from \( t=0 \)</td>
+              <td>Models a load that increases progressively; it is the integral of the step</td></tr>
+          <tr><td>Exponential \( e^{-t/\tau}u(t) \)</td><td>Decays from 1 with time constant \( \tau \)</td>
+              <td>The form of every transient response of a first-order RC or RL circuit</td></tr>
+          <tr><td>Sinusoid \( A\cos(\omega t+\varphi) \)</td><td>Periodic, with amplitude \( A \), angular frequency \( \omega \) and phase \( \varphi \)</td>
+              <td>The sinusoidal steady-state signal, the central topic of several of the following units</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="rms">
+      <h2><span class="n">03</span>Average value and RMS value: what an instrument actually measures</h2>
+      <p>For a periodic signal, the <b>average value</b> can be misleading: that of a pure sinusoid is
+      zero, even though the signal clearly “does something.” What matters for calculating the power
+      delivered is the <b>effective value</b> or RMS (<i>root mean square</i>): the DC voltage that would
+      deliver the same average power to the same resistor.</p>
+      <div class="form">
+        \[ \bar{x} = \frac{1}{T}\int_0^T x(t)\,dt \qquad\qquad
+           X_{RMS} = \sqrt{\frac{1}{T}\int_0^T x(t)^2\,dt} \]
+        <span class="cap">The RMS value always involves squaring before averaging: that is why a signal with zero average value —like any symmetric sinusoid— can have an RMS value that is far from zero.</span>
+      </div>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Waveform</th><th>RMS value</th><th>Rectified average value</th></tr></thead>
+        <tbody>
+          <tr><td>Sinusoid, amplitude \( V_p \)</td><td>\( V_p/\sqrt{2} \approx 0.707\,V_p \)</td><td>\( 2V_p/\pi \approx 0.637\,V_p \)</td></tr>
+          <tr><td>Symmetric square wave, amplitude \( V_p \)</td><td>\( V_p \)</td><td>\( V_p \)</td></tr>
+          <tr><td>Triangle / sawtooth, amplitude \( V_p \)</td><td>\( V_p/\sqrt{3} \approx 0.577\,V_p \)</td><td>\( V_p/2 \)</td></tr>
+          <tr><td>Pulse with duty cycle \( D \), amplitude \( V_p \)</td><td>\( V_p\sqrt{D} \)</td><td>\( V_p D \)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="lw" id="rm">
+        <div class="lt">Lab · average value and RMS value of a waveform</div>
+        <p class="ls">You choose the shape —and the duty cycle, where applicable— and the panel computes
+        the average value, the RMS value and the form factor using exactly the formulas in the table.</p>
+        <div class="fila">
+          <select id="rmF">
+            <option value="seno" selected>sinusoidal</option>
+            <option value="cuadrada">square / pulse</option>
+            <option value="triangular">triangle / sawtooth</option>
+          </select>
+        </div>
+        <div class="fila" id="rmDfila">
+          <label for="rmD">Duty cycle = <b id="rmDv">50 %</b></label>
+          <input type="range" id="rmD" min="5" max="95" step="1" value="50">
+        </div>
+        <canvas id="rmLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.8/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="rmDatos" style="margin-top:8px"></div>
+        <div class="nota" id="rmNota"></div>
+      </div>
+    </section>
+
+    <section id="energia">
+      <h2><span class="n">04</span>Energy signals and power signals</h2>
+      <p>An <b>energy</b> signal has finite total energy —\( \int_{-\infty}^{\infty}|x(t)|^2\,dt <
+      \infty \)— typically because it dies out with time, like a single pulse or a decaying transient
+      response. A <b>power</b> signal has infinite energy but finite average power, typically because it
+      is periodic and lasts forever, like any steady-state sinusoid.</p>
+      <div class="box key"><div class="bt">Why this distinction matters</div>
+        <p>No real circuit produces a sinusoid that has always existed and will always exist; it is a
+        useful idealization of “steady state,” after any transient has died out. The transient response
+        unit of this course deals with energy signals; the sinusoidal steady-state and spectra unit, with
+        power signals. They are two different tools —Laplace for one, Fourier series and integrals for
+        the other— and choosing the wrong one does not give an approximate result: it does not
+        converge.</p></div>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">05</span>Where it shows up in electronics</h2>
+      <p>An ordinary multimeter does not measure RMS: it rectifies the signal, measures its <b>average
+      value</b> and multiplies by a calibrated constant so that the result is correct <b>if the signal is
+      sinusoidal</b> (that constant is \( \pi/(2\sqrt2) \approx 1.11 \), the ratio between the RMS and
+      the average value of a sinusoid). With any other waveform —the output of a motor drive, a switching
+      charger, a PWM signal— that multimeter gives a wrong number, sometimes by more than 10 %. A <b>true
+      RMS</b> multimeter computes the integral for real, whatever the waveform, and that is why it costs
+      more and is essential for measuring power electronics.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · The error of an ordinary multimeter</div>
+        <p>Using this page’s lab, calculate the true RMS value of a square wave of 10 V amplitude and
+        compare it with what an “average-responding, RMS-calibrated” multimeter would show, which
+        multiplies the rectified average value by 1.11. Express the error as a percentage.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · RMS of a PWM signal</div>
+        <p>Calculate the RMS value of a PWM signal of 12 V amplitude at duty cycles of 10 %, 50 % and
+        90 %, and explain why that value —not the average value— is the one that determines the power
+        delivered to a resistor.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Classifying signals in a real circuit</div>
+        <p>For a battery charger with a rectifier input stage and a switching output, identify at least
+        three different signals in the circuit and classify each one according to the four categories of
+        the first section.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Confusing the average value with the RMS value.</b> The average value of a symmetric
+        sinusoid is zero; its RMS value is not.</li>
+        <li><b>Using an ordinary multimeter to measure non-sinusoidal signals.</b> Without the “true RMS”
+        label, the instrument assumes a waveform that may not be the real one.</li>
+        <li><b>Thinking that “energy signal” and “power signal” are the same idea with a different
+        name.</b> They are mutually exclusive categories with different analysis tools.</li>
+        <li><b>Applying the sinusoid’s RMS formula to any other waveform.</b> Each waveform has its own
+        factor between RMS and peak value.</li>
+        <li><b>Forgetting the duty cycle when calculating the RMS of a pulse.</b> A 10 % pulse is not the
+        same as a 90 % one, even when the amplitude is the same.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>Why is the average value of a symmetric sinusoid no use for calculating
+        the power it delivers?</summary>
+        <div class="a"><p>Because it is zero —the positive and negative half-cycles cancel—, while power
+        depends on the square of the signal, which is never negative.</p></div></details>
+      <details class="q"><summary>What does the effective or RMS value of a signal represent?</summary>
+        <div class="a"><p>The value of a DC voltage that would deliver the same average power to the same
+        resistor.</p></div></details>
+      <details class="q"><summary>What is the RMS value of a symmetric square wave of amplitude
+        \( V_p \)?</summary>
+        <div class="a"><p>\( V_p \), because the square of the signal equals \( V_p^2 \) all the time.</p></div></details>
+      <details class="q"><summary>What is the difference between an energy signal and a power
+        signal?</summary>
+        <div class="a"><p>An energy signal has finite total energy, typically because it dies out with
+        time; a power signal has finite average power but infinite energy, typically because it is
+        periodic and lasts forever.</p></div></details>
+      <details class="q"><summary>Why can a multimeter without “true RMS” give a wrong value on a PWM
+        signal?</summary>
+        <div class="a"><p>Because it measures the rectified average value and multiplies it by a constant
+        that is only correct if the signal is sinusoidal.</p></div></details>
+      <details class="q"><summary>Which elementary signal is the derivative of the step?</summary>
+        <div class="a"><p>The impulse \( \delta(t) \).</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Charles K. Alexander and Matthew N. O. Sadiku.</span>
+          <span class="ti">Fundamentals of Electric Circuits</span>.
+          <span class="ed">7th ed., McGraw-Hill, 2021.</span>
+          <span class="pq">The chapter on effective values and elementary signals, with the same treatment as this page.</span></li>
+        <li><span class="au">Alan V. Oppenheim, Alan S. Willsky and S. Hamid Nawab.</span>
+          <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed., Prentice Hall, 1996.</span>
+          <span class="pq">The complete classification of signals —continuous-time, periodic, energy and power— with the mathematical rigor that this page simplifies.</span></li>
+        <li><span class="au">Fluke Corporation.</span>
+          <span class="ti">ABCs of DMMs: A Guide to Selecting and Using Digital Multimeters</span>.
+          <span class="ed">Fluke Corporation.</span>
+          <span class="pq">The manufacturer’s technical explanation of the difference between an “average-responding, RMS-calibrated” multimeter and a true RMS one.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/modelos-concentrados">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Lumped elements and time invariance</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/componentes-pasivos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Passive components: frequency and time</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Signals in circuit theory”</b> of <b>Circuit Theory I</b> (Level 3), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Valor medio (rectificado) y RMS de tres formas de onda, calculados con las
+   formulas cerradas de la tabla -no integrando numericamente-, para que el
+   panel de datos sea exacto y no una aproximacion de muestreo. El dibujo
+   del tiempo si es geometrico, punto a punto, porque ahi solo hace falta
+   que se vea bien. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("rmLienzo"), ctx = cv.getContext("2d");
+  var VP = 5;             /* amplitud de pico fija, en volts */
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+
+  /* valor instantaneo normalizado en [-1,1] o [0,1] segun la forma, para
+     dibujar; f en [0,1) es la fase dentro del periodo */
+  function muestra(forma, f, D){
+    if(forma === "seno") return Math.sin(2 * Math.PI * f);
+    if(forma === "cuadrada") return f < D ? 1 : 0;
+    /* triangular / diente de sierra: sube linealmente durante D del periodo
+       desde -1, baja el resto; con D=0.5 da un triangulo simetrico */
+    if(f < D) return -1 + 2 * (f / D);
+    return 1 - 2 * (f - D) / (1 - D);
+  }
+
+  function formulas(forma, D){
+    if(forma === "seno")
+      return { rms: VP / Math.sqrt(2), media: 2 * VP / Math.PI };
+    if(forma === "cuadrada")
+      /* entre 0 y Vp con ciclo D (no +-Vp): rms = Vp*sqrt(D), media = Vp*D */
+      return { rms: VP * Math.sqrt(D), media: VP * D };
+    /* triangular / diente de sierra, amplitud de pico Vp desde 0: rms =
+       Vp/sqrt(3), media = Vp/2, independiente de D (el resultado no cambia
+       con la asimetria de la rampa, solo con su forma lineal) */
+    return { rms: VP / Math.sqrt(3), media: VP / 2 };
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+
+    var forma = $("rmF").value;
+    var D = parseFloat($("rmD").value) / 100;
+    $("rmDv").textContent = n(D * 100, 0) + " %";
+    $("rmDfila").style.display = forma === "seno" ? "none" : "flex";
+
+    var x0 = 10, x1 = Wd - 10, y0 = 14, yMed = Hd / 2, y1 = Hd - 14;
+    var esBipolar = forma !== "cuadrada";     /* cuadrada va de 0 a Vp; las otras, +-Vp */
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.strokeStyle = "rgba(42,49,64,.9)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, yMed); ctx.lineTo(x1, yMed); ctx.stroke();
+
+    /* la forma de onda, dos periodos */
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    var N = 400;
+    for(i = 0; i <= N; i++){
+      var f = (i / N * 2) % 1;
+      var v = muestra(forma, f, D);
+      var yv = esBipolar ? yMed - v * (yMed - y0) : y1 - v * (y1 - y0);
+      var xv = x0 + (i / N) * (x1 - x0);
+      if(i === 0) ctx.moveTo(xv, yv); else ctx.lineTo(xv, yv);
+    }
+    ctx.stroke();
+
+    var fo = formulas(forma, D);
+    var mediaDibujo = esBipolar ? 0 : fo.media;    /* la media rectificada no es la "linea" bipolar */
+
+    /* linea de RMS, como referencia visual */
+    var yRms = esBipolar ? yMed - fo.rms / VP * (yMed - y0) : y1 - fo.rms / VP * (y1 - y0);
+    ctx.strokeStyle = "rgba(126,231,135,.85)"; ctx.lineWidth = 1.4; ctx.setLineDash([5, 3]);
+    ctx.beginPath(); ctx.moveTo(x0, yRms); ctx.lineTo(x1, yRms); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#7ee787"; ctx.font = "600 9px system-ui, sans-serif";
+    ctx.fillText("RMS value", x0 + 4, yRms - 5);
+
+    /* --------------------------------------------------------- los datos */
+    var factorForma = fo.rms / fo.media;
+    var factorCresta = VP / fo.rms;
+    $("rmDatos").innerHTML =
+      "<span>Shape</span><b>" + (forma === "seno" ? "sinusoidal" : forma === "cuadrada" ?
+        "square / pulse, duty cycle " + n(D * 100, 0) + " %" : "triangle / sawtooth") +
+        " · amplitude " + n(VP, 0) + " V</b>" +
+      "<hr><span>RMS value</span><b>" + n(fo.rms, 3) + " V</b>" +
+      "<span>Rectified average value</span><b>" + n(fo.media, 3) + " V</b>" +
+      "<span>Form factor (RMS / average)</span><b>" + n(factorForma, 3) + "</b>" +
+      "<span>Crest factor (peak / RMS)</span><b>" + n(factorCresta, 3) + "</b>" +
+      "<hr><span>What an “average-responding, RMS-calibrated” multimeter would show</span><b>" +
+        n(fo.media * 1.1107, 3) + " V" +
+        (forma !== "seno" ? "  ·  error of " + n((fo.media * 1.1107 / fo.rms - 1) * 100, 1) + " %" : "  ·  correct") + "</b>";
+
+    $("rmNota").innerHTML = forma === "seno"
+      ? "For a sinusoid the ordinary multimeter gets it right, because its calibration constant (1.11) is "
+        + "exactly the form factor of this wave."
+      : "That multimeter assumes every signal has the form factor of a sinusoid (1.11) and applies "
+        + "that constant without looking at the actual shape: that is why it is wrong for anything else.";
+  }
+
+  $("rmF").addEventListener("input", pintar);
+  $("rmD").addEventListener("input", pintar);
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMOS inverter · Electronic Devices · Catto</title>
+<meta name="description" content="Why the CMOS inverter does not consume at rest, the transfer characteristic and its five regions, the switching threshold and PMOS sizing, noise margins and regeneration, delay, dynamic, short-circuit and leakage power, and real problems such as latch-up, with an interactive lab that solves the transfer curve and the short-circuit current. Content of Electronic Devices, Level 3 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/inversor-cmos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/inversor-cmos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/inversor-cmos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/inversor-cmos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Electronic Devices</a>
+    <span class="anio">Level 3</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electronic Devices</span> · 120 h · Topic 6 of 9</div>
+    <h1>CMOS inverter</h1>
+    <p class="lead">Two transistors, one always off: that is the reason a processor with billions of gates can operate without melting.</p>
+    <div class="chips">
+      <span class="chip hi">Transfer curve</span>
+      <span class="chip">Switching threshold</span>
+      <span class="chip">Noise margins</span>
+      <span class="chip">Dynamic power</span>
+      <span class="chip">Latch-up</span>
+    </div>
+    <hr class="rule">
+
+    <section id="estructura">
+      <h2><span class="n">01</span>Two complementary transistors</h2>
+      <p>The CMOS inverter is a PMOS between the supply and the output and an NMOS between the output and ground,
+      with both gates tied to the input. With the input at 0, the PMOS conducts and the NMOS is
+      off: the output sits at \( V_{DD} \). With the input at \( V_{DD} \), the reverse. In either
+      state <b>one of the two transistors is off</b> and there is no current path between the
+      supply and ground: the inverter at rest consumes nothing but leakage.</p>
+      <p>That property, more than any other, explains why CMOS replaced all the earlier logic families.
+      A chip with billions of transistors would be impossible if each gate
+      consumed at rest like a TTL gate. The equations of each transistor are those of the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/mosfet-escalado">previous unit</a>.</p>
+    </section>
+
+    <section id="transferencia">
+      <h2><span class="n">02</span>The transfer characteristic</h2>
+      <p>As the input is swept from 0 to \( V_{DD} \), the output passes through five regions depending on the region
+      each transistor is in. At the extremes one is off and the output is exactly \( V_{DD} \) or 0; in the middle
+      both conduct, both are in saturation and the gain is enormous: the output falls almost vertically.
+      The point where the input and the output are equal is the <b>switching threshold</b> \( V_M \). With the
+      long-channel model, equating the two saturation currents:</p>
+      <div class="form">
+        \[ V_M = \frac{V_{thn} + r\,(V_{DD} - |V_{thp}|)}{1 + r} \]
+        \[ r = \sqrt{\frac{k_p}{k_n}} = \sqrt{\frac{\mu_p\, W_p}{\mu_n\, W_n}} \]
+        <span class="cap">With the two thresholds equal, \( V_M = V_{DD}/2 \) if \( r = 1 \): the PMOS has to be \( \mu_n/\mu_p \) times wider, between 2 and 3 times, to compensate for the lower mobility of holes.</span>
+      </div>
+      <p>A symmetric inverter has its threshold in the middle and both noise margins equal. Making the PMOS smaller
+      saves area and capacitance, at the cost of shifting \( V_M \) downward and making the rise slower.</p>
+    </section>
+
+    <section id="margenes">
+      <h2><span class="n">03</span>Noise margins</h2>
+      <p>A gate has to interpret correctly an input that is somewhat contaminated. The points where the slope
+      of the characteristic equals −1 separate the regions where noise is attenuated from the region where it is amplified;
+      they are called \( V_{IL} \) and \( V_{IH} \):</p>
+      <div class="form">
+        \[ NM_L = V_{IL} - V_{OL} \qquad NM_H = V_{OH} - V_{IH} \]
+        <span class="cap">Since in CMOS \( V_{OL} = 0 \) and \( V_{OH} = V_{DD} \), the margins are large: in a symmetric inverter, close to 40 % of the supply each.</span>
+      </div>
+      <p>A second virtue, just as important: the gain in the transition region is greater than 1, so
+      a chain of gates <b>regenerates</b> the levels. A degraded signal returns to exactly 0 or
+      \( V_{DD} \) after passing through a few gates.</p>
+      <div class="lw" id="ci">
+        <div class="lt">Lab · the inverter transfer curve</div>
+        <p class="ls">An inverter with thresholds of 0.5 V in both transistors, \( \mu_n / \mu_p = 2.5 \) and a
+        long-channel model with slight channel-length modulation. You choose the supply and the
+        width ratio \( W_p / W_n \); the program solves for the output at each input by equating the two
+        currents, and also plots the current flowing from the supply to ground.</p>
+        <div class="fila"><label>\( V_{DD} \) = <b id="ciVv"></b></label><input type="range" id="ciV" min="1.2" max="5" step="0.05" value="3.3"></div>
+        <div class="fila"><label>\( W_p / W_n \) = <b id="ciRv"></b></label><input type="range" id="ciR" min="0.5" max="6" step="0.1" value="2.5"></div>
+        <canvas id="ciLienzo" style="display:block;width:100%;max-width:620px;height:320px;margin:6px auto 0"></canvas>
+        <div class="datos" id="ciDatos"></div>
+        <div class="nota" id="ciNota"></div>
+      </div>
+    </section>
+
+    <section id="retardo">
+      <h2><span class="n">04</span>Delay</h2>
+      <p>The output of an inverter drives a capacitance: the gates that follow it, the wiring and its
+      own drain junctions. Changing state means charging or discharging that capacitance with the current
+      of the conducting transistor, so the delay is approximately</p>
+      <div class="form">
+        \[ t_p \approx \frac{C_L\, V_{DD}}{2\, I_{\text{on}}} \]
+        <span class="cap">\( I_{\text{on}} \) is the current of the transistor that is on, with \( V_{GS} = V_{DD} \). Wider transistors lower the intrinsic delay but load the previous stage more.</span>
+      </div>
+      <p>To drive a large load (a bus, an output pin) a chain of inverters is used, each one wider
+      than the previous. The optimal design makes the width grow by a factor close to 4 per stage, and the
+      number of stages grows with the logarithm of the load.</p>
+    </section>
+
+    <section id="potencia">
+      <h2><span class="n">05</span>Power</h2>
+      <p>Although it consumes nothing at rest, the inverter consumes every time it switches. There are three components:</p>
+      <div class="form">
+        \[ P = \alpha\, C_L\, V_{DD}^2\, f + P_{\text{sc}} + V_{DD}\, I_{\text{leak}} \]
+        <span class="cap">\( \alpha \) is the activity factor: the fraction of clock cycles in which the output changes. \( P_{\text{sc}} \) is the current spike that flows through both transistors while the input passes through the transition region.</span>
+      </div>
+      <p>The dynamic term explains the strategy of all low-power electronics: the power falls with
+      the square of the voltage, so lowering \( V_{DD} \) is the most effective measure. With 1 fF per gate, 0.8 V,
+      3 GHz and an activity factor of 0.1, each gate consumes 0.19 µW; a hundred million gates, 19 W. With
+      the end of Dennard scaling, leakage current became an important part of the total, and
+      processors completely shut off the blocks they are not using.</p>
+    </section>
+
+    <section id="familias">
+      <h2><span class="n">06</span>The inverter in real integrated circuits</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Topic</th><th>What you need to know</th></tr></thead>
+        <tbody>
+          <tr><td>4000 series</td><td>The first CMOS family, from 3 to 18 V, slow but with minimal consumption</td></tr>
+          <tr><td>74HC and 74HCT</td><td>Fast CMOS with the pinout of the 74 series; the HCT accepts TTL input levels</td></tr>
+          <tr><td>Floating inputs</td><td>An unconnected CMOS input sits in the transition region: both transistors conduct, the gate oscillates and heats up</td></tr>
+          <tr><td>Latch-up</td><td>The P and N regions of the inverter form a parasitic thyristor which, triggered by an overvoltage on a pin, short-circuits the supply</td></tr>
+          <tr><td>Electrostatic discharge</td><td>Each pin has diodes to the supply and to ground that protect the gates</td></tr>
+        </tbody>
+      </table></div>
+      <p>The parasitic thyristor of latch-up is the same four-layer device as in the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/multijunturas">unit on multijunction devices</a>,
+      only here it appears without anyone wanting it.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Plotting the transfer curve</div>
+        <p>With a 74HC04 powered at 5 V and at 3.3 V, sweep the input with a variable source and measure the
+        output. Locate \( V_M \), \( V_{IL} \) and \( V_{IH} \) and compare them with those in the datasheet.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · The short-circuit current</div>
+        <p>With an ammeter in the supply of the same integrated circuit, slowly sweep the input and measure the
+        current spike in the transition region. Repeat with the input left floating.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Power versus frequency</div>
+        <p>Drive an inverter with a square wave from 100 kHz to 10 MHz with a 100 pF load and measure the
+        average supply current. Verify that it grows in proportion to the frequency and estimate
+        \( C_L \) from the slope.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <ul>
+        <li><b>Making the PMOS the same width as the NMOS expecting symmetry.</b> Holes are slower;
+        the threshold shifts downward.</li>
+        <li><b>Leaving inputs unconnected.</b> The gate sits in the transition region, consumes power and can
+        oscillate.</li>
+        <li><b>Believing that CMOS does not consume.</b> It does not consume at rest; while switching, the power grows with
+        frequency and with \( V_{DD}^2 \).</li>
+        <li><b>Driving a large load with a single minimum-size gate.</b> The delay grows with the load; a
+        chain of progressively larger inverters is used.</li>
+        <li><b>Applying voltage to an input while the integrated circuit is unpowered.</b> The protection diodes
+        conduct and can trigger latch-up.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Self-assessment</h2>
+      <details class="q"><summary>Why does the CMOS inverter not consume at rest?</summary>
+        <div class="a"><p>Because in either of the two states one of the two transistors is off and
+        there is no path between the supply and ground.</p></div></details>
+      <details class="q"><summary>With \( \mu_n / \mu_p = 2.5 \) and equal thresholds, what width ratio
+        puts \( V_M \) at \( V_{DD}/2 \)?</summary>
+        <div class="a"><p>\( W_p / W_n = 2.5 \), so that \( k_p = k_n \).</p></div></details>
+      <details class="q"><summary>By how much does the dynamic power drop if \( V_{DD} \) goes from 1.2 to 0.9 V?</summary>
+        <div class="a"><p>To \( (0.9/1.2)^2 = 56 \) %: almost half.</p></div></details>
+      <details class="q"><summary>What is latch-up?</summary>
+        <div class="a"><p>The triggering of a parasitic thyristor formed by the P and N regions of the CMOS circuit,
+        which short-circuits the supply until it is switched off.</p></div></details>
+      <details class="q"><summary>Why does a chain of inverters regenerate logic levels?</summary>
+        <div class="a"><p>Because the gain in the transition region is much greater than 1 and outside it is
+        smaller: intermediate levels are pushed toward 0 or toward \( V_{DD} \) at each stage.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Jan M. Rabaey, Anantha Chandrakasan and Borivoje Nikolić.</span>
+          <span class="ti">Digital Integrated Circuits: A Design Perspective</span>.
+          <span class="ed">2nd ed., Prentice Hall, 2003.</span>
+          <span class="pq">The chapter on the CMOS inverter is the reference: transfer curve, margins, delay and power.</span></li>
+        <li><span class="au">Neil H. E. Weste and David Money Harris.</span>
+          <span class="ti">CMOS VLSI Design: A Circuits and Systems Perspective</span>.
+          <span class="ed">4th ed., Addison-Wesley, 2011.</span>
+          <span class="pq">Logical effort for sizing chains of gates, and the problems of real circuits.</span></li>
+        <li><span class="au">Adel S. Sedra and Kenneth C. Smith.</span>
+          <span class="ti">Microelectronic Circuits</span>.
+          <span class="ed">7th ed., Oxford University Press, 2014.</span>
+          <span class="pq">The inverter derived from the MOS curves, with numerical examples.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/mosfet-escalado">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">MOS transistor: long channel, short channel and scaling</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/memorias-cmos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">CMOS memories</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“CMOS inverter”</b> of <b>Electronic Devices</b> (Level 3), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Transfer curve of a CMOS inverter with a long-channel model.
+   Vthn = |Vthp| = 0.5 V, lambda = 0.05 1/V, kn = 400 uA/V2,
+   kp = kn (Wp/Wn) / 2.5 (mu_n/mu_p = 2.5).
+   For each Vin the Vout that equates the two currents is found; In grows
+   with Vout and Ip decreases, so it is a bisection. VIL and VIH: where the
+   slope crosses -1. VM: where Vout = Vin.
+   Check (independent calculation in Python): VDD 3.3, Wp/Wn 2.5 ->
+   VM 1.650 V, VIL 1.325, VIH 1.975, gain -37.7, peak 286 uA;
+   Wp/Wn 1 -> VM 1.398 (closed formula 1.391); VDD 5 -> peak 900 uA. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("ciLienzo"), ctx = cv.getContext("2d");
+  var VTN = 0.5, VTP = 0.5, LAM = 0.05, KN = 400e-6, N = 400;
+
+  function iN(vin, vo){
+    if(vin <= VTN) return 0;
+    var ov = vin - VTN;
+    return vo < ov ? KN * (ov * vo - vo * vo / 2) * (1 + LAM * vo) : KN / 2 * ov * ov * (1 + LAM * vo);
+  }
+  function iP(vin, vo, kp, vdd){
+    var vsg = vdd - vin, vsd = vdd - vo;
+    if(vsg <= VTP) return 0;
+    var ov = vsg - VTP;
+    return vsd < ov ? kp * (ov * vsd - vsd * vsd / 2) * (1 + LAM * vsd) : kp / 2 * ov * ov * (1 + LAM * vsd);
+  }
+  function vout(vin, vdd, kp){
+    var lo = 0, hi = vdd;
+    for(var k = 0; k < 60; k++){ var m = (lo + hi) / 2; if(iN(vin, m) - iP(vin, m, kp, vdd) < 0) lo = m; else hi = m; }
+    return (lo + hi) / 2;
+  }
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+
+  function analizar(vdd, r){
+    var kp = KN * r / 2.5, xs = [], ys = [], is = [], i;
+    for(i = 0; i <= N; i++){ var x = vdd * i / N, y = vout(x, vdd, kp); xs.push(x); ys.push(y); is.push(iN(x, y)); }
+    var vm = 0, dmin = 1e9, gan = 0, vil = null, vih = null, ipk = 0;
+    for(i = 0; i <= N; i++){
+      if(Math.abs(ys[i] - xs[i]) < dmin){ dmin = Math.abs(ys[i] - xs[i]); vm = xs[i]; }
+      if(is[i] > ipk) ipk = is[i];
+    }
+    for(i = 1; i < N; i++){
+      var d = (ys[i + 1] - ys[i - 1]) / (xs[i + 1] - xs[i - 1]);
+      if(d < gan) gan = d;
+      if(d < -1){ if(vil === null) vil = xs[i]; vih = xs[i]; }
+    }
+    var rr = Math.sqrt(r / 2.5);
+    return { xs: xs, ys: ys, is: is, vm: vm, vmf: (VTN + rr * (vdd - VTP)) / (1 + rr), vil: vil, vih: vih,
+             vol: ys[N], voh: ys[0], gan: gan, ipk: ipk };
+  }
+
+  function pintar(){
+    var vdd = +$("ciV").value, r = +$("ciR").value;
+    $("ciVv").textContent = coma(vdd, 2) + " V";
+    $("ciRv").textContent = coma(r, 1);
+    var a = analizar(vdd, r);
+
+    var R = cv.getBoundingClientRect();
+    if(R.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(R.width * dp) || cv.height !== Math.round(R.height * dp)){
+        cv.width = Math.round(R.width * dp); cv.height = Math.round(R.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = R.width, H = R.height, x0 = 40, x1 = W - 48, y0 = 14, y1 = H - 30;
+      var X = function(v){ return x0 + v / vdd * (x1 - x0); };
+      var Y = function(v){ return y1 - v / vdd * (y1 - y0); };
+      var imax = a.ipk > 0 ? a.ipk * 1.15 : 1e-6;
+      var YI = function(i){ return y1 - i / imax * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      var pasoV = vdd > 3 ? 1 : 0.5, v;
+      for(v = 0; v <= vdd + 1e-9; v += pasoV){
+        ctx.strokeStyle = "#2a3140";
+        ctx.beginPath(); ctx.moveTo(X(v), y0); ctx.lineTo(X(v), y1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; ctx.fillText(coma(v, pasoV < 1 ? 1 : 0), X(v), y1 + 14);
+        ctx.textAlign = "right"; ctx.fillText(coma(v, pasoV < 1 ? 1 : 0), x0 - 5, Y(v) + 3);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("input voltage (V)", (x0 + x1) / 2, H - 3);
+      /* right-hand current axis */
+      ctx.fillStyle = "#d2a8ff"; ctx.textAlign = "left";
+      ctx.fillText(Math.round(a.ipk * 1e6) + " µA", x1 + 4, YI(a.ipk) + 3);
+      ctx.fillText("0", x1 + 4, y1 + 3);
+
+      /* region where the gain exceeds 1 */
+      if(a.vil !== null){
+        ctx.fillStyle = "rgba(242,204,96,.10)"; ctx.fillRect(X(a.vil), y0, X(a.vih) - X(a.vil), y1 - y0);
+      }
+      /* diagonal Vout = Vin */
+      ctx.strokeStyle = "rgba(160,172,186,.45)"; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(vdd), Y(vdd)); ctx.stroke(); ctx.setLineDash([]);
+
+      var traza = function(arr, f){
+        ctx.beginPath();
+        for(var j = 0; j <= N; j++){ var yy = f(arr[j]); if(j) ctx.lineTo(X(a.xs[j]), yy); else ctx.moveTo(X(a.xs[j]), yy); }
+        ctx.stroke();
+      };
+      ctx.strokeStyle = "rgba(210,168,255,.85)"; ctx.lineWidth = 1.8; traza(a.is, YI);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.6; traza(a.ys, Y);
+
+      ctx.fillStyle = "#f2cc60"; ctx.beginPath(); ctx.arc(X(a.vm), Y(a.vm), 5, 0, Math.PI * 2); ctx.fill();
+      ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "left";
+      ctx.fillText("VM", X(a.vm) + 8, Y(a.vm) - 6);
+      if(a.vil !== null){
+        ctx.fillStyle = "#f2cc60"; ctx.font = "10px system-ui, sans-serif"; ctx.textAlign = "center";
+        ctx.fillText("VIL", X(a.vil), y0 + 10); ctx.fillText("VIH", X(a.vih), y0 + 10);
+      }
+
+      ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(x1 - 150, y1 - 44, 148, 40);
+      ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "right";
+      ctx.fillStyle = "#58a6ff"; ctx.fillText("output voltage", x1 - 8, y1 - 28);
+      ctx.fillStyle = "#d2a8ff"; ctx.fillText("current VDD → ground", x1 - 8, y1 - 12);
+      ctx.textAlign = "left";
+    }
+
+    $("ciDatos").innerHTML =
+      "<span>switching threshold V<sub>M</sub></span><b>" + coma(a.vm, 3) + " V</b>" +
+      "<span>V<sub>M</sub> from the closed formula</span><b>" + coma(a.vmf, 3) + " V</b>" +
+      "<span>V<sub>IL</sub> / V<sub>IH</sub></span><b>" + (a.vil === null ? "—" : coma(a.vil, 3) + " / " + coma(a.vih, 3) + " V") + "</b>" +
+      "<span>noise margins NM<sub>L</sub> / NM<sub>H</sub></span><b>" + (a.vil === null ? "—" : coma(a.vil - a.vol, 2) + " / " + coma(a.voh - a.vih, 2) + " V") + "</b>" +
+      "<span>maximum gain</span><b>" + coma(a.gan, 1) + "</b>" +
+      "<span>short-circuit current peak</span><b>" + coma(a.ipk * 1e6, 0) + " µA</b>";
+
+    var sim = Math.abs(a.vm - vdd / 2) / vdd, nota;
+    if(sim < 0.02) nota = "Symmetric inverter: with W<sub>p</sub>/W<sub>n</sub> equal to μ<sub>n</sub>/μ<sub>p</sub>, the two transistors conduct equally and the threshold falls at the middle of the supply, with both margins equal.";
+    else if(a.vm < vdd / 2) nota = "The PMOS is relatively weak: the NMOS wins earlier and the threshold drops to " + coma(a.vm, 2) + " V. The margin for the 0 shrinks and the output rise will be slower than the fall.";
+    else nota = "The PMOS is stronger than necessary: the threshold rises to " + coma(a.vm, 2) + " V, the margin for the 1 shrinks and area and input capacitance are wasted.";
+    nota += " The short-circuit current only flows while the input crosses the band between the two thresholds; with the input at 0 or at V<sub>DD</sub> it is zero.";
+    $("ciNota").innerHTML = nota;
+  }
+  ["ciV", "ciR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

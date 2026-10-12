@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sequential logic: state machines and timing · Digital Techniques I · Catto</title>
+<meta name="description" content="Synchronous design, Moore and Mealy state machines, binary, Gray and one-hot state assignment, the maximum frequency set by the critical path, and metastability with the mean time between failures of a synchronizer, with two interactive labs: a cycle-by-cycle sequence detector and an MTBF calculator. Content of Digital Techniques I, Level 3 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/maquinas-estado">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/maquinas-estado">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/maquinas-estado">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/maquinas-estado">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques I</a>
+    <span class="anio">Level 3</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques I</span> · 96 h · Topic 2 of 4</div>
+    <h1>Sequential logic: state machines and timing</h1>
+    <p class="lead">A device that hangs once a day for no apparent reason may have a flip-flop reading an unsynchronized pushbutton. Adding a second flip-flop pushes that failure out to once every tens of thousands of years.</p>
+    <div class="chips">
+      <span class="chip hi">Moore and Mealy</span>
+      <span class="chip">Synchronous design</span>
+      <span class="chip">Critical path</span>
+      <span class="chip">Metastability</span>
+      <span class="chip">Synchronizer</span>
+    </div>
+    <hr class="rule">
+
+    <section id="sincronico">
+      <h2><span class="n">01</span>Synchronous design</h2>
+      <p>Flip-flops, counters and shift registers are covered in the page on
+      <a href="/en/publicaciones/mapa-electronica/temas/logica-secuencial">sequential logic in the Electronics Technician program</a>.
+      This unit goes up one level: how any sequential system is designed and what limits it.</p>
+      <p>Almost all modern digital logic is <b>synchronous</b>: a single clock marks the instants at which
+      all the flip-flops take their new value, and between one edge and the next the combinational logic
+      has time to settle. That discipline solves the hazard problem of the previous unit in one stroke:
+      glitches still occur, but the flip-flop looks at its input only right at the edge, when it has
+      already settled.</p>
+      <div class="form">
+        \[ \text{next state} = f(\text{current state},\ \text{inputs}) \]
+        <span class="cap">A register holds the state; combinational logic computes the next one. Every synchronous circuit, from the simplest counter to the processor, has this form.</span>
+      </div>
+    </section>
+
+    <section id="fsm">
+      <h2><span class="n">02</span>State machines: Moore and Mealy</h2>
+      <p>A <b>finite state machine</b> describes a sequential circuit as a set of states and of transitions
+      between them. There are two ways to produce the outputs, and the difference matters:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>Moore</th><th>Mealy</th></tr></thead>
+        <tbody>
+          <tr><td>The output depends on</td><td>The state only</td><td>The state and the current input</td></tr>
+          <tr><td>In the diagram, the output goes</td><td>Inside the state</td><td>On the transition</td></tr>
+          <tr><td>When it responds</td><td>One cycle later</td><td>In the same cycle</td></tr>
+          <tr><td>States needed</td><td>Usually needs a few more</td><td>Fewer</td></tr>
+          <tr><td>The output can have glitches</td><td>No: it comes from flip-flops</td><td>Yes: it passes through the input logic</td></tr>
+        </tbody>
+      </table></div>
+      <div class="lw" id="fs">
+        <div class="lt">Lab · a 1011 sequence detector</div>
+        <p class="ls">The machine receives one bit per clock cycle and sets the output to 1 when the last
+        four bits were 1011 (sequences may overlap). You choose Moore or Mealy and feed it bits one at a
+        time; the active state is highlighted in the diagram and the table keeps the last cycles.</p>
+        <div class="fila">
+          <select id="fsT">
+            <option value="moore" selected>Moore machine (5 states)</option>
+            <option value="mealy">Mealy machine (4 states)</option>
+          </select>
+        </div>
+        <div class="fila">
+          <button type="button" id="fs0">input 0</button>
+          <button type="button" id="fs1">input 1</button>
+          <button type="button" id="fsR">reset</button>
+          <button type="button" id="fsD">load 1011011</button>
+        </div>
+        <canvas id="fsLienzo" style="display:block;width:100%;max-width:620px;aspect-ratio:2.4/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div id="fsTabla" style="overflow-x:auto;margin-top:8px"></div>
+        <div class="nota" id="fsNota"></div>
+      </div>
+    </section>
+
+    <section id="diseno">
+      <h2><span class="n">03</span>From the diagram to the circuit</h2>
+      <p>The diagram is translated into a <b>state table</b>, and each state receives a binary code. The
+      choice of that code —the <b>state assignment</b>— changes the resulting circuit:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Encoding</th><th>Flip-flops for N states</th><th>When it is a good choice</th></tr></thead>
+        <tbody>
+          <tr><td>Binary</td><td>\( \lceil \log_2 N \rceil \)</td><td>When flip-flops are expensive, as in discrete logic</td></tr>
+          <tr><td>Gray</td><td>\( \lceil \log_2 N \rceil \)</td><td>If the transitions follow a sequence: one bit changes at a time</td></tr>
+          <tr><td>One-hot</td><td>\( N \)</td><td>In FPGAs: flip-flops are plentiful and the next-state logic ends up minimal and fast</td></tr>
+        </tbody>
+      </table></div>
+      <p>With the encoding chosen, each bit of the next state and each output are combinational functions
+      of the state bits and the inputs, and they are minimized exactly as in the previous unit.</p>
+    </section>
+
+    <section id="temporizacion">
+      <h2><span class="n">04</span>Timing: the maximum frequency</h2>
+      <p>Between two clock edges, the data has to leave the first flip-flop, cross the logic and reach the
+      second with enough time to spare for it to capture the data. That race sets the maximum frequency
+      of the whole system.</p>
+      <div class="form">
+        \[ T_{clk} \geq t_{cq} + t_{\text{logic}} + t_{su} \]
+        \[ f_{max} = \frac{1}{t_{cq} + t_{\text{logic},\,max} + t_{su}} \]
+        <span class="cap">\( t_{cq} \) is the clock-to-output delay of the flip-flop; \( t_{su} \), the <i>setup</i> time that the data has to be steady before the edge. With 1 ns, 6 ns and 0.5 ns the minimum period is 7.5 ns: 133 MHz. Speeding up the system means shortening the critical path.</span>
+      </div>
+      <p>There is also a condition in the opposite direction: the data cannot change too soon after the
+      edge, during the <b>hold time</b> (the <i>hold</i> window). And if the clock does not reach all the
+      flip-flops at the same time —the difference is called <i>clock skew</i>— both margins shrink.</p>
+    </section>
+
+    <section id="metaestabilidad">
+      <h2><span class="n">05</span>Metastability: when the input does not respect the clock</h2>
+      <p>A signal that comes from outside —a pushbutton, another circuit with its own clock— can change
+      right inside the setup-and-hold window. The flip-flop is then left in a <b>metastable</b> state:
+      neither 0 nor 1, like a ball balanced on top of a hill, and it takes a random time to fall to one
+      side. If the following logic reads it before then, it may read it differently in two places of the
+      circuit and the system fails in a way that is impossible to reproduce.</p>
+      <p>The probability that it is still undecided decays exponentially with the time it is given to
+      resolve. From this comes the <b>mean time between failures</b>:</p>
+      <div class="form">
+        \[ MTBF = \frac{e^{\,t_r/\tau}}{T_0\, f_{clk}\, f_{data}} \]
+        <span class="cap">\( t_r \) is the available resolution time; \( \tau \) and \( T_0 \), constants of the flip-flop technology. The exponential is the key: each extra \( \tau \) of time multiplies the MTBF by \( e \).</span>
+      </div>
+      <div class="lw" id="mt">
+        <div class="lt">Lab · the two-flip-flop synchronizer</div>
+        <p class="ls">An asynchronous input that changes on average one million times per second enters a
+        100 MHz system, with flip-flops of \( \tau = 50 \) ps and \( T_0 = 1 \) ns (illustrative values,
+        on the order of fast logic). You choose how many flip-flops in a chain the synchronizer uses and
+        how much resolution time each one leaves.</p>
+        <div class="fila">
+          <select id="mtN">
+            <option value="1">1 flip-flop (no synchronizer)</option>
+            <option value="2" selected>2 flip-flops in a chain</option>
+            <option value="3">3 flip-flops in a chain</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="mtR">Resolution time per stage = <b id="mtRv">1.0 ns</b></label>
+          <input type="range" id="mtR" min="2" max="40" step="1" value="10">
+        </div>
+        <div class="datos" id="mtDatos" style="margin-top:8px"></div>
+        <div class="nota" id="mtNota"></div>
+      </div>
+      <p>That is why no asynchronous signal enters a synchronous design without first passing through a
+      synchronizer of at least two flip-flops. It does not make failure impossible —no circuit can—: it
+      makes it so improbable that it stops mattering.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">06</span>Where it shows up in electronics</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Case</th><th>What is used from this unit</th></tr></thead>
+        <tbody>
+          <tr><td>Controller of a serial protocol (UART, I²C)</td><td>A state machine that steps through the bits of each frame</td></tr>
+          <tr><td>Pushbutton on a device</td><td>Two-flip-flop synchronizer plus debouncing before it enters the logic</td></tr>
+          <tr><td>FPGA synthesis report</td><td>The tool computes the critical path and the maximum frequency reached</td></tr>
+          <tr><td>Passing data between two clock domains</td><td>Synchronizers and FIFO memories with Gray-code pointers</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Designing the detector</div>
+        <p>Turn the lab’s Moore machine into a state table, encode it in binary and in one-hot, and compare
+        how many flip-flops and gates each version needs.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Moore versus Mealy on the oscilloscope</div>
+        <p>Implement both versions on a development board and observe with two channels when the output of
+        each one goes high relative to the clock edge on which the last 1 arrives.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Maximum frequency</div>
+        <p>With the timings from the synthesis report of a design of your own, verify the maximum frequency
+        by hand with the critical-path formula.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <ul>
+        <li><b>Using a Mealy output as a clock or an enable.</b> It can have glitches: it passes through the
+        input logic.</li>
+        <li><b>Forgetting the initial state.</b> Every machine needs a reset that takes it to a known
+        state.</li>
+        <li><b>Reading an asynchronous input directly.</b> Without a synchronizer, metastability is a matter
+        of time.</li>
+        <li><b>Believing a synchronizer eliminates metastability.</b> It makes it improbable, not
+        impossible.</li>
+        <li><b>Adding up only the logic delays.</b> The minimum period includes \( t_{cq} \) and \( t_{su} \).</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Self-assessment</h2>
+      <details class="q"><summary>What distinguishes a Moore machine from a Mealy machine?</summary>
+        <div class="a"><p>In Moore the output depends only on the state; in Mealy, on the state and the
+        current input, so it responds one cycle earlier.</p></div></details>
+      <details class="q"><summary>Why is one-hot encoding used in FPGAs?</summary>
+        <div class="a"><p>Because they have plenty of flip-flops, and so the next-state logic ends up minimal
+        and fast.</p></div></details>
+      <details class="q"><summary>What limits the maximum frequency of a synchronous circuit?</summary>
+        <div class="a"><p>The critical path: \( t_{cq} + t_{\text{logic}} + t_{su} \) between two flip-flops.</p></div></details>
+      <details class="q"><summary>What is metastability?</summary>
+        <div class="a"><p>The undefined state a flip-flop is left in when its input changes during the
+        setup-and-hold window; it resolves in a random time.</p></div></details>
+      <details class="q"><summary>Why does a second flip-flop improve the MTBF so much?</summary>
+        <div class="a"><p>Because it gives the first one an extra period to resolve, and the MTBF grows
+        exponentially with that time.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">John F. Wakerly.</span>
+          <span class="ti">Digital Design: Principles and Practices</span>.
+          <span class="ed">5th ed., Pearson, 2018.</span>
+          <span class="pq">State machines, timing and the best introductory chapter on metastability and synchronizers.</span></li>
+        <li><span class="au">William J. Dally and R. Curtis Harting.</span>
+          <span class="ti">Digital Design: A Systems Approach</span>.
+          <span class="ed">Cambridge University Press, 2012.</span>
+          <span class="pq">Synchronous design from the viewpoint of someone who designs processors, with the timing margins in detail.</span></li>
+        <li><span class="au">Clifford E. Cummings.</span>
+          <span class="ti">Clock Domain Crossing (CDC) Design &amp; Verification Techniques Using SystemVerilog</span>.
+          <span class="ed">SNUG Boston, 2008.</span>
+          <span class="pq">The industry’s reference paper on how to pass signals between clock domains.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/combinacional-minimizacion">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Combinational logic: minimization and hazards</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/lenguajes-hdl">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Hardware description languages</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Sequential logic: state machines and timing”</b> of <b>Digital Techniques I</b> (Level 3), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Dos laboratorios:
+   1) Detector de 1011 con superposicion, en Moore (5 estados, salida en S4)
+      y en Mealy (4 estados, salida en la transicion S3 -1-> S1). En cada
+      ciclo k se registra entrada x_k, estado s_k y salida y_k (Moore:
+      out(s_k); Mealy: out(s_k, x_k)); despues s_{k+1}. Asi se ve que Mealy
+      sube la salida en el mismo ciclo del ultimo 1 y Moore uno despues.
+   2) MTBF de un sincronizador: ln MTBF = N tr / tau - ln(T0 fclk fdato),
+      en logaritmos para no desbordar. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("fsLienzo"), ctx = cv.getContext("2d");
+  var M = {
+    moore: { n: 5, sig: [[0, 1], [2, 1], [0, 3], [2, 4], [2, 1]], out: function(s){ return s === 4 ? 1 : 0; },
+             sen: ["—", "1", "10", "101", "1011"] },
+    mealy: { n: 4, sig: [[0, 1], [2, 1], [0, 3], [2, 1]], out: function(s, x){ return s === 3 && x === 1 ? 1 : 0; },
+             sen: ["—", "1", "10", "101"] }
+  };
+  var tipo = "moore", est = 0, hist = [], ultima = null;
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var m = M[tipo], i, b, Wd = r.width;
+    var R = Math.min(22, Wd / (m.n * 3.2)), cy = R + 36;
+    /* alto que piden los arcos de vuelta mas largos: en pantallas angostas
+       la proporcion fija del lienzo los recortaba */
+    var fondo = 0;
+    for(i = 0; i < m.n; i++) for(b = 0; b < 2; b++){
+      var jj = m.sig[i][b];
+      if(jj < i) fondo = Math.max(fondo, (R * 0.7 + 1.6 * (R + 6 + 26 * (i - jj - 1)) * 1.25) / 2 + 18);
+    }
+    var alto = Math.round(cy + fondo);
+    if(Math.abs(r.height - alto) > 1){ cv.style.height = alto + "px"; r = cv.getBoundingClientRect(); }
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){ cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp); }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Hd = r.height;
+    function X(k){ return Wd * (k + 0.5) / m.n; }
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.font = "600 10px 'IBM Plex Mono', Consolas, monospace"; ctx.textAlign = "center";
+    for(i = 0; i < m.n; i++){
+      for(b = 0; b < 2; b++){
+        var j = m.sig[i][b];
+        var act = ultima && ultima.de === i && ultima.x === b;
+        ctx.strokeStyle = act ? "#f2cc60" : "rgba(160,172,186,.55)"; ctx.lineWidth = act ? 2.4 : 1.3;
+        ctx.fillStyle = act ? "#f2cc60" : "#9aa7b4";
+        var et = tipo === "moore" ? String(b) : b + "/" + m.out(i, b);
+        if(j === i){
+          ctx.beginPath(); ctx.arc(X(i), cy - R - 9, 9, 0.8 * Math.PI, 2.2 * Math.PI); ctx.stroke();
+          ctx.fillText(et, X(i), cy - R - 22);
+          continue;
+        }
+        var arriba = j > i, h = (arriba ? -1 : 1) * (R + 6 + 26 * (Math.abs(j - i) - 1)) * (arriba ? 1 : 1.25);
+        var x1 = X(i) + (arriba ? R * 0.7 : -R * 0.7), x2 = X(j) + (arriba ? -R * 0.7 : R * 0.7);
+        var y1 = cy + (arriba ? -R * 0.7 : R * 0.7), yc = cy + h * 1.6;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo((x1 + x2) / 2, yc, x2, y1); ctx.stroke();
+        /* punta de flecha en el destino */
+        var ang = Math.atan2(y1 - yc, x2 - (x1 + x2) / 2);
+        ctx.beginPath(); ctx.moveTo(x2, y1);
+        ctx.lineTo(x2 - 8 * Math.cos(ang - 0.4), y1 - 8 * Math.sin(ang - 0.4));
+        ctx.lineTo(x2 - 8 * Math.cos(ang + 0.4), y1 - 8 * Math.sin(ang + 0.4)); ctx.closePath(); ctx.fill();
+        ctx.fillText(et, (x1 + x2) / 2, (y1 + yc) / 2 + (arriba ? -2 : 10));
+      }
+    }
+    for(i = 0; i < m.n; i++){
+      var on = i === est;
+      ctx.fillStyle = on ? "#c9474c" : "#1c2230"; ctx.strokeStyle = on ? "#e8686c" : "#58a6ff"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(X(i), cy, R, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#e6edf3"; ctx.font = "700 11px 'IBM Plex Mono', Consolas, monospace";
+      ctx.fillText("S" + i, X(i), cy + (tipo === "moore" ? -1 : 4));
+      if(tipo === "moore"){ ctx.font = "600 9px 'IBM Plex Mono', Consolas, monospace"; ctx.fillText("out " + m.out(i), X(i), cy + 11); }
+    }
+    ctx.textAlign = "left";
+
+    var ult = hist.slice(-16), filas = ["cycle", "input", "state", "output"], t = '<table class="traza" style="min-width:100%">';
+    filas.forEach(function(f, fi){
+      t += "<tr><th style=\"text-align:left\">" + f + "</th>";
+      ult.forEach(function(h, k){
+        var v = [h.k, h.x, "S" + h.s, h.y][fi];
+        t += '<td style="' + (fi === 3 && h.y ? "color:#ad2436;font-weight:700" : "") + '">' + v + "</td>";
+      });
+      t += "</tr>";
+    });
+    t += "</table>";
+    $("fsTabla").innerHTML = ult.length ? t : '<p style="font-size:13px;color:var(--soft);margin:4px 0">No bit has been entered yet.</p>';
+
+    var nota;
+    if(tipo === "moore")
+      nota = "Current state <b>S" + est + "</b> (has seen “" + m.sen[est] + "”), output <b>" + m.out(est) + "</b>. " +
+             (est === 4 ? "It detected 1011: the output is 1 throughout this cycle, one after the one that brought the last 1." :
+              "In Moore the output comes from the state: it goes high only in the cycle after the one with the last 1.");
+    else
+      nota = "Current state <b>S" + est + "</b> (has seen “" + m.sen[est] + "”). " +
+             (est === 3 ? "If a 1 comes in now, the output goes high <b>in this same cycle</b>: in Mealy the output depends on the input." :
+              "In Mealy the output is on the transition: it goes high in the same cycle in which the last 1 comes in.");
+    $("fsNota").innerHTML = nota;
+  }
+  function entra(x){
+    var m = M[tipo];
+    hist.push({ k: hist.length, x: x, s: est, y: m.out(est, x) });
+    ultima = { de: est, x: x };
+    est = m.sig[est][x];
+    pintar();
+  }
+  function reinicio(){ est = 0; hist = []; ultima = null; pintar(); }
+  $("fs0").addEventListener("click", function(){ entra(0); });
+  $("fs1").addEventListener("click", function(){ entra(1); });
+  $("fsR").addEventListener("click", reinicio);
+  $("fsD").addEventListener("click", function(){ reinicio(); [1, 0, 1, 1, 0, 1, 1].forEach(entra); });
+  $("fsT").addEventListener("input", function(){ tipo = $("fsT").value; reinicio(); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var TAU = 50e-12, T0 = 1e-9, FCLK = 100e6, FDATO = 1e6;
+  var ANIO = 365.25 * 86400, UNIVERSO = 13.8e9;
+  function n(v, d){
+    if(d === undefined) d = 2;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString().replace("-", "−");
+  }
+  function lindo(lnS){
+    var s = Math.exp(Math.min(lnS, 700));
+    if(lnS > 690){ var l10 = lnS / Math.LN10 - Math.log(ANIO) / Math.LN10; return "10<sup>" + Math.round(l10) + "</sup> years"; }
+    if(s < 1) return n(s * 1000, 2) + " ms";
+    if(s < 120) return n(s, 1) + " s";
+    if(s < 7200) return n(s / 60, 1) + " minutes";
+    if(s < 172800) return n(s / 3600, 1) + " hours";
+    if(s < 2 * ANIO) return n(s / 86400, 0) + " days";
+    var a = s / ANIO;
+    if(a < 1e6) return Math.round(a).toLocaleString("en-US") + " years";
+    return n(a / Math.pow(10, Math.floor(Math.log(a) / Math.LN10)), 2) + " · 10<sup>" + Math.floor(Math.log(a) / Math.LN10) + "</sup> years";
+  }
+  function pintar(){
+    var N = parseInt($("mtN").value, 10), tr = parseFloat($("mtR").value) / 10 * 1e-9;
+    $("mtRv").textContent = n(tr * 1e9, 1) + " ns";
+    var lnS = N * tr / TAU - Math.log(T0 * FCLK * FDATO);
+    var anios = Math.exp(Math.min(lnS, 700)) / ANIO;
+    $("mtDatos").innerHTML =
+      "<span>Total resolution time</span><b>" + N + " × " + n(tr * 1e9, 1) + " ns = " + n(N * tr * 1e9, 1) + " ns</b>" +
+      "<span>t_r / τ</span><b>" + n(N * tr / TAU, 1) + "</b>" +
+      "<hr><span>Mean time between failures</span><b>" + lindo(lnS) + "</b>" +
+      "<span>Compared with the age of the universe</span><b>" + (lnS > 690 || anios > UNIVERSO ? "greater" : n(anios / UNIVERSO * 100, anios / UNIVERSO > 1e-3 ? 3 : 8) + " %") + "</b>";
+    var s = Math.exp(Math.min(lnS, 700)), nota;
+    if(s < 86400) nota = "It fails several times a day: a device like this hangs “for no reason” and nobody finds out why.";
+    else if(s < 100 * ANIO) nota = "It fails every so often: very rare on a test bench, unavoidable across thousands of devices running for years.";
+    else nota = "So improbable that it stops mattering. Try going from one to two flip-flops with the same time per stage: the exponent doubles.";
+    $("mtNota").innerHTML = nota;
+  }
+  $("mtN").addEventListener("input", pintar);
+  $("mtR").addEventListener("input", pintar);
+  pintar();
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

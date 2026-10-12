@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmable logic devices · Digital Techniques I · Catto</title>
+<meta name="description" content="AND-OR arrays in PROM, PLA, PAL and GAL, the macrocell, CPLDs, and the FPGA with its look-up tables (LUTs), block memories, DSP blocks and clocks, the Shannon expansion, the flow of synthesis, placement, routing and timing analysis, with an interactive lab on a four-input LUT and its multiplexer tree. Content of Digital Techniques I, Level 3 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/logica-programable">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/logica-programable">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/logica-programable">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/logica-programable">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques I</a>
+    <span class="anio">Level 3</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques I</span> · 96 h · Topic 4 of 4</div>
+    <h1>Programmable logic devices</h1>
+    <p class="lead">Inside an FPGA there are no AND or OR gates: there are 16- or 64-bit memories that store truth tables. An AND and the most tangled six-variable function take up the same space.</p>
+    <div class="chips">
+      <span class="chip hi">PAL and GAL</span>
+      <span class="chip">CPLD</span>
+      <span class="chip">FPGA</span>
+      <span class="chip">LUT</span>
+      <span class="chip">Bitstream</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>From fixed circuit to programmable</h2>
+      <p>With discrete 74-series gates, every design change means a new circuit board. A
+      <b>programmable logic device</b> (PLD) reverses the order: the manufacturer sells an integrated
+      circuit with many generic, unconnected logic resources, and the designer decides afterward, with a
+      configuration file, what function each one performs and how they are connected to each other. The
+      same chip can be a counter in the morning and a motor controller in the afternoon.</p>
+      <p>The Electronics Technician program’s page on <a href="/en/publicaciones/mapa-electronica/temas/memorias-dispositivos-programables">memories
+      and programmable devices</a> introduces the idea. Here we look at how each type is built inside,
+      why the FPGA ended up dominating, and how to get from an HDL file like those in the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/lenguajes-hdl">previous unit</a> to a working
+      chip.</p>
+    </section>
+
+    <section id="arreglos">
+      <h2><span class="n">02</span>AND-OR arrays: PROM, PLA and PAL</h2>
+      <p>Every combinational function can be written as a sum of products, so the first PLDs are two planes
+      of gates: an <b>AND</b> plane that forms the products of the inputs and their complements, and an
+      <b>OR</b> plane that sums them for each output. What distinguishes each family is which plane can be
+      programmed:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Device</th><th>AND plane</th><th>OR plane</th><th>Consequence</th></tr></thead>
+        <tbody>
+          <tr><td>PROM</td><td>Fixed: all the minterms</td><td>Programmable</td><td>Any function, but the AND plane grows as \(2^n\): suitable only for few inputs</td></tr>
+          <tr><td>PLA</td><td>Programmable</td><td>Programmable</td><td>The most flexible, and the slowest and most expensive: two planes of fuses in series</td></tr>
+          <tr><td>PAL, GAL</td><td>Programmable</td><td>Fixed: each output sums a fixed number of products</td><td>Fast and cheap; if a function needs more products than are available, it does not fit</td></tr>
+        </tbody>
+      </table></div>
+      <p>The <b>GAL</b> is the PAL with electrically erasable cells instead of fuses, and it adds to each
+      output a <b>macrocell</b>: a flip-flop that can be used or bypassed, a polarity control, and the
+      ability to feed the output back to the AND plane. With that, a single GAL22V10 can hold a counter or
+      a small state machine, and for years it was the logic glue of every board with a
+      microprocessor.</p>
+    </section>
+
+    <section id="cpld">
+      <h2><span class="n">03</span>CPLD</h2>
+      <p>A <b>CPLD</b> (<i>complex PLD</i>) puts several PAL-type blocks on the same chip and joins them with
+      a central interconnect matrix. It inherits the virtues of the PAL:</p>
+      <ul>
+        <li><b>Nonvolatile:</b> the configuration is held in EEPROM or flash cells and the chip works from
+        the first microsecond after power-up.</li>
+        <li><b>Predictable timing:</b> every signal crosses the same matrix, so the input-to-output delay is
+        almost the same for any path and is listed in the datasheet before designing.</li>
+      </ul>
+      <p>Its limit is size: the sum-of-products structure does not scale beyond a few hundred macrocells.
+      Today it is used for startup logic and power-supply sequencing, address decoding, and “glue” tasks
+      where the logic has to be alive before everything else.</p>
+    </section>
+
+    <section id="fpga">
+      <h2><span class="n">04</span>FPGA: truth tables in memory</h2>
+      <p>The <b>FPGA</b> (<i>field-programmable gate array</i>) abandons the sum of products. Its basic
+      element is the <b>LUT</b> (<i>look-up table</i>): a small memory of \(2^k\) bits with \(k\) address
+      inputs. By storing the desired truth table in it, the LUT implements <b>any</b> function of \(k\)
+      variables with the same delay, whether it is an AND or the most tangled function:</p>
+      <div class="form">
+        \[ \text{LUT bits} = 2^k \ \text{possible functions} = 2^{2^k} \]
+        <span class="cap">Each combination of the \( k \) inputs is an address; each of the \( 2^k \) cells can be 0 or 1 on its own.</span>
+      </div>
+      <p>With \(k = 4\) that is 16 configuration bits and 65,536 different functions; current families use
+      6-input, 64-bit LUTs. A function of more variables is split with the <b>Shannon expansion</b>, which
+      separates according to one of the variables and selects with a multiplexer:</p>
+      <div class="form">
+        \[ f(x_4, \dots, x_0) = \ \overline{x_4}\; f\big|_{x_4 = 0} \;+\; x_4\; f\big|_{x_4 = 1} \]
+        <span class="cap">\( f|_{x_4=0} \) and \( f|_{x_4=1} \) are the cofactors: the function with \( x_4 \) fixed at 0 and at 1.</span>
+      </div>
+      <p>Each cofactor is a function of four variables, which fits in a LUT4, and the multiplexer that
+      selects between them is built into the cell. Around the LUTs, the FPGA has:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Resource</th><th>What it is</th></tr></thead>
+        <tbody>
+          <tr><td>Logic block (CLB, LAB)</td><td>A group of LUTs, each with its flip-flop at the output, plus dedicated carry chains for fast addition</td></tr>
+          <tr><td>Interconnect</td><td>A grid of programmable wires and switches that takes up most of the silicon and contributes a good part of the delay</td></tr>
+          <tr><td>Block memory (BRAM)</td><td>Dual-port blocks of a few kilobits, for FIFOs, tables and buffers</td></tr>
+          <tr><td>DSP blocks</td><td>Hardwired multipliers and accumulators, for filters and signal processing</td></tr>
+          <tr><td>PLLs and clocks</td><td>Frequency synthesis and low-skew clock trees that reach every flip-flop</td></tr>
+          <tr><td>Input and output blocks</td><td>Pins configurable in voltage and standard: LVCMOS, LVDS, sometimes transceivers of several Gb/s</td></tr>
+        </tbody>
+      </table></div>
+      <div class="lw" id="lp">
+        <div class="lt">Lab · inside a four-input LUT</div>
+        <p class="ls">On the left, the LUT’s 16 memory cells; on the right, the tree of multiplexers that
+        selects one according to the inputs. You choose a function and the LUT is loaded with its truth
+        table, or you click or tap a cell to flip that bit. The four inputs move the highlighted path to the
+        output.</p>
+        <div class="fila">
+          <select id="lpF">
+            <option value="and" selected>four-input AND</option>
+            <option value="or">four-input OR</option>
+            <option value="xor">four-input XOR (parity)</option>
+            <option value="may">majority of I0, I1, I2</option>
+            <option value="mux">multiplexer: I2 ? I1 : I0</option>
+            <option value="per">custom (click or tap the cells)</option>
+          </select>
+        </div>
+        <div class="fila">
+          <button type="button" id="lpI3">I3 = 0</button>
+          <button type="button" id="lpI2">I2 = 0</button>
+          <button type="button" id="lpI1">I1 = 0</button>
+          <button type="button" id="lpI0">I0 = 0</button>
+        </div>
+        <canvas id="lpLienzo" style="display:block;width:100%;max-width:620px;height:330px;margin:6px auto 0;cursor:pointer"></canvas>
+        <div class="datos" id="lpDatos"></div>
+        <div class="nota" id="lpNota"></div>
+      </div>
+      <p>The configuration of all the LUTs, the interconnect switches and the special blocks forms the
+      <b>bitstream</b>. In most FPGAs that configuration lives in SRAM cells: it is lost at power-off and the
+      chip reads it again from an external flash memory at every power-up, which takes between a few
+      milliseconds and a few tenths of a second. There are families with flash-based configuration, which
+      start instantly, and with antifuses, programmable only once and radiation-resistant, for space
+      use.</p>
+    </section>
+
+    <section id="comparacion">
+      <h2><span class="n">05</span>Which one to choose</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>PAL, GAL</th><th>CPLD</th><th>FPGA</th></tr></thead>
+        <tbody>
+          <tr><td>Structure</td><td>One AND-OR array</td><td>Several AND-OR arrays with a central matrix</td><td>Thousands to millions of LUTs with grid interconnect</td></tr>
+          <tr><td>Capacity</td><td>Tens of gates</td><td>Hundreds to a few thousand</td><td>Thousands to millions of cells</td></tr>
+          <tr><td>Configuration</td><td>Nonvolatile</td><td>Nonvolatile</td><td>Almost always SRAM, loaded at power-up</td></tr>
+          <tr><td>Delay</td><td>Fixed</td><td>Fixed and predictable</td><td>Depends on placement and routing: it has to be analyzed</td></tr>
+          <tr><td>Typical use</td><td>Replacing discrete logic, legacy equipment</td><td>Startup, decoding, power-supply sequencing</td><td>Signal processing, video, communications, integrated-circuit prototypes</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="flujo">
+      <h2><span class="n">06</span>From HDL to chip</h2>
+      <p>The manufacturer’s tool takes the description to the device in stages, and each one can fail on its
+      own:</p>
+      <ol>
+        <li><b>Synthesis:</b> translates the HDL into a network of generic gates, flip-flops, adders and
+        memories. This is where unwanted latches and optimized-away registers show up.</li>
+        <li><b>Mapping:</b> distributes that network among the device’s resources: LUTs, flip-flops, BRAM,
+        DSP.</li>
+        <li><b>Placement and routing</b> (<i>place and route</i>): chooses which physical cell each element
+        goes in and which wires connect them. It is the slowest stage, and the one that decides the
+        delays.</li>
+        <li><b>Timing analysis:</b> adds up the delays of each path between flip-flops and compares them with
+        the clock period requested in the constraints file. If any path falls short, you have to
+        redesign or lower the frequency, just as with the critical path in the
+        <a href="/en/publicaciones/mapa-ingenieria/temas/maquinas-estado">sequential logic unit</a>.</li>
+        <li><b>Bitstream:</b> generates the configuration file and loads it into the chip or its flash.</li>
+      </ol>
+      <p>The constraints file is as much a part of the design as the HDL: it assigns each signal to a pin,
+      sets its electrical standard and declares the frequency of each clock. Without it the tool places
+      the pins at random and does not know what speed it has to meet.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">07</span>Where it shows up in electronics</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Case</th><th>Why a programmable device</th></tr></thead>
+        <tbody>
+          <tr><td>Board with a microprocessor</td><td>A CPLD generates the chip selects and the power-up order of the supplies</td></tr>
+          <tr><td>Software-defined radio</td><td>The FPGA filters and demodulates in parallel samples that arrive at hundreds of millions per second</td></tr>
+          <tr><td>Cameras and video</td><td>It receives the sensor, corrects each pixel and converts between interfaces in real time</td></tr>
+          <tr><td>Control of power converters</td><td>It generates PWM with nanosecond resolution and protections that act within one cycle</td></tr>
+          <tr><td>Integrated-circuit design</td><td>The design is tested on an FPGA before paying for the ASIC fabrication</td></tr>
+          <tr><td>Equipment updated in the field</td><td>A new bitstream changes the hardware without changing the board</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">08</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · First design on a board</div>
+        <p>With an inexpensive board (those of the iCE40 family work with open-source tools: Yosys, nextpnr
+        and icestorm), describe a counter that makes an LED blink at 1 Hz from the board’s clock. Write the
+        pin file, synthesize, load it and measure the frequency with the oscilloscope.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Reading the resource report</div>
+        <p>Synthesize the sequence detector from the previous unit and note how many LUTs and how many
+        flip-flops it uses. Change the state assignment to <i>one-hot</i> and compare the two figures.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Finding the critical path</div>
+        <p>Synthesize a 32-bit adder between registers and request an ever higher clock frequency until the
+        timing analysis fails. Open the report and locate the path that falls short: it should be the
+        carry chain.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">09</span>Common mistakes</h2>
+      <ul>
+        <li><b>Forgetting the constraints file.</b> The pins end up wherever the tool wants and the timing
+        analysis does not know what frequency to check.</li>
+        <li><b>Accepting a design as good because it simulates.</b> If the timing analysis shows paths that
+        fall short, on the board it will fail intermittently.</li>
+        <li><b>Generating clocks with logic.</b> Dividing the clock with a counter and using that output as the
+        clock of other flip-flops breaks the clock tree; use the PLL or a clock enable.</li>
+        <li><b>Assuming the FPGA starts instantly.</b> An SRAM FPGA takes time to load its configuration, and
+        in the meantime its pins do not do what the design says.</li>
+        <li><b>Counting gates instead of LUTs.</b> A two-input AND and a complicated six-input function take up
+        the same thing: one LUT.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">10</span>Self-assessment</h2>
+      <details class="q"><summary>Which plane is programmable in a PAL and which in a PROM?</summary>
+        <div class="a"><p>In the PAL the AND plane is programmed and the OR plane is fixed; in the PROM the AND
+        plane is fixed (it generates all the minterms) and the OR plane is programmed.</p></div></details>
+      <details class="q"><summary>How many bits does a six-input LUT have and how many different functions
+        can it implement?</summary>
+        <div class="a"><p>\(2^6 = 64\) bits, and \(2^{64}\), about \(1.8 \times 10^{19}\), different
+        functions.</p></div></details>
+      <details class="q"><summary>What configuration value (INIT) does a LUT4 loaded with an AND of its four
+        inputs have?</summary>
+        <div class="a"><p>Only address 1111, number 15, is 1: the value is <code>16'h8000</code>.</p></div></details>
+      <details class="q"><summary>Why does a CPLD have more predictable delays than an FPGA?</summary>
+        <div class="a"><p>Because every signal crosses the same central interconnect matrix; in the FPGA the
+        delay depends on where the tool placed each cell and on the wires it chose to join them.</p></div></details>
+      <details class="q"><summary>What happens to the configuration of an SRAM-based FPGA when the power is
+        cut?</summary>
+        <div class="a"><p>It is lost. When power returns, the chip reads the bitstream from an external flash
+        memory, and until it finishes it does not perform the designed function.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">11</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Clive Maxfield.</span>
+          <span class="ti">The Design Warrior's Guide to FPGAs</span>.
+          <span class="ed">Newnes, 2004.</span>
+          <span class="pq">The history of PLDs and the architecture of FPGAs told from the inside, in plain language.</span></li>
+        <li><span class="au">Stephen Brown and Zvonko Vranesic.</span>
+          <span class="ti">Fundamentals of Digital Logic with VHDL Design</span>.
+          <span class="ed">3rd ed., McGraw-Hill, 2009.</span>
+          <span class="pq">PLA and PAL arrays and the structure of LUTs, with the Shannon expansion applied to their synthesis.</span></li>
+        <li><span class="au">Pong P. Chu.</span>
+          <span class="ti">FPGA Prototyping by Verilog Examples</span>.
+          <span class="ed">Wiley, 2008.</span>
+          <span class="pq">The complete flow, from HDL to the board, with constraints, timing analysis and real peripherals.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/lenguajes-hdl">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Hardware description languages</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Programmable logic devices”</b> of <b>Digital Techniques I</b> (Level 3), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Una LUT de cuatro entradas: 16 celdas de memoria y un arbol de
+   multiplexores 2:1. La celda i guarda f(I3,I2,I1,I0) con
+   i = 8*I3 + 4*I2 + 2*I1 + I0, que es la convencion del parametro INIT de
+   las LUT de Xilinx (bit i del INIT = celda i). En el primer nivel del
+   arbol elige I0, en el segundo I1, en el tercero I2 y en el ultimo I3.
+   Valores de control: AND 8000, OR FFFE, XOR 6996, mayoria E8E8,
+   multiplexor I2 ? I1 : I0 = CACA. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("lpLienzo"), ctx = cv.getContext("2d");
+  var F = {
+    and: function(a){ return a[0] & a[1] & a[2] & a[3]; },
+    or:  function(a){ return a[0] | a[1] | a[2] | a[3]; },
+    xor: function(a){ return a[0] ^ a[1] ^ a[2] ^ a[3]; },
+    may: function(a){ return a[0] + a[1] + a[2] >= 2 ? 1 : 0; },
+    mux: function(a){ return a[2] ? a[1] : a[0]; }
+  };
+  var NOTA = {
+    and: "The only cell at 1 is number 15, the one with all four inputs at 1. A four-input AND and any other function of four variables take up the same thing: one LUT.",
+    or: "All the cells are 1 except cell 0. Changing from AND to OR does not change the hardware: only the contents of the memory.",
+    xor: "Parity is the most expensive function as a sum of products: eight products of four variables, with nothing to simplify. In the LUT it costs the same as the AND.",
+    may: "I3 plays no part: the bottom half of the table repeats the top half. A three-variable function still takes up an entire LUT; some families split a large LUT into two smaller ones to hold two functions.",
+    mux: "A 2:1 multiplexer is a three-variable function like any other: I2 chooses between I1 and I0, and I3 plays no part.",
+    per: "Table loaded by hand. Any of the 65,536 possible combinations of the 16 bits is a valid function, and the delay from input to output is the same for all of them."
+  };
+  var bits = [], ent = [0, 0, 0, 0], func = "and";
+
+  function cargar(){
+    if(func === "per") return;
+    for(var i = 0; i < 16; i++) bits[i] = F[func]([i & 1, i >> 1 & 1, i >> 2 & 1, i >> 3 & 1]);
+  }
+  function hex(){
+    var v = 0;
+    for(var i = 0; i < 16; i++) v += bits[i] * Math.pow(2, i);
+    return ("000" + v.toString(16).toUpperCase()).slice(-4);
+  }
+  function sel(){ return ent[3] * 8 + ent[2] * 4 + ent[1] * 2 + ent[0]; }
+  function bin(i){ return (i >> 3 & 1) + "" + (i >> 2 & 1) + (i >> 1 & 1) + (i & 1); }
+
+  var geo;
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, arriba = 12, abajo = 26;
+    var fh = (H - arriba - abajo) / 16, cx = 44, cw = 22;
+    var xs = [cx + cw], x4 = W - 64, paso = (x4 - xs[0]) / 4;
+    for(var l = 1; l <= 4; l++) xs.push(xs[0] + paso * l);
+    geo = { arriba: arriba, fh: fh, cx: cx, cw: cw };
+    ctx.clearRect(0, 0, W, H);
+
+    /* y de cada nodo, nivel por nivel: el padre queda entre sus dos hijos */
+    var ys = [[]], i, l;
+    for(i = 0; i < 16; i++) ys[0].push(arriba + fh * (i + 0.5));
+    for(l = 1; l <= 4; l++){
+      ys.push([]);
+      for(i = 0; i < 16 >> l; i++) ys[l].push((ys[l - 1][2 * i] + ys[l - 1][2 * i + 1]) / 2);
+    }
+    var s = sel();
+
+    /* conexiones: primero las apagadas, despues el camino activo encima */
+    function cables(activos){
+      for(l = 1; l <= 4; l++){
+        for(i = 0; i < 16 >> l; i++){
+          for(var h = 0; h < 2; h++){
+            var hijo = 2 * i + h, on = (s >> (l - 1)) === hijo;
+            if(on !== activos) continue;
+            var xa = l === 1 ? cx + cw : xs[l - 1] + 7, ya = ys[l - 1][hijo];
+            var xb = xs[l] - 7, yb = ys[l][i] + (h ? 1 : -1) * Math.min(6, fh * 0.35 * Math.pow(2, l - 1));
+            var xm = (xa + xb) / 2;
+            ctx.strokeStyle = on ? "#f2cc60" : "rgba(160,172,186,.45)"; ctx.lineWidth = on ? 2.4 : 1.1;
+            ctx.beginPath(); ctx.moveTo(xa, ya); ctx.lineTo(xm, ya); ctx.lineTo(xm, yb); ctx.lineTo(xb, yb); ctx.stroke();
+          }
+        }
+      }
+    }
+    cables(false); cables(true);
+
+    /* los multiplexores */
+    for(l = 1; l <= 4; l++){
+      for(i = 0; i < 16 >> l; i++){
+        var y = ys[l][i], a = Math.min(10, fh * 0.35 * Math.pow(2, l - 1)) + 3, on = (s >> l) === i;
+        ctx.fillStyle = "#1c2230"; ctx.strokeStyle = on ? "#f2cc60" : "#58a6ff"; ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(xs[l] - 7, y - a); ctx.lineTo(xs[l] + 7, y - a * 0.55);
+        ctx.lineTo(xs[l] + 7, y + a * 0.55); ctx.lineTo(xs[l] - 7, y + a); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      }
+    }
+    /* salida */
+    var yo = ys[4][0], out = bits[s];
+    ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(xs[4] + 7, yo); ctx.lineTo(W - 44, yo); ctx.stroke();
+    ctx.fillStyle = out ? "#7ee787" : "#e6edf3"; ctx.font = "700 13px 'IBM Plex Mono', Consolas, monospace";
+    ctx.textAlign = "left"; ctx.fillText("S=" + out, W - 42, yo + 4);
+
+    /* quien elige en cada nivel */
+    ctx.textAlign = "center"; ctx.font = "600 10px 'IBM Plex Mono', Consolas, monospace";
+    for(l = 1; l <= 4; l++){
+      ctx.fillStyle = "#9aa7b4";
+      ctx.fillText("I" + (l - 1) + "=" + ent[l - 1], xs[l], H - 8);
+    }
+
+    /* las 16 celdas */
+    for(i = 0; i < 16; i++){
+      var yc = arriba + fh * i, act = i === s;
+      ctx.fillStyle = act ? "rgba(242,204,96,.25)" : bits[i] ? "rgba(126,231,135,.16)" : "#1c2230";
+      ctx.fillRect(cx, yc + 1, cw, fh - 2);
+      ctx.strokeStyle = act ? "#f2cc60" : "#3a4456"; ctx.lineWidth = act ? 1.8 : 1;
+      ctx.strokeRect(cx + 0.5, yc + 1.5, cw - 1, fh - 3);
+      ctx.fillStyle = bits[i] ? "#7ee787" : "#8b93a3";
+      ctx.font = "700 " + Math.min(12, fh * 0.7).toFixed(1) + "px 'IBM Plex Mono', Consolas, monospace";
+      ctx.fillText(String(bits[i]), cx + cw / 2, yc + fh * 0.5 + fh * 0.22);
+      ctx.fillStyle = act ? "#f2cc60" : "#6b7484"; ctx.textAlign = "right";
+      ctx.font = Math.min(10, fh * 0.6).toFixed(1) + "px 'IBM Plex Mono', Consolas, monospace";
+      ctx.fillText(bin(i), cx - 5, yc + fh * 0.5 + fh * 0.2);
+      ctx.textAlign = "center";
+    }
+    ctx.textAlign = "left";
+
+    $("lpDatos").innerHTML = "<span>inputs I3 I2 I1 I0</span><b>" + bin(s) + "</b>" +
+      "<span>selected cell</span><b>" + s + "</b>" +
+      "<span>output</span><b>" + out + "</b>" +
+      "<span>configuration (INIT)</span><b>16'h" + hex() + "</b>";
+    $("lpNota").innerHTML = NOTA[func];
+    for(i = 0; i < 4; i++) $("lpI" + i).textContent = "I" + i + " = " + ent[i];
+  }
+
+  [0, 1, 2, 3].forEach(function(k){
+    $("lpI" + k).addEventListener("click", function(){ ent[k] ^= 1; pintar(); });
+  });
+  $("lpF").addEventListener("input", function(){ func = $("lpF").value; cargar(); pintar(); });
+  cv.addEventListener("click", function(e){
+    if(!geo) return;
+    var r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+    var i = Math.floor((y - geo.arriba) / geo.fh);
+    if(x > geo.cx + geo.cw + 4 || i < 0 || i > 15) return;
+    bits[i] ^= 1; func = "per"; $("lpF").value = "per";
+    pintar();
+  });
+  window.addEventListener("resize", pintar);
+  cargar(); pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
