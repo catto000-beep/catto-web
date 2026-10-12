@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aliasing · Signals and Systems · Catto</title>
+<meta name="description" content="Aliasing as a consequence of overlapping replicas, the apparent-frequency formula, the folding map, where it shows up in practice and the role of the antialiasing filter and oversampling, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/aliasing">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/aliasing">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/aliasing">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/aliasing">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 31 of 34</div>
+    <h1>Aliasing</h1>
+    <p class="lead">A high frequency disguised as a low one. The problem is not that it gets distorted: it is that afterward there is no way to tell, because the samples are exactly the same.</p>
+    <div class="chips">
+      <span class="chip hi">Aliasing</span>
+      <span class="chip">Folding</span>
+      <span class="chip">Antialiasing</span>
+      <span class="chip">Oversampling</span>
+      <span class="chip">Sigma-delta</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que">
+      <h2><span class="n">01</span>One frequency disguised as another</h2>
+      <p>When the sampling frequency is not high enough, the replicas of the spectrum get into the useful band and
+      a high signal appears in the place of a low one. This is called an <b>alias</b>, and the frequency at which it
+      shows up comes from a simple calculation:</p>
+      <div class="form">
+        \[ f_{\text{alias}} = \big|\,f - k\,f_s\,\big|,
+           \qquad k \text{ the integer that leaves the result between } 0 \text{ and } f_s/2 \]
+        <span class="cap">The frequency is “folded” into the band, as if the axis were bent at \( f_s/2 \) and at every multiple of \( f_s \).</span>
+      </div>
+      <p>The problem is not that the signal gets distorted: it is that <b>there is no way to tell afterward</b>.
+      Once sampled, the alias signal is indistinguishable from a real signal at that low frequency. There is no
+      subsequent processing that can separate it, because the samples are exactly the same.</p>
+      <div class="lw" id="al">
+        <div class="lt">Lab · the impostor sinusoid</div>
+        <p class="ls">A sinusoid sampled at a fixed \( f_s \). Raise its frequency beyond \( f_s/2 \) and watch how the same samples are explained by a different, much slower sinusoid.</p>
+        <div class="fila">
+          <label class="chk"><input type="checkbox" id="alA" checked> Show the alias sinusoid</label>
+          <label class="chk"><input type="checkbox" id="alM"> Show the folding map</label>
+        </div>
+        <div class="fila">
+          <label for="alF">Signal frequency = <b id="alFv">3.0</b> Hz   ·   fs = 10 Hz</label>
+          <input type="range" id="alF" min="0.2" max="28" step="0.1" value="3">
+        </div>
+        <canvas id="alLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="alDatos" style="margin-top:8px"></div>
+        <div class="nota" id="alNota"></div>
+      </div>
+    </section>
+
+    <section id="donde">
+      <h2><span class="n">02</span>Where you see it without looking for it</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Situation</th><th>What is observed</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>The wheels of a wagon in the movies</td><td>They turn backward or stand still</td><td>24 frames per second sample the rotation of the spokes</td></tr>
+          <tr><td>A striped shirt on television</td><td>Bands of color that do not exist appear</td><td>The spatial pattern exceeds the resolution of the sensor</td></tr>
+          <tr><td>An oscilloscope with a slow timebase</td><td>A fast sinusoid looks slow and with a pulsing amplitude</td><td>The sampling rate dropped below twice the frequency</td></tr>
+          <tr><td>An image shrunk without filtering</td><td>Textures with strange patterns, the <i>moiré</i> effect</td><td>Decimating without a prior anti-aliasing filter</td></tr>
+          <tr><td>Strobe light on a motor</td><td>The shaft appears stopped</td><td>It is aliasing used on purpose</td></tr>
+        </tbody>
+      </table></div>
+      <p>The last row is worth remembering: aliasing is not only a defect. A stroboscope and a
+      sequential-sampling oscilloscope use it <b>on purpose</b> to observe signals much faster
+      than their electronics, sampling at a frequency barely different from that of the signal so that the alias
+      falls in a band that is comfortable to measure.</p>
+    </section>
+
+    <section id="filtro">
+      <h2><span class="n">03</span>The anti-aliasing filter is not optional</h2>
+      <p>The sampling theorem requires the signal to be bandlimited, and no real signal is: there is always
+      noise and high-frequency components. That is why an analog low-pass goes <b>before</b> the converter, and it has to
+      be analog: once sampled, the damage is already done.</p>
+      <div class="form">
+        \[ \text{required attenuation at } f_s - f_{\text{useful}} \;\ge\; \text{dynamic range of the converter} \]
+        <span class="cap">A 16-bit converter —96 dB— is of little use if at the frequency that will fold onto the useful band the filter attenuates only 30 dB.</span>
+      </div>
+      <p>This is where the usual tension appears: the closer the useful band is to \( f_s/2 \), the sharper
+      the filter has to be, and a sharp filter is high-order, expensive and has nasty group delay.</p>
+      <div class="box key"><div class="bt">Oversampling, which solves the problem from the other side</div>
+        <p>The elegant way out is to sample <b>much</b> faster than necessary. If the useful band is
+        20 kHz and you sample at 5 MHz, what folds onto the band is above 4.9 MHz, and a first-order
+        analog filter already attenuates it more than enough. Then you decimate digitally, where the filter
+        can be sharp and linear-phase at no analog cost.</p>
+        <p>That is the idea behind <b>sigma-delta</b> converters, which sample at tens of megahertz with a
+        single bit and do all the fine work in the digital domain. That is why a modern audio codec needs
+        barely an RC at the input where the converters of the eighties had eighth-order
+        filters.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Folding by hand</div>
+        <p>With \( f_s = 8 \) kHz, calculate the frequency at which signals of 3, 5, 9, 11 and 16 kHz appear.
+        Verify that 3 and 5 kHz land in the same place, and explain why they cannot be
+        distinguished.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Causing it</div>
+        <p>Using a microcontroller, sample a 1.1 kHz sinusoid at 1 kS/s and plot the samples.
+        Check that a 100 Hz sinusoid is seen, and that raising it to 1.2 kHz gives a 200 Hz one.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Measuring the required attenuation</div>
+        <p>For a 12-bit converter with a 10 kHz useful band and \( f_s = 48 \) kHz, determine at what
+        frequency the folding starts and how much attenuation is needed there. Choose the order of the
+        anti-aliasing filter.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Common mistakes</h2>
+      <ul>
+        <li><b>Believing you can filter afterward.</b> Once sampled, the alias is indistinguishable from a
+        legitimate signal.</li>
+        <li><b>Putting the anti-aliasing filter in the digital domain.</b> It has to be analog, before the
+        converter.</li>
+        <li><b>Forgetting wideband noise.</b> Even if the useful signal is slow, the noise folds
+        anyway.</li>
+        <li><b>Trusting that the converter “filters something”.</b> A sample-and-hold is not an anti-aliasing
+        filter.</li>
+        <li><b>Decimating without filtering.</b> Lowering the sampling frequency also generates aliasing, and there the
+        filter can indeed be digital.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">06</span>Self-assessment</h2>
+      <details class="q"><summary>With \( f_s = 8 \) kHz, how does a 9 kHz signal appear?</summary>
+        <div class="a"><p>As 1 kHz: \( |9 - 8| = 1 \).</p></div></details>
+      <details class="q"><summary>And an 11 kHz one?</summary>
+        <div class="a"><p>As 3 kHz: \( |11 - 8| = 3 \). It is confused with a real 3
+        kHz signal.</p></div></details>
+      <details class="q"><summary>Why does the anti-aliasing filter have to be analog?</summary>
+        <div class="a"><p>Because the folding happens at the moment of sampling. Afterward there is nothing left to
+        separate.</p></div></details>
+      <details class="q"><summary>Why do the wagon wheels turn backward in the movies?</summary>
+        <div class="a"><p>Because 24 frames per second sample the rotation of the spokes, and the alias can come out
+        negative: it appears to rotate backward.</p></div></details>
+      <details class="q"><summary>What advantage does oversampling give?</summary>
+        <div class="a"><p>It moves the folding band away, so the analog filter can be much simpler and the
+        fine work is done digitally.</p></div></details>
+      <details class="q"><summary>Is aliasing good for anything?</summary>
+        <div class="a"><p>Yes: the stroboscope and the sequential-sampling oscilloscope use it on purpose
+        to observe signals faster than their own electronics.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">07</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1997.</span>
+          <span class="pq">Aliasing derived from the overlap of replicas, with graphical examples.</span></li>
+        <li><span class="au">Walt Kester (ed.).</span> <span class="ti">Data Conversion Handbook</span>.
+          <span class="ed">Analog Devices / Newnes, 2005.</span>
+          <span class="pq">Real anti-aliasing filter design, oversampling and sigma-delta architectures.</span></li>
+        <li><span class="au">Richard G. Lyons.</span> <span class="ti">Understanding Digital Signal Processing</span>.
+          <span class="ed">3rd ed., Prentice Hall, 2010.</span>
+          <span class="pq">Folding explained with figures you understand at first glance, and bandpass sampling.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/muestreo-shannon">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">The sampling theorem</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/convolucion-modulacion">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Convolution and modulation theorems</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Aliasing”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* The impostor sinusoid. A sinusoid whose frequency moves is sampled at a fixed
+   fs; when it passes fs/2, the same samples are explained by a different,
+   much slower sinusoid. The folding map shows where the apparent
+   frequency comes from. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("alLienzo"), ctx = cv.getContext("2d");
+  var FS = 10, TM = 1.4, FMAX = 28;
+
+  function alias(f){
+    /* the frequency at which it appears, folded into 0..fs/2, and its sign:
+       if the alias comes from the descending segment, the phase is inverted */
+    var r = f % FS;
+    if(r > FS / 2) return { f:FS - r, invierte:true };
+    return { f:r, invierte:false };
+  }
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var f = parseFloat($("alF").value), verA = $("alA").checked, verM = $("alM").checked;
+    $("alFv").textContent = n(f, 1);
+    var A = alias(f);
+
+    var x0 = 26, x1 = Wd - 12;
+    var yc = verM ? Hd * 0.3 : Hd * 0.45, alto = Hd * 0.2;
+    function XT(t){ return x0 + t / TM * (x1 - x0); }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, yc); ctx.lineTo(x1, yc); ctx.stroke();
+
+    /* the true sinusoid */
+    ctx.strokeStyle = "rgba(107,116,132,.75)"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for(i = 0; i <= 1600; i++){
+      var t = TM * i / 1600;
+      var q = { x:XT(t), y:yc - Math.sin(2 * Math.PI * f * t) * alto };
+      if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+    }
+    ctx.stroke();
+
+    /* the alias sinusoid: it passes exactly through the same samples */
+    if(verA && A.f > 0.01){
+      ctx.strokeStyle = "#f85149"; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      for(i = 0; i <= 900; i++){
+        var t2 = TM * i / 900;
+        var v = Math.sin(2 * Math.PI * A.f * t2 * (A.invierte ? -1 : 1));
+        var q2 = { x:XT(t2), y:yc - v * alto };
+        if(i === 0) ctx.moveTo(q2.x, q2.y); else ctx.lineTo(q2.x, q2.y);
+      }
+      ctx.stroke();
+    }
+
+    /* the samples */
+    var T = 1 / FS, err = 0;
+    for(i = 0; i * T <= TM; i++){
+      var tm = i * T, vm = Math.sin(2 * Math.PI * f * tm);
+      var va = Math.sin(2 * Math.PI * A.f * tm * (A.invierte ? -1 : 1));
+      err = Math.max(err, Math.abs(vm - va));
+      ctx.strokeStyle = "rgba(242,204,96,.6)"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(XT(tm), yc); ctx.lineTo(XT(tm), yc - vm * alto); ctx.stroke();
+      ctx.fillStyle = "#f2cc60";
+      ctx.beginPath(); ctx.arc(XT(tm), yc - vm * alto, 3.4, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = "#6b7484"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("the true signal", x0, yc - alto * 1.5);
+    ctx.fillStyle = "#f2cc60"; ctx.fillText("the samples", x0 + 92, yc - alto * 1.5);
+    if(verA){ ctx.fillStyle = "#f85149"; ctx.fillText("what you see", x0 + 164, yc - alto * 1.5); }
+
+    /* the folding map: real frequency versus apparent frequency */
+    if(verM){
+      var ym = Hd - 26, altoM = Hd * 0.26, xm0 = x0, xm1 = x1;
+      function XM(ff){ return xm0 + ff / FMAX * (xm1 - xm0); }
+      function YM(ff){ return ym - ff / (FS / 2) * altoM; }
+      ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(xm0, ym - altoM); ctx.lineTo(xm0, ym); ctx.lineTo(xm1, ym); ctx.stroke();
+      /* the lines at fs/2 and its multiples */
+      ctx.strokeStyle = "rgba(42,49,64,.9)";
+      for(i = 1; XM(i * FS / 2) < xm1; i++){
+        ctx.beginPath(); ctx.moveTo(XM(i * FS / 2), ym - altoM); ctx.lineTo(XM(i * FS / 2), ym); ctx.stroke();
+      }
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(i = 0; i <= 600; i++){
+        var ff = FMAX * i / 600;
+        var q3 = { x:XM(ff), y:YM(alias(ff).f) };
+        if(i === 0) ctx.moveTo(q3.x, q3.y); else ctx.lineTo(q3.x, q3.y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#f85149";
+      ctx.beginPath(); ctx.arc(XM(f), YM(A.f), 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#7ee787"; ctx.font = "600 10px system-ui, sans-serif";
+      ctx.fillText("apparent frequency versus real frequency", xm0, ym - altoM - 6);
+      ctx.fillStyle = "#6b7484"; ctx.font = "9px system-ui, sans-serif";
+      ctx.fillText("fs/2", XM(FS / 2) - 8, ym + 11);
+      ctx.fillText("fs", XM(FS) - 4, ym + 11);
+      ctx.fillText("2fs", XM(2 * FS) - 6, ym + 11);
+      ctx.fillText(FMAX + " Hz", xm1 - 26, ym + 11);
+    }
+
+    var ok = f < FS / 2;
+    $("alDatos").innerHTML =
+      "<span>Signal frequency   ·   fs</span><b>" + n(f, 1) + " Hz   ·   " + FS + " Hz</b>" +
+      '<hr><span style="color:#f85149">Frequency at which it appears</span><b>' + n(A.f, 2) + " Hz" +
+        (A.invierte ? "   ·   with inverted phase" : "") + "</b>" +
+      "<span>The calculation</span><b>" +
+        (ok ? "not needed: it is below fs/2"
+            : "|" + n(f, 1) + " − " + Math.round(f / FS) + "·" + FS + "| = " + n(A.f, 2) + " Hz") + "</b>" +
+      "<span>Maximum difference between the two at the samples</span><b>" + n(err, 6) + "</b>" +
+      "<hr><span>Can it be recovered?</span><b>" +
+        (ok ? "yes, it satisfies the theorem" : "<b>no</b>: the samples are not enough to tell them apart") + "</b>";
+
+    var txt;
+    if(ok)
+      txt = "Below fs/2 the reconstruction is unique: there is no other sinusoid in that band that passes " +
+            "through these samples. Raise the frequency above 5 Hz and the impostor appears.";
+    else
+      txt = "Look at the last number: the difference between the two sinusoids <b>at the sampling " +
+            "instants</b> is zero. It is not that they look alike: they give exactly the same values. That is why no subsequent " +
+            "processing can separate them, and why the anti-aliasing filter has to come before " +
+            "the converter.";
+    if(A.invierte)
+      txt += " Here the alias also comes out with the phase flipped: it is what makes the wagon wheels " +
+             "appear to turn backward.";
+    $("alNota").innerHTML = txt;
+  }
+
+  ["alF", "alA", "alM"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

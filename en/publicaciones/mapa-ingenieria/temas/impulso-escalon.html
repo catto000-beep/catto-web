@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit impulse and unit step · Signals and Systems · Catto</title>
+<meta name="description" content="The unit step and the unit impulse, why delta of t is not a function but a distribution, the sifting property, the relations between the two and how to measure the impulse response without generating an impulse, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/impulso-escalon">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/impulso-escalon">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/impulso-escalon">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/impulso-escalon">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 20 of 34</div>
+    <h1>Unit impulse and unit step</h1>
+    <p class="lead">The impulse is not a function with a shape: it is the limit of any family of pulses that narrows while keeping area one. All you need to know about it is how it behaves inside an integral.</p>
+    <div class="chips">
+      <span class="chip hi">Step</span>
+      <span class="chip">Impulse</span>
+      <span class="chip">Sifting</span>
+      <span class="chip">Distribution</span>
+      <span class="chip">Impulse response</span>
+    </div>
+    <hr class="rule">
+
+    <section id="escalon">
+      <h2><span class="n">01</span>The step, which holds no mystery</h2>
+      <p>Let us start with the easy one. The unit step is zero before and one after:</p>
+      <div class="form">
+        \[ u(t) = \begin{cases} 1 & t \gt 0 \\ 0 & t \lt 0 \end{cases}
+           \qquad\qquad
+           u[n] = \begin{cases} 1 & n \ge 0 \\ 0 & n \lt 0 \end{cases} \]
+        <span class="cap">In continuous time the value at \( t = 0 \) is left undefined, or taken as \( 1/2 \) for convenience. In discrete time there is no ambiguity: \( u[0] = 1 \).</span>
+      </div>
+      <p>Its main use is to <b>cut off</b> signals. Multiplying by \( u(t) \) turns everything earlier into zero, and
+      subtracting two shifted steps builds a pulse:
+      \( \operatorname{rect} = u(t) - u(t - T) \). It is the standard way to write piecewise-defined
+      signals on a single line.</p>
+    </section>
+
+    <section id="impulso">
+      <h2><span class="n">02</span>The impulse, which does</h2>
+      <p>In discrete time it is simple too: \( \delta[n] \) equals 1 at \( n = 0 \) and zero elsewhere. A
+      signal like any other.</p>
+      <p>In continuous time, on the other hand, \( \delta(t) \) <b>is not a function</b>. There is no function
+      that is zero everywhere except at one point and has integral one: changing the value at a single
+      point does not change any integral. What does exist is a <b>limit</b>, and more precisely a
+      <i>distribution</i>: an object that is defined by how it acts inside an integral.</p>
+      <div class="form">
+        \[ \int_{-\infty}^{\infty} x(t)\,\delta(t - t_0)\,dt = x(t_0) \]
+        <span class="cap">The <b>sifting</b>, or sampling, property. It is the operational definition of the impulse: the only thing you need to know about it.</span>
+      </div>
+      <p>Any family of pulses that narrow while keeping area one gets to the same place: a
+      rectangle, a triangle, a Gaussian, a sinc. The shape does not matter. What matters is that the area
+      stays at one and the width tends to zero.</p>
+      <div class="lw" id="im">
+        <div class="lt">Lab · the impulse as a limit</div>
+        <p class="ls">A pulse of area one that keeps narrowing. Above, the pulse next to a smooth signal; below, the result of \( \int x(t)\,p_\Delta(t - t_0)\,dt \), which has to approach \( x(t_0) \) regardless of the shape of the pulse.</p>
+        <div class="fila">
+          <select id="imF">
+            <option value="rect">Rectangular pulse</option>
+            <option value="tri">Triangular pulse</option>
+            <option value="gau">Gaussian</option>
+            <option value="sinc">Sinc</option>
+            <option value="exp">Two-sided exponential</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="imA">Width Δ = <b id="imAv">1.000</b></label>
+          <input type="range" id="imA" min="-2.3" max="0.4" step="0.02" value="0">
+        </div>
+        <div class="fila">
+          <label for="imT">Position t₀ = <b id="imTv">1.5</b></label>
+          <input type="range" id="imT" min="-2.5" max="2.5" step="0.05" value="1.5">
+        </div>
+        <canvas id="imLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="imDatos" style="margin-top:8px"></div>
+        <div class="nota" id="imNota"></div>
+      </div>
+    </section>
+
+    <section id="propiedades">
+      <h2><span class="n">03</span>The properties that get used</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Property</th><th>Expression</th><th>What it is for</th></tr></thead>
+        <tbody>
+          <tr><td>Sifting</td><td>\( \int x(t)\delta(t-t_0)dt = x(t_0) \)</td><td>Extracting a point value</td></tr>
+          <tr><td>Product</td><td>\( x(t)\,\delta(t-t_0) = x(t_0)\,\delta(t-t_0) \)</td><td>Simplifying before integrating</td></tr>
+          <tr><td>Area</td><td>\( \int \delta(t)\,dt = 1 \)</td><td>It is what defines it</td></tr>
+          <tr><td>Scaling</td><td>\( \delta(at) = \dfrac{1}{|a|}\,\delta(t) \)</td><td>Changes of variable</td></tr>
+          <tr><td>Parity</td><td>\( \delta(-t) = \delta(t) \)</td><td>It is even</td></tr>
+          <tr><td>Convolution</td><td>\( x(t) * \delta(t - t_0) = x(t - t_0) \)</td><td>Convolving with an impulse shifts</td></tr>
+        </tbody>
+      </table></div>
+      <p>The scaling one is surprising: narrowing the impulse makes it <b>taller</b>, because the area has to
+      keep equaling one. And the last row is the one that explains why \( \delta(t) \) is the identity element of
+      convolution: convolving with it changes nothing, and with a shifted version, it only shifts.</p>
+      <div class="box key"><div class="bt">The units of the impulse</div>
+        <p>Since \( \int \delta(t)dt = 1 \) and \( dt \) is measured in seconds, \( \delta(t) \) has units of
+        <b>1/second</b>. It is not dimensionless. That is why the impulse response of a circuit is measured in
+        “volts per volt-second”, and why in practice it is not excited with an impulse but with a step:
+        a pulse of area one and 1 μs width would be a million volts tall.</p></div>
+    </section>
+
+    <section id="relacion">
+      <h2><span class="n">04</span>One is the derivative of the other</h2>
+      <p>The relationship between the two is the one that organizes everything:</p>
+      <div class="form">
+        \[ \delta(t) = \frac{du(t)}{dt}, \qquad\qquad u(t) = \int_{-\infty}^{t} \delta(\tau)\,d\tau \]
+      </div>
+      <p>The derivative of a step is zero everywhere except at the jump, where it is infinite: that is
+      exactly an impulse. And in discrete time the relationship is the same with differences and sums:</p>
+      <div class="form">
+        \[ \delta[n] = u[n] - u[n-1], \qquad\qquad u[n] = \sum_{k=-\infty}^{n} \delta[k] \]
+      </div>
+      <p>From this follows something very practical. Since an LTI system commutes with the derivative, the <b>impulse
+      response is the derivative of the step response</b>. And that solves a real lab problem:
+      an impulse cannot be generated, but a step is generated with a switch. The step response is measured
+      and then differentiated.</p>
+      <div class="box ojo"><div class="bt">How long a pulse can last and still count as an impulse</div>
+        <p>It depends on the system, not on the pulse. What is required is that the pulse be <b>much narrower than the
+        fastest time constant</b> of the system: as a rule, one tenth. For a circuit with
+        \( \tau = 1 \) ms, a 100 μs pulse is enough, and the system cannot tell that input from a true
+        impulse. That is why in practice the impulse is approximated without drama, as long as it is known beforehand
+        how fast the system is.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Sifting by hand</div>
+        <p>Compute \( \int_{-\infty}^{\infty} (t^2 + 3)\,\delta(t - 2)\,dt \),
+        \( \int_0^{5} e^{-t}\delta(t-3)dt \) and \( \int_0^{5} e^{-t}\delta(t-7)dt \). Explain why the last one
+        gives zero.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · h(t) without generating an impulse</div>
+        <p>Measure the step response of an RC with the oscilloscope, export the data and differentiate it
+        numerically. Compare the result with the theoretical expression
+        \( h(t) = \frac{1}{RC}e^{-t/RC}u(t) \).</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · When a pulse is an impulse</div>
+        <p>Excite the same RC with pulses of equal area and widths of \( \tau \), \( \tau/10 \) and
+        \( \tau/100 \). Check that from \( \tau/10 \) on the response no longer changes shape: the system
+        cannot tell those pulses from an impulse.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Treating \( \delta(t) \) as a function.</b> It only makes sense inside an integral. Its
+        “value” at zero is not a number.</li>
+        <li><b>Forgetting the \( 1/|a| \)</b> in \( \delta(at) \). Narrowing raises the height.</li>
+        <li><b>Sifting with an impulse whose argument falls outside the interval.</b> If \( t_0 \) is not
+        in the range, the result is zero.</li>
+        <li><b>Believing that \( \delta[n] \) is also a distribution.</b> In discrete time it is an ordinary,
+        everyday signal.</li>
+        <li><b>Thinking the impulse is dimensionless.</b> It has units of 1/second.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What is \( \int (t^2+3)\,\delta(t-2)\,dt \)?</summary>
+        <div class="a"><p>7: it is the value of \( t^2 + 3 \) evaluated at \( t = 2 \).</p></div></details>
+      <details class="q"><summary>Why is \( \delta(t) \) not a function?</summary>
+        <div class="a"><p>Because no function that is zero except at one point can have integral one. It is
+        a distribution, defined by how it acts inside an integral.</p></div></details>
+      <details class="q"><summary>What is \( \delta(3t) \)?</summary>
+        <div class="a"><p>\( \frac{1}{3}\delta(t) \). The factor \( 1/|a| \) preserves the
+        area.</p></div></details>
+      <details class="q"><summary>What is the relationship between \( h(t) \) and the step response?</summary>
+        <div class="a"><p>\( h(t) \) is its derivative. That is why in the lab the step is measured and then
+        differentiated.</p></div></details>
+      <details class="q"><summary>What does \( x(t) * \delta(t - 3) \) give?</summary>
+        <div class="a"><p>\( x(t - 3) \): convolving with a shifted impulse shifts the
+        signal.</p></div></details>
+      <details class="q"><summary>How wide can a pulse be and still pass for an impulse?</summary>
+        <div class="a"><p>Much less than the fastest time constant of the system; as a rule, one
+        tenth.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1998.</span>
+          <span class="pq">The impulse defined as a limit of pulses and its properties, with the care the subject deserves.</span></li>
+        <li><span class="au">Ronald N. Bracewell.</span> <span class="ti">The Fourier Transform and Its Applications</span>.
+          <span class="ed">3rd ed., McGraw-Hill, 1999.</span>
+          <span class="pq">The best treatment of the impulse and of distributions for engineering ever written.</span></li>
+        <li><span class="au">Simon Haykin and Barry Van Veen.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">(Spanish edition, “Señales y sistemas”), Limusa Wiley, 2001.</span>
+          <span class="pq">The relationship between impulse response and step response, with measurement examples.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/estabilidad">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Stability</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/convolucion">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Convolution</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Unit impulse and unit step”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* The impulse as a limit. A pulse of area one that narrows, next to a smooth
+   signal; below, the value of the integral of x times the pulse, which tends to
+   x(t0) whatever the shape of the pulse. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("imLienzo"), ctx = cv.getContext("2d");
+  var T = 3;
+
+  /* the test signal: smooth and with no symmetries, so that x(t0) is recognizable */
+  function x(t){ return 1 + 0.55 * Math.sin(1.7 * t) - 0.3 * Math.cos(0.9 * t + 0.6); }
+
+  var F = {
+    rect: { n:"rectangular", alcance:0.5,
+            p:function(u, D){ return Math.abs(u) <= D / 2 ? 1 / D : 0; },
+            t:"The simplest: a rectangle of width Δ and height 1/Δ. The area is one for any " +
+              "width." },
+    tri:  { n:"triangular", alcance:1,
+            p:function(u, D){ var a = Math.abs(u) / D; return a >= 1 ? 0 : (1 - a) / D; },
+            t:"A triangle of base 2Δ and height 1/Δ. Different shape, same area, same limit." },
+    gau:  { n:"Gaussian", alcance:4,
+            p:function(u, D){ var s = D / 2.5; return Math.exp(-u * u / (2 * s * s)) / (s * Math.sqrt(2 * Math.PI)); },
+            t:"A bell curve. It is never exactly zero, and yet it converges to the same impulse: what matters " +
+              "is the area and the width, not the shape." },
+    sinc: { n:"sinc", alcance:100,
+            p:function(u, D){
+              var a = Math.PI * u / D;
+              return (Math.abs(a) < 1e-9 ? 1 : Math.sin(a) / a) / D;
+            },
+            t:"A sinc, which also takes negative values. It also converges to the impulse, but " +
+              "<b>much more slowly</b>: its tail decays like 1/u, so there is always a remainder " +
+              "outside any window. That residual error that does not go down is not a problem of " +
+              "computation: it is the same reason the ideal low-pass filter is not BIBO stable." },
+    exp:  { n:"two-sided exponential", alcance:8,
+            p:function(u, D){ return Math.exp(-2 * Math.abs(u) / D) / D; },
+            t:"Two exponentials back to back. It has a peak at the origin and is still a " +
+              "valid representative of the family." }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 4;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5e-5) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+
+  function integrar(d, D, t0, N){
+    /* integral of x(t)*p(t-t0) over the useful support of the pulse; with long-tailed
+       pulses more points are needed so as not to miss the oscillations */
+    N = Math.max(N, Math.round(d.alcance * 40));
+    var L = d.alcance * D, a = 0, area = 0, h = 2 * L / N, i;
+    for(i = 0; i < N; i++){
+      var u = -L + h * (i + 0.5);
+      var pv = d.p(u, D);
+      a += x(t0 + u) * pv * h;
+      area += pv * h;
+    }
+    return { val:a, area:area };
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var d = F[$("imF").value];
+    var D = Math.pow(10, parseFloat($("imA").value));
+    var t0 = parseFloat($("imT").value);
+    $("imAv").textContent = n(D, 3);
+    $("imTv").textContent = n(t0, 2);
+
+    var res = integrar(d, D, t0, 4000);
+    var exacto = x(t0);
+
+    var x0 = 26, x1 = Wd - 12;
+    var yA = Hd * 0.38, altoA = Hd * 0.26;
+    var yB = Hd - 28, altoB = Hd * 0.2;
+    function X(t){ return x0 + (t + T) / (2 * T) * (x1 - x0); }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yA + altoA * 0.55); ctx.lineTo(x1, yA + altoA * 0.55);
+    ctx.stroke();
+    ctx.fillStyle = "#8b93a3"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("x(t) and the pulse, which always has area 1", x0, 12);
+
+    /* x(t) */
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(i = 0; i <= 700; i++){
+      var t = -T + i / 700 * 2 * T;
+      var q = { x:X(t), y:yA + altoA * 0.55 - x(t) * altoA * 0.32 };
+      if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+    }
+    ctx.stroke();
+
+    /* the pulse, with its own scale so that it is always visible */
+    var mxp = 0;
+    for(i = 0; i <= 900; i++){
+      var t2 = -T + i / 900 * 2 * T;
+      mxp = Math.max(mxp, Math.abs(d.p(t2 - t0, D)));
+    }
+    ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(i = 0; i <= 1400; i++){
+      var t3 = -T + i / 1400 * 2 * T;
+      var pv = d.p(t3 - t0, D) / (mxp || 1);
+      var q3 = { x:X(t3), y:yA + altoA * 0.55 - pv * altoA * 0.95 };
+      if(i === 0) ctx.moveTo(q3.x, q3.y); else ctx.lineTo(q3.x, q3.y);
+    }
+    ctx.stroke();
+    /* the mark of t0 and of x(t0) */
+    ctx.strokeStyle = "rgba(248,81,73,.6)"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(X(t0), 16); ctx.lineTo(X(t0), yA + altoA * 0.62);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = "#f85149";
+    ctx.beginPath();
+    ctx.arc(X(t0), yA + altoA * 0.55 - exacto * altoA * 0.32, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("x(t₀)", X(t0) + 6, yA + altoA * 0.55 - exacto * altoA * 0.32 - 7);
+
+    /* below: the value of the integral against the width, sweeping D */
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x0, yB); ctx.lineTo(x1, yB); ctx.stroke();
+    var Dmin = Math.pow(10, -2.3), Dmax = Math.pow(10, 0.4);
+    function XD(dd){ return x0 + Math.log(dd / Dmin) / Math.log(Dmax / Dmin) * (x1 - x0); }
+    var vals = [], mn = exacto, mx = exacto;
+    for(i = 0; i <= 44; i++){
+      var dd = Dmin * Math.pow(Dmax / Dmin, i / 44);
+      var v = integrar(d, dd, t0, 900).val;
+      vals.push([dd, v]);
+      mn = Math.min(mn, v); mx = Math.max(mx, v);
+    }
+    var pad = (mx - mn) * 0.2 + 0.02;
+    mn -= pad; mx += pad;
+    function YD(v){ return yB - (v - mn) / (mx - mn) * altoB; }
+    ctx.strokeStyle = "rgba(248,81,73,.6)"; ctx.lineWidth = 1.4; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(x0, YD(exacto)); ctx.lineTo(x1, YD(exacto)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    vals.forEach(function(e, k){
+      var q4 = { x:XD(e[0]), y:Math.max(yB - altoB, Math.min(yB, YD(e[1]))) };
+      if(k === 0) ctx.moveTo(q4.x, q4.y); else ctx.lineTo(q4.x, q4.y);
+    });
+    ctx.stroke();
+    ctx.fillStyle = "#f2cc60";
+    ctx.beginPath(); ctx.arc(XD(D), Math.max(yB - altoB, Math.min(yB, YD(res.val))), 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#8b93a3"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("the result of the integral, versus Δ", x0, yB - altoB - 6);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("small Δ", x0, yB + 13);
+    ctx.fillText("large Δ", x1 - 44, yB + 13);
+    ctx.fillStyle = "#f85149";
+    ctx.fillText("x(t₀)", x1 - 34, YD(exacto) - 4);
+
+    var err = Math.abs(res.val - exacto);
+    $("imDatos").innerHTML =
+      "<span>Pulse</span><b>" + d.n + "   ·   Δ = " + n(D, 4) + "</b>" +
+      "<hr><span>Area of the pulse</span><b>" + n(res.area) + "</b>" +
+      '<span style="color:#f2cc60">∫ x(t)·p(t − t₀) dt</span><b>' + n(res.val) + "</b>" +
+      '<span style="color:#f85149">x(t₀), the exact value</span><b>' + n(exacto) + "</b>" +
+      "<hr><span>Error</span><b>" + n(err, 6) + "</b>";
+
+    var txt = d.t + " The area is one for any width, and that is why the pulse gets taller as it " +
+              "narrows.";
+    if(err < 1e-4) txt += " With this Δ the result already matches x(t₀) to four decimal places: as far as " +
+                          "the integral is concerned, the pulse <b>is</b> an impulse.";
+    else txt += " Make Δ smaller and watch the green curve below settle onto the red line.";
+    $("imNota").innerHTML = txt;
+  }
+
+  ["imF", "imA", "imT"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parseval’s relation · Signals and Systems · Catto</title>
+<meta name="description" content="Parseval’s relation in its versions for energy signals and power signals, the distribution of power among harmonics, total harmonic distortion and its uses in noise calculation and compression, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/parseval">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/parseval">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/parseval">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/parseval">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 26 of 34</div>
+    <h1>Parseval’s relation</h1>
+    <p class="lead">The energy of a signal is the same whether computed in time or in frequency. From that equality come harmonic distortion, noise calculation and the idea that makes JPEG and MP3 possible.</p>
+    <div class="chips">
+      <span class="chip hi">Parseval</span>
+      <span class="chip">Power</span>
+      <span class="chip">THD</span>
+      <span class="chip">Noise</span>
+      <span class="chip">Compression</span>
+    </div>
+    <hr class="rule">
+
+    <section id="enunciado">
+      <h2><span class="n">01</span>Energy does not depend on where you look at it</h2>
+      <p>A signal has a certain energy. That energy can be computed by summing its square over
+      time, or by summing the square of its spectrum over frequency, and the result is the
+      <b>same</b>. That is Parseval’s relation:</p>
+      <div class="form">
+        \[ \int_{-\infty}^{\infty} |x(t)|^2\,dt
+           = \frac{1}{2\pi}\int_{-\infty}^{\infty} |X(j\omega)|^2\,d\omega \]
+        <span class="cap">For isolated, finite-energy signals. The \( 1/2\pi \) disappears if you work in hertz instead of radians per second.</span>
+      </div>
+      <p>And for periodic signals, where what makes sense is the average power, the version is even more
+      convenient because the integral becomes a sum:</p>
+      <div class="form">
+        \[ P = \frac{1}{T}\int_{T}|x(t)|^2\,dt = \sum_{k=-\infty}^{\infty}|a_k|^2 \]
+        <span class="cap">The total power is the sum of the powers of the harmonics. Each one contributes its own share, with no cross terms.</span>
+      </div>
+      <p>The absence of cross terms is a direct consequence of
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/series-fourier">orthogonality</a>: when you square
+      the sum of harmonics, the products between different harmonics average to zero and only
+      the squares survive. It is the same Pythagorean theorem, in infinitely many dimensions.</p>
+    </section>
+
+    <section id="lab">
+      <h2><span class="n">02</span>How much energy each harmonic contributes</h2>
+      <p>The practical use of Parseval is not to verify an equality: it is to be able to <b>distribute</b> the energy
+      among the frequencies and ask how many are needed. The lab computes the two integrals, compares
+      them, and shows the accumulation harmonic by harmonic.</p>
+      <div class="lw" id="pv">
+        <div class="lt">Lab · how the power is distributed</div>
+        <p class="ls">The signal on top; below, the power of each harmonic and the cumulative total. See how many harmonics are needed to gather 99 %, and how that changes with the waveform.</p>
+        <div class="fila">
+          <select id="pvF">
+            <option value="sen">pure sinusoid</option>
+            <option value="cua">square</option>
+            <option value="tri">triangular</option>
+            <option value="sie">sawtooth</option>
+            <option value="pul">pulse, adjustable duty cycle</option>
+            <option value="rcl">clipped sinusoid</option>
+          </select>
+          <label class="chk"><input type="checkbox" id="pvA" checked> Show the cumulative total</label>
+        </div>
+        <div class="fila">
+          <label for="pvD">Duty cycle / clipping = <b id="pvDv">0.50</b></label>
+          <input type="range" id="pvD" min="0.05" max="0.95" step="0.01" value="0.5">
+        </div>
+        <canvas id="pvLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="pvDatos" style="margin-top:8px"></div>
+        <div class="nota" id="pvNota"></div>
+      </div>
+    </section>
+
+    <section id="thd">
+      <h2><span class="n">03</span>Harmonic distortion comes from here</h2>
+      <p>If the total power is the sum of the powers of the harmonics, then you can ask what
+      fraction is <b>not</b> in the fundamental. That is the total harmonic distortion:</p>
+      <div class="form">
+        \[ \text{THD} = \frac{\sqrt{\sum_{n \ge 2} A_n^2}}{A_1} \]
+        <span class="cap">The square root of the sum of the squares of all the harmonics, divided by the fundamental. It is expressed as a percentage or in decibels.</span>
+      </div>
+      <p>A perfect amplifier delivers a pure sinusoid: all the power is in the fundamental and the THD
+      is zero. Any nonlinearity distributes energy to the harmonics, and that percentage is what a
+      distortion analyzer measures.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Signal</th><th>THD</th><th>Comment</th></tr></thead>
+        <tbody>
+          <tr><td>Ideal sinusoid</td><td>0 %</td><td>All the power in the fundamental</td></tr>
+          <tr><td>Decent audio amplifier</td><td>&lt; 0.1 %</td><td>The harmonics are 60 dB down</td></tr>
+          <tr><td>Triangular wave</td><td>12 %</td><td>Its harmonics fall off as \( 1/n^2 \)</td></tr>
+          <tr><td>Square wave</td><td><b>48.3 %</b></td><td>They fall off as \( 1/n \): there is a great deal outside</td></tr>
+        </tbody>
+      </table></div>
+      <p>The last row gives a number worth remembering because it serves as a reference: a square wave has a
+      THD of 48.3 %, among the highest found in practice. If a distortion analyzer reads something close to that, the
+      signal is completely clipped.</p>
+    </section>
+
+    <section id="usos">
+      <h2><span class="n">04</span>Where else it is used</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Problem</th><th>How Parseval solves it</th></tr></thead>
+        <tbody>
+          <tr><td>Noise at the output of a filter</td>
+              <td>The spectral density is integrated times \( |H(j\omega)|^2 \) instead of simulating in time</td></tr>
+          <tr><td>Occupied bandwidth</td>
+              <td>You look for the band that contains 99 % of the power</td></tr>
+          <tr><td>Choosing how many harmonics to compute</td>
+              <td>You stop when the cumulative total reaches the target</td></tr>
+          <tr><td>Signal-to-noise ratio</td>
+              <td>It is a ratio between two energies, and it can be measured in either of the two domains</td></tr>
+          <tr><td>Audio and image compression</td>
+              <td>The coefficients that contribute little energy are discarded</td></tr>
+        </tbody>
+      </table></div>
+      <p>The last row is a simple idea with enormous consequences. If most of the energy of a
+      signal is in a few coefficients, storing only those preserves almost the entire signal. That is, in essence,
+      what JPEG and MP3 do: transform, keep what has energy and throw away the rest.</p>
+      <div class="box key"><div class="bt">The 99 % is not always close by</div>
+        <p>How much you can trim depends on how the harmonics fall off. Those of a triangular wave fall off as
+        \( 1/n^2 \), so their powers fall off as \( 1/n^4 \) and with three or four terms you already gather
+        almost everything. Those of a square wave fall off as \( 1/n \), with powers as \( 1/n^2 \), and many
+        more are needed. And a narrow pulse spreads the energy over a multitude of harmonics: that is why it occupies so much
+        bandwidth.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Verifying Parseval by hand</div>
+        <p>For a square wave of amplitude 1, compute the power in time —which is 1— and sum
+        \( \sum (4/n\pi)^2/2 \) for the first ten odd harmonics. Check that the sum approaches 1
+        and estimate how much is missing.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Measuring THD</div>
+        <p>Using the spectrum analyzer, measure the amplitude of the first five harmonics at the output of an
+        amplifier, compute the THD and compare it with the one indicated by the distortion analyzer. Repeat while raising the
+        signal until it clips.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · The 99 % bandwidth</div>
+        <p>For a 1 μs pulse train at 10 kHz, determine how many harmonics are needed to gather
+        99 % of the power and what bandwidth they represent. Contrast with the rule \( B \approx 1/t_r \).</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Adding amplitudes instead of powers.</b> Parseval sums squares; amplitudes are not
+        added.</li>
+        <li><b>Forgetting the \( 1/2\pi \)</b> in the integral version, or carrying it along when working in
+        hertz.</li>
+        <li><b>Counting only one half of the spectrum.</b> In the two-sided version the negative frequencies
+        are included.</li>
+        <li><b>Computing THD with a signal clipped by the instrument itself.</b> You end up measuring the
+        instrument.</li>
+        <li><b>Assuming that a few harmonics are always enough.</b> It depends on how quickly they
+        fall off.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What does Parseval say, in one line?</summary>
+        <div class="a"><p>That the energy computed in time and the energy computed in frequency are the
+        same.</p></div></details>
+      <details class="q"><summary>Why are there no cross terms between harmonics?</summary>
+        <div class="a"><p>Because of orthogonality: the average of the product of two different harmonics is
+        zero.</p></div></details>
+      <details class="q"><summary>What is the THD of a square wave?</summary>
+        <div class="a"><p>48.3 %. It is the reference value for a completely
+        clipped signal.</p></div></details>
+      <details class="q"><summary>Why does a triangular wave need fewer harmonics than a square wave?</summary>
+        <div class="a"><p>Because its amplitudes fall off as \( 1/n^2 \) and its powers as \( 1/n^4 \): the
+        cumulative total reaches 99 % much sooner.</p></div></details>
+      <details class="q"><summary>How is the noise at the output of a filter calculated?</summary>
+        <div class="a"><p>By integrating the noise spectral density multiplied by \( |H(j\omega)|^2 \) over
+        the whole band.</p></div></details>
+      <details class="q"><summary>How is Parseval related to JPEG?</summary>
+        <div class="a"><p>It makes it possible to know which coefficients contribute little energy, so they can be discarded without it
+        being too noticeable.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1997.</span>
+          <span class="pq">Parseval in both versions, with the derivation from orthogonality.</span></li>
+        <li><span class="au">C. D. Motchenbacher and J. A. Connelly.</span> <span class="ti">Low-Noise Electronic System Design</span>.
+          <span class="ed">Wiley, 1993.</span>
+          <span class="pq">The calculation of total noise by integrating spectral density, which is Parseval applied every day.</span></li>
+        <li><span class="au">Adel S. Sedra and Kenneth C. Smith.</span> <span class="ti">Microelectronic Circuits</span>.
+          <span class="ed">7th ed. (Spanish edition, “Circuitos microelectrónicos”), Oxford University Press, 2015.</span>
+          <span class="pq">Harmonic distortion in amplifiers, with its measurement and its causes.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/espectros">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Spectra</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Frequency response</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Parseval’s relation”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* How the power is distributed. On top the signal; below, the power of each
+   harmonic and the cumulative total, to see how many are needed depending on
+   the waveform. The two calculations —the one in time and the one from the sum of harmonics—
+   are shown together: that is Parseval verified with numbers. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pvLienzo"), ctx = cv.getContext("2d");
+  var NC = 40, NINT = 8000;
+
+  var F = {
+    sen: { n:"pure sinusoid", usaD:false,
+           f:function(u){ return Math.sin(2 * Math.PI * u); },
+           t:"All the power is in the first harmonic and the THD is zero. It is the standard against which " +
+             "any amplifier is compared." },
+    cua: { n:"square", usaD:false,
+           f:function(u){ return u < 0.5 ? 1 : -1; },
+           t:"Its harmonics fall off as 1/n, so the powers fall off as 1/n²: many have to be added " +
+             "to gather 99 %. Its THD, 48.3 %, is the reference for a completely clipped signal." },
+    tri: { n:"triangular", usaD:false,
+           f:function(u){ return u < 0.25 ? 4 * u : (u < 0.75 ? 2 - 4 * u : 4 * u - 4); },
+           t:"Here the harmonics fall off as 1/n² and the powers as 1/n⁴: with three terms you already have almost " +
+             "all the power. That is why a triangular wave occupies much less bandwidth than a square wave." },
+    sie: { n:"sawtooth", usaD:false,
+           f:function(u){ return 2 * u - 1; },
+           t:"It has all the harmonics, even and odd, falling off as 1/n. Its THD is similar to that of the " +
+             "square wave." },
+    pul: { n:"pulse", usaD:true,
+           f:function(u, D){ return u < D ? 1 - D : -D; },   /* no DC, to look at the harmonics */
+           t:"The narrower the pulse, the more harmonics the power is spread over. That is where you see why " +
+             "a short pulse occupies so much bandwidth." },
+    rcl: { n:"clipped sinusoid", usaD:true,
+           f:function(u, D){ return Math.max(-1, Math.min(1, Math.sin(2 * Math.PI * u) / D)); },
+           t:"A sinusoid that saturates. With the parameter at its maximum the clipping is minimal and the THD almost zero; as you lower it, " +
+             "the power leaks out into the odd harmonics." }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 3;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5e-4) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var d = F[$("pvF").value], D = parseFloat($("pvD").value), verA = $("pvA").checked;
+    $("pvDv").textContent = n(D, 2);
+    $("pvD").disabled = !d.usaD;
+
+    /* power in time, and coefficients */
+    var Pt = 0, a0 = 0;
+    for(i = 0; i < NINT; i++){
+      var u = (i + 0.5) / NINT, v = d.f(u, D);
+      Pt += v * v / NINT; a0 += v / NINT;
+    }
+    var pot = [], Pf = a0 * a0;
+    for(k = 1; k <= NC; k++){
+      var sa = 0, sb = 0;
+      for(i = 0; i < NINT; i++){
+        var u2 = (i + 0.5) / NINT, w = 2 * Math.PI * k * u2, vv = d.f(u2, D);
+        sa += vv * Math.cos(w); sb += vv * Math.sin(w);
+      }
+      var A = 2 * Math.hypot(sa, sb) / NINT;          /* amplitude of the harmonic */
+      pot.push(A * A / 2);                            /* its average power */
+      Pf += A * A / 2;
+    }
+    /* cumulative total and how many are needed for 99 % */
+    var ac = [], s = a0 * a0, n99 = NC, n999 = NC;
+    for(k = 0; k < NC; k++){
+      s += pot[k]; ac.push(s / Pt);
+      if(ac[k] >= 0.99 && n99 === NC) n99 = k + 1;
+      if(ac[k] >= 0.999 && n999 === NC) n999 = k + 1;
+    }
+    /* The THD is obtained from the total power, not from summing the 40 harmonics: that way
+       it does not depend on where the sum is cut off. Everything that is neither in the
+       fundamental nor in the DC component is distortion. */
+    var thd = pot[0] > 1e-12
+      ? Math.sqrt(Math.max(0, Pt - a0 * a0 - pot[0]) / pot[0]) * 100 : 0;
+
+    var x0 = 30, x1 = Wd - 14;
+    var yT = Hd * 0.18, altoT = Hd * 0.12;
+    var yB = Hd - 24, altoB = Hd * 0.5;
+    function XT(u3){ return x0 + u3 / 2 * (x1 - x0); }
+    function XB(k2){ return x0 + (k2 + 0.5) / NC * (x1 - x0); }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yT); ctx.lineTo(x1, yT);
+    ctx.moveTo(x0, yB - altoB); ctx.lineTo(x0, yB); ctx.lineTo(x1, yB);
+    ctx.stroke();
+
+    /* the signal, two periods */
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    var ant = null;
+    for(i = 0; i <= 900; i++){
+      var t = 2 * i / 900, vt = d.f(t - Math.floor(t), D);
+      var q = { x:XT(t), y:yT - vt * altoT };
+      if(ant !== null && Math.abs(vt - ant) > 0.7) ctx.moveTo(q.x, q.y);
+      else if(i === 0) ctx.moveTo(q.x, q.y);
+      else ctx.lineTo(q.x, q.y);
+      ant = vt;
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#8b93a3"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("the signal", x0, 12);
+
+    /* the powers, as a fraction of the total */
+    var anchoB = (x1 - x0) / NC;
+    for(k = 0; k < NC; k++){
+      var fr = pot[k] / Pt;
+      var hb = Math.min(1, fr) * altoB;
+      ctx.fillStyle = k === 0 ? "#f2cc60" : "#7ee787";
+      if(hb > 0.4) ctx.fillRect(XB(k) - anchoB * 0.32, yB - hb, anchoB * 0.64, hb);
+    }
+    /* the cumulative total */
+    if(verA){
+      ctx.strokeStyle = "#ff9f6b"; ctx.lineWidth = 2;
+      ctx.beginPath();
+      for(k = 0; k < NC; k++){
+        var q2 = { x:XB(k), y:yB - Math.min(1, ac[k]) * altoB };
+        if(k === 0) ctx.moveTo(q2.x, q2.y); else ctx.lineTo(q2.x, q2.y);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(248,81,73,.55)"; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(x0, yB - 0.99 * altoB); ctx.lineTo(x1, yB - 0.99 * altoB); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#f85149"; ctx.font = "9px system-ui, sans-serif";
+      ctx.fillText("99 %", x1 - 26, yB - 0.99 * altoB - 3);
+    }
+    ctx.fillStyle = "#7ee787"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("power of each harmonic", x0, yB - altoB - 6);
+    if(verA){ ctx.fillStyle = "#ff9f6b"; ctx.fillText("cumulative", x0 + 140, yB - altoB - 6); }
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    for(k = 5; k <= NC; k += 10) ctx.fillText(k + "", XB(k - 1) - 4, yB + 12);
+    ctx.fillText("harmonic", x1 - 44, yB + 12);
+
+    $("pvDatos").innerHTML =
+      "<span>Signal</span><b>" + d.n + (d.usaD ? "   ·   " + n(D, 2) : "") + "</b>" +
+      '<hr><span style="color:#58a6ff">Power computed in time</span><b>' + n(Pt, 4) + "</b>" +
+      '<span style="color:#7ee787">Summing that of the ' + NC + " harmonics</span><b>" + n(Pf, 4) +
+        "   ·   " + n(Pf / Pt * 100, 2) + " % of the total</b>" +
+      '<hr><span style="color:#ff9f6b">Harmonics needed to gather 99 %</span><b>' +
+        (n99 < NC ? n99 : "more than " + NC) + "</b>" +
+      "<span>For 99.9 %</span><b>" + (n999 < NC ? n999 : "more than " + NC) + "</b>" +
+      "<span>Total harmonic distortion</span><b>" + n(thd, 2) + " %</b>";
+
+    var txt = d.t + " The first two rows are Parseval: the power comes out the same computed from one side or " +
+              "the other.";
+    if(Pf / Pt < 0.98)
+      txt += " Here the " + NC + " harmonics are not enough to gather everything: " +
+             n(100 - Pf / Pt * 100, 1) + " % is missing, spread over the higher harmonics.";
+    $("pvNota").innerHTML = txt;
+  }
+
+  ["pvF", "pvD", "pvA"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

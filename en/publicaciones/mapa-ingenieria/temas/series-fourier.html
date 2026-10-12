@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fourier series and integrals · Signals and Systems · Catto</title>
+<meta name="description" content="The Fourier series in its exponential and trigonometric forms, the orthogonality that lets you solve for the coefficients, the Dirichlet conditions, the Gibbs phenomenon and the step to the Fourier integral, with a harmonic synthesis lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/series-fourier">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/series-fourier">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/series-fourier">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/series-fourier">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 23 of 34</div>
+    <h1>Fourier series and integrals</h1>
+    <p class="lead">Every reasonable periodic signal is a sum of sinusoids whose frequencies are multiples of the fundamental. And since each one goes through an LTI system without changing shape, it is enough to know what happens to each harmonic.</p>
+    <div class="chips">
+      <span class="chip hi">Fourier series</span>
+      <span class="chip">Orthogonality</span>
+      <span class="chip">Dirichlet</span>
+      <span class="chip">Gibbs</span>
+      <span class="chip">Spectrum</span>
+    </div>
+    <hr class="rule">
+
+    <section id="idea">
+      <h2><span class="n">01</span>Building any periodic signal out of sinusoids</h2>
+      <p>The result that opens the second half of the subject is this one: <b>every reasonable periodic signal can be
+      written as a sum of harmonically related complex exponentials</b>, that is, of
+      sinusoids whose frequencies are integer multiples of the fundamental.</p>
+      <div class="form">
+        \[ x(t) = \sum_{k=-\infty}^{\infty} a_k\,e^{jk\omega_0 t},
+           \qquad \omega_0 = \frac{2\pi}{T} \]
+        <span class="cap">The exponential form. It is the most convenient to work with, although the trigonometric one is easier to visualize.</span>
+      </div>
+      <p>And since those exponentials are <a class="ref"
+      href="/en/publicaciones/mapa-ingenieria/temas/exponencial-compleja">eigenfunctions</a> of any LTI
+      system, the benefit is immediate: to know what a circuit does to a periodic signal, it is enough to
+      know what it does to each harmonic separately and add them back up.</p>
+      <div class="form">
+        \[ x(t) = a_0 + \sum_{n=1}^{\infty}\Big(a_n\cos n\omega_0 t + b_n\operatorname{sin} n\omega_0 t\Big) \]
+        <span class="cap">The trigonometric form, equivalent. For real signals the two contain exactly the same information.</span>
+      </div>
+    </section>
+
+    <section id="ortogonalidad">
+      <h2><span class="n">02</span>Orthogonality: why they can be solved for</h2>
+      <p>That the sum exists is one thing; being able to compute the coefficients is another. What makes it possible is
+      a property of the harmonic exponentials:</p>
+      <div class="form">
+        \[ \int_{T} e^{jk\omega_0 t}\,e^{-jm\omega_0 t}\,dt
+           = \begin{cases} T & k = m \\ 0 & k \ne m \end{cases} \]
+        <span class="cap">Two different harmonics are <b>orthogonal</b>: their product averaged over one period gives zero.</span>
+      </div>
+      <p>The idea is the same as for perpendicular vectors. To find out how much of the component
+      \( m \) there is in a signal, multiply it by the conjugate of harmonic \( m \) and average: everything that is not
+      that component cancels, and what is left is the coefficient being sought.</p>
+      <div class="form">
+        \[ a_k = \frac{1}{T}\int_{T} x(t)\,e^{-jk\omega_0 t}\,dt \]
+      </div>
+      <p>It is exactly what a <i>lock-in</i> amplifier does in a lab: it multiplies the measured signal
+      by a reference at the frequency of interest and averages. Everything that is not at that frequency
+      —including noise, which is at all of them— averages to zero. A lock-in is, literally, a calculator of
+      Fourier coefficients.</p>
+    </section>
+
+    <section id="lab">
+      <h2><span class="n">03</span>Adding harmonics and watching the signal appear</h2>
+      <div class="lw" id="sf">
+        <div class="lt">Lab · harmonic synthesis</div>
+        <p class="ls">Above, the original signal in gray and the sum of the first harmonics in color. Below, the spectrum. Increase the number of terms and see what happens near the jumps.</p>
+        <div class="fila">
+          <select id="sfF">
+            <option value="cua">square wave</option>
+            <option value="tri">triangle wave</option>
+            <option value="sie">sawtooth</option>
+            <option value="pul">pulse, duty cycle 0.25</option>
+            <option value="rec">full-wave rectified sinusoid</option>
+            <option value="sem">half-wave rectified sinusoid</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="sfN">Harmonics = <b id="sfNv">5</b></label>
+          <input type="range" id="sfN" min="1" max="60" step="1" value="5">
+        </div>
+        <canvas id="sfLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.5/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="sfDatos" style="margin-top:8px"></div>
+        <div class="nota" id="sfNota"></div>
+      </div>
+    </section>
+
+    <section id="convergencia">
+      <h2><span class="n">04</span>Convergence, and the overshoot that does not go away</h2>
+      <p>The <b>Dirichlet conditions</b> say when the series converges, and any engineering signal satisfies them: that it be
+      absolutely integrable over one period, that it have a finite number of maxima and
+      minima, and a finite number of discontinuities, all with finite jumps.</p>
+      <p>At points of discontinuity the series converges to the <b>average</b> of the two one-sided values. In
+      a square wave that jumps from −1 to +1, the series equals exactly zero at the instant of the jump, no matter
+      how many terms are added.</p>
+      <div class="box key"><div class="bt">The Gibbs phenomenon</div>
+        <p>Near a jump, the partial sum always <b>overshoots</b> it, and the excess is about
+        <b>8.95 % of the height of the jump</b>. The remarkable thing is that this percentage <b>does not go down</b> when adding
+        terms: the oscillation gets narrower and squeezes up against the jump, but its height stays the same. The
+        lab measures it: with 5 harmonics and with 60 the overshoot is practically the same.</p>
+        <p>The practical consequence appears when filtering. An abrupt low-pass filter applied to a pulse produces that
+        same overshoot —the <i>ringing</i> seen on the oscilloscope— and it cannot be eliminated by sharpening the
+        cutoff: the transition of the filter has to be smoothed, which is what design windows
+        do.</p></div>
+    </section>
+
+    <section id="integral">
+      <h2><span class="n">05</span>From the series to the integral</h2>
+      <p>The series serves for periodic signals. An isolated signal —a pulse, a transient— is
+      thought of as periodic with period \( T \to \infty \). As \( T \) grows, the spacing between harmonics,
+      \( \omega_0 = 2\pi/T \), shrinks, and the lines of the spectrum crowd together until they become a continuum:</p>
+      <div class="form">
+        \[ X(j\omega) = \int_{-\infty}^{\infty} x(t)\,e^{-j\omega t}\,dt,
+           \qquad
+           x(t) = \frac{1}{2\pi}\int_{-\infty}^{\infty} X(j\omega)\,e^{j\omega t}\,d\omega \]
+        <span class="cap">The Fourier transform pair. The sum became an integral and the discrete coefficients, a continuous function of frequency.</span>
+      </div>
+      <p>That explains a difference worth having clear from the start: a <b>periodic</b> signal
+      has a <b>line</b> spectrum, with lines spaced \( \omega_0 \) apart; an <b>isolated</b> signal has a
+      <b>continuous</b> spectrum. And as a pulse train gets more widely spaced, its lines crowd together and its
+      envelope is precisely the transform of the single pulse.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · The coefficients of the square wave</div>
+        <p>Compute by hand the \( b_n \) of an odd square wave of amplitude 1 and check that they equal
+        \( 4/(n\pi) \) for odd \( n \) and zero for even \( n \). Compare with the spectrum shown by the
+        lab.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · Measuring real harmonics</div>
+        <p>Generate a 1 kHz square wave and measure with the spectrum analyzer the amplitude of the third, fifth
+        and seventh harmonics. Check that they fall off as \( 1/n \) and that the even ones do not appear.</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · Seeing the ringing</div>
+        <p>Pass a pulse train through a high-order low-pass filter with an abrupt cutoff and observe the overshoot on
+        the edge. Measure its height relative to the jump and compare with the 8.95 % that Gibbs predicts.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Believing the Gibbs overshoot disappears with more terms.</b> It narrows, but its height does not
+        go down.</li>
+        <li><b>Forgetting the \( 1/T \)</b> in the coefficient formula.</li>
+        <li><b>Expecting even harmonics in a signal with half-wave symmetry.</b> It does not have
+        them.</li>
+        <li><b>Confusing the line spectrum with the continuous one.</b> Lines for periodic signals, continuous for
+        isolated ones.</li>
+        <li><b>Assuming the series equals the value of the signal at a jump.</b> It equals the average of the two
+        one-sided values.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>What property allows the coefficients to be solved for?</summary>
+        <div class="a"><p>The orthogonality of the harmonic exponentials: the average of the product of two
+        different ones is zero.</p></div></details>
+      <details class="q"><summary>What is the value of the series at a point of discontinuity?</summary>
+        <div class="a"><p>The average of the two one-sided values.</p></div></details>
+      <details class="q"><summary>How much does the partial sum overshoot at a jump?</summary>
+        <div class="a"><p>About 8.95 % of the height of the jump, and that value does not go down no matter how many
+        terms are added.</p></div></details>
+      <details class="q"><summary>How do the harmonics of a square wave fall off?</summary>
+        <div class="a"><p>As \( 1/n \), and only the odd ones are present.</p></div></details>
+      <details class="q"><summary>What happens to the spectrum when \( T \to \infty \)?</summary>
+        <div class="a"><p>The lines crowd together into a continuum: the series becomes the Fourier
+        integral.</p></div></details>
+      <details class="q"><summary>What instrument computes a Fourier coefficient?</summary>
+        <div class="a"><p>A lock-in amplifier: it multiplies by a reference at that frequency and
+        averages.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1998.</span>
+          <span class="pq">Chapters 3 and 4: the series, the transform and the passage from one to the other.</span></li>
+        <li><span class="au">Ronald N. Bracewell.</span> <span class="ti">The Fourier Transform and Its Applications</span>.
+          <span class="ed">3rd ed., McGraw-Hill, 1999.</span>
+          <span class="pq">The graphical treatment of the Gibbs phenomenon and of convergence.</span></li>
+        <li><span class="au">Simon Haykin and Barry Van Veen.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">(Spanish edition, “Señales y sistemas”), Limusa Wiley, 2001.</span>
+          <span class="pq">Tables of coefficients for the classic waveforms, with their symmetries.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/senales-periodicas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Periodic signals</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/propiedades-fourier">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Properties of the transform</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Fourier series and integrals”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Harmonic synthesis. The coefficients are computed by numerical integration, so
+   it holds for any waveform; above, the partial sum is superimposed on the
+   signal, and below, the spectrum. The Gibbs overshoot is measured
+   and shown not to go down when terms are added. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("sfLienzo"), ctx = cv.getContext("2d");
+  var NC = 62, NINT = 6000;
+
+  var F = {
+    cua: { n:"square wave", salto:2,
+           f:function(u){ return u < 0.5 ? 1 : -1; },
+           t:"Only odd harmonics, falling off as 1/n. It is the signal where the Gibbs overshoot is seen " +
+             "best." },
+    tri: { n:"triangle wave", salto:0,
+           f:function(u){ return u < 0.25 ? 4 * u : (u < 0.75 ? 2 - 4 * u : 4 * u - 4); },
+           t:"Also only odd ones, but falling off as 1/n²: that is why with three or four terms it is already " +
+             "practically built. With no jumps, there is no Gibbs." },
+    sie: { n:"sawtooth", salto:2,
+           f:function(u){ return 2 * u - 1; },
+           t:"All the harmonics, falling off as 1/n. It has one jump per period, so the overshoot " +
+             "appears just as in the square wave." },
+    pul: { n:"pulse, duty cycle 0.25", salto:1,
+           f:function(u){ return u < 0.25 ? 1 : 0; },
+           t:"A pulse train. Its spectrum is a sampled sinc: the coefficients follow an envelope " +
+             "that vanishes every four harmonics, which is 1 divided by the duty cycle." },
+    rec: { n:"full-wave rectified", salto:0,
+           f:function(u){ return Math.abs(Math.sin(Math.PI * u)); },
+           t:"The output of a bridge rectifier. Note that its fundamental is at <b>twice</b> the " +
+             "input frequency, and that it has no odd harmonics." },
+    sem: { n:"half-wave rectified", salto:0,
+           f:function(u){ var v = Math.sin(2 * Math.PI * u); return v > 0 ? v : 0; },
+           t:"Half-wave: it has a DC component, the fundamental, and after that only even harmonics. The " +
+             "odd ones above the first vanish." }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 4;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5e-5) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+
+  var cacheK = null, cache = null;
+  function coef(d, clave){
+    /* a0, an and bn by numerical integration over one period */
+    if(cacheK === clave) return cache;
+    var a = [], b = [], k, i;
+    var a0 = 0;
+    for(i = 0; i < NINT; i++) a0 += d.f((i + 0.5) / NINT) / NINT;
+    for(k = 1; k <= NC; k++){
+      var sa = 0, sb = 0;
+      for(i = 0; i < NINT; i++){
+        var u = (i + 0.5) / NINT, v = d.f(u), w = 2 * Math.PI * k * u;
+        sa += v * Math.cos(w); sb += v * Math.sin(w);
+      }
+      a.push(2 * sa / NINT); b.push(2 * sb / NINT);
+    }
+    cacheK = clave; cache = { a0:a0, a:a, b:b };
+    return cache;
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var clave = $("sfF").value, d = F[clave], N = parseInt($("sfN").value, 10);
+    $("sfNv").textContent = N;
+    var C = coef(d, clave);
+
+    function suma(u){
+      var s = C.a0, w;
+      for(k = 1; k <= N; k++){
+        w = 2 * Math.PI * k * u;
+        s += C.a[k - 1] * Math.cos(w) + C.b[k - 1] * Math.sin(w);
+      }
+      return s;
+    }
+
+    /* the overshoot and the mean-square error */
+    var mxS = -1e9, mxX = -1e9, ecm = 0, M = 3000;
+    for(i = 0; i < M; i++){
+      var u2 = (i + 0.5) / M;
+      var vs = suma(u2), vx = d.f(u2);
+      mxS = Math.max(mxS, vs); mxX = Math.max(mxX, vx);
+      ecm += (vs - vx) * (vs - vx) / M;
+    }
+    ecm = Math.sqrt(ecm);
+    var gibbs = d.salto > 0 ? (mxS - mxX) / d.salto * 100 : 0;
+
+    var x0 = 26, x1 = Wd - 12;
+    var yA = Hd * 0.30, altoA = Hd * 0.21;
+    var yB = Hd - 26, altoB = Hd * 0.3;
+    var CI = 2;
+    function X(u){ return x0 + u / CI * (x1 - x0); }
+    function Y(v){ return yA - v * altoA; }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yA); ctx.lineTo(x1, yA);
+    ctx.moveTo(x0, yB); ctx.lineTo(x1, yB);
+    ctx.stroke();
+
+    /* the original signal */
+    ctx.strokeStyle = "rgba(107,116,132,.75)"; ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    var ant = null;
+    for(i = 0; i <= 1600; i++){
+      var u3 = CI * i / 1600, v3 = d.f(u3 - Math.floor(u3));
+      var q = { x:X(u3), y:Y(v3) };
+      if(ant !== null && Math.abs(v3 - ant) > 0.7) ctx.moveTo(q.x, q.y);
+      else if(i === 0) ctx.moveTo(q.x, q.y);
+      else ctx.lineTo(q.x, q.y);
+      ant = v3;
+    }
+    ctx.stroke();
+    /* the partial sum */
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    for(i = 0; i <= 1600; i++){
+      var u4 = CI * i / 1600;
+      var q2 = { x:X(u4), y:Math.max(yA - altoA * 1.55, Math.min(yA + altoA * 1.55, Y(suma(u4)))) };
+      if(i === 0) ctx.moveTo(q2.x, q2.y); else ctx.lineTo(q2.x, q2.y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#6b7484"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("the signal", x0, Math.max(10, yA - altoA * 1.6));
+    ctx.fillStyle = "#58a6ff";
+    ctx.fillText("the sum of " + N + " harmonic" + (N > 1 ? "s" : ""), x0 + 56,
+                 Math.max(10, yA - altoA * 1.6));
+
+    /* the spectrum */
+    var amp = [], mxA = Math.abs(C.a0) + 1e-9;
+    for(k = 1; k <= NC; k++){
+      var m = Math.hypot(C.a[k - 1], C.b[k - 1]);
+      amp.push(m); mxA = Math.max(mxA, m);
+    }
+    var anchoB = (x1 - x0) / (NC + 2);
+    if(Math.abs(C.a0) > 1e-4){
+      ctx.fillStyle = "rgba(242,204,96,.85)";
+      ctx.fillRect(x0, yB - Math.abs(C.a0) / mxA * altoB, anchoB * 0.7, Math.abs(C.a0) / mxA * altoB);
+    }
+    for(k = 1; k <= NC; k++){
+      ctx.fillStyle = k <= N ? "#7ee787" : "rgba(126,231,135,.2)";
+      var hb = amp[k - 1] / mxA * altoB;
+      ctx.fillRect(x0 + k * anchoB, yB - hb, anchoB * 0.7, hb);
+    }
+    ctx.fillStyle = "#7ee787"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("the spectrum   ·   in green, the ones that are summed", x0, yB - altoB - 6);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("1", x0 + anchoB, yB + 12);
+    ctx.fillText("10", x0 + 10 * anchoB - 3, yB + 12);
+    ctx.fillText("30", x0 + 30 * anchoB - 3, yB + 12);
+    ctx.fillText("60", x0 + 60 * anchoB - 3, yB + 12);
+
+    var primeros = [];
+    for(k = 1; k <= 6; k++) primeros.push(n(amp[k - 1], 3));
+
+    $("sfDatos").innerHTML =
+      "<span>Signal</span><b>" + d.n + "</b>" +
+      "<hr><span>DC component</span><b>" + n(C.a0, 3) + "</b>" +
+      "<span>Amplitude of the first six</span><b>" + primeros.join("  ·  ") + "</b>" +
+      '<hr><span style="color:#58a6ff">RMS error with ' + N + " harmonics</span><b>" +
+        n(ecm) + "</b>" +
+      "<span>Overshoot at the jump   ·   Gibbs</span><b>" +
+        (d.salto > 0 ? n(gibbs, 2) + " %" : "no jumps") + "</b>";
+
+    var txt = d.t;
+    if(d.salto > 0)
+      txt += " Raise and lower the number of harmonics: the RMS error goes down, but the overshoot " +
+             "stays near 9 % of the jump. That is Gibbs: the oscillation narrows, it does not shrink.";
+    else
+      txt += " With no discontinuities there is no overshoot, and the convergence is much faster.";
+    $("sfNota").innerHTML = txt;
+  }
+
+  ["sfF", "sfN"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

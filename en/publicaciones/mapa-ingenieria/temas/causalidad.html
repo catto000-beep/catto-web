@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Causality · Signals and Systems · Catto</title>
+<meta name="description" content="Causal and non-causal systems, the condition on the impulse response, the difference from memory, the delay of linear-phase FIR filters and the Paley-Wiener criterion, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/causalidad">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/causalidad">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/causalidad">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/causalidad">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 18 of 34</div>
+    <h1>Causality</h1>
+    <p class="lead">Today’s output cannot depend on tomorrow’s input. That single requirement is why no real filter has a vertical cutoff, and why any digital audio processing has latency.</p>
+    <div class="chips">
+      <span class="chip hi">Causality</span>
+      <span class="chip">Memory</span>
+      <span class="chip">Linear phase</span>
+      <span class="chip">Paley-Wiener</span>
+      <span class="chip">Latency</span>
+    </div>
+    <hr class="rule">
+
+    <section id="definicion">
+      <h2><span class="n">01</span>No guessing the future</h2>
+      <p>A system is <b>causal</b> if its output at an instant depends only on what happened up to that
+      instant, never on what is going to happen afterward:</p>
+      <div class="form">
+        \[ y(t_0) \text{ depends on } x(t) \text{ for } t \le t_0 \text{, and on nothing else} \]
+        <span class="cap">They are also called <b>non-anticipative</b>. Every system that works in real time has to be one, because the future has not arrived yet.</span>
+      </div>
+      <p>For an LTI system the condition translates into a single sentence about the impulse response. If the
+      impulse arrives at \( t = 0 \), the output cannot have started earlier:</p>
+      <div class="form">
+        \[ \text{causal} \iff h(t) = 0 \;\text{ for all } t \lt 0 \]
+      </div>
+      <p>With that, the convolution integral no longer runs over the whole axis and starts at zero, which also
+      explains why in the one-sided Laplace transform you integrate from \( 0 \) to \( \infty \) without losing anything.</p>
+      <div class="box key"><div class="bt">Causality and memory are not the same thing</div>
+        <p>A <b>memoryless</b> system responds only to the present value: \( y(t) = 3x(t) \). One <b>with
+        memory</b> also uses earlier values —a capacitor, an averager— or later ones. Every
+        memoryless system is causal, but a system with memory can be causal or not. They are two
+        independent classifications.</p></div>
+    </section>
+
+    <section id="lab">
+      <h2><span class="n">02</span>Which part of the input is involved</h2>
+      <p>The clearest way to see causality is to ask, for a given instant, <b>which stretch of the
+      input that output depends on</b>. In a causal system that stretch always lies to the left of the cursor;
+      in a non-causal one, it reaches to the right.</p>
+      <div class="lw" id="ca">
+        <div class="lt">Lab · the stretch each output depends on</div>
+        <p class="ls">Above, the input, with the shaded zone that is involved in computing the output at the marked instant. Below, the complete output. Move the cursor and see where each value comes from.</p>
+        <div class="fila">
+          <select id="caF">
+            <option value="ret">y(t) = x(t − 1) · a delay</option>
+            <option value="prom">y(t) = average of the last 1.5 s</option>
+            <option value="cen">y(t) = average centered at t</option>
+            <option value="ade">y(t) = x(t + 1) · an advance</option>
+            <option value="rc">y(t) = response of an RC</option>
+            <option value="fil">y(t) = linear-phase filter</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="caT">Instant t₀ = <b id="caTv">4.0</b> s</label>
+          <input type="range" id="caT" min="0.5" max="9" step="0.05" value="4">
+        </div>
+        <canvas id="caLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.6/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="caDatos" style="margin-top:8px"></div>
+        <div class="nota" id="caNota"></div>
+      </div>
+    </section>
+
+    <section id="nocausales">
+      <h2><span class="n">03</span>Non-causal systems exist, and they are used</h2>
+      <p>A system not being causal does not make it useless. It makes it <b>unrealizable in real time</b>, which is
+      something else. If the signal is already recorded, the “future” is available in the file:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Case</th><th>Why it is not causal</th><th>How it is used anyway</th></tr></thead>
+        <tbody>
+          <tr><td>Centered average</td><td>Uses later samples</td><td>File and image processing</td></tr>
+          <tr><td>Linear-phase FIR filter</td><td>Its \( h[n] \) is symmetric about the center</td><td>It is delayed until it becomes causal</td></tr>
+          <tr><td>Ideal low-pass filter</td><td>Its \( h(t) \) is a sinc extending to \( -\infty \)</td><td>It is not used: it is approximated</td></tr>
+          <tr><td>Smoothing a data series</td><td>Looks both forward and backward</td><td>Post-processing, never online</td></tr>
+        </tbody>
+      </table></div>
+      <p>The second row is the most interesting in practice. A linear-phase FIR filter needs to be
+      symmetric, and symmetry about time zero would make it non-causal. The solution is simple:
+      <b>shift it</b>. Shifting \( h[n] \) by \( (N-1)/2 \) samples makes it causal, and the price is a
+      fixed delay of that many samples. That delay is the one that appears on the datasheet of any digital
+      filter, and it is the reason an audio system with FIR processing has latency.</p>
+      <div class="box ojo"><div class="bt">The ideal filter cannot be causal</div>
+        <p>The <b>Paley-Wiener</b> criterion says it precisely: a causal and stable system cannot
+        have a magnitude of exactly zero over a band of frequencies of nonzero width. An ideal low-pass filter, which
+        attenuates infinitely beyond the cutoff, violates that condition. The practical consequence is that <b>every
+        transition of a real filter has a width</b>: there is no vertical cutoff, and the slope is the price
+        of causality.</p></div>
+    </section>
+
+    <section id="discreto">
+      <h2><span class="n">04</span>In discrete time</h2>
+      <p>The condition is the same with square brackets: \( h[n] = 0 \) for \( n \lt 0 \). And it can be read directly from
+      the difference equation:</p>
+      <div class="form">
+        \[ y[n] = \sum_{k=0}^{M} b_k\,x[n-k] - \sum_{k=1}^{N} a_k\,y[n-k] \]
+        <span class="cap">All the indices are \( n - k \) with \( k \ge 0 \): only past or current samples enter. That filter is causal by construction.</span>
+      </div>
+      <p>If an \( x[n+1] \) appeared in the expression, the system would need a sample that has not yet
+      arrived. In a processor that works on a block of data this is solved without drama; in one that
+      processes sample by sample, it is impossible.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Exercise 1 · Classifying</div>
+        <p>Decide whether these are causal: \( y(t) = x(t)\cos(t+1) \), \( y[n] = x[-n] \),
+        \( y(t) = \int_{-\infty}^{t} x(\tau)d\tau \) and \( y[n] = x[n] - x[n+2] \). Justify each
+        one.</p></div>
+      <div class="box lab"><div class="bt">Exercise 2 · The latency of an FIR</div>
+        <p>Program a symmetric 51-coefficient FIR filter and measure the delay between input and output with the oscilloscope.
+        Check that it matches 25 sampling periods, which is
+        \( (N-1)/2 \).</p></div>
+      <div class="box lab"><div class="bt">Exercise 3 · The cutoff that cannot be vertical</div>
+        <p>Design three low-pass filters with the same cutoff frequency and increasingly abrupt transitions.
+        Measure the group delay of each one and observe how it grows as the transition
+        gets sharper.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Confusing causal with stable.</b> They are independent properties: there are causal systems that are
+        unstable and stable systems that are non-causal.</li>
+        <li><b>Confusing causal with memoryless.</b> A capacitor has memory and is perfectly
+        causal.</li>
+        <li><b>Believing a non-causal system is a mistake.</b> It is valid, and it is used whenever the signal is
+        recorded.</li>
+        <li><b>Forgetting that causality is defined on \( h \), not on \( x \).</b> It is a property of the
+        system.</li>
+        <li><b>Expecting a vertical cutoff from a real filter.</b> Paley-Wiener forbids it for any causal
+        and stable system.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What condition does \( h(t) \) satisfy in a causal system?</summary>
+        <div class="a"><p>\( h(t) = 0 \) for \( t \lt 0 \): it does not respond before the impulse
+        arrives.</p></div></details>
+      <details class="q"><summary>Is \( y(t) = x(t)\cos(t + 1) \) causal?</summary>
+        <div class="a"><p>Yes. The cosine depends on time, which makes it time-varying, but it only uses the present
+        value of \( x \).</p></div></details>
+      <details class="q"><summary>How is a linear-phase FIR made causal?</summary>
+        <div class="a"><p>By shifting it \( (N-1)/2 \) samples. The price is a fixed delay of that
+        amount.</p></div></details>
+      <details class="q"><summary>Why is an ideal low-pass filter not realizable?</summary>
+        <div class="a"><p>Because its \( h(t) \) is a sinc that exists for \( t \lt 0 \), and because its zero
+        magnitude over a band violates the Paley-Wiener criterion.</p></div></details>
+      <details class="q"><summary>Can a memoryless system be non-causal?</summary>
+        <div class="a"><p>No. If it only uses the present value, it is causal by definition.</p></div></details>
+      <details class="q"><summary>What gives away a non-causal system in a difference equation?</summary>
+        <div class="a"><p>A term with index \( n+k \) with \( k \) positive: it needs a sample that has not
+        yet arrived.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1998.</span>
+          <span class="pq">The properties of systems, with the translation of each one into a condition on h.</span></li>
+        <li><span class="au">John G. Proakis and Dimitris G. Manolakis.</span> <span class="ti">Digital Signal Processing</span>.
+          <span class="ed">4th ed. (Spanish edition, “Tratamiento digital de señales”), Pearson, 2007.</span>
+          <span class="pq">Linear-phase FIR filters and the delay introduced by making them causal.</span></li>
+        <li><span class="au">Alan V. Oppenheim and Ronald W. Schafer.</span> <span class="ti">Discrete-Time Signal Processing</span>.
+          <span class="ed">3rd ed. (Spanish edition, “Tratamiento de señales en tiempo discreto”), Prentice Hall, 2011.</span>
+          <span class="pq">The Paley-Wiener criterion and the consequences of causality for the frequency response.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/sistemas-lti">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Linear time-invariant systems</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/estabilidad">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Stability</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Causality”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Which stretch of the input each output depends on. Above x(t) with the shaded
+   zone that is involved in computing y(t0); below the output. If the zone
+   reaches to the right of the cursor, the system is not causal. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("caLienzo"), ctx = cv.getContext("2d");
+  var TMAX = 10;
+
+  /* ven = [umin, umax]: the output at t uses x(t-u) with u in that range, so
+     the stretch of input involved is [t - umax, t - umin] */
+
+  /* an input with recognizable features: two pulses and a step */
+  function x(t){
+    var v = 0;
+    v += Math.exp(-Math.pow((t - 2) / 0.45, 2));
+    v += 0.7 * Math.exp(-Math.pow((t - 5.2) / 0.3, 2));
+    if(t >= 7) v += 0.55;
+    return v;
+  }
+
+  var F = {
+    ret:  { n:"x(t − 1)", causal:true, ven:[1, 1],
+            y:function(t){ return x(t - 1); },
+            t:"A pure delay. To produce the output at t₀ it uses the value of the input one second earlier: " +
+              "it sits well to the left of the cursor." },
+    prom: { n:"average of the last 1.5 s", causal:true, ven:[0, 1.5],
+            y:function(t){
+              var s = 0, N = 60, i;
+              for(i = 0; i < N; i++) s += x(t - 1.5 + 1.5 * (i + 0.5) / N);
+              return s / N;
+            },
+            t:"A causal averager: it looks backward. It smooths the signal, but delays it, because the " +
+              "center of gravity of the window is in the past." },
+    cen:  { n:"centered average, ±0.75 s", causal:false, ven:[-0.75, 0.75],
+            y:function(t){
+              var s = 0, N = 60, i;
+              for(i = 0; i < N; i++) s += x(t - 0.75 + 1.5 * (i + 0.5) / N);
+              return s / N;
+            },
+            t:"The same average, but centered. It smooths without delaying, and that is why it is the one used when processing " +
+              "a file. It is <b>not causal</b>: half of the window is in the future." },
+    ade:  { n:"x(t + 1)", causal:false, ven:[-1, -1],
+            y:function(t){ return x(t + 1); },
+            t:"An advance: today’s output is tomorrow’s input. Impossible in real time, trivial " +
+              "on a recorded file." },
+    rc:   { n:"response of an RC, τ = 0.8 s", causal:true, ven:[0, 3.2], pesa:true,
+            y:function(t){
+              var s = 0, N = 200, i, tau = 0.8;
+              for(i = 0; i < N; i++){
+                var u = 3.2 * (i + 0.5) / N;
+                s += x(t - u) * Math.exp(-u / tau) / tau * (3.2 / N);
+              }
+              return s;
+            },
+            t:"A real low-pass filter. Its h(t) is zero for negative t and decays backward: it uses the whole " +
+              "past, but weights the recent part much more." },
+    fil:  { n:"linear-phase filter, ±1.2 s", causal:false, ven:[-1.2, 1.2], pesa:true,
+            y:function(t){
+              var s = 0, N = 200, i;
+              for(i = 0; i < N; i++){
+                var u = -1.2 + 2.4 * (i + 0.5) / N;
+                var w = 0.5 * (1 + Math.cos(Math.PI * u / 1.2));
+                s += x(t - u) * w * (2.4 / N);
+              }
+              return s / 1.2;
+            },
+            t:"A symmetric FIR, like the linear-phase ones. Symmetry is precisely what makes it non-" +
+              "causal, and that is why in practice it is shifted: the delay that appears on the datasheet is " +
+              "the price of making it realizable." }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var d = F[$("caF").value], t0 = parseFloat($("caT").value);
+    $("caTv").textContent = n(t0, 1);
+
+    var x0 = 22, x1 = Wd - 12;
+    var yA = Hd * 0.30, yB = Hd * 0.80, alto = Hd * 0.2;
+    function X(t){ return x0 + t / TMAX * (x1 - x0); }
+    function Y(v, base){ return base - v * alto; }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* the zone of the input that is involved */
+    var d0 = t0 - d.ven[1], d1 = t0 - d.ven[0];
+    var za = X(Math.max(0, d0)), zb = X(Math.min(TMAX, d1));
+    ctx.fillStyle = d.causal ? "rgba(126,231,135,.13)" : "rgba(248,81,73,.15)";
+    ctx.fillRect(Math.min(za, zb), yA - alto * 1.25, Math.abs(zb - za) || 2, alto * 2.5);
+    if(!d.causal){
+      /* the piece that falls in the future, more marked */
+      var fa = Math.max(X(t0), Math.min(za, zb)), fb = Math.max(za, zb);
+      if(fb > fa){
+        ctx.fillStyle = "rgba(248,81,73,.22)";
+        ctx.fillRect(fa, yA - alto * 1.25, fb - fa, alto * 2.5);
+      }
+    }
+
+    [[yA, "x(t) · the input"], [yB, "y(t) · the output"]].forEach(function(e){
+      ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x0, e[0]); ctx.lineTo(x1, e[0]); ctx.stroke();
+      ctx.fillStyle = "#8b93a3"; ctx.font = "600 10px system-ui, sans-serif";
+      ctx.fillText(e[1], x0, Math.max(10, e[0] - alto * 1.3));
+    });
+
+    function curva(f, base, col, gr){
+      ctx.strokeStyle = col; ctx.lineWidth = gr; ctx.beginPath();
+      for(i = 0; i <= 600; i++){
+        var t = i / 600 * TMAX;
+        var q = { x:X(t), y:Math.max(base - alto * 1.25, Math.min(base + alto * 1.25, Y(f(t), base))) };
+        if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+      }
+      ctx.stroke();
+    }
+    curva(x, yA, "#58a6ff", 2.2);
+    curva(d.y, yB, "#7ee787", 2.2);
+
+    /* the cursor and the value it produces */
+    ctx.strokeStyle = "rgba(242,204,96,.8)"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(X(t0), yA - alto * 1.25); ctx.lineTo(X(t0), yB + alto * 1.25);
+    ctx.stroke();
+    var vy = d.y(t0);
+    ctx.fillStyle = "#f2cc60";
+    ctx.beginPath(); ctx.arc(X(t0), Y(vy, yB), 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("t₀", X(t0) + 5, yA - alto * 1.25 + 9);
+
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    for(i = 2; i <= 8; i += 2) ctx.fillText(i + " s", X(i) - 8, yB + alto * 1.25 + 12);
+
+    $("caDatos").innerHTML =
+      "<span>System</span><b>y(t) = " + d.n + "</b>" +
+      '<hr><span style="color:#f2cc60">Output at t₀ = ' + n(t0, 1) + " s</span><b>" + n(vy, 3) + "</b>" +
+      "<span>Stretch of the input involved</span><b>from " + n(d0, 2) + " to " + n(d1, 2) + " s" +
+        (d.pesa ? "   ·   with different weights" : "") + "</b>" +
+      "<span>Does it reach into the future of t₀?</span><b>" +
+        (d.causal ? "no" : "yes, up to " + n(d1 - t0, 2) + " s later") + "</b>" +
+      "<hr><span>Classification</span><b>" + (d.causal ? "causal" : "<b>non-causal</b>") + "</b>";
+
+    $("caNota").innerHTML = d.t + (d.causal
+      ? " The shaded zone never goes past the cursor: it can be implemented in real time."
+      : " The more intense red zone is the part that lies on the side of the future. On an already " +
+        "recorded signal there is no problem; in real time, it is impossible.");
+  }
+
+  ["caF", "caT"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

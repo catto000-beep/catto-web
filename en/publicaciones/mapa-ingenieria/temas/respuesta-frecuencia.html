@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frequency response · Signals and Systems · Catto</title>
+<meta name="description" content="The frequency response as a multiplication of spectra, Bode plotting by asymptotes, group delay and distortion from nonlinear phase, and minimum-phase systems, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 27 of 34</div>
+    <h1>Frequency response</h1>
+    <p class="lead">An LTI system does not mix frequencies: each harmonic comes out scaled and phase-shifted, unaware of the others. But looking only at the magnitude is not enough, and an all-pass shows why.</p>
+    <div class="chips">
+      <span class="chip hi">Bode</span>
+      <span class="chip">Asymptotes</span>
+      <span class="chip">Group delay</span>
+      <span class="chip">Minimum phase</span>
+      <span class="chip">Phase margin</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que">
+      <h2><span class="n">01</span>What the system does to each frequency</h2>
+      <p>If a complex exponential enters an LTI system and comes out multiplied by \( H(s) \), then
+      evaluating on the imaginary axis gives what happens to each real frequency:</p>
+      <div class="form">
+        \[ Y(j\omega) = H(j\omega)\,X(j\omega) \]
+        <span class="cap">The output spectrum is the input spectrum, multiplied frequency by frequency. Convolution in time has become a product.</span>
+      </div>
+      <p>This means that an LTI system <b>does not mix frequencies</b>: each harmonic of the input comes out
+      scaled by \( |H| \) and shifted by \( \angle H \), unaware of the others. Analyzing a circuit
+      comes down to reading two curves.</p>
+      <div class="lw" id="rf">
+        <div class="lt">Lab · the filter, harmonic by harmonic</div>
+        <p class="ls">On top, the input and the output in time. Below, the input spectrum in gray, the filter response in yellow and what is left at the output in green.</p>
+        <div class="fila">
+          <select id="rfF">
+            <option value="pb">second-order low-pass</option>
+            <option value="pa">second-order high-pass</option>
+            <option value="bp">band-pass</option>
+            <option value="notch">notch</option>
+            <option value="pt">all-pass · flat magnitude</option>
+          </select>
+          <select id="rfS">
+            <option value="cua">input: square</option>
+            <option value="tri">input: triangular</option>
+            <option value="pul">input: pulse train</option>
+            <option value="dos">input: two tones</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="rfW">Cutoff frequency = <b id="rfWv">3.0</b> harmonics</label>
+          <input type="range" id="rfW" min="0.7" max="12" step="0.1" value="3">
+        </div>
+        <div class="fila">
+          <label for="rfQ">Q = <b id="rfQv">0.71</b></label>
+          <input type="range" id="rfQ" min="0.5" max="10" step="0.05" value="0.707">
+        </div>
+        <canvas id="rfLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.4/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="rfDatos" style="margin-top:8px"></div>
+        <div class="nota" id="rfNota"></div>
+      </div>
+    </section>
+
+    <section id="bode">
+      <h2><span class="n">02</span>Why it is plotted in decibels and on a logarithmic scale</h2>
+      <p>The Bode plot is not an arbitrary convention. Taking the logarithm of a product of factors,
+      multiplication becomes addition:</p>
+      <div class="form">
+        \[ 20\log|H| = 20\log|K| + \sum_i 20\log|j\omega - z_i| - \sum_k 20\log|j\omega - p_k| \]
+        <span class="cap">Each pole and each zero contributes its own curve, and the total is the sum. That is why it can be drawn by hand, by adding asymptotes.</span>
+      </div>
+      <p>And with the frequency axis on a logarithmic scale, those asymptotes are <b>straight lines</b>: each simple pole
+      contributes −20 dB per decade starting at its frequency, each zero +20. With two rules you can draw the Bode plot of
+      any system:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Element</th><th>Magnitude</th><th>Phase</th></tr></thead>
+        <tbody>
+          <tr><td>Simple pole at \( \omega_p \)</td><td>−20 dB/dec from \( \omega_p \); −3 dB at \( \omega_p \)</td><td>0 to −90°, with −45° at \( \omega_p \)</td></tr>
+          <tr><td>Simple zero at \( \omega_z \)</td><td>+20 dB/dec from \( \omega_z \)</td><td>0 to +90°</td></tr>
+          <tr><td>Pole at the origin</td><td>−20 dB/dec throughout</td><td>−90° constant</td></tr>
+          <tr><td>Pair of poles with \( Q \)</td><td>−40 dB/dec, with a peak of \( 20\log Q \) if \( Q \gt 0.707 \)</td><td>0 to −180°</td></tr>
+        </tbody>
+      </table></div>
+      <p>The phase transition of a simple pole is not abrupt: it starts a decade before \( \omega_p \) and
+      ends a decade after. That is why, when compensating a feedback loop, a pole that seems far away still
+      affects the phase margin.</p>
+    </section>
+
+    <section id="fase">
+      <h2><span class="n">03</span>Phase distorts too</h2>
+      <p>It is easy to stick to the magnitude alone. But if the harmonics of a signal arrive with different
+      delays, the waveform is distorted even though its amplitudes have been preserved. What measures that is the
+      <b>group delay</b>:</p>
+      <div class="form">
+        \[ \tau_g(\omega) = -\frac{d\,\angle H(j\omega)}{d\omega} \]
+        <span class="cap">If the phase is a straight line, the group delay is constant and all the harmonics are delayed by the same amount: the signal comes out unchanged, only later.</span>
+      </div>
+      <p>The extreme case is in the lab: an <b>all-pass</b> filter has a perfectly flat magnitude —it does not attenuate
+      any frequency— and yet it distorts the signal, because its phase is not linear. It is the demonstration that
+      looking at the magnitude alone is not enough.</p>
+      <div class="box key"><div class="bt">Where it matters and where it does not</div>
+        <p>The ear is fairly insensitive to phase, so in audio it is tolerated. In <b>video</b> and in
+        <b>data transmission</b>, it is not: an uneven group delay shifts some harmonics relative to others,
+        widens the pulses and makes one symbol spill into the place of the next. That is called intersymbol
+        interference, and it is the reason linear-phase filters are used in communications even though they cost
+        more order.</p></div>
+    </section>
+
+    <section id="minima">
+      <h2><span class="n">04</span>Minimum phase</h2>
+      <p>A system is <b>minimum phase</b> if all of its poles and all of its zeros are in the left
+      half-plane. The property that makes it interesting is this: among all systems with the same magnitude,
+      the minimum-phase one is the one with the <b>least phase shift</b> and the smallest group delay.</p>
+      <p>And it has a very practical consequence: in a minimum-phase system, the magnitude determines the phase. Just
+      by measuring the amplitude curve you can deduce the phase shift, which is what makes it possible to estimate the phase
+      margin of a loop from the slope of the Bode plot. The rule that comes out of this —crossing zero with
+      −20 dB/decade— is the design criterion for any feedback system.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Slope at the 0 dB crossing</th><th>Approximate phase</th><th>Margin</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>−20 dB/dec</td><td>−90°</td><td>90°</td><td>Stable and without overshoot</td></tr>
+          <tr><td>−30 dB/dec</td><td>−135°</td><td>45°</td><td>Acceptable, with some overshoot</td></tr>
+          <tr><td>−40 dB/dec</td><td>−180°</td><td>0°</td><td>At the limit: it oscillates</td></tr>
+        </tbody>
+      </table></div>
+      <p>A zero in the right half-plane breaks all of this: it contributes the magnitude of a zero but the phase of a pole,
+      so it worsens the margin while giving nothing in return. It is what complicates the compensation of boost
+      converters.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Bode plot by hand and measured</div>
+        <p>Draw by asymptotes the Bode plot of \( H(s) = \dfrac{100}{(1+s/10)(1+s/1000)} \) and then measure it with
+        the generator and the oscilloscope at ten frequencies. Compare the two on the same sheet.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · The all-pass distorts</div>
+        <p>Build a first-order all-pass filter, inject a square wave and compare input and output on the
+        oscilloscope. Verify with the analyzer that the magnitude is flat, and explain why the shape changed
+        anyway.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Phase margin</div>
+        <p>Measure the open-loop Bode plot of a feedback amplifier, find the 0 dB crossover frequency
+        and read the phase there. Contrast the margin obtained with the overshoot shown by the step
+        response.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Looking only at the magnitude.</b> Phase distorts, and an all-pass proves it.</li>
+        <li><b>Believing that a distant pole does not affect the phase.</b> Its transition starts a decade
+        earlier.</li>
+        <li><b>Confusing phase delay with group delay.</b> The latter is the derivative of the phase and is
+        the one that tells you whether the shape is preserved.</li>
+        <li><b>Assuming a system with right-half-plane zeros is minimum phase.</b> There the magnitude no longer determines the
+        phase.</li>
+        <li><b>Designing a loop that crosses 0 dB at −40 dB/decade.</b> The phase margin ends up at
+        zero.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What is the relationship between the input and output spectra?</summary>
+        <div class="a"><p>\( Y = H\,X \): they are multiplied frequency by frequency. An LTI system does not mix
+        frequencies.</p></div></details>
+      <details class="q"><summary>Why does the Bode plot use decibels and a logarithmic scale?</summary>
+        <div class="a"><p>Because that way the product of factors becomes a sum and the asymptotes are straight, which
+        makes it possible to draw it by hand.</p></div></details>
+      <details class="q"><summary>What does a simple pole contribute at its own frequency?</summary>
+        <div class="a"><p>−3 dB of magnitude and −45° of phase.</p></div></details>
+      <details class="q"><summary>What is group delay?</summary>
+        <div class="a"><p>Minus the derivative of the phase with respect to frequency. If it is constant, the shape of
+        the signal is preserved.</p></div></details>
+      <details class="q"><summary>How can a filter with flat magnitude distort?</summary>
+        <div class="a"><p>With nonlinear phase: the harmonics arrive shifted relative to one another. It is what an
+        all-pass does.</p></div></details>
+      <details class="q"><summary>At what slope should the loop cross 0 dB?</summary>
+        <div class="a"><p>At −20 dB/decade, which leaves about 90° of phase margin.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Katsuhiko Ogata.</span> <span class="ti">Modern Control Engineering</span>.
+          <span class="ed">5th ed. (Spanish edition, “Ingeniería de control moderna”), Prentice Hall, 2010.</span>
+          <span class="pq">Bode plotting by asymptotes and phase and gain margins, with complete examples.</span></li>
+        <li><span class="au">Adel S. Sedra and Kenneth C. Smith.</span> <span class="ti">Microelectronic Circuits</span>.
+          <span class="ed">7th ed. (Spanish edition, “Circuitos microelectrónicos”), Oxford University Press, 2015.</span>
+          <span class="pq">Frequency response of amplifiers and compensation of feedback loops.</span></li>
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1997.</span>
+          <span class="pq">Group delay, linear phase and minimum-phase systems, with their magnitude-phase relationship.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/parseval">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Parseval’s relation</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/representacion-sistemas">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Representation of signals and systems</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Frequency response”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* The filter, harmonic by harmonic. The input is decomposed into its Fourier
+   series, each harmonic is multiplied by H(jw) and the results are added back up: that is
+   Y = H*X done by hand. Below, the three spectra are overlaid, so you can
+   see where each line of the output comes from. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("rfLienzo"), ctx = cv.getContext("2d");
+  var NC = 30, NINT = 4000;
+
+  var S = {
+    cua: { n:"square", f:function(u){ return u < 0.5 ? 1 : -1; } },
+    tri: { n:"triangular",
+           f:function(u){ return u < 0.25 ? 4 * u : (u < 0.75 ? 2 - 4 * u : 4 * u - 4); } },
+    pul: { n:"pulse train", f:function(u){ return u < 0.2 ? 1 - 0.2 : -0.2; } },
+    dos: { n:"two tones",
+           f:function(u){ return Math.cos(2 * Math.PI * u) + 0.7 * Math.cos(2 * Math.PI * 7 * u); } }
+  };
+
+  /* normalized H(jw): w comes in units of harmonic and w0 is the cutoff */
+  var F = {
+    pb:    { n:"low-pass", hQ:true,
+             H:function(w, w0, Q){ var x = w / w0;
+               return div([1, 0], [1 - x * x, x / Q]); },
+             t:"The low-pass lets the first harmonics through and erases the ones above. With a square wave it " +
+               "is obvious right away: the output is rounded off because the high harmonics are missing, and they are the ones that " +
+               "build the edges." },
+    pa:    { n:"high-pass", hQ:true,
+             H:function(w, w0, Q){ var x = w / w0;
+               return div([-x * x, 0], [1 - x * x, x / Q]); },
+             t:"The opposite: it erases the DC component and the low harmonics, and leaves only the edges. The output " +
+               "has spikes where the input changed quickly." },
+    bp:    { n:"band-pass", hQ:true,
+             H:function(w, w0, Q){ var x = w / w0;
+               return div([0, x / Q], [1 - x * x, x / Q]); },
+             t:"It keeps a narrow band. Raise the Q and watch how the output ends up being a " +
+               "sinusoid: the filter extracted a single harmonic from the whole signal." },
+    notch: { n:"notch", hQ:true,
+             H:function(w, w0, Q){ var x = w / w0;
+               return div([1 - x * x, 0], [1 - x * x, x / Q]); },
+             t:"It removes one frequency and leaves the rest. It is what is used to eliminate the 50 Hz mains hum " +
+               "without touching the signal." },
+    pt:    { n:"all-pass", hQ:false,
+             H:function(w, w0){ var x = w / w0;
+               return div([1, -x], [1, x]); },
+             t:"Here is the demonstration that the magnitude is not enough: the yellow curve is <b>flat</b>, " +
+               "the filter did not attenuate any harmonic, and yet the output came out distorted. The culprit is " +
+               "the phase, which shifts some harmonics relative to others." }
+  };
+
+  function div(a, b){
+    var m = b[0] * b[0] + b[1] * b[1];
+    if(m < 1e-14) return [0, 0];
+    return [(a[0] * b[0] + a[1] * b[1]) / m, (a[1] * b[0] - a[0] * b[1]) / m];
+  }
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+
+  var cacheK = null, cacheC = null;
+  function coef(s, clave){
+    if(cacheK === clave) return cacheC;
+    var a = [], b = [], a0 = 0, i, k;
+    for(i = 0; i < NINT; i++) a0 += s.f((i + 0.5) / NINT) / NINT;
+    for(k = 1; k <= NC; k++){
+      var sa = 0, sb = 0;
+      for(i = 0; i < NINT; i++){
+        var u = (i + 0.5) / NINT, w = 2 * Math.PI * k * u, v = s.f(u);
+        sa += v * Math.cos(w); sb += v * Math.sin(w);
+      }
+      a.push(2 * sa / NINT); b.push(2 * sb / NINT);
+    }
+    cacheK = clave; cacheC = { a0:a0, a:a, b:b };
+    return cacheC;
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var d = F[$("rfF").value], sen = S[$("rfS").value];
+    var w0 = parseFloat($("rfW").value), Q = parseFloat($("rfQ").value);
+    $("rfWv").textContent = n(w0, 1);
+    $("rfQv").textContent = n(Q, 3);
+    $("rfQ").disabled = !d.hQ;
+
+    var C = coef(sen, $("rfS").value);
+
+    /* each harmonic, multiplied by H */
+    var Hm = [], Hf = [], ain = [], aout = [];
+    for(k = 1; k <= NC; k++){
+      var h = d.H(k, w0, Q);
+      Hm.push(Math.hypot(h[0], h[1]));
+      Hf.push(Math.atan2(h[1], h[0]));
+      var A = Math.hypot(C.a[k - 1], C.b[k - 1]);
+      ain.push(A);
+      aout.push(A * Hm[k - 1]);
+    }
+    var h0 = d.H(1e-6, w0, Q), g0 = Math.hypot(h0[0], h0[1]);
+
+    function ent(u){
+      var s = C.a0, w;
+      for(k = 1; k <= NC; k++){
+        w = 2 * Math.PI * k * u;
+        s += C.a[k - 1] * Math.cos(w) + C.b[k - 1] * Math.sin(w);
+      }
+      return s;
+    }
+    function sal(u){
+      var s = C.a0 * g0, w;
+      for(k = 1; k <= NC; k++){
+        w = 2 * Math.PI * k * u + Hf[k - 1];
+        s += Hm[k - 1] * (C.a[k - 1] * Math.cos(w) + C.b[k - 1] * Math.sin(w));
+      }
+      return s;
+    }
+
+    var x0 = 26, x1 = Wd - 12;
+    var yT = Hd * 0.22, altoT = Hd * 0.16;
+    var yB = Hd - 24, altoB = Hd * 0.4;
+    function XT(u){ return x0 + u / 2 * (x1 - x0); }
+    function XB(k2){ return x0 + (k2 - 0.5) / NC * (x1 - x0); }
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yT); ctx.lineTo(x1, yT);
+    ctx.moveTo(x0, yB - altoB); ctx.lineTo(x0, yB); ctx.lineTo(x1, yB);
+    ctx.stroke();
+
+    /* top: input and output */
+    var mxT = 0.3;
+    for(i = 0; i <= 200; i++){
+      var u2 = 2 * i / 200;
+      mxT = Math.max(mxT, Math.abs(ent(u2 - Math.floor(u2))), Math.abs(sal(u2 - Math.floor(u2))));
+    }
+    [[ent, "rgba(107,116,132,.75)", 1.5], [sal, "#7ee787", 2.3]].forEach(function(e){
+      ctx.strokeStyle = e[1]; ctx.lineWidth = e[2];
+      ctx.beginPath();
+      for(i = 0; i <= 700; i++){
+        var u3 = 2 * i / 700;
+        var q = { x:XT(u3), y:yT - e[0](u3 - Math.floor(u3)) / mxT * altoT };
+        if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+      }
+      ctx.stroke();
+    });
+    ctx.fillStyle = "#6b7484"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("input", x0, 13);
+    ctx.fillStyle = "#7ee787"; ctx.fillText("output", x0 + 48, 13);
+
+    /* bottom: the three spectra */
+    var mxA = 1e-9;
+    for(k = 0; k < NC; k++) mxA = Math.max(mxA, ain[k]);
+    var anchoB = (x1 - x0) / NC;
+    for(k = 0; k < NC; k++){
+      var hi = ain[k] / mxA * altoB;
+      ctx.fillStyle = "rgba(107,116,132,.4)";
+      ctx.fillRect(XB(k + 1) - anchoB * 0.34, yB - hi, anchoB * 0.68, hi);
+      var ho = aout[k] / mxA * altoB;
+      ctx.fillStyle = "#7ee787";
+      ctx.fillRect(XB(k + 1) - anchoB * 0.22, yB - ho, anchoB * 0.44, ho);
+    }
+    /* the filter response, on its own scale up to 1 */
+    ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for(i = 0; i <= 500; i++){
+      var wk = 0.2 + (NC - 0.2) * i / 500;
+      var hh = d.H(wk, w0, Q);
+      var m = Math.min(1.6, Math.hypot(hh[0], hh[1]));
+      var q2 = { x:XB(wk + 0.5), y:yB - m / 1.6 * altoB };
+      if(i === 0) ctx.moveTo(q2.x, q2.y); else ctx.lineTo(q2.x, q2.y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(248,81,73,.55)"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(XB(w0 + 0.5), yB - altoB); ctx.lineTo(XB(w0 + 0.5), yB); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#f2cc60"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("|H| of the filter", x0, yB - altoB - 6);
+    ctx.fillStyle = "#6b7484"; ctx.fillText("input spectrum", x0 + 92, yB - altoB - 6);
+    ctx.fillStyle = "#7ee787"; ctx.fillText("and output", x0 + 178, yB - altoB - 6);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    for(k = 5; k <= NC; k += 5) ctx.fillText(k + "", XB(k) - 4, yB + 12);
+    ctx.fillText("harmonic", x1 - 44, yB + 12);
+
+    /* how much power survived, and how much it was distorted */
+    var Pin = 0, Pout = 0;
+    for(k = 0; k < NC; k++){ Pin += ain[k] * ain[k] / 2; Pout += aout[k] * aout[k] / 2; }
+    var plano = true, mn = 1e9, mx = 0;
+    for(k = 0; k < NC; k++){ mn = Math.min(mn, Hm[k]); mx = Math.max(mx, Hm[k]); }
+    plano = (mx - mn) < 0.02;
+    /* difference in shape between input and output, already normalized */
+    var dif = 0, ne = 0, ns = 0;
+    for(i = 0; i < 400; i++){
+      var u4 = (i + 0.5) / 400, e1 = ent(u4), s1 = sal(u4);
+      ne += e1 * e1; ns += s1 * s1;
+    }
+    ne = Math.sqrt(ne / 400); ns = Math.sqrt(ns / 400);
+    for(i = 0; i < 400; i++){
+      var u5 = (i + 0.5) / 400;
+      var dd = ent(u5) / (ne || 1) - sal(u5) / (ns || 1);
+      dif = Math.max(dif, Math.abs(dd));
+    }
+
+    $("rfDatos").innerHTML =
+      "<span>Filter   ·   input</span><b>" + d.n + "   ·   " + sen.n + "</b>" +
+      '<hr><span style="color:#f2cc60">|H| between harmonic 1 and ' + NC + "</span><b>" +
+        n(mn, 3) + " to " + n(mx, 3) + (plano ? "   ·   <b>flat</b>" : "") + "</b>" +
+      '<span style="color:#7ee787">Power that survived</span><b>' +
+        n(Pin > 0 ? Pout / Pin * 100 : 0, 1) + " %</b>" +
+      "<hr><span>Waveform distortion</span><b>" + n(dif, 3) +
+        (dif < 0.02 ? "   ·   comes out the same" : "   ·   changed shape") + "</b>";
+
+    var txt = d.t;
+    if(plano && dif > 0.05)
+      txt += " Look at the two numbers below: the magnitude did not change at all and the shape did. That is what " +
+             "group delay measures.";
+    $("rfNota").innerHTML = txt;
+  }
+
+  ["rfF", "rfS", "rfW", "rfQ"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

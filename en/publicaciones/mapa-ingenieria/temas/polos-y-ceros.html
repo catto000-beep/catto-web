@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poles and zeros · Signals and Systems · Catto</title>
+<meta name="description" content="The poles and zeros of a transfer function, the geometric reading of the frequency response, stability according to the half-plane, and the typical cases —low-pass, band-pass, notch, all-pass—, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/polos-y-ceros">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/polos-y-ceros">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/polos-y-ceros">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/polos-y-ceros">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 9 of 34</div>
+    <h1>Poles and zeros</h1>
+    <p class="lead">A constant and a handful of points of the plane contain the whole circuit: the frequency response, the step response and the stability all come from reading where those points are.</p>
+    <div class="chips">
+      <span class="chip hi">Poles</span>
+      <span class="chip">Zeros</span>
+      <span class="chip">Stability</span>
+      <span class="chip">Q</span>
+      <span class="chip">Bode</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que">
+      <h2><span class="n">01</span>The two numbers that define a circuit</h2>
+      <p>A lumped-parameter transfer function is always a quotient of polynomials, and every
+      polynomial can be factored. So:</p>
+      <div class="form">
+        \[ H(s) = K\,\frac{(s - z_1)(s - z_2)\cdots(s - z_m)}{(s - p_1)(s - p_2)\cdots(s - p_n)} \]
+        <span class="cap">The \( z_i \) are the <b>zeros</b>: there \( H \) is zero. The \( p_k \) are the <b>poles</b>: there \( H \) goes to infinity.</span>
+      </div>
+      <p>That factorization says something powerful: <b>a constant and a handful of points of the plane contain all
+      the information about the circuit</b>. The frequency response, the step response, the stability and
+      even the settling time come from reading where those points are.</p>
+      <div class="box key"><div class="bt">How to read each one</div>
+        <p>The <b>real part</b> of a pole tells how fast that component of the response dies out: a pole
+        at \( \sigma \) contributes \( e^{\sigma t} \). The <b>imaginary part</b> tells at what frequency it
+        oscillates. A real pole gives an exponential; a conjugate pair, a damped sinusoid.</p></div>
+    </section>
+
+    <section id="geometria">
+      <h2><span class="n">02</span>The frequency response, read with a ruler</h2>
+      <p>To obtain the frequency response, \( H \) is evaluated on the imaginary axis, that is, at
+      \( s = j\omega \). Taking the modulus and phase of the factorization:</p>
+      <div class="form">
+        \[ |H(j\omega)| = |K|\,\frac{\prod_i |\,j\omega - z_i\,|}{\prod_k |\,j\omega - p_k\,|},
+           \qquad
+           \angle H(j\omega) = \sum_i \angle(j\omega - z_i) - \sum_k \angle(j\omega - p_k) \]
+      </div>
+      <p>Each factor \( j\omega - p_k \) is the <b>vector</b> that goes from the pole to the operating point on the axis.
+      The magnitude of the response is the product of the distances to the zeros divided by the product of the
+      distances to the poles. With a ruler and a protractor on the diagram you can estimate the Bode plot
+      without computing anything.</p>
+      <p>From this come the two rules that an electronics engineer uses all the time: <b>bringing a pole closer to the
+      imaginary axis raises a peak</b> at that frequency, because the denominator distance becomes small; and
+      <b>a zero on the axis produces a null</b>, because the numerator vanishes.</p>
+      <div class="lw" id="pz">
+        <div class="lt">Lab · the diagram and its response</div>
+        <p class="ls">On the left, the \( s \)-plane with the poles (×) and zeros (○), and the vectors going to the operating point. On the right, the magnitude in decibels and the phase. Click or tap the plane to move the pole pair.</p>
+        <div class="fila">
+          <select id="pzF">
+            <option value="pb1">First-order low-pass</option>
+            <option value="pb2">Second-order low-pass</option>
+            <option value="pa2">Second-order high-pass</option>
+            <option value="bp">Band-pass</option>
+            <option value="notch">Notch · band-reject</option>
+            <option value="pt">All-pass</option>
+          </select>
+          <label class="chk"><input type="checkbox" id="pzV" checked> Show the vectors</label>
+        </div>
+        <div class="fila">
+          <label for="pzW">Operating frequency ω = <b id="pzWv">1.00</b> rad/s</label>
+          <input type="range" id="pzW" min="-1.4" max="0.8" step="0.01" value="0">
+        </div>
+        <div class="fila">
+          <label for="pzQ">Q = <b id="pzQv">0.71</b></label>
+          <input type="range" id="pzQ" min="0.5" max="12" step="0.05" value="0.707">
+        </div>
+        <canvas id="pzLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:2/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16;cursor:crosshair"></canvas>
+        <div class="datos" id="pzDatos" style="margin-top:8px"></div>
+        <div class="nota" id="pzNota"></div>
+      </div>
+    </section>
+
+    <section id="estabilidad">
+      <h2><span class="n">03</span>Stability: a single line divides the plane</h2>
+      <p>The natural response of a system is the sum of the terms \( e^{p_k t} \), one per pole. Whether it dies
+      out or not depends only on the sign of the real part:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Where the pole is</th><th>What it contributes to the response</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>\( \operatorname{Re}(p) \lt 0 \)</td><td>\( e^{\sigma t} \) with \( \sigma \lt 0 \)</td><td>Dies out · stable</td></tr>
+          <tr><td>\( \operatorname{Re}(p) = 0 \), simple</td><td>Oscillation of constant amplitude</td><td>Marginally stable</td></tr>
+          <tr><td>\( \operatorname{Re}(p) = 0 \), double</td><td>\( t\cos\omega t \), grows</td><td>Unstable</td></tr>
+          <tr><td>\( \operatorname{Re}(p) \gt 0 \)</td><td>\( e^{\sigma t} \) with \( \sigma \gt 0 \)</td><td>Grows without bound · unstable</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Zeros do not affect stability</b>: they can be anywhere. They do affect the shape of the
+      response, and a zero in the right half-plane —what is called <i>non-minimum phase</i>— makes the output
+      start off in the wrong direction before correcting. This is what happens in a boost converter and is one
+      of the reasons they are hard to compensate.</p>
+      <div class="box ojo"><div class="bt">The oscillator lives on the line</div>
+        <p>A sinusoidal oscillator needs a pair of poles <b>exactly</b> on the imaginary axis. Since that
+        cannot be sustained with real components, they are designed slightly to the right and an amplitude
+        control is added —a small lamp, a JFET, a limiter— that pushes them toward the axis when the
+        amplitude grows. The circuit settles by itself onto the line.</p></div>
+    </section>
+
+    <section id="casos">
+      <h2><span class="n">04</span>The cases you have to recognize by heart</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Function</th><th>Poles and zeros</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>\( \dfrac{1}{s + \omega_0} \)</td><td>One real pole</td><td>Low-pass, −20 dB/dec, −45° at \( \omega_0 \)</td></tr>
+          <tr><td>\( \dfrac{s}{s + \omega_0} \)</td><td>A zero at the origin</td><td>First-order high-pass</td></tr>
+          <tr><td>\( \dfrac{\omega_0^2}{s^2 + \frac{\omega_0}{Q}s + \omega_0^2} \)</td><td>Conjugate pair</td><td>Low-pass with a peak if \( Q \gt 0.707 \)</td></tr>
+          <tr><td>\( \dfrac{s^2 + \omega_0^2}{s^2 + \frac{\omega_0}{Q}s + \omega_0^2} \)</td><td>Zeros on the axis</td><td>Notch: exact null at \( \omega_0 \)</td></tr>
+          <tr><td>\( \dfrac{s - a}{s + a} \)</td><td>Zero and pole in mirror image</td><td>All-pass: flat magnitude, only the phase changes</td></tr>
+        </tbody>
+      </table></div>
+      <p>The all-pass deserves attention because it is counterintuitive: it has a zero in the right half-plane and yet
+      is perfectly stable, because the <b>pole</b> is on the left. Its magnitude is 1 at all frequencies and
+      all it does is delay. It is used to equalize delays and to correct phase without touching the amplitude.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Measuring the peak and deducing Q</div>
+        <p>Build a series RLC with variable \( R \) and measure the frequency response. Locate the peak, measure
+        its height relative to the passband and solve for \( Q \). Compare with \( Q = \frac{1}{R}\sqrt{L/C} \)
+        and locate the poles in the plane.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · The power-line notch</div>
+        <p>Design a notch at 50 Hz with \( Q = 10 \), compute the positions of its two zeros and two
+        poles, and verify in the lab how many decibels of attenuation it gives at 50 Hz and how much it affects
+        45 Hz and 55 Hz.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · The phase of the all-pass</div>
+        <p>Build a first-order all-pass with an operational amplifier and measure magnitude and phase between
+        \( 0.1\,a \) and \( 10\,a \). Check that the magnitude stays flat while the phase sweeps
+        180°.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Believing that a zero in the right half-plane makes the system unstable.</b> Stability is decided by the
+        poles, nothing else.</li>
+        <li><b>Forgetting the zeros at infinity.</b> If the denominator has a higher degree than the numerator, there are
+        zeros at infinity, and that fixes the final slope of the Bode plot.</li>
+        <li><b>Confusing \( \omega_0 \) with the frequency of the peak.</b> The peak is at
+        \( \omega_0\sqrt{1 - 1/(2Q^2)} \), slightly below.</li>
+        <li><b>Drawing a conjugate pair without its mirror partner.</b> With real coefficients, complex poles
+        always come in pairs.</li>
+        <li><b>Canceling an unstable pole with a zero.</b> On paper they cancel; in the real circuit the
+        cancellation is never exact and the unstable mode is still there.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What is a pole and what is a zero?</summary>
+        <div class="a"><p>A zero is a value of \( s \) where \( H \) vanishes; a pole, where it becomes
+        infinite. They are the roots of the numerator and of the denominator.</p></div></details>
+      <details class="q"><summary>How do you estimate \( |H(j\omega)| \) by looking at the diagram?</summary>
+        <div class="a"><p>Product of the distances to the zeros divided by the product of the distances to
+        the poles, all times \( |K| \).</p></div></details>
+      <details class="q"><summary>A pole at \( -0.1 \pm j10 \): what response does it give?</summary>
+        <div class="a"><p>An oscillation of 10 rad/s that decays with a time constant of 10 s. It is a high \( Q \),
+        around 50: in frequency it will show a pronounced peak.</p></div></details>
+      <details class="q"><summary>Why does the all-pass have constant magnitude?</summary>
+        <div class="a"><p>Because the zero and the pole are mirror images across the imaginary axis: for each
+        \( j\omega \) the two distances are equal and the quotient is 1.</p></div></details>
+      <details class="q"><summary>What does bringing a pole closer to the imaginary axis do to the circuit?</summary>
+        <div class="a"><p>It raises a peak at that frequency and makes the time response take longer to
+        die out. On the axis, it oscillates without damping.</p></div></details>
+      <details class="q"><summary>What is a non-minimum-phase system?</summary>
+        <div class="a"><p>One with zeros in the right half-plane. It is stable, but its output starts off in the
+        opposite direction before heading to the final value.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1998.</span>
+          <span class="pq">The Laplace chapter, with the relationship between pole location and time response.</span></li>
+        <li><span class="au">Adel S. Sedra and Kenneth C. Smith.</span> <span class="ti">Microelectronic Circuits</span>.
+          <span class="ed">7th ed. (Spanish edition, “Circuitos microelectrónicos”), Oxford University Press, 2016.</span>
+          <span class="pq">The filters chapter: each classic response with its pole-zero diagram alongside.</span></li>
+        <li><span class="au">Katsuhiko Ogata.</span> <span class="ti">Modern Control Engineering</span>.
+          <span class="ed">5th ed. (Spanish edition, “Ingeniería de control moderna”), Pearson, 2010.</span>
+          <span class="pq">The root locus, which is the study of how the poles move as a gain is varied.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/formula-cauchy">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Cauchy’s integral formula</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/singularidades">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Singularities</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Poles and zeros”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* El diagrama de polos y ceros y la respuesta que produce. A la izquierda el
+   plano s con los vectores que van de cada polo y cada cero hasta el punto de
+   trabajo jw; a la derecha, el modulo en decibeles y la fase desenrollada. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pzLienzo"), ctx = cv.getContext("2d");
+  var R = 2.4, W0 = 1, Q = 0.707;
+
+  function mul(a, b){ return [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]]; }
+  function div(a, b){
+    var m = b[0] * b[0] + b[1] * b[1];
+    if(m < 1e-14) return [1e9, 0];
+    return [(a[0] * b[0] + a[1] * b[1]) / m, (a[1] * b[0] - a[0] * b[1]) / m];
+  }
+
+  function par(){
+    /* el par conjugado de modulo W0 y amortiguamiento 1/(2Q) */
+    var ze = 1 / (2 * Q);
+    if(ze >= 1) return [[-W0 * ze, 0], [-W0 / ze, 0]];      /* sobreamortiguado: dos reales */
+    var im = W0 * Math.sqrt(1 - ze * ze);
+    return [[-W0 * ze, im], [-W0 * ze, -im]];
+  }
+
+  var F = {
+    pb1:   { n:"first-order low-pass", hQ:false,
+             arm:function(){ return { p:[[-W0, 0]], z:[], K:[W0, 0] }; },
+             t:"A single real pole. The response falls 20 dB per decade from ω₀ on and the phase reaches " +
+               "−90°. At ω₀ the magnitude is 3 dB down and the phase is −45°." },
+    pb2:   { n:"second-order low-pass", hQ:true,
+             arm:function(){ return { p:par(), z:[], K:[W0 * W0, 0] }; },
+             t:"The conjugate pair. With Q above 0.707 a peak appears, and the closer to the imaginary " +
+               "axis the poles sit, the higher it is. The final roll-off is 40 dB per decade." },
+    pa2:   { n:"second-order high-pass", hQ:true,
+             arm:function(){ return { p:par(), z:[[0, 0], [0, 0]], K:[1, 0] }; },
+             t:"The same poles, but with two zeros at the origin: the numerator kills the response at " +
+               "DC and leaves it flat at high frequency." },
+    bp:    { n:"band-pass", hQ:true,
+             arm:function(){ return { p:par(), z:[[0, 0]], K:[W0 / Q, 0] }; },
+             t:"A zero at the origin and the conjugate pair. The −3 dB bandwidth is ω₀/Q, so " +
+               "raising Q sharpens the bell." },
+    notch: { n:"notch", hQ:true,
+             arm:function(){ return { p:par(), z:[[0, W0], [0, -W0]], K:[1, 0] }; },
+             t:"The zeros are <b>on</b> the imaginary axis, so at ω₀ the response becomes " +
+               "exactly zero. It is the way to remove the 50 Hz of the power line without touching the rest." },
+    pt:    { n:"all-pass", hQ:false,
+             arm:function(){ return { p:[[-W0, 0]], z:[[W0, 0]], K:[-1, 0] }; },
+             t:"Zero and pole in mirror image. For any ω the two distances are equal, so the magnitude " +
+               "is 1 at all frequencies: the only thing that changes is the phase." }
+  };
+
+  function H(cfg, s){
+    var num = [cfg.K[0], cfg.K[1]], den = [1, 0], i;
+    for(i = 0; i < cfg.z.length; i++) num = mul(num, [s[0] - cfg.z[i][0], s[1] - cfg.z[i][1]]);
+    for(i = 0; i < cfg.p.length; i++) den = mul(den, [s[0] - cfg.p[i][0], s[1] - cfg.p[i][1]]);
+    return div(num, den);
+  }
+
+  function n(x, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(x)) return "—";
+    if(Math.abs(x) > 1e5) return "∞";
+    if(Math.abs(x) < 5 * Math.pow(10, -d - 1)) x = 0;
+    return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+  function cpx(v, d){
+    if(!v || !isFinite(v[0])) return "—";
+    var im = n(Math.abs(v[1]), d);
+    return n(v[0], d) + (v[1] >= 0 || im === "0" ? " + j" : " − j") + im;
+  }
+
+  var WMIN = 0.05, WMAX = 20, DBMIN = -60, DBMAX = 40;
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var d = F[$("pzF").value], verV = $("pzV").checked;
+    var wt = Math.pow(10, parseFloat($("pzW").value));
+    $("pzWv").textContent = n(wt, 2);
+    $("pzQv").textContent = n(Q, 3);
+    $("pzQ").disabled = !d.hQ;
+    $("pzQ").value = Q;
+
+    var cfg = d.arm();
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    var mitad = Wd / 2;
+    var ez = Math.min(mitad, Hd) / (2 * R) * 0.88;
+    var c1 = { x:mitad * 0.58, y:Hd / 2 };
+    function Az(p){ return { x:c1.x + p[0] * ez, y:c1.y - p[1] * ez }; }
+
+    /* ---------------------------------------------- izquierda: el plano s */
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(6, c1.y); ctx.lineTo(mitad - 6, c1.y);
+    ctx.moveTo(c1.x, 8); ctx.lineTo(c1.x, Hd - 8);
+    ctx.stroke();
+    /* el eje imaginario, que es donde se mide */
+    ctx.strokeStyle = "rgba(242,204,96,.35)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(c1.x, 8); ctx.lineTo(c1.x, Hd - 8); ctx.stroke();
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("s-plane", 10, 16);
+
+    var qw = Az([0, wt]);
+    if(verV){
+      cfg.p.forEach(function(p){
+        var q = Az(p);
+        ctx.strokeStyle = "rgba(248,81,73,.55)"; ctx.lineWidth = 1.3;
+        ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(qw.x, qw.y); ctx.stroke();
+      });
+      cfg.z.forEach(function(p){
+        var q = Az(p);
+        ctx.strokeStyle = "rgba(126,231,135,.55)"; ctx.lineWidth = 1.3;
+        ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(qw.x, qw.y); ctx.stroke();
+      });
+    }
+    cfg.p.forEach(function(p){
+      var q = Az(p);
+      ctx.strokeStyle = "#f85149"; ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(q.x - 6, q.y - 6); ctx.lineTo(q.x + 6, q.y + 6);
+      ctx.moveTo(q.x + 6, q.y - 6); ctx.lineTo(q.x - 6, q.y + 6);
+      ctx.stroke();
+    });
+    cfg.z.forEach(function(p){
+      var q = Az(p);
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.arc(q.x, q.y, 6, 0, Math.PI * 2); ctx.stroke();
+    });
+    ctx.fillStyle = "#f2cc60";
+    ctx.beginPath(); ctx.arc(qw.x, qw.y, 4.5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = "600 11px system-ui, sans-serif";
+    ctx.fillText("jω", qw.x + 8, qw.y - 6);
+
+    /* ------------------------------------- derecha: modulo y fase */
+    var x0 = mitad + 34, x1 = Wd - 10, yA0 = 22, yA1 = Hd / 2 - 12, yB0 = Hd / 2 + 16, yB1 = Hd - 20;
+    function X(w){ return x0 + (Math.log(w / WMIN) / Math.log(WMAX / WMIN)) * (x1 - x0); }
+    function YA(db){ return yA1 - (db - DBMIN) / (DBMAX - DBMIN) * (yA1 - yA0); }
+    function YB(f){ return yB1 - (f + 360) / 450 * (yB1 - yB0); }
+
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    [[yA0, yA1], [yB0, yB1]].forEach(function(e){
+      ctx.beginPath();
+      ctx.moveTo(x0, e[0]); ctx.lineTo(x0, e[1]); ctx.lineTo(x1, e[1]); ctx.stroke();
+    });
+    ctx.strokeStyle = "rgba(42,49,64,.8)";
+    [0.1, 1, 10].forEach(function(w){
+      ctx.beginPath();
+      ctx.moveTo(X(w), yA0); ctx.lineTo(X(w), yA1);
+      ctx.moveTo(X(w), yB0); ctx.lineTo(X(w), yB1);
+      ctx.stroke();
+    });
+    ctx.beginPath(); ctx.moveTo(x0, YA(0)); ctx.lineTo(x1, YA(0)); ctx.stroke();
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("dB", mitad + 8, yA0 + 4);
+    ctx.fillText("0", mitad + 14, YA(0) + 3);
+    ctx.fillText("−40", mitad + 6, YA(-40) + 3);
+    ctx.fillText("phase", mitad + 4, yB0 + 4);
+    ctx.fillText("0°", mitad + 12, YB(0) + 3);
+    ctx.fillText("−180°", mitad + 2, YB(-180) + 3);
+    ctx.fillText("0.1", X(0.1) - 6, yB1 + 12);
+    ctx.fillText("1", X(1) - 2, yB1 + 12);
+    ctx.fillText("10", X(10) - 5, yB1 + 12);
+
+    var PASOS = 260, fant = 0, vuelta = 0;
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+    var faseXY = [];
+    for(i = 0; i <= PASOS; i++){
+      var w = WMIN * Math.pow(WMAX / WMIN, i / PASOS);
+      var h = H(cfg, [0, w]);
+      var db = 20 * Math.log(Math.hypot(h[0], h[1])) / Math.LN10;
+      db = Math.max(DBMIN, Math.min(DBMAX, db));
+      var q = { x:X(w), y:YA(db) };
+      if(i === 0) ctx.moveTo(q.x, q.y); else ctx.lineTo(q.x, q.y);
+      var f = Math.atan2(h[1], h[0]) * 180 / Math.PI;
+      if(i > 0){
+        var dif = f + vuelta - fant;
+        if(dif > 180) vuelta -= 360;
+        if(dif < -180) vuelta += 360;
+      }
+      fant = f + vuelta;
+      faseXY.push([q.x, Math.max(yB0, Math.min(yB1, YB(fant)))]);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = "#d2a8ff"; ctx.lineWidth = 2; ctx.beginPath();
+    faseXY.forEach(function(p, k){ if(k === 0) ctx.moveTo(p[0], p[1]); else ctx.lineTo(p[0], p[1]); });
+    ctx.stroke();
+
+    /* el punto de trabajo */
+    var ht = H(cfg, [0, wt]);
+    var dbt = 20 * Math.log(Math.hypot(ht[0], ht[1])) / Math.LN10;
+    var fat = Math.atan2(ht[1], ht[0]) * 180 / Math.PI;
+    ctx.strokeStyle = "rgba(242,204,96,.6)"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(X(wt), yA0); ctx.lineTo(X(wt), yA1);
+    ctx.moveTo(X(wt), yB0); ctx.lineTo(X(wt), yB1);
+    ctx.stroke();
+    ctx.fillStyle = "#f2cc60";
+    ctx.beginPath();
+    ctx.arc(X(wt), YA(Math.max(DBMIN, Math.min(DBMAX, dbt))), 4, 0, Math.PI * 2); ctx.fill();
+
+    /* --------------------------------------------------------- los numeros */
+    var pico = "—";
+    if(d.hQ && Q > 0.7072) pico = n(W0 * Math.sqrt(1 - 1 / (2 * Q * Q)), 3) + " rad/s";
+    $("pzDatos").innerHTML =
+      "<span>Configuration</span><b>" + d.n + "</b>" +
+      '<hr><span style="color:#f85149">Poles</span><b>' +
+        cfg.p.map(function(p){ return cpx(p); }).join("  ·  ") + "</b>" +
+      '<span style="color:#7ee787">Zeros</span><b>' +
+        (cfg.z.length ? cfg.z.map(function(p){ return cpx(p); }).join("  ·  ") : "none") + "</b>" +
+      '<hr><span style="color:#f2cc60">At ω = ' + n(wt, 2) + " rad/s</span><b>" +
+        (isFinite(dbt) ? n(dbt, 1) + " dB" : "null, −∞ dB") + "  ·  " + n(fat, 1) + "°</b>" +
+      "<span>ω₀  ·  Q</span><b>" + n(W0, 2) + " rad/s  ·  " + (d.hQ ? n(Q, 2) : "n/a") + "</b>" +
+      "<span>Peak frequency</span><b>" + pico + "</b>";
+
+    var txt = d.t;
+    if(d.hQ && Q > 5)
+      txt += " With such a high Q the poles sit right against the imaginary axis: the peak shoots up and the time " +
+             "response takes a very long time to die out.";
+    if(cfg.p.some(function(p){ return p[0] > -1e-9; }))
+      txt += " <b>Warning:</b> there is a pole on the imaginary axis or to its right. The circuit is no longer " +
+             "stable.";
+    txt += " Click or tap the left plane to move the poles: the distance to the origin sets ω₀ and the " +
+           "angle sets Q.";
+    $("pzNota").innerHTML = txt;
+  }
+
+  cv.addEventListener("click", function(ev){
+    var r = cv.getBoundingClientRect();
+    var mitad = r.width / 2, esc = Math.min(mitad, r.height) / (2 * R) * 0.88;
+    if(ev.clientX - r.left > mitad) return;
+    var cx = mitad * 0.58;
+    var x = (ev.clientX - r.left - cx) / esc, y = (r.height / 2 - (ev.clientY - r.top)) / esc;
+    var m = Math.hypot(x, y);
+    if(m < 0.05) return;
+    W0 = Math.max(0.06, Math.min(8, m));
+    if(F[$("pzF").value].hQ){
+      var ze = Math.max(0.042, Math.min(0.999, -x / m));
+      Q = 1 / (2 * ze);
+      Q = Math.max(0.5, Math.min(12, Q));
+    }
+    pintar();
+  });
+  $("pzQ").addEventListener("input", function(){ Q = parseFloat($("pzQ").value); pintar(); });
+  ["pzF", "pzV", "pzW"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

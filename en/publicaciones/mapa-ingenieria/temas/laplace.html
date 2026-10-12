@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Laplace transform · Signals and Systems · Catto</title>
+<meta name="description" content="The Laplace transform, the region of convergence and why the transform is incomplete without it, the unilateral version with initial conditions, generalized impedances and the initial and final value theorems, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/laplace">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/laplace">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/laplace">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/laplace">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 33 of 34</div>
+    <h1>The Laplace transform</h1>
+    <p class="lead">Fourier leaves out everything that grows. Laplace adds a convergence factor, and with it the step, unstable systems and initial conditions come in. The price is that you always have to say where it converges.</p>
+    <div class="chips">
+      <span class="chip hi">Laplace</span>
+      <span class="chip">Region of convergence</span>
+      <span class="chip">Unilateral</span>
+      <span class="chip">Impedances</span>
+      <span class="chip">Final value</span>
+    </div>
+    <hr class="rule">
+
+    <section id="porque">
+      <h2><span class="n">01</span>What for, if we already have Fourier</h2>
+      <p>The Fourier transform requires the signal to be absolutely integrable, and that leaves out
+      such common things as the step or a growing exponential. Laplace’s solution is to multiply by
+      a convergence factor \( e^{-\sigma t} \) before transforming:</p>
+      <div class="form">
+        \[ X(s) = \int_{-\infty}^{\infty} x(t)\,e^{-st}\,dt, \qquad s = \sigma + j\omega \]
+        <span class="cap">With \( \sigma = 0 \) you get exactly the Fourier transform. Laplace contains it as a particular case.</span>
+      </div>
+      <p>That \( \sigma \) is what does the work: if the signal grows, you choose a \( \sigma \) large enough
+      for the product to decay and the integral to converge. The price is that now you have to state
+      <b>for which values of \( \sigma \) it converges</b>, and that is the region of convergence.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>What Laplace adds</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td>Transforms growing signals</td><td>Makes it possible to analyze unstable systems</td></tr>
+          <tr><td>Handles initial conditions</td><td>A charged capacitor enters the calculation</td></tr>
+          <tr><td>Turns the differential equation into an algebraic one</td><td>Solving circuits is just solving for the unknown</td></tr>
+          <tr><td>Gives poles and zeros</td><td>The whole reading of stability and response</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="roc">
+      <h2><span class="n">02</span>The region of convergence, which is not a detail</h2>
+      <p>Here is what is hardest about Laplace and what gets skipped most: <b>\( X(s) \) alone does not determine the
+      signal</b>. The region of convergence is also needed, and with the same algebraic expression and different
+      regions you get completely different signals.</p>
+      <div class="lw" id="lp">
+        <div class="lt">Lab · the same X(s), three signals</div>
+        <p class="ls">On the left the \( s \)-plane with the poles and the region of convergence shaded; on the right, the corresponding signal in time. Change the region and watch how the signal changes without a single pole moving.</p>
+        <div class="fila">
+          <select id="lpF">
+            <option value="dos">X(s) = 1 / ((s+1)(s−2))</option>
+            <option value="uno">X(s) = 1 / (s+1)</option>
+            <option value="ines">X(s) = 1 / (s−1)</option>
+          </select>
+          <select id="lpR">
+            <option value="der">region to the right of all the poles</option>
+            <option value="med">the strip in the middle</option>
+            <option value="izq">region to the left of all of them</option>
+          </select>
+        </div>
+        <canvas id="lpLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:1.8/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16"></canvas>
+        <div class="datos" id="lpDatos" style="margin-top:8px"></div>
+        <div class="nota" id="lpNota"></div>
+      </div>
+      <p>It pays to keep the three rules that summarize all this together:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>If the region…</th><th>Then the signal…</th></tr></thead>
+        <tbody>
+          <tr><td>Is to the right of all the poles</td><td>Is <b>causal</b>: it is zero before \( t = 0 \)</td></tr>
+          <tr><td>Is to the left of all of them</td><td>Is anticausal: it is zero after \( t = 0 \)</td></tr>
+          <tr><td>Is a strip between poles</td><td>Is two-sided: it extends to both sides</td></tr>
+          <tr><td><b>Contains the \( j\omega \) axis</b></td><td>Has a Fourier transform, and the system is <b>stable</b></td></tr>
+        </tbody>
+      </table></div>
+      <p>The last row is the connection between the two transforms, and also the stability criterion:
+      a causal system is stable if and only if all of its poles are to the left of the imaginary axis,
+      because only then does the causal region —which starts at the rightmost pole— manage to cover it.</p>
+    </section>
+
+    <section id="unilateral">
+      <h2><span class="n">03</span>The one-sided transform, which is the one used in circuits</h2>
+      <p>For problems with initial conditions, the version that integrates from zero is used:</p>
+      <div class="form">
+        \[ X(s) = \int_{0^{-}}^{\infty} x(t)\,e^{-st}\,dt \]
+      </div>
+      <p>Its appeal lies in how it transforms the derivative, because that is where the past of the circuit enters:</p>
+      <div class="form">
+        \[ \mathcal{L}\left\{\frac{dx}{dt}\right\} = s\,X(s) - x(0^{-}),
+           \qquad
+           \mathcal{L}\left\{\int_{0}^{t} x\,d\tau\right\} = \frac{X(s)}{s} \]
+        <span class="cap">The \( x(0^-) \) is the initial condition. That is why a charged capacitor or an inductor carrying current appear in the calculation without adding anything by hand.</span>
+      </div>
+      <p>With that, a circuit is solved as if it were resistive, using <b>generalized impedances</b>:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Element</th><th>Impedance</th><th>The initial condition appears as</th></tr></thead>
+        <tbody>
+          <tr><td>Resistor</td><td>\( R \)</td><td>It has none</td></tr>
+          <tr><td>Capacitor</td><td>\( 1/(sC) \)</td><td>A voltage source \( v_C(0)/s \) in series</td></tr>
+          <tr><td>Inductor</td><td>\( sL \)</td><td>A voltage source \( L\,i_L(0) \) in series</td></tr>
+        </tbody>
+      </table></div>
+      <div class="box key"><div class="bt">The initial and final value theorems</div>
+        <p>Two shortcuts that avoid inverse transforming when only the endpoints matter:
+        \( x(0^+) = \lim_{s\to\infty} sX(s) \) and \( x(\infty) = \lim_{s\to 0} sX(s) \). The second has a
+        condition that is often forgotten: <b>it holds only if the system is stable</b>. Applied to something that
+        oscillates or grows, it gives a number that means nothing.</p>
+      </div>
+    </section>
+
+    <section id="antitransformar">
+      <h2><span class="n">04</span>Back to the time domain</h2>
+      <p>For rational functions, which is what comes out of any circuit, the way is partial fractions:
+      you factor the denominator, split into terms of one pole each, and inverse transform each term
+      using the table. And we have already seen that <a class="ref"
+      href="/en/publicaciones/mapa-ingenieria/temas/residuos">the coefficients of those fractions are the
+      residues</a>, so the two techniques are the same.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>\( X(s) \)</th><th>\( x(t) \) for \( t \ge 0 \)</th></tr></thead>
+        <tbody>
+          <tr><td>\( 1/s \)</td><td>\( 1 \), the step</td></tr>
+          <tr><td>\( 1/s^2 \)</td><td>\( t \), the ramp</td></tr>
+          <tr><td>\( 1/(s+a) \)</td><td>\( e^{-at} \)</td></tr>
+          <tr><td>\( 1/(s+a)^2 \)</td><td>\( t\,e^{-at} \)</td></tr>
+          <tr><td>\( \omega/(s^2+\omega^2) \)</td><td>\( \operatorname{sin}\omega t \)</td></tr>
+          <tr><td>\( \dfrac{\omega}{(s+a)^2+\omega^2} \)</td><td>\( e^{-at}\operatorname{sin}\omega t \)</td></tr>
+          <tr><td>\( e^{-sT}X(s) \)</td><td>\( x(t-T) \), the delayed signal</td></tr>
+        </tbody>
+      </table></div>
+      <p>The fourth row explains where the \( t\,e^{-at} \) of a double pole comes from, and the last one is the one that
+      makes it possible to handle delays: an \( e^{-sT} \) in the transfer function is a dead time, and it is what makes a system with
+      transport delay non-rational.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Solving an RLC with initial conditions</div>
+        <p>Set up a series RLC with the capacitor charged to 5 V, write the transformed circuit with the
+        initial-condition sources, solve for \( V_C(s) \) and inverse transform. Compare with the measurement on
+        the oscilloscope.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Initial and final value</div>
+        <p>For \( V(s) = \dfrac{10(s+2)}{s(s^2+3s+2)} \), apply the two theorems and then inverse transform
+        to verify. Repeat with a denominator that has a pole in the right half-plane and explain why
+        the final value theorem fails.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · The region matters</div>
+        <p>For \( X(s) = \dfrac{1}{(s+1)(s-2)} \), write the three possible signals according to the region of
+        convergence and decide which of the three has a Fourier transform.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Giving \( X(s) \) without the region of convergence.</b> The expression alone does not determine the
+        signal.</li>
+        <li><b>Forgetting the initial condition</b> when transforming a derivative in the one-sided
+        version.</li>
+        <li><b>Applying the final value theorem to an unstable system.</b> It returns a meaningless
+        number.</li>
+        <li><b>Confusing a pole with a zero of the transformed denominator.</b> It is best to always
+        factor.</li>
+        <li><b>Believing that Fourier and Laplace are different things.</b> Fourier is Laplace on the imaginary
+        axis, when that axis is inside the region.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What does Laplace add compared with Fourier?</summary>
+        <div class="a"><p>The factor \( e^{-\sigma t} \), which makes it possible to transform growing signals and to handle
+        initial conditions.</p></div></details>
+      <details class="q"><summary>Why is the region of convergence needed?</summary>
+        <div class="a"><p>Because the same \( X(s) \) with different regions corresponds to different
+        signals.</p></div></details>
+      <details class="q"><summary>When does the Fourier transform exist?</summary>
+        <div class="a"><p>When the region of convergence contains the imaginary axis. For a causal
+        system, that is equivalent to its being stable.</p></div></details>
+      <details class="q"><summary>How does a charged capacitor enter the calculation?</summary>
+        <div class="a"><p>As an impedance \( 1/(sC) \) in series with a source
+        \( v_C(0)/s \).</p></div></details>
+      <details class="q"><summary>What is \( \mathcal{L}^{-1}\{1/(s+a)^2\} \)?</summary>
+        <div class="a"><p>\( t\,e^{-at} \). That is the term contributed by a double pole.</p></div></details>
+      <details class="q"><summary>What does an \( e^{-sT} \) represent in a transfer function?</summary>
+        <div class="a"><p>A pure delay of \( T \) seconds. It is not rational, and that is why it is approximated with a
+        Padé approximant.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1997.</span>
+          <span class="pq">Chapter 9, with the careful treatment of the region of convergence that most books omit.</span></li>
+        <li><span class="au">Charles K. Alexander and Matthew N. O. Sadiku.</span> <span class="ti">Fundamentals of Electric Circuits</span>.
+          <span class="ed">7th ed. (Spanish edition, “Fundamentos de circuitos eléctricos”), McGraw-Hill, 2021.</span>
+          <span class="pq">Laplace applied to circuits, with the initial-condition sources and many examples.</span></li>
+        <li><span class="au">Katsuhiko Ogata.</span> <span class="ti">Modern Control Engineering</span>.
+          <span class="ed">5th ed. (Spanish edition, “Ingeniería de control moderna”), Prentice Hall, 2010.</span>
+          <span class="pq">The table of transforms and the initial and final value theorems, with their conditions of validity.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/convolucion-modulacion">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Convolution and modulation theorems</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/transformada-z">
+        <div class="dir">Next topic →</div>
+        <div class="tt">The Z-transform and notions of filtering</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“The Laplace transform”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* The same X(s), three signals. On the left the s-plane with the poles and the
+   shaded region of convergence; on the right, the signal that corresponds to
+   that region. The poles do not move: the only thing that changes is the region, and the
+   signal is a different one. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("lpLienzo"), ctx = cv.getContext("2d");
+  var R = 3.6, TM = 3;
+
+  var F = {
+    dos:  { n:"1 / ((s+1)(s−2))", polos:[-1, 2],
+            /* partial fractions: −1/3 at s=−1 and +1/3 at s=2 */
+            res:[-1 / 3, 1 / 3],
+            regiones:{
+              der:{ n:"Re(s) > 2", a:2, b:99, causal:[true, true],
+                    t:"To the right of both poles: causal signal. But one of the poles is in the " +
+                      "right half-plane, so the exponential grows and the system is unstable." },
+              med:{ n:"−1 < Re(s) < 2", a:-1, b:2, causal:[true, false],
+                    t:"The strip in the middle contains the imaginary axis: <b>this is the only one of the three that " +
+                      "has a Fourier transform</b>, and the only stable one. In exchange, it is not causal: the " +
+                      "signal exists before t = 0." },
+              izq:{ n:"Re(s) < −1", a:-99, b:-1, causal:[false, false],
+                    t:"To the left of both: anticausal signal, which is zero for positive t. It is " +
+                      "mathematically valid and physically useless, but it shows up when analyzing systems " +
+                      "backward in time." }
+            } },
+    uno:  { n:"1 / (s+1)", polos:[-1], res:[1],
+            regiones:{
+              der:{ n:"Re(s) > −1", a:-1, b:99, causal:[true],
+                    t:"The usual decaying exponential. The region contains the imaginary axis, so " +
+                      "Fourier exists and the system is stable." },
+              med:{ n:"Re(s) > −1", a:-1, b:99, causal:[true],
+                    t:"With a single pole there are only two possible regions: on one side or the other." },
+              izq:{ n:"Re(s) < −1", a:-99, b:-1, causal:[false],
+                    t:"The same expression, read backward: a growing exponential that lives in the " +
+                      "past. It does not contain the imaginary axis, so it has no Fourier transform." }
+            } },
+    ines: { n:"1 / (s−1)", polos:[1], res:[1],
+            regiones:{
+              der:{ n:"Re(s) > 1", a:1, b:99, causal:[true],
+                    t:"Causal but with the pole on the right: the signal grows without bound. The region does not " +
+                      "reach the imaginary axis, and that is why there is neither Fourier nor stability." },
+              med:{ n:"Re(s) > 1", a:1, b:99, causal:[true],
+                    t:"With a single pole there are only two regions." },
+              izq:{ n:"Re(s) < 1", a:-99, b:1, causal:[false],
+                    t:"Anticausal, and here the region does contain the imaginary axis: this version has a " +
+                      "Fourier transform. A pole on the right does not prevent stability if the signal " +
+                      "is anticausal." }
+            } }
+  };
+
+  function n(v, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(v)) return "—";
+    if(Math.abs(v) < 5 * Math.pow(10, -d - 1)) v = 0;
+    return (Math.round(v * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i, k;
+    var d = F[$("lpF").value], reg = d.regiones[$("lpR").value];
+
+    /* the signal: each pole contributes its exponential, causal or anticausal depending
+       on which side the region ended up on */
+    function x(t){
+      var v = 0;
+      for(k = 0; k < d.polos.length; k++){
+        var p = d.polos[k], A = d.res[k];
+        if(reg.causal[k]){ if(t >= 0) v += A * Math.exp(p * t); }
+        else { if(t < 0) v -= A * Math.exp(p * t); }
+      }
+      return v;
+    }
+
+    var mitad = Wd * 0.44;
+    ctx.clearRect(0, 0, Wd, Hd);
+
+    /* ------------------------------------------- left: the s-plane */
+    var cs = { x:mitad * 0.5, y:Hd / 2 };
+    var es = Math.min(mitad, Hd) / (2 * R) * 0.82;
+    function XS(v){ return cs.x + v * es; }
+    var xa = Math.max(10, XS(reg.a)), xb = Math.min(mitad - 10, XS(reg.b));
+    ctx.fillStyle = "rgba(126,231,135,.13)";
+    ctx.fillRect(xa, 10, Math.max(0, xb - xa), Hd - 20);
+    ctx.strokeStyle = "rgba(126,231,135,.45)"; ctx.lineWidth = 1.4;
+    [xa, xb].forEach(function(xx){
+      if(xx > 11 && xx < mitad - 11){
+        ctx.beginPath(); ctx.moveTo(xx, 10); ctx.lineTo(xx, Hd - 10); ctx.stroke();
+      }
+    });
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(10, cs.y); ctx.lineTo(mitad - 10, cs.y); ctx.stroke();
+    /* the imaginary axis, highlighted: if it is inside the region there is Fourier */
+    var dentro = reg.a < 0 && reg.b > 0;
+    ctx.strokeStyle = dentro ? "#f2cc60" : "rgba(242,204,96,.3)";
+    ctx.lineWidth = dentro ? 2.4 : 1.4;
+    ctx.beginPath(); ctx.moveTo(cs.x, 12); ctx.lineTo(cs.x, Hd - 12); ctx.stroke();
+    d.polos.forEach(function(p){
+      var q = XS(p);
+      ctx.strokeStyle = "#f85149"; ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(q - 7, cs.y - 7); ctx.lineTo(q + 7, cs.y + 7);
+      ctx.moveTo(q + 7, cs.y - 7); ctx.lineTo(q - 7, cs.y + 7);
+      ctx.stroke();
+      ctx.fillStyle = "#f85149"; ctx.font = "600 10px system-ui, sans-serif";
+      ctx.fillText(n(p, 0), q - 4, cs.y + 22);
+    });
+    ctx.fillStyle = "#7ee787"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("the region", 12, 15);
+    ctx.fillStyle = dentro ? "#f2cc60" : "#6b7484";
+    ctx.fillText("jω axis", cs.x + 5, Hd - 14);
+
+    /* ---------------------------------------------- right: the signal */
+    var x0 = mitad + 30, x1 = Wd - 12, yc = Hd / 2, alto = Hd * 0.33;
+    function XT(t){ return x0 + (t + TM) / (2 * TM) * (x1 - x0); }
+    var mx = 0.3;
+    for(i = 0; i <= 400; i++) mx = Math.max(mx, Math.abs(x(-TM + 2 * TM * i / 400)));
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x0, yc); ctx.lineTo(x1, yc);
+    ctx.moveTo(XT(0), yc - alto * 1.2); ctx.lineTo(XT(0), yc + alto * 1.2);
+    ctx.stroke();
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    var ant = null;
+    for(i = 0; i <= 900; i++){
+      var t = -TM + 2 * TM * i / 900, v = x(t);
+      var q2 = { x:XT(t), y:Math.max(yc - alto * 1.15, Math.min(yc + alto * 1.15, yc - v / mx * alto)) };
+      if(ant !== null && Math.abs(v - ant) > mx * 0.5) ctx.moveTo(q2.x, q2.y);
+      else if(i === 0) ctx.moveTo(q2.x, q2.y);
+      else ctx.lineTo(q2.x, q2.y);
+      ant = v;
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#58a6ff"; ctx.font = "600 10px system-ui, sans-serif";
+    ctx.fillText("x(t)", x0, 15);
+    ctx.fillStyle = "#6b7484"; ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText("0", XT(0) - 3, yc + alto * 1.2 + 12);
+    ctx.fillText("t →", x1 - 20, yc + alto * 1.2 + 12);
+
+    /* type of signal */
+    var todosCausales = reg.causal.every(function(c){ return c; });
+    var ningunoCausal = reg.causal.every(function(c){ return !c; });
+    var tipo = todosCausales ? "causal" : (ningunoCausal ? "anticausal" : "two-sided");
+    /* it grows if any active term has an exponent that does not decay toward its side */
+    var crece = false;
+    for(k = 0; k < d.polos.length; k++){
+      if(reg.causal[k] && d.polos[k] > 0) crece = true;
+      if(!reg.causal[k] && d.polos[k] < 0) crece = true;
+    }
+
+    $("lpDatos").innerHTML =
+      "<span>X(s)</span><b>" + d.n + "</b>" +
+      '<span style="color:#f85149">Poles</span><b>' +
+        d.polos.map(function(p){ return "s = " + n(p, 0); }).join("   ·   ") + "</b>" +
+      '<hr><span style="color:#7ee787">Region of convergence</span><b>' + reg.n + "</b>" +
+      "<span>Type of signal</span><b>" + tipo + (crece ? "   ·   grows without bound" : "   ·   dies out") +
+        "</b>" +
+      '<hr><span style="color:#f2cc60">Does it contain the jω axis?</span><b>' +
+        (dentro ? "yes" : "no") + "</b>" +
+      "<span>Does it have Fourier?   ·   is it stable?</span><b>" +
+        (dentro ? "yes to both" : "no to both") + "</b>";
+
+    $("lpNota").innerHTML = reg.t + " Notice that the poles <b>did not move</b>: the algebraic expression " +
+      "is the same in all three cases. The only thing that changes is the region, and with it the signal. That is why a " +
+      "Laplace transform without its region of convergence is incomplete.";
+  }
+
+  ["lpF", "lpR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

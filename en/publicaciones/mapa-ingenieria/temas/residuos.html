@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The residue theorem · Signals and Systems · Catto</title>
+<meta name="description" content="The residue theorem, the three formulas for computing residues, their relation to partial fractions and the inverse Laplace transform as a sum of residues, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/residuos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/residuos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/residuos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/residuos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 11 of 34</div>
+    <h1>The residue theorem</h1>
+    <p class="lead">An integral over an entire curve is reduced to adding up a few numbers, one per singularity. And you already knew those numbers: they are the coefficients of the partial fraction expansion.</p>
+    <div class="chips">
+      <span class="chip hi">Residues</span>
+      <span class="chip">Laurent</span>
+      <span class="chip">Partial fractions</span>
+      <span class="chip">Inverse transform</span>
+      <span class="chip">Bromwich</span>
+    </div>
+    <hr class="rule">
+
+    <section id="enunciado">
+      <h2><span class="n">01</span>It all comes down to one coefficient</h2>
+      <p>When the Laurent series is integrated term by term over a closed contour, all the terms give
+      zero except one: the \( 1/(z - z_0) \) term, which gives \( 2\pi j \). That coefficient, the \( b_1 \) of the
+      expansion, is the <b>residue</b>, and it is the only thing about the function that survives the integral.</p>
+      <div class="form">
+        \[ \oint_C f(z)\,dz = 2\pi j \sum_{k} \operatorname{Res}\big(f, z_k\big) \]
+        <span class="cap">The sum runs over the singularities enclosed by \( C \), traversed once counterclockwise.</span>
+      </div>
+      <p>It is a result of remarkable economy: an integral over an entire curve is reduced to adding up
+      a few numbers, one per singularity inside. Everything else —the shape of the contour, the
+      behavior of the function far from the poles— plays no part.</p>
+      <div class="box key"><div class="bt">You have been using it under another name</div>
+        <p>When a rational function is decomposed into partial fractions, the coefficients obtained
+        <b>are</b> the residues. The expansion \( \frac{1}{(s+1)(s+2)} = \frac{1}{s+1} - \frac{1}{s+2} \) says
+        that the residue at \( -1 \) is 1 and the one at \( -2 \) is \( -1 \). The residue method is the general
+        version of a calculation you already did in Calculus.</p></div>
+    </section>
+
+    <section id="calcular">
+      <h2><span class="n">02</span>The three ways to compute it</h2>
+      <p>There is no need to expand the full series. Depending on the case:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Case</th><th>Formula</th></tr></thead>
+        <tbody>
+          <tr><td>Simple pole</td>
+              <td>\( \operatorname{Res} = \lim_{z \to z_0} (z - z_0)\,f(z) \)</td></tr>
+          <tr><td>Simple pole with \( f = g/h \)</td>
+              <td>\( \operatorname{Res} = \dfrac{g(z_0)}{h'(z_0)} \)</td></tr>
+          <tr><td>Pole of order \( m \)</td>
+              <td>\( \operatorname{Res} = \dfrac{1}{(m-1)!}\lim_{z \to z_0}
+                  \dfrac{d^{\,m-1}}{dz^{\,m-1}}\Big[(z - z_0)^{m} f(z)\Big] \)</td></tr>
+          <tr><td>Essential singularity</td>
+              <td>No shortcut: you have to expand the Laurent series and read \( b_1 \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>The second row is the one most used in practice and worth keeping at hand: with
+      \( f(z) = 1/(z^3 - 1) \), the denominator has derivative \( 3z^2 \), so the residue at each cube
+      root of unity is \( 1/(3z_k^2) \). And since \( z_k^3 = 1 \), that simplifies to \( z_k/3 \). The
+      three residues add up to zero, and that is why a contour that encloses all three gives zero.</p>
+      <div class="box ojo"><div class="bt">A zero residue is not the same as having no pole</div>
+        <p>\( 1/z^2 \) has a double pole at the origin and residue <b>zero</b>, because its expansion has no
+        \( 1/z \) term. The pole is there, but it contributes nothing to the integral. Confusing the two things leads to
+        wrong conclusions about which singularities matter.</p></div>
+    </section>
+
+    <section id="lab">
+      <h2><span class="n">03</span>Each pole contributes its share</h2>
+      <div class="lw" id="rs">
+        <div class="lt">Lab · the sum of the contributions</div>
+        <p class="ls">On the left, the contour and the poles; on the right, the contributions \( 2\pi j \operatorname{Res} \) chained one after another. The end of the chain is the value of the integral, and the yellow point is what the numerical calculation over the contour gives. Click or tap the canvas to move the center.</p>
+        <div class="fila">
+          <select id="rsF">
+            <option value="dos">f(z) = 1/(z² − 1)</option>
+            <option value="cubo">f(z) = 1/(z³ − 1)</option>
+            <option value="imag">f(z) = 1/(z² + 1)</option>
+            <option value="dobl">f(z) = (z + 2)/(z²(z − 1))</option>
+            <option value="expo">f(z) = e^z/(z(z − 1))</option>
+          </select>
+        </div>
+        <div class="fila">
+          <label for="rsR">Contour radius = <b id="rsRv">1.50</b></label>
+          <input type="range" id="rsR" min="0.2" max="2.2" step="0.01" value="1.5">
+        </div>
+        <canvas id="rsLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:2/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16;cursor:crosshair"></canvas>
+        <div class="datos" id="rsDatos" style="margin-top:8px"></div>
+        <div class="nota" id="rsNota"></div>
+      </div>
+    </section>
+
+    <section id="laplace">
+      <h2><span class="n">04</span>What it is really for: inverse transforms</h2>
+      <p>The inverse Laplace transform is defined as a line integral along a vertical line to the
+      right of all the poles —the Bromwich line—:</p>
+      <div class="form">
+        \[ f(t) = \frac{1}{2\pi j}\int_{\sigma - j\infty}^{\sigma + j\infty} F(s)\,e^{st}\,ds \]
+      </div>
+      <p>Nobody computes it that way. What is done is to close the contour with a semicircle on the left, which
+      by the ML bound contributes zero as the radius grows, and apply the residue theorem to the closed contour
+      that results. The outcome is the formula that is always used:</p>
+      <div class="form">
+        \[ f(t) = \sum_{k} \operatorname{Res}\Big[F(s)\,e^{st}\Big]_{s = p_k} \]
+        <span class="cap">The time response is the sum of the contributions of the poles. Each one brings its own \( e^{p_k t} \).</span>
+      </div>
+      <p>With \( F(s) = \dfrac{1}{(s+1)(s+2)} \), the residue at \( s = -1 \) is \( e^{-t} \) and the one at
+      \( s = -2 \) is \( -e^{-2t} \), so \( f(t) = e^{-t} - e^{-2t} \). It is the same answer that the
+      table gives, obtained without a table.</p>
+      <p>And here the circle closes, the one that began with
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/polos-y-ceros">poles and zeros</a>: each pole of
+      the transfer function contributes an exponential term to the response, and the residue is precisely
+      how much amplitude it does so with. A pole with a small residue is there but is barely noticeable.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Three paths to the same number</div>
+        <p>Compute \( \operatorname{Res}\big(1/(z^2+1),\, j\big) \) in the three ways: by the limit, by
+        \( g/h' \) and by expanding in partial fractions. Verify that all three give \( -j/2 \).</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Inverse transform without a table</div>
+        <p>For \( F(s) = \dfrac{s+3}{s(s+1)(s+2)} \), compute the three residues of \( F(s)e^{st} \) and build
+        \( f(t) \). Check the initial and final values with the corresponding theorems.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · The double pole</div>
+        <p>Inverse-transform \( F(s) = \dfrac{1}{(s+1)^2(s+2)} \) using the formula for a pole of order 2.
+        Verify that a \( t\,e^{-t} \) term appears and compare it with the measured response of a critically
+        damped RLC.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Adding residues of poles that ended up outside.</b> Only those enclosed by the
+        contour count.</li>
+        <li><b>Using the simple-pole formula on a multiple pole.</b> The limit gives infinity; you have to differentiate
+        \( m-1 \) times.</li>
+        <li><b>Forgetting the \( (m-1)! \)</b> in the formula for a pole of order \( m \).</li>
+        <li><b>Confusing a zero residue with the absence of a pole.</b> \( 1/z^2 \) has a pole and residue
+        zero.</li>
+        <li><b>Inverse-transforming without checking that the semicircle contributes zero.</b> If the degree of the numerator is
+        not less than that of the denominator, the polynomial part has to be separated first.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What is the residue, in one line?</summary>
+        <div class="a"><p>The coefficient of \( 1/(z-z_0) \) in the Laurent series: the only term that
+        survives integration over a closed contour.</p></div></details>
+      <details class="q"><summary>What is \( \operatorname{Res}(1/(z^2+1),\, j) \)?</summary>
+        <div class="a"><p>\( 1/(2j) = -j/2 \), using \( g/h' \) with \( h' = 2z \).</p></div></details>
+      <details class="q"><summary>What does \( \oint dz/(z^3-1) \) give over \( |z| = 2 \)?</summary>
+        <div class="a"><p>Zero: it encloses the three poles, and their residues \( z_k/3 \) add up to zero because the three
+        cube roots of unity add up to zero.</p></div></details>
+      <details class="q"><summary>How is the residue computed at a pole of order 2?</summary>
+        <div class="a"><p>Multiply by \( (z-z_0)^2 \), differentiate once and take the limit. The
+        \( (m-1)! \) is 1 in this case.</p></div></details>
+      <details class="q"><summary>What is the relationship between residues and partial fractions?</summary>
+        <div class="a"><p>They are the same thing: the coefficients of the partial fraction decomposition are the
+        residues at each pole.</p></div></details>
+      <details class="q"><summary>How do you inverse-transform with residues?</summary>
+        <div class="a"><p>\( f(t) = \sum \operatorname{Res}[F(s)e^{st}] \) at the poles of \( F \). Each pole
+        contributes its exponential, with the amplitude given by its residue.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Ruel V. Churchill and James W. Brown.</span> <span class="ti">Complex Variables and Applications</span>.
+          <span class="ed">7th ed. (Spanish edition, “Variable compleja y aplicaciones”), McGraw-Hill, 2004.</span>
+          <span class="pq">The residue theorem with its computation formulas and the chapter on integral transforms.</span></li>
+        <li><span class="au">Murray R. Spiegel.</span> <span class="ti">Complex Variables</span>.
+          <span class="ed">Schaum’s Outline Series (Spanish edition, “Variable compleja”), McGraw-Hill, 2011.</span>
+          <span class="pq">Residues applied to dozens of integrals, organized by type of problem.</span></li>
+        <li><span class="au">Alan V. Oppenheim and Alan S. Willsky.</span> <span class="ti">Signals and Systems</span>.
+          <span class="ed">2nd ed. (Spanish edition, “Señales y sistemas”), Prentice Hall, 1998.</span>
+          <span class="pq">The inverse Laplace transform, with the relationship between residues and partial fractions.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/singularidades">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Singularities</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/residuos-aplicaciones">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Residues applied to real integrals</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“The residue theorem”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* El teorema de los residuos, aporte por aporte. Los residuos se calculan
+   numericamente integrando sobre una circunferencia chiquita alrededor de cada
+   polo, y a la derecha se encadenan los vectores 2*pi*j*Res de los polos que
+   quedaron adentro. El extremo de la cadena tiene que caer sobre el valor que
+   da la integral calculada sobre el contorno grande. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("rsLienzo"), ctx = cv.getContext("2d");
+  var R = 2.6, C = { x:0, y:0 }, NC = 2400, NR = 900, RCHICO = 0.015;
+
+  function mul(a, b){ return [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]]; }
+  function div(a, b){
+    var m = b[0] * b[0] + b[1] * b[1];
+    if(m < 1e-300) return [NaN, NaN];
+    return [(a[0] * b[0] + a[1] * b[1]) / m, (a[1] * b[0] - a[0] * b[1]) / m];
+  }
+  function prod(ls){
+    var r = [1, 0], i;
+    for(i = 0; i < ls.length; i++) r = mul(r, ls[i]);
+    return r;
+  }
+
+  var C3 = Math.cos(2 * Math.PI / 3), S3 = Math.sin(2 * Math.PI / 3);
+
+  var F = {
+    dos:  { n:"1/(z² − 1)", pol:[[1, 0], [-1, 0]],
+            f:function(p){ return div([1, 0], prod([[p[0] - 1, p[1]], [p[0] + 1, p[1]]])); },
+            t:"Two simple poles with residues 1/2 and −1/2. Enclosing both, the contributions cancel and the " +
+              "chain returns to the origin." },
+    cubo: { n:"1/(z³ − 1)", pol:[[1, 0], [C3, S3], [C3, -S3]],
+            f:function(p){
+              var z = [p[0], p[1]], z3 = mul(z, mul(z, z));
+              return div([1, 0], [z3[0] - 1, z3[1]]);
+            },
+            t:"The three cube roots of unity, with residues zₖ/3. Since the three roots add up to zero, " +
+              "the three contributions form a closed triangle: enclosing all of them gives zero." },
+    imag: { n:"1/(z² + 1)", pol:[[0, 1], [0, -1]],
+            f:function(p){
+              var z2 = mul([p[0], p[1]], [p[0], p[1]]);
+              return div([1, 0], [z2[0] + 1, z2[1]]);
+            },
+            t:"The poles are on the imaginary axis, with residues −j/2 and +j/2. It is the integrand that " +
+              "appears when computing ∫dx/(1+x²) by residues." },
+    dobl: { n:"(z + 2)/(z²(z − 1))", pol:[[0, 0], [1, 0]],
+            f:function(p){
+              var z = [p[0], p[1]];
+              return div([p[0] + 2, p[1]], prod([z, z, [p[0] - 1, p[1]]]));
+            },
+            t:"A double pole at the origin and a simple one at z = 1. The double one has residue −3 and the simple one 3: " +
+              "again they cancel, but for different reasons." },
+    expo: { n:"e^z/(z(z − 1))", pol:[[0, 0], [1, 0]],
+            f:function(p){
+              var m = Math.exp(p[0]);
+              return div([m * Math.cos(p[1]), m * Math.sin(p[1])],
+                         prod([[p[0], p[1]], [p[0] - 1, p[1]]]));
+            },
+            t:"Residues −1 and e. It is the kind of integrand that appears when inverse-transforming: each pole brings its " +
+              "own exponential." }
+  };
+
+  function integrar(d, cen, rad, N){
+    var ac = [0, 0], i;
+    for(i = 0; i < N; i++){
+      var t0 = 2 * Math.PI * i / N, t1 = 2 * Math.PI * (i + 1) / N, tm = (t0 + t1) / 2;
+      var p0 = [cen[0] + rad * Math.cos(t0), cen[1] + rad * Math.sin(t0)];
+      var p1 = [cen[0] + rad * Math.cos(t1), cen[1] + rad * Math.sin(t1)];
+      var pm = [cen[0] + rad * Math.cos(tm), cen[1] + rad * Math.sin(tm)];
+      var v = d.f(pm);
+      if(!isFinite(v[0])) return null;
+      var tr = mul(v, [p1[0] - p0[0], p1[1] - p0[1]]);
+      ac = [ac[0] + tr[0], ac[1] + tr[1]];
+    }
+    return ac;
+  }
+
+  function n(x, d){
+    if(d === undefined) d = 3;
+    if(!isFinite(x)) return "—";
+    if(Math.abs(x) > 1e5) return "∞";
+    if(Math.abs(x) < 5e-4) x = 0;
+    return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+  function cpx(v, d){
+    if(!v || !isFinite(v[0])) return "—";
+    var im = n(Math.abs(v[1]), d);
+    return n(v[0], d) + (v[1] >= 0 || im === "0" ? " + j" : " − j") + im;
+  }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var Wd = r.width, Hd = r.height, i;
+    var d = F[$("rsF").value], rad = parseFloat($("rsR").value);
+    $("rsRv").textContent = n(rad, 2);
+
+    /* el residuo de cada polo, por integral sobre una circunferencia chiquita */
+    var res = d.pol.map(function(p){
+      var v = integrar(d, p, RCHICO, NR);
+      if(!v) return null;
+      return div(v, [0, 2 * Math.PI]);       /* dividir por 2*pi*j */
+    });
+    var dentro = d.pol.map(function(p){ return Math.hypot(p[0] - C.x, p[1] - C.y) < rad; });
+    var cerca = d.pol.some(function(p){
+      return Math.abs(Math.hypot(p[0] - C.x, p[1] - C.y) - rad) < 0.06;
+    });
+
+    /* la cadena de aportes, y la integral sobre el contorno grande */
+    var cad = [[0, 0]], ac = [0, 0];
+    d.pol.forEach(function(p, k){
+      if(!dentro[k] || !res[k]) return;
+      var ap = mul([0, 2 * Math.PI], res[k]);
+      ac = [ac[0] + ap[0], ac[1] + ap[1]];
+      cad.push([ac[0], ac[1]]);
+    });
+    var total = cerca ? null : integrar(d, [C.x, C.y], rad, NC);
+
+    ctx.clearRect(0, 0, Wd, Hd);
+    var mitad = Wd / 2;
+    var ez = Math.min(mitad, Hd) / (2 * R) * 0.88;
+    var mx = 0.6;
+    cad.forEach(function(p){ mx = Math.max(mx, Math.abs(p[0]), Math.abs(p[1])); });
+    if(total) mx = Math.max(mx, Math.abs(total[0]), Math.abs(total[1]));
+    var Rw = mx * 1.35;
+    var ew = Math.min(mitad, Hd) / (2 * Rw) * 0.88;
+    var c1 = { x:mitad / 2, y:Hd / 2 }, c2 = { x:mitad + mitad / 2, y:Hd / 2 };
+    function Az(p){ return { x:c1.x + p[0] * ez, y:c1.y - p[1] * ez }; }
+    function Aw(p){ return { x:c2.x + p[0] * ew, y:c2.y - p[1] * ew }; }
+
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(6, c1.y); ctx.lineTo(mitad - 6, c1.y); ctx.moveTo(c1.x, 8); ctx.lineTo(c1.x, Hd - 8);
+    ctx.moveTo(mitad + 6, c2.y); ctx.lineTo(Wd - 6, c2.y); ctx.moveTo(c2.x, 8); ctx.lineTo(c2.x, Hd - 8);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(107,116,132,.35)";
+    ctx.beginPath(); ctx.moveTo(mitad, 4); ctx.lineTo(mitad, Hd - 4); ctx.stroke();
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("z-plane  ·  the contour", 10, 16);
+    ctx.fillText("the contributions 2πj·Res, chained", mitad + 10, 16);
+
+    /* izquierda */
+    var qc = Az([C.x, C.y]);
+    ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(qc.x, qc.y, rad * ez, 0, Math.PI * 2); ctx.stroke();
+    d.pol.forEach(function(p, k){
+      var q = Az(p);
+      ctx.strokeStyle = dentro[k] ? "#f85149" : "rgba(248,81,73,.35)";
+      ctx.lineWidth = dentro[k] ? 2.2 : 1.4;
+      ctx.beginPath();
+      ctx.moveTo(q.x - 7, q.y - 7); ctx.lineTo(q.x + 7, q.y + 7);
+      ctx.moveTo(q.x + 7, q.y - 7); ctx.lineTo(q.x - 7, q.y + 7);
+      ctx.stroke();
+      if(res[k]){
+        ctx.fillStyle = dentro[k] ? "#f85149" : "#6b7484";
+        ctx.font = "600 10px system-ui, sans-serif";
+        ctx.fillText(cpx(res[k], 2), q.x + 10, q.y - 8);
+      }
+    });
+
+    /* derecha: la cadena */
+    var col = ["#7ee787", "#ff9f6b", "#6bd5e1", "#d2a8ff", "#f2cc60"];
+    for(i = 1; i < cad.length; i++){
+      var a = Aw(cad[i - 1]), b = Aw(cad[i]);
+      ctx.strokeStyle = col[(i - 1) % col.length]; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      var an = Math.atan2(b.y - a.y, b.x - a.x);
+      ctx.fillStyle = col[(i - 1) % col.length];
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(b.x - 8 * Math.cos(an - 0.4), b.y - 8 * Math.sin(an - 0.4));
+      ctx.lineTo(b.x - 8 * Math.cos(an + 0.4), b.y - 8 * Math.sin(an + 0.4));
+      ctx.closePath(); ctx.fill();
+    }
+    if(total){
+      var qt = Aw(total);
+      ctx.fillStyle = "#f2cc60";
+      ctx.beginPath(); ctx.arc(qt.x, qt.y, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.font = "600 11px system-ui, sans-serif";
+      ctx.fillText("the integral", qt.x + 9, qt.y - 7);
+    }
+    ctx.fillStyle = "rgba(107,116,132,.9)";
+    ctx.beginPath(); ctx.arc(c2.x, c2.y, 3, 0, Math.PI * 2); ctx.fill();
+
+    /* los numeros */
+    var html = "<span>Function</span><b>f(z) = " + d.n + "</b><hr>";
+    d.pol.forEach(function(p, k){
+      html += '<span style="color:' + (dentro[k] ? "#f85149" : "#6b7484") + '">Res at ' +
+              cpx(p, 2) + (dentro[k] ? "  ·  inside" : "  ·  outside") + "</span><b>" +
+              cpx(res[k]) + "</b>";
+    });
+    html += "<hr><span>2πj times the sum of those inside</span><b>" + cpx(ac) + "</b>" +
+            "<span>The integral, computed over the contour</span><b>" +
+              (total ? cpx(total) : "the contour passes over a pole") + "</b>";
+    $("rsDatos").innerHTML = html;
+
+    var txt = d.t;
+    var cuantos = dentro.filter(Boolean).length;
+    if(cuantos === 0)
+      txt += " Now the contour encloses no pole: by Cauchy’s theorem the integral is zero, and " +
+             "the chain never gets started.";
+    if(cerca)
+      txt += " <b>The contour is passing over a pole</b>: there the integral is not defined. Move it.";
+    txt += " Click or tap the left plane to move the center of the contour.";
+    $("rsNota").innerHTML = txt;
+  }
+
+  cv.addEventListener("click", function(ev){
+    var r = cv.getBoundingClientRect();
+    var mitad = r.width / 2, esc = Math.min(mitad, r.height) / (2 * R) * 0.88;
+    if(ev.clientX - r.left > mitad) return;
+    var x = (ev.clientX - r.left - mitad / 2) / esc, y = (r.height / 2 - (ev.clientY - r.top)) / esc;
+    C = { x:Math.max(-R, Math.min(R, x)), y:Math.max(-R, Math.min(R, y)) };
+    pintar();
+  });
+  ["rsF", "rsR"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

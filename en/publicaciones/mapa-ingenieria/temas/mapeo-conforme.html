@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytic functions and conformal mapping · Signals and Systems · Catto</title>
+<meta name="description" content="Why an analytic function preserves angles, the scale factor and the rotation imposed by the derivative, critical points, and applications to the Smith chart, Nyquist and field calculation, with an interactive lab. Content of Signals and Systems, Level 2 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/mapeo-conforme">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/mapeo-conforme">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/mapeo-conforme">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/mapeo-conforme">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Signals and Systems</a>
+    <span class="anio">Level 2</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Signals and Systems</span> · 144 h · Topic 5 of 34</div>
+    <h1>Analytic functions and conformal mapping</h1>
+    <p class="lead">Near a point, every analytic function reduces to multiplication by a complex number: scale and rotate. That, and nothing else, is what makes angles preserved and what lets the Smith chart be drawn with a compass.</p>
+    <div class="chips">
+      <span class="chip hi">Conformal</span>
+      <span class="chip">Critical points</span>
+      <span class="chip">Smith chart</span>
+      <span class="chip">Nyquist</span>
+      <span class="chip">Schwarz-Christoffel</span>
+    </div>
+    <hr class="rule">
+
+    <section id="analitica">
+      <h2><span class="n">01</span>Analytic, and what comes with it</h2>
+      <p>To recap: \( f \) is <b>analytic</b> on a domain if it is differentiable in the complex sense at all
+      of its points, which by
+      <a class="ref" href="/en/publicaciones/mapa-ingenieria/temas/cauchy-riemann">Cauchy-Riemann</a> is equivalent to
+      \( u \) and \( v \) being tied to each other. That requirement, which at first seems technical, brings
+      very concrete geometric consequences, and from it comes the tool most used at high
+      frequency.</p>
+      <p>The key is to look at the first-order approximation around a point:</p>
+      <div class="form">
+        \[ f(z) \approx f(z_0) + f'(z_0)\,(z - z_0) \]
+        <span class="cap">Near \( z_0 \), every analytic function behaves like multiplication by a fixed complex number.</span>
+      </div>
+      <p>And multiplying by a complex number \( f'(z_0) = \rho\,e^{j\alpha} \) is one single thing: <b>scaling by
+      \( \rho \) and rotating by \( \alpha \)</b>. It does not stretch more in one direction than another, does not shear, does not reflect.
+      That is why a small figure, once transformed, comes out the same as itself apart from size and orientation.</p>
+    </section>
+
+    <section id="conforme">
+      <h2><span class="n">02</span>Preserving angles</h2>
+      <p>The central result follows from the previous approximation. If two curves cross at \( z_0 \) forming
+      an angle \( \varphi \), their images cross forming <b>the same angle \( \varphi \)</b>, and in
+      the same sense of rotation. A mapping with that property is called <b>conformal</b>.</p>
+      <div class="form">
+        \[ f'(z_0) = \rho\,e^{j\alpha} \;\Longrightarrow\;
+           \begin{cases} \text{each tangent rotates by } \alpha \\[2pt] \text{each length is multiplied by } \rho \end{cases} \]
+      </div>
+      <p>Both tangents rotate by <i>the same amount</i>, so the difference between them —the angle— does not change. And
+      since all lengths are multiplied by the same \( \rho \), small figures keep their
+      shape. Large ones do not: the approximation holds only on a neighborhood, and at the scale of the whole plane an
+      analytic function deforms as much as it likes.</p>
+      <div class="lw" id="cf">
+        <div class="lt">Lab · the angle, before and after</div>
+        <p class="ls">Two rays leave the chosen point at the angles set below. On the right, what they turn into. Compare the angle between them on one side and on the other, and shrink the size to watch the small square become a square.</p>
+        <div class="fila">
+          <select id="cfF">
+            <option value="cuad">f(z) = z²</option>
+            <option value="exp">f(z) = e^z</option>
+            <option value="inv">f(z) = 1/z</option>
+            <option value="mob">f(z) = (z−1)/(z+1) · the Smith chart</option>
+            <option value="cubo">f(z) = z³ − 3z</option>
+            <option value="conj">f(z) = z̄ · not analytic</option>
+          </select>
+          <label class="chk"><input type="checkbox" id="cfQ" checked> Show the small test square</label>
+        </div>
+        <div class="fila">
+          <label for="cfA">First ray = <b id="cfAv">20</b>°</label>
+          <input type="range" id="cfA" min="0" max="359" step="1" value="20">
+        </div>
+        <div class="fila">
+          <label for="cfB">Second ray = <b id="cfBv">80</b>°</label>
+          <input type="range" id="cfB" min="0" max="359" step="1" value="80">
+        </div>
+        <div class="fila">
+          <label for="cfL">Size = <b id="cfLv">0.40</b></label>
+          <input type="range" id="cfL" min="0.02" max="0.8" step="0.01" value="0.4">
+        </div>
+        <canvas id="cfLienzo" style="display:block;width:100%;max-width:580px;aspect-ratio:2/1;margin:6px auto 0;border:1px solid var(--line);border-radius:10px;background:#0b0f16;cursor:crosshair"></canvas>
+        <div class="datos" id="cfDatos" style="margin-top:8px"></div>
+        <div class="nota" id="cfNota"></div>
+      </div>
+      <div class="box ojo"><div class="bt">The conjugate also preserves the angle, and it does not qualify</div>
+        <p>\( f(z) = \bar{z} \) keeps the absolute value of the angle between curves, but it <b>reverses its
+        direction</b>: it is a reflection. This is called <i>anticonformal</i>, and it is not the same thing. The definition
+        of conformal includes orientation, and that is why it is equivalent to being analytic with a nonzero derivative.</p></div>
+    </section>
+
+    <section id="criticos">
+      <h2><span class="n">03</span>Where it stops working: critical points</h2>
+      <p>The whole argument rested on \( f'(z_0) \ne 0 \). If the derivative vanishes, the first-order
+      approximation says nothing and you have to go to the first term that survives:</p>
+      <div class="form">
+        \[ f(z) - f(z_0) \approx \frac{f^{(m)}(z_0)}{m!}\,(z - z_0)^m
+           \;\Longrightarrow\; \text{angles are multiplied by } m \]
+      </div>
+      <p>With \( w = z^2 \) at the origin, \( m = 2 \): two curves that crossed at 45° come out crossing at 90°.
+      You can see this in the lab by moving the point to zero. The points where \( f' \) vanishes are called
+      <b>critical</b>, and they are exactly the places where the mapping stops being conformal.</p>
+      <p>The function \( f(z) = z^3 - 3z \) in the lab has two: \( f'(z) = 3z^2 - 3 \) vanishes at
+      \( z = \pm 1 \). Moving the point there shows the fold.</p>
+    </section>
+
+    <section id="aplicaciones">
+      <h2><span class="n">04</span>What it is used for</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Application</th><th>What is transformed</th><th>What is gained</th></tr></thead>
+        <tbody>
+          <tr><td><b>Smith chart</b></td>
+              <td>\( \Gamma = \dfrac{z-1}{z+1} \) takes the right half-plane to the unit disk</td>
+              <td>The whole impedance plane fits on one sheet, and the circles of \( r \) and of \( x \) remain circles</td></tr>
+          <tr><td><b>Nyquist criterion</b></td>
+              <td>The Nyquist contour, mapped by \( 1 + L(s) \)</td>
+              <td>Counting encirclements of −1 tells how many unstable poles the closed loop has</td></tr>
+          <tr><td><b>Fields and capacitances</b></td>
+              <td>A complicated geometry, taken to a rectangle or a half-plane</td>
+              <td>Laplace is solved in the simple geometry and the solution is brought back</td></tr>
+          <tr><td><b>Microstrip</b></td>
+              <td>Schwarz-Christoffel, which maps the half-plane onto the interior of a polygon</td>
+              <td>Gives the closed-form characteristic impedance formulas used by design software</td></tr>
+          <tr><td><b>Filter stability</b></td>
+              <td>\( z = e^{sT} \), from the \( s \)-plane to the \( z \)-plane</td>
+              <td>The left half-plane becomes the interior of the unit circle</td></tr>
+        </tbody>
+      </table></div>
+      <p>The last row will be seen in detail when we reach the
+      Z-transform, but
+      it is worth noting now: the stability criterion for a digital filter —poles inside the circle—
+      is the usual criterion —poles on the left— seen through a mapping.</p>
+      <div class="box key"><div class="bt">The argument principle, in one line</div>
+        <p>If you traverse a closed curve in the \( s \)-plane and watch how its image winds around the
+        origin, the number of turns is \( Z - P \): the zeros minus the poles that ended up inside. Nyquist
+        is that count applied to \( 1 + L(s) \), and the calculus of residues is the same idea carried over to
+        integrals. Everything left in the first half of the course comes from here.</p></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Measuring the scale factor</div>
+        <p>For \( f(z) = z^2 \) at \( z_0 = 1 + j \), compute \( f'(z_0) = 2 + j2 \), its modulus
+        \( 2\sqrt{2} \approx 2.83 \) and its argument 45°. Transform a square of side 0.1 centered there and
+        verify with a ruler and protractor that the result measures 0.283 on a side and is rotated 45°.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · The fold at a critical point</div>
+        <p>With \( f(z) = z^3 - 3z \), move the lab point to \( z = 1 \) and check that two rays
+        60° apart come out 120° apart. Verify analytically that \( f'(1) = 0 \) and that the first
+        nonzero derivative is the second.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Nyquist by hand</div>
+        <p>For \( L(s) = \dfrac{K}{s(s+1)(s+2)} \), evaluate \( L(j\omega) \) at about ten frequencies,
+        plot the result in the complex plane and find the value of \( K \) that makes the curve pass
+        through −1. Compare it with the one given by the Routh criterion.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Believing that conformal means “does not deform.”</b> It preserves angles and the shape of
+        <i>small</i> figures; at large scale it deforms as much as it needs to.</li>
+        <li><b>Forgetting the condition \( f'(z_0) \ne 0 \).</b> At critical points the angles are
+        multiplied.</li>
+        <li><b>Taking the conjugate to be conformal.</b> It preserves the angle but reverses its direction: it is
+        anticonformal.</li>
+        <li><b>Confusing the scale factor with the circuit gain.</b> \( |f'(z_0)| \) is a
+        local stretching of the plane, not an amplitude.</li>
+        <li><b>Using the first-order approximation far from the point.</b> It holds on a neighborhood, and the lab
+        shows how quickly it breaks down as the size is increased.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What two things does \( f'(z_0) \) do locally?</summary>
+        <div class="a"><p>Its modulus scales and its argument rotates. Near \( z_0 \), the function is that
+        multiplication and nothing more.</p></div></details>
+      <details class="q"><summary>Why are angles preserved?</summary>
+        <div class="a"><p>Because all the tangents rotate by the same \( \arg f'(z_0) \); the difference between
+        any two of them does not change.</p></div></details>
+      <details class="q"><summary>What happens at a point where \( f' = 0 \)?</summary>
+        <div class="a"><p>Angles are multiplied by \( m \), the order of the first nonzero derivative. With
+        \( z^2 \) at the origin, they are doubled.</p></div></details>
+      <details class="q"><summary>Where does \( f(z) = z^3 - 3z \) have critical points?</summary>
+        <div class="a"><p>At \( z = \pm 1 \), where \( f'(z) = 3z^2 - 3 \) vanishes.</p></div></details>
+      <details class="q"><summary>What transformation is behind the Smith chart?</summary>
+        <div class="a"><p>The bilinear transformation \( \Gamma = (z-1)/(z+1) \), which takes the right half-plane to the unit
+        disk while preserving circles and angles.</p></div></details>
+      <details class="q"><summary>What does the argument principle count?</summary>
+        <div class="a"><p>The turns that the image of a contour makes around the origin: they equal
+        \( Z - P \), zeros minus enclosed poles. It is the basis of Nyquist and of residues.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Ruel V. Churchill and James W. Brown.</span> <span class="ti">Complex Variables and Applications</span>.
+          <span class="ed">7th ed. (Spanish edition, “Variable compleja y aplicaciones”), McGraw-Hill, 2004.</span>
+          <span class="pq">The chapters on conformal mapping and its applications to Laplace’s equation, with the classic examples worked out.</span></li>
+        <li><span class="au">David M. Pozar.</span> <span class="ti">Microwave Engineering</span>.
+          <span class="ed">4th ed., Wiley, 2011.</span>
+          <span class="pq">The Smith chart derived as a bilinear transformation, and the use of mapping in planar lines.</span></li>
+        <li><span class="au">Katsuhiko Ogata.</span> <span class="ti">Modern Control Engineering</span>.
+          <span class="ed">5th ed. (Spanish edition, “Ingeniería de control moderna”), Pearson, 2010.</span>
+          <span class="pq">The Nyquist criterion presented as a contour mapping, which is exactly what it is.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/cauchy-riemann">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">The Cauchy-Riemann equations</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/integrales-complejas">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Line integrals in the complex plane</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Analytic functions and conformal mapping”</b> of <b>Signals and Systems</b> (Level 2), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* El angulo, antes y despues. Dos rayos salen de z0 y se dibuja su imagen, con
+   el angulo medido de los dos lados. El panel derecho se centra en f(z0) y se
+   autoescala, para mirar el entorno y no todo el plano. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("cfLienzo"), ctx = cv.getContext("2d");
+  var R = 2.2, Z0 = { x:0.9, y:0.5 };
+
+  var F = {
+    cuad: { n:"z²", an:true, cr:[[0, 0]],
+            f:function(x, y){ return [x * x - y * y, 2 * x * y]; },
+            t:"Conformal on the whole plane except at the origin, marked with a cross. Click near it and the point " +
+              "snaps there: watch the angle double, because f′ vanishes." },
+    exp:  { n:"e^z", an:true, cr:[],
+            f:function(x, y){ var m = Math.exp(x); return [m * Math.cos(y), m * Math.sin(y)]; },
+            t:"The exponential has no critical points: f′ = e^z is never zero. The angle is preserved on " +
+              "the whole plane, even though the scale factor changes a lot from one side to the other." },
+    inv:  { n:"1/z", an:true, cr:[],
+            f:function(x, y){ var m = x * x + y * y; return m < 1e-8 ? [NaN, NaN] : [x / m, -y / m]; },
+            t:"Conformal except at the origin, which is a pole. Note that the scale factor is 1/|z|²: " +
+              "near zero it stretches enormously." },
+    mob:  { n:"(z−1)/(z+1)", an:true, cr:[],
+            f:function(x, y){
+              var dr = x + 1, den = dr * dr + y * y;
+              if(den < 1e-8) return [NaN, NaN];
+              return [((x - 1) * dr + y * y) / den, (y * dr - (x - 1) * y) / den];
+            },
+            t:"The Smith chart transformation. It is conformal on the whole plane except at z = −1, and " +
+              "it also takes circles to circles. That is why the chart can be drawn with a compass." },
+    cubo: { n:"z³ − 3z", an:true, cr:[[1, 0], [-1, 0]],
+            f:function(x, y){ return [x * x * x - 3 * x * y * y - 3 * x,
+                                      3 * x * x * y - y * y * y - 3 * y]; },
+            t:"It has two critical points, at z = 1 and z = −1, where f′ = 3z² − 3 vanishes: they are the two " +
+              "crosses. Click near either one and the angle comes out multiplied by two." },
+    conj: { n:"z̄", an:false, cr:[],
+            f:function(x, y){ return [x, -y]; },
+            t:"The angle comes out with the same absolute value but with its sign changed: it is a reflection. This " +
+              "is called anticonformal, and it is not enough: the conjugate is analytic at no point." }
+  };
+
+  function n(x, d){
+    if(d === undefined) d = 2;
+    if(!isFinite(x)) return "—";
+    if(Math.abs(x) > 1e4) return "∞";
+    if(Math.abs(x) < 5 * Math.pow(10, -d - 1)) x = 0;
+    return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString()
+             .replace("-", "−");
+  }
+  function cpx(v, d){
+    if(!v || !isFinite(v[0])) return "—";
+    var im = n(Math.abs(v[1]), d);        /* el cero no lleva signo menos */
+    return n(v[0], d) + (v[1] >= 0 || im === "0" ? " + j" : " − j") + im;
+  }
+  function norma(a){                       /* a grados en (−180, 180] */
+    while(a > 180) a -= 360;
+    while(a <= -180) a += 360;
+    return a;
+  }
+  function ok(p){ return p && isFinite(p[0]) && isFinite(p[1]) && Math.abs(p[0]) < 1e5 && Math.abs(p[1]) < 1e5; }
+
+  function pintar(){
+    var r = cv.getBoundingClientRect();
+    if(!r.width) return;
+    var dp = Math.min(window.devicePixelRatio || 1, 2);
+    if(cv.width !== Math.round(r.width * dp)){
+      cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+    }
+    ctx.setTransform(dp, 0, 0, dp, 0, 0);
+    var W = r.width, H = r.height, i;
+    var d = F[$("cfF").value];
+    var A = parseFloat($("cfA").value), B = parseFloat($("cfB").value);
+    var L = parseFloat($("cfL").value), verQ = $("cfQ").checked;
+    $("cfAv").textContent = $("cfA").value;
+    $("cfBv").textContent = $("cfB").value;
+    $("cfLv").textContent = n(L, 2);
+
+    var w0 = d.f(Z0.x, Z0.y);
+
+    /* las figuras del plano z y sus imagenes */
+    function rayo(ang){
+      var s = [], t = [], k, rr, p, q;
+      for(k = 0; k <= 60; k++){
+        rr = L * k / 60;
+        p = [Z0.x + rr * Math.cos(ang * Math.PI / 180), Z0.y + rr * Math.sin(ang * Math.PI / 180)];
+        s.push(p); q = d.f(p[0], p[1]); t.push(q);
+      }
+      return { z:s, w:t };
+    }
+    function cuadro(){
+      var s = [], t = [], lados = [[-1,-1],[1,-1],[1,1],[-1,1]], k, m, p;
+      for(m = 0; m < 4; m++){
+        var a1 = lados[m], a2 = lados[(m + 1) % 4];
+        for(k = 0; k < 20; k++){
+          var u = k / 20;
+          p = [Z0.x + L / 2 * (a1[0] + u * (a2[0] - a1[0])),
+               Z0.y + L / 2 * (a1[1] + u * (a2[1] - a1[1]))];
+          s.push(p); t.push(d.f(p[0], p[1]));
+        }
+      }
+      s.push(s[0]); t.push(t[0]);
+      return { z:s, w:t };
+    }
+    var r1 = rayo(A), r2 = rayo(B), qd = verQ ? cuadro() : null;
+
+    /* la escala del panel derecho: percentil 95 de las distancias a w0 */
+    var ds = [];
+    [r1, r2].concat(qd ? [qd] : []).forEach(function(g){
+      g.w.forEach(function(p){ if(ok(p) && ok(w0)) ds.push(Math.hypot(p[0] - w0[0], p[1] - w0[1])); });
+    });
+    ds.sort(function(a, b){ return a - b; });
+    var Rw = ds.length ? Math.max(ds[Math.floor(ds.length * 0.95)] * 1.3, 1e-9) : 1;
+
+    ctx.clearRect(0, 0, W, H);
+    var mitad = W / 2;
+    var ez = Math.min(mitad, H) / (2 * R) * 0.88, ew = Math.min(mitad, H) / (2 * Rw) * 0.88;
+    var c1 = { x:mitad / 2, y:H / 2 }, c2 = { x:mitad + mitad / 2, y:H / 2 };
+    function Az(p){ return { x:c1.x + p[0] * ez, y:c1.y - p[1] * ez }; }
+    function Aw(p){ return { x:c2.x + (p[0] - w0[0]) * ew, y:c2.y - (p[1] - w0[1]) * ew }; }
+
+    ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(6, c1.y); ctx.lineTo(mitad - 6, c1.y);
+    ctx.moveTo(c1.x, 8); ctx.lineTo(c1.x, H - 8);
+    ctx.moveTo(mitad + 6, c2.y); ctx.lineTo(W - 6, c2.y);
+    ctx.moveTo(c2.x, 8); ctx.lineTo(c2.x, H - 8);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(107,116,132,.35)";
+    ctx.beginPath(); ctx.moveTo(mitad, 4); ctx.lineTo(mitad, H - 4); ctx.stroke();
+    ctx.fillStyle = "#6b7484"; ctx.font = "11px system-ui, sans-serif";
+    ctx.fillText("z-plane", 10, 16);
+    ctx.fillText(mitad < 230 ? "w-plane  ·  ±" + n(Rw, 3)
+                             : "w-plane  ·  centered at f(z₀), scale ±" + n(Rw, 3),
+                 mitad + 10, 16);
+
+    function trazo(pts, A_, col, gr){
+      ctx.strokeStyle = col; ctx.lineWidth = gr; ctx.beginPath();
+      var roto = true;
+      for(i = 0; i < pts.length; i++){
+        if(!ok(pts[i])){ roto = true; continue; }
+        var q = A_(pts[i]);
+        if(roto){ ctx.moveTo(q.x, q.y); roto = false; } else ctx.lineTo(q.x, q.y);
+      }
+      ctx.stroke();
+    }
+    if(qd){
+      trazo(qd.z, Az, "rgba(210,168,255,.65)", 1.4);
+      trazo(qd.w, Aw, "rgba(210,168,255,.65)", 1.4);
+    }
+    trazo(r1.z, Az, "#ff9f6b", 2); trazo(r1.w, Aw, "#ff9f6b", 2);
+    trazo(r2.z, Az, "#6bd5e1", 2); trazo(r2.w, Aw, "#6bd5e1", 2);
+
+    (d.cr || []).forEach(function(c){
+      var q = Az(c);
+      ctx.strokeStyle = "rgba(242,204,96,.75)"; ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(q.x - 6, q.y - 6); ctx.lineTo(q.x + 6, q.y + 6);
+      ctx.moveTo(q.x + 6, q.y - 6); ctx.lineTo(q.x - 6, q.y + 6);
+      ctx.stroke();
+    });
+    var pz = Az([Z0.x, Z0.y]);
+    ctx.fillStyle = "#f85149";
+    ctx.beginPath(); ctx.arc(pz.x, pz.y, 5, 0, Math.PI * 2); ctx.fill();
+    if(ok(w0)){
+      var pw = Aw(w0);
+      ctx.beginPath(); ctx.arc(pw.x, pw.y, 5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    /* los angulos: en w se miden con la tangente inicial de cada imagen */
+    function tang(ang){
+      var e = 1e-3;
+      var p = d.f(Z0.x + e * Math.cos(ang * Math.PI / 180), Z0.y + e * Math.sin(ang * Math.PI / 180));
+      if(!ok(p) || !ok(w0)) return null;
+      var vx = p[0] - w0[0], vy = p[1] - w0[1];
+      if(Math.hypot(vx, vy) < 1e-14) return null;
+      return Math.atan2(vy, vx) * 180 / Math.PI;
+    }
+    var t1 = tang(A), t2 = tang(B);
+    var angZ = norma(B - A), angW = (t1 === null || t2 === null) ? NaN : norma(t2 - t1);
+
+    /* la derivada, por diferencias centradas */
+    var h = 1e-5;
+    var pa = d.f(Z0.x + h, Z0.y), pb = d.f(Z0.x - h, Z0.y);
+    var der = (ok(pa) && ok(pb)) ? [(pa[0] - pb[0]) / (2 * h), (pa[1] - pb[1]) / (2 * h)] : null;
+    var mod = der ? Math.hypot(der[0], der[1]) : NaN;
+    var arg = der ? Math.atan2(der[1], der[0]) * 180 / Math.PI : NaN;
+
+    $("cfDatos").innerHTML =
+      "<span>Function</span><b>f(z) = " + d.n + "</b>" +
+      '<hr><span style="color:#f85149">z₀  →  f(z₀)</span><b>' +
+        cpx([Z0.x, Z0.y]) + "  →  " + cpx(w0) + "</b>" +
+      "<span>Angle between the rays, in z</span><b>" + n(angZ, 1) + "°</b>" +
+      "<span>Angle between the images, in w</span><b>" + n(angW, 1) + "°</b>" +
+      (d.an ? "<hr><span>|f′(z₀)|  ·  local scale</span><b>" + n(mod, 3) + "</b>" +
+              "<span>arg f′(z₀)  ·  local rotation</span><b>" + n(arg, 1) + "°</b>"
+            : "<hr><span>Derivative</span><b>does not exist at any point</b>");
+
+    var txt = d.t;
+    if(!isNaN(angW) && Math.abs(angZ) > 1){
+      var k = angW / angZ;
+      if(Math.abs(angW - angZ) < 1.5)
+        txt += " <b>Here the angle is preserved</b>: the mapping is conformal at this point.";
+      else if(Math.abs(angW + angZ) < 1.5)
+        txt += " <b>The angle was reversed</b>: same value, opposite direction.";
+      else if(Math.abs(k - Math.round(k)) < 0.08 && Math.round(k) >= 2)
+        txt += " <b>The angle ended up multiplied by " + Math.round(k) +
+               "</b>: you are on a critical point, where f′ vanishes.";
+    }
+    if(d.an && mod > 1e-9 && L > 0.3)
+      txt += " With a size this large the first-order approximation is no longer enough and the small square " +
+             "comes out curved; shrink it and watch it straighten out.";
+    txt += " Click or tap the left plane to move z₀.";
+    $("cfNota").innerHTML = txt;
+  }
+
+  cv.addEventListener("click", function(ev){
+    var r = cv.getBoundingClientRect();
+    var mitad = r.width / 2, esc = Math.min(mitad, r.height) / (2 * R) * 0.88;
+    if(ev.clientX - r.left > mitad) return;
+    var x = (ev.clientX - r.left - mitad / 2) / esc, y = (r.height / 2 - (ev.clientY - r.top)) / esc;
+    Z0 = { x:Math.max(-R, Math.min(R, x)), y:Math.max(-R, Math.min(R, y)) };
+    /* los puntos criticos son puntos aislados: imposibles de acertar con el
+       mouse, asi que el clic cercano se engancha */
+    (F[$("cfF").value].cr || []).forEach(function(c){
+      if(Math.hypot(Z0.x - c[0], Z0.y - c[1]) * esc < 14) Z0 = { x:c[0], y:c[1] };
+    });
+    pintar();
+  });
+  ["cfF", "cfQ", "cfA", "cfB", "cfL"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar();
+  setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
