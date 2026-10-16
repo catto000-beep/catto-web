@@ -147,25 +147,55 @@
     d.texto((x0 + x1) / 2, H - 6, "V_CE (V)", { a: "middle", t: 12 });
     d.texto(14, (y0 + y1) / 2, "I_C (mA)", { a: "middle", t: 12, rot: -90 });
     /* familia de curvas; el rótulo de cada una, afuera del área, a su altura */
+    var obst = [];   /* tramos que un rótulo no debe tocar */
     p.ibList.forEach(function (ib) {
       var res = p.highlight != null && Math.abs(ib - p.highlight) < 1e-6, pts = [];
       for (var k = 0; k <= 80; k++) { var vv = k / 80 * maxV; pts.push([X(vv), Y(ic(vv, ib, beta))]); }
       d.cable(pts, res ? AZUL : "#9aa7b4", res ? 2.6 : 1.5);
+      for (var k2 = 1; k2 < pts.length; k2++) obst.push([pts[k2 - 1], pts[k2]]);
       d.texto(x1 + 8, Y(ic(maxV, ib, beta)) + 4, ib + " µA", { t: 10.5, c: res ? AZUL : "#7d8a99", b: res ? 700 : null });
     });
     if (p.vcc && p.rc) {
       d.s.push('<line x1="' + X(0) + '" y1="' + n(Y(isat)) + '" x2="' + n(X(p.vcc)) + '" y2="' + Y(0) +
         '" stroke="' + ROJO + '" stroke-width="2" stroke-dasharray="6 4"/>');
       /* los extremos de la recta se rotulan sobre los ejes, como en un gráfico técnico */
-      d.cable([[x0 - 5, Y(isat)], [x0, Y(isat)]], ROJO, 2).cable([[X(p.vcc), y1], [X(p.vcc), y1 + 5]], ROJO, 2);
-      d.texto(x0 - 8, Y(isat) + 3.5, "I_C(sat)", { a: "end", t: 10, c: ROJO });
-      d.texto(X(p.vcc), y1 + 16, "V_CC", { a: "middle", t: 10.5, c: ROJO });
+      d.cable([[x0 - 4, Y(isat)], [x0, Y(isat)]], ROJO, 2).cable([[X(p.vcc), y1], [X(p.vcc), y1 + 5]], ROJO, 2);
+      d.texto(x0 - 11, Y(isat) + 3.5, "I_C(sat)", { a: "end", t: 10, c: ROJO });
+      d.texto(X(p.vcc), y1 + 20, "V_CC", { a: "middle", t: 10.5, c: ROJO });
       if (p.ibQ != null) {
         var q = puntoQ(p.vcc, p.rc, p.ibQ, beta), qx = X(q.vce), qy = Y(q.ic);
         d.s.push('<line x1="' + n(qx) + '" y1="' + y1 + '" x2="' + n(qx) + '" y2="' + n(qy) + '" stroke="' + AMBAR + '" stroke-width="1" stroke-dasharray="3 3"/>');
         d.s.push('<line x1="' + x0 + '" y1="' + n(qy) + '" x2="' + n(qx) + '" y2="' + n(qy) + '" stroke="' + AMBAR + '" stroke-width="1" stroke-dasharray="3 3"/>');
         d.s.push('<circle cx="' + n(qx) + '" cy="' + n(qy) + '" r="5.5" fill="' + AMBAR + '" stroke="#0a0e17" stroke-width="1.5"/>');
-        d.texto(qx + 9, qy - 14, "Q", { t: 12, b: 700, c: AMBAR, halo: true });
+        /* la Q va en el primer lugar libre alrededor del punto: lejos de la grilla,
+           de la recta de carga (que baja hacia la derecha) y de su propia curva */
+        for (i = 0; i <= maxI + 1e-9; i += pasoI) obst.push([[x0, Y(i)], [x1, Y(i)]]);
+        for (v = 0; v <= maxV + 1e-9; v += pasoV) obst.push([[X(v), y0], [X(v), y1]]);
+        obst.push([[X(0), Y(isat)], [X(p.vcc), Y(0)]], [[qx, y1], [qx, qy]], [[x0, qy], [qx, qy]]);
+        /* ¿el segmento corta el rectángulo agrandado 4 px? (Liang–Barsky) */
+        var corta = function (sg, r) {
+          var p0 = sg[0], dx = sg[1][0] - p0[0], dy = sg[1][1] - p0[1], t0 = 0, t1 = 1;
+          var lim = [[-dx, p0[0] - r[0]], [dx, r[2] - p0[0]], [-dy, p0[1] - r[1]], [dy, r[3] - p0[1]]];
+          for (var j = 0; j < 4; j++) {
+            var pp = lim[j][0], qq = lim[j][1];
+            if (pp === 0) { if (qq < 0) return false; continue; }
+            var t = qq / pp;
+            if (pp < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+          }
+          return true;
+        };
+        /* candidatos en anillos alrededor del punto; gana el libre más cercano */
+        var elegido = null;
+        for (var rad = 16; rad <= 64 && !elegido; rad += 6) {
+          for (var ang = 0; ang < 360 && !elegido; ang += 20) {
+            var cx = qx + rad * Math.cos(ang * Math.PI / 180), cy = qy - rad * Math.sin(ang * Math.PI / 180);
+            var r = [cx - 4.5 - 4, cy - 8 - 4, cx + 4.5 + 4, cy + 6 + 4];
+            if (r[0] < x0 + 2 || r[2] > x1 - 2 || r[1] < y0 || r[3] > y1) continue;
+            if (!obst.some(function (sg) { return corta(sg, r); })) elegido = [cx, cy + 4, "middle"];
+          }
+        }
+        if (!elegido) elegido = [qx + 12, qy - 12, "start"];
+        d.texto(elegido[0], elegido[1], "Q", { a: elegido[2], t: 12, b: 700, c: AMBAR, halo: true });
       }
     }
     return d.svg("0 0 " + W + " " + H, W, H, "Curvas características de salida del transistor");
@@ -272,12 +302,12 @@
     d.cable([[70, 18], [70, 30]]).resV(70, 30, 64).cable([[70, 64], [70, 128]]).resV(70, 128, 162).cable([[70, 162], [70, 228]]);
     d.texto(82, 51, "R_1").texto(82, 149, "R_2");
     d.borne(20, 120).cable([[20, 120], [44, 120]]).capH(44, 56, 120).cable([[56, 120], [70, 120]]).nodo(70, 120);
-    d.texto(50, 102, "C_1", { a: "middle" }).texto(12, 124, "v_in", { a: "end", c: AZUL, t: 13 });
+    d.texto(50, 95, "C_1", { a: "middle" }).texto(12, 124, "v_in", { a: "end", c: AZUL, t: 13 });
     var t = d.bjt(XC - 30, 120);
     d.cable([[70, 120], [XC - 30, 120]]).texto(150, 113, "B", { a: "middle" });
     d.cable([[XC, 18], [XC, 26]]).resV(XC, 26, 58).cable([[XC, 58], t.C]).texto(XC - 14, 46, "R_C", { a: "end" });
     d.nodo(XC, 66).cable([[XC, 66], [244, 66]]).capH(244, 256, 66).cable([[256, 66], [290, 66]]).borne(290, 66);
-    d.texto(250, 48, "C_2", { a: "middle" }).texto(298, 70, "v_out", { c: AZUL, t: 13 });
+    d.texto(250, 96, "C_2", { a: "middle" }).texto(298, 70, "v_out", { c: AZUL, t: 13 });
     d.texto(XC + 7, 94, "C").texto(XC + 7, 154, "E");
     d.cable([t.E, [XC, 176]]).resV(XC, 176, 208).cable([[XC, 208], [XC, 228]]).texto(XC + 14, 196, "R_E");
     if (conCE) {
@@ -293,9 +323,9 @@
     var d = new Dib(), rec = amp >= 58;
     onda(d, 20, 62, 100, 8, 1.5, "#9aa7b4");
     onda(d, 150, 62, 130, Math.min(amp, 58), 1.5, AZUL, true, rec ? 0.82 : null);
-    d.texto(70, 136, "entrada", { a: "middle" });
-    d.texto(215, 136, "salida (×" + ganancia + ")", { a: "middle", c: AZUL });
-    return d.svg("0 0 300 142", 300, 142, "Entrada y salida del emisor común: la salida es mayor e invertida");
+    d.texto(70, 142, "entrada", { a: "middle" });
+    d.texto(215, 142, "salida (×" + ganancia + ")", { a: "middle", c: AZUL });
+    return d.svg("0 0 300 148", 300, 148, "Entrada y salida del emisor común: la salida es mayor e invertida");
   };
 
   /* -------------------------------------------- 10 · colector común */
@@ -304,14 +334,14 @@
     d.cable([[70, 20], [XQ + 30, 20]]).borne(XQ + 30, 20).texto(XQ + 38, 25, "V_CC", { c: AZUL, t: 13 });
     d.cable([[70, 20], [70, 32]]).resV(70, 32, 66).cable([[70, 66], [70, 96]]).texto(82, 53, "R_B");
     d.borne(20, 96).cable([[20, 96], [44, 96]]).capH(44, 56, 96).cable([[56, 96], [70, 96]]).nodo(70, 96);
-    d.texto(50, 78, "C_1", { a: "middle" }).texto(12, 100, "v_in", { a: "end", c: AZUL, t: 13 });
+    d.texto(50, 71, "C_1", { a: "middle" }).texto(12, 100, "v_in", { a: "end", c: AZUL, t: 13 });
     var t = d.bjt(XQ - 30, 96);
     d.cable([[70, 96], [XQ - 30, 96]]).texto(92, 89, "B", { a: "middle" });
     d.cable([t.C, [XQ, 20]]).nodo(XQ, 20).texto(XQ + 7, 50, "C");
     d.cable([t.E, [XQ, 150]]).nodo(XQ, 150).texto(XQ + 7, 130, "E");
     d.cable([[XQ, 150], [XQ, 156]]).resV(XQ, 156, 186).cable([[XQ, 186], [XQ, 190]]).masa(XQ, 190).texto(XQ + 14, 176, "R_E");
     d.cable([[XQ, 150], [196, 150]], VERDE).capH(196, 208, 150).cable([[208, 150], [244, 150]]).borne(244, 150);
-    d.texto(202, 132, "C_2", { a: "middle" }).texto(252, 154, "v_out", { c: AZUL, t: 13 });
+    d.texto(202, 125, "C_2", { a: "middle" }).texto(252, 154, "v_out", { c: AZUL, t: 13 });
     return d.svg("-34 0 334 214", 334, 214, "Seguidor de emisor: colector a VCC, salida por el emisor");
   };
 
