@@ -141,6 +141,15 @@
     var h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
     return w > 0 && h > 0 && w * h > 0.1 * Math.min(a.width * a.height, b.width * b.height);
   };
+  // en las figuras animadas cada estado es un <g> hijo del <svg>: los
+  // rotulos de estados distintos nunca se ven juntos y no se comparan
+  var estado = function(t){
+    var s = t.ownerSVGElement, e = t;
+    if(!s.hasAttribute('data-anim')) return null;
+    while(e.parentNode !== s) e = e.parentNode;
+    return e.tagName === 'g' && e.querySelector(':scope > animate') ? e : null;
+  };
+  var est = ts.map(estado);
   var ant = cajas();
   ts.forEach(function(t){
     var cs = getComputedStyle(t), fs = parseFloat(cs.fontSize), m = rgb.exec(cs.fill);
@@ -155,6 +164,7 @@
     if(des[i].fuera && !ant[i].fuera){ t.style.fontSize = ''; t.style.fontWeight = ''; }
     for(var j = i + 1; j < ts.length; j++){
       if(ts[j].ownerSVGElement !== t.ownerSVGElement) continue;
+      if(est[i] && est[j] && est[i] !== est[j]) continue;
       if(encima(des[i].q, des[j].q) && !encima(ant[i].q, ant[j].q)){
         t.style.fontSize = ''; ts[j].style.fontSize = '';
       }
