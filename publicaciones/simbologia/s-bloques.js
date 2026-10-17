@@ -125,7 +125,7 @@ SB.add('bloques', [
   { id: 'not-iec', n: 'Compuerta NOT (inversor)', v: 'IEC', alt: ['NO', 'inversor lógico', 'negador'], rel: ['not-ansi'],
     s: iec('1', 1, true),
     d: 'La salida es lo contrario de la entrada. El rectángulo con un 1 es una compuerta que no cambia el valor; el círculo en la salida lo invierte.',
-    x: 'Aquí la negación se marca con un círculo, como en los libros de texto; la IEC 60617-12 la representa con un pequeño triángulo.' },
+    x: 'El círculo es el indicador de negación de la IEC 60617-12. El pequeño triángulo que aparece en algunos esquemas es otra cosa: el indicador de polaridad (lógica de nivel bajo activo).' },
   { id: 'nand-ansi', n: 'Compuerta NAND', v: 'ANSI', alt: ['NO Y'], rel: ['nand-iec'],
     s: ansi('nand'),
     d: 'Una AND seguida de una NOT: la salida vale 0 solo si todas las entradas valen 1.',

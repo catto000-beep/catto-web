@@ -55,8 +55,9 @@ function llave(nd, ni){
 }
 /* trazos de conductores sobre una cañería horizontal en y = 40 */
 function larga(x){ return l(x - 5, 50, x + 5, 30); }
-function corta(x){ return l(x - 3, 45, x + 3, 35); }
-function tierraC(x){ return l(x - 5, 50, x + 5, 30) + c(x + 5, 30, 2.4, true); }
+/* IEC 60617: fase, trazo simple; neutro, trazo con un círculo en el extremo; protección, trazo con una barra */
+function corta(x){ return l(x - 5, 50, x + 3.6, 32.8) + o(x + 5.4, 29.2); }
+function tierraC(x){ return l(x - 5, 50, x + 5, 30) + l(x + 0.5, 30, x + 9.5, 30); }
 
 SB.add('plano', [
   /* ------------------------------------------------------------- iluminación */
@@ -209,31 +210,31 @@ SB.add('plano', [
     x: 'Es el caso de los talleres y los galpones. Los planos municipales a veces la dibujan de otro modo: manda la leyenda.',
     rel: ['canio-pared', 'canio-piso'] },
   { id: 'canio-sube', n: 'Cañería que sube', v: 'IRAM 2010', alt: ['ascendente', 'cañería vertical hacia arriba'],
-    s: l(10, 40, 50, 40) + c(60, 40, 10) + p('M50,40 a10,10 0 0 1 20,0 Z', 'f'),
-    d: 'La cañería deja el plano y sube hacia el nivel superior o hacia el techo. La mitad superior está llena.',
-    x: 'Es una convención de planta. La mitad llena marca el sentido en que sigue el caño.',
+    s: l(10, 52, 60, 52) + n(60, 52) + ar(60, 52, 88, 24, 9),
+    d: 'La cañería deja el plano y sube hacia el nivel superior o hacia el techo: la flecha inclinada sale del extremo.',
+    x: 'Es la convención de IEC 60617 para planos de planta. Si la cañería atraviesa el nivel sin terminar, la flecha cruza el punto.',
     rel: ['canio-baja'] },
   { id: 'canio-baja', n: 'Cañería que baja', v: 'IRAM 2010', alt: ['descendente', 'cañería vertical hacia abajo'],
-    s: l(10, 40, 50, 40) + c(60, 40, 10) + p('M50,40 a10,10 0 0 0 20,0 Z', 'f'),
-    d: 'La cañería deja el plano y baja hacia el nivel inferior o hacia el piso. La mitad inferior está llena.',
+    s: l(10, 52, 60, 52) + n(60, 52) + ar(88, 24, 62.5, 49.5, 9),
+    d: 'La cañería deja el plano y baja hacia el nivel inferior o hacia el piso: la flecha inclinada llega al extremo.',
     x: 'Un caño que baja desde el techo para llegar a una llave se dibuja así en la pared.',
     rel: ['canio-sube'] },
 
   /* --------------------------------------------------- conductores en la cañería */
   { id: 'cond-fase', n: 'Conductor de fase en la cañería', v: 'IRAM 2010', alt: ['fase', 'activo', 'L'],
     s: l(10, 40, 110, 40) + larga(60),
-    d: 'Una raya oblicua larga que cruza la línea de la cañería indica un conductor de fase.',
+    d: 'Un trazo oblicuo que cruza la línea de la cañería indica un conductor de fase (IEC 60617).',
     x: 'Cada raya es un conductor. El de fase es el marrón, negro o rojo: el que lleva la tensión.',
     rel: ['cond-neutro', 'cond-tierra', 'cond-fn'] },
   { id: 'cond-neutro', n: 'Conductor neutro en la cañería', v: 'IRAM 2010', alt: ['neutro', 'N'],
     s: l(10, 40, 110, 40) + corta(60),
-    d: 'Una raya oblicua corta indica el conductor neutro.',
+    d: 'Un trazo oblicuo con un pequeño círculo en el extremo indica el conductor neutro (IEC 60617).',
     x: 'En la instalación va de color celeste. El neutro nunca se interrumpe con una llave.',
     rel: ['cond-fase', 'cond-tierra', 'cond-fn'] },
   { id: 'cond-tierra', n: 'Conductor de protección en la cañería', v: 'IRAM 2010', alt: ['tierra', 'PE', 'conductor verde y amarillo'],
     s: l(10, 40, 110, 40) + tierraC(60),
-    d: 'Una raya oblicua larga con un punto en el extremo indica el conductor de protección (tierra).',
-    x: 'El cable es verde y amarillo. Esta marca varía entre planos: la leyenda define cuál se usa.',
+    d: 'Un trazo oblicuo con una barra en el extremo indica el conductor de protección, la tierra (IEC 60617).',
+    x: 'El cable es verde y amarillo. Muchos planos solo cuentan los conductores con trazos simples y escriben al lado «2 × 2,5 + T»; la leyenda del plano define cuál se usa.',
     rel: ['cond-fase', 'cond-neutro', 'cond-fnt'] },
   { id: 'cond-fn', n: 'Cañería con fase y neutro', v: 'IRAM 2010', alt: ['dos conductores', 'circuito de luz'],
     s: l(10, 40, 110, 40) + larga(50) + corta(68),
