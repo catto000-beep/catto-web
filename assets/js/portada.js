@@ -31,6 +31,45 @@
     .filter(Boolean);
   if (!grids.length) return;
 
+  /* ------------------------------------------------- columnas sin huecos
+     En la grilla común cada fila mide lo que la tarjeta más alta, y debajo
+     de las cortas queda un hueco. Las tarjetas se reparten en columnas, en
+     orden, cada una debajo de la columna más corta. Se rearma al cambiar el
+     ancho de la pantalla o el resultado del buscador; abrir una materia solo
+     alarga su columna. */
+  var ANCHO_MIN = 272, GAP = 16;
+  grids.forEach(function (grid) {
+    grid.tarjetas = [].slice.call(grid.querySelectorAll("section.anio"));
+  });
+  function apilar(grid, forzar) {
+    var n = Math.max(1, Math.floor((grid.clientWidth + GAP) / (ANCHO_MIN + GAP)));
+    var vivas = grid.tarjetas.filter(function (c) { return !c.hidden; });
+    n = Math.min(n, Math.max(1, vivas.length));
+    if (!forzar && grid.columnas === n) return;
+    grid.columnas = n;
+    var cols = [], alto = [];
+    for (var i = 0; i < n; i++) {
+      var d = document.createElement("div");
+      d.className = "a-col";
+      cols.push(d); alto.push(0);
+    }
+    grid.style.gridTemplateColumns = "repeat(" + n + ",minmax(0,1fr))";
+    grid.textContent = "";
+    cols.forEach(function (d) { grid.appendChild(d); });
+    grid.tarjetas.forEach(function (c) {
+      if (c.hidden) { cols[0].appendChild(c); return; }
+      var k = alto.indexOf(Math.min.apply(null, alto));
+      cols[k].appendChild(c);
+      alto[k] += c.offsetHeight + GAP;
+    });
+  }
+  grids.forEach(function (g) { apilar(g, true); });
+  var esperaAncho;
+  window.addEventListener("resize", function () {
+    clearTimeout(esperaAncho);
+    esperaAncho = setTimeout(function () { grids.forEach(function (g) { apilar(g); }); }, 150);
+  });
+
   /* Para buscar sin que importen tildes ni mayusculas. Cada eje trae en su
      data-b el texto ya normalizado: titulo, descripcion, temas transversales,
      materia y area. */
@@ -157,7 +196,7 @@
        sección entera sin resultados tampoco */
     grids.forEach(function (grid) {
       var vivas = 0;
-      [].forEach.call(grid.children, function (col) {
+      grid.tarjetas.forEach(function (col) {
         var quedan = [].filter.call(col.querySelectorAll(".m-item"), function (li) {
           return !li.hidden;
         }).length;
@@ -168,6 +207,7 @@
          sección se queda: adentro vive el aviso de «no encontré nada» */
       var seccion = grid.closest ? grid.closest("section.block") : null;
       if (seccion) seccion.hidden = !!pal.length && vivas === 0 && hallados > 0;
+      apilar(grid, true);
     });
 
     if (limpiar) limpiar.hidden = !pal.length;
