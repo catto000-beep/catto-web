@@ -203,28 +203,31 @@
 
   /* --------------------------------------------------- 5 · como llave */
   F.llave = function (on) {
-    var d = new Dib(), g = on ? VERDE : CABLE, X = 200;
-    /* alimentación como bandera: una barra corta sobre la rama, sin riel que quede colgando */
-    d.cable([[X - 12, 24], [X + 12, 24]], COMP, 2.4).texto(X + 18, 29, "+V", { c: AZUL, t: 13 });
-    d.cable([[X, 24], [X, 34]], g).resV(X, 34, 70, on ? VERDE : COMP).texto(X - 14, 56, "R_L", { a: "end" });
-    d.cable([[X, 70], [X, 82]], g);
+    /* rama de colector: +V, R_L y LED repartidos con el mismo largo de cable entre ellos y hasta C;
+       R_B centrada entre el borne de entrada y la base */
+    var d = new Dib(), g = on ? VERDE : CABLE, X = 200, YB = 200;
+    var t = d.bjt(X - 30, YB, { brillo: on, c: on ? VERDE : COMP });
+    var y0 = 24, y1 = t.C[1], gap = (y1 - y0 - 30 - 16) / 3, yR = y0 + gap + 15, yL = y0 + 2 * gap + 30;
+    d.cable([[X - 12, y0], [X + 12, y0]], COMP, 2.4).texto(X + 18, y0 + 5, "+V", { c: AZUL, t: 13 });
+    d.cable([[X, y0], [X, yR - 15]], g).resV(X, yR - 15, yR + 15, on ? VERDE : COMP).cable([[X, yR + 15], [X, yL]], g);
+    d.texto(X - 14, yR + 5, "R_L", { a: "end" });
     /* LED con la punta hacia abajo: el ánodo arriba, del lado de +V */
-    d.add('<polygon points="' + (X - 10) + ',82 ' + (X + 10) + ',82 ' + X + ',98" fill="' + (on ? VERDE : FONDO) + '" stroke="' + (on ? VERDE : COMP) + '" stroke-width="2" stroke-linejoin="round"/>');
-    d.cable([[X - 11, 98], [X + 11, 98]], on ? VERDE : COMP, 2.4);
+    d.add('<polygon points="' + (X - 10) + ',' + yL + ' ' + (X + 10) + ',' + yL + ' ' + X + ',' + (yL + 16) + '" fill="' + (on ? VERDE : FONDO) + '" stroke="' + (on ? VERDE : COMP) + '" stroke-width="2" stroke-linejoin="round"/>');
+    d.cable([[X - 11, yL + 16], [X + 11, yL + 16]], on ? VERDE : COMP, 2.4);
     [0, 9].forEach(function (k) {
       var c = on ? VERDE : "#5a6675";
-      d.cable([[X + 14, 88 + k], [X + 26, 80 + k]], c, 1.6);
-      d.add('<polygon points="' + (X + 29) + "," + (78 + k) + " " + (X + 22) + "," + (79 + k) + " " + (X + 25) + "," + (84 + k) + '" fill="' + c + '"/>');
+      d.cable([[X + 14, yL + 6 + k], [X + 26, yL - 2 + k]], c, 1.6);
+      d.add('<polygon points="' + (X + 29) + "," + (yL - 4 + k) + " " + (X + 22) + "," + (yL - 3 + k) + " " + (X + 25) + "," + (yL + 2 + k) + '" fill="' + c + '"/>');
     });
-    d.texto(X - 16, 94, "LED", { a: "end" });
-    var t = d.bjt(X - 30, 160, { brillo: on, c: on ? VERDE : COMP });
-    d.cable([[X, 98], t.C], g);
-    d.cable([t.E, [X, 206]], g).masa(X, 206, g);
-    d.texto(X + 7, 128, "C").texto(X + 7, 192, "E").texto(152, 152, "B", { a: "middle" });
-    d.cable([[52, 160], [82, 160]], g).resH(82, 128, 160, on ? VERDE : COMP).cable([[128, 160], [X - 30, 160]], g);
-    d.texto(105, 145, "R_B", { a: "middle" });
-    d.borne(52, 160, g).texto(42, 164, on ? "5 V" : "0 V", { a: "end", c: on ? VERDE : AZUL, t: 13, b: 700 });
-    return d.svg("0 0 300 236", 300, 236, "Transistor como llave con un LED en el colector");
+    d.texto(X - 16, yL + 12, "LED", { a: "end" });
+    d.cable([[X, yL + 16], t.C], g);
+    d.cable([t.E, [X, t.E[1] + 14]], g).masa(X, t.E[1] + 14, g);
+    d.texto(X + 8, t.C[1] + 4, "C").texto(X + 8, t.E[1] - 6, "E").texto(152, YB - 8, "B", { a: "middle" });
+    var xm = (52 + X - 30) / 2;
+    d.cable([[52, YB], [xm - 15, YB]], g).resH(xm - 15, xm + 15, YB, on ? VERDE : COMP).cable([[xm + 15, YB], [X - 30, YB]], g);
+    d.texto(xm, YB - 15, "R_B", { a: "middle" });
+    d.borne(52, YB, g).texto(42, YB + 4, on ? "5 V" : "0 V", { a: "end", c: on ? VERDE : AZUL, t: 13, b: 700 });
+    return d.svg("0 0 300 290", 300, 290, "Transistor como llave con un LED en el colector");
   };
 
   /* ---------------------------------------------- 6 · como amplificador */
@@ -252,70 +255,83 @@
 
   /* ------------------------------------------------- 7 · polarización */
   F.polarizacion = function (tipo) {
-    var d = new Dib(), XC = 182;
-    d.cable([[62, 20], [XC + 26, 20]]).nodo(XC, 20).borne(XC + 26, 20).texto(XC + 34, 25, "V_CC", { c: AZUL, t: 13 });
+    /* cada resistor centrado entre los extremos de su rama (riel, nodo, codo o terminal) */
+    var d = new Dib(), XC = 182, XI = 62;
+    d.cable([[XI, 20], [XC + 30, 20]]).nodo(XC, 20).borne(XC + 30, 20).texto(XC + 38, 25, "V_CC", { c: AZUL, t: 13 });
     if (tipo === "fija") {
-      var t = d.bjt(XC - 30, 124);
-      d.cable([[62, 20], [62, 30]]).resV(62, 30, 70).cable([[62, 70], [62, 124], [XC - 30, 124]]);
-      d.texto(74, 54, "R_B");
-      d.cable([[XC, 20], [XC, 30]]).resV(XC, 30, 70).cable([[XC, 70], t.C]).texto(XC - 14, 54, "R_C", { a: "end" });
-      d.cable([t.E, [XC, 176]]).masa(XC, 176);
-      d.texto(XC + 7, 100, "C").texto(XC + 7, 158, "E").texto(XC - 48, 117, "B", { a: "middle" });
-      return d.svg("0 0 260 210", 260, 210, "Polarización de base fija");
+      var YB = 150, t = d.bjt(XC - 30, YB);
+      d.resV(XI, 20, YB).cable([[XI, YB], [XC - 30, YB]]).texto(XI + 14, (20 + YB) / 2 + 5, "R_B");
+      d.resV(XC, 20, t.C[1]).texto(XC - 14, (20 + t.C[1]) / 2 + 5, "R_C", { a: "end" });
+      d.cable([t.E, [XC, t.E[1] + 14]]).masa(XC, t.E[1] + 14);
+      d.texto(XC + 8, t.C[1] + 4, "C").texto(XC + 8, t.E[1] - 6, "E").texto(XC - 48, YB - 8, "B", { a: "middle" });
+      return d.svg("0 0 260 240", 260, 240, "Polarización de base fija");
     }
-    var t2 = d.bjt(XC - 30, 112);
-    d.cable([[62, 20], [62, 30]]).resV(62, 30, 70).cable([[62, 70], [62, 124]]).resV(62, 124, 160).cable([[62, 160], [62, 196]]);
-    d.nodo(62, 112).cable([[62, 112], [XC - 30, 112]]);
-    d.texto(74, 54, "R_1").texto(74, 146, "R_2");
-    d.cable([[XC, 20], [XC, 30]]).resV(XC, 30, 66).cable([[XC, 66], t2.C]).texto(XC - 14, 52, "R_C", { a: "end" });
-    d.cable([t2.E, [XC, 160]]).resV(XC, 160, 192).cable([[XC, 192], [XC, 196]]).texto(XC + 14, 180, "R_E");
-    d.cable([[62, 196], [XC, 196]]).masa(122, 196);
-    d.texto(XC + 7, 88, "C").texto(XC + 7, 146, "E").texto(XC - 48, 105, "B", { a: "middle" });
-    return d.svg("0 0 260 220", 260, 220, "Polarización por divisor de tensión con resistencia de emisor");
+    var YB2 = 140, YM = 276, t2 = d.bjt(XC - 30, YB2);
+    d.resV(XI, 20, YB2).resV(XI, YB2, YM).nodo(XI, YB2).cable([[XI, YB2], [XC - 30, YB2]]);
+    d.texto(XI + 14, (20 + YB2) / 2 + 5, "R_1").texto(XI + 14, (YB2 + YM) / 2 + 5, "R_2");
+    d.resV(XC, 20, t2.C[1]).texto(XC - 14, (20 + t2.C[1]) / 2 + 5, "R_C", { a: "end" });
+    d.resV(XC, t2.E[1], YM).texto(XC + 14, (t2.E[1] + YM) / 2 + 5, "R_E");
+    d.cable([[XI, YM], [XC, YM]]).nodo((XI + XC) / 2, YM).masa((XI + XC) / 2, YM);
+    d.texto(XC + 8, t2.C[1] + 4, "C").texto(XC + 8, t2.E[1] - 6, "E").texto(XC - 48, YB2 - 8, "B", { a: "middle" });
+    return d.svg("0 0 260 300", 260, 300, "Polarización por divisor de tensión con resistencia de emisor");
   };
 
   /* -------------------------------------------- 8 · fuente regulada */
   F.fuente = function () {
-    var d = new Dib(), XQ = 180, XZ = 62, XL = 238;
-    d.cable([[XZ, 20], [XQ + 26, 20]]).borne(XQ + 26, 20).texto(XQ + 34, 25, "V_in", { c: AZUL, t: 13 });
-    d.cable([[XZ, 20], [XZ, 30]]).resV(XZ, 30, 66).cable([[XZ, 66], [XZ, 120]]).texto(XZ + 12, 52, "R");
-    d.nodo(XZ, 100);
+    /* R entre el riel y el nodo de base; zener centrado entre ese nodo y la masa; carga centrada
+       entre el nodo de salida y la masa */
+    var d = new Dib(), XQ = 180, XZ = 62, XL = 250, YB = 130, YO = 196, YM = 268;
+    d.cable([[XZ, 20], [XQ + 30, 20]]).borne(XQ + 30, 20).texto(XQ + 38, 25, "V_in", { c: AZUL, t: 13 });
+    d.resV(XZ, 20, YB).texto(XZ + 14, (20 + YB) / 2 + 5, "R").nodo(XZ, YB);
     /* zener en inversa: el cátodo (barra) hacia arriba, del lado positivo */
-    d.add('<polygon points="' + (XZ - 10) + ',136 ' + (XZ + 10) + ',136 ' + XZ + ',120" fill="' + FONDO + '" stroke="' + COMP + '" stroke-width="2" stroke-linejoin="round"/>');
-    d.cable([[XZ - 14, 124], [XZ - 10, 120], [XZ + 10, 120], [XZ + 14, 116]], COMP, 2.4);
-    d.cable([[XZ, 136], [XZ, 190]]).texto(XZ - 18, 132, "V_Z", { a: "end", c: AZUL, t: 13 });
-    var t = d.bjt(XQ - 30, 100);
-    d.cable([[XZ, 100], [XQ - 30, 100]]);
+    var yz = (YB + YM) / 2 - 8;
+    d.cable([[XZ, YB], [XZ, yz]]).cable([[XZ, yz + 16], [XZ, YM]]);
+    d.add('<polygon points="' + (XZ - 10) + ',' + (yz + 16) + ' ' + (XZ + 10) + ',' + (yz + 16) + ' ' + XZ + ',' + yz + '" fill="' + FONDO + '" stroke="' + COMP + '" stroke-width="2" stroke-linejoin="round"/>');
+    d.cable([[XZ - 14, yz + 4], [XZ - 10, yz], [XZ + 10, yz], [XZ + 14, yz - 4]], COMP, 2.4);
+    d.texto(XZ - 18, yz + 13, "V_Z", { a: "end", c: AZUL, t: 13 });
+    var t = d.bjt(XQ - 30, YB);
+    d.cable([[XZ, YB], [XQ - 30, YB]]);
     d.cable([t.C, [XQ, 20]]).nodo(XQ, 20);
-    d.cable([t.E, [XQ, 150], [XL, 150]], VERDE).nodo(XL, 150, VERDE);
-    d.texto(XL + 8, 146, "V_out", { c: AZUL, t: 13 });
-    d.cable([[XL, 150], [XL, 156]]).resV(XL, 156, 184).cable([[XL, 184], [XL, 190]]).texto(XL + 14, 176, "carga");
-    d.cable([[XZ, 190], [XL, 190]]).masa(150, 190);
-    d.texto(XQ + 7, 58, "C").texto(XQ + 7, 134, "E").texto(XQ - 48, 93, "B", { a: "middle" });
-    return d.svg("0 0 300 214", 300, 214, "Fuente regulada: seguidor de emisor con referencia zener");
+    d.cable([t.E, [XQ, YO], [XL, YO]], VERDE).nodo(XL, YO, VERDE);
+    d.texto(XL + 8, YO - 6, "V_out", { c: AZUL, t: 13 });
+    d.resV(XL, YO, YM).texto(XL + 14, (YO + YM) / 2 + 5, "carga");
+    d.cable([[XZ, YM], [XL, YM]]).nodo((XZ + XL) / 2, YM).masa((XZ + XL) / 2, YM);
+    d.texto(XQ + 8, t.C[1] - 20, "C").texto(XQ + 8, t.E[1] - 6, "E").texto(XQ - 48, YB - 8, "B", { a: "middle" });
+    return d.svg("0 0 320 294", 320, 294, "Fuente regulada: seguidor de emisor con referencia zener");
   };
 
   /* ---------------------------------------------- 9 · emisor común */
+  /* Grilla (18/10): cada componente centrado entre los dos extremos de su rama, con 15 px o más de
+     cable libre a cada lado. resV, capH y capV centran el cuerpo entre los extremos que reciben.
+       rieles: V_CC en y = 20 (de x = 70 al borne en x = 290), masa en y = 276 (de x = 70 a XC).
+       divisor en x = 70: R1 entre el riel (20) y el nodo de base (140); R2 entre el nodo y la masa.
+       entrada: borne en x = 14, C1 entre el borne y el nodo de base (x = 70), sobre y = 140.
+       colector en XC = 210: RC entre el riel (20) y el nodo de salida (96); C2 de ese nodo al borne (290).
+       base en y = 150; masa en y = 276. Emisor: sin CE, RE del emisor a la masa; con CE, nodo 20 px bajo
+       el emisor, RE de ese nodo a la masa y CE en x = 140, de su codo a la masa (ramas a la misma altura).
+       Masa en el centro de su tramo de riel. */
   F.emisorComun = function (conCE) {
-    var d = new Dib(), XC = 200;
-    d.cable([[70, 18], [XC + 36, 18]]).nodo(XC, 18).borne(XC + 36, 18).texto(XC + 44, 23, "V_CC", { c: AZUL, t: 13 });
-    d.cable([[70, 18], [70, 30]]).resV(70, 30, 64).cable([[70, 64], [70, 128]]).resV(70, 128, 162).cable([[70, 162], [70, 228]]);
-    d.texto(82, 51, "R_1").texto(82, 149, "R_2");
-    d.borne(20, 120).cable([[20, 120], [44, 120]]).capH(44, 56, 120).cable([[56, 120], [70, 120]]).nodo(70, 120);
-    d.texto(50, 95, "C_1", { a: "middle" }).texto(12, 124, "v_in", { a: "end", c: AZUL, t: 13 });
-    var t = d.bjt(XC - 30, 120);
-    d.cable([[70, 120], [XC - 30, 120]]).texto(150, 113, "B", { a: "middle" });
-    d.cable([[XC, 18], [XC, 26]]).resV(XC, 26, 58).cable([[XC, 58], t.C]).texto(XC - 14, 46, "R_C", { a: "end" });
-    d.nodo(XC, 66).cable([[XC, 66], [244, 66]]).capH(244, 256, 66).cable([[256, 66], [290, 66]]).borne(290, 66);
-    d.texto(250, 96, "C_2", { a: "middle" }).texto(298, 70, "v_out", { c: AZUL, t: 13 });
-    d.texto(XC + 7, 94, "C").texto(XC + 7, 154, "E");
-    d.cable([t.E, [XC, 176]]).resV(XC, 176, 208).cable([[XC, 208], [XC, 228]]).texto(XC + 14, 196, "R_E");
+    var d = new Dib(), XC = 210, YB = 150, YS = 96, YM = 276, XE = 140;
+    var t = d.bjt(XC - 30, YB), YN = t.E[1] + 20;            /* nodo de RE y CE, 20 px bajo el emisor */
+    d.cable([[70, 20], [290, 20]]).nodo(XC, 20).borne(290, 20).texto(298, 25, "V_CC", { c: AZUL, t: 13 });
+    d.resV(70, 20, YB).resV(70, YB, YM).nodo(70, YB);
+    d.texto(84, (20 + YB) / 2 + 5, "R_1").texto(84, (YB + YM) / 2 + 5, "R_2");
+    d.borne(14, YB).capH(14, 70, YB);
+    d.texto(42, YB - 22, "C_1", { a: "middle" }).texto(4, YB + 4, "v_in", { a: "end", c: AZUL, t: 13 });
+    d.cable([[70, YB], [XC - 30, YB]]).texto(150, YB - 8, "B", { a: "middle" });
+    d.resV(XC, 20, YS).texto(XC - 14, (20 + YS) / 2 + 5, "R_C", { a: "end" });
+    d.cable([[XC, YS], t.C]).nodo(XC, YS).capH(XC, 290, YS).borne(290, YS);
+    d.texto(250, YS - 22, "C_2", { a: "middle" }).texto(298, YS + 4, "v_out", { c: AZUL, t: 13 });
+    d.texto(XC + 8, t.C[1] + 4, "C").texto(XC + 8, t.E[1] - 6, "E");
     if (conCE) {
-      d.nodo(XC, 166).cable([[XC, 166], [128, 166], [128, 178]]).capV(128, 178, 194).cable([[128, 194], [128, 228]]);
-      d.texto(144, 191, "C_E");
+      d.cable([t.E, [XC, YN]]).nodo(XC, YN).resV(XC, YN, YM).texto(XC + 14, (YN + YM) / 2 + 5, "R_E");
+      d.cable([[XC, YN], [XE, YN]]).capV(XE, YN, YM).nodo(XE, YM).texto(XE + 18, (YN + YM) / 2 + 5, "C_E");
+      d.cable([[70, YM], [XC, YM]]).nodo((70 + XE) / 2, YM).masa((70 + XE) / 2, YM);
+    } else {
+      d.resV(XC, t.E[1], YM).texto(XC + 14, (t.E[1] + YM) / 2 + 5, "R_E");
+      d.cable([[70, YM], [XC, YM]]).nodo(XE, YM).masa(XE, YM);
     }
-    d.cable([[70, 228], [XC, 228]]).masa(100, 228);
-    return d.svg("-34 0 380 250", 380, 250, "Amplificador en emisor común con divisor de tensión" + (conCE ? " y capacitor de paso" : ""));
+    return d.svg("-40 0 400 300", 400, 300, "Amplificador en emisor común con divisor de tensión" + (conCE ? " y capacitor de paso" : ""));
   };
 
   /* ---------------------------------- 9 · entrada y salida del emisor común */
@@ -330,19 +346,22 @@
 
   /* -------------------------------------------- 10 · colector común */
   F.colectorComun = function () {
-    var d = new Dib(), XQ = 142;
-    d.cable([[70, 20], [XQ + 30, 20]]).borne(XQ + 30, 20).texto(XQ + 38, 25, "V_CC", { c: AZUL, t: 13 });
-    d.cable([[70, 20], [70, 32]]).resV(70, 32, 66).cable([[70, 66], [70, 96]]).texto(82, 53, "R_B");
-    d.borne(20, 96).cable([[20, 96], [44, 96]]).capH(44, 56, 96).cable([[56, 96], [70, 96]]).nodo(70, 96);
-    d.texto(50, 71, "C_1", { a: "middle" }).texto(12, 100, "v_in", { a: "end", c: AZUL, t: 13 });
-    var t = d.bjt(XQ - 30, 96);
-    d.cable([[70, 96], [XQ - 30, 96]]).texto(92, 89, "B", { a: "middle" });
-    d.cable([t.C, [XQ, 20]]).nodo(XQ, 20).texto(XQ + 7, 50, "C");
-    d.cable([t.E, [XQ, 150]]).nodo(XQ, 150).texto(XQ + 7, 130, "E");
-    d.cable([[XQ, 150], [XQ, 156]]).resV(XQ, 156, 186).cable([[XQ, 186], [XQ, 190]]).masa(XQ, 190).texto(XQ + 14, 176, "R_E");
-    d.cable([[XQ, 150], [196, 150]], VERDE).capH(196, 208, 150).cable([[208, 150], [244, 150]]).borne(244, 150);
-    d.texto(202, 125, "C_2", { a: "middle" }).texto(252, 154, "v_out", { c: AZUL, t: 13 });
-    return d.svg("-34 0 334 214", 334, 214, "Seguidor de emisor: colector a VCC, salida por el emisor");
+    /* R_B centrada entre el riel y el nodo de base; R_E entre el nodo de salida y la masa;
+       C1 y C2 centrados entre su borne y su nodo */
+    var d = new Dib(), XQ = 152, XI = 72, YB = 120, YO = 190, YM = 262;
+    d.cable([[XI, 20], [XQ + 30, 20]]).borne(XQ + 30, 20).texto(XQ + 38, 25, "V_CC", { c: AZUL, t: 13 });
+    d.resV(XI, 20, YB).texto(XI + 14, (20 + YB) / 2 + 5, "R_B").nodo(XI, YB);
+    d.borne(14, YB).capH(14, XI, YB);
+    d.texto((14 + XI) / 2, YB - 22, "C_1", { a: "middle" }).texto(4, YB + 4, "v_in", { a: "end", c: AZUL, t: 13 });
+    var t = d.bjt(XQ - 30, YB);
+    d.cable([[XI, YB], [XQ - 30, YB]]).texto(XQ - 48, YB - 8, "B", { a: "middle" });
+    d.cable([t.C, [XQ, 20]]).nodo(XQ, 20).texto(XQ + 8, t.C[1] - 20, "C");
+    d.cable([t.E, [XQ, YO]]).nodo(XQ, YO).texto(XQ + 8, t.E[1] - 6, "E");
+    d.resV(XQ, YO, YM).masa(XQ, YM).texto(XQ + 14, (YO + YM) / 2 + 5, "R_E");
+    var xm = (XQ + 260) / 2;
+    d.cable([[XQ, YO], [xm - 4, YO]], VERDE).capH(xm - 4, xm + 4, YO).cable([[xm + 4, YO], [260, YO]]).borne(260, YO);
+    d.texto(xm, YO - 22, "C_2", { a: "middle" }).texto(268, YO + 4, "v_out", { c: AZUL, t: 13 });
+    return d.svg("-40 0 360 290", 360, 290, "Seguidor de emisor: colector a VCC, salida por el emisor");
   };
 
   /* ------------------------------------------------- 11 · Darlington */
