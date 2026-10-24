@@ -64,6 +64,10 @@ nav.tabs button.on{background:var(--accent2);border-color:var(--accent);color:#f
 .lienzo{display:block;width:100%;height:var(--h,300px);
   border-radius:10px;background:#0b0f16;border:1px solid var(--line)}
 @media(max-width:600px){.lienzo{height:calc(var(--h,300px) * .85)}}
+.c3{position:relative;overflow:hidden;background:#9fc4e8}
+.c3-vistas{position:absolute;top:8px;left:8px;display:flex;gap:5px;flex-wrap:wrap}
+.c3-vistas button{background:rgba(13,17,23,.78);border:1px solid #2a3140;color:#e6edf3;border-radius:7px;padding:4px 9px;font:12px "Segoe UI",system-ui,sans-serif;cursor:pointer}
+.c3-vistas button.on{background:#1f6feb;border-color:#58a6ff}
 .side{display:flex;flex-direction:column;gap:12px}
 
 /* controles */
@@ -219,8 +223,10 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
           <h3>El cruce</h3>
           <p>La calle A corre de izquierda a derecha y la calle B de arriba hacia abajo. Los autos
              respetan lo que muestran los semáforos: frenan con el rojo y con el amarillo, salvo que
-             ya estén tan cerca de la línea que no les dé para frenar.</p>
-          <canvas class="lienzo" id="cvCruce" style="--h:380px"></canvas>
+             ya estén tan cerca de la línea que no les dé para frenar. Arrastrá para girar la vista y usá la
+             rueda para acercarte.</p>
+          <div class="lienzo c3" id="cruce3d" style="--h:380px"></div>
+          <canvas id="cvCruce" hidden></canvas>
         </div>
         <div class="panel">
           <h3>Diagrama de tiempos de un ciclo completo</h3>
@@ -464,6 +470,9 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
   </footer>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="/publicaciones/semaforo-logico/cruce3d.js?v=1"></script>
 <script>
 /* ============================================================================
    SEMÁFORO CON COMPUERTAS LÓGICAS — catto.ar
@@ -1114,6 +1123,10 @@ $("rR2").addEventListener("input", function(){
 
 /* ---------------------------------------------------------------- arranque --- */
 armarTabla(); armarEsquema(); armarCIs(); datosReloj(); verTab("sim");
+/* el cruce en 3D (si no carga three.js, queda el dibujo plano) */
+var C3 = null;
+try { if(window.THREE && window.CruceTres) C3 = window.CruceTres($("cruce3d")); } catch(e){ C3 = null; }
+if(!C3){ $("cruce3d").hidden = true; $("cvCruce").hidden = false; $("cvCruce").className = "lienzo"; $("cvCruce").style.setProperty("--h", "380px"); }
 var ultimo = 0;
 function cuadro(ts){
   var dt = ultimo ? Math.min((ts - ultimo) / 1000, 0.05) : 0;
@@ -1126,7 +1139,10 @@ function cuadro(ts){
     if(geo) moverAutos(geo, dt * S.vel, n);
   }
   vivo(n);
-  if(tab === "sim"){ pintarCruce(n); pintarTiempos(S.t); }
+  if(tab === "sim"){
+    if(C3) C3.paso(S.corre ? dt * S.vel : 0, luzA(n), luzB(n)); else pintarCruce(n);
+    pintarTiempos(S.t);
+  }
   requestAnimationFrame(cuadro);
 }
 window.addEventListener("resize", function(){ geo = null; });
