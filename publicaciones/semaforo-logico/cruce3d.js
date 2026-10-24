@@ -85,8 +85,8 @@ for (let i = 0; i < 8; i++) { const n = new THREE.Mesh(new THREE.SphereGeometry(
 const semaf = [];
 function semaforo(x, z, rot, grupo) {
   const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot; esc.add(g);
-  caja(.3, 5, .3, 0x30343a, 0, 2.5, 0, g); const cab = caja(1, 2.6, .8, 0x1c1f24, 0, 5.4, 0, g);
-  const luces = [0xf85149, 0xf2cc60, 0x3fb950].map((c, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(.3, 16, 12), new THREE.MeshBasicMaterial({ color: 0x222222 })); m.position.set(0, 6.2 - i * .8, .42); g.add(m); m.userData.c = c; return m; });
+  caja(.3, 5, .3, 0x30343a, 0, 2.5, 0, g); const cab = caja(1.25, 3.1, .8, 0x1c1f24, 0, 5.6, 0, g);
+  const luces = [0xf85149, 0xf2cc60, 0x3fb950].map((c, i) => { const m = new THREE.Mesh(new THREE.SphereGeometry(.42, 18, 14), new THREE.MeshBasicMaterial({ color: 0x222222 })); m.position.set(0, 6.6 - i * 1, .45); g.add(m); m.userData.c = c; return m; });
   semaf.push({ luces, grupo });
 }
 // dos semáforos: uno por calle, en la esquina por la que llega el tránsito
