@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embedded systems hardware and software · Digital Techniques II · Catto</title>
+<meta name="description" content="What distinguishes an embedded system, the hardware decisions (processor, clock, power, reset and watchdog), the software structure from the boot code to the main loop and interrupts, power consumption with duty cycling and debugging through JTAG or SWD, with an interactive lab on the battery life of a sensor. Content of Digital Techniques II, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/sistemas-embebidos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-embebidos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/sistemas-embebidos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/sistemas-embebidos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques II</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques II</span> · 120 h · Topic 4 of 6</div>
+    <h1>Embedded systems hardware and software</h1>
+    <p class="lead">A sensor that sleeps at 2 µA lasts more than two years on a CR2032 cell. If a peripheral is left on and the sleep current rises to 50 µA, the same cell lasts four months.</p>
+    <div class="chips">
+      <span class="chip hi">Microcontroller</span>
+      <span class="chip">Boot code</span>
+      <span class="chip">Interrupts</span>
+      <span class="chip">Low power</span>
+      <span class="chip">Watchdog</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que-es">
+      <h2><span class="n">01</span>A computer nobody sees</h2>
+      <p>An <b>embedded system</b> is a computer dedicated to one task inside a product: the control of a
+      washing machine, an airbag unit, a gas meter, a pacemaker. It does not look like a computer and is almost
+      never reprogrammed, but it has a processor, memory, peripherals and software. What distinguishes it is the
+      set of constraints: cost per unit, power consumption, size, guaranteed response times and years of
+      operation without anyone restarting it.</p>
+      <p>The technician program presents the <a href="/en/publicaciones/mapa-electronica/temas/familia-microcontroladores">microcontroller
+      families</a>, their <a href="/en/publicaciones/mapa-electronica/temas/perifericos-microcontrolador">peripherals</a>
+      and the <a href="/en/publicaciones/mapa-electronica/temas/interrupciones">interrupts</a>. Here we see how the
+      complete system is designed.</p>
+    </section>
+
+    <section id="hardware">
+      <h2><span class="n">02</span>The hardware</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Block</th><th>What has to be decided</th></tr></thead>
+        <tbody>
+          <tr><td>Processor</td><td>Microcontroller, processor with an operating system, or FPGA, depending on the load and the cost</td></tr>
+          <tr><td>Memory</td><td>Flash for the program and SRAM for the data, with margin for updates</td></tr>
+          <tr><td>Clock</td><td>Internal RC oscillator (cheap, ±1 %) or crystal (±20 ppm, needed for USB, CAN or a time-of-day clock)</td></tr>
+          <tr><td>Power</td><td>Linear or switching regulator, voltage supervision (brown-out) and power-up sequencing</td></tr>
+          <tr><td>Reset and supervision</td><td>Reliable reset circuit and watchdog timer that restarts the system if the software hangs</td></tr>
+          <tr><td>Inputs and outputs</td><td>Protection against discharges and overvoltages on everything that leaves the board</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Platform</th><th>When it is the right choice</th></tr></thead>
+        <tbody>
+          <tr><td>Microcontroller (Cortex-M, AVR, RISC-V)</td><td>Control and data acquisition with guaranteed timing, microamp consumption in sleep</td></tr>
+          <tr><td>Application processor running Linux</td><td>Graphical interface, complex networking, gigabytes of memory; boot time of seconds</td></tr>
+          <tr><td>FPGA or SoC with FPGA</td><td>Parallel processing at speeds that software cannot reach</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="software">
+      <h2><span class="n">03</span>The software</h2>
+      <p>A microcontroller’s program starts without an operating system to prepare it. The <b>boot
+      code</b> locates the vector table, initializes the stack, copies the initialized variables from flash to
+      RAM, zeroes the rest and only then calls <code>main</code>. From there on there are three
+      possible structures:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Structure</th><th>How it works</th><th>Limit</th></tr></thead>
+        <tbody>
+          <tr><td>Main loop</td><td>A <code>while(1)</code> that polls and services everything in order</td><td>The response time is the duration of the complete loop</td></tr>
+          <tr><td>Foreground and background</td><td>Interrupts handle what is urgent and leave flags; the main loop does the rest</td><td>Interrupt routines have to be short and share data carefully</td></tr>
+          <tr><td>Real-time operating system</td><td>Independent tasks with priorities and a scheduler</td><td>More memory and complexity; covered in the <a href="/en/publicaciones/mapa-ingenieria/temas/rtos">RTOS unit</a></td></tr>
+        </tbody>
+      </table></div>
+      <p>On top of the hardware the code is organized in layers: drivers that know the registers, a hardware
+      abstraction layer (HAL) that hides them, and the application, which should not know which microcontroller it runs on. Two
+      details of the C language become critical: <code>volatile</code> on every variable modified by an
+      interrupt or by the hardware, so that the compiler does not keep it in a register, and atomic access to the
+      data shared between an interrupt and the main loop.</p>
+    </section>
+
+    <section id="consumo">
+      <h2><span class="n">04</span>Power consumption and battery</h2>
+      <p>A battery-powered node spends almost all its time asleep: it wakes up, measures, sometimes transmits and goes back to
+      sleep. The average current is the charge of each state divided by the period:</p>
+      <div class="form">
+        \[ \bar I = \frac{I_{act}\, t_{act} + I_{rad}\, t_{rad} + I_{dor}\, t_{dor}}{T} \]
+        \[ t_{vida} = \frac{0.8\; C}{\bar I + I_{auto}} \]
+        <span class="cap">\( C \) is the battery capacity, of which it is wise to count only 80 %, and \( I_{auto} \) is the self-discharge expressed as a current. With short wake-ups, what decides the lifetime is the sleep current: 2 µA versus 50 µA is the difference between years and months.</span>
+      </div>
+      <div class="lw" id="em">
+        <div class="lt">Lab · how long a sensor’s battery lasts</div>
+        <p class="ls">A microcontroller that wakes up periodically, measures for 10 ms at 5 mA and every so often
+        transmits by radio for 5 ms at 20 mA. The bar divides the charge consumed among the states; the
+        chart below shows the shape of the current, with the time scale distorted so that the pulses
+        can be seen.</p>
+        <div class="fila">
+          <select id="emB">
+            <option value="cr2032" selected>CR2032 coin cell (225 mAh)</option>
+            <option value="aa">Two AA alkaline cells (2500 mAh)</option>
+            <option value="liion">18650 Li-ion battery (3000 mAh)</option>
+          </select>
+          <select id="emT">
+            <option value="1">Wakes up every 1 s</option>
+            <option value="10" selected>Wakes up every 10 s</option>
+            <option value="60">Wakes up every 1 min</option>
+            <option value="600">Wakes up every 10 min</option>
+            <option value="3600">Wakes up every 1 h</option>
+          </select>
+        </div>
+        <div class="fila">
+          <select id="emS">
+            <option value="0.5e-6">Sleep 0.5 µA (real-time clock only)</option>
+            <option value="2e-6" selected>Sleep 2 µA (RAM retained)</option>
+            <option value="50e-6">Sleep 50 µA (a forgotten peripheral)</option>
+            <option value="1e-3">No sleep mode (1 mA)</option>
+          </select>
+          <select id="emN">
+            <option value="1">Transmits on every wake-up</option>
+            <option value="6" selected>Transmits every 6 wake-ups</option>
+            <option value="60">Transmits every 60 wake-ups</option>
+            <option value="0">Does not transmit</option>
+          </select>
+        </div>
+        <canvas id="emLienzo" style="display:block;width:100%;max-width:620px;height:230px;margin:6px auto 0"></canvas>
+        <div class="datos" id="emDatos"></div>
+        <div class="nota" id="emNota"></div>
+      </div>
+    </section>
+
+    <section id="desarrollo">
+      <h2><span class="n">05</span>Development, debugging and reliability</h2>
+      <p>The program is compiled on a computer for a different processor (cross-compilation) and is flashed and debugged
+      through a <b>JTAG</b> or <b>SWD</b> interface, which allows you to halt the processor, step through the code
+      and read memory without modifying the program. For timing problems, the oscilloscope and the
+      logic analyzer are as necessary as the debugger: a pin that toggles on entering and leaving an
+      interrupt measures its real duration.</p>
+      <p>A system that has to work for years unattended is designed to fail well: the watchdog
+      restarts a hung program, voltage supervision prevents it from running with insufficient power, remote
+      updates keep a backup image, and coding guidelines such as MISRA C restrict
+      the language constructs most prone to errors.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Measuring the real consumption</div>
+        <p>With a 10 Ω resistor in series with the supply of a microcontroller and an oscilloscope, measure
+        the sleep current and the current during wake-ups. Calculate the lifetime of a CR2032 and compare it with the
+        lab.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Duration of an interrupt</div>
+        <p>Set a pin high on entering an interrupt routine and low on leaving it, and measure its duration and
+        its variation with the oscilloscope.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · The watchdog</div>
+        <p>Enable the watchdog, deliberately cause an infinite loop and verify that the system restarts and
+        records the cause of the reset.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Forgetting <code>volatile</code>.</b> The compiler optimizes the read of a flag and the loop never sees
+        the change the interrupt made.</li>
+        <li><b>Long interrupt routines.</b> They delay all the others; the interrupt sets a flag and the loop
+        does the processing.</li>
+        <li><b>Leaving a peripheral on during sleep.</b> A converter or a floating pin can multiply the sleep current by
+        twenty.</li>
+        <li><b>Disabling the watchdog for debugging and not enabling it again.</b></li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>A sensor draws an average of 3 µA. How long does a 225 mAh CR2032 last, using 80 % of it?</summary>
+        <div class="a"><p>\( 180\ \text{mAh} / 3\ \mu\text{A} = 60\,000 \) h, almost 7 years, not counting self-discharge.</p></div></details>
+      <details class="q"><summary>What charge does a 10 ms wake-up at 5 mA consume?</summary>
+        <div class="a"><p>50 µC, or 0.0139 µAh.</p></div></details>
+      <details class="q"><summary>Why is a variable modified in an interrupt declared <code>volatile</code>?</summary>
+        <div class="a"><p>So that the compiler reads it from memory every time, instead of assuming it has not changed since
+        the last read.</p></div></details>
+      <details class="q"><summary>When is a crystal needed instead of the internal RC oscillator?</summary>
+        <div class="a"><p>When frequency accuracy is required: communications such as USB or CAN, a time-of-day clock
+        or precise time measurements.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Elecia White.</span>
+          <span class="ti">Making Embedded Systems</span>.
+          <span class="ed">2nd ed., O'Reilly, 2024.</span>
+          <span class="pq">Embedded system design from software architecture to power consumption, with a lot of practical experience.</span></li>
+        <li><span class="au">Joseph Yiu.</span>
+          <span class="ti">The Definitive Guide to ARM Cortex-M3 and Cortex-M4 Processors</span>.
+          <span class="ed">3rd ed., Newnes, 2014.</span>
+          <span class="pq">The processor in almost all current microcontrollers, with startup, interrupts and low-power modes.</span></li>
+        <li><span class="au">Jack Ganssle.</span>
+          <span class="ti">The Art of Designing Embedded Systems</span>.
+          <span class="ed">2nd ed., Newnes, 2008.</span>
+          <span class="pq">How an embedded project is organized so that it works and can be maintained.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/arquitectura-procesadores">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Processor architecture and organization</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/protocolos-seriales">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Serial communications and protocols</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Embedded systems hardware and software”</b> of <b>Digital Techniques II</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Battery life of a duty-cycled node.
+   Per period T: active 10 ms at 5 mA; radio 5 ms at 20 mA every N periods;
+   the rest asleep at Is. I = (Ia ta + Ir tr / N + Is (T - ta - tr / N)) / T.
+   Self-discharge as a current: C * annual fraction / 8760 h (CR2032 1 %,
+   alkaline 3 %, Li-ion 24 %). Life = 0.8 C / (I + Iauto).
+   Check (Python): CR2032, 10 s, 2 uA, radio every 6 -> 8.665 uA, 20,176 h
+   (2.30 years); AA, 60 s, radio always -> 4.5 uA + 8.56 uA, 17.5 years;
+   Li-ion same -> 3.16 years; CR2032 with 50 uA -> 0.36 years. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("emLienzo"), ctx = cv.getContext("2d");
+  var BAT = { cr2032: [0.225, 0.01, "the CR2032"], aa: [2.5, 0.03, "the AA cells"], liion: [3.0, 0.24, "the Li-ion battery"] };
+  var IA = 5e-3, TA = 10e-3, IR = 20e-3, TR = 5e-3;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function corr(i){ return i >= 1e-3 ? coma(i * 1e3, 2) + " mA" : coma(i * 1e6, i < 1e-5 ? 2 : 1) + " µA"; }
+  function dur(h){ return h >= 8760 ? coma(h / 8760, 2) + " years" : h >= 48 ? coma(h / 24, 0) + " days" : coma(h, 0) + " hours"; }
+
+  function pintar(){
+    var b = BAT[$("emB").value], T = +$("emT").value, Is = +$("emS").value, N = +$("emN").value;
+    var qa = IA * TA, qr = N ? IR * TR / N : 0, td = T - TA - (N ? TR / N : 0), qs = Is * td;
+    var I = (qa + qr + qs) / T, Iau = b[0] * b[1] / 8760, It = I + Iau, h = 0.8 * b[0] / It;
+    var parte = [[qa / T / It, "active", "#58a6ff"], [qr / T / It, "radio", "#f2cc60"], [qs / T / It, "sleep", "#7ee787"], [Iau / It, "self-discharge", "#9aa7b4"]];
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 14, x1 = W - 14;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]);
+      ctx.font = "10px system-ui, sans-serif"; ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left";
+      ctx.fillText("where the consumed charge goes", x0, 12);
+      var xx = x0;
+      parte.forEach(function(p){ var w = p[0] * (x1 - x0); ctx.fillStyle = p[2]; ctx.fillRect(xx, 18, Math.max(0, w - 1), 22); xx += w; });
+      /* legend in two rows if it does not fit */
+      ctx.font = "600 10.5px system-ui, sans-serif"; var lx = x0, ly = 56;
+      parte.forEach(function(p){
+        var t = p[1] + " " + coma(p[0] * 100, 1) + " %", w = ctx.measureText(t).width + 26;
+        if(lx + w > x1){ lx = x0; ly += 16; }
+        ctx.fillStyle = p[2]; ctx.fillRect(lx, ly - 9, 10, 10); ctx.fillStyle = "#c9d1d9"; ctx.fillText(t, lx + 14, ly); lx += w;
+      });
+      /* shape of the current, logarithmic scale, distorted time */
+      var g0 = ly + 22, g1 = H - 14, Y = function(i){ return g1 - (Math.log10(i) + 7) / 5.5 * (g1 - g0); };
+      ctx.font = "10px system-ui, sans-serif"; ctx.textAlign = "right"; ctx.fillStyle = "#6b7484";
+      [[1e-6, "1 µA"], [1e-4, "100 µA"], [1e-2, "10 mA"]].forEach(function(e){ ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0 + 44, Y(e[0])); ctx.lineTo(x1, Y(e[0])); ctx.stroke(); ctx.fillText(e[1], x0 + 40, Y(e[0]) + 3); });
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      var ancho = x1 - x0 - 48, per = 3, pw = ancho / per, px = x0 + 48, yS = Y(Math.max(Is, 2e-7));
+      ctx.moveTo(px, yS);
+      for(var k = 0; k < per; k++){
+        var a0 = px + k * pw + pw * 0.35;
+        ctx.lineTo(a0, yS); ctx.lineTo(a0, Y(IA)); ctx.lineTo(a0 + pw * 0.1, Y(IA));
+        if(N && k === 0){ ctx.lineTo(a0 + pw * 0.1, Y(IR)); ctx.lineTo(a0 + pw * 0.16, Y(IR)); ctx.lineTo(a0 + pw * 0.16, yS); }
+        else ctx.lineTo(a0 + pw * 0.1, yS);
+        ctx.lineTo(px + (k + 1) * pw, yS);
+      }
+      ctx.stroke();
+    }
+
+    $("emDatos").innerHTML =
+      "<span>average circuit current</span><b>" + corr(I) + "</b>" +
+      "<span>self-discharge of " + b[2] + ", as a current</span><b>" + corr(Iau) + "</b>" +
+      "<span>estimated lifetime</span><b>" + dur(h) + "</b>";
+    var nota, mayor = parte.slice().sort(function(a, c){ return c[0] - a[0]; })[0];
+    if(Is >= 1e-3) nota = "With no sleep mode, the microcontroller draws almost the same asleep as awake and " + b[2] + " lasts " + dur(h) + ". Sleeping well is the first design decision for battery-powered equipment.";
+    else if(mayor[1] === "self-discharge") nota = "The circuit draws so little that the battery rules: self-discharge weighs more than the sensor itself. " + (b[2] === "the Li-ion battery" ? "A Li-ion loses about 2 % per month; for years of autonomy a primary lithium cell is the better choice." : "Beyond about ten years, moreover, the shelf life of the cell sets the limit.");
+    else if(mayor[1] === "sleep") nota = "The sleep current rules: " + coma(mayor[0] * 100, 0) + " % of the charge is spent while the device sleeps. Lowering it is worth more than shortening the wake-ups.";
+    else if(mayor[1] === "radio") nota = "The radio rules: transmitting less often, or grouping several measurements into one message, is what extends the life the most.";
+    else nota = "The active time rules: shortening the measurement, or doing it with a faster clock to go back to sleep sooner, is what pays off the most.";
+    $("emNota").innerHTML = nota;
+  }
+  ["emB", "emT", "emS", "emN"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

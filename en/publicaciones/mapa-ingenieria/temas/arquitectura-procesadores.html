@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Processor architecture and organization · Digital Techniques II · Catto</title>
+<meta name="description" content="Architecture and organization, von Neumann and Harvard, CISC and RISC instruction sets, the performance equation, the five-stage pipeline and its hazards, the memory hierarchy and the cache with its three kinds of misses, and superscalar, SIMD and multicore parallelism, with an interactive lab that simulates a cache facing four programs. Content of Digital Techniques II, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/arquitectura-procesadores">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/arquitectura-procesadores">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/arquitectura-procesadores">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/arquitectura-procesadores">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques II</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques II</span> · 120 h · Topic 3 of 6</div>
+    <h1>Processor architecture and organization</h1>
+    <p class="lead">Summing a matrix by traversing it by columns instead of by rows can drop the cache hit rate from 87 % to 0 %. The algorithm is the same; what changes is the order.</p>
+    <div class="chips">
+      <span class="chip hi">RISC and CISC</span>
+      <span class="chip">CPI</span>
+      <span class="chip">Pipeline</span>
+      <span class="chip">Cache</span>
+      <span class="chip">Locality</span>
+    </div>
+    <hr class="rule">
+
+    <section id="niveles">
+      <h2><span class="n">01</span>Architecture and organization</h2>
+      <p>There are two ways of looking at a processor. The <b>architecture</b> is the contract with the software: the
+      instruction set, the visible registers, the addressing modes, the memory model. The
+      <b>organization</b> (or microarchitecture) is how that contract is fulfilled in silicon: how many stages
+      the pipeline has, which caches there are, how many instructions are executed at once. Two processors with the same
+      architecture, such as a Cortex-M0 and a Cortex-M7, run the same code with very different
+      organizations and performance. The general view of CPU, memory and buses is in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/sistema-computacional">the computer system</a> page of
+      Computer Science I and in <a href="/en/publicaciones/mapa-electronica/temas/arquitectura-microprocesadores">microprocessor
+      architecture</a>, from the technician program.</p>
+      <p>The first organization decision is how instructions and data arrive. In the
+      <b>von Neumann</b> architecture they share memory and bus; in the <b>Harvard</b> architecture, they have separate memories and buses and can
+      be read at the same time. Almost all current processors are modified Harvard: a single main
+      memory, but separate instruction and data caches.</p>
+    </section>
+
+    <section id="isa">
+      <h2><span class="n">02</span>The instruction set</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>CISC</th><th>RISC</th></tr></thead>
+        <tbody>
+          <tr><td>Instructions</td><td>Many, some of them complex, of variable length</td><td>Few and simple, of fixed length (32 bits)</td></tr>
+          <tr><td>Memory access</td><td>Almost any instruction can operate on memory</td><td>Only the load and store instructions</td></tr>
+          <tr><td>Registers</td><td>Few, with special uses</td><td>Many general-purpose ones (32 in RISC-V)</td></tr>
+          <tr><td>Examples</td><td>x86, 8051</td><td>ARM, RISC-V, AVR, MIPS</td></tr>
+        </tbody>
+      </table></div>
+      <p>The simplicity of RISC is what allows execution to be pipelined efficiently: all instructions
+      go through the same stages and take the same time in each one. Modern x86 processors translate
+      their complex instructions internally into RISC-like micro-operations.</p>
+    </section>
+
+    <section id="rendimiento">
+      <h2><span class="n">03</span>The performance equation</h2>
+      <div class="form">
+        \[ T_{CPU} = N_{instr} \cdot CPI \cdot T_{clk} \]
+        <span class="cap">The execution time is the number of instructions times the average cycles per instruction times the clock period. One billion instructions with a CPI of 1.5 at 500 MHz take 3 s. Improving one factor at the expense of another does not always pay off.</span>
+      </div>
+      <p>The compiler and the instruction set decide \( N_{instr} \); the organization decides the CPI; the
+      technology and the depth of the pipeline decide the clock. Comparing processors by their clock frequency
+      alone ignores the other two factors.</p>
+    </section>
+
+    <section id="pipeline">
+      <h2><span class="n">04</span>Pipelining</h2>
+      <p>A <b>pipeline</b> divides execution into stages, and each stage works on a different instruction at the
+      same time, like an assembly line. The classic five stages: instruction fetch (IF), decode and register
+      read (ID), execute (EX), memory access (MEM) and write-back of the result (WB). Ideally it finishes
+      one instruction per cycle, and the clock can be up to five times faster than without pipelining.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Hazard</th><th>Cause</th><th>Solution</th></tr></thead>
+        <tbody>
+          <tr><td>Structural</td><td>Two stages need the same resource</td><td>Duplicate the resource: separate instruction and data memories</td></tr>
+          <tr><td>Data</td><td>An instruction needs a result that has not been written yet</td><td>Forwarding from the later stages; if that is not enough, a bubble</td></tr>
+          <tr><td>Control</td><td>A branch is resolved only in EX, with instructions already fetched behind it</td><td>Branch prediction; if it fails, the fetched instructions are discarded</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="cache">
+      <h2><span class="n">05</span>Memory hierarchy and cache</h2>
+      <p>A processor executes an instruction per nanosecond, and a DRAM takes tens of nanoseconds to
+      respond. The solution is a hierarchy: a small, fast memory, the <b>cache</b>, keeps copies of what was
+      used recently. It works because programs have <b>locality</b>: <i>temporal</i> (what was used
+      is used again) and <i>spatial</i> (after one address, the next one is used). That is why the cache brings in
+      entire lines of 32 or 64 bytes.</p>
+      <p>The address is divided into three fields: the <b>offset</b> chooses the byte within the line, the
+      <b>index</b> chooses the set where it can be, and the <b>tag</b> is compared to find out whether the stored
+      line is the one sought. In a <b>direct-mapped</b> cache each line has only one possible
+      place; in an <b>n-way set-associative</b> cache, n places.</p>
+      <div class="form">
+        \[ t_{medio} = t_{acierto} + m \cdot t_{penalidad} \]
+        <span class="cap">The average access time: with 1 cycle for a hit, 100 of penalty and a 5 % miss rate, 6 cycles. Each point of miss rate costs one cycle per access.</span>
+      </div>
+      <p>Misses have three causes: <b>compulsory</b> (the first access to a line), <b>capacity</b> (the
+      program uses more data than fits) and <b>conflict</b> (lines that compete for the same set
+      even though there is room in others). The last depend on the addresses, and the same algorithm can be fast
+      or slow depending on how it traverses the data.</p>
+      <div class="lw" id="ca">
+        <div class="lt">Lab · a cache facing four programs</div>
+        <p class="ls">A data cache with LRU replacement receives the address sequence of a short program.
+        The strip at the top shows the first 512 accesses (green, hit; red, miss) and the grid shows which array
+        occupies each line at the end. 1 cycle per hit and 100 per miss are assumed.</p>
+        <div class="fila">
+          <select id="caP">
+            <option value="sec">Sum an array of 2048 integers, twice</option>
+            <option value="filas">Traverse a 64 × 64 matrix by rows</option>
+            <option value="columnas" selected>Traverse the same matrix by columns</option>
+            <option value="conflicto">Dot product of two arrays 8 KB apart</option>
+          </select>
+        </div>
+        <div class="fila">
+          <select id="caT">
+            <option value="1024" selected>1 KB cache</option>
+            <option value="4096">4 KB cache</option>
+            <option value="16384">16 KB cache</option>
+          </select>
+          <select id="caL">
+            <option value="16">16 B lines</option>
+            <option value="32" selected>32 B lines</option>
+            <option value="64">64 B lines</option>
+          </select>
+          <select id="caV">
+            <option value="1" selected>Direct-mapped</option>
+            <option value="2">2-way set-associative</option>
+            <option value="4">4-way set-associative</option>
+          </select>
+        </div>
+        <canvas id="caLienzo" style="display:block;width:100%;max-width:620px;height:250px;margin:6px auto 0"></canvas>
+        <div class="datos" id="caDatos"></div>
+        <div class="nota" id="caNota"></div>
+      </div>
+    </section>
+
+    <section id="paralelismo">
+      <h2><span class="n">06</span>Beyond one instruction per cycle</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Technique</th><th>What it does</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td>Superscalar</td><td>Several instructions per cycle, with out-of-order execution</td><td>Computer and phone processors</td></tr>
+          <tr><td>SIMD</td><td>One instruction operates on several data items at once</td><td>Vector extensions for audio, video and neural networks</td></tr>
+          <tr><td>Multicore</td><td>Several complete processors on one chip, with shared caches</td><td>Almost everything that is not a simple microcontroller</td></tr>
+          <tr><td>DSP</td><td>Multiply-accumulate in one cycle and circular addressing</td><td>Digital filters and signal processing</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Rows versus columns</div>
+        <p>Write in C the sum of a 2048 × 2048 matrix traversed by rows and by columns, measure the times on
+        a computer and explain the difference in terms of the cache.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Cycles per instruction</div>
+        <p>On a microcontroller with a cycle counter, measure how many cycles a loop takes and compare it with the
+        assembly code the compiler generated.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · A pipeline by hand</div>
+        <p>Draw the diagram of a five-stage pipeline for a sequence of six instructions with two
+        data dependencies, with and without forwarding, and count the cycles.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <ul>
+        <li><b>Comparing processors by clock alone.</b> The CPI and the number of instructions weigh just as much.</li>
+        <li><b>Traversing a matrix against the way it is stored.</b> In C it is stored by rows; traversing it by
+        columns can multiply the time.</li>
+        <li><b>Using power-of-two sizes and spacings without thinking.</b> They make the cache indices coincide and
+        cause conflict misses.</li>
+        <li><b>Confusing architecture with organization.</b> The same ARM binary runs on very
+        different processors.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Self-assessment</h2>
+      <details class="q"><summary>How is a 32-bit address divided in a 4 KB direct-mapped cache with 32 B lines?</summary>
+        <div class="a"><p>5 offset bits, 7 index bits (128 lines) and 20 tag bits.</p></div></details>
+      <details class="q"><summary>What average access time does a 2 % miss rate give with 1 cycle for a hit and 80 of penalty?</summary>
+        <div class="a"><p>\( 1 + 0.02 \cdot 80 = 2.6 \) cycles.</p></div></details>
+      <details class="q"><summary>A program goes from CPI 2 to CPI 1.2, but the clock drops from 1 GHz to 800 MHz. Is it an improvement?</summary>
+        <div class="a"><p>Yes: the time per instruction goes from 2 ns to 1.5 ns.</p></div></details>
+      <details class="q"><summary>What type of miss does increasing associativity eliminate?</summary>
+        <div class="a"><p>Conflict misses. Capacity misses need a larger cache, and compulsory misses, longer lines
+        or prefetching.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">David A. Patterson and John L. Hennessy.</span>
+          <span class="ti">Computer Organization and Design: RISC-V Edition</span>.
+          <span class="ed">2nd ed., Morgan Kaufmann, 2020.</span>
+          <span class="pq">The course text: instruction set, pipeline and memory hierarchy on RISC-V.</span></li>
+        <li><span class="au">John L. Hennessy and David A. Patterson.</span>
+          <span class="ti">Computer Architecture: A Quantitative Approach</span>.
+          <span class="ed">6th ed., Morgan Kaufmann, 2017.</span>
+          <span class="pq">The next level: instruction-level parallelism, advanced caches and accelerators.</span></li>
+        <li><span class="au">Sarah L. Harris and David Harris.</span>
+          <span class="ti">Digital Design and Computer Architecture: RISC-V Edition</span>.
+          <span class="ed">Morgan Kaufmann, 2021.</span>
+          <span class="pq">Builds a complete RISC-V processor in HDL, starting from the gates.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/memorias-electronicas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Electronic memories</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/sistemas-embebidos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Embedded systems hardware and software</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Processor architecture and organization”</b> of <b>Digital Techniques II</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Data cache simulator with LRU replacement.
+   Traces (base 0x10000): sum of 2048 integers twice; 64 x 64 float matrix
+   by rows and by columns; dot product of two arrays of 1024 integers
+   8 KB apart (a[i], b[i] alternating).
+   sets = size / (line * ways); block = addr / line; index = block
+   mod sets; tag = block / sets. Average time = 1 + m * 100.
+   Check (Python): sec 1K/32/1 -> 87.5 %; columns 1K/32/1 -> 0 %;
+   columns 16K/32/1 -> 87.5 %; columns 4K/64/4 -> 0 %; conflict 4K/32/1
+   -> 0 %; conflict 4K/32/2 -> 87.5 %; sec 16K/32/1 -> 93.75 %. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("caLienzo"), ctx = cv.getContext("2d");
+  var B = 0x10000;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function traza(p){
+    var t = [], i, j, r;
+    if(p === "sec"){ for(r = 0; r < 2; r++) for(i = 0; i < 2048; i++) t.push(B + 4 * i); }
+    else if(p === "filas"){ for(i = 0; i < 64; i++) for(j = 0; j < 64; j++) t.push(B + (i * 64 + j) * 4); }
+    else if(p === "columnas"){ for(j = 0; j < 64; j++) for(i = 0; i < 64; i++) t.push(B + (i * 64 + j) * 4); }
+    else { for(i = 0; i < 1024; i++){ t.push(B + 4 * i); t.push(B + 8192 + 4 * i); } }
+    return t;
+  }
+  function log2(x){ return Math.round(Math.log(x) / Math.LN2); }
+
+  function pintar(){
+    var p = $("caP").value, T = +$("caT").value, L = +$("caL").value, V = +$("caV").value;
+    var S = T / (L * V), tr = traza(p), C = [], dueno = [], hit = 0, marcas = [];
+    for(var s = 0; s < S; s++){ C.push([]); dueno.push([]); }
+    tr.forEach(function(a, k){
+      var blk = Math.floor(a / L), si = blk % S, tag = Math.floor(blk / S), l = C[si], d = dueno[si], pos = l.indexOf(tag);
+      var ar = p === "conflicto" && a >= B + 8192 ? 1 : 0, ok;
+      if(pos >= 0){ hit++; l.splice(pos, 1); var dv = d.splice(pos, 1)[0]; l.push(tag); d.push(dv); ok = true; }
+      else { if(l.length >= V){ l.shift(); d.shift(); } l.push(tag); d.push(ar); ok = false; }
+      if(k < 512) marcas.push(ok);
+    });
+    var n = tr.length, mis = n - hit, tasa = hit / n, amat = 1 + (1 - tasa) * 100;
+    var off = log2(L), idx = log2(S), etq = 32 - off - idx;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 14, x1 = W - 14;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]);
+      ctx.font = "10px system-ui, sans-serif"; ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left";
+      ctx.fillText("first 512 accesses", x0, 12);
+      /* strip of hits and misses: 2 rows of 256 */
+      var cw = (x1 - x0) / 256;
+      marcas.forEach(function(ok, k){
+        ctx.fillStyle = ok ? "#7ee787" : "#f85149";
+        ctx.fillRect(x0 + (k % 256) * cw, 18 + Math.floor(k / 256) * 12, Math.max(1, cw - 0.3), 10);
+      });
+      ctx.fillStyle = "#8b93a3"; ctx.fillText("final cache contents: " + S + " sets × " + V + (V > 1 ? " ways" : " way") + " = " + (S * V) + " lines", x0, 56);
+      /* grid of lines: rows = grouped sets, columns */
+      var nl = S * V, cols = Math.ceil(Math.sqrt(nl * (x1 - x0) / (H - 70))), filas = Math.ceil(nl / cols);
+      var gw = (x1 - x0) / cols, gh = Math.min(16, (H - 66) / filas);
+      for(var q = 0; q < nl; q++){
+        var si2 = Math.floor(q / V), w = q % V, own = dueno[si2][w];
+        ctx.fillStyle = own === undefined ? "#2a3140" : own ? "#d2a8ff" : "#58a6ff";
+        ctx.fillRect(x0 + (q % cols) * gw, 62 + Math.floor(q / cols) * gh, Math.max(1, gw - 1), Math.max(1, gh - 1));
+      }
+      /* legend */
+      var ly = H - 8, lx = x0;
+      [["#58a6ff", p === "conflicto" ? "array a" : p === "sec" ? "array" : "matrix"]].concat(p === "conflicto" ? [["#d2a8ff", "array b"]] : []).concat([["#2a3140", "empty"]]).forEach(function(e){
+        ctx.fillStyle = e[0]; ctx.fillRect(lx, ly - 9, 12, 10);
+        ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText(e[1], lx + 16, ly); lx += 22 + ctx.measureText(e[1]).width + 12;
+      });
+    }
+
+    $("caDatos").innerHTML =
+      "<span>accesses</span><b>" + n + "</b>" +
+      "<span>hits / misses</span><b>" + hit + " / " + mis + "</b>" +
+      "<span>hit rate</span><b>" + coma(tasa * 100, 2) + " %</b>" +
+      "<span>average access time</span><b>" + coma(amat, 2) + " cycles</b>" +
+      "<span>address: tag / index / offset</span><b>" + etq + " / " + idx + " / " + off + " bits</b>";
+
+    /* distinct sets touched by a single column of the matrix */
+    var cjs = {}; for(var fi = 0; fi < 64; fi++) cjs[Math.floor((B + fi * 256) / L) % S] = 1;
+    var ncol = Object.keys(cjs).length;
+    var nota;
+    if(tasa === 0 && p === "conflicto") nota = "<b>Conflict misses:</b> a[i] and b[i] are 8 KB apart, a multiple of the cache size, and fall in the same set. With a single way they evict each other on every access. With two ways they coexist.";
+    else if(tasa === 0 && p === "columnas") nota = "<b>No hits at all:</b> by columns, each access jumps 256 bytes (an entire row) and uses a different line. When it returns to the first row for the next column, that line has already been evicted. The 64 rows of a column fall in only " + ncol + " of the " + S + " sets, because the 256-byte stride is a power of two: " + 64 + " lines compete for " + (ncol * V) + " places.";
+    else if(p === "columnas") nota = "The cache is large enough to hold the 64 lines that a column touches, and the next column finds them: spatial locality is recovered, even though the traversal goes against the order of the matrix.";
+    else if(p === "conflicto") nota = "With " + V + " ways, a[i] and b[i] share a set without evicting each other: only the compulsory misses remain, one per line of each array.";
+    else nota = "Spatial locality: each miss brings in a line of " + L + " bytes, and the next " + (L / 4 - 1) + " integers are hits. " + (p === "sec" && T < 8192 ? "The array takes 8 KB and does not fit: the second pass misses again on every line (capacity misses)." : p === "sec" ? "The whole array fits: the second pass is all hits." : "Traversing in the order in which the matrix is stored is the most efficient.");
+    $("caNota").innerHTML = nota;
+  }
+  ["caP", "caT", "caL", "caV"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

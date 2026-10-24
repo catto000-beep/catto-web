@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RF oscillators · Applied Electronics III · Catto</title>
+<meta name="description" content="The oscillation condition, the Colpitts, Hartley and Clapp LC oscillators, the quality factor and Leeson's phase noise, the quartz crystal with its equivalent circuit, its series and parallel resonances and the load capacitance, and voltage-controlled oscillators, with an interactive lab on the frequency pulling of a crystal with load capacitance. Content of Applied Electronics III, Level 5 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/osciladores-rf">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/osciladores-rf">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/osciladores-rf">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/osciladores-rf">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Applied Electronics III</a>
+    <span class="anio">Level 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Applied Electronics III</span> · 120 h · Topic 1 of 10</div>
+    <h1>RF oscillators</h1>
+    <p class="lead">A 10 MHz crystal specified for an 18 pF load oscillates 41 ppm higher if the circuit gives it 16 pF. That is why the crystal's datasheet and the board's have to agree.</p>
+    <div class="chips">
+      <span class="chip hi">Oscillation condition</span>
+      <span class="chip">Colpitts</span>
+      <span class="chip">Phase noise</span>
+      <span class="chip">Quartz crystal</span>
+      <span class="chip">Load capacitance</span>
+    </div>
+    <hr class="rule">
+
+    <section id="condicion">
+      <h2><span class="n">01</span>The oscillation condition at radio frequency</h2>
+      <p>An oscillator is a feedback amplifier that deliberately satisfies the Barkhausen criterion: loop gain of
+      magnitude 1 and zero phase at a single frequency. At low frequency the network that selects the frequency is RC, like the Wien bridge
+      in <a href="/en/publicaciones/mapa-ingenieria/temas/estabilidad-compensacion">stability and compensation</a>. At
+      radio frequency, LC resonant circuits or crystals are used, which have a much higher quality factor: their phase changes
+      very fast near resonance, and that fixes the frequency precisely and reduces noise. To start up, the loop gain
+      has to be somewhat greater than 1; the amplitude is then limited by the nonlinearity of the transistor.</p>
+    </section>
+
+    <section id="lc">
+      <h2><span class="n">02</span>LC oscillators</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Oscillator</th><th>Feedback network</th><th>Frequency</th></tr></thead>
+        <tbody>
+          <tr><td>Colpitts</td><td>Capacitive divider \( C_1, C_2 \) with an inductor</td><td>\( 1/\big(2\pi\sqrt{L\,C_1C_2/(C_1+C_2)}\big) \)</td></tr>
+          <tr><td>Hartley</td><td>Tapped inductor, or two inductors, with a capacitor</td><td>\( 1/\big(2\pi\sqrt{(L_1+L_2)C}\big) \)</td></tr>
+          <tr><td>Clapp</td><td>Colpitts with a small capacitor in series with the inductor</td><td>Set almost entirely by the series capacitor, less sensitive to the transistor</td></tr>
+        </tbody>
+      </table></div>
+      <p>In the Colpitts, the capacitive divider feeds back a fraction \( C_1/C_2 \) of the output; with a bipolar transistor, the
+      start-up condition calls for approximately \( g_m R \ge C_2/C_1 \), where \( R \) is the load resistance of the tank. With
+      \( L \) = 1 μH and two 100 pF capacitors, it oscillates at 22.5 MHz. The basic circuits were presented in
+      <a href="/en/publicaciones/mapa-electronica/temas/osciladores">oscillators</a>, in the Electronics Technician program.</p>
+    </section>
+
+    <section id="ruido">
+      <h2><span class="n">03</span>Phase noise: Leeson's model</h2>
+      <p>A real oscillator does not generate a perfect line: the transistor's noise modulates its phase, and the spectrum has skirts on
+      either side of the carrier. David Leeson proposed in 1966 a model that shows what it depends on:</p>
+      <div class="form">
+        \[ \mathcal{L}(\Delta f) = 10\log\left[\frac{2FkT}{P_s}\, A\left(1 + \frac{f_c}{\Delta f}\right)\right] \]
+        \[ A = 1 + \left(\frac{f_0}{2Q_L\,\Delta f}\right)^2 \]
+        <span class="cap">\( \Delta f \) is the offset from the carrier \( f_0 \), \( Q_L \) the loaded quality factor of the resonator, \( P_s \) the power in the resonator, \( F \) the noise factor of the amplifier and \( f_c \) the flicker noise corner. Within \( f_0/2Q_L \) the noise falls 20 dB per decade: doubling Q improves it by 6 dB.</span>
+      </div>
+      <p>That is why reference oscillators use crystals, with Q of tens or hundreds of thousands, compared with a few hundred for an LC. The
+      phase noise of the reference is what a synthesizer multiplies, as seen in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/generadores-sintetizados">synthesized generators</a>.</p>
+    </section>
+
+    <section id="cristal">
+      <h2><span class="n">04</span>The quartz crystal</h2>
+      <p>A quartz crystal is piezoelectric: it vibrates mechanically when a voltage is applied, and its mechanical resonance looks
+      electrically like a series RLC circuit, the <b>motional</b> branch (\( L_m, C_m, R_m \)), in parallel with the capacitance of the
+      electrodes \( C_0 \). It has two very close resonances:</p>
+      <div class="form">
+        \[ f_s = \frac{1}{2\pi\sqrt{L_m C_m}} \]
+        \[ f_p = f_s\sqrt{1 + \frac{C_m}{C_0}} \]
+        \[ f_L \approx f_s\left(1 + \frac{C_m}{2(C_0 + C_L)}\right) \]
+        <span class="cap">\( C_m \) is a few femtofarads and \( C_0 \) a few picofarads, so \( f_p \) is only a fraction of a percent above \( f_s \). In parallel-resonance oscillators the crystal operates between the two, as an inductor, and the frequency depends on the load capacitance \( C_L \) that the circuit presents to it. The manufacturer specifies the nominal frequency for a given \( C_L \).</span>
+      </div>
+      <div class="lw" id="xtal">
+        <div class="lt">Lab · the crystal and its load capacitance</div>
+        <p class="ls">A crystal with a series resonance at 10 MHz, specified for an 18 pF load. The curve is the reactance of the
+        crystal between its two resonances; the yellow line, the reactance that the crystal has to cancel in order to oscillate with the
+        chosen load. Their crossing is the operating frequency.</p>
+        <div class="fila"><label>Motional capacitance C<sub>m</sub> = <b id="xtMv"></b></label><input type="range" id="xtM" min="5" max="30" step="1" value="20"></div>
+        <div class="fila"><label>Parallel capacitance C<sub>0</sub> = <b id="xtCv"></b></label><input type="range" id="xtC" min="2" max="8" step="0.1" value="5"></div>
+        <div class="fila"><label>Circuit load capacitance C<sub>L</sub> = <b id="xtLv"></b></label><input type="range" id="xtL" min="6" max="40" step="0.5" value="16"></div>
+        <canvas id="xtLienzo" style="display:block;width:100%;max-width:620px;height:230px;margin:6px auto 0"></canvas>
+        <div class="datos" id="xtDatos"></div>
+        <div class="nota" id="xtNota"></div>
+      </div>
+      <p>Besides the load, the frequency changes with temperature: in the AT cut, the most widely used, it follows a cubic with a few
+      ppm between −20 and 70 °C. The temperature-compensated (TCXO) and oven-controlled (OCXO) oscillators of
+      <a href="/en/publicaciones/mapa-ingenieria/temas/tiempo-frecuencia">time and frequency</a> tackle that dependence. The
+      <b>voltage-controlled oscillators</b> (VCO) use a varactor, a diode whose capacitance depends on the reverse voltage,
+      to tune an LC tank; in a VCXO, the varactor pulls a crystal by a few tens of ppm.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Colpitts</div>
+        <p>Build a Colpitts oscillator with a transistor, measure the frequency with a counter and compare it with the calculated one.
+        Change the C<sub>1</sub>/C<sub>2</sub> ratio and observe the start-up.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Pulling a crystal</div>
+        <p>In a Pierce oscillator with a logic gate, change the load capacitors and measure the shift in ppm.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Phase noise</div>
+        <p>Compare with a spectrum analyzer the phase noise of an LC oscillator and a crystal oscillator of similar frequency.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Forgetting the stray capacitances in the crystal load.</b> Those of the board and the IC add up to several picofarads.</li>
+        <li><b>Driving the crystal with too much power.</b> It ages faster and changes frequency; the drive level is specified.</li>
+        <li><b>Designing with the loop gain exactly at 1.</b> The oscillator will not start with tolerances; margin is needed.</li>
+        <li><b>Loading the tank with the output.</b> It lowers the Q and worsens the phase noise; a buffer is preferable.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>At what frequency does a Colpitts with L = 2 μH, C<sub>1</sub> = 220 pF and C<sub>2</sub> = 220 pF oscillate?</summary>
+        <div class="a"><p>\( C_{eq} \) = 110 pF: \( 1/(2\pi\sqrt{2\cdot10^{-6}\cdot 110\cdot10^{-12}}) \approx 10.7 \) MHz.</p></div></details>
+      <details class="q"><summary>According to Leeson, how much does the close-in phase noise improve when the resonator's Q is doubled?</summary>
+        <div class="a"><p>6 dB.</p></div></details>
+      <details class="q"><summary>What shift does a crystal with C<sub>m</sub> = 20 fF and C<sub>0</sub> = 5 pF have between loads of 18 and 16 pF?</summary>
+        <div class="a"><p>About 41 ppm.</p></div></details>
+      <details class="q"><summary>What component makes it possible to tune a VCO?</summary>
+        <div class="a"><p>A varactor, a diode whose capacitance depends on the reverse voltage.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Chris Bowick.</span>
+          <span class="ti">RF Circuit Design</span>.
+          <span class="ed">2nd ed., Newnes, 2008.</span>
+          <span class="pq">RF oscillators and the practical design of resonant circuits.</span></li>
+        <li><span class="au">Thomas H. Lee.</span>
+          <span class="ti">The Design of CMOS Radio-Frequency Integrated Circuits</span>.
+          <span class="ed">2nd ed., Cambridge University Press, 2004.</span>
+          <span class="pq">Oscillators and a clear treatment of phase noise.</span></li>
+        <li><span class="au">David B. Leeson.</span>
+          <span class="ti">A Simple Model of Feedback Oscillator Noise Spectrum</span>.
+          <span class="ed">Proceedings of the IEEE, 54(2), 1966.</span>
+          <span class="pq">The paper with the phase noise model.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a class="ph" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">← Back</div>
+        <div class="tt">Engineering Topic Map</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/sintesis-frecuencia">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Frequency synthesis</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“RF oscillators”</b> of <b>Applied Electronics III</b> (Level 5), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Cristal sin perdidas: rama movil Lm, Cm (fs = 10 MHz) en paralelo con C0.
+   X(f) = X1 X0 / (X1 + X0), X1 = w Lm - 1/(w Cm), X0 = -1/(w C0). Con carga CL oscila donde
+   X(f) = 1/(w CL) (biseccion entre fs y fp). Aproximacion fL = fs (1 + Cm/(2 (C0 + CL))).
+   Control (Python, aproximacion): Cm 20 fF, C0 5 pF: CL 18 pF -> +434,78 ppm; 16 pF -> +476,19
+   (41,41 ppm sobre la nominal); 12 pF -> +153,45 ppm sobre la nominal; sensibilidad -18,9 ppm/pF. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("xtLienzo"), ctx = cv.getContext("2d");
+  var FS = 10e6, CLN = 18e-12;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+
+  function pintar(){
+    var Cm = +$("xtM").value * 1e-15, C0 = +$("xtC").value * 1e-12, CL = +$("xtL").value * 1e-12;
+    $("xtMv").textContent = Math.round(Cm * 1e15) + " fF"; $("xtCv").textContent = coma(C0 * 1e12, 1) + " pF"; $("xtLv").textContent = coma(CL * 1e12, 1) + " pF";
+    var Lm = 1 / (Math.pow(2 * Math.PI * FS, 2) * Cm), fp = FS * Math.sqrt(1 + Cm / C0);
+    var X = function(f){ var w = 2 * Math.PI * f, x1 = w * Lm - 1 / (w * Cm), x0 = -1 / (w * C0); return x1 * x0 / (x1 + x0); };
+    var sol = function(cl){ var lo = FS * (1 + 1e-12), hi = fp * (1 - 1e-12); for(var i = 0; i < 200; i++){ var m = (lo + hi) / 2; if(X(m) < 1 / (2 * Math.PI * m * cl)) lo = m; else hi = m; } return (lo + hi) / 2; };
+    var fL = sol(CL), fN = sol(CLN), ap = FS * (1 + Cm / (2 * (C0 + CL))), apN = FS * (1 + Cm / (2 * (C0 + CLN)));
+    var ppm = function(f){ return (f - FS) / FS * 1e6; }, sens = -Cm / (2 * Math.pow(C0 + CL, 2)) * 1e-12 * 1e6;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 40, x1 = W - 12, y0 = 10, y1 = H - 26, P1 = ppm(fp), XM = 20e3;
+      var Xp = function(p){ return x0 + p / P1 * (x1 - x0); }, Yk = function(x){ return y1 - Math.max(0, Math.min(XM, x)) / XM * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(var k = 0; k <= 20; k += 5){ ctx.beginPath(); ctx.moveTo(x0, Yk(k * 1e3)); ctx.lineTo(x1, Yk(k * 1e3)); ctx.stroke(); ctx.fillText(k + "k", x0 - 4, Yk(k * 1e3) + 3); }
+      ctx.textAlign = "left"; ctx.fillText("fs", x0, y1 + 13); ctx.textAlign = "right"; ctx.fillText("fp (+" + Math.round(P1) + " ppm)", x1, y1 + 13);
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText("reactance (Ω) between fs and fp", (x0 + x1) / 2, y1 + 24);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      for(k = 1; k < 600; k++){ var p = P1 * k / 600, f = FS * (1 + p * 1e-6), yy = Yk(X(f)); if(k > 1) ctx.lineTo(Xp(p), yy); else ctx.moveTo(Xp(p), yy); }
+      ctx.stroke(); ctx.lineWidth = 1;
+      ctx.strokeStyle = "#f2cc60"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x0, Yk(1 / (2 * Math.PI * FS * CL))); ctx.lineTo(x1, Yk(1 / (2 * Math.PI * fp * CL))); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#f2cc60"; ctx.beginPath(); ctx.arc(Xp(ppm(fL)), Yk(X(fL)), 5, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = "rgba(126,231,135,.8)"; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(Xp(ppm(fN)), y0); ctx.lineTo(Xp(ppm(fN)), y1); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#7ee787"; ctx.textAlign = "left"; ctx.fillText("nominal (18 pF)", Math.min(Xp(ppm(fN)) + 3, x1 - 80), y0 + 10);
+    }
+
+    $("xtDatos").innerHTML =
+      "<span>motional inductance L<sub>m</sub></span><b>" + coma(Lm * 1e3, 2) + " mH</b>" +
+      "<span>parallel resonance above the series one</span><b>+" + coma(ppm(fp), 0) + " ppm</b>" +
+      "<span>frequency with C<sub>L</sub>: exact / approximate</span><b>+" + coma(ppm(fL), 2) + " / +" + coma(ppm(ap), 2) + " ppm</b>" +
+      "<span>difference from nominal (C<sub>L</sub> = 18 pF)</span><b>" + (fL >= fN ? "+" : "") + coma((fL - fN) / FS * 1e6, 2) + " ppm (" + (fL >= fN ? "+" : "") + coma(fL - fN, 0) + " Hz)</b>" +
+      "<span>sensitivity to the load</span><b>" + coma(sens, 1) + " ppm/pF</b>";
+    var dif = (fL - fN) / FS * 1e6, nota;
+    if(Math.abs(dif) < 5) nota = "The circuit's load matches the specified one: the crystal oscillates at its nominal frequency, within a few ppm.";
+    else nota = "With " + coma(CL * 1e12, 1) + " pF instead of 18 pF, the crystal oscillates " + coma(Math.abs(dif), 0) + " ppm " + (dif > 0 ? "higher" : "lower") + ": more than the typical manufacturing tolerance, of 10 to 30 ppm. The load capacitors have to be corrected, counting the stray capacitances.";
+    $("xtNota").innerHTML = nota;
+  }
+  ["xtM", "xtC", "xtL"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

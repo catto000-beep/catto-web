@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The operating system and the hardware · Digital Techniques III · Catto</title>
+<meta name="description" content="The processor mechanisms that a general-purpose operating system needs: privilege modes, system calls, interrupts and DMA, the MMU with virtual memory, the page table and the TLB, the effective access time and the replacement algorithms, with an interactive lab of FIFO, LRU and optimal replacement. Content of Digital Techniques III, Level 5 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/so-hardware">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/so-hardware">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/so-hardware">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/so-hardware">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques III</a>
+    <span class="anio">Level 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques III</span> · 120 h · Topic 3 of 3</div>
+    <h1>The operating system and the hardware</h1>
+    <p class="lead">With the FIFO algorithm, giving a program more memory can make it fault more. This is Belady’s anomaly, and it shows up with twelve references.</p>
+    <div class="chips">
+      <span class="chip hi">Privilege modes</span>
+      <span class="chip">Interrupts and DMA</span>
+      <span class="chip">Virtual memory</span>
+      <span class="chip">TLB</span>
+      <span class="chip">Page replacement</span>
+    </div>
+    <hr class="rule">
+
+    <section id="proposito">
+      <h2><span class="n">01</span>A general-purpose operating system</h2>
+      <p>A <a href="/en/publicaciones/mapa-ingenieria/temas/rtos">real-time operating system</a> promises deadlines. A
+      general-purpose one, such as Linux, Windows or macOS, promises other things: that many programs share the machine
+      fairly, that none can harm the others or the system, and that each sees more memory than there is. Keeping those
+      promises is not possible with software alone: it needs processor mechanisms. The general concepts of the operating
+      system were covered in <a href="/en/publicaciones/mapa-ingenieria/temas/sistemas-operativos">operating systems</a>, in
+      Computer Science.</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>System promise</th><th>Hardware mechanism</th></tr></thead>
+        <tbody>
+          <tr><td>Isolation between programs and from the kernel</td><td>Privilege modes: user code cannot execute privileged instructions or touch the hardware</td></tr>
+          <tr><td>Sharing of the processor</td><td>A timer that interrupts and returns control to the scheduler</td></tr>
+          <tr><td>Private memory for each process</td><td>The memory management unit (MMU) translates virtual addresses to physical ones</td></tr>
+          <tr><td>Efficient input and output</td><td>Peripheral interrupts and DMA</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="modos">
+      <h2><span class="n">02</span>Modes, system calls and interrupts</h2>
+      <p>The processor has at least two modes. In user mode, a privileged instruction or an access to a protected page
+      causes an <b>exception</b> that passes control to the kernel. A program requests services from the kernel with a
+      <b>system call</b>, a special instruction that changes mode and jumps to a fixed address. Peripherals
+      signal with <b>interrupts</b>: the processor saves its state, runs the <i>driver</i> routine and
+      returns. For large transfers, the <b>DMA</b> copies the data between the peripheral and memory and interrupts only when
+      it finishes. Peripheral registers appear as memory addresses, which the kernel maps and protects.</p>
+    </section>
+
+    <section id="virtual">
+      <h2><span class="n">03</span>Virtual memory</h2>
+      <p>Each process sees its own address space, divided into <b>pages</b>, typically 4 KB. The MMU translates each
+      address with the process’s <b>page table</b>, which says in which frame of physical memory each page is, with what
+      permissions, or whether it is not loaded. Since reading the table on every access would double the time, the MMU keeps recent translations
+      in a cache, the <b>TLB</b>. If the page is not in memory, a <b>page fault</b> occurs: the kernel
+      brings it from disk, which costs millions of times an access. Physical memories were covered in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/memorias-electronicas">electronic memories</a>.</p>
+      <div class="form">
+        \[ t_{ef} = h\,(t_{TLB} + t_m) + (1 - h)(t_{TLB} + 2 t_m) \]
+        \[ t'_{ef} = (1 - p)\, t_{ef} + p\, t_{fp} \]
+        <span class="cap">\( h \) is the TLB hit rate, \( t_m \) the memory access time, \( p \) the page fault probability and \( t_{fp} \) the time to service it. With 100 ns memory, a 98% hit rate and an 8 ms fault, one fault per 100,000 accesses is enough to almost double the effective time: from 102 to 182 ns.</span>
+      </div>
+    </section>
+
+    <section id="reemplazo">
+      <h2><span class="n">04</span>Which page to evict</h2>
+      <p>When memory is full and a fault occurs, the system has to choose a page to evict. The <b>optimal</b>
+      algorithm, by Belady, evicts the one that will be used furthest in the future: it cannot be implemented because it requires knowing the future,
+      but it serves as a reference. <b>FIFO</b> evicts the oldest; <b>LRU</b> the one least recently used, and it takes advantage of the
+      <b>locality</b> of programs, which tend to return to what they just used. Real systems approximate LRU with a
+      reference bit set by the MMU, in the clock algorithm.</p>
+      <div class="lw" id="pag">
+        <div class="lt">Lab · page replacement</div>
+        <p class="ls">A sequence of page references and a number of physical memory frames. Each column is a
+        reference; the cells show which page is in each frame, and the highlighted columns are page faults.</p>
+        <div class="fila">
+          <select id="pgS">
+            <option value="belady" selected>Belady sequence (12 references)</option>
+            <option value="bucle">A loop over 5 pages</option>
+            <option value="loc">A program with locality (30 references)</option>
+          </select>
+        </div>
+        <div class="fila">
+          <select id="pgA">
+            <option value="fifo" selected>FIFO</option>
+            <option value="lru">LRU</option>
+            <option value="opt">Optimal</option>
+          </select>
+        </div>
+        <div class="fila"><label>Memory frames = <b id="pgMv"></b></label><input type="range" id="pgM" min="1" max="7" step="1" value="3"></div>
+        <canvas id="pgLienzo" style="display:block;width:100%;max-width:620px;height:200px;margin:6px auto 0"></canvas>
+        <div class="datos" id="pgDatos"></div>
+        <div class="nota" id="pgNota"></div>
+      </div>
+      <p>The Belady sequence shows a surprise: with FIFO, adding a frame can <b>increase</b> the faults. LRU and the
+      optimal algorithm do not have that anomaly. With a loop only slightly larger than memory, LRU and FIFO fault on every reference.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the laboratory</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Page faults</div>
+        <p>On Linux, measure the page faults of a program that traverses a large matrix by rows and by columns, using the
+        performance statistics command. Explain the difference.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · System calls</div>
+        <p>Trace the system calls of a simple program with strace and identify those for reading, writing and memory
+        mapping.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · A driver</div>
+        <p>Write a minimal Linux driver for an LED on a board with an ARM processor, exposing a file in /dev
+        to turn it on from user space.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Believing that virtual memory is only for having more memory.</b> Its main function is to isolate processes.</li>
+        <li><b>Ignoring the cost of a page fault.</b> One fault per hundred thousand accesses already doubles the effective time.</li>
+        <li><b>Thinking that more memory always reduces faults.</b> With FIFO that may not be so.</li>
+        <li><b>Accessing the hardware from a user program.</b> It is done with a driver in the kernel or by mapping memory with permissions.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>How many entries does the page table of a 4 GB address space with 4 KB pages have, in a single level?</summary>
+        <div class="a"><p>\( 2^{32}/2^{12} = 2^{20} \), one million.</p></div></details>
+      <details class="q"><summary>With 100 ns memory and a 95% TLB hit rate, with no page faults, what is the effective time?</summary>
+        <div class="a"><p>\( 0.95 \cdot 100 + 0.05 \cdot 200 = 105 \) ns, neglecting the TLB.</p></div></details>
+      <details class="q"><summary>What is Belady’s anomaly?</summary>
+        <div class="a"><p>That with FIFO, more memory frames can produce more page faults.</p></div></details>
+      <details class="q"><summary>Which processor mechanism prevents a user program from disabling interrupts?</summary>
+        <div class="a"><p>Privilege modes: that instruction executes only in kernel mode.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Abraham Silberschatz, Peter B. Galvin and Greg Gagne.</span>
+          <span class="ti">Operating System Concepts</span>.
+          <span class="ed">10th ed., Wiley, 2018.</span>
+          <span class="pq">Virtual memory, page replacement and the relationship with the hardware.</span></li>
+        <li><span class="au">Remzi H. Arpaci-Dusseau and Andrea C. Arpaci-Dusseau.</span>
+          <span class="ti">Operating Systems: Three Easy Pieces</span>.
+          <span class="ed">Arpaci-Dusseau Books, 2018.</span>
+          <span class="pq">A clear, freely available book, with chapters on the TLB and replacement.</span></li>
+        <li><span class="au">Jonathan Corbet, Alessandro Rubini and Greg Kroah-Hartman.</span>
+          <span class="ti">Linux Device Drivers</span>.
+          <span class="ed">3rd ed., O'Reilly, 2005.</span>
+          <span class="pq">How Linux kernel drivers are written.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/redes-datos">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Data networks and protocols</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“The operating system and the hardware”</b> of <b>Digital Techniques III</b> (Level 5), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Page replacement FIFO, LRU and optimal with physical frames. Optimal: the page whose next
+   use is furthest away (or never) is evicted; in a tie, the lowest-index frame.
+   Sequence with locality: mulberry32(21), 30 references.
+   Check (Python), faults FIFO/LRU/OPT: Belady 3 frames 9/10/7, 4 frames 10/8/6;
+   loop 1-5 x4 with 4 frames 20/20/8; locality 3 frames 10/13/9, 5 frames 10/8/8. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pgLienzo"), ctx = cv.getContext("2d");
+  function mulberry32(a){ return function(){ a = (a + 0x6D2B79F5) | 0; var t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  var r = mulberry32(21), loc = [], base = 0;
+  for(var i = 0; i < 30; i++){ if(r() < 0.15) base = Math.floor(r() * 6); loc.push(base + Math.floor(r() * 3) + 1); }
+  var SEC = { belady: [1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5], bucle: [], loc: loc };
+  for(i = 0; i < 4; i++) SEC.bucle = SEC.bucle.concat([1, 2, 3, 4, 5]);
+  var NOM = { fifo: "FIFO", lru: "LRU", opt: "the optimal algorithm" };
+
+  function simular(s, m, alg){
+    var marcos = [], carga = [], uso = [], hist = [], fallos = 0;
+    s.forEach(function(x, t){
+      var k = marcos.indexOf(x), falla = k < 0;
+      if(!falla){ uso[k] = t; }
+      else {
+        fallos++;
+        if(marcos.length < m){ marcos.push(x); carga.push(t); uso.push(t); }
+        else {
+          var v = 0;
+          if(alg === "fifo"){ for(var j = 1; j < m; j++) if(carga[j] < carga[v]) v = j; }
+          else if(alg === "lru"){ for(j = 1; j < m; j++) if(uso[j] < uso[v]) v = j; }
+          else {
+            var mejor = -1;
+            for(j = 0; j < m; j++){ var p = 1e9; for(var u = t + 1; u < s.length; u++) if(s[u] === marcos[j]){ p = u; break; } if(p > mejor){ mejor = p; v = j; } }
+          }
+          marcos[v] = x; carga[v] = t; uso[v] = t;
+        }
+      }
+      hist.push({m: marcos.slice(), f: falla});
+    });
+    return {fallos: fallos, hist: hist};
+  }
+
+  function pintar(){
+    var s = SEC[$("pgS").value], alg = $("pgA").value, m = +$("pgM").value;
+    $("pgMv").textContent = m;
+    var R = simular(s, m, alg), todos = ["fifo", "lru", "opt"].map(function(a){ return simular(s, m, a).fallos; });
+    var fifoMas = m < 7 ? simular(s, m + 1, "fifo").fallos : null;
+
+    var b = cv.getBoundingClientRect();
+    var altoDeseado = 30 + 22 * (m + 1) + 10;
+    if(Math.abs(b.height - altoDeseado) > 1){ cv.style.height = altoDeseado + "px"; b = cv.getBoundingClientRect(); }
+    if(b.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(b.width * dp) || cv.height !== Math.round(b.height * dp)){
+        cv.width = Math.round(b.width * dp); cv.height = Math.round(b.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = b.width, corto = W < 480 && s.length > 15, x0 = corto ? 24 : 44, x1 = W - 6, n = s.length, cw = (x1 - x0) / n, ch = 22, y0 = 8;
+      var fs = Math.max(8, Math.min(12, cw * 0.6));
+      ctx.clearRect(0, 0, W, b.height); ctx.setLineDash([]);
+      ctx.font = "10px system-ui, sans-serif"; ctx.fillStyle = "#8b93a3"; ctx.textAlign = "right";
+      ctx.fillText(corto ? "p" : "page", x0 - 6, y0 + 15);
+      for(var k = 0; k < m; k++) ctx.fillText((corto ? "f" : "frame ") + (k + 1), x0 - 6, y0 + ch * (k + 1) + 15);
+      ctx.textAlign = "center";
+      R.hist.forEach(function(h, t){
+        var x = x0 + t * cw;
+        if(h.f){ ctx.fillStyle = "rgba(248,81,73,.28)"; ctx.fillRect(x + 1, y0 + ch, cw - 2, ch * m); }
+        ctx.font = "600 " + fs + "px system-ui, sans-serif"; ctx.fillStyle = "#f2cc60"; ctx.fillText(s[t], x + cw / 2, y0 + 15);
+        ctx.font = fs + "px system-ui, sans-serif";
+        for(var j = 0; j < m; j++){
+          ctx.strokeStyle = "#2a3242"; ctx.strokeRect(x + 0.5, y0 + ch * (j + 1) + 0.5, cw - 1, ch - 1);
+          if(j < h.m.length){ ctx.fillStyle = h.f && h.m[j] === s[t] ? "#f3f6f8" : "#9aa7b4"; ctx.fillText(h.m[j], x + cw / 2, y0 + ch * (j + 1) + 15); }
+        }
+      });
+      ctx.fillStyle = "#f85149"; ctx.font = "600 10px system-ui, sans-serif"; ctx.textAlign = "left";
+      ctx.fillText(R.fallos + " faults in " + n + " references", x0, y0 + ch * (m + 1) + 14);
+    }
+
+    $("pgDatos").innerHTML =
+      "<span>faults with FIFO / LRU / optimal</span><b>" + todos.join(" / ") + "</b>" +
+      "<span>fault rate of " + NOM[alg] + "</span><b>" + Math.round(100 * R.fallos / s.length) + " %</b>" +
+      (fifoMas !== null ? "<span>FIFO with " + (m + 1) + " frames</span><b>" + fifoMas + " faults</b>" : "");
+    var nota;
+    if(fifoMas !== null && fifoMas > todos[0]) nota = "<b>Belady’s anomaly:</b> with FIFO, going from " + m + " to " + (m + 1) + " frames increases the faults from " + todos[0] + " to " + fifoMas + ".";
+    else if($("pgS").value === "bucle" && m < 5) nota = "With a 5-page loop and " + m + " frames, FIFO and LRU always evict the page that is about to be needed: they fault on every reference. The optimal algorithm keeps some.";
+    else if(todos[1] < todos[0]) nota = "LRU takes advantage of locality: the pages used most recently are the ones that get used again, and it faults less than FIFO.";
+    else nota = "The optimal algorithm is the lower bound: no real algorithm can have fewer faults, because it requires knowing the future references.";
+    $("pgNota").innerHTML = nota;
+  }
+  ["pgS", "pgA", "pgM"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

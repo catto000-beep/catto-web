@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The engineering preliminary design · Final Project · Catto</title>
+<meta name="description" content="The content of an engineering preliminary design: the descriptive report, the specification, the block diagram, the justified selection of the main components, the sizing budgets for energy, error, link and temperature, the test plan and the cost estimate, with an interactive lab of the energy budget of a battery-powered sensor node. Content of Final Project, Level 6 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/anteproyecto">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/anteproyecto">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/anteproyecto">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/anteproyecto">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Final Project</a>
+    <span class="anio">Level 6</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Final Project</span> · 96 h · Topic 3 of 4</div>
+    <h1>The engineering preliminary design</h1>
+    <p class="lead">A sensor that wakes up for a tenth of a second per minute at 20 mA and sleeps at 5 μA lasts almost six years on two AA batteries. If it draws 50 μA when asleep, it lasts less than three: the sleep mode decides the battery life.</p>
+    <div class="chips">
+      <span class="chip hi">Descriptive report</span>
+      <span class="chip">Block diagram</span>
+      <span class="chip">Energy budget</span>
+      <span class="chip">Test plan</span>
+      <span class="chip">Component selection</span>
+    </div>
+    <hr class="rule">
+
+    <section id="contenido">
+      <h2><span class="n">01</span>What a preliminary design contains</h2>
+      <p>The <b>preliminary design</b> is the document that shows, before building, that the proposed solution will meet the specification. It
+      is not the detailed design —the complete schematics and the board come later—, but the architecture decisions justified with
+      calculations. A typical preliminary design includes:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Part</th><th>What it says</th></tr></thead>
+        <tbody>
+          <tr><td>Descriptive report</td><td>The problem, the user, the scope and what is left out</td></tr>
+          <tr><td>Specification</td><td>The quantitative and verifiable requirements</td></tr>
+          <tr><td>Block diagram</td><td>The functions, the interfaces between them and the signals that connect them</td></tr>
+          <tr><td>Selection of main components</td><td>The microcontroller, the sensor, the radio, the power supply, with the discarded alternatives and why</td></tr>
+          <tr><td>Sizing budgets</td><td>Energy, measurement error, radio link, dissipation, response times</td></tr>
+          <tr><td>Test plan</td><td>How each point of the specification will be verified</td></tr>
+          <tr><td>Preliminary costs and schedule</td><td>The priced bill of materials and the stages</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="presupuestos">
+      <h2><span class="n">02</span>The sizing budgets</h2>
+      <p>A <b>budget</b> distributes a limited resource among the blocks and verifies that it is enough with a margin. The <b>error</b> budget adds up the
+      uncertainties of the sensor, signal conditioning and converter, as seen in Measurements; the <b>link</b> budget adds up powers, gains and losses
+      down to the receiver sensitivity; the <b>thermal</b> budget verifies junction temperatures with the dissipation of each component, and feeds the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/confiabilidad">reliability</a> estimate. In a battery-powered device, the most important is
+      the <b>energy</b> budget: with active and sleep duty cycles, the average current is</p>
+      <div class="form">
+        \[ \bar I = \frac{I_a\,t_a + I_s\,(T - t_a)}{T} \]
+        \[ \text{battery life} = \frac{\eta\, C}{\bar I} \]
+        <span class="cap">\( I_a \) is the active current during \( t_a \), \( I_s \) the sleep current, \( T \) the period between wake-ups, \( C \) the battery capacity and \( \eta \) the usable fraction, taken here as 0.8 to cover the cutoff voltage, temperature and aging.</span>
+      </div>
+      <div class="lw" id="bat">
+        <div class="lt">Lab · energy budget of a sensor node</div>
+        <p class="ls">A node that wakes up every T seconds, measures and transmits for t<sub>a</sub> at current I<sub>a</sub>, and sleeps the rest of the
+        time at I<sub>s</sub>. The curve is the battery life in years as a function of the period, on a logarithmic scale; the yellow dot is the chosen design.</p>
+        <div class="fila"><label>Sleep current I<sub>s</sub> = <b id="baSv"></b></label><input type="range" id="baS" min="1" max="100" step="1" value="5"></div>
+        <div class="fila"><label>Active current I<sub>a</sub> = <b id="baAv"></b></label><input type="range" id="baA" min="1" max="100" step="1" value="20"></div>
+        <div class="fila"><label>Active time t<sub>a</sub> = <b id="baTv"></b></label><input type="range" id="baT" min="10" max="2000" step="10" value="100"></div>
+        <div class="fila"><label>Period T = <b id="baPv"></b></label><input type="range" id="baP" min="1" max="3600" step="1" value="60"></div>
+        <div class="fila"><label>Battery</label><select id="baC"><option value="2500" selected>Two alkaline AA cells (2500 mAh)</option><option value="225">CR2032 coin cell (225 mAh)</option><option value="3000">18650 lithium cell (3000 mAh)</option></select></div>
+        <canvas id="baLienzo" style="display:block;width:100%;max-width:620px;height:220px;margin:6px auto 0"></canvas>
+        <div class="datos" id="baDatos"></div>
+        <div class="nota" id="baNota"></div>
+      </div>
+    </section>
+
+    <section id="ensayos">
+      <h2><span class="n">03</span>The test plan</h2>
+      <p>Each point of the specification needs a <b>test</b> that says how it will be measured, with what instrument, under what conditions and what the
+      acceptance criterion is. Writing it into the preliminary design forces the specification to be verifiable and anticipates the instruments that will be
+      needed. The degree’s laboratory tests —from Electronic Measurements I and II— are the basis; those for regulatory compliance, if the product
+      requires them, are usually done in an external laboratory and should be budgeted. The manufacturing technology was defined in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/tecnologia-constructiva">construction technology</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>In the laboratory</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Block diagram</div>
+        <p>Draw the block diagram of the final project with the interfaces, the supply voltages and the signals between blocks.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Measuring consumption</div>
+        <p>With a sense resistor and the oscilloscope, measure the current profile of a microcontroller that sleeps and wakes up, and
+        compare it with the budget.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Verification matrix</div>
+        <p>Build a table with each specification, the test that verifies it and the instrument required.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Common mistakes</h2>
+      <ul>
+        <li><b>Taking the sleep current from the microcontroller datasheet alone.</b> Regulators, dividers, sensors and pull-ups also consume.</li>
+        <li><b>Using the full nominal capacity of the battery.</b> At low temperature or with current peaks considerably less is usable.</li>
+        <li><b>Promising battery lives of decades.</b> Battery self-discharge sets a limit of a few years to a decade.</li>
+        <li><b>Leaving the test plan for the end.</b> If a specification cannot be tested, it has to be rewritten now.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">06</span>Self-assessment</h2>
+      <details class="q"><summary>What average current does the lab node have with its initial values?</summary>
+        <div class="a"><p>About 38.3 μA.</p></div></details>
+      <details class="q"><summary>What battery life does that give with two AA cells?</summary>
+        <div class="a"><p>Almost 6 years: \( 0.8 \cdot 2500 / 0.0383 \approx 52\,000 \) hours.</p></div></details>
+      <details class="q"><summary>And with a CR2032 coin cell?</summary>
+        <div class="a"><p>A little over half a year.</p></div></details>
+      <details class="q"><summary>What is the difference between a preliminary design and a detailed design?</summary>
+        <div class="a"><p>The preliminary design fixes and justifies the architecture with calculations; the detailed design produces the complete schematics, board and software.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">07</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Karl T. Ulrich and Steven D. Eppinger.</span>
+          <span class="ti">Product Design and Development</span>.
+          <span class="ed">McGraw-Hill. (Spanish edition: “Diseño y desarrollo de productos”.)</span>
+          <span class="pq">Product architecture and system-level design.</span></li>
+        <li><span class="au">Elecia White.</span>
+          <span class="ti">Making Embedded Systems</span>.
+          <span class="ed">2nd ed., O'Reilly, 2024.</span>
+          <span class="pq">Embedded systems architecture and power reduction.</span></li>
+        <li><span class="au">Paul Horowitz and Winfield Hill.</span>
+          <span class="ti">The Art of Electronics</span>.
+          <span class="ed">3rd ed., Cambridge University Press, 2015.</span>
+          <span class="pq">Low-power circuit design and component selection.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/aspectos-proyecto">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Technical, legal, economic, social and environmental aspects</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/administracion-proyectos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Project planning and management</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“The engineering preliminary design”</b> of <b>Final Project</b> (Level 6), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Energy budget: average I = (Ia ta + Is (T - ta)) / T; battery life = 0.8 C / average I (hours); sleep fraction Is (T - ta) / (I T).
+   Check (Python): Is 5 uA, Ia 20 mA, ta 100 ms, T 60 s, 2500 mAh -> 38.325 uA, 52,185.3 h, 5.957 years, sleep 13.02 %;
+   Is 50 -> 83.25 uA, 2.742 years, 59.96 %; T 600 -> 8.332 uA, 27.400 years; T 10 -> 204.95 uA, 1.114 years;
+   CR2032 225 mAh -> 0.536 years; Is 2, Ia 80, ta 500, T 300, 3000 mAh -> 135.33 uA, 2.024 years. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("baLienzo"), ctx = cv.getContext("2d");
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function miles(v, d){ var s = v.toFixed(d).split("."); s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ","); return s.join("."); }
+  function media(Is, Ia, ta, T){ return (Ia * ta + Is / 1000 * (T - ta)) / T; }
+
+  function pintar(){
+    var Is = +$("baS").value, Ia = +$("baA").value, ta = +$("baT").value / 1000, T = Math.max(+$("baP").value, ta), C = +$("baC").value;
+    $("baSv").textContent = Is + " μA"; $("baAv").textContent = Ia + " mA"; $("baTv").textContent = Math.round(ta * 1000) + " ms"; $("baPv").textContent = T >= 60 ? coma(T / 60, T % 60 ? 1 : 0) + " min" : T + " s";
+    var im = media(Is, Ia, ta, T), h = 0.8 * C / im, an = h / 8760, fs = Is / 1000 * (T - ta) / (im * T);
+    var anos = function(t){ return 0.8 * C / media(Is, Ia, ta, Math.max(t, ta)) / 8760; };
+
+    var b = cv.getBoundingClientRect();
+    if(b.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(b.width * dp) || cv.height !== Math.round(b.height * dp)){
+        cv.width = Math.round(b.width * dp); cv.height = Math.round(b.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = b.width, H = b.height, x0 = 38, x1 = W - 10, y0 = 10, y1 = H - 30, L0 = 0, L1 = Math.log10(3600), E0 = -2, E1 = 2;
+      var X = function(t){ return x0 + (Math.log10(t) - L0) / (L1 - L0) * (x1 - x0); }, Y = function(a){ return y1 - (Math.log10(a) - E0) / (E1 - E0) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.fillStyle = "rgba(248,81,73,.10)"; ctx.fillRect(x0, y0, x1 - x0, Y(10) - y0);
+      ctx.strokeStyle = "#252d3a"; ctx.lineWidth = 1;
+      for(var e = E0; e <= E1; e++){ ctx.beginPath(); ctx.moveTo(x0, Y(Math.pow(10, e))); ctx.lineTo(x1, Y(Math.pow(10, e))); ctx.stroke(); }
+      [1, 10, 60, 600, 3600].forEach(function(t){ ctx.beginPath(); ctx.moveTo(X(t), y0); ctx.lineTo(X(t), y1); ctx.stroke(); });
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      ["0.01", "0.1", "1", "10", "100"].forEach(function(t, i){ ctx.fillText(t, x0 - 4, Y(Math.pow(10, E0 + i)) + 3); });
+      [[1, "1 s"], [10, "10 s"], [60, "1 min"], [600, "10 min"], [3600, "1 h"]].forEach(function(p, i){ ctx.textAlign = i === 0 ? "left" : i === 4 ? "right" : "center"; ctx.fillText(p[1], X(p[0]), y1 + 13); });
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText(W < 480 ? "period; vertical, years" : "period between wake-ups; vertical, battery life (years)", (x0 + x1) / 2, y1 + 26);
+      ctx.fillStyle = "#f85149"; ctx.textAlign = "left"; ctx.fillText("more than 10 years: limited by self-discharge", x0 + 4, y0 + 11);
+      ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      for(var i = 0; i <= 200; i++){ var lt = L0 + (L1 - L0) * i / 200, py = Y(anos(Math.pow(10, lt))); if(i) ctx.lineTo(X(Math.pow(10, lt)), py); else ctx.moveTo(X(1), py); }
+      ctx.stroke(); ctx.lineWidth = 1; ctx.restore();
+      ctx.fillStyle = "#f2cc60"; ctx.beginPath(); ctx.arc(X(T), Y(Math.min(Math.max(an, 0.0101), 99)), 4.5, 0, 2 * Math.PI); ctx.fill();
+    }
+
+    $("baDatos").innerHTML =
+      "<span>average current</span><b>" + coma(im * 1000, 2) + " μA</b>" +
+      "<span>battery life</span><b>" + miles(h, 0) + " h = " + coma(an, 2) + " years</b>" +
+      "<span>energy spent asleep</span><b>" + coma(fs * 100, 1) + " %</b>" +
+      "<span>energy spent active</span><b>" + coma((1 - fs) * 100, 1) + " %</b>";
+    var nota;
+    if(an > 10) nota = "<b>The calculation gives " + coma(an, 1) + " years, but that is not credible:</b> battery self-discharge limits the life to a few years or a decade. Use the margin to measure more often or choose a smaller battery.";
+    else if(fs > 0.5) nota = "<b>Sleep dominates:</b> " + coma(fs * 100, 0) + " % of the energy is spent sleeping. Lowering the sleep current, by reviewing regulators, dividers and sensors that stay powered, pays off more than shortening the activity.";
+    else nota = "<b>Activity dominates:</b> " + coma((1 - fs) * 100, 0) + " % of the energy is spent awake. It is worth shortening the active time, waking up less often or transmitting less.";
+    $("baNota").innerHTML = nota;
+  }
+  ["baS", "baA", "baT", "baP", "baC"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

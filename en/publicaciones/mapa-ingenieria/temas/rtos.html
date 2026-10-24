@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real-time operating systems · Digital Techniques II · Catto</title>
+<meta name="description" content="What a real-time system is, tasks and their states, context switching and preemptive scheduling, the RM and EDF policies with the Liu and Layland bound and response-time analysis, semaphores, mutexes and queues, and priority inversion, with an interactive lab that schedules three periodic tasks and marks the missed deadlines. Content of Digital Techniques II, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/rtos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/rtos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/rtos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/rtos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques II</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques II</span> · 120 h · Topic 6 of 6</div>
+    <h1>Real-time operating systems</h1>
+    <p class="lead">With a utilization of 95 %, three tasks can miss a deadline with fixed priorities and meet them all with EDF. The difference is not the power of the processor but the order in which they are served.</p>
+    <div class="chips">
+      <span class="chip hi">Tasks</span>
+      <span class="chip">RM scheduling</span>
+      <span class="chip">EDF</span>
+      <span class="chip">Response time</span>
+      <span class="chip">Priority inversion</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que">
+      <h2><span class="n">01</span>Real time does not mean fast</h2>
+      <p>A system is <b>real-time</b> when the correctness of a result also depends on when it is
+      delivered. An airbag controller that computes perfectly but 50 ms late has failed. What matters is not the average
+      speed but the <b>worst case</b>: the guarantee that every task finishes before its deadline, always.
+      A distinction is made between <b>hard</b> systems, where missing a deadline is a failure (brakes, pacemakers, flight
+      control), and <b>soft</b> ones, where it only degrades quality (audio, video).</p>
+      <p>When an <a href="/en/publicaciones/mapa-ingenieria/temas/sistemas-embebidos">embedded system</a> has
+      many activities with different deadlines, the main loop with interrupts becomes hard to
+      analyze. A <b>real-time operating system</b> (RTOS) organizes the program into independent tasks and
+      decides at each moment which one to run, with predictable rules. The general concepts of processes and
+      scheduling were covered in <a href="/en/publicaciones/mapa-ingenieria/temas/sistemas-operativos">operating
+      systems</a>, in Computer Science II.</p>
+    </section>
+
+    <section id="tareas">
+      <h2><span class="n">02</span>Tasks, states and context switching</h2>
+      <p>Each <b>task</b> is a function that runs as if it had the processor to itself, with its own
+      stack. The kernel keeps for each one a control block with its priority, its state and its stack pointer.
+      A task is <b>running</b>, <b>ready</b> waiting for the processor, <b>blocked</b> waiting for an event or
+      a time, or <b>suspended</b>. The <b>context switch</b> saves the registers of the task going out and
+      loads those of the one coming in; on a Cortex-M it takes about a microsecond.</p>
+      <p>The scheduler runs on every <b>tick</b> of the system clock (typically every 1 ms) and every time a
+      task blocks or an event unblocks another. In a <b>preemptive</b> RTOS, if a task of
+      higher priority than the running one is unblocked, it takes the processor away immediately.</p>
+    </section>
+
+    <section id="planificacion">
+      <h2><span class="n">03</span>Scheduling and analysis</h2>
+      <p>For periodic tasks, with period \( T_i \), worst-case execution time \( C_i \) and a deadline equal
+      to the period, there are two classic policies. <b>Rate-monotonic</b> (RM) scheduling gives a higher fixed priority
+      to the task with the shorter period. <b>Earliest deadline first</b> (EDF) chooses at each moment
+      the task whose deadline expires soonest. Both have a utilization-based schedulability test:</p>
+      <div class="form">
+        \[ U = \sum \frac{C_i}{T_i} \le n\left(2^{1/n} - 1\right) \]
+        \[ U \le 1 \]
+        <span class="cap">The first is the Liu and Layland bound for RM: sufficient, not necessary. With three tasks it equals 0.78, and if the utilization does not exceed it, RM meets all the deadlines. The second is the exact condition for EDF: with deadlines equal to the periods, EDF succeeds if and only if the utilization does not exceed 100 %.</span>
+      </div>
+      <p>Between 0.78 and 1, RM may or may not succeed. It is decided by <b>response-time analysis</b>, which computes
+      the worst-case time of each task by adding the interference from the higher-priority ones, and is solved by iterating
+      until the value no longer changes:</p>
+      <div class="form">
+        \[ R_i = C_i + \sum_{j \in hp(i)} \left\lceil \frac{R_i}{T_j} \right\rceil C_j \]
+        <span class="cap">\( hp(i) \) are the tasks of higher priority than \( i \). If every \( R_i \) is below its period, the set is schedulable with RM.</span>
+      </div>
+      <div class="lw" id="rt">
+        <div class="lt">Lab · three periodic tasks</div>
+        <p class="ls">Three tasks with periods 5, 8 and 20, with a deadline equal to the period, on one processor. You choose the execution time of
+        each one and the scheduler. The diagram shows one complete hyperperiod (40 units): the
+        marks indicate the activations and the red cross, a missed deadline.</p>
+        <div class="fila">
+          <select id="rtP">
+            <option value="rm" selected>Rate-monotonic (RM)</option>
+            <option value="edf">Earliest deadline first (EDF)</option>
+          </select>
+        </div>
+        <div class="fila"><label>Task 1 (T = 5): C<sub>1</sub> = <b id="rt1v"></b></label><input type="range" id="rt1" min="1" max="3" step="1" value="1"></div>
+        <div class="fila"><label>Task 2 (T = 8): C<sub>2</sub> = <b id="rt2v"></b></label><input type="range" id="rt2" min="1" max="5" step="1" value="4"></div>
+        <div class="fila"><label>Task 3 (T = 20): C<sub>3</sub> = <b id="rt3v"></b></label><input type="range" id="rt3" min="1" max="10" step="1" value="5"></div>
+        <canvas id="rtLienzo" style="display:block;width:100%;max-width:620px;height:158px;margin:6px auto 0"></canvas>
+        <div class="datos" id="rtDatos"></div>
+        <div class="nota" id="rtNota"></div>
+      </div>
+    </section>
+
+    <section id="sincronizacion">
+      <h2><span class="n">04</span>Synchronization and communication</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Mechanism</th><th>What it is for</th></tr></thead>
+        <tbody>
+          <tr><td>Binary semaphore</td><td>Having an interrupt wake up a task: the interrupt gives the semaphore and the task, blocked on it, does the long work</td></tr>
+          <tr><td>Counting semaphore</td><td>Keeping count of resources or pending events</td></tr>
+          <tr><td>Mutex</td><td>Mutual exclusion over a shared resource, with priority inheritance</td></tr>
+          <tr><td>Message queue</td><td>Passing data between tasks without sharing variables</td></tr>
+          <tr><td>Event flags</td><td>Waiting for a combination of conditions</td></tr>
+        </tbody>
+      </table></div>
+      <p>The classic trap is <b>priority inversion</b>. A low-priority task takes a resource; a
+      high-priority one requests it and blocks; and a medium-priority one, which does not use the resource, preempts the low one and
+      delays it indefinitely, with the high one waiting behind. The solution is <b>priority inheritance</b>: the
+      task holding the mutex inherits the priority of the one waiting for it. In 1997, the Mars Pathfinder probe
+      kept resetting on Mars because of this problem, and it was fixed remotely by enabling priority
+      inheritance in its operating system.</p>
+    </section>
+
+    <section id="rtos-reales">
+      <h2><span class="n">05</span>Real-time operating systems in use</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>RTOS</th><th>Characteristics</th></tr></thead>
+        <tbody>
+          <tr><td>FreeRTOS</td><td>The most widespread on microcontrollers; a kernel of a few kilobytes, MIT license</td></tr>
+          <tr><td>Zephyr</td><td>A Linux Foundation project with integrated drivers and network stacks</td></tr>
+          <tr><td>ThreadX</td><td>Certified for safety applications; now open source under the Eclipse Foundation</td></tr>
+          <tr><td>VxWorks</td><td>Commercial, in avionics, defense and space missions</td></tr>
+          <tr><td>RTEMS</td><td>Free, widely used in satellites and scientific instruments</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Three tasks with FreeRTOS</div>
+        <p>Create three periodic tasks on a microcontroller, each with a pin that goes high at the start and low at the
+        end. Measure the response times with a logic analyzer and compare them with the analysis.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · From the interrupt to the task</div>
+        <p>Handle a pushbutton with an interrupt that only gives a semaphore, and process the event in a task.
+        Measure the latency between the edge and the start of the task.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Causing a priority inversion</div>
+        <p>Set up the three-task scenario with a binary semaphore and observe the delay of the high-priority
+        task. Repeat with a mutex with priority inheritance.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Measuring the average time instead of the worst case.</b> The analysis uses the worst-case \( C_i \), with
+        empty caches and all the longest branches.</li>
+        <li><b>Using a binary semaphore where a mutex is needed.</b> Without priority inheritance, the
+        inversion appears.</li>
+        <li><b>Stacks that are too small.</b> Each task has its own; an overflow corrupts another’s memory and fails
+        unpredictably.</li>
+        <li><b>Calling blocking functions from an interrupt.</b> Interrupts only use the
+        special RTOS versions, which do not block.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>What is the value of the Liu and Layland bound for two tasks?</summary>
+        <div class="a"><p>\( 2(\sqrt{2} - 1) \approx 0.83 \).</p></div></details>
+      <details class="q"><summary>Tasks (C, T) = (1, 4) and (2, 6). What is the response time of the second one with RM?</summary>
+        <div class="a"><p>\( R = 2 + \lceil R/4 \rceil \cdot 1 \): starting at 2 gives 3, and with 3 gives 3. It responds in 3, before
+        its period of 6.</p></div></details>
+      <details class="q"><summary>A set has a utilization of 0.95. Is it schedulable with EDF? And with RM?</summary>
+        <div class="a"><p>With EDF yes, because it does not exceed 1. With RM the bound does not tell: you have to do the
+        response-time analysis.</p></div></details>
+      <details class="q"><summary>What is priority inheritance?</summary>
+        <div class="a"><p>That the task holding a mutex temporarily takes the priority of the highest-priority task
+        waiting for it, so that no intermediate task delays it.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Giorgio C. Buttazzo.</span>
+          <span class="ti">Hard Real-Time Computing Systems: Predictable Scheduling Algorithms and Applications</span>.
+          <span class="ed">3rd ed., Springer, 2011.</span>
+          <span class="pq">The reference on real-time scheduling: RM, EDF, response analysis and resource protocols.</span></li>
+        <li><span class="au">Jane W. S. Liu.</span>
+          <span class="ti">Real-Time Systems</span>.
+          <span class="ed">Prentice Hall, 2000.</span>
+          <span class="pq">The complete theoretical treatment of real-time systems.</span></li>
+        <li><span class="au">Richard Barry.</span>
+          <span class="ti">Mastering the FreeRTOS Real Time Kernel</span>.
+          <span class="ed">Real Time Engineers Ltd., 2016.</span>
+          <span class="pq">The practical guide by the author of FreeRTOS: tasks, queues, semaphores and interrupts with examples.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/protocolos-seriales">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Serial communications and protocols</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Real-time operating systems”</b> of <b>Digital Techniques II</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Scheduling of three periodic tasks (T = 5, 8, 20; deadline = period)
+   in steps of one unit over the hyperperiod of 40. RM: fixed priority
+   by period; EDF: earliest deadline (tie: the lower index). A job
+   that has not finished when the next one is released counts as a missed
+   deadline and is dropped.
+   Analysis: U, Liu and Layland bound 3 (2^(1/3) - 1) = 0.7798, and response
+   time R_i = C_i + sum ceil(R_i / T_j) C_j for RM.
+   Check (Python, all 150 combinations): the response analysis and the
+   simulation always agree; (1, 4, 5) U 0.95 -> RM misses 1 deadline
+   (R3 = 21 > 20), EDF none; (1, 3, 4) U 0.775 -> R = 1, 4, 13. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("rtLienzo"), ctx = cv.getContext("2d");
+  var T = [5, 8, 20], H = 40, COL = ["#58a6ff", "#7ee787", "#f2cc60"];
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function simular(C, pol){
+    var rem = [0, 0, 0], dl = [0, 0, 0], g = [], perd = [];
+    for(var t = 0; t < H; t++){
+      for(var i = 0; i < 3; i++) if(t % T[i] === 0){ if(rem[i] > 0) perd.push([i, t]); rem[i] = C[i]; dl[i] = t + T[i]; }
+      var k = -1;
+      for(i = 0; i < 3; i++) if(rem[i] > 0 && (k < 0 || (pol === "rm" ? false : dl[i] < dl[k]))) k = i;
+      g.push(k); if(k >= 0) rem[k]--;
+    }
+    for(i = 0; i < 3; i++) if(rem[i] > 0) perd.push([i, H]);
+    return { g: g, perd: perd };
+  }
+  function respuesta(C){
+    return C.map(function(c, i){
+      var r = c, n;
+      for(var it = 0; it < 50; it++){
+        n = c; for(var j = 0; j < i; j++) n += Math.ceil(r / T[j]) * C[j];
+        if(n === r || n > T[i]) { r = n; break; } r = n;
+      }
+      return r;
+    });
+  }
+
+  function pintar(){
+    var C = [+$("rt1").value, +$("rt2").value, +$("rt3").value], pol = $("rtP").value;
+    C.forEach(function(c, i){ $("rt" + (i + 1) + "v").textContent = c; });
+    var U = C[0] / T[0] + C[1] / T[1] + C[2] / T[2], LL = 3 * (Math.pow(2, 1 / 3) - 1);
+    var s = simular(C, pol), R = respuesta(C), okR = R.every(function(r, i){ return r <= T[i]; });
+    var otra = simular(C, pol === "rm" ? "edf" : "rm");
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, Hc = r.height, x0 = 52, x1 = W - 12, fh = 34, y0 = 16, bw = (x1 - x0) / H;
+      ctx.clearRect(0, 0, W, Hc); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      for(var t = 0; t <= H; t += 5){
+        ctx.strokeStyle = "#2a3140"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x0 + t * bw, y0 - 4); ctx.lineTo(x0 + t * bw, y0 + 3 * fh); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; ctx.fillText(t, x0 + t * bw, y0 + 3 * fh + 14);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.fillText("time", (x0 + x1) / 2, y0 + 3 * fh + 30);
+      for(var i = 0; i < 3; i++){
+        var yb = y0 + i * fh;
+        ctx.fillStyle = COL[i]; ctx.textAlign = "right"; ctx.font = "600 10.5px system-ui, sans-serif"; ctx.fillText("task " + (i + 1), x0 - 6, yb + fh / 2 + 3);
+        ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, yb + fh - 4); ctx.lineTo(x1, yb + fh - 4); ctx.stroke();
+        /* activations */
+        ctx.strokeStyle = "#c9d1d9"; ctx.lineWidth = 1.4;
+        for(t = 0; t < H; t += T[i]){ ctx.beginPath(); ctx.moveTo(x0 + t * bw, yb + fh - 4); ctx.lineTo(x0 + t * bw, yb + 2); ctx.lineTo(x0 + t * bw + 4, yb + 6); ctx.stroke(); }
+        ctx.lineWidth = 1;
+      }
+      s.g.forEach(function(k, t){ if(k >= 0){ ctx.fillStyle = COL[k]; ctx.fillRect(x0 + t * bw + 0.5, y0 + k * fh + 9, bw - 1, fh - 14); } });
+      /* missed deadlines */
+      ctx.strokeStyle = "#f85149"; ctx.lineWidth = 2.4;
+      s.perd.forEach(function(p){ var x = x0 + p[1] * bw, y = y0 + p[0] * fh + fh / 2; ctx.beginPath(); ctx.moveTo(x - 5, y - 5); ctx.lineTo(x + 5, y + 5); ctx.moveTo(x + 5, y - 5); ctx.lineTo(x - 5, y + 5); ctx.stroke(); });
+    }
+
+    $("rtDatos").innerHTML =
+      "<span>utilization</span><b>" + coma(U * 100, 1) + " % (Liu and Layland bound: " + coma(LL * 100, 1) + " %)</b>" +
+      "<span>response times with RM</span><b>" + R.map(function(x, i){ return "R" + (i + 1) + " = " + (x > T[i] ? "&gt; " + T[i] : x); }).join(" · ") + "</b>" +
+      "<span>missed deadlines in the hyperperiod</span><b>" + s.perd.length + " with " + (pol === "rm" ? "RM" : "EDF") + " · " + otra.perd.length + " with " + (pol === "rm" ? "EDF" : "RM") + "</b>";
+
+    var nota;
+    if(U > 1) nota = "The utilization exceeds 100 %: the processor is not enough, and no scheduler can meet all the deadlines.";
+    else if(U <= LL) nota = "Utilization below the Liu and Layland bound: RM meets all the deadlines without any further analysis, and so does EDF.";
+    else if(okR && pol === "rm") nota = "Utilization above the bound, but the response analysis shows that each task finishes before its period: the bound is sufficient, not necessary. RM succeeds.";
+    else if(!okR && pol === "rm") nota = "<b>RM misses deadlines</b> even though the utilization does not exceed 100 %: task 3, the lowest in priority, accumulates too much interference from the other two. Switch to EDF: with the same load it meets everything.";
+    else if(!okR) nota = "With this load RM would miss deadlines, but EDF meets them all: by always choosing the earliest deadline, it uses the processor up to 100 %. The price is that the priorities change all the time and the behavior under overload is less predictable.";
+    else nota = "Both schedulers meet all the deadlines with this load.";
+    $("rtNota").innerHTML = nota;
+  }
+  ["rtP", "rt1", "rt2", "rt3"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

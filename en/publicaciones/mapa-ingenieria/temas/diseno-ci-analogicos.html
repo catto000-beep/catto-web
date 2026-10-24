@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analog integrated circuit design · Applied Electronics I · Catto</title>
+<meta name="description" content="Designing with ratios instead of absolute values, mismatch and Pelgrom's law, the trade-off between precision and area, layout techniques such as the common centroid, design with gm/ID, the two-stage operational amplifier and the design flow, with an interactive lab on the Monte Carlo of the offset of a differential pair. Content of Applied Electronics I, Level 3 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/diseno-ci-analogicos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/diseno-ci-analogicos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/diseno-ci-analogicos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/diseno-ci-analogicos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Applied Electronics I</a>
+    <span class="anio">Level 3</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Applied Electronics I</span> · 120 h · Topic 7 of 7</div>
+    <h1>Analog integrated circuit design</h1>
+    <p class="lead">On a chip, no resistor is worth what the drawing says, but two neighboring resistors are almost identical. All integrated analog design rests on that paradox.</p>
+    <div class="chips">
+      <span class="chip hi">Matching</span>
+      <span class="chip">Pelgrom's law</span>
+      <span class="chip">Common centroid</span>
+      <span class="chip">gm/ID</span>
+      <span class="chip">Monte Carlo</span>
+    </div>
+    <hr class="rule">
+
+    <section id="cocientes">
+      <h2><span class="n">01</span>Designing with ratios</h2>
+      <p>Integrated analog design starts from a paradox. The absolute values on a chip are poor: a
+      resistor can come out 20 % above or below its value, the threshold voltage of a transistor varies by tens
+      of millivolts from one wafer to another, and no capacitance is exact. But two identical components, drawn
+      together on the same chip, are almost identical: their ratio holds to within tenths of a percent.</p>
+      <p>That is why analog integrated circuits are designed to depend on <b>ratios</b> and not on values:
+      the gain as a ratio of two resistors, the current of a
+      <a href="/en/publicaciones/mapa-ingenieria/temas/fuentes-corriente">mirror</a> as a ratio of two
+      geometries, the split of a <a href="/en/publicaciones/mapa-ingenieria/temas/amplificador-diferencial">differential
+      pair</a> as the difference between two twin transistors. What limits precision is no longer the
+      tolerance, but the <b>mismatch</b>.</p>
+    </section>
+
+    <section id="pelgrom">
+      <h2><span class="n">02</span>Mismatch and Pelgrom's law</h2>
+      <p>Even when drawn identical, two transistors differ because of random effects at the atomic scale: the exact
+      number of dopant atoms under each gate, the irregularities of the edge. Marcel Pelgrom showed in
+      1989 that the spread of the difference between two transistors falls with the square root of their area:</p>
+      <div class="form">
+        \[ \sigma(\Delta V_{th}) = \frac{A_{VT}}{\sqrt{W L}} \]
+        \[ \sigma\!\left(\frac{\Delta \beta}{\beta}\right) = \frac{A_\beta}{\sqrt{W L}} \]
+        <span class="cap">\( A_{VT} \) depends on the technology: on the order of 1 mV·µm per nanometer of oxide. With \( A_{VT} = 5 \) mV·µm, a 1 µm² pair has a spread of 5 mV, and a 100 µm² one, 0.5 mV.</span>
+      </div>
+      <p>The consequence is a direct trade-off between <b>precision and area</b>: to cut the offset in
+      half you have to quadruple the area of the input transistors, with more capacitance, less speed and more
+      cost. In a MOS differential pair, the input offset combines the two sources:</p>
+      <div class="form">
+        \[ \sigma(V_{os}) = \sqrt{\sigma(\Delta V_{th})^2 + \left( \frac{V_{ov}}{2}\, \sigma\!\left(\frac{\Delta \beta}{\beta}\right) \right)^2} \]
+      </div>
+      <div class="lw" id="mc">
+        <div class="lt">Lab · Monte Carlo of the offset of a differential pair</div>
+        <p class="ls">4000 MOS differential pairs are virtually fabricated, each with random mismatches
+        according to Pelgrom's law, and the distribution of their offset voltage is plotted. You choose the area of the
+        input transistors, the overdrive voltage and the offset specification the
+        chip must meet.</p>
+        <div class="fila"><label>Area of each transistor \( W L \) = <b id="mcAv"></b></label><input type="range" id="mcA" min="-1" max="3" step="0.05" value="1.4"></div>
+        <div class="fila"><label>Overdrive voltage \( V_{ov} \) = <b id="mcOv"></b></label><input type="range" id="mcO" min="0.05" max="0.5" step="0.01" value="0.2"></div>
+        <div class="fila"><label>Technology coefficient \( A_{VT} \) = <b id="mcKv"></b></label><input type="range" id="mcK" min="1" max="10" step="0.5" value="5"></div>
+        <div class="fila"><label>Specification: maximum offset = <b id="mcSv"></b></label><input type="range" id="mcS" min="0.5" max="10" step="0.5" value="2"></div>
+        <div class="fila"><button type="button" id="mcB">fabricate another batch</button></div>
+        <canvas id="mcLienzo" style="display:block;width:100%;max-width:620px;height:260px;margin:6px auto 0"></canvas>
+        <div class="datos" id="mcDatos"></div>
+        <div class="nota" id="mcNota"></div>
+      </div>
+    </section>
+
+    <section id="layout">
+      <h2><span class="n">03</span>The drawing matters as much as the schematic</h2>
+      <p>Besides random mismatch, there are systematic errors that the drawing of the chip (the
+      <i>layout</i>) can avoid: gradients of temperature, oxide thickness or mechanical stress across
+      the wafer. The classic techniques:</p>
+      <ul>
+        <li><b>Common centroid:</b> each transistor of the pair is split into parts that are laid out in a cross, so
+        that a linear gradient affects both equally.</li>
+        <li><b>Interdigitated:</b> the fingers of the two transistors alternate, A B A B.</li>
+        <li><b>Dummy elements:</b> inactive transistors or resistors at the ends, so that the
+        active ones all have the same surroundings.</li>
+        <li><b>Same orientation and symmetry:</b> all matched devices in the same direction, with the
+        same routing of connections, far from the edges and symmetric with respect to heat sources.</li>
+      </ul>
+    </section>
+
+    <section id="gm-id">
+      <h2><span class="n">04</span>Designing with \( g_m/I_D \)</h2>
+      <p>In a modern technology the long-channel equations are unreliable, and the design is organized
+      around one number: the efficiency \( g_m/I_D \), how much transconductance each ampere gives. It defines
+      which region the transistor operates in:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Region</th><th>\( g_m/I_D \)</th><th>What you gain</th><th>What you lose</th></tr></thead>
+        <tbody>
+          <tr><td>Weak inversion</td><td>Up to about 25 S/A, near the limit \( 1/nV_T \)</td><td>Maximum gain per unit current, minimum power consumption</td><td>Speed and area</td></tr>
+          <tr><td>Moderate inversion</td><td>10 to 20 S/A</td><td>A good balance</td><td>—</td></tr>
+          <tr><td>Strong inversion</td><td>Less than 10 S/A</td><td>Speed, linearity, better current matching</td><td>Power consumption and output swing</td></tr>
+        </tbody>
+      </table></div>
+      <p>The designer chooses \( g_m/I_D \) for each transistor according to what is needed, obtains the current from the
+      required \( g_m \), and the width comes from measured or simulated tables of the technology.</p>
+    </section>
+
+    <section id="opamp">
+      <h2><span class="n">05</span>A two-stage operational amplifier</h2>
+      <p>The most widely taught architecture brings together everything in this course: a differential pair with a mirror as an
+      active load, a common-source gain stage and a capacitor \( C_c \) between the input and the output of the
+      second stage which, through the Miller effect, sets a dominant pole and makes the amplifier stable with
+      feedback. Its two key figures come directly from the first stage:</p>
+      <div class="form">
+        \[ GBW = \frac{g_{m1}}{2 \pi\, C_c} \qquad SR = \frac{I_{SS}}{C_c} \]
+        <span class="cap">With \( g_{m1} = 1 \) mS, \( C_c = 2 \) pF and \( I_{SS} = 100 \) µA, a gain-bandwidth product of 80 MHz and a slew rate of 50 V/µs.</span>
+      </div>
+    </section>
+
+    <section id="flujo">
+      <h2><span class="n">06</span>The design flow</h2>
+      <ol>
+        <li><b>Specification:</b> gain, bandwidth, noise, offset, power consumption, area.</li>
+        <li><b>Schematic and sizing</b>, with \( g_m/I_D \) or with equations.</li>
+        <li><b>Simulation</b> with the foundry models, at all process, voltage and temperature
+        <b>corners</b>, and with <b>Monte Carlo</b> for the mismatch.</li>
+        <li><b>Layout</b>, with the matching techniques.</li>
+        <li><b>Verification</b>: design rules (DRC), layout versus schematic (LVS) and extraction
+        of the parasitics to simulate again.</li>
+        <li><b>Sending to fabrication</b> and measuring the samples.</li>
+      </ol>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Measuring the offset spread</div>
+        <p>Measure the offset voltage of ten operational amplifiers of the same model and compare the
+        spread with the typical and maximum values given in the datasheet.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Monte Carlo in a simulator</div>
+        <p>In a simulator with models of a CMOS technology, run a Monte Carlo analysis of a differential
+        pair for two different areas and verify that the spread scales as \( 1/\sqrt{WL} \).</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Drawing a common centroid</div>
+        <p>With a free layout tool, draw a 2 × 2 common-centroid differential pair and a simple
+        one, and explain which gradient each one cancels.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <ul>
+        <li><b>Designing with absolute values.</b> In an integrated circuit, only ratios are reliable.</li>
+        <li><b>Using minimum-size input transistors.</b> The offset grows as the inverse of the square root of the area.</li>
+        <li><b>Simulating only the typical case.</b> A circuit has to work at all the corners and across the whole
+        spread.</li>
+        <li><b>Leaving the layout for last.</b> A drawing without symmetry ruins a good schematic.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Self-assessment</h2>
+      <details class="q"><summary>How much area is needed for \( \sigma(\Delta V_{th}) = 1 \) mV with \( A_{VT} = 4 \)
+        mV·µm?</summary>
+        <div class="a"><p>\( WL = (4/1)^2 = 16 \) µm².</p></div></details>
+      <details class="q"><summary>What happens to the offset if the area is quadrupled?</summary>
+        <div class="a"><p>It is cut in half.</p></div></details>
+      <details class="q"><summary>What problem does the common centroid solve?</summary>
+        <div class="a"><p>Linear gradients across the chip, which affect both transistors of the pair
+        equally.</p></div></details>
+      <details class="q"><summary>What is the slew rate with \( I_{SS} = 40 \) µA and \( C_c = 4 \) pF?</summary>
+        <div class="a"><p>\( 40\text{ µA} / 4\text{ pF} = 10 \) V/µs.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Behzad Razavi.</span>
+          <span class="ti">Design of Analog CMOS Integrated Circuits</span>.
+          <span class="ed">2nd ed., McGraw-Hill, 2017.</span>
+          <span class="pq">The two-stage amplifier, compensation and analog layout.</span></li>
+        <li><span class="au">Alan Hastings.</span>
+          <span class="ti">The Art of Analog Layout</span>.
+          <span class="ed">2nd ed., Prentice Hall, 2005.</span>
+          <span class="pq">The reference on matching and layout techniques.</span></li>
+        <li><span class="au">Paul G. A. Jespers and Boris Murmann.</span>
+          <span class="ti">Systematic Design of Analog CMOS Circuits Using Pre-Computed Lookup Tables</span>.
+          <span class="ed">Cambridge University Press, 2017.</span>
+          <span class="pq">The \( g_m/I_D \) method explained by its leading advocates.</span></li>
+        <li><span class="au">Marcel J. M. Pelgrom, Aad C. J. Duinmaijer and Anton P. G. Welbers.</span>
+          <span class="ti">Matching Properties of MOS Transistors</span>.
+          <span class="ed">IEEE Journal of Solid-State Circuits, 1989.</span>
+          <span class="pq">The original paper on the matching law.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/amplificadores-multietapa">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Multistage amplifiers</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Analog integrated circuit design”</b> of <b>Applied Electronics I</b> (Level 3), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Monte Carlo of the offset of a MOS differential pair (Pelgrom's law).
+   sigma(dVth) = AVT / sqrt(WL);  sigma(dB/B) = Abeta / sqrt(WL), Abeta = 1 %.um
+   Vos = dVth + (Vov/2) dB/B  ->  sigma(Vos) = sqrt(AVT^2 + (5 Vov)^2) / sqrt(WL) mV
+   (5 Vov comes from Vov/2 in mV times 1 % = 0.01).
+   Area to meet the specification at 3 sigma:
+     WL = (AVT^2 + (5 Vov)^2) / (spec/3)^2.
+   Check: AVT 5, Vov 0.2, WL 25 um2 -> sigma 1.02 mV; with spec 2 mV it meets
+   95 % (|Z| < 1.96). Generator: mulberry32 with Box-Muller, 4000 samples. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("mcLienzo"), ctx = cv.getContext("2d");
+  var NMC = 4000, ABETA = 1, semilla = 12345;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function area(a){ return a >= 100 ? coma(a, 0) + " µm²" : a >= 1 ? coma(a, 1) + " µm²" : coma(a, 2) + " µm²"; }
+  function mulberry(s){ return function(){ s |= 0; s = s + 0x6D2B79F5 | 0; var t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  /* normal distribution function (Abramowitz and Stegun 7.1.26) */
+  function phi(z){
+    var t = 1 / (1 + 0.3275911 * Math.abs(z) / Math.SQRT2);
+    var e = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z / 2);
+    return z >= 0 ? (1 + e) / 2 : (1 - e) / 2;
+  }
+
+  function pintar(){
+    var wl = Math.pow(10, +$("mcA").value), vov = +$("mcO").value, avt = +$("mcK").value, spec = +$("mcS").value;
+    $("mcAv").textContent = area(wl); $("mcOv").textContent = coma(vov, 2) + " V";
+    $("mcKv").textContent = coma(avt, 1) + " mV·µm"; $("mcSv").textContent = "± " + coma(spec, 1) + " mV";
+    var sVT = avt / Math.sqrt(wl), sB = ABETA / Math.sqrt(wl), sB_mv = 5 * vov * ABETA / Math.sqrt(wl);
+    var sig = Math.sqrt(sVT * sVT + sB_mv * sB_mv);
+
+    /* the batch */
+    var rnd = mulberry(semilla), v = [], i, suma = 0, suma2 = 0, dentro = 0;
+    for(i = 0; i < NMC; i++){
+      var u1 = Math.max(rnd(), 1e-12), u2 = rnd(), u3 = Math.max(rnd(), 1e-12), u4 = rnd();
+      var z1 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      var z2 = Math.sqrt(-2 * Math.log(u3)) * Math.cos(2 * Math.PI * u4);
+      var x = sVT * z1 + (vov / 2) * 1000 * (sB / 100) * z2;
+      v.push(x); suma += x; suma2 += x * x; if(Math.abs(x) <= spec) dentro++;
+    }
+    var media = suma / NMC, sMuestra = Math.sqrt(suma2 / NMC - media * media);
+    var rend = dentro / NMC, rendTeo = phi(spec / sig) - phi(-spec / sig);
+    var wlNec = (avt * avt + 25 * vov * vov * ABETA * ABETA) / Math.pow(spec / 3, 2);
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 14, x1 = W - 14, y0 = 14, y1 = H - 30;
+      var lim = Math.max(4 * sig, 1.4 * spec), nb = 60, bw = 2 * lim / nb, cnt = [];
+      for(i = 0; i < nb; i++) cnt.push(0);
+      v.forEach(function(x){ var b = Math.floor((x + lim) / bw); if(b >= 0 && b < nb) cnt[b]++; });
+      var cmax = Math.max.apply(null, cnt) * 1.1;
+      var X = function(x){ return x0 + (x + lim) / (2 * lim) * (x1 - x0); };
+      var Y = function(c){ return y1 - c / cmax * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H);
+      ctx.setLineDash([]); ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      /* axis ticks at round mV values */
+      var paso = Math.pow(10, Math.floor(Math.log10(lim / 2))), q = lim / 2 / paso;
+      paso *= q > 5 ? 5 : q > 2 ? 2 : 1;
+      for(var m = -Math.floor(lim / paso) * paso; m <= lim + 1e-9; m += paso){
+        ctx.strokeStyle = Math.abs(m) < 1e-9 ? "#3a4456" : "#2a3140"; ctx.beginPath(); ctx.moveTo(X(m), y0); ctx.lineTo(X(m), y1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; ctx.fillText(coma(m, paso < 1 ? 1 : 0), X(m), y1 + 14);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("offset voltage (mV)", (x0 + x1) / 2, H - 3);
+      for(i = 0; i < nb; i++){
+        var xc = -lim + (i + 0.5) * bw, ok = Math.abs(xc) <= spec;
+        ctx.fillStyle = ok ? "rgba(88,166,255,.7)" : "rgba(248,81,73,.75)";
+        ctx.fillRect(X(-lim + i * bw) + 0.5, Y(cnt[i]), Math.max(1, X(-lim + (i + 1) * bw) - X(-lim + i * bw) - 1), y1 - Y(cnt[i]));
+      }
+      /* theoretical bell curve */
+      ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 2; ctx.beginPath();
+      for(var j = 0; j <= 200; j++){
+        var xx = -lim + 2 * lim * j / 200, dens = NMC * bw / (sig * Math.sqrt(2 * Math.PI)) * Math.exp(-xx * xx / (2 * sig * sig));
+        if(j) ctx.lineTo(X(xx), Y(dens)); else ctx.moveTo(X(xx), Y(dens));
+      }
+      ctx.stroke();
+      ctx.strokeStyle = "#7ee787"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+      [-spec, spec].forEach(function(s){ ctx.beginPath(); ctx.moveTo(X(s), y0); ctx.lineTo(X(s), y1); ctx.stroke(); });
+      ctx.setLineDash([]);
+      ctx.textAlign = "left";
+    }
+
+    $("mcDatos").innerHTML =
+      "<span>σ(ΔV<sub>th</sub>) = A<sub>VT</sub>/√(WL)</span><b>" + coma(sVT, 3) + " mV</b>" +
+      "<span>contribution of the β mismatch</span><b>" + coma(sB_mv, 3) + " mV</b>" +
+      "<span>σ of the offset: theoretical / of the batch</span><b>" + coma(sig, 3) + " / " + coma(sMuestra, 3) + " mV</b>" +
+      "<hr><span>chips meeting ±" + coma(spec, 1) + " mV: batch / theory</span><b>" + coma(rend * 100, 1) + " / " + coma(rendTeo * 100, 1) + " %</b>" +
+      "<span>area to meet the spec at 3σ (99.7 %)</span><b>" + area(wlNec) + "</b>";
+
+    var nota;
+    if(rendTeo > 0.997) nota = "The offset sits comfortably within the specification: the input area could be reduced, gaining speed and saving silicon, and still meet the spec at 3σ with " + area(wlNec) + ".";
+    else if(rendTeo > 0.9) nota = coma((1 - rendTeo) * 100, 1) + " % of the chips would fail: in a production run of one million that is " + Math.round((1 - rendTeo) * 1e6).toLocaleString("en-US") + " rejected chips. To meet the spec at 3σ an area of " + area(wlNec) + " is needed.";
+    else nota = "<b>The specification is very demanding for this area:</b> only " + coma(rendTeo * 100, 0) + " % of the batch meets it. The ways out are more area (" + area(wlNec) + "), factory offset trimming, or an architecture with cancellation, such as chopper-stabilized amplifiers.";
+    $("mcNota").innerHTML = nota;
+  }
+  ["mcA", "mcO", "mcK", "mcS"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  $("mcB").addEventListener("click", function(){ semilla = (semilla * 1103515245 + 12345) % 2147483648; pintar(); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

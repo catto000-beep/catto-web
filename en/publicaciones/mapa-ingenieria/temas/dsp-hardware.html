@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital signal processing and hardware · Digital Techniques III · Catto</title>
+<meta name="description" content="Why signal processing calls for dedicated hardware, the multiply-accumulate operation, the Harvard architecture and circular addressing, Q15 fixed point with saturation and guard bits, block processing with DMA and the FFT, with an interactive lab that quantizes the coefficients of an FIR filter. Content of Digital Techniques III, Level 5 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/dsp-hardware">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/dsp-hardware">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/dsp-hardware">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/dsp-hardware">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques III</a>
+    <span class="anio">Level 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques III</span> · 120 h · Topic 1 of 3</div>
+    <h1>Digital signal processing and hardware</h1>
+    <p class="lead">A filter with a Blackman window attenuates 75 dB in floating point. With 12-bit coefficients, barely 57: the precision of the hardware decides which filter can be implemented.</p>
+    <div class="chips">
+      <span class="chip hi">Multiply-accumulate</span>
+      <span class="chip">Harvard architecture</span>
+      <span class="chip">Q15 fixed point</span>
+      <span class="chip">DMA and blocks</span>
+      <span class="chip">FFT</span>
+    </div>
+    <hr class="rule">
+
+    <section id="mac">
+      <h2><span class="n">01</span>An operation repeated millions of times</h2>
+      <p>Almost all digital signal processing boils down to sums of products. An \( N \)-coefficient <a href="/en/publicaciones/mapa-ingenieria/temas/filtros-digitales">FIR
+      filter</a> computes each output sample with \( N \) multiplications and \( N \) additions; so does an FFT, a
+      correlation or an equalizer. The basic operation is <b>multiply-accumulate</b> (MAC):</p>
+      <div class="form">
+        \[ y[n] = \sum_{k=0}^{N-1} h[k]\, x[n-k] \]
+        \[ \text{MAC/s} = N\, f_s \]
+        <span class="cap">A 51-coefficient FIR at 48 kHz needs 2.45 million MACs per second per channel; a channel filter in a software-defined radio, hundreds of millions. The cycle budget per sample is \( f_{clk}/f_s \).</span>
+      </div>
+      <p>A general-purpose processor does a MAC in several instructions: two memory reads, a multiplication,
+      an addition and the pointer update. A digital signal processor (DSP) is designed to do it in one cycle.</p>
+    </section>
+
+    <section id="arquitectura">
+      <h2><span class="n">02</span>The hardware of a DSP</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Resource</th><th>What it is for</th></tr></thead>
+        <tbody>
+          <tr><td>Modified Harvard architecture</td><td>Separate buses for instructions and data, and sometimes two for data: the coefficient and the sample are read in the same cycle</td></tr>
+          <tr><td>Hardware multiplier and accumulator</td><td>One MAC per cycle, with a wide accumulator</td></tr>
+          <tr><td>Circular addressing</td><td>The filter’s delay line without moving data: the pointer wraps back to the start on its own</td></tr>
+          <tr><td>Bit-reversed addressing</td><td>The reordering of the FFT with no computation</td></tr>
+          <tr><td>Zero-overhead loops</td><td>Repeating a block of instructions without branch instructions</td></tr>
+          <tr><td>DMA</td><td>Moving the samples from the converter to memory without using the core</td></tr>
+        </tbody>
+      </table></div>
+      <p>Today these ideas are also in microcontrollers: the Cortex-M4 and M7 have single-cycle MAC instructions and
+      SIMD operations that process two 16-bit samples at once. For higher bandwidths, FPGAs are used, with hundreds
+      of multipliers in parallel, and GPUs. The general organization of processors was covered in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/arquitectura-procesadores">processor architecture</a>.</p>
+    </section>
+
+    <section id="puntofijo">
+      <h2><span class="n">03</span>Fixed point: Q15, saturation and guard bits</h2>
+      <p>Many DSPs and almost all microcontrollers work in <b>fixed point</b>: the numbers are integers that are
+      interpreted as fractions. In the <b>Q15</b> format, a 16-bit integer represents values between −1 and 1 − 2⁻¹⁵:</p>
+      <div class="form">
+        \[ x = \frac{X}{2^{15}}, \quad X \in [-32768,\ 32767] \]
+        <span class="cap">The product of two Q15 numbers is a 32-bit Q30. Adding many products can overflow, which is why accumulators have guard bits, 40 bits in many 16-bit DSPs. When going back to 16 bits the result is rounded and <b>saturated</b>: an overflow that wraps around from positive to negative produces a click; saturation produces only clipping.</span>
+      </div>
+      <p>The coefficients are also rounded. A filter designed in floating point, such as those in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/diseno-filtros">filter design</a>, changes its response when quantized:
+      the error in each coefficient is noise that fills the stopband, and it limits the attenuation to about 6 dB per bit.</p>
+      <div class="lw" id="qf">
+        <div class="lt">Lab · FIR coefficients in fixed point</div>
+        <p class="ls">A 51-coefficient low-pass filter with \( f_c = 0.2\, f_s \), designed with a window. The gray curve is the response
+        with floating-point coefficients; the blue one, with coefficients rounded to the chosen number of bits. The attenuation is
+        measured as the worst value above \( 0.26\, f_s \).</p>
+        <div class="fila">
+          <select id="qfV">
+            <option value="hamming" selected>Hamming window</option>
+            <option value="blackman">Blackman window</option>
+          </select>
+        </div>
+        <div class="fila"><label>Coefficient bits = <b id="qfBv"></b></label><input type="range" id="qfB" min="6" max="16" step="1" value="12"></div>
+        <canvas id="qfLienzo" style="display:block;width:100%;max-width:620px;height:230px;margin:6px auto 0"></canvas>
+        <div class="datos" id="qfDatos"></div>
+        <div class="nota" id="qfNota"></div>
+      </div>
+    </section>
+
+    <section id="tiempo">
+      <h2><span class="n">04</span>Real time: sample by sample or in blocks</h2>
+      <p>A real-time system has to finish processing each sample before the next one arrives. There are two
+      ways to organize it:</p>
+      <ul>
+        <li><b>Sample by sample</b>: one interrupt for each sample from the <a href="/en/publicaciones/mapa-ingenieria/temas/conversores-datos">converter</a>.
+        Latency is minimal, but the cost of entering and leaving the interrupt is paid on every sample.</li>
+        <li><b>In blocks</b>: the DMA fills one buffer while the core processes the other (<i>ping-pong</i>). A whole block
+        is processed with efficient loops, in exchange for a latency of one or two blocks. It is the usual approach in audio and
+        communications.</li>
+      </ul>
+      <p>The \( N \)-point FFT needs \( (N/2) \log_2 N \) butterflies, each with one complex multiplication: 5120 for
+      1024 points, against more than a million products for the direct DFT. DSPs accelerate it with bit-reversed
+      addressing and, in some cases, with dedicated accelerators.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the laboratory</h2>
+      <div class="box lab"><div class="bt">Activity 1 · FIR on a microcontroller</div>
+        <p>Implement a 51-coefficient Q15 FIR on a Cortex-M4 with the CMSIS-DSP library, processing blocks with DMA
+        from the converter, and measure the computation time with an output pin.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Overflow and saturation</div>
+        <p>Process a sine wave near full scale with wrap-around addition and with saturation, and listen to or plot the
+        difference.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Measured response</div>
+        <p>Measure the response of the implemented filter with a generator and an analyzer, and compare it with the floating-point
+        one.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Designing the filter in floating point and quantizing without checking.</b> The attenuation can drop by tens of dB.</li>
+        <li><b>Accumulating in 16 bits.</b> The products are summed in a wide accumulator and rounded only once at the end.</li>
+        <li><b>Letting the overflow wrap around.</b> You have to saturate, or scale the input so that it does not occur.</li>
+        <li><b>Forgetting the latency of block processing.</b> In a control loop it can make the system unstable.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>How many MACs per second does a 128-coefficient FIR at 96 kHz in stereo need?</summary>
+        <div class="a"><p>\( 128 \cdot 96\,000 \cdot 2 \approx 24.6 \) million.</p></div></details>
+      <details class="q"><summary>What value does the integer 16384 represent in Q15?</summary>
+        <div class="a"><p>0.5.</p></div></details>
+      <details class="q"><summary>How many butterflies does a 4096-point FFT have?</summary>
+        <div class="a"><p>\( 2048 \cdot 12 = 24\,576 \).</p></div></details>
+      <details class="q"><summary>Why a 40-bit accumulator in a 16-bit DSP?</summary>
+        <div class="a"><p>The products are 32 bits; the 8 guard bits make it possible to add up to 256 full-scale products without overflow.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Steven W. Smith.</span>
+          <span class="ti">The Scientist and Engineer's Guide to Digital Signal Processing</span>.
+          <span class="ed">California Technical Publishing, 1997.</span>
+          <span class="pq">A practical text, with chapters devoted to DSP architecture.</span></li>
+        <li><span class="au">Richard G. Lyons.</span>
+          <span class="ti">Understanding Digital Signal Processing</span>.
+          <span class="ed">3rd ed., Prentice Hall, 2010.</span>
+          <span class="pq">Fixed-point arithmetic and implementation tricks.</span></li>
+        <li><span class="au">Donald S. Reay.</span>
+          <span class="ti">Digital Signal Processing Using the ARM Cortex-M4</span>.
+          <span class="ed">Wiley, 2015.</span>
+          <span class="pq">Real-time filters and FFT on a microcontroller, with DMA and CMSIS.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a class="ph" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">← Back</div>
+        <div class="tt">Engineering Topic Map</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/redes-datos">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Data networks and protocols</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Digital signal processing and hardware”</b> of <b>Digital Techniques III</b> (Level 5), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Low-pass FIR N = 51, fc = 0.2 fs, Hamming or Blackman window; coefficients
+   rounded to b signed bits: round(h 2^(b-1)) / 2^(b-1), saturating.
+   Attenuation: worst value from 0.26 to 0.5 fs (401 points), relative to the DC gain.
+   Check (Python): Hamming floating -58.36; 16 b -58.34; 12 b -51.08; 10 b -37.31;
+   8 b -32.80; 6 b -19.93. Blackman floating -75.31; 16 b -75.00; 12 b -56.71; 10 b -46.35. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("qfLienzo"), ctx = cv.getContext("2d");
+  var N = 51, FC = 0.2, F0 = 0.26;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function ventana(t, n){ var x = 2 * Math.PI * n / (N - 1); return t === "hamming" ? 0.54 - 0.46 * Math.cos(x) : 0.42 - 0.5 * Math.cos(x) + 0.08 * Math.cos(2 * x); }
+  function disenar(t){ var M = (N - 1) / 2, h = []; for(var n = 0; n < N; n++){ var k = n - M, s = k === 0 ? 2 * FC : Math.sin(2 * Math.PI * FC * k) / (Math.PI * k); h.push(s * ventana(t, n)); } return h; }
+  function q(h, b){ var S = Math.pow(2, b - 1); return h.map(function(x){ return Math.max(-S, Math.min(S - 1, Math.round(x * S))) / S; }); }
+  function mod(h, f){ var re = 0, im = 0; for(var n = 0; n < h.length; n++){ re += h[n] * Math.cos(2 * Math.PI * f * n); im += h[n] * Math.sin(2 * Math.PI * f * n); } return Math.hypot(re, im); }
+  function peor(h){ var g = mod(h, 0), m = -999; for(var k = 0; k <= 400; k++){ var f = F0 + (0.5 - F0) * k / 400; m = Math.max(m, 20 * Math.log10(mod(h, f) / g + 1e-12)); } return m; }
+
+  function pintar(){
+    var t = $("qfV").value, b = +$("qfB").value;
+    $("qfBv").textContent = b + " (Q" + (b - 1) + ")";
+    var h = disenar(t), hq = q(h, b), a0 = peor(h), a1 = peor(hq), g0 = mod(h, 0), g1 = mod(hq, 0);
+    var emax = 0; for(var i = 0; i < N; i++) emax = Math.max(emax, Math.abs(hq[i] - h[i]));
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 34, x1 = W - 12, y0 = 10, y1 = H - 26, D0 = -100;
+      var X = function(f){ return x0 + f / 0.5 * (x1 - x0); }, Y = function(d){ return y0 + Math.min(-D0, Math.max(0, -d)) / -D0 * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(var d = 0; d >= D0; d -= 20){ ctx.beginPath(); ctx.moveTo(x0, Y(d)); ctx.lineTo(x1, Y(d)); ctx.stroke(); ctx.fillText(d === 0 ? "0" : "−" + (-d), x0 - 4, Y(d) + 3); }
+      ctx.textAlign = "center";
+      [0, 0.1, 0.2, 0.3, 0.4, 0.5].forEach(function(f){ ctx.fillText(coma(f, 1), X(f), y1 + 13); });
+      ctx.fillStyle = "#8b93a3"; ctx.fillText("frequency / fs", (x0 + x1) / 2, y1 + 24);
+      ctx.fillStyle = "rgba(154,167,180,.08)"; ctx.fillRect(X(F0), y0, X(0.5) - X(F0), y1 - y0);
+      [[h, g0, "#9aa7b4", 1.4], [hq, g1, "#58a6ff", 2]].forEach(function(p){
+        ctx.strokeStyle = p[2]; ctx.lineWidth = p[3]; ctx.beginPath();
+        for(var k = 0; k <= 300; k++){ var f = 0.5 * k / 300, yy = Y(20 * Math.log10(mod(p[0], f) / p[1] + 1e-12)); if(k) ctx.lineTo(X(f), yy); else ctx.moveTo(X(f), yy); }
+        ctx.stroke(); ctx.lineWidth = 1;
+      });
+      ctx.strokeStyle = "#f85149"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(X(F0), Y(a1)); ctx.lineTo(X(0.5), Y(a1)); ctx.stroke(); ctx.setLineDash([]);
+    }
+
+    $("qfDatos").innerHTML =
+      "<span>attenuation with floating-point coefficients</span><b>" + coma(a0, 1) + " dB</b>" +
+      "<span>attenuation with " + b + " bits</span><b>" + coma(a1, 1) + " dB</b>" +
+      "<span>maximum error of a coefficient</span><b>" + coma(emax * 1e5, 2) + "·10⁻⁵</b>" +
+      "<span>quantization step</span><b>2<sup>−" + (b - 1) + "</sup> = " + coma(Math.pow(2, 1 - b) * 1e5, 2) + "·10⁻⁵</b>";
+    var p = a0 - a1, nota;
+    if(p < 1) nota = "With " + b + " bits the quantized filter is practically the same as the floating-point one: the coefficient noise stays below the stopband.";
+    else if(p < 10) nota = "Quantization is already eating up " + coma(p, 1) + " dB of attenuation: the coefficient error is starting to fill the stopband.";
+    else nota = "<b>Quantization dominates:</b> " + coma(p, 0) + " dB are lost. With " + b + " bits a better window makes no sense: the floor is set by rounding, not by the design.";
+    $("qfNota").innerHTML = nota;
+  }
+  ["qfV", "qfB"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analog-to-digital and digital-to-analog converters · Digital Techniques II · Catto</title>
+<meta name="description" content="Quantization and the 6.02N + 1.76 dB signal-to-noise ratio, effective bits, the static (INL, DNL) and dynamic (SINAD, SFDR) specifications, the clock jitter limit, flash, SAR, pipeline and sigma-delta architectures, and R-2R and current-source DACs, with an interactive lab that quantizes a sine wave and measures its spectrum with an FFT. Content of Digital Techniques II, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/conversores-datos">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/conversores-datos">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/conversores-datos">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/conversores-datos">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Digital Techniques II</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Digital Techniques II</span> · 120 h · Topic 1 of 6</div>
+    <h1>Analog-to-digital and digital-to-analog converters</h1>
+    <p class="lead">A 14-bit converter sampling a 49 MHz signal with a clock of 1 ps jitter performs the same as an 11-bit one: the clock, not the converter, sets the limit.</p>
+    <div class="chips">
+      <span class="chip hi">Quantization</span>
+      <span class="chip">ENOB</span>
+      <span class="chip">INL and DNL</span>
+      <span class="chip">Jitter</span>
+      <span class="chip">SAR and sigma-delta</span>
+    </div>
+    <hr class="rule">
+
+    <section id="frontera">
+      <h2><span class="n">01</span>The boundary between analog and digital</h2>
+      <p>Every digital system that measures or acts on the world has a converter at each edge: an
+      <b>analog-to-digital converter</b> (ADC) that turns a voltage into a number, and a
+      <b>digital-to-analog converter</b> (DAC) that does the opposite. Between the two there can be the most
+      sophisticated processing, but the quality of the system never exceeds that of its converters. The
+      <a href="/en/publicaciones/mapa-electronica/temas/conversores-ad-da">technician program page</a> presents
+      the basic circuits; here the subject is how they are specified, what limits them, and how to choose an architecture.</p>
+      <p>Conversion has two independent steps. <b>Sampling</b> discretizes time and requires, by the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/muestreo-shannon">Shannon theorem</a>, a sampling frequency greater than twice the
+      bandwidth of the signal, with an anti-aliasing filter in front. <b>Quantization</b> discretizes the amplitude,
+      and it is the subject proper to this page.</p>
+    </section>
+
+    <section id="cuantizacion">
+      <h2><span class="n">02</span>Quantization and signal-to-noise ratio</h2>
+      <p>An \( N \)-bit converter with input range \( FS \) divides that range into \( 2^N \) steps of
+      width \( \Delta = FS / 2^N \), the <b>LSB</b>. Each sample is rounded to the nearest step, with an error
+      between \( -\Delta/2 \) and \( +\Delta/2 \). For a signal that sweeps across many steps, that error behaves
+      like uniform noise with an RMS value of \( \Delta/\sqrt{12} \). Compared with a sine wave that fills the whole
+      range:</p>
+      <div class="form">
+        \[ SNR = 6.02\,N + 1.76 \ \text{dB} \]
+        \[ ENOB = \frac{SINAD - 1.76}{6.02} \]
+        <span class="cap">Each bit adds 6 dB. An ideal 12-bit converter gives 74 dB. The effective number of bits (ENOB) inverts the formula: it tells you how many ideal bits a real converter is equivalent to, based on its measured signal-to-noise-and-distortion ratio.</span>
+      </div>
+      <p>The quantization noise is spread between 0 and \( f_s/2 \). In a spectrum computed with an
+      \( M \)-point FFT, each bin receives only a part of it, and the floor appears \( 10 \log(M/2) \) dB below the
+      total noise level: with 4096 points, 33 dB. That is why the spectrum of a 12-bit converter shows its floor
+      near −107 dBFS even though its signal-to-noise ratio is 74 dB.</p>
+    </section>
+
+    <section id="especificaciones">
+      <h2><span class="n">03</span>Static and dynamic specifications</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Parameter</th><th>What it measures</th></tr></thead>
+        <tbody>
+          <tr><td>Offset and gain error</td><td>The shift of zero and the slope of the characteristic; they are calibrated out</td></tr>
+          <tr><td>DNL (differential nonlinearity)</td><td>How far each step deviates from 1 LSB; with a DNL of −1 LSB a code is lost</td></tr>
+          <tr><td>INL (integral nonlinearity)</td><td>The maximum distance between the real characteristic and the ideal straight line</td></tr>
+          <tr><td>SINAD</td><td>Signal versus noise plus distortion: the measure from which the ENOB comes</td></tr>
+          <tr><td>SFDR</td><td>Distance between the signal and the highest spur; decisive in radio receivers</td></tr>
+        </tbody>
+      </table></div>
+      <p>There is a limit that does not depend on the converter: the uncertainty in the sampling instant. A clock with
+      RMS jitter \( t_j \) takes each sample a little early or late, and on a fast-changing signal that timing error
+      becomes an amplitude error:</p>
+      <div class="form">
+        \[ SNR_j = -20 \log\left(2\pi\, f_{in}\, t_j\right) \]
+        <span class="cap">With 1 ps of jitter and a 100 MHz signal, the limit is 64 dB, a little over 10 effective bits, no matter how many bits the converter has. In high-frequency sampling, the clock is as critical a component as the ADC.</span>
+      </div>
+      <div class="lw" id="ad">
+        <div class="lt">Lab · quantize a sine wave and measure its spectrum</div>
+        <p class="ls">A sine wave close to full scale, sampled at 100 MS/s and quantized with \( N \) bits, with a
+        clock that can have jitter. 4096 samples are taken, the FFT is computed and the signal-to-noise
+        ratio is measured. The input frequency completes a whole number of cycles in the window, so that the signal falls
+        into a single bin.</p>
+        <div class="fila">
+          <select id="adF">
+            <option value="41">1.00 MHz input</option>
+            <option value="409">9.99 MHz input</option>
+            <option value="2003" selected>48.9 MHz input</option>
+          </select>
+          <select id="adJ">
+            <option value="0" selected>Ideal clock</option>
+            <option value="0.5e-12">0.5 ps jitter</option>
+            <option value="1e-12">1 ps jitter</option>
+            <option value="5e-12">5 ps jitter</option>
+            <option value="20e-12">20 ps jitter</option>
+          </select>
+        </div>
+        <div class="fila"><label>Resolution N = <b id="adNv"></b></label><input type="range" id="adN" min="4" max="16" step="1" value="12"></div>
+        <canvas id="adLienzo" style="display:block;width:100%;max-width:620px;height:240px;margin:6px auto 0"></canvas>
+        <div class="datos" id="adDatos"></div>
+        <div class="nota" id="adNota"></div>
+      </div>
+    </section>
+
+    <section id="adc">
+      <h2><span class="n">04</span>ADC architectures</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Architecture</th><th>How it converts</th><th>Typical resolution and speed</th></tr></thead>
+        <tbody>
+          <tr><td>Flash</td><td>\( 2^N - 1 \) comparators in parallel, one per threshold</td><td>6 to 8 bits, gigasamples per second; 255 comparators for 8 bits</td></tr>
+          <tr><td>Successive approximation (SAR)</td><td>Binary search with a DAC and a comparator: one bit per cycle</td><td>10 to 18 bits, up to tens of MS/s; the one in almost all microcontrollers</td></tr>
+          <tr><td>Pipeline</td><td>Cascaded stages that each resolve a few bits and pass the amplified remainder on</td><td>12 to 16 bits, hundreds of MS/s; software-defined radio</td></tr>
+          <tr><td>Sigma-delta</td><td>A heavily oversampled 1-bit modulator and a digital filter that averages</td><td>16 to 24 bits, up to hundreds of kS/s; audio and measurement</td></tr>
+          <tr><td>Dual slope</td><td>Integrates the input and counts the discharge time</td><td>Slow and very linear; multimeters</td></tr>
+        </tbody>
+      </table></div>
+      <p>The sigma-delta trades speed for resolution. Plain oversampling gains 3 dB each time the sampling
+      frequency doubles, because the quantization noise is spread over a wider band and the filter lets
+      only a part of it through. The modulator also <b>shapes</b> the noise: it pushes it toward high frequencies,
+      outside the useful band. A first-order modulator gains 9 dB per doubling; a second-order one,
+      15 dB.</p>
+    </section>
+
+    <section id="dac">
+      <h2><span class="n">05</span>Digital-to-analog converters</h2>
+      <p>A DAC sums binary weights. The <b>R-2R</b> network obtains them with only two resistance values; the
+      <b>resistor string</b> with \( 2^N \) taps is monotonic by construction; <b>current-source</b>
+      switched DACs are the fastest, and <b>sigma-delta</b> DACs dominate audio.
+      At the output, the DAC holds each value for one period: this zero-order hold attenuates the response
+      with a \( \sin(x)/x \) shape, 3.9 dB at half the sampling frequency, and leaves images of the spectrum
+      around the multiples of \( f_s \), which a reconstruction filter removes.</p>
+    </section>
+
+    <section id="electronica">
+      <h2><span class="n">06</span>Where it appears in electronics</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>System</th><th>Typical converter</th></tr></thead>
+        <tbody>
+          <tr><td>Microcontroller</td><td>12-bit SAR at 1 MS/s, with an input multiplexer</td></tr>
+          <tr><td>Audio interface</td><td>24-bit sigma-delta at 48 or 96 kS/s</td></tr>
+          <tr><td>Scale or bridge sensor</td><td>24-bit sigma-delta at a few samples per second</td></tr>
+          <tr><td>Digital oscilloscope</td><td>Flash or interleaved 8-bit arrays at gigasamples</td></tr>
+          <tr><td>Software-defined radio</td><td>14-bit pipeline at hundreds of MS/s, with a low-jitter clock</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">07</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · The ENOB of a microcontroller ADC</div>
+        <p>Digitize a sine wave from a low-distortion generator with a microcontroller’s ADC, send
+        4096 samples to the computer, compute the FFT and obtain the SINAD and the effective bits.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · DNL with a ramp</div>
+        <p>Apply a slow ramp, build the code histogram and compute the DNL of each code. Look for
+        missing codes.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · An R-2R DAC</div>
+        <p>Build an 8-bit R-2R DAC with 1 % resistors and measure its INL. Repeat with 0.1 % resistors and
+        compare.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">08</span>Common mistakes</h2>
+      <ul>
+        <li><b>Confusing resolution with accuracy.</b> A 16-bit ADC with 4 LSB of INL is not accurate to 16 bits.</li>
+        <li><b>Reading the FFT floor as the total noise.</b> You have to add \( 10\log(M/2) \) dB to it.</li>
+        <li><b>Ignoring the clock jitter.</b> At high input frequencies it limits performance more than the bits do.</li>
+        <li><b>Omitting the anti-aliasing filter.</b> Everything above \( f_s/2 \) folds onto the useful
+        band and cannot be separated afterward.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">09</span>Self-assessment</h2>
+      <details class="q"><summary>What ideal SNR does a 16-bit converter have?</summary>
+        <div class="a"><p>\( 6.02 \cdot 16 + 1.76 = 98.1 \) dB.</p></div></details>
+      <details class="q"><summary>An ADC measures 62 dB of SINAD. How many effective bits does it have?</summary>
+        <div class="a"><p>\( (62 - 1.76)/6.02 = 10 \) bits.</p></div></details>
+      <details class="q"><summary>What maximum jitter does a system that samples 10 MHz with 80 dB of SNR allow?</summary>
+        <div class="a"><p>\( t_j = 10^{-4}/(2\pi \cdot 10^7) \approx 1.6 \) ps.</p></div></details>
+      <details class="q"><summary>How many clock cycles does a 12-bit SAR need to convert?</summary>
+        <div class="a"><p>Twelve, one per bit, plus the acquisition time.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">10</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Walt Kester (ed.).</span>
+          <span class="ti">Data Conversion Handbook</span>.
+          <span class="ed">Analog Devices and Newnes, 2005.</span>
+          <span class="pq">The practical reference: specifications, architectures, tests and applications of ADCs and DACs.</span></li>
+        <li><span class="au">Marcel J. M. Pelgrom.</span>
+          <span class="ti">Analog-to-Digital Conversion</span>.
+          <span class="ed">3rd ed., Springer, 2017.</span>
+          <span class="pq">The design treatment, from sampling to sigma-delta converters, with the physical limits of each architecture.</span></li>
+        <li><span class="au">Behzad Razavi.</span>
+          <span class="ti">Principles of Data Conversion System Design</span>.
+          <span class="ed">IEEE Press, 1995.</span>
+          <span class="pq">Brief and clear on the architectures and their errors.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a class="ph" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">← Back</div>
+        <div class="tt">Engineering Topic Map</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/memorias-electronicas">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Electronic memories</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Analog-to-digital and digital-to-analog converters”</b> of <b>Digital Techniques II</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Quantization of a sine wave and a 4096-point FFT.
+   fs = 100 MS/s, fin = J fs / M with J prime (coherent sampling), amplitude
+   0.999 FS, quantizer step 2/2^N with clipping to [-1, 1 - D].
+   Jitter: t = n/fs + tj * g, with g Gaussian (Box-Muller on mulberry32,
+   seed 12345), same as the Python check.
+   SNR = P(J) / sum of the rest (no DC). Theory: 6.02N + 1.76 combined
+   with -20 log(2 pi fin tj).
+   Check (Python, same seed): N 12, 1 MHz -> 73.90 dB; N 12, 48.9 MHz,
+   1 ps -> 68.83 dB; N 14, 48.9 MHz, 1 ps -> 70.28 dB; N 8 -> 49.40 dB. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("adLienzo"), ctx = cv.getContext("2d");
+  var M = 4096, FS = 100e6;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function fft(re, im){
+    var n = re.length, i, j = 0, k, len;
+    for(i = 1; i < n; i++){ var bit = n >> 1; for(; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+      if(i < j){ var t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+    for(len = 2; len <= n; len <<= 1){
+      var ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+      for(i = 0; i < n; i += len){
+        var cr = 1, ci = 0;
+        for(k = 0; k < len / 2; k++){
+          var ar = re[i + k], ai = im[i + k], br = re[i + k + len / 2] * cr - im[i + k + len / 2] * ci, bi = re[i + k + len / 2] * ci + im[i + k + len / 2] * cr;
+          re[i + k] = ar + br; im[i + k] = ai + bi; re[i + k + len / 2] = ar - br; im[i + k + len / 2] = ai - bi;
+          var nr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nr;
+        }
+      }
+    }
+  }
+
+  function pintar(){
+    var N = +$("adN").value, J = +$("adF").value, tj = +$("adJ").value;
+    $("adNv").textContent = N + " bits";
+    var fin = J * FS / M, D = 2 / Math.pow(2, N), A = 0.999, rnd = mulberry(12345);
+    var re = new Float64Array(M), im = new Float64Array(M);
+    for(var n = 0; n < M; n++){
+      var u = Math.max(rnd(), 1e-12), v = rnd(), g = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+      var x = A * Math.sin(2 * Math.PI * fin * (n / FS + tj * g));
+      var q = Math.round(x / D) * D; q = Math.max(-1, Math.min(1 - D, q));
+      re[n] = q;
+    }
+    fft(re, im);
+    var P = new Float64Array(M / 2), tot = 0;
+    for(var k = 0; k < M / 2; k++){ P[k] = re[k] * re[k] + im[k] * im[k]; if(k) tot += P[k]; }
+    var snr = 10 * Math.log10(P[J] / (tot - P[J]));
+    var sq = 6.02 * N + 1.76, sj = tj > 0 ? -20 * Math.log10(2 * Math.PI * fin * tj) : Infinity;
+    var st = -10 * Math.log10(Math.pow(10, -sq / 10) + (tj > 0 ? Math.pow(10, -sj / 10) : 0));
+    var enob = (snr - 1.76) / 6.02, ref = Math.pow(M / 2, 2), piso = -snr - 10 * Math.log10(M / 2);
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 42, x1 = W - 22, y0 = 12, y1 = H - 30, DB0 = 0, DB1 = -160;
+      var X = function(kk){ return x0 + kk / (M / 2) * (x1 - x0); };
+      var Y = function(db){ return y0 + (DB0 - Math.max(DB1, db)) / (DB0 - DB1) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H);
+      ctx.setLineDash([]); ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      for(var db = 0; db >= DB1; db -= 40){
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(db)); ctx.lineTo(x1, Y(db)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(db, x0 - 5, Y(db) + 3);
+      }
+      for(var fm = 0; fm <= 50; fm += 10){
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = fm === 0 ? "left" : fm === 50 ? "right" : "center";
+        ctx.fillText(fm, x0 + fm / 50 * (x1 - x0), y1 + 13);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("frequency (MHz) · level in dBFS", (x0 + x1) / 2, H - 3);
+      /* spectrum: the maximum of each pixel column */
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 1.2; ctx.beginPath();
+      var cols = Math.floor(x1 - x0), paso = (M / 2) / cols;
+      for(var c = 0; c < cols; c++){
+        var a = Math.floor(c * paso), b = Math.max(a + 1, Math.floor((c + 1) * paso)), mx = 0;
+        for(var kk = Math.max(1, a); kk < b; kk++) if(P[kk] > mx) mx = P[kk];
+        var yy = Y(10 * Math.log10(mx / ref + 1e-30));
+        if(c) ctx.lineTo(x0 + c, yy); else ctx.moveTo(x0 + c, yy);
+      }
+      ctx.stroke();
+      /* noise floor per bin */
+      ctx.strokeStyle = "rgba(242,204,96,.9)"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(x0, Y(piso)); ctx.lineTo(x1, Y(piso)); ctx.stroke(); ctx.setLineDash([]);
+      /* legend at top left, with its own background so it does not cover the spectrum */
+      ctx.font = "600 10.5px system-ui, sans-serif";
+      var txt = "floor per bin: " + coma(piso, 0) + " dBFS", lw = ctx.measureText(txt).width;
+      ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(x0 + 6, y0 + 6, lw + 34, 18);
+      ctx.strokeStyle = "rgba(242,204,96,.9)"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x0 + 10, y0 + 15); ctx.lineTo(x0 + 30, y0 + 15); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#f2cc60"; ctx.textAlign = "left"; ctx.fillText(txt, x0 + 36, y0 + 19);
+    }
+
+    $("adDatos").innerHTML =
+      "<span>SNR measured with the FFT</span><b>" + coma(snr, 2) + " dB</b>" +
+      "<span>effective bits (ENOB)</span><b>" + coma(enob, 2) + "</b>" +
+      "<span>quantization limit, 6.02N + 1.76</span><b>" + coma(sq, 2) + " dB</b>" +
+      "<span>jitter limit</span><b>" + (tj > 0 ? coma(sj, 2) + " dB" : "no limit (ideal clock)") + "</b>" +
+      "<span>combined theory</span><b>" + coma(st, 2) + " dB</b>";
+    var nota;
+    if(tj > 0 && sj < sq - 6) nota = "<b>The clock rules:</b> with " + coma(tj * 1e12, 1) + " ps of jitter and a " + coma(fin / 1e6, 1) + " MHz input, the limit is " + coma(sj, 1) + " dB. Adding bits does not help: the converter performs like a " + coma(enob, 1) + "-bit one.";
+    else if(tj > 0 && sj < sq + 6) nota = "Quantization and jitter weigh about the same: the two noises add in power and the SNR ends up below both limits.";
+    else if(N <= 6) nota = "With so few bits the quantization error stops looking like noise: it concentrates in harmonics of the signal, visible as lines in the spectrum. The 6.02N + 1.76 formula is an approximation that improves with more bits.";
+    else nota = "The spectrum shows a single line, the signal, above the quantization floor. The floor is " + coma(10 * Math.log10(M / 2), 0) + " dB below the total noise because the noise is spread over " + (M / 2) + " bins. Each additional bit lowers the floor by 6 dB.";
+    $("adNota").innerHTML = nota;
+  }
+  ["adN", "adF", "adJ"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Software-defined radio and digital communications · Applied Electronics III · Catto</title>
+<meta name="description" content="Software-defined radio with its digital blocks, bandpass sampling with its valid intervals and spectrum inversion, clock jitter, and current digital systems with OFDM, codes and MIMO, with an interactive lab on bandpass sampling. Content of Applied Electronics III, Level 5 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/comunicaciones-digitales-rf">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/comunicaciones-digitales-rf">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/comunicaciones-digitales-rf">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/comunicaciones-digitales-rf">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Applied Electronics III</a>
+    <span class="anio">Level 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Applied Electronics III</span> · 120 h · Topic 10 of 10</div>
+    <h1>Software-defined radio and digital communications</h1>
+    <p class="lead">A 20 MHz band centered at 70 MHz can be digitized with a 56 MS/s converter, less than its highest frequency. The converter, well chosen, acts as a mixer.</p>
+    <div class="chips">
+      <span class="chip hi">Software-defined radio</span>
+      <span class="chip">Bandpass sampling</span>
+      <span class="chip">Nyquist zones</span>
+      <span class="chip">OFDM</span>
+      <span class="chip">MIMO</span>
+    </div>
+    <hr class="rule">
+
+    <section id="sdr">
+      <h2><span class="n">01</span>Software-defined radio</h2>
+      <p>In a classic receiver, each function is a circuit: the channel filter, the demodulator, the carrier recovery. In
+      a <b>software-defined radio</b> (SDR), the analog front end is reduced to amplifying, sometimes translating, and digitizing; everything
+      else is done by a processor, an FPGA or a computer. Changing the standard, the bandwidth or the modulation is changing
+      the program. The same blocks of <a href="/en/publicaciones/mapa-ingenieria/temas/receptores">receivers</a> and
+      <a href="/en/publicaciones/mapa-ingenieria/temas/transmisores">transmitters</a> are still there, but on the digital side of the
+      converter:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Digital block</th><th>Function</th></tr></thead>
+        <tbody>
+          <tr><td>Numerically controlled oscillator and digital mixer</td><td>Bring the channel down to baseband, with perfectly balanced I and Q</td></tr>
+          <tr><td>Decimating filters (CIC and FIR)</td><td>Select the channel and reduce the sampling rate</td></tr>
+          <tr><td>Synchronization</td><td>Recover the carrier, the symbol clock and the frame</td></tr>
+          <tr><td>Equalizer and demodulator</td><td>Correct the channel and decide the symbols</td></tr>
+          <tr><td>Channel decoder</td><td>Correct errors using the code</td></tr>
+        </tbody>
+      </table></div>
+      <p>The processing relies on the hardware of <a href="/en/publicaciones/mapa-ingenieria/temas/dsp-hardware">digital signal
+      processing</a>, and the modulations and their error rates are those of <a href="/en/publicaciones/mapa-ingenieria/temas/ruido-modulaciones-digitales">noise
+      in digital modulations</a>.</p>
+    </section>
+
+    <section id="pasabanda">
+      <h2><span class="n">02</span>Bandpass sampling</h2>
+      <p>The sampling theorem calls for sampling at twice the maximum frequency, but for a bandpass signal, which occupies only from
+      \( f_L \) to \( f_H \), twice the <b>bandwidth</b> is enough, if the sampling frequency is chosen well: the alias of the band
+      falls cleanly in the first Nyquist zone, without overlapping itself. This is <b>undersampling</b>, which replaces a mixer
+      with the converter itself:</p>
+      <div class="form">
+        \[ \frac{2 f_H}{n} \le f_s \le \frac{2 f_L}{n - 1}, \quad n = 1, 2, \dots, \left\lfloor \frac{f_H}{B} \right\rfloor \]
+        <span class="cap">Each n gives a valid interval; with even n the band appears inverted, which is corrected in the processing. The theoretical minimum frequency is 2B, but in practice margin is left for the filters and the clock tolerance. The converter has to have analog bandwidth up to \( f_H \) and a clock with low phase noise, because the jitter is multiplied with the signal frequency.</span>
+      </div>
+      <div class="lw" id="pbs">
+        <div class="lt">Lab · bandpass sampling</div>
+        <p class="ls">A band of width B centered at f<sub>c</sub>. Above, where it appears after sampling, in the first Nyquist zone, from 0 to
+        f<sub>s</sub>/2; below, the valid sampling frequencies in green and the chosen one in yellow.</p>
+        <div class="fila"><label>Center frequency f<sub>c</sub> = <b id="pbCv"></b></label><input type="range" id="pbC" min="20" max="200" step="1" value="70"></div>
+        <div class="fila"><label>Bandwidth B = <b id="pbBv"></b></label><input type="range" id="pbB" min="1" max="40" step="0.5" value="20"></div>
+        <div class="fila"><label>Sampling frequency f<sub>s</sub> = <b id="pbSv"></b></label><input type="range" id="pbS" min="10" max="400" step="0.5" value="100"></div>
+        <canvas id="pbLienzo" style="display:block;width:100%;max-width:620px;height:220px;margin:6px auto 0"></canvas>
+        <div class="datos" id="pbDatos"></div>
+        <div class="nota" id="pbNota"></div>
+      </div>
+    </section>
+
+    <section id="sistemas">
+      <h2><span class="n">03</span>Current digital systems</h2>
+      <p>Mobile communications, Wi-Fi and digital television combine everything seen: adaptive QAM modulations, OFDM with
+      hundreds of subcarriers that turn a channel with echoes into many flat channels, LDPC or turbo codes close to the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/intercomparacion-sistemas">Shannon limit</a>, multiple antennas (MIMO) that
+      multiply the capacity by exploiting the different propagation paths, and an RF front end that is, in large part, a
+      software-defined radio.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">04</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · SDR receiver</div>
+        <p>With a low-cost SDR receiver and GNU Radio, receive a commercial FM station, filter the channel, demodulate and
+        listen to the audio. Identify each block of the diagram.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Undersampling</div>
+        <p>Sample a 10.7 MHz signal with a 4 MS/s converter and find where it appears in the digital spectrum.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Constellation</div>
+        <p>Transmit and receive a QPSK between two SDRs and observe the constellation before and after carrier recovery.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">05</span>Common mistakes</h2>
+      <ul>
+        <li><b>Sampling a bandpass signal at any frequency greater than 2B.</b> Only the valid intervals work.</li>
+        <li><b>Forgetting the bandpass filter before the converter.</b> Noise and signals from all the Nyquist zones fold onto the band.</li>
+        <li><b>Using a noisy clock to undersample.</b> Jitter degrades the signal-to-noise ratio in proportion to the signal frequency.</li>
+        <li><b>Forgetting the spectrum inversion in even zones.</b> The frequency has to be inverted in the processing.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">06</span>Self-assessment</h2>
+      <details class="q"><summary>What sampling frequencies work for a 60 to 80 MHz band with n = 2?</summary>
+        <div class="a"><p>From 80 to 120 MHz.</p></div></details>
+      <details class="q"><summary>With f<sub>s</sub> = 100 MHz, where does that band appear and how?</summary>
+        <div class="a"><p>Between 20 and 40 MHz, inverted.</p></div></details>
+      <details class="q"><summary>What is the theoretical minimum sampling frequency for a 20 MHz band?</summary>
+        <div class="a"><p>40 MHz, if the band is located at an integer position relative to its width.</p></div></details>
+      <details class="q"><summary>What advantage does the digital mixer have over an analog one?</summary>
+        <div class="a"><p>Its I and Q branches are exactly equal: there is no imbalance or carrier leakage.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">07</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Travis F. Collins, Robin Getz, Di Pu and Alexander M. Wyglinski.</span>
+          <span class="ti">Software-Defined Radio for Engineers</span>.
+          <span class="ed">Artech House, 2018.</span>
+          <span class="pq">Software-defined radio with exercises on real hardware, freely available.</span></li>
+        <li><span class="au">Richard G. Lyons.</span>
+          <span class="ti">Understanding Digital Signal Processing</span>.
+          <span class="ed">3rd ed., Prentice Hall, 2010.</span>
+          <span class="pq">Bandpass sampling and digital frequency conversion.</span></li>
+        <li><span class="au">Jeffrey H. Reed.</span>
+          <span class="ti">Software Radio: A Modern Approach to Radio Engineering</span>.
+          <span class="ed">Prentice Hall, 2002.</span>
+          <span class="pq">The architecture of software-defined radios.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/receptores">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Receivers</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Software-defined radio and digital communications”</b> of <b>Applied Electronics III</b> (Level 5), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Muestreo pasabanda: intervalos validos 2 fH / n <= fs <= 2 fL /(n - 1), n = 1..floor(fH/B).
+   Plegado: f mod fs, reflejado si pasa de fs/2; la banda esta invertida si su zona de Nyquist
+   floor(fL/(fs/2)) es impar (primera zona = 0). Es valida si fL y fH caen en la misma zona.
+   Control (Python): fc 70, B 20 -> n1 fs >= 160; n2 80..120; n3 53,33..60; n4 40..40.
+   fs 100 -> banda en 20..40 MHz invertida; fs 56 -> 4..24 sin invertir; fs 45 -> se superpone. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pbLienzo"), ctx = cv.getContext("2d");
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function fold(f, fs){ var r = f % fs; return r <= fs / 2 ? r : fs - r; }
+
+  function pintar(){
+    var fc = +$("pbC").value, B = +$("pbB").value, fs = +$("pbS").value;
+    if(B / 2 >= fc) B = 2 * fc - 1;
+    $("pbCv").textContent = fc + " MHz"; $("pbBv").textContent = coma(B, 1) + " MHz"; $("pbSv").textContent = coma(fs, 1) + " MS/s";
+    var fL = fc - B / 2, fH = fc + B / 2, zonas = [];
+    for(var n = 1; n <= Math.floor(fH / B); n++){ var lo = 2 * fH / n, hi = n > 1 ? 2 * fL / (n - 1) : Infinity; if(lo <= hi + 1e-9) zonas.push([n, lo, hi]); }
+    var zL = Math.floor(fL / (fs / 2)), zH = Math.floor(fH / (fs / 2) - 1e-12), valida = zL === zH, inv = zL % 2 === 1;
+    var a = fold(fL, fs), b = fold(fH, fs);
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 14, x1 = W - 14;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      /* primera zona */
+      var t0 = 26, t1 = 96, X1 = function(f){ return x0 + f / (fs / 2) * (x1 - x0); };
+      ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, t1); ctx.lineTo(x1, t1); ctx.stroke();
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "left"; ctx.fillText("0", x0, t1 + 13); ctx.textAlign = "right"; ctx.fillText("fs/2 = " + coma(fs / 2, 1) + " MHz", x1, t1 + 13);
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("the band after sampling", x0, 12);
+      if(valida){
+        var xa = X1(Math.min(a, b)), xb = X1(Math.max(a, b));
+        var gr = ctx.createLinearGradient(X1(a), 0, X1(b), 0); gr.addColorStop(0, "rgba(88,166,255,.35)"); gr.addColorStop(1, "rgba(88,166,255,.95)");
+        ctx.fillStyle = gr; ctx.fillRect(xa, t0, Math.max(2, xb - xa), t1 - t0);
+        ctx.fillStyle = "#c9d1d9"; ctx.textAlign = "center"; ctx.fillText(inv ? "inverted" : "not inverted", (xa + xb) / 2, t0 - 4);
+      } else {
+        ctx.fillStyle = "rgba(248,81,73,.5)";
+        for(var k = 0; k <= 60; k++){ var f = fL + B * k / 60, xf = X1(fold(f, fs)); ctx.fillRect(xf - 1, t0, 2, t1 - t0); }
+        ctx.fillStyle = "#f85149"; ctx.textAlign = "center"; ctx.fillText("the band folds onto itself", (x0 + x1) / 2, t0 - 4);
+      }
+      /* frecuencias de muestreo validas */
+      var s0 = 150, S1 = 400, XS = function(v){ return x0 + (v - 10) / (S1 - 10) * (x1 - x0); };
+      ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, s0); ctx.lineTo(x1, s0); ctx.stroke();
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 8;
+      zonas.forEach(function(z){ var h = Math.min(z[2], S1); if(z[1] <= S1){ ctx.beginPath(); ctx.moveTo(XS(Math.max(10, z[1])), s0); ctx.lineTo(Math.max(XS(h), XS(z[1]) + 2), s0); ctx.stroke(); } });
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "#f2cc60"; ctx.beginPath(); ctx.moveTo(XS(fs), s0 - 8); ctx.lineTo(XS(fs) - 6, s0 - 18); ctx.lineTo(XS(fs) + 6, s0 - 18); ctx.fill();
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; [10, 100, 200, 300, 400].forEach(function(v){ ctx.textAlign = v === 10 ? "left" : v === 400 ? "right" : "center"; ctx.fillText(v, XS(v), s0 + 20); });
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText("sampling frequency (MS/s); valid ones in green", (x0 + x1) / 2, s0 + 34);
+    }
+
+    var lista = zonas.filter(function(z){ return z[1] <= 400; }).slice(-3).map(function(z){ return "n=" + z[0] + ": " + coma(z[1], 1) + (isFinite(z[2]) ? "–" + coma(z[2], 1) : " or more"); }).join("; ");
+    $("pbDatos").innerHTML =
+      "<span>input band</span><b>" + coma(fL, 1) + " to " + coma(fH, 1) + " MHz</b>" +
+      "<span>valid sampling?</span><b>" + (valida ? "yes, zone " + (zL + 1) + (inv ? " (inverted spectrum)" : "") : "no: the band crosses a multiple of fs/2") + "</b>" +
+      (valida ? "<span>where it appears</span><b>" + coma(Math.min(a, b), 1) + " to " + coma(Math.max(a, b), 1) + " MHz</b>" : "") +
+      "<span>lowest valid intervals</span><b>" + lista + "</b>";
+    var nota;
+    if(!valida) nota = "<b>The band overlaps itself:</b> part falls on one side of a multiple of f<sub>s</sub>/2 and part on the other, and the two pieces get mixed. A frequency inside a green interval has to be chosen.";
+    else if(fs >= 2 * fH) nota = "Sampling above 2 f<sub>H</sub>: it works, but the undersampling is not being exploited, and the converter runs faster than necessary.";
+    else nota = "<b>Undersampling:</b> with " + coma(fs, 1) + " MS/s, below 2 f<sub>H</sub> = " + coma(2 * fH, 0) + " MHz, the band arrives cleanly in the first zone" + (inv ? ", inverted." : ".") + " The converter acts as a mixer.";
+    $("pbNota").innerHTML = nota;
+  }
+  ["pbC", "pbB", "pbS"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

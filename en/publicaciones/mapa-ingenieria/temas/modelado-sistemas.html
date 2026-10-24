@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modeling and simulation of dynamic systems · Control Systems · Catto</title>
+<meta name="description" content="Modeling systems with physical laws and the analogies between domains, the DC motor as a complete example, the state-space and transfer-function representations, reduction to first order and numerical simulation with Euler and Runge-Kutta, with an interactive lab that compares the full motor model with its approximation. Content of Control Systems, Level 5 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/modelado-sistemas">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/modelado-sistemas">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/modelado-sistemas">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/modelado-sistemas">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Control Systems</a>
+    <span class="anio">Level 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Control Systems</span> · 96 h · Topic 2 of 8</div>
+    <h1>Modeling and simulation of dynamic systems</h1>
+    <p class="lead">Neglecting the inductance of a small motor is almost always reasonable. With 10 mH and low inertia, the simplified model fails to see that the speed overshoots by 70 % before settling.</p>
+    <div class="chips">
+      <span class="chip hi">Analogies</span>
+      <span class="chip">DC motor</span>
+      <span class="chip">State space</span>
+      <span class="chip">Transfer function</span>
+      <span class="chip">Runge-Kutta</span>
+    </div>
+    <hr class="rule">
+
+    <section id="modelo">
+      <h2><span class="n">01</span>From the physical system to the equations</h2>
+      <p>To design a controller you need a <b>model</b> of the plant: equations that describe how it responds to its
+      inputs. It is obtained by applying the physical laws of each domain, Kirchhoff's laws in circuits, Newton's laws in
+      mechanics, energy and mass balances in thermal and chemical processes, and linearizing around the operating
+      point. The analogies between domains mean that the same type of equation describes very different systems:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Domain</th><th>Effort</th><th>Flow</th><th>Stores energy</th><th>Dissipates</th></tr></thead>
+        <tbody>
+          <tr><td>Electrical</td><td>Voltage</td><td>Current</td><td>Capacitance, inductance</td><td>Resistance</td></tr>
+          <tr><td>Rotational mechanical</td><td>Torque</td><td>Angular velocity</td><td>Inertia, spring</td><td>Viscous friction</td></tr>
+          <tr><td>Thermal</td><td>Temperature</td><td>Heat flow</td><td>Thermal capacitance</td><td>Thermal resistance</td></tr>
+          <tr><td>Hydraulic</td><td>Pressure</td><td>Flow rate</td><td>Tank, fluid inertance</td><td>Restriction</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="motor">
+      <h2><span class="n">02</span>A complete example: the DC motor</h2>
+      <p>The permanent-magnet DC motor couples an electrical circuit, with resistance \( R \) and inductance \( L \), and a
+      mechanical load, with inertia \( J \) and friction \( b \). The back EMF is \( K\omega \) and the torque is \( Ki \). With the
+      state variables \( i \) and \( \omega \):</p>
+      <div class="form">
+        \[ L \frac{di}{dt} = v - R\,i - K\omega \]
+        \[ J \frac{d\omega}{dt} = K\,i - b\,\omega - T_L \]
+        <span class="cap">Two first-order equations, one for each element that stores energy. \( T_L \) is the load torque. How the motor works was covered in <a href="/en/publicaciones/mapa-ingenieria/temas/maquinas-cc">DC machines</a>.</span>
+      </div>
+    </section>
+
+    <section id="estados">
+      <h2><span class="n">03</span>State space and transfer function</h2>
+      <p>The same model can be written in two ways. In <b>state space</b>, as a system of first-order equations in
+      matrix form, which admits several inputs and outputs, initial conditions and nonlinearities, and is integrated numerically.
+      With the <a href="/en/publicaciones/mapa-ingenieria/temas/laplace">Laplace transform</a> and zero initial conditions,
+      as a <b>transfer function</b> between one input and one output:</p>
+      <div class="form">
+        \[ \dot{\mathbf x} = A\mathbf x + B u, \quad y = C\mathbf x + D u \]
+        \[ \frac{\Omega(s)}{V(s)} = \frac{K}{(Ls + R)(Js + b) + K^2} \]
+        <span class="cap">The poles of the transfer function are the eigenvalues of \( A \). If the electrical constant \( L/R \) is much smaller than the mechanical one, the motor is approximated with a single pole: \( \Omega/V = K_m/(\tau_m s + 1) \), with \( \tau_m = RJ/(Rb + K^2) \).</span>
+      </div>
+      <div class="lw" id="mot">
+        <div class="lt">Lab · the DC motor, full and approximate</div>
+        <p class="ls">A motor with R = 1 Ω, K = 0.05 V·s/rad and b = 10⁻⁵ N·m·s, driven by a 12 V step. The blue curve is the
+        speed of the full model, integrated with fourth-order Runge-Kutta in 4000 steps; the dotted one, that of the
+        first-order model; below, the current.</p>
+        <div class="fila"><label>Inductance L = <b id="moLv"></b></label><input type="range" id="moL" min="-4" max="-1.7" step="0.05" value="-3"></div>
+        <div class="fila"><label>Inertia J = <b id="moJv"></b></label><input type="range" id="moJ" min="-6" max="-4" step="0.05" value="-5"></div>
+        <canvas id="moLienzo" style="display:block;width:100%;max-width:620px;height:250px;margin:6px auto 0"></canvas>
+        <div class="datos" id="moDatos"></div>
+        <div class="nota" id="moNota"></div>
+      </div>
+    </section>
+
+    <section id="simulacion">
+      <h2><span class="n">04</span>Simulation</h2>
+      <p>To simulate is to integrate the state equations numerically. Euler's method advances using the derivative at the start of the
+      step; fourth-order Runge-Kutta averages four derivatives and is much more accurate with the same step. The step has to be
+      considerably smaller than the fastest time constant of the system: if there are very different constants, the system is
+      <b>stiff</b> and a variable-step or implicit integrator is preferable. The usual tools, such as Simulink, Xcos,
+      Modelica or the Python libraries, do this automatically, but the model is written by the engineer.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Identify a motor</div>
+        <p>Measure R with the motor stalled, K with the motor unloaded as a generator, and τ<sub>m</sub> with the speed
+        step response. Build the model and compare the simulation with the measurement.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Euler and Runge-Kutta</div>
+        <p>Simulate the motor in Python with both methods and different steps, and compare with the exact solution.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · A thermal process</div>
+        <p>Model a heated block with its thermal capacitance and resistance and verify the time constant with
+        a measurement.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Using the model away from the point where it was linearized.</b> With large excursions, the nonlinearities change the response.</li>
+        <li><b>Neglecting the inductance without checking.</b> It is only valid if the electrical constant is much smaller than the mechanical one.</li>
+        <li><b>Simulating with a large step.</b> The simulation can oscillate or diverge even if the system is stable.</li>
+        <li><b>Confusing the transfer function with the system.</b> It describes one input and one output with zero initial conditions.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What final speed does the lab motor reach with 12 V?</summary>
+        <div class="a"><p>\( K V/(Rb + K^2) = 0.6/0.00251 \approx 239 \) rad/s.</p></div></details>
+      <details class="q"><summary>What is τ<sub>m</sub> with J = 10⁻⁵ kg·m²?</summary>
+        <div class="a"><p>\( 10^{-5}/0.00251 \approx 4 \) ms.</p></div></details>
+      <details class="q"><summary>How many state variables does a system with two independent capacitors and one inductor need?</summary>
+        <div class="a"><p>Three.</p></div></details>
+      <details class="q"><summary>What is the relationship between the poles of the transfer function and the matrix A?</summary>
+        <div class="a"><p>The poles are the eigenvalues of A.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Katsuhiko Ogata.</span>
+          <span class="ti">System Dynamics</span>.
+          <span class="ed">4th ed., Pearson Prentice Hall, 2004 (Spanish edition: “Dinámica de sistemas”, Prentice Hall Hispanoamericana, 1987).</span>
+          <span class="pq">The modeling of mechanical, electrical, thermal and hydraulic systems with the same method.</span></li>
+        <li><span class="au">Norman S. Nise.</span>
+          <span class="ti">Control Systems Engineering</span>.
+          <span class="ed">8th ed., Wiley, 2019.</span>
+          <span class="pq">State-space and transfer-function modeling with many examples.</span></li>
+        <li><span class="au">Gene F. Franklin, J. David Powell and Abbas Emami-Naeini.</span>
+          <span class="ti">Feedback Control of Dynamic Systems</span>.
+          <span class="ed">8th ed., Pearson, 2019.</span>
+          <span class="pq">Models of real systems, from the motor to the airplane, and their simulation.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/control-introduccion">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Introduction to control systems</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/respuesta-transitoria-control">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Transient response</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Modeling and simulation of dynamic systems”</b> of <b>Control Systems</b> (Level 5), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Motor de CC: L di/dt = V - R i - K w; J dw/dt = K i - b w. R 1, K 0,05, b 1e-5, V 12.
+   RK4 con 4000 pasos hasta 8/sigma (sigma = menor |Re(p)|). Aproximacion de primer orden:
+   w = w_inf (1 - e^(-t/tau_m)), tau_m = R J/(R b + K^2).
+   Control (Python): L 1 mH, J 1e-5 -> w_inf 239,04, final 238,341, i max 8,830; L 10 mH ->
+   w max 322,152 (34,8 %), i max 5,009; L 0,1 mH -> i max 11,162; L 10 mH, J 1e-6 -> w max 408,0. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("moLienzo"), ctx = cv.getContext("2d");
+  var R = 1, K = 0.05, B = 1e-5, V = 12, NP = 4000;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function ms(t){ return t >= 1e-3 ? coma(t * 1e3, t >= 0.01 ? 1 : 2) + " ms" : coma(t * 1e6, 0) + " μs"; }
+
+  function pintar(){
+    var L = Math.pow(10, +$("moL").value), J = Math.pow(10, +$("moJ").value);
+    $("moLv").textContent = L >= 1e-3 ? coma(L * 1e3, 2) + " mH" : coma(L * 1e6, 0) + " μH";
+    var eJ = Math.floor(Math.log10(J) + 1e-9); $("moJv").innerHTML = coma(J / Math.pow(10, eJ), 2) + "·10<sup>−" + (-eJ) + "</sup> kg·m²";
+    var a = L * J, b = R * J + L * B, c = R * B + K * K, disc = b * b - 4 * a * c, sig, p1, p2, im = 0;
+    if(disc >= 0){ p1 = (-b + Math.sqrt(disc)) / (2 * a); p2 = (-b - Math.sqrt(disc)) / (2 * a); sig = Math.min(Math.abs(p1), Math.abs(p2)); }
+    else { p1 = p2 = -b / (2 * a); im = Math.sqrt(-disc) / (2 * a); sig = Math.abs(p1); }
+    var imin = 0, wi = K * V / c, tm = R * J / c, Tf = 8 / sig, dt = Tf / NP, i = 0, w = 0, W = [0], I = [0], wmax = 0, imax = 0;
+    var f = function(i2, w2){ return [(V - R * i2 - K * w2) / L, (K * i2 - B * w2) / J]; };
+    for(var k = 0; k < NP; k++){
+      var a1 = f(i, w), a2 = f(i + dt / 2 * a1[0], w + dt / 2 * a1[1]), a3 = f(i + dt / 2 * a2[0], w + dt / 2 * a2[1]), a4 = f(i + dt * a3[0], w + dt * a3[1]);
+      i += dt / 6 * (a1[0] + 2 * a2[0] + 2 * a3[0] + a4[0]); w += dt / 6 * (a1[1] + 2 * a2[1] + 2 * a3[1] + a4[1]);
+      W.push(w); I.push(i); wmax = Math.max(wmax, w); imax = Math.max(imax, i); imin = Math.min(imin, i);
+    }
+    var zeta = b / (2 * Math.sqrt(a * c)), wn = Math.sqrt(c / a);
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var Wc = r.width, H = r.height, x0 = 36, x1 = Wc - 12, a0 = 10, a1b = H * 0.62, b0 = H * 0.7, b1 = H - 20;
+      var wtop = Math.max(wmax, wi) * 1.1, itop = Math.max(imax, 1) * 1.15;
+      var X = function(t){ return x0 + t / Tf * (x1 - x0); }, Yw = function(v){ return a1b - v / wtop * (a1b - a0); }, ibot = Math.min(0, imin) * 1.15, Yi = function(v){ return b1 - (v - ibot) / (itop - ibot) * (b1 - b0); };
+      ctx.clearRect(0, 0, Wc, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.beginPath(); ctx.moveTo(x0, a1b); ctx.lineTo(x1, a1b); ctx.moveTo(x0, Yi(0)); ctx.lineTo(x1, Yi(0)); ctx.stroke();
+      ctx.strokeStyle = "rgba(242,204,96,.6)"; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(x0, Yw(wi)); ctx.lineTo(x1, Yw(wi)); ctx.stroke();
+      ctx.strokeStyle = "rgba(154,167,180,.9)"; ctx.setLineDash([5, 4]); ctx.beginPath();
+      for(k = 0; k <= 300; k++){ var t = Tf * k / 300, yy = Yw(wi * (1 - Math.exp(-t / tm))); if(k) ctx.lineTo(X(t), yy); else ctx.moveTo(X(t), yy); }
+      ctx.stroke(); ctx.setLineDash([]);
+      var paso = 10;
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      for(k = 0; k <= NP; k += paso){ var yy2 = Yw(W[k]); if(k) ctx.lineTo(X(k * dt), yy2); else ctx.moveTo(X(0), yy2); }
+      ctx.stroke();
+      ctx.strokeStyle = "#f0883e"; ctx.beginPath();
+      for(k = 0; k <= NP; k += paso){ yy2 = Yi(I[k]); if(k) ctx.lineTo(X(k * dt), yy2); else ctx.moveTo(X(0), yy2); }
+      ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(Math.round(wi), x0 - 4, Yw(wi) + 3); ctx.fillText("0", x0 - 4, a1b + 3); ctx.fillText(coma(imax, 1), x0 - 4, Yi(imax) + 3);
+      ctx.textAlign = "left"; ctx.fillStyle = "#58a6ff"; ctx.fillText("speed (rad/s)", x0 + 4, a0 + 8);
+      ctx.fillStyle = "#f0883e"; ctx.fillText("current (A)", x0 + 4, b0 - 2);
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "right"; ctx.fillText(ms(Tf), x1, H - 5); ctx.textAlign = "left"; ctx.fillText("0", x0, H - 5);
+    }
+
+    var polos = im > 0 ? coma(p1, 0) + " ± j" + coma(im, 0) : coma(p1, 0) + " and " + coma(p2, 0);
+    $("moDatos").innerHTML =
+      "<span>final speed / time constant τ<sub>m</sub> / τ<sub>e</sub> = L/R</span><b>" + coma(wi, 1) + " rad/s / " + ms(tm) + " / " + ms(L / R) + "</b>" +
+      "<span>poles of the full model (1/s)</span><b>" + polos + "</b>" +
+      "<span>damping ratio ζ</span><b>" + coma(zeta, 3) + "</b>" +
+      "<span>peak speed / overshoot</span><b>" + coma(wmax, 1) + " rad/s / " + coma(Math.max(0, 100 * (wmax / wi - 1)), 1) + " %</b>" +
+      "<span>peak starting current</span><b>" + coma(imax, 2) + " A</b>";
+    var nota;
+    if(L / R < tm / 10) nota = "The electrical constant is much smaller than the mechanical one: the first-order model describes the speed well. The starting current approaches V/R = 12 A.";
+    else if(zeta < 1) nota = "<b>The first-order approximation fails:</b> with this inductance the poles are complex (ζ = " + coma(zeta, 2) + ") and the speed overshoots by " + coma(100 * (wmax / wi - 1), 0) + " % before settling. The full model has to be used.";
+    else nota = "The two constants are comparable: the first-order approximation departs from the full model at the start.";
+    $("moNota").innerHTML = nota;
+  }
+  ["moL", "moJ"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

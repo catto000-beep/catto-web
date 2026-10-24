@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal sources · Electronic Measurements I · Catto</title>
+<meta name="description" content="Analog function generators, direct digital synthesis with the phase accumulator, the tuning word and the resolution, the sin(x)/x roll-off and the images of the zero-order hold, arbitrary, pulse and RF generators with their phase noise, and the 50 Ω output, with an interactive lab of a DDS synthesizer. Content of Electronic Measurements I, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/fuentes-senales">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/fuentes-senales">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/fuentes-senales">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/fuentes-senales">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Electronic Measurements I</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electronic Measurements I</span> · 120 h · Topic 3 of 11</div>
+    <h1>Signal sources</h1>
+    <p class="lead">A DDS with a 100 MHz clock adjusts the frequency in steps of 0.023 Hz, but at 45 MHz its image is almost at the same level as the signal. That is why nobody uses it beyond 40% of its clock.</p>
+    <div class="chips">
+      <span class="chip hi">Function generator</span>
+      <span class="chip">DDS</span>
+      <span class="chip">Tuning word</span>
+      <span class="chip">Images</span>
+      <span class="chip">50 Ω output</span>
+    </div>
+    <hr class="rule">
+
+    <section id="para-que">
+      <h2><span class="n">01</span>Half of every measurement</h2>
+      <p>To measure the response of an amplifier, a filter or a receiver, it must be excited with a known
+      signal. The <b>signal source</b> is the other half of the measurement bench, and its imperfections —distortion,
+      frequency error, phase noise, amplitude that changes with frequency— add to those of the circuit
+      under test. Knowing how signals are generated makes it possible to tell when the generator limits the measurement.</p>
+    </section>
+
+    <section id="funciones">
+      <h2><span class="n">02</span>Analog function generators</h2>
+      <p>The classic function generator starts from a triangle wave: an integrator charges a capacitor with a
+      constant current and a comparator with hysteresis reverses the direction on reaching each threshold. The comparator
+      output is the square wave, and the sine wave is obtained by rounding the triangle with a diode
+      network that approximates the curvature piecewise, with a typical distortion of 0.5 to 1%. The frequency is
+      changed with the charging current, which makes it possible to sweep it with a control voltage.</p>
+      <p>Low-distortion sine oscillators, such as the Wien bridge with amplitude control, are covered in
+      the technician program, in <a href="/en/publicaciones/mapa-electronica/temas/osciladores">oscillators</a>.</p>
+    </section>
+
+    <section id="dds">
+      <h2><span class="n">03</span>Direct digital synthesis</h2>
+      <p>Almost all current generators use <b>direct digital synthesis</b> (DDS). An \( N \)-bit register,
+      the <b>phase accumulator</b>, adds a number \( M \), the tuning word, on every clock cycle. Its value
+      sweeps the phase from 0 to \( 2\pi \) and overflows to start over. The upper bits of the accumulator index a
+      table with the sine values, and a DAC converts them into voltage:</p>
+      <div class="form">
+        \[ f_{out} = \frac{M \cdot f_{clk}}{2^N} \]
+        \[ \Delta f = \frac{f_{clk}}{2^N} \]
+        <span class="cap">With a 100 MHz clock and a 32-bit accumulator, the resolution is 0.023 Hz, and the frequency changes from one value to another without a transient, in one clock cycle. The frequency accuracy is that of the clock: a temperature-compensated crystal oscillator gives a few parts per million.</span>
+      </div>
+      <p>The DAC output is a staircase: each sample is held for one clock period. This has two
+      effects. The amplitude falls with frequency according to \( \sin(\pi f/f_{clk}) / (\pi f/f_{clk}) \), and
+      <b>images</b> of the spectrum appear at \( f_{clk} \pm f_{out} \), \( 2 f_{clk} \pm f_{out} \)… A
+      reconstruction filter removes them, which is why a DDS is used up to about 40% of its clock frequency: higher
+      up, the image is too close to be filtered.</p>
+      <div class="lw" id="dd">
+        <div class="lt">Lab · a DDS synthesizer</div>
+        <p class="ls">100 MHz clock, 32-bit phase accumulator and 14-bit DAC. Top, the samples coming out of the
+        DAC (staircase) over the ideal sine wave, for two periods; bottom, the spectrum before the filter, with the
+        fundamental and the first two images.</p>
+        <div class="fila"><label>Requested frequency = <b id="ddFv"></b></label><input type="range" id="ddF" min="3" max="7.69" step="0.005" value="7"></div>
+        <canvas id="ddLienzo" style="display:block;width:100%;max-width:620px;height:260px;margin:6px auto 0"></canvas>
+        <div class="datos" id="ddDatos"></div>
+        <div class="nota" id="ddNota"></div>
+      </div>
+    </section>
+
+    <section id="otros">
+      <h2><span class="n">04</span>Arbitrary, pulse and RF generators</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Generator</th><th>How it works</th><th>Key specification</th></tr></thead>
+        <tbody>
+          <tr><td>Arbitrary waveform (AWG)</td><td>A memory with samples of any shape, read at a fixed rate</td><td>Sampling rate, memory length and DAC bits</td></tr>
+          <tr><td>Pulse</td><td>Pulses with adjustable width, period, delay and edges</td><td>Rise time, jitter</td></tr>
+          <tr><td>RF</td><td>A voltage-controlled oscillator locked with a PLL to a reference</td><td>Phase noise, calibrated output power, modulations</td></tr>
+        </tbody>
+      </table></div>
+      <p>The <b>phase noise</b> of an RF generator is the noise power at a given offset from the carrier,
+      in dBc/Hz: for example, −110 dBc/Hz at 10 kHz. It limits the measurement of receivers and oscillators, because the
+      generator’s noise is mixed up with that of the circuit.</p>
+    </section>
+
+    <section id="salida">
+      <h2><span class="n">05</span>The output impedance</h2>
+      <p>Almost all generators have 50 Ω of output impedance and display the amplitude assuming a 50 Ω
+      load. If the load is high, such as the input of an oscilloscope or of an operational amplifier, the actual voltage
+      is <b>double</b> the indicated one: the divider between the internal 50 Ω and the load no longer divides by two.
+      Generators allow the load to be configured so that the indication matches. With intermediate loads the
+      divider has to be calculated.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the laboratory</h2>
+      <div class="box lab"><div class="bt">Activity 1 · The 50 Ω output</div>
+        <p>Program 1 V peak-to-peak on a generator and measure it with the oscilloscope at high impedance and with a
+        50 Ω termination. Explain the difference.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · The DDS images</div>
+        <p>With a spectrum analyzer, observe the output of an unfiltered DDS module at several frequencies and
+        measure the level of the first image. Compare it with the lab.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Generator distortion</div>
+        <p>With a spectrum analyzer, measure the harmonic distortion of the sine wave of an analog function
+        generator and of a DDS one.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Forgetting the 50 Ω load.</b> With an oscilloscope at high impedance, double the programmed value is
+        measured.</li>
+        <li><b>Using a DDS near half of its clock.</b> The image is almost at the same level as the signal.</li>
+        <li><b>Blaming the circuit for the generator’s distortion.</b> The generator must be measured alone first.</li>
+        <li><b>Trusting the frequency without checking the reference.</b> The accuracy is that of the crystal, and an
+        external 10 MHz clock improves the whole bench.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>What tuning word gives 1 MHz in a 32-bit DDS with a 100 MHz clock?</summary>
+        <div class="a"><p>\( M = 10^6 \cdot 2^{32} / 10^8 \approx 42\,949\,673 \).</p></div></details>
+      <details class="q"><summary>How much does the amplitude of a DDS fall at a quarter of its clock frequency?</summary>
+        <div class="a"><p>\( \sin(\pi/4)/(\pi/4) = 0.90 \): 0.91 dB.</p></div></details>
+      <details class="q"><summary>A generator indicates 2 V into a 50 Ω load. What voltage does it give into a 1 MΩ load?</summary>
+        <div class="a"><p>4 V.</p></div></details>
+      <details class="q"><summary>Where does the first image of a 30 MHz output appear with a 100 MHz clock?</summary>
+        <div class="a"><p>At 70 MHz.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Analog Devices.</span>
+          <span class="ti">A Technical Tutorial on Digital Signal Synthesis</span>.
+          <span class="ed">Analog Devices, 1999.</span>
+          <span class="pq">The reference tutorial on DDS: phase accumulator, truncation, spurs and images.</span></li>
+        <li><span class="au">Albert D. Helfrick and William D. Cooper.</span>
+          <span class="ti">Modern Electronic Instrumentation and Measurement Techniques (Spanish edition: “Instrumentación electrónica moderna y técnicas de medición”)</span>.
+          <span class="ed">Prentice Hall, 1990.</span>
+          <span class="pq">Signal and function generators, with their circuits.</span></li>
+        <li><span class="au">Ulrich L. Rohde and Enrico Rubiola.</span>
+          <span class="ti">Microwave and Wireless Synthesizers: Theory and Design</span>.
+          <span class="ed">2nd ed., Wiley, 2021.</span>
+          <span class="pq">Frequency synthesis with PLL and DDS, and phase noise in depth.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/mediciones-baja-frecuencia">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Voltage, current and power at low frequency</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/senales-no-senoidales">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Measuring non-sinusoidal signals</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Signal sources”</b> of <b>Electronic Measurements I</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* DDS synthesizer: fclk = 100 MHz, 32-bit accumulator, 14-bit DAC.
+   M = round(f 2^32 / fclk); actual f = M fclk / 2^32; resolution fclk / 2^32.
+   Zero-order hold: amplitude sinc(f / fclk); images at fclk - f and
+   fclk + f with the sinc amplitude of their frequency.
+   Check (Python): 10 MHz -> M 429,496,730, error +9.3 mHz, drop -0.143 dB,
+   image at 90 MHz at -19.08 dB from the fundamental; 40 MHz -> -2.42 dB and
+   image at -3.52 dB; 25 MHz -> M = 2^30 exactly. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("ddLienzo"), ctx = cv.getContext("2d");
+  var FC = 100e6, N2 = 4294967296, B = 14;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function hz(f){ return f >= 1e6 ? coma(f / 1e6, f >= 1e7 ? 2 : 3) + " MHz" : f >= 1e3 ? coma(f / 1e3, f >= 1e5 ? 1 : 2) + " kHz" : coma(f, 1) + " Hz"; }
+  function sinc(x){ return x === 0 ? 1 : Math.sin(Math.PI * x) / (Math.PI * x); }
+  function tres(x){ var e = Math.floor(Math.log10(x)) - 2, p = Math.pow(10, e); return Math.round(x / p) * p; }
+
+  function pintar(){
+    var f = tres(Math.pow(10, +$("ddF").value));
+    $("ddFv").textContent = hz(f);
+    var M = Math.round(f * N2 / FC), fa = M * FC / N2, err = fa - f;
+    var d0 = sinc(f / FC), im1 = FC - f, im2 = FC + f, a1 = Math.abs(sinc(im1 / FC)), a2 = Math.abs(sinc(im2 / FC));
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 16, x1 = W - 16;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      /* time: two periods */
+      var t0 = 14, t1 = 110, ym = (t0 + t1) / 2, amp = (t1 - t0) / 2 - 4, Tt = 2 / fa, ns = Math.round(Tt * FC);
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("DAC output: " + (ns > 400 ? "more than 400" : ns) + " samples in two periods", x0, 10);
+      ctx.strokeStyle = "rgba(242,204,96,.7)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.beginPath();
+      for(var k = 0; k <= 300; k++){ var tt = Tt * k / 300, y = ym - amp * Math.sin(2 * Math.PI * fa * tt); if(k) ctx.lineTo(x0 + k / 300 * (x1 - x0), y); else ctx.moveTo(x0, y); }
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = "#58a6ff"; ctx.lineWidth = 1.8; ctx.beginPath();
+      /* with many samples the steps are not visible: one in every "paso" is drawn */
+      var fase = 0, cuanto = Math.pow(2, B - 1) - 1, paso = Math.max(1, Math.ceil(ns / 2000));
+      for(var n = 0; n <= ns; n += paso){
+        var v = Math.round(Math.sin(2 * Math.PI * fase / N2) * cuanto) / cuanto, xa = x0 + (n / FC) / Tt * (x1 - x0), xb = x0 + Math.min((n + paso) / FC, Tt) / Tt * (x1 - x0), yv = ym - amp * v;
+        if(n) ctx.lineTo(xa, yv); else ctx.moveTo(xa, yv);
+        ctx.lineTo(xb, yv);
+        fase = (fase + M * paso) % N2;
+      }
+      ctx.stroke();
+      /* spectrum 0 to 200 MHz in relative dB, -60 to 0 */
+      var s0 = 136, s1 = H - 24, X = function(fr){ return x0 + fr / 200e6 * (x1 - x0); }, Y = function(db){ return s0 + (-Math.max(-60, db)) / 60 * (s1 - s0); };
+      for(var fm = 0; fm <= 200; fm += 50){
+        ctx.strokeStyle = fm === 100 ? "#3a4456" : "#2a3140"; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(fm * 1e6), s0); ctx.lineTo(X(fm * 1e6), s1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = fm === 0 ? "left" : fm === 200 ? "right" : "center"; ctx.fillText(fm === 100 ? "f clk" : fm === 200 ? "200 MHz" : fm, X(fm * 1e6), s1 + 12);
+      }
+      /* sinc envelope */
+      ctx.strokeStyle = "rgba(154,167,180,.6)"; ctx.setLineDash([3, 3]); ctx.beginPath();
+      for(k = 1; k <= 200; k++){ var fr = k * 1e6, db = 20 * Math.log10(Math.abs(sinc(fr / FC)) + 1e-9); if(k > 1) ctx.lineTo(X(fr), Y(db)); else ctx.moveTo(X(fr), Y(db)); }
+      ctx.stroke(); ctx.setLineDash([]);
+      [[fa, d0, "#58a6ff"], [im1, a1, "#f85149"], [im2, a2, "#f85149"]].forEach(function(l){
+        var db = 20 * Math.log10(l[1] + 1e-12);
+        ctx.strokeStyle = l[2]; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(l[0]), s1); ctx.lineTo(X(l[0]), Y(db)); ctx.stroke();
+      });
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("unfiltered spectrum (0 to −60 dB)", x0, s0 - 6);
+    }
+
+    $("ddDatos").innerHTML =
+      "<span>tuning word M</span><b>" + M.toLocaleString("en-US") + "</b>" +
+      "<span>frequency obtained</span><b>" + hz(fa) + " (error of " + coma(err * 1e3, 1) + " mHz)</b>" +
+      "<span>amplitude drop sin(x)/x</span><b>" + coma(20 * Math.log10(d0), Math.abs(20 * Math.log10(d0)) < 0.1 ? 4 : 2) + " dB</b>" +
+      "<span>first image</span><b>" + hz(im1) + ", " + coma(20 * Math.log10(a1 / d0), 1) + " dB relative to the signal</b>";
+    var nota;
+    if(f / FC > 0.4) nota = "<b>Too close to half the clock:</b> the image at " + hz(im1) + " is barely " + coma(-20 * Math.log10(a1 / d0), 1) + " dB below the signal and only " + hz(im1 - fa) + " away. No practical filter can separate it.";
+    else if(f / FC > 0.1) nota = "The image at " + hz(im1) + " is " + coma(-20 * Math.log10(a1 / d0), 1) + " dB down: a reconstruction filter cutting off at about 40 MHz removes it. The sin(x)/x drop is already noticeable (" + coma(20 * Math.log10(d0), 2) + " dB) and generators compensate for it in the table.";
+    else nota = "With many samples per period, the staircase closely follows the sine wave and the image is far down, near " + hz(im1) + ". The frequency resolution is 0.023 Hz: any frequency is obtained with an error of millihertz.";
+    $("ddNota").innerHTML = nota;
+  }
+  $("ddF").addEventListener("input", pintar);
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

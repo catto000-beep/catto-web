@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design of continuous and discrete controllers · Control Systems · Catto</title>
+<meta name="description" content="The PID controller with its three actions, Ziegler–Nichols tuning by the oscillation method, digital implementation with sampling and hold, the effect of the sampling period and the stages of a control system project, with an interactive lab that compares a continuous PID with its digital version. Content of Control Systems, Level 5 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/diseno-control">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/diseno-control">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/diseno-control">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/diseno-control">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Control Systems</a>
+    <span class="anio">Level 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Control Systems</span> · 96 h · Topic 8 of 8</div>
+    <h1>Design of continuous and discrete controllers</h1>
+    <p class="lead">The same PID that controls a plant well in continuous time makes it oscillate if it is implemented by sampling every half second. The sampling period is part of the design.</p>
+    <div class="chips">
+      <span class="chip hi">PID</span>
+      <span class="chip">Ziegler–Nichols</span>
+      <span class="chip">Digital control</span>
+      <span class="chip">Sampling period</span>
+      <span class="chip">Integral windup</span>
+    </div>
+    <hr class="rule">
+
+    <section id="pid">
+      <h2><span class="n">01</span>The PID controller</h2>
+      <p>Most industrial loops use a three-action controller. The <b>proportional</b> action acts according to the current error;
+      the <b>integral</b>, according to the accumulated error, and eliminates the steady-state error because it raises the type of the system, as
+      seen in <a href="/en/publicaciones/mapa-ingenieria/temas/estado-permanente">steady state</a>; the <b>derivative</b>, according to the
+      rate of change, and anticipates, adding phase and damping:</p>
+      <div class="form">
+        \[ u(t) = K_p \left( e(t) + \frac{1}{T_i}\int_0^t e\,d\tau + T_d \frac{de}{dt} \right) \]
+        <span class="cap">\( T_i \) is the integral time and \( T_d \) the derivative time. In practice the derivative is applied to the measurement rather than the error, so as not to cause a kick when the reference changes, and it is filtered so as not to amplify noise.</span>
+      </div>
+      <p>On the root locus, the PID adds a pole at the origin and two zeros, which attract the branches to the left; in
+      frequency, it raises the gain at low frequencies and adds phase near the crossover. Both readings were covered in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/lugar-raices">root locus</a> and in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia-control">frequency response</a>.</p>
+    </section>
+
+    <section id="sintonia">
+      <h2><span class="n">02</span>Tuning: Ziegler and Nichols</h2>
+      <p>In 1942, John Ziegler and Nathaniel Nichols proposed empirical rules for tuning a PID without a model. In the
+      oscillation method, only the proportional action is left, the gain is raised until the loop oscillates in a sustained way and
+      that ultimate gain \( K_u \) and the period \( T_u \) are noted. It is the critical gain given by the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/estabilidad-control">Routh</a> criterion:</p>
+      <div class="form">
+        \[ K_p = 0.6\, K_u, \quad T_i = T_u/2, \quad T_d = T_u/8 \]
+        <span class="cap">For the plant \( 1/(s+1)^3 \), \( K_u = 8 \) and \( T_u = 2\pi/\sqrt 3 \approx 3.63 \) s. The rules aim for a quarter-amplitude decay between successive peaks: they give a fast response but with a lot of overshoot, and are a starting point for fine tuning.</span>
+      </div>
+    </section>
+
+    <section id="discreto">
+      <h2><span class="n">03</span>The digital controller</h2>
+      <p>Today the PID is implemented in a microcontroller or a PLC. In each sampling period \( T_s \) the sensor is read, the action
+      is computed and held constant until the next period (zero-order hold). The simplest form approximates the
+      integral by a sum and the derivative by a difference:</p>
+      <div class="form">
+        \[ I_k = I_{k-1} + \frac{K_p T_s}{T_i}\, e_k \]
+        \[ u_k = K_p\, e_k + I_k - K_p T_d\, \frac{y_k - y_{k-1}}{T_s} \]
+        <span class="cap">There are more exact versions, such as Tustin's bilinear transformation, which preserves the frequency response better. Sampling and holding are roughly equivalent to a delay of half a period, which subtracts phase: with \( T_s \) large compared with the loop dynamics, digital control degrades and can become unstable. The rule of thumb asks for sampling ten to twenty times per closed-loop time constant.</span>
+      </div>
+      <div class="lw" id="pid">
+        <div class="lt">Lab · continuous and digital PID</div>
+        <p class="ls">A PID on the plant \( 1/(s+1)^3 \) with a unit reference step. The plant is integrated with Runge-Kutta with a
+        1 ms step; the controller computes its action every \( T_s \) and holds it until the next period. The dotted line
+        is the reference.</p>
+        <div class="fila">
+          <select id="pdS">
+            <option value="zn" selected>Ziegler–Nichols tuning</option>
+            <option value="suave">Gentler tuning</option>
+          </select>
+        </div>
+        <div class="fila"><label>K<sub>p</sub> = <b id="pdKv"></b></label><input type="range" id="pdK" min="0.5" max="8" step="0.1" value="4.8"></div>
+        <div class="fila"><label>T<sub>i</sub> = <b id="pdIv"></b></label><input type="range" id="pdI" min="0.5" max="10" step="0.0001" value="1.8138"></div>
+        <div class="fila"><label>T<sub>d</sub> = <b id="pdDv"></b></label><input type="range" id="pdD" min="0" max="1.5" step="0.0001" value="0.4534"></div>
+        <div class="fila">
+          <select id="pdT">
+            <option value="0.001" selected>Continuous (T<sub>s</sub> = 1 ms)</option>
+            <option value="0.05">T<sub>s</sub> = 50 ms</option>
+            <option value="0.2">T<sub>s</sub> = 200 ms</option>
+            <option value="0.5">T<sub>s</sub> = 500 ms</option>
+          </select>
+        </div>
+        <canvas id="pdLienzo" style="display:block;width:100%;max-width:620px;height:220px;margin:6px auto 0"></canvas>
+        <div class="datos" id="pdDatos"></div>
+        <div class="nota" id="pdNota"></div>
+      </div>
+    </section>
+
+    <section id="proyecto">
+      <h2><span class="n">04</span>The design of a control system</h2>
+      <p>A complete project goes through everything covered in the subject: specifying the required behavior (overshoot, settling
+      time, steady-state error, disturbance rejection), modeling or identifying the plant, choosing the structure of the
+      controller, designing it with the root locus or in frequency, verifying it by simulation with the real
+      nonlinearities (actuator saturation, with its anti-windup protection), choosing the sampling period,
+      implementing it and tuning it on the real plant.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Real Ziegler–Nichols</div>
+        <p>On a thermal or speed plant, find K<sub>u</sub> and T<sub>u</sub> with the oscillation method and apply
+        the rules. Measure the overshoot and tune by hand.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Sampling period</div>
+        <p>Implement the PID in a microcontroller and increase the sampling period until the response degrades.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Integral windup</div>
+        <p>Saturate the actuator with a large step and compare the response with and without anti-windup
+        protection.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Differentiating the error.</b> A reference change produces an enormous spike in the action; it is better to differentiate the measurement.</li>
+        <li><b>Forgetting actuator saturation.</b> The integral keeps growing and produces a large overshoot when leaving saturation.</li>
+        <li><b>Sampling too slowly.</b> The sampling delay subtracts phase and can make unstable a loop that was stable in continuous time.</li>
+        <li><b>Taking the Ziegler–Nichols tuning as final.</b> It gives responses with a lot of overshoot; it is a starting point.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>A loop oscillates with K<sub>u</sub> = 12 and T<sub>u</sub> = 2 s. What PID do the Ziegler–Nichols rules give?</summary>
+        <div class="a"><p>K<sub>p</sub> = 7.2; T<sub>i</sub> = 1 s; T<sub>d</sub> = 0.25 s.</p></div></details>
+      <details class="q"><summary>What action eliminates the steady-state error for a step?</summary>
+        <div class="a"><p>The integral.</p></div></details>
+      <details class="q"><summary>What approximate delay does a hold with T<sub>s</sub> = 0.2 s add?</summary>
+        <div class="a"><p>Half a period: 0.1 s.</p></div></details>
+      <details class="q"><summary>Why is the derivative action filtered?</summary>
+        <div class="a"><p>Because it amplifies the high-frequency noise of the measurement.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Karl J. Åström and Tore Hägglund.</span>
+          <span class="ti">Advanced PID Control</span>.
+          <span class="ed">ISA, 2006.</span>
+          <span class="pq">PID in practice: tuning, filtering, integral windup and implementation.</span></li>
+        <li><span class="au">Katsuhiko Ogata.</span>
+          <span class="ti">Discrete-Time Control Systems</span>.
+          <span class="ed">2nd ed., Prentice Hall, 1995 (Spanish edition: “Sistemas de control en tiempo discreto”, 2nd ed., Prentice Hall, 1996).</span>
+          <span class="pq">The z-transform, sampling and the design of digital controllers.</span></li>
+        <li><span class="au">John G. Ziegler and Nathaniel B. Nichols.</span>
+          <span class="ti">Optimum Settings for Automatic Controllers</span>.
+          <span class="ed">Transactions of the ASME, 64, 1942.</span>
+          <span class="pq">The original paper with the tuning rules.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia-control">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Frequency response in control</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Design of continuous and discrete controllers”</b> of <b>Control Systems</b> (Level 5), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* PID sobre 1/(s+1)^3 (x1' = -x1 + u, x2' = -x2 + x1, x3' = -x3 + x2, y = x3), RK4 con 1 ms
+   durante 25 s. Cada Ts: e = 1 - y; I += Kp Ts/Ti e; D = Kp Td (y_ant - y)/Ts; u = Kp e + I + D
+   retenido hasta el periodo siguiente.
+   Control (Python): Ziegler-Nichols 4,8 / 1,8138 / 0,45345: continuo 52,53 %, ts 9,907 s;
+   Ts 0,2 -> 66,04 %, 15,142 s; Ts 0,5 -> inestable. Suave 2,4 / 2,5 / 0,6: 19,56 %, 6,648 s;
+   Ts 0,2 -> 23,03 %, 5,706 s. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("pdLienzo"), ctx = cv.getContext("2d");
+  var TF = 25, DT = 0.001, TU = 2 * Math.PI / Math.sqrt(3);
+  var PRE = { zn: [4.8, TU / 2, TU / 8], suave: [2.4, 2.5, 0.6] };
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+
+  function sim(Kp, Ti, Td, h){
+    var x = [0, 0, 0], I = 0, yp = 0, u = 0, n = Math.round(TF / DT), m = Math.round(h / DT), Y = [], U = [];
+    var f = function(xx, uu){ return [-xx[0] + uu, -xx[1] + xx[0], -xx[2] + xx[1]]; };
+    for(var k = 0; k < n; k++){
+      if(k % m === 0){ var y = x[2], e = 1 - y; I += Kp / Ti * h * e; var D = Kp * Td * (yp - y) / h; u = Kp * e + I + D; yp = y; }
+      var k1 = f(x, u), k2 = f([x[0] + DT / 2 * k1[0], x[1] + DT / 2 * k1[1], x[2] + DT / 2 * k1[2]], u), k3 = f([x[0] + DT / 2 * k2[0], x[1] + DT / 2 * k2[1], x[2] + DT / 2 * k2[2]], u), k4 = f([x[0] + DT * k3[0], x[1] + DT * k3[1], x[2] + DT * k3[2]], u);
+      for(var i = 0; i < 3; i++) x[i] += DT / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]);
+      Y.push(x[2]); U.push(u);
+    }
+    return {Y: Y, U: U};
+  }
+  function preset(){ var p = PRE[$("pdS").value]; $("pdK").value = p[0]; $("pdI").value = p[1]; $("pdD").value = p[2]; pintar(); }
+
+  function pintar(){
+    var Kp = +$("pdK").value, Ti = +$("pdI").value, Td = +$("pdD").value, h = +$("pdT").value;
+    $("pdKv").textContent = coma(Kp, 2); $("pdIv").textContent = coma(Ti, 2) + " s"; $("pdDv").textContent = coma(Td, 2) + " s";
+    var S = sim(Kp, Ti, Td, h), mx = -1e9, ts = 0, n = S.Y.length, div = false;
+    for(var i = 0; i < n; i++){ mx = Math.max(mx, S.Y[i]); if(Math.abs(S.Y[i] - 1) > 0.02) ts = (i + 1) * DT; }
+    if(ts >= TF - DT * 2 && Math.abs(S.Y[n - 1] - 1) > 0.2) div = true;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 30, x1 = W - 12, y0 = 10, y1 = H - 24, V0 = -0.2, V1 = 2.2;
+      var X = function(t){ return x0 + t / TF * (x1 - x0); }, Y = function(v){ return y1 - (Math.max(V0, Math.min(V1, v)) - V0) / (V1 - V0) * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      [0, 0.5, 1, 1.5, 2].forEach(function(v){ ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke(); ctx.fillText(coma(v, 1), x0 - 4, Y(v) + 3); });
+      ctx.fillStyle = "rgba(126,231,135,.12)"; ctx.fillRect(x0, Y(1.02), x1 - x0, Y(0.98) - Y(1.02));
+      ctx.strokeStyle = "#f2cc60"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(x0, Y(1)); ctx.lineTo(x1, Y(1)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = div ? "#f85149" : "#58a6ff"; ctx.lineWidth = 2; ctx.beginPath();
+      for(i = 0; i < n; i += 25){ var yy = Y(S.Y[i]); if(i) ctx.lineTo(X((i + 1) * DT), yy); else ctx.moveTo(X(DT), yy); }
+      ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("0 s", x0, H - 6); ctx.textAlign = "right"; ctx.fillText("25 s", x1, H - 6);
+    }
+
+    $("pdDatos").innerHTML =
+      "<span>overshoot</span><b>" + (div ? "—" : coma(Math.max(0, 100 * (mx - 1)), 1) + " %") + "</b>" +
+      "<span>2 % settling time</span><b>" + (div ? "does not settle" : ts >= TF - 0.01 ? "more than 25 s" : coma(ts, 2) + " s") + "</b>" +
+      "<span>samples per oscillation period T<sub>u</sub></span><b>" + (h >= 0.01 ? coma(TU / h, 0) : "continuous") + "</b>";
+    var nota;
+    if(div) nota = "<b>The digital loop is unstable:</b> with T<sub>s</sub> = " + coma(h, 1) + " s the sampling delay subtracts so much phase that the same PID that worked in continuous time makes the system oscillate.";
+    else if(mx > 1.4) nota = "Overshoot of " + coma(100 * (mx - 1), 0) + " %: it is the typical response of Ziegler–Nichols tuning, designed for a quarter-amplitude decay. Lowering K<sub>p</sub> or raising T<sub>i</sub> softens it.";
+    else if(h > 0.1) nota = "The sampling is already noticeable: compare with the continuous version. The half-period delay of the hold adds overshoot.";
+    else nota = "Reasonable response: moderate overshoot and settling in " + coma(ts, 1) + " s, with no steady-state error thanks to the integral action.";
+    $("pdNota").innerHTML = nota;
+  }
+  $("pdS").addEventListener("input", preset);
+  ["pdK", "pdI", "pdD", "pdT"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

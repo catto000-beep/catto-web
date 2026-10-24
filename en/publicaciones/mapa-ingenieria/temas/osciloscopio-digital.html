@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The digital oscilloscope · Electronic Measurements I · Catto</title>
+<meta name="description" content="The architecture of the digital oscilloscope, the effective sampling rate as a function of memory and timebase, aliasing and interpolation, the acquisition modes (peak detect, high resolution, averaging, segmented memory), the 8-bit vertical resolution, and advanced triggering, with an interactive lab that shows when the screen displays an alias. Content of Electronic Measurements I, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/osciloscopio-digital">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/osciloscopio-digital">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/osciloscopio-digital">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/osciloscopio-digital">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Electronic Measurements I</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Electronic Measurements I</span> · 120 h · Topic 7 of 11</div>
+    <h1>The digital oscilloscope</h1>
+    <p class="lead">A 1 GS/s oscilloscope with 1000 points of memory, at 10 µs/div, samples at only 10 MS/s. A 10.1 MHz signal then appears as a clean 100 kHz sine wave that does not exist.</p>
+    <div class="chips">
+      <span class="chip hi">Sampling rate</span>
+      <span class="chip">Memory</span>
+      <span class="chip">Aliasing</span>
+      <span class="chip">Peak detect</span>
+      <span class="chip">Vertical resolution</span>
+    </div>
+    <hr class="rule">
+
+    <section id="arquitectura">
+      <h2><span class="n">01</span>From the beam to the memory</h2>
+      <p>A digital storage oscilloscope (DSO) keeps the vertical channel of the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/osciloscopio-analogico">analog scope</a> —attenuator,
+      amplifier, bandwidth— but instead of deflecting a beam, it digitizes the signal with a fast ADC and stores
+      the samples in an <b>acquisition memory</b>. The trigger decides which part of that memory is displayed, and a
+      processor builds the image, calculates measurements and stores the waveform. The advantage is enormous: you can see what
+      happened before the trigger, capture a single event, measure automatically, calculate the FFT and decode serial
+      buses.</p>
+      <p>The price is that there is now sampling, with all its consequences: the signal you see is a
+      reconstruction from samples, and it may not resemble the real one.</p>
+    </section>
+
+    <section id="muestreo">
+      <h2><span class="n">02</span>Sampling rate and memory</h2>
+      <p>The maximum sampling rate appears in the specification, but the one actually used depends on the
+      timebase, because the memory has to be enough to fill the ten divisions of the screen:</p>
+      <div class="form">
+        \[ f_s = \min\left( f_{s,max},\ \frac{N}{10 \cdot t_{div}} \right) \]
+        <span class="cap">\( N \) is the number of points in the acquisition memory. With 10,000 points and 1 ms/div, the oscilloscope samples at only 1 MS/s, even if its maximum is 1 GS/s. More memory sustains a high sampling rate at slow timebases.</span>
+      </div>
+      <p>To reconstruct a sine wave properly, more than two samples per period are needed, according to the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/muestreo-shannon">sampling theorem</a>. Oscilloscopes
+      interpolate between samples with the \( \sin(x)/x \) function and in practice need about 2.5
+      samples per period of the highest frequency; without interpolation, joining points with straight lines, about
+      ten are needed. If the sampling rate falls below twice the signal frequency, an <b>alias</b> appears: a stable
+      waveform, of lower frequency, that does not exist.</p>
+      <div class="lw" id="al">
+        <div class="lt">Lab · the sampling rate that is actually used</div>
+        <p class="ls">An oscilloscope with a 1 GS/s maximum. You choose the signal, the timebase and the memory length; the
+        screen shows the real signal in gray and what the oscilloscope reconstructs from its samples, in green.</p>
+        <div class="fila">
+          <select id="alF">
+            <option value="1e6">1 MHz sine wave</option>
+            <option value="10.1e6" selected>10.1 MHz sine wave</option>
+            <option value="49e6">49 MHz sine wave</option>
+          </select>
+          <select id="alT">
+            <option value="1e-8">10 ns/div</option>
+            <option value="1e-7">100 ns/div</option>
+            <option value="1e-6">1 µs/div</option>
+            <option value="1e-5" selected>10 µs/div</option>
+            <option value="1e-4">100 µs/div</option>
+          </select>
+          <select id="alN">
+            <option value="1e3" selected>1000-point memory</option>
+            <option value="1e4">10,000-point memory</option>
+            <option value="1e5">100,000-point memory</option>
+            <option value="1e6">1,000,000-point memory</option>
+          </select>
+        </div>
+        <canvas id="alLienzo" style="display:block;width:100%;max-width:620px;height:220px;margin:6px auto 0"></canvas>
+        <div class="datos" id="alDatos"></div>
+        <div class="nota" id="alNota"></div>
+      </div>
+      <p>There are two defenses against aliasing: look first with the fastest timebase, to find out which
+      frequencies the signal has, and use <b>peak detect</b> mode, which stores the maximum and minimum of
+      each interval instead of one sample and does not let a glitch or a high frequency go by without showing it.</p>
+    </section>
+
+    <section id="modos">
+      <h2><span class="n">03</span>Acquisition modes</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Mode</th><th>What it does</th><th>What for</th></tr></thead>
+        <tbody>
+          <tr><td>Normal</td><td>One sample per interval</td><td>General use</td></tr>
+          <tr><td>Peak detect</td><td>Maximum and minimum of each interval, sampling at the maximum rate</td><td>Glitches and aliasing at slow timebases</td></tr>
+          <tr><td>High resolution</td><td>Averages the samples of each interval</td><td>Less noise and more effective bits on slow signals</td></tr>
+          <tr><td>Average</td><td>Averages several successive acquisitions</td><td>Reduces random noise by \( \sqrt{n} \), with repetitive signals</td></tr>
+          <tr><td>Segmented memory</td><td>Stores only the segments around each trigger</td><td>Widely spaced bursts, such as bus packets</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="vertical">
+      <h2><span class="n">04</span>Vertical resolution and bandwidth</h2>
+      <p>Most oscilloscopes use 8-bit converters: 256 levels over the whole screen, about 32 per
+      division. To avoid losing resolution, the signal has to fill almost the whole height: a signal that occupies one
+      division is digitized with barely 5 bits. Recent models have 10 or 12 bits, useful for seeing small
+      details on large signals, such as the ripple of a power supply.</p>
+      <p>The frequency response of a digital oscilloscope is usually steeper than that of an analog one, to
+      make use of the sampling rate without letting aliases through. That is why the relationship between rise time and
+      bandwidth is \( t_r \approx 0.4/BW \) to \( 0.45/BW \) instead of 0.35.</p>
+    </section>
+
+    <section id="funciones">
+      <h2><span class="n">05</span>Triggering, measurements and analysis</h2>
+      <p>Digital triggering goes beyond the edge: it can wait for a pulse wider or narrower than a value, a
+      pulse that did not reach the logic level (runt), a pattern on several channels or a frame with certain data on a serial
+      bus. Automatic measurements —frequency, rise time, RMS value— are calculated on the samples,
+      and their accuracy depends on there being enough samples per edge and on the calculation spanning a whole number
+      of periods. The FFT turns the oscilloscope into a basic spectrum analyzer, with the limitation of its 8
+      bits.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the laboratory</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Causing an alias</div>
+        <p>With a 10 MHz generator, reduce the oscilloscope’s memory and lengthen the timebase until a
+        low-frequency signal appears. Verify the apparent frequency with the formula and eliminate it with peak
+        detect.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Averaging</div>
+        <p>Measure a noisy 1 mV signal in normal mode and averaging 16 and 256 acquisitions. Estimate how much the
+        noise drops.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Decoding a bus</div>
+        <p>Capture an I²C transaction, configure the decoding and trigger on a specific address.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Trusting a stable waveform at a slow timebase.</b> It may be an alias.</li>
+        <li><b>Using a small signal on the screen.</b> Bits of resolution are lost.</li>
+        <li><b>Measuring a rise time with few samples per edge.</b> Interpolation invents the shape.</li>
+        <li><b>Leaving the memory at the minimum.</b> It forces the sampling rate down at slow timebases.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>At what rate does a 2 GS/s oscilloscope with 20,000 points sample at 50 µs/div?</summary>
+        <div class="a"><p>\( 20\,000 / (10 \cdot 50\ \mu\text{s}) = 40 \) MS/s.</p></div></details>
+      <details class="q"><summary>What apparent frequency does a 10.1 MHz sine wave sampled at 10 MS/s show?</summary>
+        <div class="a"><p>100 kHz, the distance to the nearest multiple of the sampling rate.</p></div></details>
+      <details class="q"><summary>How many quantization levels does a signal use that occupies two divisions with an 8-bit ADC and eight divisions?</summary>
+        <div class="a"><p>About 64, the equivalent of 6 bits.</p></div></details>
+      <details class="q"><summary>How much does random noise drop when averaging 100 acquisitions?</summary>
+        <div class="a"><p>Tenfold: 20 dB.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Tektronix.</span>
+          <span class="ti">XYZs of Oscilloscopes</span>.
+          <span class="ed">Tektronix, technical primer.</span>
+          <span class="pq">Sampling, memory, acquisition modes and triggering in digital oscilloscopes.</span></li>
+        <li><span class="au">Keysight Technologies.</span>
+          <span class="ti">Evaluating Oscilloscope Sample Rates vs. Sampling Fidelity</span>.
+          <span class="ed">Application note 1587.</span>
+          <span class="pq">How many samples per period are really needed, with measurements.</span></li>
+        <li><span class="au">Ian Hickman.</span>
+          <span class="ti">Oscilloscopes: How to Use Them, How They Work</span>.
+          <span class="ed">5th ed., Newnes, 2001.</span>
+          <span class="pq">Digital oscilloscopes compared with analog ones.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/osciloscopio-analogico">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">The analog oscilloscope</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/acondicionamiento-sensores">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Signal conditioning and sensors</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“The digital oscilloscope”</b> of <b>Electronic Measurements I</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Effective sampling rate and aliasing in a digital oscilloscope.
+   fs = min(1 GS/s, N / (10 t/div)); apparent frequency = |f - round(f / fs) fs|.
+   The screen joins the samples with straight lines (if there are more samples than pixels,
+   it draws the minimum and maximum of each column, like the oscilloscope).
+   Check (Python): 10.1 MHz, 10 us/div, 1000 points -> fs 10 MS/s, apparent
+   100 kHz; 1 MHz, 1 ms/div, 10,000 points -> fs 1 MS/s, apparent 0 (shows
+   as constant). */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("alLienzo"), ctx = cv.getContext("2d");
+  var FSMAX = 1e9;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function hz(f){ return f >= 1e6 ? coma(f / 1e6, f >= 1e7 ? 1 : 2) + " MHz" : f >= 1e3 ? coma(f / 1e3, 1) + " kHz" : coma(f, 0) + " Hz"; }
+  function sps(f){ return f >= 1e9 ? coma(f / 1e9, 0) + " GS/s" : f >= 1e6 ? coma(f / 1e6, f >= 1e7 ? 0 : 1) + " MS/s" : coma(f / 1e3, 0) + " kS/s"; }
+  function tdiv(t){ return t >= 1e-6 ? coma(t * 1e6, 0) + " µs" : coma(t * 1e9, 0) + " ns"; }
+
+  function pintar(){
+    var f = +$("alF").value, td = +$("alT").value, N = +$("alN").value;
+    var fs = Math.min(FSMAX, N / (10 * td)), k = Math.round(f / fs), fa = Math.abs(f - k * fs), spp = fs / f;
+    var ventana = 10 * td, ciclos = f * ventana, ns = Math.min(N, Math.round(fs * ventana));
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, dv = Math.min((W - 16) / 10, (H - 16) / 6), x0 = (W - 10 * dv) / 2, y0 = (H - 6 * dv) / 2, ym = y0 + 3 * dv, A = 2.3 * dv;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(10,20,16,.55)"; ctx.fillRect(x0, y0, 10 * dv, 6 * dv);
+      ctx.strokeStyle = "rgba(126,231,135,.14)"; ctx.lineWidth = 1;
+      for(var gx = 0; gx <= 10; gx++){ ctx.beginPath(); ctx.moveTo(x0 + gx * dv, y0); ctx.lineTo(x0 + gx * dv, y0 + 6 * dv); ctx.stroke(); }
+      for(var gy = 0; gy <= 6; gy++){ ctx.beginPath(); ctx.moveTo(x0, y0 + gy * dv); ctx.lineTo(x0 + 10 * dv, y0 + gy * dv); ctx.stroke(); }
+      var cols = Math.floor(10 * dv);
+      /* real signal */
+      ctx.strokeStyle = "rgba(200,210,220,.35)"; ctx.fillStyle = "rgba(200,210,220,.18)";
+      if(ciclos > cols / 3){ ctx.fillRect(x0, ym - A, 10 * dv, 2 * A); }
+      else { ctx.lineWidth = 1.2; ctx.beginPath(); for(var c = 0; c <= cols * 2; c++){ var t = c / (cols * 2) * ventana, y = ym - A * Math.sin(2 * Math.PI * f * t); if(c) ctx.lineTo(x0 + c / 2, y); else ctx.moveTo(x0, y); } ctx.stroke(); }
+      /* reconstruction from the samples */
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2; ctx.shadowColor = "rgba(126,231,135,.6)"; ctx.shadowBlur = 5;
+      if(ns <= cols * 2){
+        ctx.beginPath();
+        for(var n = 0; n < ns; n++){ var x = x0 + n / fs / ventana * 10 * dv, yv = ym - A * Math.sin(2 * Math.PI * f * n / fs); if(n) ctx.lineTo(x, yv); else ctx.moveTo(x, yv); }
+        ctx.stroke(); ctx.shadowBlur = 0;
+        if(ns <= 120){ ctx.fillStyle = "#7ee787"; for(n = 0; n < ns; n++){ ctx.beginPath(); ctx.arc(x0 + n / fs / ventana * 10 * dv, ym - A * Math.sin(2 * Math.PI * f * n / fs), 2.4, 0, Math.PI * 2); ctx.fill(); } }
+      } else {
+        /* each column includes the last sample of the previous one, so the trace is not cut */
+        var por = ns / cols, ult = null;
+        for(c = 0; c < cols; c++){
+          var mn = 1, mx = -1, a = Math.floor(c * por), b = Math.max(a + 1, Math.floor((c + 1) * por));
+          if(ult !== null){ mn = ult; mx = ult; }
+          for(n = a; n < b; n += Math.max(1, Math.floor((b - a) / 40))){ var v = Math.sin(2 * Math.PI * f * n / fs); if(v < mn) mn = v; if(v > mx) mx = v; }
+          ult = Math.sin(2 * Math.PI * f * (b - 1) / fs);
+          ctx.beginPath(); ctx.moveTo(x0 + c + 0.5, ym - A * mx); ctx.lineTo(x0 + c + 0.5, ym - A * mn + 0.5); ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+      }
+      ctx.font = "10px system-ui, sans-serif"; ctx.fillStyle = "rgba(126,231,135,.75)"; ctx.textAlign = "right";
+      ctx.fillText(tdiv(td) + "/div · " + sps(fs), x0 + 10 * dv - 4, y0 + 6 * dv - 5);
+    }
+
+    $("alDatos").innerHTML =
+      "<span>sampling rate used</span><b>" + sps(fs) + (fs < FSMAX ? " (limited by the memory)" : " (the maximum)") + "</b>" +
+      "<span>samples per signal period</span><b>" + (spp >= 100 ? coma(spp, 0) : coma(spp, 2)) + "</b>" +
+      "<span>frequency the screen appears to show</span><b>" + (spp > 2 ? hz(f) + " (the real one)" : fa < 1 ? "0 Hz: a line is displayed" : hz(fa)) + "</b>";
+    var nota;
+    if(spp <= 2) nota = "<b>Alias:</b> with " + coma(spp, 2) + " samples per period, the samples fall on points that draw a sine wave of " + (fa < 1 ? "zero frequency" : hz(fa)) + ", stable and believable, that does not exist. The real signal is " + hz(f) + ". Increasing the memory or shortening the timebase solves it.";
+    else if(spp < 10) nota = "There are more than two samples per period, so there is no aliasing, but with " + coma(spp, 1) + " samples per cycle the shape is faithful only if the oscilloscope interpolates with sin(x)/x. Joined with straight lines, the samples look like a polygonal line.";
+    else nota = "With " + (spp >= 100 ? coma(spp, 0) : coma(spp, 1)) + " samples per period the reconstruction is faithful. " + (ciclos > 50 ? "The screen shows so many cycles that it looks like a band: that is correct, not an error." : "");
+    $("alNota").innerHTML = nota;
+  }
+  ["alF", "alT", "alN"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

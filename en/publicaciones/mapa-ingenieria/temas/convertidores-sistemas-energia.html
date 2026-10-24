@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Converters in power systems · Power Electronics · Catto</title>
+<meta name="description" content="Converters in photovoltaic and wind generation, maximum power point tracking, the grid-connected inverter with its synchronization and current control, battery storage, DC transmission, static compensators and active filters, with an interactive lab of perturb-and-observe tracking. Content of Power Electronics, Level 5 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/convertidores-sistemas-energia">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/convertidores-sistemas-energia">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/convertidores-sistemas-energia">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/convertidores-sistemas-energia">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Power Electronics</a>
+    <span class="anio">Level 5</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Power Electronics</span> · 96 h · Topic 7 of 8</div>
+    <h1>Converters in power systems</h1>
+    <p class="lead">A perturb-and-observe tracker with 2 V steps quickly finds the maximum power point, but it oscillates and loses almost 2 %. With 0.1 V steps it is accurate, but slow: after 40 iterations it has not arrived yet.</p>
+    <div class="chips">
+      <span class="chip hi">Photovoltaic</span>
+      <span class="chip">MPPT</span>
+      <span class="chip">Grid-connected inverter</span>
+      <span class="chip">STATCOM</span>
+      <span class="chip">DC transmission</span>
+    </div>
+    <hr class="rule">
+
+    <section id="renovables">
+      <h2><span class="n">01</span>Converters in generation</h2>
+      <p>Renewable generation reaches the grid through converters. A <b>photovoltaic</b> panel delivers direct current with a
+      current-voltage characteristic that depends on irradiance and temperature; a DC-DC converter makes it work at its
+      maximum power point and an inverter injects that power into the grid. A modern <b>wind turbine</b> produces AC of variable
+      frequency, which a back-to-back converter —active rectifier, DC bus and inverter— adapts to the grid frequency.
+      <b>Storage systems</b> based on batteries use bidirectional converters that charge or discharge according to the demand of the grid.</p>
+    </section>
+
+    <section id="mppt">
+      <h2><span class="n">02</span>The maximum power point</h2>
+      <p>With the one-diode model, without parasitic resistances, the current of a panel of \( N_s \) cells in series is:</p>
+      <div class="form">
+        \[ I = I_{sc}\,\frac{G}{1000} - I_0\left(e^{V / (n N_s V_T)} - 1\right) \]
+        <span class="cap">The power \( P = V I \) has a maximum, which moves with the irradiance \( G \) and with the temperature. The most widely used algorithm to track it is <b>perturb and observe</b>: the voltage is changed by one step; if the power rose, it continues in the same direction, and if it fell, the direction is reversed. It never stays still: it oscillates around the maximum.</span>
+      </div>
+      <div class="lw" id="mp">
+        <div class="lt">Lab · maximum power point tracking</div>
+        <p class="ls">A 60-cell panel with I<sub>sc</sub> = 9 A and V<sub>oc</sub> = 38 V at 1000 W/m², with n = 1.3, at 25 °C. The tracker
+        starts at 20 V and takes 80 steps: the first 40 with the initial irradiance and the other 40 with the final one. The curves are the power
+        as a function of voltage; the dots, the path of the tracker.</p>
+        <div class="fila"><label>Initial irradiance = <b id="mpAv"></b></label><input type="range" id="mpA" min="100" max="1000" step="50" value="1000"></div>
+        <div class="fila"><label>Final irradiance = <b id="mpBv"></b></label><input type="range" id="mpB" min="100" max="1000" step="50" value="500"></div>
+        <div class="fila"><label>Voltage step ΔV = <b id="mpSv"></b></label><input type="range" id="mpS" min="0.1" max="3" step="0.1" value="0.5"></div>
+        <canvas id="mpLienzo" style="display:block;width:100%;max-width:620px;height:230px;margin:6px auto 0"></canvas>
+        <div class="datos" id="mpDatos"></div>
+        <div class="nota" id="mpNota"></div>
+      </div>
+      <p>When there is partial shading, the curve of a set of panels has several maxima and the simple algorithm can get stuck at a local
+      one; commercial inverters periodically sweep the whole curve.</p>
+    </section>
+
+    <section id="red">
+      <h2><span class="n">03</span>The grid-connected inverter</h2>
+      <p>A grid-connected inverter does not set the voltage, which the grid imposes, but the <b>current</b> it injects. A phase-locked
+      loop (PLL) measures the grid phase and the control generates a sinusoidal current reference in phase with it, with the amplitude that
+      corresponds to the available power; an L or LCL filter attenuates the switching harmonics. It must detect the loss of the grid and
+      disconnect, the <b>anti-islanding</b> protection, and meet the connection requirements of the utility.</p>
+    </section>
+
+    <section id="transmision">
+      <h2><span class="n">04</span>Transmission and compensation</h2>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>System</th><th>Function</th></tr></thead>
+        <tbody>
+          <tr><td>High-voltage direct-current transmission (HVDC)</td><td>Long or submarine links and links between grids of different frequency, with thyristor rectifiers and inverters or with voltage-source converters</td></tr>
+          <tr><td>Static VAR compensator (SVC)</td><td>Thyristor-controlled reactors and switched capacitors that regulate the voltage</td></tr>
+          <tr><td>STATCOM</td><td>An inverter that injects capacitive or inductive reactive current, fast and compact</td></tr>
+          <tr><td>Active filter</td><td>An inverter that injects the harmonics opposite to those of a nonlinear load</td></tr>
+        </tbody>
+      </table></div>
+      <p>The problems that this equipment solves were described in <a href="/en/publicaciones/mapa-ingenieria/temas/calidad-energia">power
+      quality</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the laboratory</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Panel curve</div>
+        <p>Measure the current-voltage curve of a panel with a variable electronic load, in full sun and with partial shading.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Tracker</div>
+        <p>Program a perturb-and-observe tracker on a microcontroller driving a buck converter, and record the power.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Synchronization</div>
+        <p>Implement a digital PLL that locks onto the attenuated grid voltage and measure its response to a phase jump.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Choosing a voltage step without considering the trade-off.</b> A large one oscillates; a small one is slow to follow changes in irradiance.</li>
+        <li><b>Trusting a simple tracker with partial shading.</b> It can get stuck at a local maximum.</li>
+        <li><b>Voltage-controlling a grid-connected inverter.</b> The grid imposes the voltage; the current must be controlled.</li>
+        <li><b>Omitting the anti-islanding protection.</b> It endangers anyone working on a line believed to be de-energized.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>Where is the maximum power point of the lab panel at 1000 W/m²?</summary>
+        <div class="a"><p>At about 32.3 V, with 273.8 W.</p></div></details>
+      <details class="q"><summary>And at 500 W/m²?</summary>
+        <div class="a"><p>At about 31.0 V, with 131 W: the voltage hardly changes, the current does.</p></div></details>
+      <details class="q"><summary>What does a grid-connected inverter control?</summary>
+        <div class="a"><p>The current it injects, in phase with the grid voltage.</p></div></details>
+      <details class="q"><summary>What does a STATCOM do?</summary>
+        <div class="a"><p>It injects reactive power with an inverter to regulate the grid voltage.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Remus Teodorescu, Marco Liserre and Pedro Rodríguez.</span>
+          <span class="ti">Grid Converters for Photovoltaic and Wind Power Systems</span>.
+          <span class="ed">Wiley-IEEE Press, 2011.</span>
+          <span class="pq">Control of grid-connected inverters, synchronization and anti-islanding.</span></li>
+        <li><span class="au">Narain G. Hingorani and Laszlo Gyugyi.</span>
+          <span class="ti">Understanding FACTS</span>.
+          <span class="ed">Wiley-IEEE Press, 2000.</span>
+          <span class="pq">Static compensators and flexible transmission systems.</span></li>
+        <li><span class="au">Gilbert M. Masters.</span>
+          <span class="ti">Renewable and Efficient Electric Power Systems</span>.
+          <span class="ed">2nd ed., Wiley, 2013.</span>
+          <span class="pq">Photovoltaic and wind generation from the resource to the grid.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/control-maquinas">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Control of electric machines</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/protecciones-potencia">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Protection and heat removal</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Converters in power systems”</b> of <b>Power Electronics</b> (Level 5), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Maximum power point tracking by perturb and observe. 60-cell panel, Isc 9 A, Voc 38 V, n 1.3,
+   VT 0.025693 V; I = max(0, Isc G/1000 - I0 (e^(V/A) - 1)), A = n Ns VT, I0 = Isc / (e^(Voc/A) - 1).
+   Tracker: V0 20 V, P0 with G1; 80 steps (40 with G1, 40 with G2): V += d dV, if P < previous P, d is reversed.
+   Tracking efficiency: average of the last 20 steps of each stretch over the maximum (golden section, 200 iterations).
+   Check (Python): MPP 1000 W/m2 32.308 V 273.79 W; 500 -> 30.997 V 131.02 W; 200 -> 29.268 V 49.31 W; 800 -> 31.885 V 216.00 W.
+   1000/500 step 0.5 -> 99.68 % and 99.89 %, final V 31.0; step 2 -> 98.30 and 98.06 %, 28.0; step 0.1 -> 75.72 and 91.48 %, 27.8. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("mpLienzo"), ctx = cv.getContext("2d");
+  var NS = 60, ISC = 9, VOC = 38, A = 1.3 * NS * 0.025693, I0 = ISC / (Math.exp(VOC / A) - 1), K = 80;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function corr(V, G){ return Math.max(0, ISC * G / 1000 - I0 * (Math.exp(V / A) - 1)); }
+  function pot(V, G){ return V * corr(V, G); }
+  function mpp(G){
+    var a = 0, b = VOC, g = (Math.sqrt(5) - 1) / 2;
+    for(var i = 0; i < 200; i++){ var c = b - g * (b - a), d = a + g * (b - a); if(pot(c, G) > pot(d, G)) b = d; else a = c; }
+    var v = (a + b) / 2; return [v, pot(v, G)];
+  }
+  function seguir(G1, G2, dV){
+    var V = 20, Pp = pot(V, G1), d = 1, tr = [];
+    for(var k = 0; k < K; k++){
+      var G = k < K / 2 ? G1 : G2;
+      V = V + d * dV; var p = pot(V, G);
+      if(p < Pp) d = -d;
+      Pp = p; tr.push([V, p]);
+    }
+    return tr;
+  }
+
+  function pintar(){
+    var G1 = +$("mpA").value, G2 = +$("mpB").value, dV = +$("mpS").value;
+    $("mpAv").textContent = G1 + " W/m²"; $("mpBv").textContent = G2 + " W/m²"; $("mpSv").textContent = coma(dV, 1) + " V";
+    var tr = seguir(G1, G2, dV), m1 = mpp(G1), m2 = mpp(G2), s1 = 0, s2 = 0;
+    for(var k = K / 2 - 20; k < K / 2; k++) s1 += tr[k][1];
+    for(k = K - 20; k < K; k++) s2 += tr[k][1];
+    var e1 = s1 / 20 / m1[1], e2 = s2 / 20 / m2[1];
+
+    var b = cv.getBoundingClientRect();
+    if(b.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(b.width * dp) || cv.height !== Math.round(b.height * dp)){
+        cv.width = Math.round(b.width * dp); cv.height = Math.round(b.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = b.width, H = b.height, x0 = 32, x1 = W - 10, y0 = 24, y1 = H - 30, VM = 40, PM = 300;
+      var X = function(v){ return x0 + v / VM * (x1 - x0); }, Y = function(p){ return y1 - p / PM * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#252d3a"; ctx.lineWidth = 1;
+      for(var p = 0; p <= PM; p += 100){ ctx.beginPath(); ctx.moveTo(x0, Y(p)); ctx.lineTo(x1, Y(p)); ctx.stroke(); }
+      for(var v = 0; v <= VM; v += 10){ ctx.beginPath(); ctx.moveTo(X(v), y0); ctx.lineTo(X(v), y1); ctx.stroke(); }
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(p = 0; p <= PM; p += 100) ctx.fillText(p, x0 - 4, Y(p) + 3);
+      for(v = 0; v <= VM; v += 10){ ctx.textAlign = v === 0 ? "left" : v === VM ? "right" : "center"; ctx.fillText(v, X(v), y1 + 13); }
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText("panel voltage (V); vertical, power (W)", (x0 + x1) / 2, y1 + 26);
+      function curva(G, col){
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
+        for(var i = 0; i <= 200; i++){ var vv = VOC * i / 200 * 1.02, py = Y(pot(Math.min(vv, VOC), G)); if(i) ctx.lineTo(X(vv), py); else ctx.moveTo(X(vv), py); }
+        ctx.stroke(); ctx.lineWidth = 1;
+      }
+      curva(G1, "#58a6ff"); if(G2 !== G1) curva(G2, "#d2a8ff");
+      tr.forEach(function(t, i){ ctx.fillStyle = i < K / 2 ? "rgba(88,166,255,.9)" : "rgba(210,168,255,.9)"; ctx.beginPath(); ctx.arc(X(t[0]), Y(t[1]), 2.4, 0, 2 * Math.PI); ctx.fill(); });
+      [m1, m2].forEach(function(m){ ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X(m[0]), Y(m[1]), 6, 0, 2 * Math.PI); ctx.stroke(); ctx.lineWidth = 1; });
+      ctx.textAlign = "left"; ctx.lineWidth = 2;
+      ctx.strokeStyle = "#58a6ff"; ctx.beginPath(); ctx.moveTo(x0, 9); ctx.lineTo(x0 + 16, 9); ctx.stroke();
+      ctx.fillStyle = "#58a6ff"; ctx.fillText("initial", x0 + 21, 12);
+      ctx.strokeStyle = "#d2a8ff"; ctx.beginPath(); ctx.moveTo(x0 + 70, 9); ctx.lineTo(x0 + 86, 9); ctx.stroke();
+      ctx.fillStyle = "#d2a8ff"; ctx.fillText("final", x0 + 91, 12);
+      ctx.strokeStyle = "#f2cc60"; ctx.beginPath(); ctx.arc(x0 + 140, 9, 5, 0, 2 * Math.PI); ctx.stroke();
+      ctx.fillStyle = "#f2cc60"; ctx.fillText("maximum", x0 + 149, 12); ctx.lineWidth = 1;
+    }
+
+    $("mpDatos").innerHTML =
+      "<span>maximum at the initial irradiance</span><b>" + coma(m1[1], 1) + " W at " + coma(m1[0], 2) + " V</b>" +
+      "<span>maximum at the final irradiance</span><b>" + coma(m2[1], 1) + " W at " + coma(m2[0], 2) + " V</b>" +
+      "<span>tracking efficiency, first stretch</span><b>" + coma(e1 * 100, 2) + " %</b>" +
+      "<span>tracking efficiency, second stretch</span><b>" + coma(e2 * 100, 2) + " %</b>" +
+      "<span>voltage at the end</span><b>" + coma(tr[K - 1][0], 2) + " V</b>";
+    var nota;
+    if(Math.min(e1, e2) < 0.95) nota = "<b>Step too small:</b> the tracker advances " + coma(dV, 1) + " V per iteration and does not manage to reach the maximum in 40 steps; energy is lost while it walks.";
+    else if(dV >= 1.5) nota = "<b>Large step:</b> the tracker arrives quickly, but it oscillates several volts around the maximum and loses " + coma((1 - Math.min(e1, e2)) * 100, 1) + " % of the energy in steady state.";
+    else nota = "Good compromise: the tracker reaches the maximum in a few steps and oscillates close to it. Note that the voltage at the maximum changes little with irradiance; what changes is the current.";
+    $("mpNota").innerHTML = nota;
+  }
+  ["mpA", "mpB", "mpS"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

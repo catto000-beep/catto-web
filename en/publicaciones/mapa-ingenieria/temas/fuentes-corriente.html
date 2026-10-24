@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Current sources and active loads · Applied Electronics I · Catto</title>
+<meta name="description" content="Why integrated circuits use transistors instead of resistors, the bipolar and MOS current mirror, the Widlar source, the cascode and its minimum voltage, and the active load that brings the gain of a stage up to the intrinsic gain, with an interactive lab on the output current of three sources. Content of Applied Electronics I, Level 3 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/fuentes-corriente">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/fuentes-corriente">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/fuentes-corriente">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/fuentes-corriente">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Applied Electronics I</a>
+    <span class="anio">Level 3</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Applied Electronics I</span> · 120 h · Topic 4 of 7</div>
+    <h1>Current sources and active loads</h1>
+    <p class="lead">Replacing a collector resistor with a transistor takes the gain of a stage from a few hundred to almost two thousand. It is the trick that makes an operational amplifier possible.</p>
+    <div class="chips">
+      <span class="chip hi">Current mirror</span>
+      <span class="chip">Widlar source</span>
+      <span class="chip">Cascode</span>
+      <span class="chip">Output resistance</span>
+      <span class="chip">Active load</span>
+    </div>
+    <hr class="rule">
+
+    <section id="por-que">
+      <h2><span class="n">01</span>Transistors instead of resistors</h2>
+      <p>In an integrated circuit, resistors are expensive —they take up a lot of area—, imprecise —they vary by 20 % from
+      one wafer to another— and cannot be very large. Transistors, on the other hand, are cheap and, most
+      importantly, <b>identical to each other</b>: two neighboring transistors on the same wafer have almost
+      identical parameters. This gives rise to the technique that distinguishes integrated analog design: using transistors as
+      current sources for biasing, and as loads for amplifiers.</p>
+      <p>An ideal current source delivers the same current at any voltage, that is, it has
+      infinite output resistance. Real ones are described by two numbers: their <b>output resistance</b>
+      \( R_{out} \) and their <b>useful voltage range</b> (the minimum voltage at which they still work, called
+      the compliance voltage).</p>
+    </section>
+
+    <section id="espejo">
+      <h2><span class="n">02</span>The current mirror</h2>
+      <p>Two identical transistors with the same base-emitter voltage conduct the same current. If one of them
+      is connected as a diode (base tied to collector) and a reference current is forced through it, the other one
+      copies it. In the bipolar:</p>
+      <div class="form">
+        \[ I_{out} = \frac{I_{ref}}{1 + 2/\beta} \left( 1 + \frac{V_{CE2} - V_{BE}}{V_A} \right) \]
+        \[ R_{out} = r_o = \frac{V_A}{I_{out}} \]
+        <span class="cap">The factor \( 1 + 2/\beta \) is the error due to the base currents: with β = 100, the copy comes out 2 % low. The second factor is the Early effect.</span>
+      </div>
+      <p>In MOS there is no gate current and the current ratio is set by the geometry:
+      \( I_{out} = I_{ref}\,(W/L)_2 / (W/L)_1 \), with the same error from channel-length modulation. With
+      several output transistors connected to the same diode, a single reference biases an entire chip.</p>
+    </section>
+
+    <section id="widlar">
+      <h2><span class="n">03</span>The Widlar current source</h2>
+      <p>To obtain small currents without enormous resistors, Bob Widlar added a resistor in the
+      emitter of the output transistor. The two base-emitter voltages are no longer equal, and their difference drops
+      across that resistor:</p>
+      <div class="form">
+        \[ V_T \ln \frac{I_{ref}}{I_{out}} = I_{out}\, R_E \]
+        <span class="cap">To go down from 1 mA to 10 µA you need \( R_E = 25.85\text{ mV} \times \ln 100 / 10\text{ µA} \approx 11.9 \) kΩ. With a simple mirror, a 10 µA reference from 15 V would require a 1.4 MΩ resistor.</span>
+      </div>
+      <p>The emitter resistor also provides feedback and raises the output resistance to approximately
+      \( r_o (1 + g_m R_E) \). Widlar used this idea to design the first successful integrated operational
+      amplifiers, such as the μA702 and the LM101.</p>
+    </section>
+
+    <section id="cascodo">
+      <h2><span class="n">04</span>The cascode</h2>
+      <p>Stacking a second transistor on the output, in common base, leaves the bottom transistor with its
+      collector voltage fixed and the Early effect almost disappears. The output resistance is multiplied:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Source</th><th>Output resistance</th><th>Minimum operating voltage</th></tr></thead>
+        <tbody>
+          <tr><td>Simple mirror</td><td>\( r_o \)</td><td>\( V_{CE(sat)} \approx 0.2 \) V</td></tr>
+          <tr><td>Widlar</td><td>\( \approx r_o (1 + g_m R_E) \)</td><td>\( I_{out} R_E + V_{CE(sat)} \)</td></tr>
+          <tr><td>Bipolar cascode</td><td>\( \approx \beta\, r_o / 2 \)</td><td>\( V_{BE} + V_{CE(sat)} \approx 0.9 \) V</td></tr>
+          <tr><td>MOS cascode</td><td>\( \approx g_m r_o^2 \)</td><td>\( V_{th} + 2 V_{ov} \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>The price of the cascode is range: it consumes more voltage, a serious problem when the supply is
+      1 V. That is why modern design looks for low-voltage cascode configurations.</p>
+      <div class="lw" id="fcr">
+        <div class="lt">Lab · how close to an ideal source</div>
+        <p class="ls">The output current of three bipolar sources as a function of the voltage across their
+        output, with the same reference. The chosen curve is highlighted; the others stay in the background. An ideal source
+        would be a horizontal line.</p>
+        <div class="fila">
+          <select id="fcrT">
+            <option value="simple" selected>simple mirror</option>
+            <option value="widlar">Widlar source</option>
+            <option value="cascodo">cascode mirror</option>
+          </select>
+        </div>
+        <div class="fila"><label>Reference current \( I_{ref} \) = <b id="fcrIv"></b></label><input type="range" id="fcrI" min="0.1" max="2" step="0.05" value="1"></div>
+        <div class="fila"><label>Widlar emitter resistance \( R_E \) = <b id="fcrRv"></b></label><input type="range" id="fcrR" min="100" max="20000" step="100" value="2000"></div>
+        <div class="fila"><label>Early voltage \( V_A \) = <b id="fcrAv"></b></label><input type="range" id="fcrA" min="20" max="200" step="5" value="100"></div>
+        <div class="fila"><label>β = <b id="fcrBv"></b></label><input type="range" id="fcrB" min="50" max="400" step="10" value="100"></div>
+        <canvas id="fcrLienzo" style="display:block;width:100%;max-width:620px;height:270px;margin:6px auto 0"></canvas>
+        <div class="datos" id="fcrDatos"></div>
+        <div class="nota" id="fcrNota"></div>
+      </div>
+    </section>
+
+    <section id="carga-activa">
+      <h2><span class="n">05</span>The active load</h2>
+      <p>In a common emitter with a collector resistor, the gain \( g_m R_C = I_C R_C / V_T \) is limited by
+      the supply: \( I_C R_C \) cannot exceed a few volts, and the gain ends up at a few hundred. If
+      the resistor is replaced by a current source —a mirror PNP transistor—, the load seen by the
+      collector is its output resistance, which is enormous, while the DC drop is small. The gain becomes
+      the intrinsic gain of the transistors:</p>
+      <div class="form">
+        \[ A_v = -g_m\, (r_{o1} \parallel r_{o2}) \approx -\frac{V_A}{2\, V_T} \]
+        <span class="cap">With \( V_A = 100 \) V in both transistors, about 1900 in a single stage, something impossible with a resistor.</span>
+      </div>
+      <p>The active load is the reason an integrated operational amplifier reaches gains of one hundred
+      thousand with two or three stages, and it appears again in the
+      <a href="/en/publicaciones/mapa-ingenieria/temas/amplificador-diferencial">differential amplifier</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · A mirror with discrete transistors</div>
+        <p>Build a mirror with two BC548s and a 1 mA reference. Measure the output current for voltages from
+        1 to 10 V and estimate the output resistance. Repeat with the two transistors bonded together with thermal grease
+        to equalize their temperature.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · A Widlar source</div>
+        <p>Add to the mirror an emitter resistor calculated for 50 µA and verify the current and the increase
+        in output resistance.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Better with an integrated circuit</div>
+        <p>Repeat the mirror with transistors from an integrated array (such as the CA3096 or a matched pair) and
+        compare the error with that of the loose transistors.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Building mirrors with loose transistors and expecting accuracy.</b> The copy depends on
+        matching and temperature.</li>
+        <li><b>Forgetting the minimum voltage.</b> Below it, the output transistor saturates and the source stops
+        being a source.</li>
+        <li><b>Ignoring the base currents.</b> The \( 2/\beta \) error accumulates if many
+        outputs are copied from the same diode.</li>
+        <li><b>Measuring the gain with an active load using a 1 MΩ probe.</b> The probe loading is lower
+        than the output resistance and the measured gain drops.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>What error does a simple mirror with β = 50 have?</summary>
+        <div class="a"><p>\( 1/(1 + 2/50) = 0.96 \): the copy comes out 4 % low.</p></div></details>
+      <details class="q"><summary>What emitter resistance does a Widlar source need to go from 1 mA to 100 µA?</summary>
+        <div class="a"><p>\( 25.85 \text{ mV} \times \ln 10 / 100 \text{ µA} \approx 595 \) Ω.</p></div></details>
+      <details class="q"><summary>What is the output resistance of a simple mirror at 100 µA with
+        \( V_A = 80 \) V?</summary>
+        <div class="a"><p>\( 80 / 100\text{ µA} = 800 \) kΩ.</p></div></details>
+      <details class="q"><summary>Why does an active load give more gain than a resistor?</summary>
+        <div class="a"><p>Because it presents a very high small-signal resistance with a small DC drop.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Paul R. Gray, Paul J. Hurst, Stephen H. Lewis and Robert G. Meyer.</span>
+          <span class="ti">Analysis and Design of Analog Integrated Circuits</span>.
+          <span class="ed">5th ed., Wiley, 2009.</span>
+          <span class="pq">Chapter 4 is the reference on mirrors, Widlar sources and cascodes, in bipolar and MOS.</span></li>
+        <li><span class="au">Behzad Razavi.</span>
+          <span class="ti">Design of Analog CMOS Integrated Circuits</span>.
+          <span class="ed">2nd ed., McGraw-Hill, 2017.</span>
+          <span class="pq">Mirrors and active loads in CMOS, with low-voltage cascodes.</span></li>
+        <li><span class="au">Robert J. Widlar.</span>
+          <span class="ti">Some Circuit Design Techniques for Linear Integrated Circuits</span>.
+          <span class="ed">IEEE Transactions on Circuit Theory, 1965.</span>
+          <span class="pq">The paper in which the source that bears his name appears.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/fet-amplificador">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">The field-effect transistor as an amplifier: small and large signal</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/amplificador-diferencial">
+        <div class="dir">Next topic →</div>
+        <div class="tt">The differential amplifier</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Current sources and active loads”</b> of <b>Applied Electronics I</b> (Level 3), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Output current of three bipolar sources versus output voltage
+   (simplified first-order model).
+   Simple mirror: I0 = Iref/(1+2/beta); I = I0 (1 + (V - 0.7)/VA) for
+     V >= 0.2 V; below that it falls linearly to zero (saturation).
+   Widlar: I0 from VT ln(Iref/I0) = I0 RE (bisection); Rout = ro (1 + gm RE)
+     with ro = VA/I0, gm = I0/VT; minimum = I0 RE + 0.2 V.
+   Cascode: I0 = Iref/(1+2/beta); Rout = beta ro / 2; minimum 0.9 V.
+   Check: Iref 1 mA, VA 100: simple ro = 100 k; Widlar at 10 uA with
+   RE 11.9 k -> Rout 56 M; cascode with beta 200 -> 10 M. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("fcrLienzo"), ctx = cv.getContext("2d");
+  var VT = 0.02585, VMAX = 10;
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function amp(i){ return i >= 1e-3 ? coma(i * 1e3, 3) + " mA" : coma(i * 1e6, i >= 1e-5 ? 1 : 2) + " µA"; }
+  function ohm(r){ return r >= 1e6 ? coma(r / 1e6, 1) + " MΩ" : r >= 1e3 ? coma(r / 1e3, r >= 1e4 ? 0 : 1) + " kΩ" : coma(r, 0) + " Ω"; }
+
+  function widlarI(iref, re){
+    var lo = 1e-12, hi = iref;
+    for(var k = 0; k < 100; k++){ var m = (lo + hi) / 2; if(VT * Math.log(iref / m) - m * re > 0) lo = m; else hi = m; }
+    return (lo + hi) / 2;
+  }
+  function fuente(tipo, iref, re, va, beta){
+    var i0, rout, vmin;
+    if(tipo === "widlar"){ i0 = widlarI(iref, re); rout = va / i0 * (1 + i0 * re / VT); vmin = i0 * re + 0.2; }
+    else if(tipo === "cascodo"){ i0 = iref / (1 + 2 / beta); rout = beta * (va / i0) / 2; vmin = 0.9; }
+    else { i0 = iref / (1 + 2 / beta); rout = va / i0; vmin = 0.2; }
+    var vref = tipo === "cascodo" ? 1.4 : 0.7;   /* voltage at which the output equals i0 */
+    var curva = function(v){
+      var iv = i0 + (Math.max(v, vmin) - vref) / rout;
+      return v >= vmin ? iv : Math.max(0, (i0 + (vmin - vref) / rout) * v / vmin);
+    };
+    return { i0: i0, rout: rout, vmin: vmin, I: curva };
+  }
+
+  function pintar(){
+    var tipo = $("fcrT").value, iref = +$("fcrI").value * 1e-3, re = +$("fcrR").value, va = +$("fcrA").value, beta = +$("fcrB").value;
+    $("fcrIv").textContent = amp(iref); $("fcrRv").textContent = ohm(re);
+    $("fcrAv").textContent = va + " V"; $("fcrBv").textContent = beta;
+    var F = { simple: fuente("simple", iref, re, va, beta), widlar: fuente("widlar", iref, re, va, beta), cascodo: fuente("cascodo", iref, re, va, beta) };
+    var f = F[tipo];
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 52, x1 = W - 16, y0 = 12, y1 = H - 30;
+      /* vertical scale: from 0 to 1.25 times the current of the chosen source */
+      var imax = f.I(VMAX) * 1.25;
+      var X = function(v){ return x0 + v / VMAX * (x1 - x0); };
+      var Y = function(i){ return y1 - i / imax * (y1 - y0); };
+      ctx.clearRect(0, 0, W, H);
+      ctx.setLineDash([]); ctx.lineWidth = 1; ctx.font = "10px system-ui, sans-serif";
+      for(var v = 0; v <= VMAX; v += 2){
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(X(v), y0); ctx.lineTo(X(v), y1); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "center"; ctx.fillText(v + " V", X(v), y1 + 14);
+      }
+      /* round tick marks: step of 1, 2 or 5 per power of ten */
+      var paso = Math.pow(10, Math.floor(Math.log10(imax / 4))), q = imax / 4 / paso;
+      paso *= q > 5 ? 5 : q > 2 ? 2 : 1;
+      for(var ii = 0; ii <= imax; ii += paso){
+        ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(ii)); ctx.lineTo(x1, Y(ii)); ctx.stroke();
+        ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+        ctx.fillText(ii === 0 ? "0" : ii >= 1e-3 ? coma(ii * 1e3, paso >= 1e-3 ? 0 : 1) + " mA" : coma(ii * 1e6, paso >= 1e-6 ? 0 : 1) + " µA", x0 - 4, Y(ii) + 3);
+      }
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("voltage across the output", (x0 + x1) / 2, H - 3);
+      ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+      var COL = { simple: "#58a6ff", widlar: "#7ee787", cascodo: "#ff9f6b" };
+      ["simple", "widlar", "cascodo"].forEach(function(t){
+        if(t === tipo) return;
+        ctx.strokeStyle = COL[t]; ctx.globalAlpha = 0.35; ctx.lineWidth = 1.4; ctx.beginPath();
+        for(var j = 0; j <= 200; j++){ var vv = VMAX * j / 200, yy = Y(F[t].I(vv)); if(j) ctx.lineTo(X(vv), yy); else ctx.moveTo(X(vv), yy); }
+        ctx.stroke(); ctx.globalAlpha = 1;
+      });
+      ctx.strokeStyle = COL[tipo]; ctx.lineWidth = 2.8; ctx.beginPath();
+      for(var j = 0; j <= 200; j++){ var vv = VMAX * j / 200, yy = Y(f.I(vv)); if(j) ctx.lineTo(X(vv), yy); else ctx.moveTo(X(vv), yy); }
+      ctx.stroke();
+      ctx.strokeStyle = "rgba(242,204,96,.7)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(X(f.vmin), y0); ctx.lineTo(X(f.vmin), y1); ctx.stroke(); ctx.setLineDash([]);
+      ctx.restore();
+      ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(x1 - 118, y1 - 58, 116, 54);
+      ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "left";
+      [["simple mirror", "simple"], ["Widlar", "widlar"], ["cascode", "cascodo"]].forEach(function(e, n){
+        ctx.fillStyle = COL[e[1]]; ctx.globalAlpha = e[1] === tipo ? 1 : 0.6;
+        ctx.fillText(e[0], x1 - 110, y1 - 42 + n * 16); ctx.globalAlpha = 1;
+      });
+    }
+
+    var i5 = f.I(5);
+    $("fcrDatos").innerHTML =
+      "<span>output current at 5 V</span><b>" + amp(i5) + "</b>" +
+      "<span>output resistance</span><b>" + ohm(f.rout) + "</b>" +
+      "<span>current change between 2 and 10 V</span><b>" + coma((f.I(10) - f.I(2)) / f.I(2) * 100, 2) + " %</b>" +
+      "<span>minimum operating voltage</span><b>" + coma(f.vmin, 2) + " V</b>" +
+      (tipo === "widlar" ? "<span>reduction relative to the reference</span><b>" + coma(iref / f.i0, 1) + " times</b>" : "");
+
+    var nota;
+    if(tipo === "simple") nota = "The simple mirror copies the reference with the error from the base currents (" + coma((1 - 1 / (1 + 2 / beta)) * 100, 1) + " %) and the current rises with voltage because of the Early effect: its output resistance is only r<sub>o</sub> = V<sub>A</sub>/I.";
+    else if(tipo === "widlar") nota = "With " + ohm(re) + " in the emitter, the output is " + coma(iref / f.i0, 1) + " times smaller than the reference, and the feedback from that resistor multiplies the output resistance by 1 + g<sub>m</sub>R<sub>E</sub> = " + coma(1 + f.i0 * re / VT, 1) + ". The cost is the voltage that drops across R<sub>E</sub>.";
+    else nota = "The cascode keeps the voltage of the bottom transistor fixed: the current barely changes with the output voltage, with a resistance β times larger. In exchange, it stops working below about 0.9 V, where the simple mirror still works.";
+    $("fcrNota").innerHTML = nota;
+  }
+  ["fcrT", "fcrI", "fcrR", "fcrA", "fcrB"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

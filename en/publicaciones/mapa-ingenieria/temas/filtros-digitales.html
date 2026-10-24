@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IIR and FIR digital filters · Circuit Theory II · Catto</title>
+<meta name="description" content="The differences between FIR and IIR filters, linear phase and group delay, the moving average and exponential smoothing, implementation structures, fixed point, rounding and limit cycles, with an interactive lab that compares a moving average and an exponential in frequency and on a noisy step. Content of Circuit Theory II, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/filtros-digitales">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/filtros-digitales">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/filtros-digitales">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/filtros-digitales">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Circuit Theory II</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Circuit Theory II</span> · 120 h · Topic 7 of 8</div>
+    <h1>IIR and FIR digital filters</h1>
+    <p class="lead">An eight-sample average and an exponential with α = 0.22 reduce noise equally. The first needs eight samples in memory; the second, a single variable.</p>
+    <div class="chips">
+      <span class="chip hi">FIR</span>
+      <span class="chip">IIR</span>
+      <span class="chip">Linear phase</span>
+      <span class="chip">Moving average</span>
+      <span class="chip">Fixed point</span>
+    </div>
+    <hr class="rule">
+
+    <section id="dos-familias">
+      <h2><span class="n">01</span>Two families of digital filters</h2>
+      <p>A digital filter is a <a href="/en/publicaciones/mapa-ingenieria/temas/senales-tiempo-discreto">difference
+      equation</a> that a processor computes at every sample. If it uses only inputs, its impulse response is finite
+      (<b>FIR</b>); if it feeds back previous outputs, it is infinite (<b>IIR</b>). The choice between the two is the first
+      design decision:</p>
+      <div class="tw"><table class="tab">
+        <thead><tr><th></th><th>FIR</th><th>IIR</th></tr></thead>
+        <tbody>
+          <tr><td>Stability</td><td>Always stable: it has no poles away from the origin</td><td>It has to be ensured: the poles inside the unit circle</td></tr>
+          <tr><td>Phase</td><td>Can have exactly linear phase</td><td>Nonlinear phase, like analog filters</td></tr>
+          <tr><td>Order for a steep transition</td><td>High: tens or hundreds of coefficients</td><td>Low: a few poles are enough</td></tr>
+          <tr><td>Cost per sample</td><td>One multiplication per coefficient</td><td>Few multiplications</td></tr>
+          <tr><td>Sensitivity to quantization</td><td>Low</td><td>High: rounding a coefficient moves the poles</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="fase">
+      <h2><span class="n">02</span>Linear phase and group delay</h2>
+      <p>The <b>group delay</b> \( \tau(\Omega) = -d\varphi/d\Omega \) says how many samples each frequency takes to pass through.
+      If it is the same for all of them, the waveform comes out intact, just delayed. An FIR with symmetric coefficients
+      has exactly linear phase:</p>
+      <div class="form">
+        \[ h[n] = h[M - 1 - n] \ \Rightarrow\ \tau = \frac{M - 1}{2} \]
+        <span class="cap">A symmetric FIR of \( M \) coefficients delays all frequencies by the same amount: \( (M-1)/2 \) samples. An IIR delays each frequency differently, and distorts pulses even if its magnitude is flat.</span>
+      </div>
+      <p>That is why FIR filters dominate in digital communications, professional audio and instrumentation, where the shape of
+      the pulses matters, and IIR filters where cost or latency matters: control, tone detection, low-power
+      equalizers.</p>
+    </section>
+
+    <section id="ejemplos">
+      <h2><span class="n">03</span>The two simplest filters</h2>
+      <div class="form">
+        \[ y[n] = \frac{1}{M}\sum_{k=0}^{M-1} x[n-k] \]
+        \[ y[n] = \alpha\, x[n] + (1 - \alpha)\, y[n-1] \]
+        <span class="cap">The moving average is an FIR of \( M \) equal coefficients; exponential smoothing, a one-pole IIR at \( 1 - \alpha \). Both are lowpass and both reduce white noise: the variance drops to \( 1/M \) in the first and to \( \alpha/(2 - \alpha) \) in the second.</span>
+      </div>
+      <p>The moving average needs to store \( M \) samples and, computed recursively, two additions per sample; the
+      exponential needs a single variable and one multiplication. They are the filters in almost all measurement firmware.</p>
+      <div class="lw" id="fd">
+        <div class="lt">Lab · moving average versus exponential smoothing</div>
+        <p class="ls">At the top, the magnitude of the frequency response of the two filters from 0 to π. Below, their response to a
+        step with white noise (the same noise sequence for both). You adjust the length of the average and the
+        coefficient of the exponential.</p>
+        <div class="fila"><label>Moving average, M = <b id="fdMv"></b></label><input type="range" id="fdM" min="2" max="32" step="1" value="8"></div>
+        <div class="fila"><label>Exponential, α = <b id="fdAv"></b></label><input type="range" id="fdA" min="0.02" max="0.6" step="0.01" value="0.2"></div>
+        <canvas id="fdLienzo" style="display:block;width:100%;max-width:620px;height:280px;margin:6px auto 0"></canvas>
+        <div class="datos" id="fdDatos"></div>
+        <div class="nota" id="fdNota"></div>
+      </div>
+    </section>
+
+    <section id="estructuras">
+      <h2><span class="n">04</span>Structures and implementation</h2>
+      <p>The same transfer function can be computed with different <b>structures</b>: direct form, transposed direct
+      form, cascade of second-order sections (biquads) or lattice. Mathematically they are
+      equivalent; numerically they are not. A high-order IIR in direct form is very sensitive to the rounding of its
+      coefficients, and in practice it is always implemented as a cascade of biquads, just as
+      <a href="/en/publicaciones/mapa-ingenieria/temas/filtros-analogicos">active filters</a> are built with
+      second-order sections.</p>
+      <p>On a microcontroller without floating point, work is done in <b>fixed point</b>, with scaled integers. You have to
+      watch out for overflow in the sums, for rounding, which adds noise, and for limit cycles: small oscillations that an
+      IIR sustains through rounding even when the input is zero. Signal processors multiply and accumulate in one
+      cycle, with wide accumulators to avoid overflow, as seen in
+      <a href="/en/publicaciones/mapa-ingenieria/temas/arquitectura-procesadores">processor architecture</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Filtering a measurement</div>
+        <p>Read a noisy sensor with a microcontroller, apply a moving average and an exponential with the same
+        noise reduction, and compare their response to an abrupt change.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Linear phase</div>
+        <p>Filter a square wave with a symmetric FIR and with an IIR of the same cutoff frequency, and compare the shape
+        of the edges on the oscilloscope.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Fixed point</div>
+        <p>Implement the exponential in 16-bit fixed point and find the smallest α that still converges to the final
+        value.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Forgetting the filter delay.</b> A 32-sample average delays by 15.5 samples: in a control loop
+        it can destabilize it.</li>
+        <li><b>Implementing a high-order IIR in direct form.</b> The rounding of the coefficients makes it unstable.</li>
+        <li><b>Using a very small α in fixed point.</b> The product is rounded to zero and the output stalls short of the final
+        value.</li>
+        <li><b>Believing that the moving average is a good lowpass filter.</b> Its sidelobes let quite a lot through; it is good
+        against noise, not for separating frequencies.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>How much does a symmetric 31-coefficient FIR delay at 48 kHz?</summary>
+        <div class="a"><p>15 samples: 0.31 ms.</p></div></details>
+      <details class="q"><summary>What α gives the same noise reduction as an 8-sample average?</summary>
+        <div class="a"><p>\( \alpha/(2-\alpha) = 1/8 \Rightarrow \alpha = 2/9 \approx 0.22 \).</p></div></details>
+      <details class="q"><summary>Where is the pole of the exponential with α = 0.1?</summary>
+        <div class="a"><p>At \( z = 0.9 \): inside the circle, stable.</p></div></details>
+      <details class="q"><summary>Why is an FIR always stable?</summary>
+        <div class="a"><p>Because all its poles are at the origin: the output is a finite sum of bounded inputs.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Richard G. Lyons.</span>
+          <span class="ti">Understanding Digital Signal Processing</span>.
+          <span class="ed">3rd ed., Prentice Hall, 2010.</span>
+          <span class="pq">FIR and IIR filters explained intuitively, including structures and fixed point.</span></li>
+        <li><span class="au">Alan V. Oppenheim and Ronald W. Schafer.</span>
+          <span class="ti">Discrete-Time Signal Processing</span>.
+          <span class="ed">3rd ed., Pearson, 2010.</span>
+          <span class="pq">The complete theory of structures and of the effects of quantization.</span></li>
+        <li><span class="au">Steven W. Smith.</span>
+          <span class="ti">The Scientist and Engineer's Guide to Digital Signal Processing</span>.
+          <span class="ed">California Technical Publishing, 1997.</span>
+          <span class="pq">The moving-average chapter is the best analysis of why it is so useful against noise.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/senales-tiempo-discreto">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Discrete-time signals</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/diseno-filtros">
+        <div class="dir">Next topic →</div>
+        <div class="tt">Filter design</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“IIR and FIR digital filters”</b> of <b>Circuit Theory II</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Moving average of M samples versus exponential smoothing with coefficient a.
+   |H_MA| = |sin(M W / 2) / (M sin(W / 2))|; delay (M - 1) / 2.
+   |H_EXP| = a / |1 - (1 - a) e^-jW|; DC delay (1 - a) / a.
+   White-noise variance at the output: 1/M and a / (2 - a).
+   Check (Python, and with 200,000 noise samples): M 8 -> -3 dB at
+   W = 0.3503, variance 0.125, delay 3.5; a 0.2 -> -3 dB at 0.2241,
+   variance 0.1111, delay 4. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("fdLienzo"), ctx = cv.getContext("2d");
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function hma(M, w){ return w === 0 ? 1 : Math.abs(Math.sin(M * w / 2) / (M * Math.sin(w / 2))); }
+  function hex(a, w){ var p = 1 - a; return a / Math.hypot(1 - p * Math.cos(w), p * Math.sin(w)); }
+  function corte(f){ var lo = 1e-6, hi = Math.PI; for(var i = 0; i < 60; i++){ var m = (lo + hi) / 2; if(f(m) > Math.SQRT1_2) lo = m; else hi = m; } return lo; }
+  var rnd = mulberry(3), ruido = [];
+  for(var i = 0; i < 160; i++){ var u = Math.max(rnd(), 1e-12), v = rnd(); ruido.push(0.25 * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)); }
+
+  function pintar(){
+    var M = +$("fdM").value, a = +$("fdA").value;
+    $("fdMv").textContent = M; $("fdAv").textContent = coma(a, 2);
+    var cM = corte(function(w){ return hma(M, w); }), cA = corte(function(w){ return hex(a, w); });
+    var x = ruido.map(function(r, n){ return (n >= 40 ? 1 : 0) + r; }), ym = [], ye = [], s = 0;
+    x.forEach(function(v, n){ var acc = 0; for(var k = 0; k < M; k++) if(n - k >= 0) acc += x[n - k]; ym.push(acc / M); s = a * v + (1 - a) * s; ye.push(s); });
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 34, x1 = W - 12, a0 = 10, a1 = H * 0.42, b0 = H * 0.5, b1 = H - 18;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      /* frequency response in dB, 0 to -40 */
+      var Yd = function(d){ return a0 + (-Math.max(-40, d)) / 40 * (a1 - a0); }, Xw = function(w){ return x0 + w / Math.PI * (x1 - x0); };
+      [0, -20, -40].forEach(function(d){ ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Yd(d)); ctx.lineTo(x1, Yd(d)); ctx.stroke(); ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(d + " dB", x0 - 3, Yd(d) + 3); });
+      [[function(w){ return hma(M, w); }, "#58a6ff"], [function(w){ return hex(a, w); }, "#f2cc60"]].forEach(function(c){
+        ctx.strokeStyle = c[1]; ctx.lineWidth = 2; ctx.beginPath();
+        for(var k = 0; k <= 300; k++){ var w = Math.PI * k / 300, y = Yd(20 * Math.log10(c[0](w) + 1e-9)); if(k) ctx.lineTo(Xw(w), y); else ctx.moveTo(Xw(w), y); }
+        ctx.stroke();
+      });
+      ctx.lineWidth = 1; ctx.fillStyle = "#6b7484"; ctx.textAlign = "left"; ctx.fillText("0", x0, a1 + 11); ctx.textAlign = "right"; ctx.fillText("π", x1, a1 + 11);
+      /* time response */
+      var N = x.length, Xn = function(n){ return x0 + n / (N - 1) * (x1 - x0); }, Yt = function(v){ return b1 - (v + 0.6) / 2.2 * (b1 - b0); };
+      [0, 1].forEach(function(v){ ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Yt(v)); ctx.lineTo(x1, Yt(v)); ctx.stroke(); ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(v, x0 - 3, Yt(v) + 3); });
+      ctx.strokeStyle = "rgba(154,167,180,.45)"; ctx.lineWidth = 1; ctx.beginPath(); x.forEach(function(v, n){ if(n) ctx.lineTo(Xn(n), Yt(v)); else ctx.moveTo(Xn(n), Yt(v)); }); ctx.stroke();
+      [[ym, "#58a6ff"], [ye, "#f2cc60"]].forEach(function(c){ ctx.strokeStyle = c[1]; ctx.lineWidth = 2; ctx.beginPath(); c[0].forEach(function(v, n){ if(n) ctx.lineTo(Xn(n), Yt(v)); else ctx.moveTo(Xn(n), Yt(v)); }); ctx.stroke(); });
+      ctx.lineWidth = 1; ctx.fillStyle = "#8b93a3"; ctx.textAlign = "center"; ctx.fillText("step with noise at sample 40 (160 samples)", (x0 + x1) / 2, H - 4);
+      /* legend */
+      ctx.font = "600 10.5px system-ui, sans-serif"; ctx.fillStyle = "rgba(24,44,35,.88)"; ctx.fillRect(x1 - 150, a0 + 2, 146, 34);
+      ctx.fillStyle = "#58a6ff"; ctx.fillRect(x1 - 144, a0 + 10, 14, 3); ctx.textAlign = "left"; ctx.fillText("moving average", x1 - 124, a0 + 15);
+      ctx.fillStyle = "#f2cc60"; ctx.fillRect(x1 - 144, a0 + 26, 14, 3); ctx.fillText("exponential", x1 - 124, a0 + 31);
+    }
+
+    $("fdDatos").innerHTML =
+      "<span>−3 dB cutoff (fraction of f<sub>s</sub>)</span><b>" + coma(cM / (2 * Math.PI), 4) + " · " + coma(cA / (2 * Math.PI), 4) + "</b>" +
+      "<span>output noise variance</span><b>" + coma(1 / M, 4) + " · " + coma(a / (2 - a), 4) + "</b>" +
+      "<span>delay (samples)</span><b>" + coma((M - 1) / 2, 1) + " constant · " + coma((1 - a) / a, 1) + " at DC</b>" +
+      "<span>memory and operations per sample</span><b>" + M + " samples, 2 additions · 1 variable, 1 multiplication</b>";
+    var aeq = 2 / (M + 1);
+    $("fdNota").innerHTML = "For the same noise reduction as the " + M + "-sample average, the exponential needs α ≈ " + coma(aeq, 3) + ". " +
+      (Math.abs(a - aeq) < 0.02 ? "With α at that value, the two filter similarly, but the average reaches the final value in exactly " + M + " samples and the exponential creeps up gradually, never quite getting there." : "The moving average has zeros at multiples of f<sub>s</sub>/" + M + " (the dips of the blue curve), useful for removing an interference of known frequency.");
+  }
+  ["fdM", "fdA"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

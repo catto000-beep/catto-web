@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Information theory · Communication Systems · Catto</title>
+<meta name="description" content="Information and the entropy of a source, the source coding theorem, the Huffman code, mutual information and the capacity of the binary symmetric channel, the channel coding theorem and the Shannon–Hartley formula, with an interactive lab that builds the Huffman code of a source. Content of Communication Systems, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/teoria-informacion">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/teoria-informacion">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/teoria-informacion">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/teoria-informacion">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Communication Systems</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Communication Systems</span> · 96 h · Topic 10 of 11</div>
+    <h1>Information theory</h1>
+    <p class="lead">A 3100 Hz telephone channel with 35 dB of signal-to-noise ratio supports at most about 36 kbit/s. The last voice modems reached 33.6: theory set the ceiling before they existed.</p>
+    <div class="chips">
+      <span class="chip hi">Entropy</span>
+      <span class="chip">Huffman code</span>
+      <span class="chip">Channel capacity</span>
+      <span class="chip">Shannon–Hartley</span>
+      <span class="chip">Channel coding</span>
+    </div>
+    <hr class="rule">
+
+    <section id="informacion">
+      <h2><span class="n">01</span>Measuring information</h2>
+      <p>Claude Shannon proposed in 1948 to measure the information of a message by how improbable it is: a message that was
+      expected tells us nothing. The information of a symbol of probability \( p \), and the average over all the symbols
+      of a source, the <b>entropy</b>, are:</p>
+      <div class="form">
+        \[ I = \log_2 \frac{1}{p} \ \ \mathrm{bits} \]
+        \[ H = \sum_i p_i \log_2 \frac{1}{p_i} \]
+        <span class="cap">A fair coin gives 1 bit per toss; a die, 2.585 bits. Entropy is maximum, \( \log_2 M \), when the \( M \) symbols are equiprobable, and is zero if one symbol is certain. Probabilities were covered in <a href="/en/publicaciones/mapa-ingenieria/temas/probabilidad">probability</a>.</span>
+      </div>
+      <p>Entropy is not an arbitrary definition: the <b>source coding theorem</b> says it is the minimum number
+      of bits per symbol with which the source can be represented without loss. No code does better, and
+      by coding longer and longer blocks of symbols it is possible to come as close as desired.</p>
+    </section>
+
+    <section id="huffman">
+      <h2><span class="n">02</span>Source coding: Huffman</h2>
+      <p>A variable-length code assigns short words to frequent symbols and long ones to rare symbols, like Morse
+      code. For it to be decodable without separators, no word can be the beginning of another: it is a <b>prefix
+      code</b>. The <b>Huffman</b> algorithm builds the best possible prefix code: it repeatedly merges the two
+      least probable symbols into a new one, until only one remains, and reads the codes by walking the tree.</p>
+      <div class="form">
+        \[ H \le \bar L < H + 1 \]
+        <span class="cap">\( \bar L = \sum p_i \ell_i \) is the mean length of the code. If the probabilities are powers of 1/2, Huffman reaches the entropy exactly. If a single probability is very large, it cannot go below 1 bit per symbol, and it is better to code in pairs or use arithmetic coding.</span>
+      </div>
+      <div class="lw" id="huf">
+        <div class="lt">Lab · the Huffman code</div>
+        <p class="ls">Six symbols with probabilities proportional to the chosen weights. The solid bars are the lengths
+        of the Huffman code; the outlines, the information of each symbol, \( \log_2(1/p) \). Above each bar is the
+        code word.</p>
+        <div class="fila">
+          <select id="hfP">
+            <option value="40,20,15,10,10,5" selected>General source</option>
+            <option value="64,32,16,8,4,4">Probabilities that are powers of 1/2</option>
+            <option value="90,2,2,2,2,2">One very probable symbol</option>
+            <option value="20,20,20,20,20,20">Equiprobable</option>
+          </select>
+        </div>
+        <div class="fila"><label>Weight of A = <b id="hfv0"></b></label><input type="range" id="hf0" min="0" max="100" step="1"></div>
+        <div class="fila"><label>Weight of B = <b id="hfv1"></b></label><input type="range" id="hf1" min="0" max="100" step="1"></div>
+        <div class="fila"><label>Weight of C = <b id="hfv2"></b></label><input type="range" id="hf2" min="0" max="100" step="1"></div>
+        <div class="fila"><label>Weight of D = <b id="hfv3"></b></label><input type="range" id="hf3" min="0" max="100" step="1"></div>
+        <div class="fila"><label>Weight of E = <b id="hfv4"></b></label><input type="range" id="hf4" min="0" max="100" step="1"></div>
+        <div class="fila"><label>Weight of F = <b id="hfv5"></b></label><input type="range" id="hf5" min="0" max="100" step="1"></div>
+        <canvas id="hfLienzo" style="display:block;width:100%;max-width:620px;height:220px;margin:6px auto 0"></canvas>
+        <div class="datos" id="hfDatos"></div>
+        <div class="nota" id="hfNota"></div>
+      </div>
+    </section>
+
+    <section id="canal">
+      <h2><span class="n">03</span>Channel capacity</h2>
+      <p>A noisy channel confuses some symbols. The <b>mutual information</b> between input and output measures how much
+      is learned about the input by seeing the output, and its maximum over all input distributions is the <b>capacity</b>
+      of the channel. In the binary symmetric channel, which flips each bit with probability \( p \):</p>
+      <div class="form">
+        \[ C = 1 - H_b(p) \]
+        \[ H_b(p) = -p\log_2 p - (1-p)\log_2(1-p) \]
+        <span class="cap">With p = 0.01, C = 0.919 bits per channel use; with p = 0.11, barely 0.5. With p = 0.5 the output does not depend on the input and the capacity is zero.</span>
+      </div>
+      <p>The <b>channel coding theorem</b> is Shannon's most surprising result: if the rate is less than
+      the capacity, there exist codes with an error probability as small as desired. There is no need to choose between
+      speed and reliability, only to add redundancy in the right way. Above capacity, on the other hand,
+      no code achieves it.</p>
+    </section>
+
+    <section id="shannon">
+      <h2><span class="n">04</span>The Gaussian channel: the Shannon–Hartley formula</h2>
+      <p>For a channel of bandwidth \( B \) with white Gaussian noise, the capacity is:</p>
+      <div class="form">
+        \[ C = B \log_2\!\left(1 + \frac{S}{N}\right) \]
+        <span class="cap">A 3100 Hz telephone channel with 35 dB of signal-to-noise ratio supports about 36 kbit/s: that is why voice modems stopped at 33.6 kbit/s. Capacity grows in proportion to bandwidth, but only with the logarithm of power.</span>
+      </div>
+      <p>The formula sets a limit that no modulation or code can exceed, and it makes it possible to measure how good
+      real systems are: turbo and LDPC codes, used in cellular telephony and digital television, operate within
+      1 dB of it. The comparison of systems against this limit is the subject of <a href="/en/publicaciones/mapa-ingenieria/temas/intercomparacion-sistemas">system
+      intercomparison</a>.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">05</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Entropy of a text</div>
+        <p>Count the letter frequencies of a long text in Spanish with a program, calculate its entropy and
+        build the Huffman code. Compare the size with that of a 5-bit-per-letter code.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · Real compression</div>
+        <p>With a general-purpose compressor, compress text files, audio files and random data, and compare the compression
+        ratios with the estimated entropy.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Binary channel</div>
+        <p>Simulate a binary symmetric channel with a three-bit repetition code and majority voting, and compare the error
+        rate with that of the uncoded channel.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">06</span>Common mistakes</h2>
+      <ul>
+        <li><b>Confusing a bit of information with a binary digit.</b> A binary digit carries at most one bit of information, and less if it is not equiprobable.</li>
+        <li><b>Believing that compression can go below the entropy.</b> Without loss, it is impossible on average.</li>
+        <li><b>Reading capacity as a rate achievable with any system.</b> It is a limit: reaching it requires long, complex codes.</li>
+        <li><b>Using Shannon's formula with S/N in dB.</b> It takes a ratio: 30 dB is 1000.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">07</span>Self-assessment</h2>
+      <details class="q"><summary>What entropy does a four-symbol source with probabilities 1/2, 1/4, 1/8 and 1/8 have?</summary>
+        <div class="a"><p>1.75 bits, and the Huffman code 0, 10, 110, 111 achieves it.</p></div></details>
+      <details class="q"><summary>What is the capacity of a binary symmetric channel with p = 0.1?</summary>
+        <div class="a"><p>\( 1 - H_b(0.1) = 1 - 0.469 = 0.531 \) bits per use.</p></div></details>
+      <details class="q"><summary>What capacity does a 1 MHz channel with 20 dB of signal-to-noise ratio have?</summary>
+        <div class="a"><p>\( 10^6 \log_2 101 \approx 6.66 \) Mbit/s.</p></div></details>
+      <details class="q"><summary>Why is Huffman no good for a binary source with p = 0.95?</summary>
+        <div class="a"><p>Because it cannot use less than 1 bit per symbol and the entropy is 0.29 bits: blocks of symbols must be coded.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">08</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Thomas M. Cover and Joy A. Thomas.</span>
+          <span class="ti">Elements of Information Theory</span>.
+          <span class="ed">2nd ed., Wiley, 2006.</span>
+          <span class="pq">The reference for the subject: entropy, source coding and channel capacity.</span></li>
+        <li><span class="au">Claude E. Shannon and Warren Weaver.</span>
+          <span class="ti">The Mathematical Theory of Communication</span>.
+          <span class="ed">University of Illinois Press, 1949.</span>
+          <span class="pq">Shannon's original work, with an introduction by Weaver for non-specialist readers.</span></li>
+        <li><span class="au">David J. C. MacKay.</span>
+          <span class="ti">Information Theory, Inference, and Learning Algorithms</span>.
+          <span class="ed">Cambridge University Press, 2003.</span>
+          <span class="pq">A modern approach, with the codes that approach the Shannon limit.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/ruido-modulaciones-digitales">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">Noise in digital modulations</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria/temas/intercomparacion-sistemas">
+        <div class="dir">Next topic →</div>
+        <div class="tt">System intercomparison</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Information theory”</b> of <b>Communication Systems</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Codigo de Huffman de 6 simbolos (y de los 36 pares). Se une siempre el par de
+   menor probabilidad; en empate, el nodo creado antes (como heapq en Python).
+   Control (Python): pesos 40,20,15,10,10,5 -> H 2,2842, L 2,35 (97,2 %), pares
+   2,3113 (98,83 %); potencias de 1/2 -> 1,9375 exacto; 90,2,2,2,2,2 -> H 0,7012,
+   L 1,24, pares 0,8586; equiprobables -> 2,585 / 2,6667 / 2,6111. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("hfLienzo"), ctx = cv.getContext("2d");
+  var NOM = ["A", "B", "C", "D", "E", "F"];
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function huffman(p){
+    var n = p.length, cod = p.map(function(){ return ""; });
+    if(n === 1) return ["0"];
+    var nodos = p.map(function(v, i){ return {p: v, id: i, s: [i]}; }), cont = n;
+    while(nodos.length > 1){
+      nodos.sort(function(a, b){ return a.p - b.p || a.id - b.id; });
+      var a = nodos.shift(), b = nodos.shift();
+      a.s.forEach(function(i){ cod[i] = "0" + cod[i]; });
+      b.s.forEach(function(i){ cod[i] = "1" + cod[i]; });
+      nodos.push({p: a.p + b.p, id: cont++, s: a.s.concat(b.s)});
+    }
+    return cod;
+  }
+  function preset(){
+    $("hfP").value.split(",").forEach(function(v, i){ $("hf" + i).value = v; });
+    pintar();
+  }
+
+  function pintar(){
+    var w = [], i;
+    for(i = 0; i < 6; i++){ w.push(+$("hf" + i).value); $("hfv" + i).textContent = w[i]; }
+    var idx = [], t = 0;
+    for(i = 0; i < 6; i++) if(w[i] > 0){ idx.push(i); t += w[i]; }
+    var p = idx.map(function(k){ return w[k] / t; });
+    var H = 0; p.forEach(function(x){ H -= x * Math.log2(x); });
+    var cod = idx.length ? huffman(p) : [], L = 0;
+    p.forEach(function(x, j){ L += x * cod[j].length; });
+    var pp = []; p.forEach(function(a){ p.forEach(function(b){ pp.push(a * b); }); });
+    var c2 = pp.length ? huffman(pp) : [], L2 = 0;
+    pp.forEach(function(x, j){ L2 += x * c2[j].length; }); L2 /= 2;
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, Hh = r.height, x0 = 28, x1 = W - 12, y0 = 26, y1 = Hh - 34;
+      var LMAX = 6;
+      idx.forEach(function(k, j){ LMAX = Math.max(LMAX, cod[j].length, Math.ceil(Math.log2(1 / p[j]))); });
+      var Y = function(v){ return y1 - Math.min(v, LMAX) / LMAX * (y1 - y0); };
+      ctx.clearRect(0, 0, W, Hh); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      ctx.strokeStyle = "#2a3242"; ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
+      for(var v = 0; v <= LMAX; v += (LMAX > 8 ? 2 : 1)){ ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke(); ctx.fillText(v, x0 - 5, Y(v) + 3); }
+      var dx = (x1 - x0) / 6, bw = Math.min(40, dx * 0.55);
+      ctx.textAlign = "center";
+      for(i = 0; i < 6; i++){
+        var xc = x0 + dx * (i + 0.5), j2 = idx.indexOf(i);
+        ctx.fillStyle = "#c9d1d9"; ctx.font = "600 11px system-ui, sans-serif"; ctx.fillText(NOM[i], xc, y1 + 14);
+        ctx.font = "10px system-ui, sans-serif"; ctx.fillStyle = "#6b7484";
+        if(j2 < 0){ ctx.fillText("p = 0", xc, y1 + 27); continue; }
+        ctx.fillText(coma(p[j2], 3), xc, y1 + 27);
+        var li = cod[j2].length, inf = Math.log2(1 / p[j2]);
+        ctx.fillStyle = "rgba(88,166,255,.75)"; ctx.fillRect(xc - bw / 2, Y(li), bw, y1 - Y(li));
+        ctx.strokeStyle = "#f2cc60"; ctx.lineWidth = 1.6; ctx.strokeRect(xc - bw / 2 - 3, Y(inf), bw + 6, y1 - Y(inf)); ctx.lineWidth = 1;
+        ctx.fillStyle = "#f3f6f8"; ctx.font = "600 10px ui-monospace, Consolas, monospace";
+        var tx = cod[j2], yT = Math.min(Y(li), Y(inf)) - 5;
+        if(tx.length > 7 && dx < 60) tx = tx.slice(0, 6) + "…";
+        ctx.fillText(tx, xc, yT); ctx.font = "10px system-ui, sans-serif";
+      }
+      ctx.textAlign = "left"; ctx.fillStyle = "#8b93a3"; ctx.fillText("bits", 2, y0 - 10);
+    }
+
+    var d;
+    if(idx.length < 2){
+      d = "<span>entropy</span><b>0 bits per symbol</b>";
+      $("hfDatos").innerHTML = d;
+      $("hfNota").innerHTML = "With only one possible symbol the source conveys no information: there is nothing to transmit. Raise the weight of another symbol.";
+      return;
+    }
+    d = "<span>entropy H</span><b>" + coma(H, 4) + " bits per symbol</b>" +
+      "<span>mean Huffman length</span><b>" + coma(L, 4) + " bits (" + coma(100 * H / L, 1) + " %)</b>" +
+      "<span>coding in pairs</span><b>" + coma(L2, 4) + " bits (" + coma(100 * H / L2, 1) + " %)</b>" +
+      "<span>fixed-length code</span><b>" + Math.ceil(Math.log2(idx.length)) + (idx.length > 2 ? " bits" : " bit") + "</b>";
+    $("hfDatos").innerHTML = d;
+    var nota;
+    if(L - H < 1e-9) nota = "<b>Huffman reaches the entropy:</b> all the probabilities are powers of 1/2 and each length matches the information of its symbol.";
+    else if(p.some(function(x){ return x > 0.6; })) nota = "One symbol is very probable: Huffman cannot give it less than 1 bit even though its information is " + coma(Math.log2(1 / Math.max.apply(null, p)), 2) + " bits. Coding in pairs raises the efficiency from " + coma(100 * H / L, 0) + " to " + coma(100 * H / L2, 0) + " %.";
+    else nota = "Huffman falls " + coma(L - H, 3) + " bits short of the entropy. With longer blocks the difference shrinks: with pairs it is already " + coma(L2 - H, 3) + ".";
+    $("hfNota").innerHTML = nota;
+  }
+  for(var k = 0; k < 6; k++) $("hf" + k).addEventListener("input", pintar);
+  $("hfP").addEventListener("input", preset);
+  window.addEventListener("resize", pintar);
+  preset(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filter design · Circuit Theory II · Catto</title>
+<meta name="description" content="The digital filter design process, the window method for FIR with the rectangular, Hann, Hamming, Blackman and Kaiser windows, frequency sampling and Parks-McClellan, and IIR from analog filters with the bilinear transform and prewarping, with an interactive lab that designs an FIR and measures its attenuation and its transition. Content of Circuit Theory II, Level 4 of Electronic Engineering (UTN).">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/diseno-filtros">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=3">
+<link rel="stylesheet" href="/publicaciones/mapa-ingenieria/temas/ing.css?v=7">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/diseno-filtros">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/mapa-ingenieria/temas/diseno-filtros">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/mapa-ingenieria/temas/diseno-filtros">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/en"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/en/publicaciones/mapa-ingenieria">Topic Map · Circuit Theory II</a>
+    <span class="anio">Level 4</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">On this page</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb"><span class="mt">Circuit Theory II</span> · 120 h · Topic 8 of 8</div>
+    <h1>Filter design</h1>
+    <p class="lead">In an FIR designed with windows, adding coefficients does not improve rejection: with the Hamming window it stays at 53 dB with 21 coefficients or with 101. What changes is the width of the transition.</p>
+    <div class="chips">
+      <span class="chip hi">Windows</span>
+      <span class="chip">Gibbs phenomenon</span>
+      <span class="chip">Parks-McClellan</span>
+      <span class="chip">Bilinear transform</span>
+      <span class="chip">Prewarping</span>
+    </div>
+    <hr class="rule">
+
+    <section id="proceso">
+      <h2><span class="n">01</span>From specification to coefficients</h2>
+      <p>Designing a digital filter means following a fixed path: start from the template (bands, attenuations, sampling
+      frequency), choose between <a href="/en/publicaciones/mapa-ingenieria/temas/filtros-digitales">FIR or IIR</a>,
+      compute the coefficients with an approximation method, choose the structure, quantize the coefficients to the
+      processor’s format and verify that the quantized filter still meets the specification. Almost all the steps are done today by a
+      program, but choosing the method and judging the result requires understanding what each one does.</p>
+    </section>
+
+    <section id="ventanas">
+      <h2><span class="n">02</span>FIR by the window method</h2>
+      <p>The ideal lowpass with cutoff frequency \( f_c \) (as a fraction of \( f_s \)) has an infinite impulse
+      response, shaped like a sinc function. The window method truncates it to \( N \) samples, centered, and
+      multiplies it by a <b>window</b> that smooths the ends:</p>
+      <div class="form">
+        \[ h[n] = 2 f_c\, \frac{\sin(2\pi f_c\, (n - M))}{2\pi f_c\, (n - M)}\, w[n] \]
+        <span class="cap">With \( M = (N-1)/2 \) and \( n = 0, \ldots, N - 1 \). Truncating without a window (rectangular window) produces the Gibbs phenomenon: a ripple that does not go away as \( N \) increases and leaves the stopband at only 21 dB.</span>
+      </div>
+      <div class="tw"><table class="tab">
+        <thead><tr><th>Window</th><th>Minimum stopband attenuation</th><th>Approximate transition width</th></tr></thead>
+        <tbody>
+          <tr><td>Rectangular</td><td>21 dB</td><td>\( 0.9/N \)</td></tr>
+          <tr><td>Hann</td><td>44 dB</td><td>\( 3.1/N \)</td></tr>
+          <tr><td>Hamming</td><td>53 dB</td><td>\( 3.3/N \)</td></tr>
+          <tr><td>Blackman</td><td>74 dB</td><td>\( 5.5/N \)</td></tr>
+        </tbody>
+      </table></div>
+      <p>The window sets the attenuation; the length \( N \), the width of the transition. The <b>Kaiser window</b> has a
+      parameter that allows the attenuation to be chosen continuously, with empirical formulas for the required length.</p>
+      <div class="lw" id="fw">
+        <div class="lt">Lab · designing an FIR with windows</div>
+        <p class="ls">A linear-phase FIR lowpass. You choose the cutoff frequency, the number of coefficients and the window.
+        At the top, the coefficients; below, the magnitude of the response in dB from 0 to \( f_s/2 \), with the minimum attenuation
+        measured in the stopband.</p>
+        <div class="fila">
+          <select id="fwV">
+            <option value="rect">Rectangular window</option>
+            <option value="hann">Hann window</option>
+            <option value="hamming" selected>Hamming window</option>
+            <option value="blackman">Blackman window</option>
+          </select>
+        </div>
+        <div class="fila"><label>Coefficients N = <b id="fwNv"></b></label><input type="range" id="fwN" min="11" max="101" step="2" value="51"></div>
+        <div class="fila"><label>Cutoff frequency = <b id="fwFv"></b></label><input type="range" id="fwF" min="0.05" max="0.4" step="0.005" value="0.2"></div>
+        <canvas id="fwLienzo" style="display:block;width:100%;max-width:620px;height:270px;margin:6px auto 0"></canvas>
+        <div class="datos" id="fwDatos"></div>
+        <div class="nota" id="fwNota"></div>
+      </div>
+    </section>
+
+    <section id="otros-fir">
+      <h2><span class="n">03</span>Other methods for FIR</h2>
+      <p><b>Frequency sampling</b> sets the desired response at equally spaced points and obtains the coefficients with
+      an inverse DFT. The <b>Parks-McClellan</b> algorithm looks for the shortest FIR that meets the template, with the
+      error spread as equal ripples in both bands: it is the optimal design, and the one that programs use by
+      default. For the same specification, it usually needs considerably fewer coefficients than the window method.</p>
+    </section>
+
+    <section id="iir">
+      <h2><span class="n">04</span>IIR from analog filters</h2>
+      <p>IIR filters are almost always designed starting from an <a href="/en/publicaciones/mapa-ingenieria/temas/filtros-analogicos">analog
+      filter</a> —Butterworth, Chebyshev, elliptic— and transforming it to the z-plane. The most widely used transformation is the
+      <b>bilinear</b> one, which maps the whole \( j\omega \) axis onto the unit circle exactly once, without aliasing:</p>
+      <div class="form">
+        \[ s = \frac{2}{T}\,\frac{z - 1}{z + 1} \]
+        \[ \omega_a = \frac{2}{T}\,\tan\frac{\omega_d T}{2} \]
+        <span class="cap">In exchange, it warps the frequency axis: the digital frequency \( \omega_d \) corresponds to the analog one \( \omega_a \). That is why the critical frequencies are prewarped before designing the analog filter. For a 1 kHz cutoff with 8 kHz sampling, the analog filter is designed for 1.055 kHz.</span>
+      </div>
+      <p><b>Impulse invariance</b>, the alternative, samples the impulse response of the analog filter: it preserves the shape
+      in time but suffers from aliasing, and is only suitable for lowpass and bandpass filters that are well band-limited.</p>
+    </section>
+
+    <section id="herramientas">
+      <h2><span class="n">05</span>Tools and verification</h2>
+      <p>In Python, the <code>scipy.signal</code> module has <code>firwin</code> (windows), <code>remez</code>
+      (Parks-McClellan) and <code>butter</code>, <code>cheby1</code> and <code>ellip</code> with bilinear transformation, and
+      returns IIR filters directly as second-order sections. Octave and MATLAB have equivalent functions. The
+      final verification is always done with the coefficients already quantized to the processor’s format: an IIR that
+      meets the specification with 64-bit coefficients may fail to, or become unstable, with 16.</p>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>In the lab</h2>
+      <div class="box lab"><div class="bt">Activity 1 · Windows in Python</div>
+        <p>Design the same lowpass with <code>firwin</code> using the four windows and compare their responses with those of the
+        lab.</p></div>
+      <div class="box lab"><div class="bt">Activity 2 · FIR on a microcontroller</div>
+        <p>Load the coefficients of a 31-coefficient FIR in 16-bit fixed point onto a microcontroller, filter an
+        ADC signal and measure the response with a generator and an oscilloscope.</p></div>
+      <div class="box lab"><div class="bt">Activity 3 · Bilinear</div>
+        <p>Design a fourth-order Butterworth for 1 kHz with 8 kHz sampling, with and without prewarping, and measure where
+        the cutoff ends up in each case.</p></div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Common mistakes</h2>
+      <ul>
+        <li><b>Increasing N expecting more attenuation.</b> The attenuation is set by the window; N only narrows the transition.</li>
+        <li><b>Forgetting prewarping in the bilinear transform.</b> The cutoff ends up lower than designed.</li>
+        <li><b>Verifying with double-precision coefficients.</b> The real filter uses the quantized ones.</li>
+        <li><b>Specifying the cutoff frequency in hertz in a function that expects it normalized.</b> Each tool
+        uses its own convention: a fraction of \( f_s \), of \( f_s/2 \), or radians per sample.</li>
+      </ul>
+    </section>
+
+    <section id="autoevaluacion">
+      <h2><span class="n">08</span>Self-assessment</h2>
+      <details class="q"><summary>Which window is suitable for 50 dB of stopband rejection?</summary>
+        <div class="a"><p>Hamming, which gives about 53 dB; Hann falls short.</p></div></details>
+      <details class="q"><summary>How many coefficients does an FIR with a Hamming window and a 0.05 f<sub>s</sub> transition need?</summary>
+        <div class="a"><p>\( N \approx 3.3/0.05 = 66 \): 67, to make it odd.</p></div></details>
+      <details class="q"><summary>For what analog frequency is a digital cutoff of 2 kHz with 10 kHz sampling designed?</summary>
+        <div class="a"><p>\( f_a = (f_s/\pi)\tan(\pi f_d/f_s) = (10\,000/\pi)\tan(0.2\pi) \approx 2.31 \) kHz.</p></div></details>
+      <details class="q"><summary>What advantage does Parks-McClellan have over windows?</summary>
+        <div class="a"><p>It meets the same template with fewer coefficients, because it distributes the error optimally.</p></div></details>
+    </section>
+
+    <section id="ampliar">
+      <h2><span class="n">09</span>Further reading</h2>
+      <ul class="libros">
+        <li><span class="au">Alan V. Oppenheim and Ronald W. Schafer.</span>
+          <span class="ti">Discrete-Time Signal Processing</span>.
+          <span class="ed">3rd ed., Pearson, 2010.</span>
+          <span class="pq">FIR and IIR design methods with their theoretical justification, including the Kaiser window and the bilinear transform.</span></li>
+        <li><span class="au">Richard G. Lyons.</span>
+          <span class="ti">Understanding Digital Signal Processing</span>.
+          <span class="ed">3rd ed., Prentice Hall, 2010.</span>
+          <span class="pq">Filter design explained with examples and with the mistakes made in practice.</span></li>
+        <li><span class="au">John G. Proakis and Dimitris G. Manolakis.</span>
+          <span class="ti">Digital Signal Processing</span>.
+          <span class="ed">4th ed., Pearson, 2007 (Spanish edition, “Tratamiento digital de señales”).</span>
+          <span class="pq">The design methods with many solved exercises.</span></li>
+      </ul>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/en/publicaciones/mapa-ingenieria/temas/filtros-digitales">
+        <div class="dir">← Previous topic</div>
+        <div class="tt">IIR and FIR digital filters</div>
+      </a>
+      <a class="r" href="/en/publicaciones/mapa-ingenieria">
+        <div class="dir">End of the subject →</div>
+        <div class="tt">Back to the Topic Map</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Development of the topic <b>“Filter design”</b> of <b>Circuit Theory II</b> (Level 4), based on the
+  curriculum of the UTN Electronic Engineering program, 2023 curriculum — Ordinance No. 1849 of the
+  UTN Higher Council.
+  <a href="/en/publicaciones/mapa-ingenieria">Back to the Topic Map</a> ·
+  <a href="/en">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<!-- Las formulas se escriben en LaTeX y las compone KaTeX, que da la
+     tipografia de imprenta: integrales altas, fracciones bien espaciadas
+     y radicales prolijos. Si el CDN no responde, queda el LaTeX legible. -->
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, {delimiters:[{left:'\\[',right:'\\]',display:true},{left:'\\(',right:'\\)',display:false}],throwOnError:false,errorColor:'#f85149',strict:false});"></script>
+<script>
+/* Lowpass FIR by windows: h[n] = 2 fc sinc(2 fc (n - M)) w[n], M = (N-1)/2.
+   Windows: rectangular, Hann, Hamming and Blackman. Response by direct DTFT at
+   400 frequencies from 0 to fs/2, normalized to the DC gain.
+   Minimum attenuation: the maximum of the stopband, after the first
+   minimum past fc. Transition: from -1 dB until that level is reached.
+   Check (Python, N 51, fc 0.2): rectangular -21.0 dB; Hann -43.9;
+   Hamming -53.7; Blackman -75.3. */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var cv = $("fwLienzo"), ctx = cv.getContext("2d");
+  var NOM = { rect: "rectangular", hann: "Hann", hamming: "Hamming", blackman: "Blackman" };
+  function coma(v, d){ return v.toFixed(d).replace("-", "−"); }
+  function ventana(t, n, N){ var x = 2 * Math.PI * n / (N - 1); return t === "rect" ? 1 : t === "hann" ? 0.5 - 0.5 * Math.cos(x) : t === "hamming" ? 0.54 - 0.46 * Math.cos(x) : 0.42 - 0.5 * Math.cos(x) + 0.08 * Math.cos(2 * x); }
+  function disenar(t, N, fc){ var M = (N - 1) / 2, h = []; for(var n = 0; n < N; n++){ var k = n - M, s = k === 0 ? 2 * fc : Math.sin(2 * Math.PI * fc * k) / (Math.PI * k); h.push(s * ventana(t, n, N)); } return h; }
+  function modulo(h, f){ var re = 0, im = 0; for(var n = 0; n < h.length; n++){ re += h[n] * Math.cos(2 * Math.PI * f * n); im -= h[n] * Math.sin(2 * Math.PI * f * n); } return Math.hypot(re, im); }
+
+  function pintar(){
+    var t = $("fwV").value, N = +$("fwN").value, fc = +$("fwF").value;
+    $("fwNv").textContent = N; $("fwFv").innerHTML = coma(fc, 3) + " f<sub>s</sub>";
+    var h = disenar(t, N, fc), K = 400, fs = [], db = [], g0 = modulo(h, 0);
+    for(var k = 0; k <= K; k++){ var f = 0.5 * k / K; fs.push(f); db.push(20 * Math.log10(modulo(h, f) / g0 + 1e-12)); }
+    var i0 = -1; for(k = 0; k < K; k++) if(fs[k] > fc && db[k + 1] > db[k] && (t === "rect" || db[k] < -20)){ i0 = k; break; }
+    var at = -999; if(i0 >= 0) for(k = i0; k <= K; k++) at = Math.max(at, db[k]);
+    var pb = 0; for(k = 0; k <= K; k++) if(fs[k] <= fc && db[k] > -1) pb = fs[k];
+    var sb = 0.5; for(k = 0; k <= K; k++) if(fs[k] > fc && db[k] <= at + 0.01){ sb = fs[k]; break; }
+
+    var r = cv.getBoundingClientRect();
+    if(r.width){
+      var dp = Math.min(window.devicePixelRatio || 1, 2);
+      if(cv.width !== Math.round(r.width * dp) || cv.height !== Math.round(r.height * dp)){
+        cv.width = Math.round(r.width * dp); cv.height = Math.round(r.height * dp);
+      }
+      ctx.setTransform(dp, 0, 0, dp, 0, 0);
+      var W = r.width, H = r.height, x0 = 40, x1 = W - 12, c0 = 8, c1 = H * 0.3, d0 = H * 0.38, d1 = H - 20;
+      ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
+      /* coefficients */
+      var hm = Math.max.apply(null, h.map(Math.abs)), yc = c0 + (c1 - c0) * 0.7;
+      ctx.strokeStyle = "#3a4456"; ctx.beginPath(); ctx.moveTo(x0, yc); ctx.lineTo(x1, yc); ctx.stroke();
+      h.forEach(function(v, n){ var x = x0 + (n + 0.5) / N * (x1 - x0), y = yc - v / hm * (yc - c0); ctx.strokeStyle = "#58a6ff"; ctx.beginPath(); ctx.moveTo(x, yc); ctx.lineTo(x, y); ctx.stroke(); ctx.fillStyle = "#58a6ff"; ctx.beginPath(); ctx.arc(x, y, N > 61 ? 1.6 : 2.2, 0, Math.PI * 2); ctx.fill(); });
+      ctx.fillStyle = "#8b93a3"; ctx.textAlign = "left"; ctx.fillText("h[n], " + N + " coefficients", x0, c1 + 10);
+      /* response */
+      var Y = function(d){ return d0 + (-Math.max(-100, Math.min(0, d))) / 100 * (d1 - d0); }, X = function(f){ return x0 + f / 0.5 * (x1 - x0); };
+      [0, -25, -50, -75, -100].forEach(function(d){ ctx.strokeStyle = "#2a3140"; ctx.beginPath(); ctx.moveTo(x0, Y(d)); ctx.lineTo(x1, Y(d)); ctx.stroke(); ctx.fillStyle = "#6b7484"; ctx.textAlign = "right"; ctx.fillText(d + " dB", x0 - 3, Y(d) + 3); });
+      if(at > -999){ ctx.strokeStyle = "rgba(242,204,96,.85)"; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(X(fc), Y(at)); ctx.lineTo(x1, Y(at)); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.strokeStyle = "rgba(154,167,180,.5)"; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(X(fc), d0); ctx.lineTo(X(fc), d1); ctx.stroke(); ctx.setLineDash([]);
+      ctx.strokeStyle = "#7ee787"; ctx.lineWidth = 2; ctx.beginPath();
+      db.forEach(function(d, k2){ var x = X(fs[k2]), y = Y(d); if(k2) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+      ctx.stroke(); ctx.lineWidth = 1;
+      ctx.fillStyle = "#6b7484"; ctx.textAlign = "left"; ctx.fillText("0", x0, H - 5); ctx.textAlign = "right"; ctx.fillText("fs/2", x1, H - 5);
+      ctx.textAlign = "center"; ctx.fillStyle = "#8b93a3"; ctx.fillText("frequency response", (x0 + x1) / 2, H - 5);
+    }
+
+    var tabla = { rect: 0.9, hann: 3.1, hamming: 3.3, blackman: 5.5 }[t];
+    $("fwDatos").innerHTML =
+      "<span>minimum stopband attenuation</span><b>" + coma(-at, 1) + " dB</b>" +
+      "<span>measured transition (from −1 dB to the stopband level)</span><b>" + coma(sb - pb, 3) + " f<sub>s</sub></b>" +
+      "<span>group delay</span><b>" + coma((N - 1) / 2, 0) + " samples, the same for all frequencies</b>" +
+      "<span>multiplications per sample</span><b>" + N + " (or " + Math.ceil(N / 2) + " using the symmetry)</b>";
+    var nota = "With the " + NOM[t] + " window the attenuation stays near " + coma(-at, 0) + " dB even if N is changed: it is set by the shape of the window. " +
+      "Increasing N only narrows the transition, which the table estimates at " + coma(tabla, 1) + "/N = " + coma(tabla / N, 3) + " f<sub>s</sub>." +
+      (t === "rect" ? " Without a window, the Gibbs ripple leaves the stopband at barely 21 dB." : "");
+    $("fwNota").innerHTML = nota;
+  }
+  ["fwV", "fwN", "fwF"].forEach(function(id){ $(id).addEventListener("input", pintar); });
+  window.addEventListener("resize", pintar);
+  pintar(); setTimeout(pintar, 400);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>
