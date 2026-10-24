@@ -126,6 +126,39 @@ function paso(dt) {
     ubicar(a);
   }
 }
+// un chico en la esquina frente al cartel haciendo el «six seven»: palmas para arriba, subiendo y bajando
+const CHICO = (function () {
+  const g = new THREE.Group(); g.position.set(7.2, .3, 8.2); g.rotation.y = Math.atan2(-37, -40); esc.add(g);
+  const piel = 0xd9a77c;
+  caja(.32, 1.1, .32, 0x2b3a67, -.2, .55, 0, g); caja(.32, 1.1, .32, 0x2b3a67, .2, .55, 0, g);      // piernas (jean)
+  caja(.36, .18, .5, 0xffffff, -.2, .09, .08, g); caja(.36, .18, .5, 0xffffff, .2, .09, .08, g);    // zapatillas
+  caja(.8, 1.05, .45, 0xff6b35, 0, 1.62, 0, g);                                                     // remera
+  const cab = new THREE.Mesh(new THREE.SphereGeometry(.3, 14, 12), M(piel)); cab.position.set(0, 2.42, 0); cab.castShadow = true; g.add(cab);
+  caja(.62, .14, .62, 0x1b1b1b, 0, 2.66, 0, g); caja(.62, .08, .3, 0x1b1b1b, 0, 2.6, .3, g);        // gorra con visera
+  // brazos: hombro → codo hacia adelante, antebrazo con la palma para arriba
+  function brazo(lado) {
+    const h = new THREE.Group(); h.position.set(lado * .5, 2.05, 0); g.add(h);
+    caja(.2, .55, .2, 0xff6b35, 0, -.27, 0, h);
+    const ante = new THREE.Group(); ante.position.set(0, -.55, 0); h.add(ante);
+    caja(.17, .17, .55, piel, 0, 0, .28, ante); caja(.26, .06, .26, piel, 0, .06, .6, ante);           // antebrazo y palma
+    return ante;
+  }
+  const izq = brazo(-1), der = brazo(1);
+  // cartelito flotante «6 7» que alterna
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128; const c = cv.getContext('2d');
+  const tex = new THREE.CanvasTexture(cv);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true })); sp.scale.set(1.6, .8, 1); sp.position.set(0, 3.5, 0); g.add(sp);
+  let ult = '';
+  function rotulo(txt) { if (txt === ult) return; ult = txt; c.clearRect(0, 0, 256, 128); c.font = 'bold 96px Segoe UI, sans-serif'; c.textAlign = 'center'; c.lineWidth = 10; c.strokeStyle = '#1b1b1b'; c.strokeText(txt, 128, 98); c.fillStyle = '#f2cc60'; c.fillText(txt, 128, 98); tex.needsUpdate = true; }
+  let t = 0;
+  return function (dt) {
+    t += dt;
+    const f = Math.sin(t * 7);
+    izq.rotation.x = .25 + f * .45; der.rotation.x = .25 - f * .45;      // una palma sube y la otra baja
+    g.position.y = .3 + Math.abs(Math.sin(t * 7)) * .05;                 // un leve rebote
+    rotulo(f > 0 ? '6' : '7');
+  };
+})();
 const cam = new THREE.PerspectiveCamera(45, 1, 0.1, 500);
 const ctl = new THREE.OrbitControls(cam, ren.domElement); ctl.maxPolarAngle = Math.PI / 2.1; ctl.enableDamping = true;
 const VISTAS = { iso: [[-30, 20, -32], [3, 3, 3]], arriba: [[0, 85, 0.1], [0, 0, 0]], calle: [[-1.5, 2.2, -32], [0, 2.5, 0]] };
@@ -137,5 +170,5 @@ vista('iso');
 function medir() { const w = div.clientWidth, h = div.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
 if (window.ResizeObserver) new ResizeObserver(medir).observe(div); medir();
 const IDX = { r: 0, a: 1, v: 2 };
-return { paso(dt, la, lb) { LZ.EO = IDX[la]; LZ.NS = IDX[lb]; paso(dt); ctl.update(); ren.render(esc, cam); } };
+return { paso(dt, la, lb) { LZ.EO = IDX[la]; LZ.NS = IDX[lb]; paso(dt); CHICO(dt); ctl.update(); ren.render(esc, cam); } };
 };
