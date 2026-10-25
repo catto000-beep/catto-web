@@ -90,8 +90,7 @@ drop policy if exists entregas_del  on storage.objects;
 drop policy if exists fotos_read    on storage.objects;
 create policy entregas_read on storage.objects for select
   using (bucket_id='entregas' and ((storage.foldername(name))[1] = auth.uid()::text or es_profesor()));
-create policy entregas_del on storage.objects for delete
-  using (bucket_id='entregas' and ((storage.foldername(name))[1] = auth.uid()::text or es_profesor()));
+-- (entregas_del no existía antes de la etapa 1: reentrega.sql nunca se había corrido)
 create policy fotos_read on storage.objects for select
   using (bucket_id='fotos-perfil' and es_miembro_aula());
 

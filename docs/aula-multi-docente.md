@@ -1,6 +1,13 @@
 # Aula Catto para varios docentes — diseño
 
-Fecha: 25/10/2026. Estado: **etapa 1 escrita, sin ejecutar.**
+Fecha: 25/10/2026. Estado: **etapa 1 aplicada el 25/10/2026** (respaldo previo en el esquema
+`respaldo_20261025`; pruebas de aislamiento pasadas; las dos Edge Functions desplegadas).
+
+Al aplicarla apareció un problema y quedó corregido: las columnas de autoría (`curso.creado_por`,
+`materia.creada_por`, `escuela.creada_por`) tenían clave foránea a `perfil`, y la API dejó de poder
+resolver «el curso del estudiante» (dos caminos entre perfil y curso, error PGRST201). Se quitaron esas
+claves; el script ya está corregido. La respuesta de error (HTTP 300) quedó en la caché del navegador
+de Diego unos minutos; se renovó a mano.
 
 ## La idea
 

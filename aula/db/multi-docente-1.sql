@@ -32,7 +32,7 @@ create table if not exists escuela (
   cue        text unique,
   codigo     text unique,                        -- prefijo de los usuarios de estudiantes (etapa 3)
   estado     text not null default 'pendiente' check (estado in ('pendiente','aprobada','rechazada')),
-  creada_por uuid references perfil(id) on delete set null,
+  creada_por uuid,                                 -- sin clave foránea: ver la nota de curso.creado_por
   creada_en  timestamptz not null default now()
 );
 alter table escuela add column if not exists departamento   text;
@@ -50,14 +50,16 @@ end $$;
 
 alter table curso add column if not exists escuela_id bigint references escuela(id) on delete restrict;
 alter table curso add column if not exists estado     text not null default 'aprobado';
-alter table curso add column if not exists creado_por uuid references perfil(id) on delete set null;
+-- creado_por y creada_por van SIN clave foránea a perfil: con ella la API ve dos caminos entre perfil y
+-- curso y los embeds «curso(nombre)» desde perfil fallan (PGRST201). Pasó al aplicarla el 25/10/2026.
+alter table curso add column if not exists creado_por uuid;
 do $$ begin
   if not exists (select 1 from pg_constraint where conname = 'curso_estado_check') then
     alter table curso add constraint curso_estado_check check (estado in ('pendiente','aprobado','rechazado'));
   end if;
 end $$;
 
-alter table materia add column if not exists creada_por uuid references perfil(id) on delete set null;
+alter table materia add column if not exists creada_por uuid;
 
 create table if not exists materia_docente (
   materia_id  bigint not null references materia(id) on delete cascade,

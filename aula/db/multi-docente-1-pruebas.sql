@@ -57,6 +57,8 @@ insert into entrega (actividad_id, estudiante_id, nota_num) values
 -- =========================================================
 -- PROFE A (M1 en C1)
 -- =========================================================
+-- ids anotados antes de cambiar de rol (el profe A no ve lo de M2: buscarlo como él no probaría nada)
+select set_config('prueba.act2', (select id from actividad where titulo = 'ZZ act2')::text, true);
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-0000000000a1","role":"authenticated"}', true);
 do $$ begin
@@ -68,8 +70,12 @@ do $$ begin
   if es_admin() then raise exception 'FALLÓ: el profe A no es admin'; end if;
 end $$;
 -- no puede calificar ni tocar lo de M2
-update entrega set nota_num = 1 where actividad_id = (select id from actividad where titulo='ZZ act2');
-update actividad set titulo = 'pisado' where titulo = 'ZZ act2';
+update entrega set nota_num = 1 where actividad_id = current_setting('prueba.act2')::bigint;
+update actividad set titulo = 'pisado' where id = current_setting('prueba.act2')::bigint;
+do $$ begin
+  if exists (select 1 from actividad where id = current_setting('prueba.act2')::bigint) then
+    raise exception 'FALLÓ: el profe A ve la actividad de M2'; end if;
+end $$;
 -- no puede crear actividades en la materia del profe B
 do $$ begin
   begin
@@ -147,6 +153,9 @@ end $$;
 -- =========================================================
 -- ALUMNO 1 (C1)
 -- =========================================================
+-- el id de act3 se anota antes de cambiar de rol: como alumno de C1 no la ve, y un
+-- «insert … select … where titulo='ZZ act3'» no insertaría nada sin dar error
+select set_config('prueba.act3', (select id from actividad where titulo = 'ZZ act3')::text, true);
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-a000-0000000000d1","role":"authenticated"}', true);
 do $$ begin
@@ -154,7 +163,7 @@ do $$ begin
   if (select count(*) from entrega) <> 2 then raise exception 'FALLÓ: el alumno 1 tiene que ver solo sus 2 entregas'; end if;
   if (select count(*) from perfil) <> 1 then raise exception 'FALLÓ: el alumno 1 tiene que ver solo su perfil'; end if;
   begin
-    insert into entrega (actividad_id, estudiante_id) select id, auth.uid() from actividad where titulo = 'ZZ act3';
+    insert into entrega (actividad_id, estudiante_id) values (current_setting('prueba.act3')::bigint, auth.uid());
     raise exception 'FALLÓ: el alumno 1 entregó en una actividad de otro curso';
   exception when insufficient_privilege then null;
   end;
