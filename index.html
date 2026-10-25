@@ -115,6 +115,8 @@ section.par-bl{padding:22px 0 0}
   -webkit-mask-image:linear-gradient(#000 calc(100% - 28px),transparent);mask-image:linear-gradient(#000 calc(100% - 28px),transparent)}
 .amigas.desliza .am-lista::-webkit-scrollbar{width:6px}.amigas.desliza .am-lista::-webkit-scrollbar-thumb{background:rgba(163,113,247,.6);border-radius:3px}
 .amigas.desliza.al-fondo .am-lista{-webkit-mask-image:none;mask-image:none}
+.mod-aviso{display:block;max-width:1240px;margin:0 auto 12px;padding:11px 16px;border-radius:10px;background:rgba(214,48,63,.14);border:1px solid rgba(214,48,63,.55);color:#ffd7db;font-size:14.5px;text-decoration:none}
+.mod-aviso b{color:#fff}.mod-aviso span{color:#ff9aa3;font-weight:600;margin-left:4px}.mod-aviso:hover{background:rgba(214,48,63,.22);text-decoration:none}
 </style>
 <!-- idiomas -->
 <link rel="alternate" hreflang="es" href="https://catto.ar/">
@@ -282,6 +284,39 @@ section.par-bl{padding:22px 0 0}
       el.textContent = (x.n === 1 ? '1 consulta' : x.n + ' consultas') + ' · la última, ' + hace + ': ';
       el.appendChild(b);
       document.querySelector('#foroFranja .ff-go').textContent = 'Ir al foro →';
+    })
+    .catch(function () {});
+})();
+</script>
+
+<script>
+/* Aviso de moderación: solo para quien entró al foro con rol de moderador. Se lee la sesión
+   que guarda Supabase en este navegador; si está vencida o no es moderador, no se muestra nada. */
+(function () {
+  var B = 'https://fjzcajiemogsqizdgqjs.supabase.co/rest/v1/', K = 'sb_publishable_mGM62YDOYWB3uvFj6QCO_A_Elj_cjAy';
+  var ses = null;
+  try { ses = JSON.parse(localStorage.getItem('sb-fjzcajiemogsqizdgqjs-auth-token') || 'null'); } catch (e) {}
+  if (!ses || !ses.access_token || !ses.user || (ses.expires_at && ses.expires_at * 1000 < Date.now())) return;
+  var H = { apikey: K, Authorization: 'Bearer ' + ses.access_token };
+  function cuenta(q) {
+    return fetch(B + q + '&select=id&limit=1', { headers: Object.assign({ Prefer: 'count=exact' }, H) })
+      .then(function (r) { return r.ok ? parseInt((r.headers.get('content-range') || '').split('/')[1], 10) || 0 : 0; });
+  }
+  fetch(B + 'foro_perfil?id=eq.' + ses.user.id + '&select=rol', { headers: H })
+    .then(function (r) { return r.json(); })
+    .then(function (p) {
+      if (!p || !p[0] || p[0].rol !== 'moderador') return;
+      return Promise.all([cuenta('foro_tema?estado=eq.pendiente'), cuenta('foro_respuesta?estado=eq.pendiente'), cuenta('foro_denuncia?atendida=eq.false')])
+        .then(function (n) {
+          var men = n[0] + n[1], den = n[2];
+          if (!men && !den) return;
+          var partes = [];
+          if (men) partes.push(men + (men === 1 ? ' mensaje por aprobar' : ' mensajes por aprobar'));
+          if (den) partes.push(den + (den === 1 ? ' denuncia sin atender' : ' denuncias sin atender'));
+          var a = document.createElement('a'); a.className = 'mod-aviso'; a.href = '/foro/moderar';
+          a.innerHTML = '<b>Moderación del foro:</b> ' + partes.join(' y ') + '. <span>Revisar →</span>';
+          var f = document.querySelector('#foroFranja .container'); if (f) f.parentNode.insertBefore(a, f);
+        });
     })
     .catch(function () {});
 })();
