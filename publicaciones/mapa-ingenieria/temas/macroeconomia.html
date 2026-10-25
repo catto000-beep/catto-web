@@ -226,6 +226,10 @@
       ctx.clearRect(0, 0, W, H); ctx.setLineDash([]); ctx.font = "10px system-ui, sans-serif";
       var marcas = [10, 20, 30, 50, 70, 100, 150, 200, 300, 500, 700, 1000, 2000, 3000, 5000, 10000].filter(function(v){ var l = Math.log10(v); return l >= lo && l <= hi; });
       if(marcas.length < 3) marcas = [Math.pow(10, lo + 0.05), 100, Math.pow(10, hi - 0.05)].map(function(v){ return Math.round(v); });
+      /* ralear: dejar solo las marcas separadas al menos 14 px (la de 100 tiene prioridad) */
+      (function(){ var orden = marcas.slice().sort(function(p, q){ return (p === 100 ? -1 : 0) - (q === 100 ? -1 : 0); }), ok = [];
+        orden.forEach(function(v){ if(ok.every(function(u){ return Math.abs(Y(v) - Y(u)) >= 14; })) ok.push(v); });
+        marcas = ok; })();
       ctx.strokeStyle = "#252d3a"; ctx.lineWidth = 1;
       marcas.forEach(function(v){ ctx.beginPath(); ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); ctx.stroke(); });
       ctx.fillStyle = "#6b7484"; ctx.textAlign = "right";
