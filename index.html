@@ -105,6 +105,15 @@ section.par-bl{padding:22px 0 0}
 .am-web b{display:block;font-size:15px;color:#c9b3ff;margin-bottom:3px}.am-web .am-txt span{display:block;font-size:13px;color:var(--muted);line-height:1.45}
 .am-web em{display:block;font-style:normal;font-size:12.5px;color:#c9b3ff;margin-top:6px}
 @media(max-width:520px){.am-web a{grid-template-columns:1fr}}
+/* desde la tercera web: de a dos por fila, imagen arriba */
+@media(min-width:640px){.am-lista:has(> li:nth-child(3)){display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
+.am-lista:has(> li:nth-child(3)) .am-web a{grid-template-columns:1fr;align-items:start}
+.am-lista:has(> li:nth-child(3)) li{border-bottom:0}}
+/* cuando no entran: deslizante interno (lo activa el script según la altura de la fila) */
+.amigas.desliza .am-lista{overflow-y:auto;padding-right:6px;scrollbar-width:thin;scrollbar-color:rgba(163,113,247,.6) transparent;
+  -webkit-mask-image:linear-gradient(#000 calc(100% - 28px),transparent);mask-image:linear-gradient(#000 calc(100% - 28px),transparent)}
+.amigas.desliza .am-lista::-webkit-scrollbar{width:6px}.amigas.desliza .am-lista::-webkit-scrollbar-thumb{background:rgba(163,113,247,.6);border-radius:3px}
+.amigas.desliza.al-fondo .am-lista{-webkit-mask-image:none;mask-image:none}
 </style>
 <!-- idiomas -->
 <link rel="alternate" hreflang="es" href="https://catto.ar/">
@@ -1349,6 +1358,29 @@ section.par-bl{padding:22px 0 0}
     </div>
   </div>
 </section>
+
+<script>
+/* webs amigas: el recuadro no pasa de la altura de su fila; si la lista no entra, se desliza por dentro */
+(function () {
+  var box = document.querySelector(".amigas"); if (!box) return;
+  var lista = box.querySelector(".am-lista"), grid = box.parentElement;
+  function ajustar() {
+    lista.style.maxHeight = ""; box.classList.remove("desliza");
+    /* altura natural de la fila sin el recuadro (las tarjetas se estiran a la fila más alta) */
+    box.style.display = "none"; var hermanos = [].filter.call(grid.children, function (c) { return c !== box && !c.hidden; });
+    var alturas = hermanos.map(function (c) { return [c.offsetTop, c.offsetHeight]; }); box.style.display = "";
+    var top = box.offsetTop, alto = 0;
+    alturas.forEach(function (h) { if (Math.abs(h[0] - top) < 4) alto = Math.max(alto, h[1]); });
+    if (!alto || box.offsetHeight <= alto) return;
+    lista.style.maxHeight = Math.max(160, alto - (box.offsetHeight - lista.offsetHeight)) + "px";
+    box.classList.add("desliza"); fondo();
+  }
+  function fondo() { box.classList.toggle("al-fondo", lista.scrollTop + lista.clientHeight >= lista.scrollHeight - 4); }
+  lista.addEventListener("scroll", fondo);
+  window.addEventListener("load", ajustar); window.addEventListener("resize", ajustar);
+  var bt = document.getElementById("btIn"); if (bt) bt.addEventListener("input", function () { setTimeout(ajustar, 50); });
+})();
+</script>
 
 <!-- ============ EL MAPA ============ -->
 <section class="block" id="mapa">
