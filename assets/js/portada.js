@@ -1,8 +1,9 @@
 /* ============================================================
    catto.ar — Portada: el desglose de las dos carreras
 
-   Son dos: los cuatro años de la tecnicatura y los seis niveles de la
-   ingeniería. Las columnas y los enlaces vienen escritos en el HTML: no los
+   Son tres: los cuatro años de la tecnicatura en Electrónica, los de la
+   tecnicatura en Electricidad y los seis niveles de la ingeniería. Las
+   columnas y los enlaces vienen escritos en el HTML: no los
    arma este archivo. Eso importa por dos motivos. Un buscador que no ejecuta
    javascript igual encuentra las páginas de tema —antes no las veía
    ninguna— y quien tenga el javascript apagado ve la lista completa.
@@ -14,19 +15,20 @@
    4) Llegando con /#t=<tema>, abrir la materia de ese tema y marcarlo.
 
    El HTML de la tecnicatura lo genera scratchpad/generar-anios.js a partir
-   de assets/js/tecnicatura.js, y el de la ingeniería lo rehace
+   de assets/js/tecnicatura.js; el de Electricidad, scratchpad/anios_electricidad.py
+   a partir de assets/js/tecnicatura-electricidad.js; y el de la ingeniería lo rehace
    _src-publicaciones/ingenieria/motor.py en cada corrida, entre los
    marcadores <!-- ingenieria:niveles -->.
    ============================================================ */
 (function () {
   "use strict";
 
-  /* Dos desgloses: los cuatro años de la tecnicatura y los seis niveles de
-     la ingeniería. El comportamiento es el mismo para los dos. */
+  /* Tres desgloses: las dos tecnicaturas y los seis niveles de la
+     ingeniería. El comportamiento es el mismo para los tres. */
   var EN = (document.documentElement.lang || "").indexOf("en") === 0;
   var TX = EN ? { de: " of ", t1: "1 topic", tn: " topics" } : { de: " de ", t1: "1 tema", tn: " temas" };
 
-  var grids = ["gridAnios", "gridNiveles"]
+  var grids = ["gridAnios", "gridElec", "gridNiveles"]
     .map(function (id) { return document.getElementById(id); })
     .filter(Boolean);
   if (!grids.length) return;
