@@ -8,6 +8,10 @@
    ========================================================================== */
 (function () {
   "use strict";
+  /* idioma de la página: «en» en /en/, castellano en el resto */
+  var EN = document.documentElement.lang === "en";
+  function T(es, en) { return EN ? en : es; }
+
   var CABLE = "#8896a6", COMP = "#c8d2dd", ROT = "#9aa7b4", AZUL = "#58a6ff",
       VERDE = "#3fb950", ROJO = "#f85149", AMBAR = "#d29922", GRILLA = "#212836",
       EJE = "#5a6675", FONDO = "#1c2230";
@@ -113,10 +117,10 @@
     var d = new Dib(), t = d.bjt(100, 75, { tipo: tipo });
     d.cable([[48, 75], [100, 75]]).cable([t.C, [130, 22]]).cable([t.E, [130, 128]]);
     /* cada letra con su nombre al lado, en el mismo renglón */
-    d.texto(40, 80, "B", { a: "end", t: 14, b: 700, c: "#e6edf3" }).texto(40, 98, "base", { a: "end", t: 10.5 })
-     .texto(138, 28, "C", { t: 14, b: 700, c: "#e6edf3" }).texto(152, 28, "colector", { t: 10.5 })
-     .texto(138, 133, "E", { t: 14, b: 700, c: "#e6edf3" }).texto(152, 133, "emisor", { t: 10.5 });
-    return d.svg("0 0 220 150", 220, 150, "Símbolo del transistor " + tipo.toUpperCase());
+    d.texto(40, 80, "B", { a: "end", t: 14, b: 700, c: "#e6edf3" }).texto(40, 98, T("base", "base"), { a: "end", t: 10.5 })
+     .texto(138, 28, "C", { t: 14, b: 700, c: "#e6edf3" }).texto(152, 28, T("colector", "collector"), { t: 10.5 })
+     .texto(138, 133, "E", { t: 14, b: 700, c: "#e6edf3" }).texto(152, 133, T("emisor", "emitter"), { t: 10.5 });
+    return d.svg("0 0 220 150", 220, 150, T("Símbolo del transistor ", "Transistor symbol: ") + tipo.toUpperCase());
   };
 
   /* --------------------------------------- 2 y 4 · curvas y recta de carga */
@@ -198,7 +202,7 @@
         d.texto(elegido[0], elegido[1], "Q", { a: elegido[2], t: 12, b: 700, c: AMBAR, halo: true });
       }
     }
-    return d.svg("0 0 " + W + " " + H, W, H, "Curvas características de salida del transistor");
+    return d.svg("0 0 " + W + " " + H, W, H, T("Curvas características de salida del transistor", "Output characteristic curves of the transistor"));
   };
 
   /* --------------------------------------------------- 5 · como llave */
@@ -227,7 +231,7 @@
     d.cable([[52, YB], [xm - 15, YB]], g).resH(xm - 15, xm + 15, YB, on ? VERDE : COMP).cable([[xm + 15, YB], [X - 30, YB]], g);
     d.texto(xm, YB - 15, "R_B", { a: "middle" });
     d.borne(52, YB, g).texto(42, YB + 4, on ? "5 V" : "0 V", { a: "end", c: on ? VERDE : AZUL, t: 13, b: 700 });
-    return d.svg("0 0 300 290", 300, 290, "Transistor como llave con un LED en el colector");
+    return d.svg("0 0 300 290", 300, 290, T("Transistor como llave con un LED en el colector", "Transistor as a switch with an LED in the collector"));
   };
 
   /* ---------------------------------------------- 6 · como amplificador */
@@ -244,13 +248,13 @@
   }
   F.amplificador = function () {
     var d = new Dib();
-    d.texto(150, 18, "Señal montada sobre el punto Q", { a: "middle", t: 12.5, b: 700, c: "#e6edf3" });
+    d.texto(150, 18, T("Señal montada sobre el punto Q", "Signal riding on the Q point"), { a: "middle", t: 12.5, b: 700, c: "#e6edf3" });
     onda(d, 22, 96, 84, 11, 1.5, "#9aa7b4");
     d.cable([[114, 96], [140, 96]], CABLE).add('<polygon points="140,90 151,96 140,102" fill="' + CABLE + '"/>');
     onda(d, 160, 96, 120, 48, 1.5, AZUL);
-    d.texto(64, 172, "ΔI_B chica", { a: "middle" });
-    d.texto(220, 172, "ΔI_C = β · ΔI_B, en fase", { a: "middle", c: AZUL });
-    return d.svg("0 0 300 190", 300, 190, "Una variación chica de la corriente de base produce una variación grande de la de colector");
+    d.texto(64, 172, T("ΔI_B chica", "small ΔI_B"), { a: "middle" });
+    d.texto(220, 172, T("ΔI_C = β · ΔI_B, en fase", "ΔI_C = β · ΔI_B, in phase"), { a: "middle", c: AZUL });
+    return d.svg("0 0 300 190", 300, 190, T("Una variación chica de la corriente de base produce una variación grande de la de colector", "A small variation in the base current produces a large variation in the collector current"));
   };
 
   /* ------------------------------------------------- 7 · polarización */
@@ -264,7 +268,7 @@
       d.resV(XC, 20, t.C[1]).texto(XC - 14, (20 + t.C[1]) / 2 + 5, "R_C", { a: "end" });
       d.cable([t.E, [XC, t.E[1] + 14]]).masa(XC, t.E[1] + 14);
       d.texto(XC + 8, t.C[1] + 4, "C").texto(XC + 8, t.E[1] - 6, "E").texto(XC - 48, YB - 8, "B", { a: "middle" });
-      return d.svg("0 0 260 240", 260, 240, "Polarización de base fija");
+      return d.svg("0 0 260 240", 260, 240, T("Polarización de base fija", "Fixed-bias (fixed base current) biasing"));
     }
     var YB2 = 140, YM = 276, t2 = d.bjt(XC - 30, YB2);
     d.resV(XI, 20, YB2).resV(XI, YB2, YM).nodo(XI, YB2).cable([[XI, YB2], [XC - 30, YB2]]);
@@ -273,7 +277,7 @@
     d.resV(XC, t2.E[1], YM).texto(XC + 14, (t2.E[1] + YM) / 2 + 5, "R_E");
     d.cable([[XI, YM], [XC, YM]]).nodo((XI + XC) / 2, YM).masa((XI + XC) / 2, YM);
     d.texto(XC + 8, t2.C[1] + 4, "C").texto(XC + 8, t2.E[1] - 6, "E").texto(XC - 48, YB2 - 8, "B", { a: "middle" });
-    return d.svg("0 0 260 300", 260, 300, "Polarización por divisor de tensión con resistencia de emisor");
+    return d.svg("0 0 260 300", 260, 300, T("Polarización por divisor de tensión con resistencia de emisor", "Voltage-divider biasing with an emitter resistor"));
   };
 
   /* -------------------------------------------- 8 · fuente regulada */
@@ -294,10 +298,10 @@
     d.cable([t.C, [XQ, 20]]).nodo(XQ, 20);
     d.cable([t.E, [XQ, YO], [XL, YO]], VERDE).nodo(XL, YO, VERDE);
     d.texto(XL + 8, YO - 6, "V_out", { c: AZUL, t: 13 });
-    d.resV(XL, YO, YM).texto(XL + 14, (YO + YM) / 2 + 5, "carga");
+    d.resV(XL, YO, YM).texto(XL + 14, (YO + YM) / 2 + 5, T("carga", "load"));
     d.cable([[XZ, YM], [XL, YM]]).nodo((XZ + XL) / 2, YM).masa((XZ + XL) / 2, YM);
     d.texto(XQ + 8, t.C[1] - 20, "C").texto(XQ + 8, t.E[1] - 6, "E").texto(XQ - 48, YB - 8, "B", { a: "middle" });
-    return d.svg("0 0 320 294", 320, 294, "Fuente regulada: seguidor de emisor con referencia zener");
+    return d.svg("0 0 320 294", 320, 294, T("Fuente regulada: seguidor de emisor con referencia zener", "Regulated power supply: emitter follower with a zener reference"));
   };
 
   /* ---------------------------------------------- 9 · emisor común */
@@ -331,7 +335,7 @@
       d.resV(XC, t.E[1], YM).texto(XC + 14, (t.E[1] + YM) / 2 + 5, "R_E");
       d.cable([[70, YM], [XC, YM]]).nodo(XE, YM).masa(XE, YM);
     }
-    return d.svg("-40 0 400 300", 400, 300, "Amplificador en emisor común con divisor de tensión" + (conCE ? " y capacitor de paso" : ""));
+    return d.svg("-40 0 400 300", 400, 300, T("Amplificador en emisor común con divisor de tensión" + (conCE ? " y capacitor de paso" : ""), "Common-emitter amplifier with voltage divider" + (conCE ? " and bypass capacitor" : "")));
   };
 
   /* ---------------------------------- 9 · entrada y salida del emisor común */
@@ -339,9 +343,9 @@
     var d = new Dib(), rec = amp >= 58;
     onda(d, 20, 62, 100, 8, 1.5, "#9aa7b4");
     onda(d, 150, 62, 130, Math.min(amp, 58), 1.5, AZUL, true, rec ? 0.82 : null);
-    d.texto(70, 142, "entrada", { a: "middle" });
-    d.texto(215, 142, "salida (×" + ganancia + ")", { a: "middle", c: AZUL });
-    return d.svg("0 0 300 148", 300, 148, "Entrada y salida del emisor común: la salida es mayor e invertida");
+    d.texto(70, 142, T("entrada", "input"), { a: "middle" });
+    d.texto(215, 142, T("salida (×", "output (×") + ganancia + ")", { a: "middle", c: AZUL });
+    return d.svg("0 0 300 148", 300, 148, T("Entrada y salida del emisor común: la salida es mayor e invertida", "Input and output of the common emitter: the output is larger and inverted"));
   };
 
   /* -------------------------------------------- 10 · colector común */
@@ -361,7 +365,7 @@
     var xm = (XQ + 260) / 2;
     d.cable([[XQ, YO], [xm - 4, YO]], VERDE).capH(xm - 4, xm + 4, YO).cable([[xm + 4, YO], [260, YO]]).borne(260, YO);
     d.texto(xm, YO - 22, "C_2", { a: "middle" }).texto(268, YO + 4, "v_out", { c: AZUL, t: 13 });
-    return d.svg("-40 0 360 290", 360, 290, "Seguidor de emisor: colector a VCC, salida por el emisor");
+    return d.svg("-40 0 360 290", 360, 290, T("Seguidor de emisor: colector a VCC, salida por el emisor", "Emitter follower: collector to VCC, output from the emitter"));
   };
 
   /* ------------------------------------------------- 11 · Darlington */
@@ -374,7 +378,7 @@
     d.cable([q1.E, [106, 132], [150, 132]]);
     d.cable([q2.E, [180, 186], [224, 186]]).borne(224, 186).texto(232, 191, "E", { t: 13, b: 700, c: "#e6edf3" });
     d.texto(118, 74, "Q_1", { t: 12.5, b: 700, c: "#e6edf3" }).texto(192, 136, "Q_2", { t: 12.5, b: 700, c: "#e6edf3" });
-    return d.svg("0 0 250 206", 250, 206, "Par Darlington: el emisor de Q1 maneja la base de Q2");
+    return d.svg("0 0 250 206", 250, 206, T("Par Darlington: el emisor de Q1 maneja la base de Q2", "Darlington pair: the emitter of Q1 drives the base of Q2"));
   };
 
   window.cattoBJT = F;

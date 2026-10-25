@@ -33,9 +33,14 @@
   var EN = [
     "/",
     "/descargas",
+    "/publicaciones/amplificadores-operacionales",
     "/publicaciones/ca-vectorial",
+    "/publicaciones/calculadora-resistores",
     "/publicaciones/carta-smith",
+    "/publicaciones/conversor-si",
     "/publicaciones/escritura-cursiva",
+    "/publicaciones/fuente-lm317",
+    "/publicaciones/logica-digital",
     "/publicaciones/mapa-electronica",
     "/publicaciones/mapa-electronica/temas/alumbrado",
     "/publicaciones/mapa-electronica/temas/amplificadores-potencia",
@@ -440,10 +445,14 @@
     "/publicaciones/mapa-ingenieria/temas/uniones-quimicas",
     "/publicaciones/mapa-ingenieria/temas/variables-estado",
     "/publicaciones/mapa-ingenieria/temas/vectores-r2-r3",
+    "/publicaciones/mc1496-modulador",
     "/publicaciones/semaforo-logico",
     "/publicaciones/simbologia",
+    "/publicaciones/simulador-555",
     "/publicaciones/simulador-instrumental",
+    "/publicaciones/telecomunicaciones",
     "/publicaciones/tortuga",
+    "/publicaciones/transistores-bipolares",
     "/taller"
   ];
   /* <</lista-en>> */
