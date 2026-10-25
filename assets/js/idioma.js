@@ -500,7 +500,13 @@
     '.idioma>button svg{width:15px;height:15px;opacity:.85}' +
     '.idioma>button .fl{font-size:10px;opacity:.7}' +
     '.idioma-menu{position:fixed;z-index:400;min-width:190px;margin:0;padding:4px;list-style:none;background:#161b22;border:1px solid #30363d;border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,.35);display:none}' +
-    '.idioma-menu.abierto{display:block}' +
+    '.idioma-menu.abierto{display:block;transform-origin:top;animation:idmAbre .22s ease}' +
+    /* como los desplegables de la portada: el menú baja y las opciones caen una tras otra */
+    '.idioma-menu.abierto li{animation:idmCae .25s ease backwards}' +
+    '.idioma-menu.abierto li:nth-child(2){animation-delay:.05s}.idioma-menu.abierto li:nth-child(n+3){animation-delay:.1s}' +
+    '@keyframes idmAbre{from{opacity:0;transform:translateY(-6px) scaleY(.9)}to{opacity:1;transform:none}}' +
+    '@keyframes idmCae{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}' +
+    '@media (prefers-reduced-motion:reduce){.idioma-menu.abierto,.idioma-menu.abierto li{animation:none}}' +
     '.idioma-menu li{margin:0;padding:0;border:0}' +
     '.idioma-menu li a{display:block;padding:7px 10px;border-radius:3px;color:#e6edf3;font-size:14px;text-decoration:none;line-height:1.3}' +
     '.idioma-menu li a:hover{background:#21262d;text-decoration:none}' +

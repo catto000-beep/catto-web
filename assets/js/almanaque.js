@@ -88,6 +88,19 @@
     if (!raiz) return;
 
     el.raiz = raiz;
+
+    /* al desplegarse, el mes baja desde la hojita y sus partes caen una tras otra, como los
+       desplegables de la portada (la regla que lo muestra está en base.css) */
+    var css = document.createElement("style");
+    css.textContent =
+      ".fecha-pop{transform-origin:top left}" +
+      ".fecha:hover .fecha-pop,.fecha.abierto .fecha-pop,.fecha:focus-within .fecha-pop{animation:almAbre .25s ease}" +
+      ".fecha:hover .fecha-pop>*,.fecha.abierto .fecha-pop>*,.fecha:focus-within .fecha-pop>*{animation:almCae .3s ease backwards}" +
+      ".fecha .fecha-pop>:nth-child(2){animation-delay:.06s}.fecha .fecha-pop>:nth-child(n+3){animation-delay:.12s}" +
+      "@keyframes almAbre{from{opacity:0;transform:translateY(-6px) scaleY(.92)}to{opacity:1;transform:none}}" +
+      "@keyframes almCae{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}" +
+      "@media (prefers-reduced-motion:reduce){.fecha .fecha-pop,.fecha .fecha-pop>*{animation:none!important}}";
+    document.head.appendChild(css);
     el.boton = raiz.querySelector("#fechaBtn");
     el.hojaMes = raiz.querySelector("#almHojaMes");
     el.hojaNum = raiz.querySelector("#almHojaNum");
