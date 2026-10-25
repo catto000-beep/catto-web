@@ -88,6 +88,15 @@
     if (!h) return;
     var cuerpo = sec.querySelector(".container");
     if (cuerpo && !cuerpo.id) cuerpo.id = sec.id + "-cuerpo";
+    /* todo lo que va debajo del título, en una caja que el CSS anima al abrir
+       (crece de alto y las columnas caen en cascada) */
+    if (cuerpo) {
+      var caja = document.createElement("div"), dentro = document.createElement("div");
+      caja.className = "pl-cuerpo"; dentro.className = "pl-in";
+      [].slice.call(cuerpo.children).forEach(function (n) { if (n !== h) dentro.appendChild(n); });
+      caja.appendChild(dentro);
+      cuerpo.appendChild(caja);
+    }
     var b = document.createElement("button");
     b.type = "button";
     b.className = "pl-btn";
@@ -130,7 +139,7 @@
         abrir(f, true);
         a.className += " aqui";
         a.setAttribute("aria-current", "page");
-        setTimeout(function () { mostrar(f.li, a); }, 60);
+        setTimeout(function () { mostrar(f.li, a); }, 520);   /* después de que la carrera termine de abrirse */
       });
     });
   }
