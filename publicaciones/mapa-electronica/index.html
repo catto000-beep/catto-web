@@ -64,8 +64,20 @@
   .subj .sh small{color:var(--muted);font-size:11px}
   .subj .chev{transition:transform .2s;color:var(--muted)}
   .subj.open .chev{transform:rotate(90deg)}
-  .ejes{display:none;padding:2px 10px 12px}
-  .subj.open .ejes{display:block}
+  .ejes{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;
+    transition:grid-template-rows .4s ease,opacity .3s ease,visibility 0s .4s}
+  .ej-in{min-height:0;overflow:hidden}
+  .ej-pad{padding:2px 10px 12px}
+  .subj.open .ejes{grid-template-rows:1fr;opacity:1;visibility:visible;
+    transition:grid-template-rows .4s ease,opacity .3s ease}
+  /* al abrir una materia, sus ejes caen uno tras otro (no al redibujar por una búsqueda) */
+  .subj.open:not(.sin-anim) .ej-pad > *{animation:ejCae .35s ease backwards}
+  .subj.open .ej-pad > :nth-child(2){animation-delay:.04s} .subj.open .ej-pad > :nth-child(3){animation-delay:.08s}
+  .subj.open .ej-pad > :nth-child(4){animation-delay:.12s} .subj.open .ej-pad > :nth-child(5){animation-delay:.16s}
+  .subj.open .ej-pad > :nth-child(6){animation-delay:.2s} .subj.open .ej-pad > :nth-child(7){animation-delay:.24s}
+  .subj.open .ej-pad > :nth-child(n+8){animation-delay:.28s}
+  @keyframes ejCae{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.ejes{transition:none}.subj.open .ej-pad > *{animation:none}}
   .eje{padding:8px 0;border-top:1px solid var(--line)}
   .eje .et{font-size:12.5px;font-weight:600;margin-bottom:3px}
   /* Enlace al desarrollo completo del tema */
@@ -507,7 +519,7 @@ function renderMapa(){
           : `<div class="et">${e.t}</div>`;
         ejesH+=`<div class="eje">${titulo}<div class="ed">${e.d}</div><div class="tags">${e.tm.map(([tk,lv])=>tagHTML(tk,lv)).join('')}</div></div>`;
       });
-      sub.innerHTML=`<div class="sh"><span class="dot" style="background:${a.color}"></span><span class="sname">${m.n}</span><small>${m.h} h</small><span class="chev">▶</span></div><div class="ejes">${ejesH}</div>`;
+      sub.innerHTML=`<div class="sh"><span class="dot" style="background:${a.color}"></span><span class="sname">${m.n}</span><small>${m.h} h</small><span class="chev">▶</span></div><div class="ejes"><div class="ej-in"><div class="ej-pad">${ejesH}</div></div></div>`;
       sub.querySelector('.sh').addEventListener('click',()=>sub.classList.toggle('open'));
       col.appendChild(sub);
     });

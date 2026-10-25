@@ -49,6 +49,11 @@
     var lista = li.querySelector(".m-ejes");
     var cuenta = li.querySelector(".m-c");
     if (!boton || !lista) return;
+    /* la lista va en una caja que el CSS anima al abrir (crece de alto y los temas caen en cascada) */
+    var mCaja = document.createElement("div"), mIn = document.createElement("div");
+    mCaja.className = "m-caja"; mIn.className = "m-in";
+    lista.parentNode.insertBefore(mCaja, lista);
+    mIn.appendChild(lista); mCaja.appendChild(mIn);
 
     var ejes = [].map.call(lista.children, function (x) {
       return { li: x, texto: x.getAttribute("data-b") || "" };
