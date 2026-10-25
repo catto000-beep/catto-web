@@ -440,7 +440,10 @@
     "/publicaciones/mapa-ingenieria/temas/uniones-quimicas",
     "/publicaciones/mapa-ingenieria/temas/variables-estado",
     "/publicaciones/mapa-ingenieria/temas/vectores-r2-r3",
+    "/publicaciones/semaforo-logico",
+    "/publicaciones/simbologia",
     "/publicaciones/simulador-instrumental",
+    "/publicaciones/tortuga",
     "/taller"
   ];
   /* <</lista-en>> */

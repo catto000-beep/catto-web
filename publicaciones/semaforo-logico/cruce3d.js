@@ -2,6 +2,7 @@
    Calle A (izquierda → derecha, +x) y calle B (arriba → abajo, +z). Las luces las manda el circuito:
    CruceTres(div).paso(dt, luzA, luzB) con luz 'r' | 'a' | 'v'. La cámara se maneja con el mouse. */
 window.CruceTres = function (div) {
+const EN = /^en/i.test(document.documentElement.lang || '');
 const ren = new THREE.WebGLRenderer({ antialias: true }); ren.setPixelRatio(Math.min(devicePixelRatio, 2));
 ren.shadowMap.enabled = true; div.appendChild(ren.domElement);
 ren.domElement.style.cssText = 'display:block;width:100%;height:100%;border-radius:10px;touch-action:none';
@@ -47,7 +48,7 @@ function cartel(x, z, rot) {
   const gr = c.createLinearGradient(0, 0, 1024, 512); gr.addColorStop(0, '#1f6feb'); gr.addColorStop(1, '#a371f7');
   c.fillStyle = gr; c.fillRect(0, 0, 1024, 512);
   c.fillStyle = '#fff'; c.font = 'bold 190px Segoe UI, sans-serif'; c.textAlign = 'center'; c.fillText('catto.ar', 512, 270);
-  c.font = '54px Segoe UI, sans-serif'; c.fillText('electrónica para aprender y enseñar', 512, 380);
+  c.font = '54px Segoe UI, sans-serif'; c.fillText(EN ? 'electronics to learn and to teach' : 'electrónica para aprender y enseñar', 512, 380);
   c.font = '150px serif'; c.fillText('🐷', 120, 170);
   const tex = new THREE.CanvasTexture(cv);
   const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = rot; esc.add(g);
@@ -163,7 +164,7 @@ const cam = new THREE.PerspectiveCamera(45, 1, 0.1, 500);
 const ctl = new THREE.OrbitControls(cam, ren.domElement); ctl.maxPolarAngle = Math.PI / 2.1; ctl.enableDamping = true;
 const VISTAS = { iso: [[-30, 20, -32], [3, 3, 3]], arriba: [[0, 85, 0.1], [0, 0, 0]], calle: [[-1.5, 2.2, -32], [0, 2.5, 0]] };
 const bar = document.createElement('div'); bar.className = 'c3-vistas'; div.appendChild(bar);
-const nombres = { iso: 'Oblicua', arriba: 'Desde arriba', calle: 'Desde la calle' };
+const nombres = EN ? { iso: 'Oblique', arriba: 'From above', calle: 'From the street' } : { iso: 'Oblicua', arriba: 'Desde arriba', calle: 'Desde la calle' };
 function vista(v) { cam.position.set(...VISTAS[v][0]); ctl.target.set(...VISTAS[v][1]); ctl.update(); [].forEach.call(bar.children, b => b.classList.toggle('on', b.dataset.v === v)); }
 Object.keys(VISTAS).forEach(v => { const b = document.createElement('button'); b.type = 'button'; b.dataset.v = v; b.textContent = nombres[v]; b.onclick = () => vista(v); bar.appendChild(b); });
 vista('iso');

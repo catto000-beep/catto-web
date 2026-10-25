@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Logo Turtle · catto.ar</title>
+<meta name="description" content="The Logo turtle, the classic way: you give it commands (forward, right, repeat, to … end) and it draws. With worked examples that go from the square to fractals: the tree, the Koch snowflake, the Sierpinski triangle and the dragon curve.">
+<link rel="canonical" href="https://catto.ar/en/publicaciones/tortuga">
+<meta name="theme-color" content="#0d1117">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Catto">
+<meta property="og:title" content="The Logo Turtle · catto.ar">
+<meta property="og:description" content="Program drawings with the Logo turtle, from the square to fractals, with worked examples.">
+<meta property="og:url" content="https://catto.ar/en/publicaciones/tortuga">
+<meta property="og:image" content="https://catto.ar/assets/img/chancho-volador.png">
+<meta property="og:locale" content="en_US">
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3140;
+  --txt:#e6edf3; --muted:#9aa7b4; --soft:#7d8a99;
+  --accent:#58a6ff; --accent2:#1f6feb;
+  --ok:#3fb950; --warn:#d29922; --hot:#f85149; --violet:#a371f7;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{background:#0d1117}
+body{
+  background:radial-gradient(1200px 600px at 80% -10%, #1b2740 0%, var(--bg) 55%);
+  background-attachment:fixed;
+  color:var(--txt);font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+  line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px;
+}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+header.top{padding:22px 0 16px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(63,185,80,.10),transparent)}
+header.top h1{margin:0;font-size:24px;letter-spacing:.2px}
+header.top .sub{color:var(--muted);font-size:13.5px;margin:5px 0 0;max-width:820px}
+
+.mesa{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,560px);gap:18px;margin-top:18px;align-items:start}
+@media(max-width:960px){.mesa{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.panel h2{font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:var(--soft);margin:0 0 8px;font-weight:600}
+textarea#prog{width:100%;min-height:300px;resize:vertical;background:#0b0f16;border:1px solid var(--line);border-radius:10px;
+  color:#e6edf3;padding:10px 12px;font:14px/1.55 "Cascadia Code",Consolas,"Courier New",monospace;tab-size:2}
+textarea#prog:focus,#mando:focus{outline:none;border-color:var(--accent)}
+.botones{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+button.b{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:9px;
+  padding:8px 14px;font-size:13.5px;cursor:pointer;font-family:inherit}
+button.b:hover{border-color:var(--accent)}
+button.b.pri{background:#238636;border-color:var(--ok);color:#fff}
+button.b.alt{border-color:rgba(248,81,73,.55);color:#ffb3ad}
+.vel{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-left:auto}
+.vel input{width:120px;accent-color:var(--ok)}
+.mando{display:flex;gap:8px;margin-top:14px}
+#mando{flex:1;background:#0b0f16;border:1px solid var(--line);border-radius:10px;color:var(--txt);
+  padding:9px 12px;font:14px "Cascadia Code",Consolas,monospace}
+.msg{min-height:22px;font-size:13px;margin-top:10px;color:var(--muted)}
+.msg.err{color:#ffb3ad}
+.msg.ok{color:#7ee787}
+#salida{font:12.5px "Cascadia Code",Consolas,monospace;color:#f2cc60;white-space:pre-wrap;max-height:90px;overflow:auto;margin-top:6px}
+
+.lienzo{position:relative;width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#111826}
+.lienzo canvas{position:absolute;inset:0;width:100%;height:100%}
+.estado{display:flex;gap:16px;font:12.5px "Cascadia Code",Consolas,monospace;color:var(--soft);margin-top:8px;flex-wrap:wrap}
+.estado b{color:var(--txt);font-weight:400}
+
+h2.tit{font-size:20px;margin:34px 0 4px}
+p.lead{color:var(--muted);font-size:14px;margin:0 0 14px;max-width:880px}
+.ejemplos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:14px}
+.ej{min-width:0}
+@media(max-width:420px){.ejemplos{grid-template-columns:1fr}}
+.ej{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 15px;display:flex;flex-direction:column;gap:8px}
+.ej h3{margin:0;font-size:16px}
+.ej h3 .n{color:var(--ok);font-family:"Cascadia Code",Consolas,monospace;font-size:13px;margin-right:6px}
+.ej p{margin:0;font-size:13.5px;color:var(--muted)}
+.ej p b{color:var(--txt)}
+.ej pre{margin:0;background:#0b0f16;border:1px solid var(--line);border-radius:9px;padding:9px 11px;
+  font:12.5px/1.5 "Cascadia Code",Consolas,monospace;color:#c9d1d9;overflow-x:auto}
+.ej .prueba{font-size:12.5px;color:var(--soft)}
+.ej .prueba b{color:#f2cc60;font-weight:600}
+.ej button{align-self:flex-start}
+.nivel{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--soft)}
+
+table.ref{border-collapse:collapse;width:100%;font-size:13.5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tw{overflow-x:auto;border-radius:12px}
+table.ref th,table.ref td{border-bottom:1px solid var(--line);padding:7px 11px;text-align:left;vertical-align:top}
+table.ref th{background:var(--panel2);color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+table.ref td code{font-family:"Cascadia Code",Consolas,monospace;color:#7ee787;font-size:12.5px}
+table.ref td:last-child{color:var(--muted)}
+.nota{font-size:13px;color:var(--muted);max-width:880px}
+footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color:var(--soft);font-size:12.5px}
+</style>
+<!-- idiomas -->
+<link rel="alternate" hreflang="es" href="https://catto.ar/publicaciones/tortuga">
+<link rel="alternate" hreflang="en" href="https://catto.ar/en/publicaciones/tortuga">
+<link rel="alternate" hreflang="x-default" href="https://catto.ar/publicaciones/tortuga">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+<!-- /idiomas -->
+</head>
+<body>
+<div id="cattoBack" style="position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;background:rgba(13,17,23,.92);border-bottom:1px solid #2a3140;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font:600 14px 'Segoe UI',system-ui,sans-serif"><a href="/en" style="display:inline-flex;align-items:center;gap:8px;color:#e6edf3;text-decoration:none"><span style="width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#1f6feb,#a371f7);font-size:15px">🐷</span>Catto</a><a href="/en" style="margin-left:auto;color:#9aa7b4;font-weight:400;font-size:13px;text-decoration:none">← Back to home</a></div>
+
+<header class="top">
+  <div class="wrap">
+    <h1>🐢 The Logo Turtle</h1>
+    <p class="sub">The language many of us learned to program with: a turtle with a pen that obeys
+       commands such as <code>forward 100</code> or <code>right 90</code>. With repetitions and procedures
+       that call themselves you get all the way to fractals. It accepts commands in English and also in Spanish,
+       as in LogoWriter.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="mesa">
+    <div class="panel">
+      <h2>Program</h2>
+      <textarea id="prog" spellcheck="false" aria-label="Logo program">; A square: four times forward and turn 90°
+repeat 4 [forward 150 right 90]</textarea>
+      <div class="botones">
+        <button class="b pri" id="bCorrer">▶ Draw</button>
+        <button class="b alt" id="bParar">■ Stop</button>
+        <button class="b" id="bBorrar">Clear screen</button>
+        <label class="vel">speed <input type="range" id="vel" min="1" max="10" value="6" aria-label="Speed"></label>
+      </div>
+      <div class="mando">
+        <input id="mando" placeholder="Command center: type a command and press Enter (e.g.: rt 45 fd 80)" aria-label="Command center" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="msg" id="msg">The Draw button clears the screen and runs the program. The command center continues from where the turtle was left and knows the procedures in the program.</div>
+      <div id="salida"></div>
+    </div>
+    <div>
+      <div class="lienzo">
+        <canvas id="lienzo" width="1200" height="1200"></canvas>
+        <canvas id="capa" width="1200" height="1200"></canvas>
+      </div>
+      <div class="estado"><span>x <b id="ex">0</b></span><span>y <b id="ey">0</b></span><span>heading <b id="er">0°</b></span><span>pen <b id="el">down</b></span></div>
+    </div>
+  </div>
+
+  <h2 class="tit">Worked examples</h2>
+  <p class="lead">Ordered from the simplest to the hardest. Each one explains the new idea that appears; the button
+     loads it into the program and draws it. Afterwards, try changing the numbers and see what happens: that is how you learn Logo.</p>
+  <div class="ejemplos" id="ejemplos"></div>
+
+  <h2 class="tit">The commands</h2>
+  <p class="lead">The screen is 600 steps wide, with the origin at the center. Heading 0 points up and
+     increases clockwise. Commands can be written with or without accents, in lowercase or
+     uppercase, and separated by spaces or on different lines.</p>
+  <div class="tw"><table class="ref">
+    <thead><tr><th>Command</th><th>Short form or alias</th><th>In Spanish</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>forward 50</code></td><td><code>fd</code></td><td><code>avanza · av</code></td><td>Walks 50 steps in the direction it is facing; if the pen is down, it leaves a mark.</td></tr>
+      <tr><td><code>back 50</code></td><td><code>bk</code></td><td><code>retrocede · re</code></td><td>Walks backward without turning around.</td></tr>
+      <tr><td><code>right 90</code></td><td><code>rt</code></td><td><code>giraderecha · gd</code></td><td>Turns 90° clockwise, without moving from its place.</td></tr>
+      <tr><td><code>left 90</code></td><td><code>lt</code></td><td><code>giraizquierda · gi</code></td><td>Turns the other way, counterclockwise.</td></tr>
+      <tr><td><code>penup</code> · <code>pendown</code></td><td><code>pu · pd</code></td><td><code>subelapiz · bajalapiz (sl · bl)</code></td><td>Lifts or lowers the pen: with the pen up it walks without drawing.</td></tr>
+      <tr><td><code>penerase</code></td><td></td><td><code>goma</code></td><td>Whatever it travels over is erased. Drawing resumes with <code>pendown</code>.</td></tr>
+      <tr><td><code>repeat 4 [ … ]</code></td><td></td><td><code>repite</code></td><td>Repeats the commands in the brackets. <code>repcount</code> says which pass it is on (1, 2, 3…).</td></tr>
+      <tr><td><code>to square :side … end</code></td><td></td><td><code>para … fin</code></td><td>Defines a new procedure with its inputs (<code>:side</code>). Afterwards it is used like any other command: <code>square 80</code>.</td></tr>
+      <tr><td><code>if :n &lt; 5 [ … ]</code></td><td></td><td><code>si</code></td><td>Does what is in the brackets only if the condition holds. <code>ifelse cond [ … ] [ … ]</code> chooses between two.</td></tr>
+      <tr><td><code>stop</code></td><td></td><td><code>alto</code></td><td>Ends the procedure it is in. It is what stops a recursion.</td></tr>
+      <tr><td><code>make "side 40</code></td><td></td><td><code>haz</code></td><td>Stores a value in a variable; afterwards it is used as <code>:side</code>.</td></tr>
+      <tr><td><code>setpencolor "red</code></td><td><code>setpc</code></td><td><code>poncolor · poncl</code></td><td>Pen color: white, red, green, blue, yellow, orange, violet, lightblue, cyan, pink, gray, brown… or a number from 0 to 15. The Spanish color names also work.</td></tr>
+      <tr><td><code>setbackground "blue</code></td><td><code>setbg</code></td><td><code>ponfondo · pf</code></td><td>Background color (clears the screen).</td></tr>
+      <tr><td><code>setpensize 3</code></td><td></td><td><code>grosor</code></td><td>Width of the stroke.</td></tr>
+      <tr><td><code>clearscreen</code></td><td><code>cs</code></td><td><code>borrapantalla · bp</code></td><td>Clears everything and takes the turtle to the center, facing up.</td></tr>
+      <tr><td><code>home</code></td><td></td><td><code>centro</code></td><td>Goes back to the center (drawing, if the pen is down).</td></tr>
+      <tr><td><code>setxy 100 50</code> · <code>setheading 45</code></td><td><code>seth</code></td><td><code>ponpos · ponrumbo (pr)</code></td><td>Goes to a point, or points to a heading, without going through turns.</td></tr>
+      <tr><td><code>hideturtle</code> · <code>showturtle</code></td><td><code>ht · st</code></td><td><code>ocultatortuga · muestratortuga (ot · mt)</code></td><td>Hides or shows the turtle.</td></tr>
+      <tr><td><code>print :n</code></td><td><code>show</code></td><td><code>escribe · es</code></td><td>Shows a value below the program.</td></tr>
+      <tr><td><code>random 10</code> · <code>sqrt 2</code> · <code>sin 30</code> · <code>cos 30</code></td><td><code>—</code></td><td><code>azar · raizcuadrada · sen · cos</code></td><td>Functions: a random integer from 0 to 9, the square root, sine and cosine in degrees.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="nota">Calculations are written as in mathematics: <code>:side / 2</code>, <code>:n - 1</code>,
+     <code>360 / :sides</code>. A minus sign attached to the number and separated from what precedes it, as in <code>dragon :n -1</code>,
+     is a negative number, not a subtraction. Whatever follows a <code>;</code> is a comment.</p>
+
+  <footer class="pie">
+    A <a href="/en">catto.ar</a> publication · Logo was born in 1967 at MIT (Seymour Papert, Wally Feurzeig and Cynthia
+    Solomon) so that children could learn mathematics by programming. The Spanish version of this page follows
+    LogoWriter, the one used in Argentine schools.
+  </footer>
+</div>
+
+<script src="/publicaciones/tortuga/logo.js?v=2"></script>
+<script>
+(function () {
+'use strict';
+var L = window.LogoTortuga;
+function $(id) { return document.getElementById(id); }
+var T = new L.Tortuga($('lienzo'), $('capa'));
+var VEL = [0.08, 0.2, 0.5, 1, 2, 5, 15, 60, 300, Infinity];
+function velocidad() { return VEL[+$('vel').value - 1]; }
+function msg(t, cls) { var m = $('msg'); m.textContent = t; m.className = 'msg' + (cls ? ' ' + cls : ''); }
+function estado() {
+  $('ex').textContent = Math.round(T.x); $('ey').textContent = Math.round(T.y);
+  $('er').textContent = (((Math.round(T.rumbo) % 360) + 360) % 360) + '°';
+  $('el').textContent = T.lapiz ? (T.goma ? 'erase' : 'down') : 'up';
+}
+var dib = T.dibujarTortuga.bind(T);
+T.dibujarTortuga = function () { dib(); estado(); };
+T.alEscribir = function (s) { var o = $('salida'); o.textContent += s + '\n'; o.scrollTop = o.scrollHeight; };
+T.reiniciar();
+
+function correr(src, limpiar) {
+  if (limpiar) { $('salida').textContent = ''; T.procs = {}; T.globales = {}; }
+  msg('Drawing…');
+  T.lanzar(src, {
+    limpiar: limpiar, velocidad: velocidad,
+    alError: function (e) { msg((e.linea ? 'Line ' + e.linea + ': ' : '') + e.msg, 'err'); },
+    alTerminar: function (n) { msg('Done: ' + n + (n === 1 ? ' command.' : ' commands.'), 'ok'); }
+  });
+}
+$('bCorrer').onclick = function () { correr($('prog').value, true); };
+$('bParar').onclick = function () { T.detener(); msg('Stopped.'); };
+$('bBorrar').onclick = function () { T.detener(); T.reiniciar(); $('salida').textContent = ''; msg('Screen cleared.'); };
+$('mando').addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter') return;
+  var src = this.value.trim(); if (!src) return;
+  // los procedimientos del programa quedan disponibles para el centro de mando
+  try { var a = L.analizar($('prog').value); Object.keys(a.procs).forEach(function (k) { T.procs[k] = a.procs[k]; }); } catch (x) {}
+  correr(src, false);
+  this.select();
+});
+$('prog').addEventListener('keydown', function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); correr(this.value, true); }
+  if (e.key === 'Tab') { e.preventDefault(); var s = this.selectionStart; this.setRangeText('  ', s, this.selectionEnd, 'end'); }
+});
+
+/* ------------------------------------------------------------ ejemplos --- */
+var EJ = [
+ { t: 'The square', nivel: 'First steps',
+   p: 'The turtle does not know what a square is: it knows how to <b>move forward</b> and <b>turn</b>. A square is “move forward and turn 90°,” four times. <b>repeat</b> saves you from writing the same thing four times.',
+   c: 'repeat 4 [forward 150 right 90]',
+   q: 'Change the 90 to 120 and the 4 to 3: what shape comes out?' },
+ { t: 'Polygons with a procedure', nivel: 'Procedures',
+   p: 'With <b>to … end</b> you teach it a new word. To close any polygon the turtle has to turn a total of <b>360°</b>: with n sides, each turn is 360/n. This is the full-turn theorem.',
+   c: 'to polygon :sides :length\n  repeat :sides [forward :length right 360 / :sides]\nend\n\npenup setxy 110 -210 setheading 270 pendown\nsetpc "red polygon 3 220\nsetpc "orange polygon 4 170\nsetpc "yellow polygon 5 135\nsetpc "green polygon 6 112\nsetpc "blue polygon 8 84\nsetpc "violet polygon 12 56',
+   q: 'What happens with <b>polygon 36 10</b>? And with 360 sides of 1 step?' },
+ { t: 'The five-pointed star', nivel: 'First steps',
+   p: 'If the turtle turns <b>144°</b> at each point, after five legs it has turned <b>720°</b>: two full turns. That is why it returns to the starting point facing the same way, and the figure closes by crossing itself.',
+   c: 'setpc "yellow setpensize 3\npenup setxy 0 150 setheading 162 pendown\nrepeat 5 [forward 280 right 144]',
+   q: 'Try 7 points: forward 200 and right 3 × 360 / 7 (≈ 154.3).' },
+ { t: 'A flower with nested repeats', nivel: 'Repetitions',
+   p: 'A <b>repeat</b> inside another: the inner one draws a square; the outer one draws it 36 times, turning 10° between one and the next. <b>repcount</b> says which pass it is on, and we use it to change the color.',
+   c: 'setpensize 1.5\nrepeat 36 [\n  setpc repcount\n  repeat 4 [forward 110 right 90]\n  right 10\n]',
+   q: 'Change the square to a triangle, or the 36 to 72 with 5° turns.' },
+ { t: 'The spiral', nivel: 'Recursion',
+   p: 'A procedure that <b>calls itself</b> with a slightly longer side. With no brake it would go on forever: <b>if :length &gt; 280 [stop]</b> is the exit condition. Every recursion needs its own.',
+   c: 'to spiral :length\n  if :length > 280 [stop]\n  forward :length\n  right 91\n  spiral :length + 3\nend\n\nsetpc "lightblue\nspiral 2',
+   q: 'With 90° turns the square comes out neat; with 91° it twists. Try 120, 144 and 89.' },
+ { t: 'The tree', nivel: 'Fractals',
+   p: 'Each branch is a shorter trunk with two branches. The procedure draws the trunk, draws a smaller tree to the left and another to the right, and then <b>moves back</b> to leave the turtle where it found it: that step back is the key to every recursive figure.',
+   c: 'to tree :length\n  if :length < 6 [stop]\n  setpensize :length / 10\n  forward :length\n  left 25 tree :length * 0.72\n  right 50 tree :length * 0.72\n  left 25\n  back :length\nend\n\nsetpc "green\npenup back 240 pendown\ntree 120',
+   q: 'Change 25 to 15 or to 40, and 0.72 to 0.6. With <b>random</b> you can make every branch different.' },
+ { t: 'The Koch snowflake', nivel: 'Fractals',
+   p: 'A segment is replaced by four segments of one third the length, with a peak in the middle (turns of 60°, 120° and 60°). Repeated at every level, the edge fills up with peaks: its length grows by 4/3 each time and has no end, even though the snowflake fits inside a circle.',
+   c: 'to koch :length :level\n  if :level = 0 [forward :length stop]\n  koch :length / 3 :level - 1\n  left 60\n  koch :length / 3 :level - 1\n  right 120\n  koch :length / 3 :level - 1\n  left 60\n  koch :length / 3 :level - 1\nend\n\nsetpc "lightblue\npenup setxy -180 105 setheading 90 pendown\nrepeat 3 [koch 360 4 right 120]',
+   q: 'Look at levels 0, 1, 2 and 3 separately. How many segments does level 4 have?' },
+ { t: 'The Sierpinski triangle', nivel: 'Fractals',
+   p: 'A triangle made of three triangles at half the size, each made of three more… The turtle draws the bottom-left one, goes up to the top one, comes back, goes to the one on the right and always returns to the starting point.',
+   c: 'to sierpinski :side :level\n  if :level = 0 [repeat 3 [forward :side right 120] stop]\n  sierpinski :side / 2 :level - 1\n  forward :side / 2\n  sierpinski :side / 2 :level - 1\n  back :side / 2\n  right 60 forward :side / 2 left 60\n  sierpinski :side / 2 :level - 1\n  right 60 back :side / 2 left 60\nend\n\nsetpc "pink\npenup setxy -240 -208 setheading 30 pendown\nsierpinski 480 5',
+   q: 'At each level the number of triangles triples: 1, 3, 9, 27… How many are there at level 5?' },
+ { t: 'The dragon curve', nivel: 'Fractals',
+   p: 'Two procedures that call each other: <b>dragon</b> turns right between its halves and <b>nogard</b> turns left. It is what you get by folding a strip of paper in half many times and unfolding it with all the creases at right angles.',
+   c: 'to dragon :level :length\n  if :level = 0 [forward :length stop]\n  dragon :level - 1 :length\n  right 90\n  nogard :level - 1 :length\nend\n\nto nogard :level :length\n  if :level = 0 [forward :length stop]\n  dragon :level - 1 :length\n  left 90\n  nogard :level - 1 :length\nend\n\nsetpc "orange hideturtle\npenup setxy -110 70 pendown\ndragon 11 6',
+   q: 'Lower the level to 1, 2 and 3 to see how each fold grows.' },
+ { t: 'A fern with randomness', nivel: 'Fractals',
+   p: 'Like the tree, but with three branches, and each one comes out at slightly different angles thanks to <b>random</b>. The angles arrive as inputs to the procedure: that way each branch remembers its own so it can undo the turns on the way back. The result looks much more like a real plant. Every time it is drawn, a different one comes out.',
+   c: 'to branch :length :a :b\n  if :length < 4 [stop]\n  forward :length\n  left :a\n  branch :length * 0.5 15 + random 20 15 + random 20\n  right :a + :b\n  branch :length * 0.5 15 + random 20 15 + random 20\n  left :b\n  branch :length * 0.68 5 + random 10 5 + random 10\n  ; leaves the turtle where it found it\n  back :length\nend\n\nsetpc 10 hideturtle\npenup back 280 pendown\nbranch 125 20 20',
+   q: 'Draw it several times. Which number would you change to make it bushier?' }
+];
+var cont = $('ejemplos');
+EJ.forEach(function (e, i) {
+  var d = document.createElement('div'); d.className = 'ej';
+  d.innerHTML = '<span class="nivel">' + e.nivel + '</span><h3><span class="n">' + (i + 1) + '</span>' + e.t + '</h3>' +
+    '<p>' + e.p + '</p><pre></pre><p class="prueba"><b>To try:</b> ' + e.q + '</p>' +
+    '<button class="b pri">▶ Load and draw</button>';
+  d.querySelector('pre').textContent = e.c;
+  d.querySelector('button').onclick = function () {
+    $('prog').value = e.c; correr(e.c, true);
+    $('prog').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+  cont.appendChild(d);
+});
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

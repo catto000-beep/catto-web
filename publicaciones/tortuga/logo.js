@@ -7,6 +7,16 @@
 'use strict';
 
 /* ------------------------------------------------------------ vocabulario --- */
+/* Mensajes: el par (castellano, inglés) se elige según el idioma de la página. */
+var EN = /^en/i.test(document.documentElement.lang || '');
+function t(es, en) { return EN ? en : es; }
+var tr = t;
+var NOMBRE_EN = {
+  avanza: 'forward', retrocede: 'back', giraderecha: 'right', giraizquierda: 'left', ponpos: 'setxy',
+  ponrumbo: 'setheading', grosor: 'setpensize', repite: 'repeat', azar: 'random', espera: 'wait'
+};
+function nombreOrden(n) { return EN && NOMBRE_EN[n] ? NOMBRE_EN[n] : n; }
+
 function pelar(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
 
 // nombre canónico → [cantidad de datos, sinónimos…]
@@ -66,7 +76,7 @@ var COLORES = {
   azul: '#58a6ff', blue: '#58a6ff', amarillo: '#f2cc60', yellow: '#f2cc60', naranja: '#f0883e', orange: '#f0883e',
   violeta: '#a371f7', violet: '#a371f7', purple: '#a371f7', celeste: '#79c0ff', cyan: '#56d4dd', rosa: '#f778ba',
   pink: '#f778ba', gris: '#8b949e', gray: '#8b949e', grey: '#8b949e', negro: '#0d1117', black: '#0d1117',
-  marron: '#a5714a', brown: '#a5714a'
+  marron: '#a5714a', brown: '#a5714a', lightblue: '#79c0ff', skyblue: '#79c0ff'
 };
 // paleta numerada, como en el Logo clásico
 var PALETA = ['#0d1117', '#58a6ff', '#3fb950', '#56d4dd', '#f85149', '#a371f7', '#f0883e', '#e6edf3',
@@ -90,7 +100,7 @@ function tokens(src) {
     }
     if (c === ':') {
       var k = i + 1; while (k < n && /[\wÀ-ÿ.]/.test(src[k])) k++;
-      if (k === i + 1) throw new ErrLogo('Después de «:» va el nombre de una variable.', linea);
+      if (k === i + 1) throw new ErrLogo(tr('Después de «:» va el nombre de una variable.', 'A variable name must follow “:”.'), linea);
       push('var', pelar(src.slice(i + 1, k))); i = k; continue;
     }
     if (c === '"') {
@@ -112,7 +122,7 @@ function tokens(src) {
       var w = i; while (w < n && /[\wÀ-ÿñÑ.?]/.test(src[w])) w++;
       push('word', pelar(src.slice(i, w))); i = w; continue;
     }
-    throw new ErrLogo('No entiendo el carácter «' + c + '».', linea);
+    throw new ErrLogo(tr('No entiendo el carácter «' + c + '».', 'I don’t understand the character “' + c + '”.'), linea);
   }
   return out;
 }
@@ -135,10 +145,10 @@ function analizar(src, procsPrevios) {
 
   function bloque() {
     var t = sig();
-    if (!t || t.t !== '[') throw new ErrLogo('Acá falta un «[» que abra la lista de órdenes.', t ? t.l : lineaAct());
+    if (!t || t.t !== '[') throw new ErrLogo(tr('Acá falta un «[» que abra la lista de órdenes.', 'A “[” is missing here to open the list of commands.'), t ? t.l : lineaAct());
     var cuerpo = [];
     while (ver() && ver().t !== ']') cuerpo.push(orden());
-    if (!ver()) throw new ErrLogo('Falta cerrar un «]».', t.l);
+    if (!ver()) throw new ErrLogo(tr('Falta cerrar un «]».', 'A “]” is missing to close the list.'), t.l);
     sig();
     return cuerpo;
   }
@@ -146,18 +156,18 @@ function analizar(src, procsPrevios) {
   function orden() {
     var t = sig();
     if (t.t !== 'word') {
-      if (t.t === 'num') throw new ErrLogo('Sobra el número ' + t.v + ': no sé qué hacer con él.', t.l);
-      throw new ErrLogo('No esperaba «' + (t.v !== undefined ? t.v : t.t) + '» acá.', t.l);
+      if (t.t === 'num') throw new ErrLogo(tr('Sobra el número ' + t.v + ': no sé qué hacer con él.', 'Unexpected number ' + t.v + ': I don’t know what to do with it.'), t.l);
+      throw new ErrLogo(tr('No esperaba «' + (t.v !== undefined ? t.v : t.t) + '» acá.', 'Unexpected “' + (t.v !== undefined ? t.v : t.t) + '” here.'), t.l);
     }
     var esp = ESPECIALES[t.v];
     if (esp === 'para') {
       var nom = sig();
-      if (!nom || nom.t !== 'word') throw new ErrLogo('Después de «para» va el nombre del procedimiento.', t.l);
+      if (!nom || nom.t !== 'word') throw new ErrLogo(tr('Después de «para» va el nombre del procedimiento.', 'The procedure name must follow “to”.'), t.l);
       var params = [];
       while (ver() && ver().t === 'var') params.push(sig().v);
       var cuerpo = [];
       while (ver() && !(ver().t === 'word' && ESPECIALES[ver().v] === 'fin')) cuerpo.push(orden());
-      if (!ver()) throw new ErrLogo('Falta «fin» al terminar el procedimiento «' + nom.v + '».', t.l);
+      if (!ver()) throw new ErrLogo(tr('Falta «fin» al terminar el procedimiento «' + nom.v + '».', 'Missing “end” at the end of procedure “' + nom.v + '”.'), t.l);
       sig();
       procs[nom.v] = { params: params, cuerpo: cuerpo };
       return { k: 'nada' };
@@ -170,17 +180,17 @@ function analizar(src, procsPrevios) {
     }
     if (esp === 'sisino') return { k: 'si', c: expr(), a: bloque(), b: bloque(), l: t.l };
     if (esp === 'alto') return { k: 'alto' };
-    if (esp === 'fin') throw new ErrLogo('Sobra un «fin» sin «para».', t.l);
+    if (esp === 'fin') throw new ErrLogo(tr('Sobra un «fin» sin «para».', 'Unexpected “end” without a matching “to”.'), t.l);
     if (esp === 'haz') {
       var v = sig();
-      if (!v || (v.t !== 'str' && v.t !== 'word')) throw new ErrLogo('«haz» espera el nombre entre comillas: haz "lado 50', t.l);
+      if (!v || (v.t !== 'str' && v.t !== 'word')) throw new ErrLogo(tr('«haz» espera el nombre entre comillas: haz "lado 50', '“make” expects the name in quotes: make "side 50'), t.l);
       return { k: 'haz', nom: v.v, e: expr(), l: t.l };
     }
     if (CANON[t.v]) {
       var cmd = CANON[t.v], na = COMANDOS[cmd][0], args = [];
       for (var q = 0; q < na; q++) {
         if (!ver() || ver().t === ']' || (ver().t === 'word' && !CANON_F[ver().v] && !COLORES[ver().v] && ESPECIALES[ver().v] !== 'no'))
-          throw new ErrLogo('A «' + t.v + '» le falta un dato (por ejemplo: ' + t.v + ' 100).', t.l);
+          throw new ErrLogo(tr('A «' + t.v + '» le falta un dato (por ejemplo: ' + t.v + ' 100).', '“' + t.v + '” is missing an input (for example: ' + t.v + ' 100).'), t.l);
         args.push(expr());
       }
       return { k: 'cmd', c: cmd, a: args, l: t.l };
@@ -188,12 +198,12 @@ function analizar(src, procsPrevios) {
     if (aridad.hasOwnProperty(t.v)) {
       var as = [];
       for (var r = 0; r < aridad[t.v]; r++) {
-        if (!ver() || ver().t === ']') throw new ErrLogo('A «' + t.v + '» le faltan datos: necesita ' + aridad[t.v] + '.', t.l);
+        if (!ver() || ver().t === ']') throw new ErrLogo(tr('A «' + t.v + '» le faltan datos: necesita ' + aridad[t.v] + '.', '“' + t.v + '” is missing inputs: it needs ' + aridad[t.v] + '.'), t.l);
         as.push(expr());
       }
       return { k: 'llama', nom: t.v, a: as, l: t.l };
     }
-    throw new ErrLogo('No sé cómo «' + t.v + '». Si es un procedimiento tuyo, definilo con «para ' + t.v + '» … «fin».', t.l);
+    throw new ErrLogo(tr('No sé cómo «' + t.v + '». Si es un procedimiento tuyo, definilo con «para ' + t.v + '» … «fin».', 'I don’t know how to “' + t.v + '”. If it is your own procedure, define it with “to ' + t.v + '” … “end”.'), t.l);
   }
 
   // expresiones: comparación < suma < producto < signo < átomo
@@ -233,13 +243,13 @@ function analizar(src, procsPrevios) {
   }
   function atomo() {
     var t = sig();
-    if (!t) throw new ErrLogo('Falta un dato al final.', lineaAct());
+    if (!t) throw new ErrLogo(tr('Falta un dato al final.', 'An input is missing at the end.'), lineaAct());
     if (t.t === 'num') return { k: 'num', v: t.v };
     if (t.t === 'var') return { k: 'var', v: t.v, l: t.l };
     if (t.t === 'str') return { k: 'str', v: t.v };
     if (t.t === '(') {
       var e = expr(), c = sig();
-      if (!c || c.t !== ')') throw new ErrLogo('Falta cerrar un «)».', t.l);
+      if (!c || c.t !== ')') throw new ErrLogo(tr('Falta cerrar un «)».', 'A “)” is missing to close the parenthesis.'), t.l);
       return e;
     }
     if (t.t === 'word' && CANON_F[t.v]) {
@@ -248,7 +258,7 @@ function analizar(src, procsPrevios) {
       return { k: 'fn', f: f, a: args, l: t.l };
     }
     if (t.t === 'word' && COLORES[t.v]) return { k: 'str', v: t.v };
-    throw new ErrLogo('Esperaba un número o una variable y encontré «' + (t.v !== undefined ? t.v : t.t) + '».', t.l);
+    throw new ErrLogo(tr('Esperaba un número o una variable y encontré «' + (t.v !== undefined ? t.v : t.t) + '».', 'I expected a number or a variable and found “' + (t.v !== undefined ? t.v : t.t) + '”.'), t.l);
   }
 
   var prog = [];
@@ -311,7 +321,7 @@ Tortuga.prototype.dibujarTortuga = function () {
 };
 
 function numero(v, que, l) {
-  if (typeof v !== 'number' || isNaN(v)) throw new ErrLogo((que || 'Esta orden') + ' necesita un número.', l);
+  if (typeof v !== 'number' || isNaN(v)) throw new ErrLogo(tr(((que || 'Esta orden') + ' necesita un número.'), ((que ? nombreOrden(que) : 'This command') + ' needs a number.')), l);
   return v;
 }
 
@@ -323,14 +333,14 @@ Tortuga.prototype.valor = function (e, amb) {
     case 'var':
       for (var a = amb; a; a = a.padre) if (a.vars.hasOwnProperty(e.v)) return a.vars[e.v];
       if (this.globales.hasOwnProperty(e.v)) return this.globales[e.v];
-      throw new ErrLogo('La variable «:' + e.v + '» no tiene valor.', e.l);
+      throw new ErrLogo(tr('La variable «:' + e.v + '» no tiene valor.', 'Variable “:' + e.v + '” has no value.'), e.l);
     case 'neg': return -numero(this.valor(e.a, amb));
     case 'no': return this.valor(e.a, amb) ? 0 : 1;
     case 'op':
       var x = this.valor(e.a, amb), y = this.valor(e.b, amb);
       switch (e.o) {
         case '+': return x + y; case '-': return x - y; case '*': return x * y;
-        case '/': if (y === 0) throw new ErrLogo('División por cero.', e.l); return x / y;
+        case '/': if (y === 0) throw new ErrLogo(tr('División por cero.', 'Division by zero.'), e.l); return x / y;
         case '%': return x % y;
         case '=': return Math.abs(x - y) < 1e-9 || x === y ? 1 : 0;
         case '<>': return Math.abs(x - y) < 1e-9 || x === y ? 0 : 1;
@@ -358,18 +368,18 @@ Tortuga.prototype.valor = function (e, amb) {
         case 'rumbo': return ((this.rumbo % 360) + 360) % 360;
       }
   }
-  throw new ErrLogo('Expresión que no entiendo.', e.l);
+  throw new ErrLogo(tr('Expresión que no entiendo.', 'I can’t understand this expression.'), e.l);
 };
 
 function colorDe(v, l) {
   if (typeof v === 'number') return PALETA[((Math.round(v) % 16) + 16) % 16];
   if (COLORES[v]) return COLORES[v];
-  throw new ErrLogo('No conozco el color «' + v + '». Probá con rojo, verde, azul, amarillo… o un número de 0 a 15.', l);
+  throw new ErrLogo(tr('No conozco el color «' + v + '». Probá con rojo, verde, azul, amarillo… o un número de 0 a 15.', 'I don’t know the color “' + v + '”. Try red, green, blue, yellow… or a number from 0 to 15.'), l);
 }
 
 // cada movimiento hace «yield» para poder animar
 Tortuga.prototype.correr = function* (lista, amb, prof) {
-  if (prof > 400) throw new ErrLogo('Demasiadas llamadas una dentro de otra: ¿falta la condición de «alto»?');
+  if (prof > 400) throw new ErrLogo(tr('Demasiadas llamadas una dentro de otra: ¿falta la condición de «alto»?', 'Too many nested calls: is the “stop” condition missing?'));
   for (var i = 0; i < lista.length; i++) {
     var o = lista[i], self = this;
     switch (o.k) {
@@ -390,7 +400,7 @@ Tortuga.prototype.correr = function* (lista, amb, prof) {
         break;
       case 'llama':
         var pr = this.procs[o.nom];
-        if (!pr) throw new ErrLogo('No hay ningún procedimiento «' + o.nom + '».', o.l);
+        if (!pr) throw new ErrLogo(tr('No hay ningún procedimiento «' + o.nom + '».', 'There is no procedure “' + o.nom + '”.'), o.l);
         var vars = {};
         pr.params.forEach(function (nom, j) { vars[nom] = self.valor(o.a[j], amb); });
         try { yield* this.correr(pr.cuerpo, { vars: vars, padre: null }, prof + 1); }
@@ -453,7 +463,7 @@ Tortuga.prototype.lanzar = function (src, opciones) {
         if (r.done) { self.dibujarTortuga(); self.raf = null; opciones.alTerminar(pasos); return; }
         if (r.value && r.value.espera) { esperaHasta = t + r.value.espera * 1000 / 60; break; }
         pasos++; hechos += r.value === 0 ? 0.25 : 1;
-        if (pasos > 400000) throw new ErrLogo('El dibujo pasó las 400 000 órdenes y lo detuve: ¿hay un ciclo sin fin?');
+        if (pasos > 400000) throw new ErrLogo(tr('El dibujo pasó las 400 000 órdenes y lo detuve: ¿hay un ciclo sin fin?', 'The drawing went past 400,000 commands and I stopped it: is there an endless loop?'));
         if (vel === Infinity && performance.now() - inicio > 30) break;   // no congelar la página
       }
       resto = presupuesto - hechos;
@@ -475,5 +485,5 @@ Tortuga.prototype.detener = function () {
   this.raf = null;
 };
 
-window.LogoTortuga = { Tortuga: Tortuga, analizar: analizar, ErrLogo: ErrLogo };
+window.LogoTortuga = { Tortuga: Tortuga, analizar: analizar, ErrLogo: ErrLogo, EN: EN };
 })();
