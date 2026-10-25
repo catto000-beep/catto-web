@@ -41,6 +41,7 @@
     "/publicaciones/escritura-cursiva",
     "/publicaciones/fuente-lm317",
     "/publicaciones/logica-digital",
+    "/publicaciones/mapa-electricidad",
     "/publicaciones/mapa-electronica",
     "/publicaciones/mapa-electronica/temas/alumbrado",
     "/publicaciones/mapa-electronica/temas/amplificadores-potencia",
