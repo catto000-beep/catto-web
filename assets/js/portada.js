@@ -70,6 +70,47 @@
     f.boton.setAttribute("aria-expanded", si ? "true" : "false");
   }
 
+  /* ------------------------------------------------ carreras desplegables
+     Cada carrera (section.carrera) arranca plegada: se ve solo la barra del
+     título y el visitante abre la que le interesa. El pliegue lo hace el CSS
+     con html.js, así que sin javascript todo queda a la vista. La búsqueda y
+     la llegada desde una página de tema abren la carrera que haga falta; lo
+     que abrió la búsqueda se vuelve a plegar al borrarla. */
+  var carreras = [].slice.call(document.querySelectorAll("section.carrera"));
+  function abrirCarrera(sec, si) {
+    if (!sec) return;
+    sec.classList.toggle("abierta", si);
+    var b = sec.querySelector(".pl-btn");
+    if (b) b.setAttribute("aria-expanded", si ? "true" : "false");
+  }
+  carreras.forEach(function (sec) {
+    var h = sec.querySelector(".tit-sec");
+    if (!h) return;
+    var cuerpo = sec.querySelector(".container");
+    if (cuerpo && !cuerpo.id) cuerpo.id = sec.id + "-cuerpo";
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "pl-btn";
+    b.setAttribute("aria-expanded", "false");
+    if (cuerpo) b.setAttribute("aria-controls", cuerpo.id);
+    while (h.firstChild) b.appendChild(h.firstChild);
+    h.appendChild(b);
+    b.addEventListener("click", function () {
+      delete sec.dataset.porBusqueda;   /* abierta o cerrada a mano: la búsqueda ya no la toca */
+      abrirCarrera(sec, !sec.classList.contains("abierta"));
+    });
+  });
+  function abrirPorBusqueda(sec) {
+    if (!sec || sec.classList.contains("abierta")) return;
+    sec.dataset.porBusqueda = "1";
+    abrirCarrera(sec, true);
+  }
+  function cerrarLasDeBusqueda() {
+    carreras.forEach(function (sec) {
+      if (sec.dataset.porBusqueda) { delete sec.dataset.porBusqueda; abrirCarrera(sec, false); }
+    });
+  }
+
   /* ------------------------------------- llegando desde una página de tema
      La barra de cada tema enlaza la materia a /#t=<dirección del tema>: se
      abre la materia que contiene ese tema, se la trae a la vista y el tema
@@ -85,6 +126,7 @@
       f.ejes.forEach(function (e) {
         var a = e.li.querySelector("a");
         if (!a || sinEn(a.getAttribute("href")) !== destino) return;
+        abrirCarrera(f.li.closest ? f.li.closest("section.carrera") : null, true);
         abrir(f, true);
         a.className += " aqui";
         a.setAttribute("aria-current", "page");
@@ -170,12 +212,17 @@
          sección se queda: adentro vive el aviso de «no encontré nada» */
       var seccion = grid.closest ? grid.closest("section.block") : null;
       if (seccion) seccion.hidden = !!pal.length && vivas === 0 && hallados > 0;
+      /* una carrera plegada con resultados se abre para mostrarlos */
+      if (seccion && pal.length && vivas > 0) abrirPorBusqueda(seccion);
       /* la cuenta de cada materia se muestra solo mientras se busca */
       grid.classList.toggle("buscando", !!pal.length);
     });
 
     if (limpiar) limpiar.hidden = !pal.length;
     if (vacio) vacio.hidden = !(pal.length && hallados === 0);
+    /* el aviso de «no encontré nada» vive dentro de una carrera: que se vea */
+    if (vacio && !vacio.hidden) abrirPorBusqueda(vacio.closest ? vacio.closest("section.carrera") : null);
+    if (!pal.length) cerrarLasDeBusqueda();
     if (marcador) {
       marcador.textContent = !pal.length ? ""
         : hallados === 1 ? TX.t1 : hallados + TX.tn;
