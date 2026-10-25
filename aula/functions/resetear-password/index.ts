@@ -32,20 +32,28 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(url, serviceKey);
 
-    // Verificar que quien llama es el profesor
+    // Verificar que quien llama es un profesor aprobado
     const jwt = (req.headers.get("Authorization") || "").replace("Bearer ", "");
     const { data: userData, error: uerr } = await admin.auth.getUser(jwt);
     if (uerr || !userData?.user) return json(cors, { error: "No autenticado." }, 401);
-    const { data: perfil } = await admin.from("perfil").select("rol").eq("id", userData.user.id).single();
-    if (!perfil || perfil.rol !== "profesor") return json(cors, { error: "Solo el profesor puede resetear." }, 403);
+    const { data: perfil } = await admin.from("perfil").select("rol,estado,admin").eq("id", userData.user.id).single();
+    if (!perfil || perfil.rol !== "profesor" || perfil.estado !== "aprobado")
+      return json(cors, { error: "Solo un profesor aprobado puede resetear." }, 403);
 
     const body = await req.json();
     const estudianteId = body.estudiante_id;
     if (!estudianteId) return json(cors, { error: "Falta el estudiante." }, 400);
 
     // El destino tiene que ser un estudiante (no otro profesor)
-    const { data: target } = await admin.from("perfil").select("rol").eq("id", estudianteId).single();
+    const { data: target } = await admin.from("perfil").select("rol,curso_id").eq("id", estudianteId).single();
     if (!target || target.rol !== "estudiante") return json(cors, { error: "El destino no es un estudiante." }, 400);
+
+    // Salvo el admin, solo a estudiantes de un curso donde el profesor da clase
+    if (!perfil.admin) {
+      const { data: da } = await admin.from("materia_docente").select("materia_id, materia!inner(curso_id)")
+        .eq("profesor_id", userData.user.id).eq("materia.curso_id", target.curso_id).limit(1);
+      if (!da || !da.length) return json(cors, { error: "Ese estudiante no es de un curso donde das clase." }, 403);
+    }
 
     const password = genPass();
     const { error: cerr } = await admin.auth.admin.updateUserById(estudianteId, { password });

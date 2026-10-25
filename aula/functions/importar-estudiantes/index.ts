@@ -35,12 +35,13 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const admin = createClient(url, serviceKey);
 
-    // 1) Verificar que quien llama es el PROFESOR
+    // 1) Verificar que quien llama es un PROFESOR APROBADO
     const jwt = (req.headers.get("Authorization") || "").replace("Bearer ", "");
     const { data: userData, error: uerr } = await admin.auth.getUser(jwt);
     if (uerr || !userData?.user) return json(cors, { error: "No autenticado." }, 401);
-    const { data: perfil } = await admin.from("perfil").select("rol").eq("id", userData.user.id).single();
-    if (!perfil || perfil.rol !== "profesor") return json(cors, { error: "Solo el profesor puede importar." }, 403);
+    const { data: perfil } = await admin.from("perfil").select("rol,estado,admin").eq("id", userData.user.id).single();
+    if (!perfil || perfil.rol !== "profesor" || perfil.estado !== "aprobado")
+      return json(cors, { error: "Solo un profesor aprobado puede importar." }, 403);
 
     // 2) Datos de entrada
     const body = await req.json();
@@ -48,6 +49,10 @@ Deno.serve(async (req) => {
     const dominio = body.dominio || "aula.catto.ar";
     const estudiantes = Array.isArray(body.estudiantes) ? body.estudiantes : [];
     if (!cursoId || !estudiantes.length) return json(cors, { error: "Falta el curso o la lista está vacía." }, 400);
+
+    // 2b) Salvo el admin, solo se importa a un curso donde el profesor da alguna materia
+    if (!perfil.admin && !(await daClaseEn(admin, userData.user.id, cursoId)))
+      return json(cors, { error: "Solo podés importar estudiantes a un curso donde das clase." }, 403);
 
     // 3) Usuarios ya existentes (para no duplicar)
     const { data: existentes } = await admin.from("perfil").select("usuario");
@@ -93,6 +98,12 @@ Deno.serve(async (req) => {
   }
 });
 
+// ¿el profesor da al menos una materia en ese curso?
+async function daClaseEn(admin: any, profesorId: string, cursoId: number) {
+  const { data } = await admin.from("materia_docente").select("materia_id, materia!inner(curso_id)")
+    .eq("profesor_id", profesorId).eq("materia.curso_id", cursoId).limit(1);
+  return !!(data && data.length);
+}
 function json(cors: Record<string, string>, obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), { status, headers: { ...cors, "Content-Type": "application/json" } });
 }
