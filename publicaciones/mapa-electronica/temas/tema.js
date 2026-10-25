@@ -305,3 +305,46 @@
   up.parentNode.insertBefore(punto, up);
   up.parentNode.replaceChild(mat, up);
 })();
+
+/* ---------- Desplegables (<details>): se abren deslizándose y su contenido cae en cascada,
+   como las carreras y las materias de la portada. Al cerrar se encogen. Sin animación si el
+   visitante pidió menos movimiento. Se anima con la Web Animations API: el <details> sigue
+   abriéndose y cerrándose normalmente (teclado, buscar en la página, sin javascript). */
+(function(){
+  if(!Element.prototype.animate) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  [].forEach.call(document.querySelectorAll('details'), function(d){
+    var s = d.querySelector(':scope > summary');
+    if(!s) return;
+    var anim = null;
+    function alto(){ return d.getBoundingClientRect().height; }
+    function terminar(){ anim = null; d.style.overflow = ''; }
+    s.addEventListener('click', function(ev){
+      ev.preventDefault();
+      if(anim){ anim.cancel(); terminar(); }
+      var desde = alto();
+      d.style.overflow = 'hidden';
+      if(!d.open){
+        d.open = true;
+        var hasta = alto();
+        anim = d.animate({height:[desde + 'px', hasta + 'px']}, {duration:350, easing:'ease'});
+        anim.onfinish = terminar;
+        /* el contenido, bloque por bloque */
+        var piezas = [];
+        [].forEach.call(d.children, function(c){
+          if(c === s) return;
+          if(c.children.length) [].push.apply(piezas, c.children); else piezas.push(c);
+        });
+        piezas.slice(0, 8).forEach(function(p, i){
+          p.animate({opacity:[0, 1], transform:['translateY(-8px)', 'none']},
+                    {duration:300, delay:60 + i * 50, easing:'ease', fill:'backwards'});
+        });
+      } else {
+        var cerrado = s.getBoundingClientRect().height +
+          parseFloat(getComputedStyle(d).borderTopWidth) + parseFloat(getComputedStyle(d).borderBottomWidth);
+        anim = d.animate({height:[desde + 'px', cerrado + 'px']}, {duration:260, easing:'ease'});
+        anim.onfinish = function(){ d.open = false; terminar(); };
+      }
+    });
+  });
+})();
