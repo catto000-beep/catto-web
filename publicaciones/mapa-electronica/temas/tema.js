@@ -249,6 +249,15 @@
   document.body.appendChild(s);
 })();
 
+// 4a) «Me gusta»: corazón con contador en la cabecera (assets/js/me-gusta.js)
+(function(){
+  if(!document.querySelector('main.doc')) return;
+  var s = document.createElement('script');
+  s.src = '/assets/js/me-gusta.js?v=1';
+  s.defer = true;
+  document.body.appendChild(s);
+})();
+
 // 4b) Selector de idioma (assets/js/idioma.js). Las páginas que ya tienen
 // traducción lo traen en el <head>; a las demás se lo agrega esto.
 (function(){
