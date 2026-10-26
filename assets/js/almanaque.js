@@ -94,10 +94,12 @@
     var css = document.createElement("style");
     css.textContent =
       ".fecha-pop{transform-origin:top left}" +
-      ".fecha:hover .fecha-pop,.fecha.abierto .fecha-pop,.fecha:focus-within .fecha-pop{animation:almAbre .25s ease}" +
-      ".fecha:hover .fecha-pop>*,.fecha.abierto .fecha-pop>*,.fecha:focus-within .fecha-pop>*{animation:almCae .3s ease backwards}" +
-      ".fecha .fecha-pop>:nth-child(2){animation-delay:.06s}.fecha .fecha-pop>:nth-child(n+3){animation-delay:.12s}" +
-      "@keyframes almAbre{from{opacity:0;transform:translateY(-6px) scaleY(.92)}to{opacity:1;transform:none}}" +
+      /* en el teléfono el mes cuelga del borde derecho (base.css): nace de ese lado */
+      "@media(max-width:640px){.fecha-pop{transform-origin:top right}}" +
+      ".fecha:hover .fecha-pop,.fecha.abierto .fecha-pop,.fecha:focus-within .fecha-pop{animation:almAbre .2s cubic-bezier(.23,1,.32,1)}" +
+      ".fecha:hover .fecha-pop>*,.fecha.abierto .fecha-pop>*,.fecha:focus-within .fecha-pop>*{animation:almCae .22s cubic-bezier(.23,1,.32,1) backwards}" +
+      ".fecha .fecha-pop>:nth-child(2){animation-delay:.04s}.fecha .fecha-pop>:nth-child(n+3){animation-delay:.08s}" +
+      "@keyframes almAbre{from{opacity:0;transform:translateY(-4px) scale(.96)}to{opacity:1;transform:none}}" +
       "@keyframes almCae{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}" +
       "@media (prefers-reduced-motion:reduce){.fecha .fecha-pop,.fecha .fecha-pop>*{animation:none!important}}";
     document.head.appendChild(css);

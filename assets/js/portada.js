@@ -144,7 +144,7 @@
         abrir(f, true);
         a.className += " aqui";
         a.setAttribute("aria-current", "page");
-        setTimeout(function () { mostrar(f.li, a); }, 520);   /* después de que la carrera termine de abrirse */
+        setTimeout(function () { mostrar(f.li, a); }, 340);   /* después de que la carrera termine de abrirse */
       });
     });
   }

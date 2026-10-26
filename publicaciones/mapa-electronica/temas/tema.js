@@ -325,18 +325,23 @@
   [].forEach.call(document.querySelectorAll('details'), function(d){
     var s = d.querySelector(':scope > summary');
     if(!s) return;
-    var anim = null;
+    var anim = null, cerrando = false;
+    var CURVA = 'cubic-bezier(0.23, 1, 0.32, 1)';
     function alto(){ return d.getBoundingClientRect().height; }
-    function terminar(){ anim = null; d.style.overflow = ''; }
+    function terminar(){ anim = null; cerrando = false; d.style.overflow = ''; }
     s.addEventListener('click', function(ev){
       ev.preventDefault();
-      if(anim){ anim.cancel(); terminar(); }
+      /* se mide antes de cancelar: si el visitante se arrepiente a mitad de camino,
+         la caja vuelve desde donde está y no desde el final */
       var desde = alto();
+      /* mientras se cierra, d.open sigue en true: lo que vale es hacia dónde iba */
+      var abrirla = anim ? cerrando : !d.open;
+      if(anim){ anim.onfinish = null; anim.cancel(); terminar(); }
       d.style.overflow = 'hidden';
-      if(!d.open){
+      if(abrirla){
         d.open = true;
         var hasta = alto();
-        anim = d.animate({height:[desde + 'px', hasta + 'px']}, {duration:350, easing:'ease'});
+        anim = d.animate({height:[desde + 'px', hasta + 'px']}, {duration:260, easing:CURVA});
         anim.onfinish = terminar;
         /* el contenido, bloque por bloque */
         var piezas = [];
@@ -344,14 +349,17 @@
           if(c === s) return;
           if(c.children.length) [].push.apply(piezas, c.children); else piezas.push(c);
         });
+        /* si ya venía abierta (se arrepintió de cerrarla), el contenido ya está a la vista */
+        if(desde > s.getBoundingClientRect().height + 4) piezas = [];
         piezas.slice(0, 8).forEach(function(p, i){
           p.animate({opacity:[0, 1], transform:['translateY(-8px)', 'none']},
-                    {duration:300, delay:60 + i * 50, easing:'ease', fill:'backwards'});
+                    {duration:220, delay:40 + i * 40, easing:CURVA, fill:'backwards'});
         });
       } else {
         var cerrado = s.getBoundingClientRect().height +
           parseFloat(getComputedStyle(d).borderTopWidth) + parseFloat(getComputedStyle(d).borderBottomWidth);
-        anim = d.animate({height:[desde + 'px', cerrado + 'px']}, {duration:260, easing:'ease'});
+        cerrando = true;
+        anim = d.animate({height:[desde + 'px', cerrado + 'px']}, {duration:180, easing:CURVA});
         anim.onfinish = function(){ d.open = false; terminar(); };
       }
     });

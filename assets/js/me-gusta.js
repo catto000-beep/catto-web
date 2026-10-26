@@ -28,14 +28,16 @@
   css.textContent =
     '.mg{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 9px;cursor:pointer;' +
       'font:600 13px/1 "IBM Plex Mono",monospace;color:var(--soft,#62676e);background:var(--panel,#f1efea);' +
-      'border:1px solid var(--line,#cdc9bf);border-radius:999px;transition:color .15s,border-color .15s,background .15s}' +
-    '.mg:hover{color:#c8374f;border-color:#c8374f}' +
-    '.mg svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:2;transition:transform .2s}' +
+      'border:1px solid var(--line,#cdc9bf);border-radius:999px;transition:color .15s,border-color .15s,background .15s,transform 120ms ease-out}' +
+    /* solo con mouse: en el celular el :hover queda pegado y el corazón seguiría rojo al quitarlo */
+    '@media(hover:hover) and (pointer:fine){.mg:hover{color:#c8374f;border-color:#c8374f}}' +
+    '.mg:active{transform:scale(.96)}' +
+    '.mg svg{width:16px;height:16px;display:block;fill:none;stroke:currentColor;stroke-width:2}' +
     '.mg[aria-pressed="true"]{color:#c8374f;border-color:rgba(200,55,79,.55);background:rgba(200,55,79,.08)}' +
     '.mg[aria-pressed="true"] svg{fill:currentColor}' +
-    '.mg.late svg{animation:mgLate .45s ease}' +
-    '@keyframes mgLate{0%{transform:scale(1)}30%{transform:scale(1.45)}60%{transform:scale(.9)}100%{transform:scale(1)}}' +
-    '@media(prefers-reduced-motion:reduce){.mg.late svg{animation:none}}';
+    '.mg.late svg{animation:mgLate .4s ease}' +
+    '@keyframes mgLate{0%{transform:scale(1)}30%{transform:scale(1.3)}60%{transform:scale(.92)}100%{transform:scale(1)}}' +
+    '@media(prefers-reduced-motion:reduce){.mg.late svg{animation:none}.mg:active{transform:none}}';
   document.head.appendChild(css);
 
   var yaMeGusta = !!marcadas()[ruta], cuenta = null;
