@@ -59,6 +59,8 @@
 
 <div style="position:fixed;bottom:14px;width:100%;text-align:center">
   <a href="index.html" style="color:var(--soft);font-size:12px">← Volver al ingreso del Aula</a>
+  <span style="color:var(--soft);font-size:12px;margin:0 8px">·</span>
+  <a href="condiciones.html" style="color:var(--soft);font-size:12px">Condiciones de uso y privacidad</a>
 </div>
 
 <script src="assets/vendor/supabase.js"></script>
@@ -104,14 +106,21 @@
       <p>Entraste como <b>${esc(SESION.user.email)}</b>. Completá tu nombre como querés que lo vean tus estudiantes.</p>
       <div class="field"><label>Nombre</label><input id="fNombre" value="${esc(nombre)}" autocomplete="given-name"></div>
       <div class="field"><label>Apellido</label><input id="fApellido" value="${esc(apellido)}" autocomplete="family-name"></div>
+      <label style="display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--muted);line-height:1.5;margin:4px 0 16px;cursor:pointer">
+        <input type="checkbox" id="fAcepta" style="width:auto;margin-top:3px">
+        <span>Leí y acepto las <a href="condiciones.html#uso" target="_blank" rel="noopener">condiciones de uso</a> y la
+        <a href="condiciones.html#privacidad" target="_blank" rel="noopener">política de privacidad</a> del Aula, incluida mi
+        responsabilidad sobre los datos de los estudiantes que cargue.</span></label>
       <button class="btn" id="btnAlta" type="button">Pedir la cuenta de profesor</button>
       <p style="margin-top:12px"><button class="link" id="btnOtra" type="button">Usar otra cuenta de Google</button></p>`;
     document.getElementById('btnOtra').onclick = salir;
     document.getElementById('btnAlta').onclick = async () => {
       const n = document.getElementById('fNombre').value.trim(), a = document.getElementById('fApellido').value.trim();
       if (!n || !a) { show('Completá el nombre y el apellido.', '--warn'); return; }
+      const acepta = document.getElementById('fAcepta').checked;
+      if (!acepta) { show('Para seguir, marcá que aceptás las condiciones y la política de privacidad.', '--warn'); return; }
       show('Guardando…');
-      const { error } = await sb.rpc('solicitar_alta_profesor', { p_nombre: n, p_apellido: a });
+      const { error } = await sb.rpc('solicitar_alta_profesor', { p_nombre: n, p_apellido: a, p_acepta: acepta });
       if (error) { show(error.message, '--hot'); return; }
       show('');
       await cargar();

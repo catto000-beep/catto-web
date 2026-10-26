@@ -194,7 +194,7 @@ do $$ begin
     raise exception 'FALLÓ: una cuenta del foro ve datos del Aula'; end if;
 end $$;
 -- pide el alta como profesor y queda pendiente
-select solicitar_alta_profesor('Foro', 'Usuario');
+select solicitar_alta_profesor('Foro', 'Usuario', true);   -- desde la etapa 4 exige aceptar las condiciones
 reset role;
 do $$ begin
   if (select estado from perfil where id = '00000000-0000-4000-a000-0000000000e1') <> 'pendiente' then

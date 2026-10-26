@@ -42,6 +42,13 @@ escuela ──< curso ──< materia >──< materia_docente >── profesor
    con prefijo de escuela; pantalla de «cuenta pendiente».
 4. **Términos y privacidad**, y prueba con un profesor real.
 
+## Etapa 4: condiciones y privacidad (26/10/2026, aplicada)
+
+- `aula/condiciones.html`: condiciones de uso y política de privacidad (Ley 25.326, datos en Supabase en EE. UU.,
+  menores, derechos y leyenda de la AAIP). Enlazada desde el ingreso, el alta, y los paneles de profesor y estudiante.
+- `multi-docente-4.sql`: `solicitar_alta_profesor(nombre, apellido, acepta)` exige aceptar y guarda
+  `perfil.condiciones_aceptadas`. El texto conviene que lo revise un abogado antes de difundir el Aula a otras escuelas.
+
 ## Etapa 3: panel por profesor y consignas por materia (26/10/2026, aplicada)
 
 - Panel: un profesor que no es admin ve solo sus cursos y materias (`mis_cursos`, `mis_materias`); no crea cursos
