@@ -68,9 +68,10 @@
       <h1>Cursos y materias</h1>
       <div class="crumb">Tu estructura de clases. Primero el curso, después sus materias.</div>
       <div class="inline" style="margin-bottom:20px">
-        <button class="btn sm" style="width:auto" onclick="formCurso()">＋ Nuevo curso</button>
+        <button class="btn sm solo-admin" style="width:auto" onclick="formCurso()">＋ Nuevo curso</button>
+        <a class="btn sm solo-profe hidden" style="width:auto" href="registro.html">＋ Pedir otra materia</a>
         <button class="btn ghost sm" style="width:auto" onclick="formMateria()">＋ Nueva materia</button>
-        <button class="btn ghost sm" style="width:auto" onclick="abrirAdmin()">⚙️ Administrar</button>
+        <button class="btn ghost sm solo-admin" style="width:auto" onclick="abrirAdmin()">⚙️ Administrar</button>
       </div>
       <div id="clasesBox"><div class="empty">Cargando…</div></div>
     </section>
@@ -119,6 +120,12 @@ let _entScroll = 0; // recuerda el scroll de la tabla de entregas al corregir
   document.getElementById('meName').textContent = PERFIL.admin ? 'Catto' : `${PERFIL.nombre||''} ${PERFIL.apellido||''}`.trim();
   document.getElementById('meIni').textContent = PERFIL.admin ? 'C' : iniciales(PERFIL.nombre, PERFIL.apellido);
   if(PERFIL.admin){ document.getElementById('navPedidos').classList.remove('hidden'); cargarPedidos(); }
+  else {
+    /* crear cursos y administrarlos queda para el admin; un profesor pide sus materias */
+    document.querySelectorAll('.solo-admin').forEach(b=>b.classList.add('hidden'));
+    document.querySelectorAll('.solo-profe').forEach(b=>b.classList.remove('hidden'));
+    document.querySelector('[data-view="clases"] .crumb').textContent = 'Los cursos y las materias que das. Para sumar otra, pedila.';
+  }
   await cargarTodo();
 })();
 
@@ -180,6 +187,14 @@ async function cargarTodo(){
     sb.from('entrega').select('id,actividad_id,entregado_en,nota_num,archivos,archivo_path, estudiante:estudiante_id(nombre,apellido,foto_path, curso(nombre)), actividad:actividad_id(titulo, materia(nombre))').order('entregado_en',{ascending:false}).limit(12),
   ]);
   CURSOS=c.data||[]; MATERIAS=m.data||[]; ACTS=a.data||[]; ESTUD=e.data||[]; ULTIMAS=u.data||[];
+  /* un profesor ve los nombres de todos los cursos y materias (para los menús del alta),
+     pero su panel muestra solo los que da */
+  if(!PERFIL.admin){
+    const [mm, mc] = await Promise.all([sb.rpc('mis_materias'), sb.rpc('mis_cursos')]);
+    const misM = new Set(mm.data||[]), misC = new Set(mc.data||[]);
+    MATERIAS = MATERIAS.filter(x=>misM.has(x.id));
+    CURSOS = CURSOS.filter(x=>misC.has(x.id));
+  }
   renderTablero(); renderActs(); renderClases(); renderEstud();
 }
 
@@ -263,7 +278,9 @@ function renderActs(){
 }
 function renderClases(){
   const box=document.getElementById('clasesBox');
-  if(!CURSOS.length){ box.innerHTML='<div class="empty">Todavía no hay cursos. Creá el primero con “＋ Nuevo curso”.</div>'; return; }
+  if(!CURSOS.length){ box.innerHTML = PERFIL.admin
+    ? '<div class="empty">Todavía no hay cursos. Creá el primero con “＋ Nuevo curso”.</div>'
+    : '<div class="empty">Todavía no tenés materias aprobadas. Pedilas con “＋ Pedir otra materia”.</div>'; return; }
   box.innerHTML = CURSOS.map(c=>{
     const mats = MATERIAS.filter(m=>m.curso_id===c.id);
     const estud = ESTUD.filter(e=>e.curso_id===c.id).length;
@@ -668,7 +685,8 @@ async function saveActividad(id){
     for(let i=0;i<files.length;i++){
       const f=files[i];
       if(f.size > 10*1024*1024) throw new Error(`"${f.name}" supera los 10 MB.`);
-      const path = await subirArchivo('consignas', `${Date.now()}_${i}_${safeName(f.name)}`, f);
+      /* en la carpeta de la materia: así solo la leen sus docentes y los estudiantes de ese curso */
+      const path = await subirArchivo('consignas', `m${materia_id}/${Date.now()}_${i}_${safeName(f.name)}`, f);
       adjuntos.push({ path, nombre: f.name });
     }
     const datos={materia_id, titulo, consigna, fecha_limite, videos, video_url: videos[0]||null, adjuntos};

@@ -42,6 +42,18 @@ escuela ──< curso ──< materia >──< materia_docente >── profesor
    con prefijo de escuela; pantalla de «cuenta pendiente».
 4. **Términos y privacidad**, y prueba con un profesor real.
 
+## Etapa 3: panel por profesor y consignas por materia (26/10/2026, aplicada)
+
+- Panel: un profesor que no es admin ve solo sus cursos y materias (`mis_cursos`, `mis_materias`); no crea cursos
+  ni los administra (eso es del admin); tiene «＋ Pedir otra materia», que lleva a `registro.html`.
+- `multi-docente-3.sql`: los adjuntos nuevos de las consignas van en `consignas/m{materia}/…`; los suben sus docentes
+  y los leen sus docentes y los estudiantes del curso. Los viejos, en la raíz, se siguen leyendo como antes.
+- Los usuarios de estudiantes **no** llevan prefijo de escuela: la importación ya agrega un número si el nombre está
+  repetido (`gomez.juan2`), y un prefijo alargaría lo que los chicos tienen que tipear.
+- Ojo para pruebas por SQL: la regla `foro_img_ins` consulta `storage.objects` desde su propia regla y PostgreSQL lo
+  toma como recursión al insertar por SQL. Las subidas reales no pasan por ahí (hubo entregas e imágenes del foro
+  después de crearla). `multi-docente-3-pruebas.sql` la quita solo dentro de su transacción.
+
 ## Etapa 2: pedidos y aprobación (25/10/2026, aplicada en la base)
 
 - `aula/db/multi-docente-2.sql`: los pedidos van en `aula_priv.solicitud` (esquema que la API no expone) y se manejan
