@@ -14,6 +14,10 @@ async function requireAuth(rolEsperado){
     await sb.auth.signOut(); alert('Tu cuenta está desactivada. Consultá con el profesor.');
     location.href = 'index.html'; return null;
   }
+  /* un profesor con la cuenta en revisión (o rechazada) no entra al panel: ve su pedido */
+  if(perfil.rol === 'profesor' && perfil.estado && perfil.estado !== 'aprobado'){
+    location.href = 'registro.html'; return null;
+  }
   if(rolEsperado && perfil.rol !== rolEsperado){
     location.href = perfil.rol === 'profesor' ? 'profesor.html' : 'estudiante.html';
     return null;

@@ -22,6 +22,7 @@
     <a class="nav" data-v="actividades" onclick="nav('actividades')">📋 Actividades</a>
     <a class="nav" data-v="clases" onclick="nav('clases')">🏫 Cursos y materias</a>
     <a class="nav" data-v="estudiantes" onclick="nav('estudiantes')">👥 Estudiantes</a>
+    <a class="nav hidden" id="navPedidos" data-v="pedidos" onclick="nav('pedidos')">📨 Pedidos de profesores <span id="pedCuenta" class="badge2" style="background:rgba(210,153,34,.18);color:#e3b341;margin-left:4px"></span></a>
     <div class="spacer"></div>
     <div class="me">
       <div class="ph" id="meIni">·</div>
@@ -84,6 +85,17 @@
       </div>
       <div id="estudBox"><div class="empty">Cargando…</div></div>
     </section>
+
+    <!-- ===== PEDIDOS DE PROFESORES (solo admin) ===== -->
+    <section data-view="pedidos" class="hidden">
+      <h1>Pedidos de profesores</h1>
+      <div class="crumb">Quienes pidieron una cuenta y las materias que dicen dar. Aprobar un pedido aprueba al profesor
+        y crea lo que falte (escuela, curso, materia) con él como docente.</div>
+      <p class="section-title">Materias pedidas</p>
+      <div class="act-list" id="pedidosBox"><div class="empty">Cargando…</div></div>
+      <p class="section-title" style="margin-top:24px">Cuentas en revisión</p>
+      <div class="act-list" id="pendBox"><div class="empty">Cargando…</div></div>
+    </section>
   </main>
 </div>
 
@@ -103,10 +115,60 @@ let _entScroll = 0; // recuerda el scroll de la tabla de entregas al corregir
   const auth = await requireAuth('profesor');
   if(!auth) return;
   PERFIL = auth.perfil;
-  document.getElementById('meName').textContent = 'Catto';
-  document.getElementById('meIni').textContent = 'C';
+  /* el admin firma como Catto; los demás profesores, con su nombre */
+  document.getElementById('meName').textContent = PERFIL.admin ? 'Catto' : `${PERFIL.nombre||''} ${PERFIL.apellido||''}`.trim();
+  document.getElementById('meIni').textContent = PERFIL.admin ? 'C' : iniciales(PERFIL.nombre, PERFIL.apellido);
+  if(PERFIL.admin){ document.getElementById('navPedidos').classList.remove('hidden'); cargarPedidos(); }
   await cargarTodo();
 })();
+
+/* ---------- Pedidos de profesores (solo admin) ---------- */
+async function cargarPedidos(){
+  const [s, p] = await Promise.all([sb.rpc('solicitudes_pendientes'), sb.rpc('profesores_pendientes')]);
+  const pedidos = s.data || [], pend = p.data || [];
+  const cuenta = document.getElementById('pedCuenta');
+  cuenta.textContent = pedidos.length + pend.filter(x=>!x.pedidos).length || '';
+  const nuevo = '<span class="badge2" style="background:rgba(88,166,255,.16);color:#79c0ff;margin-left:6px">nueva</span>';
+  document.getElementById('pedidosBox').innerHTML = s.error ? `<div class="empty">${esc(s.error.message)}</div>`
+    : pedidos.length ? pedidos.map(x=>`
+      <div class="act" style="cursor:default;align-items:flex-start">
+        <div class="ai"><h3>${esc(x.materia)}${x.materia_nueva?nuevo:' <span style="color:var(--soft);font-weight:400;font-size:12px">(pareja pedagógica)</span>'}</h3>
+          <div class="am">${esc(x.curso)}${x.curso_nuevo?nuevo:''} · ${esc(x.escuela)}${x.escuela_nueva?nuevo:''}</div>
+          <div class="am" style="margin-top:4px">${esc(x.profesor)} · ${esc(x.email||'')}${x.estado_profesor==='pendiente'?' · cuenta en revisión':''}</div>
+          ${x.mensaje?`<div class="am" style="margin-top:6px;white-space:pre-wrap;color:var(--txt)">«${esc(x.mensaje)}»</div>`:''}</div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex:none">
+          <button class="btn sm" onclick="aprobarPedido(${x.id})">Aprobar</button>
+          <button class="btn ghost sm" onclick="rechazarPedido(${x.id})">Rechazar</button></div>
+      </div>`).join('') : '<div class="empty">No hay pedidos de materias.</div>';
+  document.getElementById('pendBox').innerHTML = p.error ? `<div class="empty">${esc(p.error.message)}</div>`
+    : pend.length ? pend.map(x=>`
+      <div class="act" style="cursor:default">
+        <div class="ai"><h3>${esc(x.profesor)}</h3>
+          <div class="am">${esc(x.email||'')} · pidió la cuenta ${new Date(x.creado_en).toLocaleDateString('es-AR')} ·
+            ${x.pedidos ? x.pedidos+' materia(s) pedida(s)' : 'todavía no pidió materias'}</div></div>
+        <button class="btn ghost sm" style="flex:none" onclick="rechazarProfesor('${x.id}')">Rechazar la cuenta</button>
+      </div>`).join('') : '<div class="empty">No hay cuentas en revisión.</div>';
+}
+async function aprobarPedido(id){
+  if(!confirm('¿Aprobar este pedido? El profesor queda aprobado y como docente de la materia.')) return;
+  const { data, error } = await sb.rpc('aprobar_solicitud', { p_id: id });
+  if(error){ alert('No se pudo aprobar: '+error.message); return; }
+  alert(data);
+  await cargarPedidos(); await cargarTodo();
+}
+async function rechazarPedido(id){
+  const motivo = prompt('Motivo del rechazo (lo ve el profesor; podés dejarlo vacío):', '');
+  if(motivo === null) return;
+  const { error } = await sb.rpc('rechazar_solicitud', { p_id: id, p_respuesta: motivo });
+  if(error){ alert('No se pudo rechazar: '+error.message); return; }
+  await cargarPedidos();
+}
+async function rechazarProfesor(id){
+  if(!confirm('¿Rechazar esta cuenta de profesor? También se rechazan sus pedidos pendientes.')) return;
+  const { error } = await sb.rpc('rechazar_profesor', { p_id: id });
+  if(error){ alert('No se pudo rechazar: '+error.message); return; }
+  await cargarPedidos();
+}
 
 async function cargarTodo(){
   const [c,m,a,e,u] = await Promise.all([

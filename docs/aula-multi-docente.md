@@ -42,6 +42,19 @@ escuela ──< curso ──< materia >──< materia_docente >── profesor
    con prefijo de escuela; pantalla de «cuenta pendiente».
 4. **Términos y privacidad**, y prueba con un profesor real.
 
+## Etapa 2: pedidos y aprobación (25/10/2026, aplicada en la base)
+
+- `aula/db/multi-docente-2.sql`: los pedidos van en `aula_priv.solicitud` (esquema que la API no expone) y se manejan
+  solo con funciones: `pedir_materia`, `mis_solicitudes`, `cancelar_solicitud` (profesor) y `solicitudes_pendientes`,
+  `profesores_pendientes`, `aprobar_solicitud`, `rechazar_solicitud`, `rechazar_profesor` (admin). Aprobar crea la
+  escuela, el curso o la materia que falten, con el profesor como autor y docente (no Diego: los automatismos se
+  apagan durante la aprobación con `aula.aprobando`). Pruebas: `multi-docente-2-pruebas.sql`, pasadas.
+- `aula/registro.html`: entrar con Google → nombre y apellido → pedir materias (buscador de las 239 escuelas,
+  cursos existentes o uno nuevo, materia nueva con sugerencias de los planes o sumarse a una existente como pareja).
+- Ingreso del Aula: botón para profesores; una cuenta en revisión va a su pedido, no al panel.
+- Panel de Diego: sección «Pedidos de profesores» con aprobar y rechazar.
+- Requiere en Supabase → Authentication → URL Configuration la dirección `https://catto.ar/aula/registro**`.
+
 ## Etapa 1: archivos
 
 | Archivo | Qué hace |

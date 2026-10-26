@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<base href="/aula/">
+<title>Aula Catto · Cuenta de profesor</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="../assets/css/base.css?v=12">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<link rel="stylesheet" href="../assets/css/aula.css?v=7">
+<style>
+  .gate{align-items:flex-start;padding:40px 16px 70px;overflow:auto}
+  .gate-card.ancha{max-width:600px}
+  .reg h2{font-size:15px;margin:22px 0 10px;color:var(--txt)}
+  .reg p{font-size:13.5px;color:var(--muted);line-height:1.55;margin:0 0 12px}
+  .reg select,.reg textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;color:var(--txt);font:inherit;font-size:14px;outline:none}
+  .reg select:focus,.reg textarea:focus{border-color:var(--accent)}
+  .reg textarea{min-height:76px;resize:vertical}
+  .res{margin-top:6px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .res button{display:block;width:100%;text-align:left;background:transparent;border:0;border-top:1px solid var(--line);
+    padding:9px 12px;color:var(--txt);font:inherit;font-size:13.5px;cursor:pointer}
+  .res button:first-child{border-top:0}
+  .res button:hover{background:var(--panel2)}
+  .res small{display:block;color:var(--soft);font-size:11.5px}
+  .elegida{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--panel2);
+    border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13.5px}
+  .link{background:none;border:0;padding:0;color:var(--accent);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline}
+  .pedido{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;border-top:1px solid var(--line);padding:10px 0;font-size:13.5px}
+  .pedido:first-child{border-top:0}
+  .pedido small{display:block;color:var(--soft);font-size:12px;margin-top:2px}
+  .estado{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+  .e-pendiente{background:rgba(210,153,34,.16);color:#e3b341}
+  .e-aprobada{background:rgba(63,185,80,.16);color:#56d364}
+  .e-rechazada{background:rgba(248,81,73,.14);color:#ff7b72}
+  .aviso{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0;padding:11px 13px;
+    font-size:13.5px;color:var(--muted);line-height:1.5;margin:0 0 14px;background:var(--panel2)}
+  .google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#fff;color:#1f1f1f;
+    border:1px solid #dadce0;border-radius:9px;padding:11px 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+  .google:hover{background:#f6f8fa}
+  #msg{font-size:13px;margin-top:12px;min-height:16px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="gate">
+  <div class="starfield" aria-hidden="true"><div class="mw"></div><div class="mw-core"></div></div>
+  <div class="gate-card ancha reg">
+    <div class="gate-logo"><span class="logo">🎓</span> Aula <span style="color:var(--accent)">Catto</span></div>
+    <div class="gate-sub">Cuenta de profesor</div>
+    <div id="vista"><p>Cargando…</p></div>
+    <div id="msg"></div>
+  </div>
+</div>
+
+<div style="position:fixed;bottom:14px;width:100%;text-align:center">
+  <a href="index.html" style="color:var(--soft);font-size:12px">← Volver al ingreso del Aula</a>
+</div>
+
+<script src="assets/vendor/supabase.js"></script>
+<script src="assets/config.js"></script>
+<script>
+(function(){
+  const vista = document.getElementById('vista');
+  const msg = document.getElementById('msg');
+  const show = (t, c) => { msg.style.color = 'var(' + (c || '--muted') + ')'; msg.textContent = t || ''; };
+  const esc = s => (s == null ? '' : String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pelar = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const entrar = new URLSearchParams(location.search).has('entrar');
+  const sb = supabase.createClient(window.AULA_CONFIG.SUPABASE_URL, window.AULA_CONFIG.SUPABASE_KEY);
+  let SESION = null, PERFIL = null, ESCUELAS = null, NOMBRES_PLAN = null;
+
+  /* ---------- 1) sin sesión: entrar con Google ---------- */
+  function vistaIngreso(){
+    vista.innerHTML = `
+      <p>Si das clases en una escuela técnica, podés usar el Aula con tus cursos: actividades, entregas con
+      archivos y fotos, notas y la importación de la libreta del CIDI.</p>
+      <div class="aviso">Cada cuenta de profesor la revisa y la aprueba Diego Cattáneo, el autor del sitio.
+      Después de pedirla, escribile para contarle quién sos.</div>
+      <button class="google" id="btnGoogle" type="button">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>
+        Continuar con Google</button>
+      <p style="margin-top:14px;font-size:12.5px">¿Sos estudiante? Ingresá con el usuario que te dio tu profesor, en
+      <a href="index.html">el ingreso del Aula</a>.</p>`;
+    document.getElementById('btnGoogle').onclick = async () => {
+      show('Abriendo Google…');
+      const { error } = await sb.auth.signInWithOAuth({ provider: 'google',
+        options: { redirectTo: location.origin + '/aula/registro' + (entrar ? '?entrar=1' : '') } });
+      if (error) show('No se pudo abrir Google: ' + error.message, '--hot');
+    };
+  }
+
+  /* ---------- 2) con sesión y sin perfil: nombre y apellido ---------- */
+  function vistaAlta(){
+    const md = SESION.user.user_metadata || {};
+    const partes = String(md.full_name || md.name || '').trim().split(/\s+/);
+    const nombre = md.given_name || (partes.length > 1 ? partes.slice(0, -1).join(' ') : partes[0] || '');
+    const apellido = md.family_name || (partes.length > 1 ? partes[partes.length - 1] : '');
+    vista.innerHTML = `
+      <p>Entraste como <b>${esc(SESION.user.email)}</b>. Completá tu nombre como querés que lo vean tus estudiantes.</p>
+      <div class="field"><label>Nombre</label><input id="fNombre" value="${esc(nombre)}" autocomplete="given-name"></div>
+      <div class="field"><label>Apellido</label><input id="fApellido" value="${esc(apellido)}" autocomplete="family-name"></div>
+      <button class="btn" id="btnAlta" type="button">Pedir la cuenta de profesor</button>
+      <p style="margin-top:12px"><button class="link" id="btnOtra" type="button">Usar otra cuenta de Google</button></p>`;
+    document.getElementById('btnOtra').onclick = salir;
+    document.getElementById('btnAlta').onclick = async () => {
+      const n = document.getElementById('fNombre').value.trim(), a = document.getElementById('fApellido').value.trim();
+      if (!n || !a) { show('Completá el nombre y el apellido.', '--warn'); return; }
+      show('Guardando…');
+      const { error } = await sb.rpc('solicitar_alta_profesor', { p_nombre: n, p_apellido: a });
+      if (error) { show(error.message, '--hot'); return; }
+      show('');
+      await cargar();
+    };
+  }
+
+  /* ---------- 3) profesor: estado, pedidos y pedir una materia ---------- */
+  async function vistaProfesor(){
+    if (PERFIL.estado === 'rechazado') {
+      vista.innerHTML = `<div class="aviso">Tu pedido de cuenta no fue aprobado. Si creés que es un error,
+        escribile a Diego.</div><button class="btn ghost" id="btnSalir" type="button">Salir</button>`;
+      document.getElementById('btnSalir').onclick = salir;
+      return;
+    }
+    if (PERFIL.estado === 'aprobado' && entrar) { location.href = 'profesor.html'; return; }
+    const { data: pedidos, error } = await sb.rpc('mis_solicitudes');
+    if (error) { show(error.message, '--hot'); return; }
+    const aprobado = PERFIL.estado === 'aprobado';
+    vista.innerHTML = `
+      ${aprobado
+        ? `<div class="aviso">Tu cuenta está aprobada, ${esc(PERFIL.nombre)}. Desde acá podés pedir más materias.</div>
+           <a class="btn" href="profesor.html" style="margin-bottom:6px">Ir a tu panel</a>`
+        : `<div class="aviso">Hola, ${esc(PERFIL.nombre)}. Tu cuenta está <b>en revisión</b>. Pedí abajo las materias
+           que das; Diego las revisa y, al aprobarlas, te quedan listas en tu panel.</div>`}
+      <h2>Tus pedidos</h2>
+      <div id="pedidos">${(pedidos || []).length ? pedidos.map(p => `
+        <div class="pedido"><div><b>${esc(p.materia)}</b>${p.rol === 'pareja' ? ' (pareja pedagógica)' : ''}
+          <small>${esc(p.curso)} · ${esc(p.escuela)}</small>
+          ${p.respuesta ? `<small>Respuesta: ${esc(p.respuesta)}</small>` : ''}</div>
+          <div style="text-align:right"><span class="estado e-${p.estado}">${p.estado}</span>
+          ${p.estado === 'pendiente' ? `<br><button class="link" data-cancelar="${p.id}" type="button" style="margin-top:6px">Cancelar</button>` : ''}</div>
+        </div>`).join('') : '<p>Todavía no pediste ninguna materia.</p>'}</div>
+      <h2>Pedir una materia</h2>
+      <div class="field"><label>Escuela</label><div id="escBox"></div></div>
+      <div class="field"><label>Curso</label><div id="curBox"><p style="margin:0">Primero elegí la escuela.</p></div></div>
+      <div class="field"><label>Materia</label><div id="matBox"><p style="margin:0">Primero elegí el curso.</p></div></div>
+      <div class="field"><label>Mensaje para Diego (opcional)</label>
+        <textarea id="fMensaje" maxlength="1000" placeholder="Por ejemplo: doy esta materia desde marzo; el número de teléfono para confirmarlo es…"></textarea></div>
+      <button class="btn" id="btnPedir" type="button">Enviar el pedido</button>
+      <p style="margin-top:14px"><button class="link" id="btnSalir" type="button">Salir</button></p>`;
+    vista.querySelectorAll('[data-cancelar]').forEach(b => b.onclick = async () => {
+      const { error } = await sb.rpc('cancelar_solicitud', { p_id: +b.dataset.cancelar });
+      if (error) { show(error.message, '--hot'); return; }
+      await cargar();
+    });
+    document.getElementById('btnSalir').onclick = salir;
+    armarFormulario();
+  }
+
+  /* El formulario: escuela (buscador sobre la lista oficial), curso y materia */
+  const P = { escuela: null, escuelaTxt: '', curso: null, cursoTxt: '', materia: null, materiaTxt: '' };
+  async function armarFormulario(){
+    Object.assign(P, { escuela: null, escuelaTxt: '', curso: null, cursoTxt: '', materia: null, materiaTxt: '' });
+    if (!ESCUELAS) {
+      const { data } = await sb.from('escuela').select('id,nombre,localidad').eq('estado', 'aprobada').order('nombre');
+      ESCUELAS = (data || []).map(e => Object.assign(e, { b: pelar(e.nombre + ' ' + (e.localidad || '')) }));
+    }
+    pintarEscuela();
+    document.getElementById('btnPedir').onclick = enviar;
+  }
+  function pintarEscuela(){
+    const box = document.getElementById('escBox');
+    if (P.escuela) {
+      box.innerHTML = `<div class="elegida"><span>${esc(P.escuela.nombre)}<small style="display:block;color:var(--soft)">${esc(P.escuela.localidad || '')}</small></span>
+        <button class="link" type="button" id="escCambiar">Cambiar</button></div>`;
+      document.getElementById('escCambiar').onclick = () => { P.escuela = null; pintarEscuela(); pintarCurso(); };
+      pintarCurso(); return;
+    }
+    if (box.dataset.modo === 'texto') {
+      box.innerHTML = `<input id="escTxt" placeholder="Nombre completo de la escuela y localidad" value="${esc(P.escuelaTxt)}">
+        <p style="margin:6px 0 0"><button class="link" type="button" id="escLista">Volver a buscar en la lista</button></p>`;
+      const t = document.getElementById('escTxt');
+      t.oninput = () => { P.escuelaTxt = t.value; };
+      document.getElementById('escLista').onclick = () => { box.dataset.modo = ''; P.escuelaTxt = ''; pintarEscuela(); pintarCurso(); };
+      pintarCurso(); return;
+    }
+    box.innerHTML = `<input id="escBuscar" placeholder="Buscá por nombre, número o localidad: IPET 49, Villa María…" autocomplete="off">
+      <div class="res" id="escRes" hidden></div>
+      <p style="margin:6px 0 0"><button class="link" type="button" id="escNoEsta">Mi escuela no está en la lista</button></p>`;
+    const inp = document.getElementById('escBuscar'), res = document.getElementById('escRes');
+    inp.oninput = () => {
+      const pal = pelar(inp.value).replace(/[.º°]/g, ' ').split(/\s+/).filter(Boolean);
+      if (!pal.length) { res.hidden = true; return; }
+      const hits = ESCUELAS.filter(e => pal.every(w => e.b.replace(/[.º°]/g, ' ').includes(w))).slice(0, 8);
+      res.hidden = false;
+      res.innerHTML = hits.length ? hits.map(e => `<button type="button" data-id="${e.id}">${esc(e.nombre)}<small>${esc(e.localidad || '')}</small></button>`).join('')
+        : '<p style="margin:8px 12px;font-size:13px">No encontré ninguna. Probá con otra palabra o escribila a mano.</p>';
+      res.querySelectorAll('button').forEach(b => b.onclick = () => { P.escuela = ESCUELAS.find(e => e.id === +b.dataset.id); pintarEscuela(); });
+    };
+    document.getElementById('escNoEsta').onclick = () => { box.dataset.modo = 'texto'; pintarEscuela(); };
+    pintarCurso();
+  }
+  async function pintarCurso(){
+    const box = document.getElementById('curBox');
+    P.curso = null; P.cursoTxt = '';
+    const conEscuela = P.escuela || document.getElementById('escBox').dataset.modo === 'texto';
+    if (!conEscuela) { box.innerHTML = '<p style="margin:0">Primero elegí la escuela.</p>'; pintarMateria(); return; }
+    let cursos = [];
+    if (P.escuela) {
+      const { data } = await sb.from('curso').select('id,nombre').eq('escuela_id', P.escuela.id).eq('estado', 'aprobado').order('nombre');
+      cursos = data || [];
+    }
+    box.innerHTML = `${cursos.length ? `<select id="curSel"><option value="">Elegí el curso…</option>
+        ${cursos.map(c => `<option value="${c.id}">${esc(c.nombre)}</option>`).join('')}
+        <option value="otro">Otro curso (lo escribo)</option></select>` : ''}
+      <input id="curTxt" placeholder="Año y división, por ejemplo: 5° A" ${cursos.length ? 'hidden' : ''} style="margin-top:${cursos.length ? '8px' : '0'}">`;
+    const sel = document.getElementById('curSel'), txt = document.getElementById('curTxt');
+    txt.oninput = () => { P.cursoTxt = txt.value; };
+    if (sel) sel.onchange = () => {
+      txt.hidden = sel.value !== 'otro';
+      P.curso = sel.value && sel.value !== 'otro' ? cursos.find(c => c.id === +sel.value) : null;
+      if (sel.value === 'otro') txt.focus();
+      pintarMateria();
+    };
+    pintarMateria();
+  }
+  async function pintarMateria(){
+    const box = document.getElementById('matBox');
+    P.materia = null; P.materiaTxt = '';
+    const conCurso = P.curso || (document.getElementById('curTxt') && !document.getElementById('curTxt').hidden);
+    if (!conCurso) { box.innerHTML = '<p style="margin:0">Primero elegí el curso.</p>'; return; }
+    let materias = [];
+    if (P.curso) {
+      const { data } = await sb.from('materia').select('id,nombre').eq('curso_id', P.curso.id).order('nombre');
+      materias = data || [];
+    }
+    if (!NOMBRES_PLAN) NOMBRES_PLAN = await nombresDelPlan();
+    box.innerHTML = `${materias.length ? `<select id="matSel"><option value="">Una materia nueva (la escribo)</option>
+        ${materias.map(m => `<option value="${m.id}">Sumarme a «${esc(m.nombre)}» (pareja pedagógica)</option>`).join('')}</select>` : ''}
+      <input id="matTxt" list="planNombres" placeholder="Nombre de la materia, como figura en el plan" style="margin-top:${materias.length ? '8px' : '0'}">
+      <datalist id="planNombres">${NOMBRES_PLAN.map(n => `<option value="${esc(n)}">`).join('')}</datalist>`;
+    const sel = document.getElementById('matSel'), txt = document.getElementById('matTxt');
+    txt.oninput = () => { P.materiaTxt = txt.value; };
+    if (sel) sel.onchange = () => {
+      P.materia = sel.value ? materias.find(m => m.id === +sel.value) : null;
+      txt.hidden = !!P.materia;
+    };
+  }
+  /* los nombres de las materias de los planes que ya están en el sitio, para sugerir */
+  async function nombresDelPlan(){
+    const n = new Set();
+    for (const u of ['/assets/js/tecnicatura.js', '/assets/js/tecnicatura-electricidad.js']) {
+      try {
+        const t = await (await fetch(u)).text();
+        new Function(t + ';return MATERIAS;')().forEach(m => n.add(m.n));
+      } catch (e) {}
+    }
+    return [...n].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+  async function enviar(){
+    const escTxt = document.getElementById('escTxt');
+    const curTxt = document.getElementById('curTxt');
+    const args = {
+      p_escuela_id: P.escuela ? P.escuela.id : null,
+      p_escuela_propuesta: !P.escuela && escTxt ? escTxt.value : null,
+      p_curso_id: P.curso ? P.curso.id : null,
+      p_curso_propuesto: !P.curso && curTxt && !curTxt.hidden ? curTxt.value : null,
+      p_materia_id: P.materia ? P.materia.id : null,
+      p_materia_nombre: P.materia ? null : (document.getElementById('matTxt') || {}).value || null,
+      p_rol: P.materia ? 'pareja' : 'titular',
+      p_mensaje: document.getElementById('fMensaje').value
+    };
+    show('Enviando…');
+    const { error } = await sb.rpc('pedir_materia', args);
+    if (error) { show(error.message, '--hot'); return; }
+    show('Pedido enviado. Diego lo va a revisar.', '--ok');
+    await cargar(true);
+  }
+
+  async function salir(){ await sb.auth.signOut(); location.href = 'registro.html'; }
+
+  async function cargar(conservarMensaje){
+    if (!conservarMensaje) show('');
+    const { data: { session } } = await sb.auth.getSession();
+    SESION = session;
+    if (!session) { vistaIngreso(); return; }
+    const { data: p, error } = await sb.from('perfil').select('rol,estado,nombre,apellido').eq('id', session.user.id).maybeSingle();
+    if (error) { show(error.message, '--hot'); return; }
+    PERFIL = p;
+    if (!p) { vistaAlta(); return; }
+    if (p.rol === 'estudiante') {
+      vista.innerHTML = `<div class="aviso">Esta cuenta es de estudiante.</div><a class="btn" href="estudiante.html">Ir a tu Aula</a>`;
+      return;
+    }
+    await vistaProfesor();
+  }
+  cargar();
+})();
+</script>
+</body>
+</html>

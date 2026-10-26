@@ -36,6 +36,10 @@
       <button class="btn" type="submit">Ingresar</button>
       <div id="msg" style="font-size:12.5px;margin-top:12px;min-height:16px;text-align:center;color:var(--muted)"></div>
     </form>
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line);text-align:center">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">¿Sos profesor?</div>
+      <a class="btn ghost" href="registro.html?entrar=1">Entrar con Google o pedir tu cuenta</a>
+    </div>
 
   </div>
 </div>
@@ -127,10 +131,16 @@
   if(sb){
     sb.auth.getSession().then(async ({ data:{ session } })=>{
       if(!session) return;
-      const { data:p } = await sb.from('perfil').select('rol').eq('id', session.user.id).single();
+      const { data:p } = await sb.from('perfil').select('rol,estado').eq('id', session.user.id).single();
       if(p){ msg.style.color='var(--muted)';
-        msg.innerHTML = `Ya tenés sesión iniciada. <a href="${p.rol==='profesor'?'profesor.html':'estudiante.html'}">Continuar →</a>`; }
+        msg.innerHTML = `Ya tenés sesión iniciada. <a href="${destino(p)}">Continuar →</a>`; }
     }).catch(()=>{});
+  }
+
+  /* un profesor con la cuenta todavía en revisión va a la página de su pedido */
+  function destino(p){
+    if(p.rol !== 'profesor') return 'estudiante.html';
+    return p.estado && p.estado !== 'aprobado' ? 'registro.html' : 'profesor.html';
   }
 
   async function onSubmit(e){
@@ -144,11 +154,11 @@
       const email = id.includes('@') ? id : `${id}@${window.AULA_CONFIG.EMAIL_DOMAIN}`;
       const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
       if(error){ show('No pudimos ingresar: '+error.message, '--hot'); return; }
-      const { data:perfil, error:pe } = await sb.from('perfil').select('rol,nombre,activo').eq('id', data.user.id).single();
+      const { data:perfil, error:pe } = await sb.from('perfil').select('rol,nombre,activo,estado').eq('id', data.user.id).single();
       if(pe || !perfil){ show('Ingresaste, pero no encontré tu perfil en la base.', '--warn'); return; }
       if(perfil.rol==='estudiante' && perfil.activo===false){ await sb.auth.signOut(); show('Tu cuenta está desactivada. Consultá con el profesor.', '--warn'); return; }
       show(`✅ Hola ${perfil.nombre||''} (rol: ${perfil.rol}). Entrando…`, '--ok');
-      setTimeout(()=>{ location.href = perfil.rol==='profesor' ? 'profesor.html' : 'estudiante.html'; }, 1000);
+      setTimeout(()=>{ location.href = destino(perfil); }, 1000);
     }catch(err){ show('Error de conexión: '+err.message, '--hot'); }
   }
 })();
