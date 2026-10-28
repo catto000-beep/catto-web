@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Plan de Sonido de catto.ar: 46 materias y 174 ejes temáticos en cinco años, con título técnico al tercero. Basado en la Ingeniería de Sonido de la UNTREF y en la Tecnicatura Superior en Sonido y Producción Musical de CABA. Tres vistas: mapa mental, matriz de temas y recorrido de cada tema.">
+<title>Mapa de Temas · Sonido</title>
+    <link rel="canonical" href="https://catto.ar/publicaciones/mapa-sonido">
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3140;
+    --txt:#e6edf3; --muted:#9aa7b4; --soft:#7d8a99;
+    --accent:#58a6ff; --accent2:#1f6feb;
+    --ok:#3fb950; --warn:#d29922; --hot:#f85149;
+    --r:14px; --shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 80% -10%, #1b2740 0%, var(--bg) 55%);
+    color:var(--txt); font-family:"Segoe UI",system-ui,Roboto,Arial,sans-serif;
+    line-height:1.45; -webkit-font-smoothing:antialiased; padding-bottom:60px;
+  }
+  a{color:var(--accent)}
+  header.top{
+    padding:26px 30px 18px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(31,111,235,.10),transparent);
+    position:sticky; top:0; z-index:50; backdrop-filter:blur(8px);
+    background-color:rgba(13,17,23,.82);
+  }
+  .top h1{margin:0;font-size:22px;letter-spacing:.2px}
+  .top .sub{color:var(--muted);font-size:13px;margin-top:3px}
+  .stats{display:flex;gap:22px;flex-wrap:wrap;margin-top:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:96px}
+  .stat b{display:block;font-size:20px;color:var(--accent)}
+  .stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:16px 30px 4px}
+  /* flex-wrap: en el teléfono las tres pestañas no entran en un renglón y
+     estiraban la página a lo ancho */
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px}
+  .tab{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13.5px;color:var(--muted);border:1px solid transparent;white-space:nowrap}
+  .tab:hover{color:var(--txt)}
+  .tab.active{background:var(--accent2);color:#fff;border-color:var(--accent)}
+  .search{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:9px 14px}
+  .search input{flex:1;background:transparent;border:0;outline:0;color:var(--txt);font-size:14px}
+  .search svg{flex:none}
+
+  .wrap{padding:14px 30px}
+  .hint{color:var(--soft);font-size:12.5px;margin:2px 0 16px}
+
+  /* ===== Mapa mental ===== */
+  .years{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+  @media(max-width:1300px){.years{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media(max-width:1000px){.years{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:640px){.years{grid-template-columns:1fr}}
+  .ycol{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:12px}
+  .yhead{display:flex;align-items:baseline;justify-content:space-between;padding:4px 6px 8px;border-bottom:1px dashed var(--line)}
+  .yhead .yn{font-size:16px;font-weight:700}
+  .yhead .yh{font-size:11px;color:var(--muted)}
+  .subj{border-radius:11px;border:1px solid var(--line);overflow:hidden;background:var(--panel2)}
+  .subj > .sh{padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:9px}
+  .subj .dot{width:10px;height:10px;border-radius:3px;flex:none}
+  .subj .sname{font-size:13.5px;font-weight:600;flex:1}
+  .subj .sh small{color:var(--muted);font-size:11px}
+  .subj .chev{transition:transform .2s;color:var(--muted)}
+  .subj.open .chev{transform:rotate(90deg)}
+  .ejes{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;
+    transition:grid-template-rows .18s cubic-bezier(.23,1,.32,1),opacity .15s ease,visibility 0s .18s}
+  .ej-in{min-height:0;overflow:hidden}
+  .ej-pad{padding:2px 10px 12px}
+  .subj.open .ejes{grid-template-rows:1fr;opacity:1;visibility:visible;
+    transition:grid-template-rows .26s cubic-bezier(.23,1,.32,1),opacity .2s ease}
+  /* al abrir una materia, sus ejes caen uno tras otro (no al redibujar por una búsqueda) */
+  .subj.open:not(.sin-anim) .ej-pad > *{animation:ejCae .22s cubic-bezier(.23,1,.32,1) backwards}
+  .subj.open .ej-pad > :nth-child(2){animation-delay:.04s} .subj.open .ej-pad > :nth-child(3){animation-delay:.08s}
+  .subj.open .ej-pad > :nth-child(4){animation-delay:.12s} .subj.open .ej-pad > :nth-child(5){animation-delay:.16s}
+  .subj.open .ej-pad > :nth-child(6){animation-delay:.2s} .subj.open .ej-pad > :nth-child(7){animation-delay:.2s}
+  .subj.open .ej-pad > :nth-child(n+8){animation-delay:.2s}
+  @keyframes ejCae{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.ejes{transition:none}.subj.open .ej-pad > *{animation:none}}
+  .eje{padding:8px 0;border-top:1px solid var(--line)}
+  .eje .et{font-size:12.5px;font-weight:600;margin-bottom:3px}
+  /* Enlace al desarrollo completo del tema */
+  a.tlink{color:var(--txt);text-decoration:none;display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  a.tlink:hover{color:var(--accent)}
+  a.tlink .tgo{font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--accent);background:rgba(31,111,235,.16);border:1px solid rgba(88,166,255,.34);
+    border-radius:20px;padding:1px 8px;white-space:nowrap;flex:none}
+  a.tlink:hover .tgo{background:var(--accent2);border-color:var(--accent);color:#fff}
+  .tl-item .ti-e a.tlink{color:var(--accent)}
+  .tl-item .ti-e a.tlink:hover{text-decoration:underline}
+  .eje .ed{font-size:11.5px;color:var(--muted)}
+  .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .tag{font-size:10px;padding:2px 7px;border-radius:20px;cursor:pointer;border:1px solid transparent;white-space:nowrap}
+
+  /* ===== Matriz ===== */
+  .matrix-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+  table.mx{border-collapse:collapse;width:100%;font-size:11.5px;min-width:1050px}
+  table.mx th,table.mx td{border:1px solid var(--line);padding:0}
+  table.mx thead th{position:sticky;top:0;background:var(--panel2);z-index:3;font-weight:600;color:var(--muted);font-size:10.5px}
+  table.mx thead th.yrgrp{background:#10202f;color:var(--accent);font-size:11px;letter-spacing:.4px}
+  .mx .rowh{position:sticky;left:0;background:var(--panel2);z-index:2;text-align:left;padding:7px 10px;font-weight:600;font-size:11.5px;min-width:210px;cursor:pointer}
+  .mx .rowh:hover{color:var(--accent)}
+  .mx .colh{writing-mode:vertical-rl;transform:rotate(180deg);padding:10px 4px;height:auto;white-space:nowrap;cursor:pointer;font-size:11px;vertical-align:bottom}
+  .mx .colh:hover{color:var(--accent)}
+  .cell{height:34px;text-align:center;cursor:default;transition:transform .08s}
+  .cell.on{cursor:pointer}
+  .cell .lvl{display:inline-block;width:20px;height:20px;line-height:20px;border-radius:6px;font-size:10px;font-weight:700;color:#06121f}
+  .lv1{background:#244a63}.lv1 .x{color:#9fd0ee}
+  .lv2{background:#2f6f9e}.lv2 .x{color:#eaf6ff}
+  .lv3{background:#58a6ff}
+  .lv4{background:#7ee787}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:12px 2px;font-size:11.5px;color:var(--muted);align-items:center}
+  .legend .k{display:inline-flex;align-items:center;gap:6px}
+  .legend .sw{width:16px;height:16px;border-radius:5px;display:inline-block}
+  .repeat-flag{color:var(--warn);font-weight:600}
+
+  /* ===== Explorador de temas ===== */
+  .theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px}
+  .tcard{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 13px;cursor:pointer;transition:transform .12s,border-color .12s}
+  .tcard:hover{border-color:var(--accent)}
+  @media(hover:hover) and (pointer:fine){.tcard:hover{transform:translateY(-2px)}}
+  .tcard.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .tcard .tn{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .tcard .tmeta{font-size:11px;color:var(--muted);margin-top:5px}
+  .tcard .bar{height:5px;border-radius:4px;background:var(--line);margin-top:8px;overflow:hidden}
+  .tcard .bar i{display:block;height:100%}
+  .timeline{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+  .tl-empty{color:var(--soft);text-align:center;padding:30px;font-size:13px}
+  .tl-head{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+  .tl-desc{color:var(--muted);font-size:12.5px;margin-bottom:16px}
+  .tl-track{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+  @media(max-width:900px){.tl-track{grid-template-columns:1fr}}
+  .tl-year{border-top:2px solid var(--line);padding-top:10px}
+  .tl-year.has{border-top-color:var(--accent)}
+  .tl-year .yl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px}
+  .tl-item{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin-bottom:9px}
+  .tl-item .ti-s{font-size:12px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .tl-item .ti-e{font-size:11.5px;color:var(--accent);margin-top:3px}
+  .tl-item .ti-d{font-size:11px;color:var(--muted);margin-top:3px}
+  .pill{font-size:9.5px;padding:1px 7px;border-radius:20px;font-weight:700}
+  .pill.l1{background:#244a63;color:#9fd0ee}
+  .pill.l2{background:#2f6f9e;color:#eaf6ff}
+  .pill.l3{background:#58a6ff;color:#06121f}
+  .pill.l4{background:#7ee787;color:#06121f}
+  .insight{background:linear-gradient(135deg,rgba(31,111,235,.12),rgba(63,185,80,.07));border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-top:16px;font-size:12.5px;color:var(--muted)}
+  .insight b{color:var(--txt)}
+  .footer{padding:24px 30px;color:var(--soft);font-size:11.5px;border-top:1px solid var(--line);margin-top:30px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .hidden{display:none!important}
+  ::-webkit-scrollbar{height:11px;width:11px}
+  ::-webkit-scrollbar-thumb{background:#30363d;border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  /* Barra de retorno a catto.ar (agregada al publicar el dashboard en el sitio) */
+  .backbar{position:fixed;right:16px;bottom:16px;z-index:200}
+  .backbar a{display:inline-flex;align-items:center;gap:7px;background:rgba(22,27,34,.92);
+    border:1px solid var(--line);border-radius:24px;padding:9px 16px;color:var(--txt);
+    font-size:13px;text-decoration:none;box-shadow:0 8px 30px rgba(0,0,0,.45);backdrop-filter:blur(8px)}
+  .backbar a:hover{border-color:var(--accent);color:var(--accent)}
+  /* El encabezado se ve solo con la pagina arriba de todo (ver el script del final) */
+  header.top{transition:transform .28s ease}
+  header.top.hd-hide{transform:translateY(-100%)}
+
+  /* ---- Fondo de estrellas (Vía Láctea) ---- */
+  .starfield{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .starfield i{position:absolute;display:block;border-radius:50%}
+  .starfield .mw{position:absolute;inset:0;filter:blur(12px);opacity:.85;
+    background:
+      radial-gradient(24% 40% at 84% 70%, rgba(216,183,140,.20), transparent 62%),
+      radial-gradient(14% 24% at 88% 74%, rgba(236,150,168,.13), transparent 60%),
+      radial-gradient(32% 46% at 74% 52%, rgba(150,120,95,.11), transparent 68%),
+      radial-gradient(40% 56% at 62% 38%, rgba(120,140,196,.10), transparent 70%),
+      radial-gradient(30% 46% at 48% 22%, rgba(112,132,188,.08), transparent 72%)}
+  .starfield .mw-core{position:absolute;left:84%;top:70%;width:150px;height:90px;
+    transform:translate(-50%,-50%);filter:blur(7px);border-radius:50%;
+    background:radial-gradient(circle at 50% 55%, rgba(240,214,170,.24), rgba(230,160,150,.10) 45%, transparent 70%)}
+
+  /* ---- índice en texto, para leer de corrido y para los buscadores ---- */
+  .indice{max-width:900px;margin:26px auto 0;padding:0 30px 10px}
+  .indice h2{font-size:19px;margin:0 0 6px}
+  .ind-nota{color:var(--muted);font-size:13.5px;margin:0 0 20px;max-width:70ch}
+  .indice h3{font-size:15px;margin:26px 0 10px;padding-bottom:6px;
+    border-bottom:1px solid var(--line);color:var(--accent)}
+  .ind-dato{color:var(--soft);font-size:12px;font-weight:400;margin-left:8px}
+  .ind-mat{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    padding:12px 16px;margin:0 0 10px}
+  .ind-mat h4{margin:0 0 3px;font-size:14.5px;color:var(--txt)}
+  .ind-ficha{margin:0 0 8px;font-size:12px;color:var(--soft)}
+  .ind-mat ul{margin:0;padding-left:18px}
+  .ind-mat li{font-size:13.5px;color:#cdd6df;margin:5px 0;line-height:1.5}
+  .ind-mat li b{color:var(--txt)}
+  .ind-mat li a{color:var(--accent);text-decoration:none}
+  .ind-mat li a:hover{text-decoration:underline}
+  .aviso-plan{margin:12px 0 2px;max-width:1100px;padding:10px 14px;border:1px solid rgba(210,153,34,.45);border-left:4px solid var(--warn);
+    border-radius:8px;background:rgba(210,153,34,.08);font-size:13px;line-height:1.55;color:var(--muted)}
+  .aviso-plan b{color:var(--txt)}
+  .aviso-plan a{color:var(--accent)}
+</style>
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="220" data-band="220">
+  <div class="mw"></div>
+  <div class="mw-core"></div>
+</div>
+<div class="backbar"><a href="/" title="Volver a catto.ar">← catto.ar</a></div>
+<header class="top">
+  <a id="cattoBack" href="/" style="display:inline-flex;align-items:center;gap:7px;color:#9aa7b4;font-size:13px;text-decoration:none;margin-bottom:10px"><span style="width:24px;height:24px;border-radius:6px;display:grid;place-items:center;background:linear-gradient(135deg,#1f6feb,#a371f7);font-size:13px">🐷</span>Volver a catto.ar</a>
+  <h1>🎧 Mapa de Temas · Sonido <span style="color:var(--accent);font-weight:600">by Catto</span></h1>
+  <div class="sub">Técnico en Sonido (3 años) e Ingeniería en Sonido (5 años) · plan de catto.ar basado en dos planes oficiales. Visualización de qué se dicta, dónde se repite y dónde se profundiza.</div>
+  <div class="aviso-plan"><b>Es un plan propio de catto.ar, no un plan oficial, y no otorga título.</b> Se armó combinando la <b>Ingeniería de Sonido de la Universidad Nacional de Tres de Febrero</b> (UNTREF, universidad pública; Resolución Ministerial 1964/07), que aporta la estructura, las materias de base y las horas, con la <b>Tecnicatura Superior en Sonido y Producción Musical</b> aprobada en la Ciudad de Buenos Aires (Resolución 536/SSPLINED/17), que aporta los contenidos de estudio, producción y escucha. La resolución de la UNTREF no publica contenidos mínimos: los ejes de esas materias los redactó catto.ar. Se dejaron afuera las materias humanísticas y comerciales. Quien quiera el título tiene que cursar en una institución que lo otorgue.</div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="toolbar">
+  <div class="tabs">
+    <div class="tab active" data-view="mapa">🧠 Mapa mental</div>
+    <div class="tab" data-view="matriz">🔲 Matriz de temas</div>
+    <div class="tab" data-view="temas">🔎 Explorar tema</div>
+  </div>
+  <label class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa7b4" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+    <input id="q" placeholder="Buscar tema o materia: micrófono, reverberación, compresor, FFT, mezcla, MIDI…">
+  </label>
+</div>
+
+<div class="wrap">
+  <!-- MAPA -->
+  <section id="view-mapa">
+    <div class="hint">Cada columna es un año. Hacé clic en una materia para ver sus ejes temáticos. Todavía ningún eje tiene página propia: se irán escribiendo y enlazando. Los <b>chips de color</b> son temas transversales: hacé clic en uno para ver en qué otras materias aparece (salta al explorador).</div>
+    <div class="years" id="years"></div>
+  </section>
+
+  <!-- MATRIZ -->
+  <section id="view-matriz" class="hidden">
+    <div class="hint">Filas = temas transversales · Columnas = materias por año. El número/color indica la <b>profundidad</b> con que cada materia aborda el tema. Leé una fila de izquierda a derecha para ver la <span class="repeat-flag">repetición y progresión</span> de un tema a lo largo de la carrera.</div>
+    <div class="legend">
+      <span class="k"><span class="sw lv1"></span> 1 · Introducción</span>
+      <span class="k"><span class="sw lv2"></span> 2 · Desarrollo</span>
+      <span class="k"><span class="sw lv3"></span> 3 · Profundización</span>
+      <span class="k"><span class="sw lv4"></span> 4 · Aplicación / Integración</span>
+      <span class="k" style="margin-left:auto">Clic en celda, fila o columna para detalle</span>
+    </div>
+    <div class="matrix-scroll"><table class="mx" id="mx"></table></div>
+  </section>
+
+  <!-- TEMAS -->
+  <section id="view-temas" class="hidden">
+    <div class="hint">Elegí un tema transversal para ver su <b>recorrido año por año</b>: dónde se introduce, dónde se refuerza y dónde se profundiza o aplica.</div>
+    <div class="theme-grid" id="themeGrid"></div>
+    <div class="timeline" id="timeline"><div class="tl-empty">Seleccioná un tema arriba para ver su progresión a lo largo de la carrera.</div></div>
+  </section>
+</div>
+
+
+<section class="indice">
+  <h2>Todos los ejes, en texto</h2>
+  <p class="ind-nota">Las mismas materias y ejes temáticos que muestra el mapa, uno debajo del otro. Cada materia indica de qué plan oficial sale. Todavía ningún eje tiene página propia: se irán escribiendo, y muchos de los primeros años van a enlazar páginas que ya existen en la ingeniería. Sirve para leer de corrido, para imprimir y para buscar una palabra con el buscador del navegador.</p>
+  <h3>1° año <span class="ind-dato">10 materias · 39 ejes · 840 horas</span></h3>
+  <article class="ind-mat">
+    <h4>Análisis Matemático I</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Funciones de una variable.</b> Funciones elementales, gráficas y transformaciones. Funciones exponencial, logarítmica y trigonométricas: las que describen una onda y un nivel en decibeles.</li>
+      <li><b>Límite y continuidad.</b> Límite, continuidad y asíntotas. Comportamiento de una función cerca de un punto y en el infinito.</li>
+      <li><b>Derivada.</b> Derivada como tasa de cambio, reglas de derivación, recta tangente. Velocidad y aceleración de una partícula que oscila.</li>
+      <li><b>Integral.</b> Integral indefinida y definida, teorema fundamental, área bajo la curva. Valor medio y valor eficaz de una señal periódica.</li>
+      <li><b>Sucesiones y series.</b> Sucesiones, series numéricas y de potencias. Aproximación de funciones por polinomios de Taylor.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Álgebra I</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Números complejos.</b> Forma binómica, polar y exponencial. Operaciones. La herramienta para representar amplitud y fase de una senoide.</li>
+      <li><b>Vectores.</b> Vectores en el plano y el espacio, producto escalar y vectorial. Rectas y planos.</li>
+      <li><b>Matrices y determinantes.</b> Operaciones con matrices, determinante, matriz inversa.</li>
+      <li><b>Sistemas de ecuaciones lineales.</b> Resolución por eliminación de Gauss. Sistemas compatibles e incompatibles.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Física I</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Cinemática y dinámica.</b> Movimiento en una y dos dimensiones. Leyes de Newton. Trabajo, energía y potencia.</li>
+      <li><b>Movimiento oscilatorio.</b> Movimiento armónico simple: masa y resorte, péndulo. Oscilaciones amortiguadas y forzadas, resonancia. La base de todo sistema que vibra.</li>
+      <li><b>Ondas mecánicas.</b> Ondas transversales y longitudinales. Velocidad, frecuencia y longitud de onda. Superposición, ondas estacionarias y modos de una cuerda o un tubo.</li>
+      <li><b>Fluidos.</b> Presión, principio de Pascal y de Arquímedes. Presión atmosférica: el medio en el que viaja el sonido.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Computación</h4>
+    <p class="ind-ficha">Ciencias básicas · 60 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Algoritmos y programación.</b> Variables, estructuras de control, funciones. Un primer lenguaje para calcular y graficar.</li>
+      <li><b>Arreglos y señales.</b> Una señal como lista de muestras: generar, recorrer, sumar y graficar senoides.</li>
+      <li><b>Archivos de audio.</b> Leer y escribir un archivo WAV: frecuencia de muestreo, canales y resolución.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Introducción a la Acústica y Psicoacústica</h4>
+    <p class="ind-ficha">Acústica y psicoacústica · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Qué es el sonido.</b> Presión sonora y presión atmosférica. Propagación en un medio elástico, velocidad del sonido. Frecuencia, período, longitud de onda y amplitud.</li>
+      <li><b>Decibeles y niveles.</b> Logaritmos y decibel. Nivel de presión sonora, intensidad y potencia acústica. Niveles de referencia y tabla de SPL.</li>
+      <li><b>Forma de onda y timbre.</b> Tono fundamental y armónicos. Formas de onda, fase y timbre. Suma de senoides. Ruido blanco y ruido rosa.</li>
+      <li><b>El oído y la audición.</b> Anatomía del oído y mecanismos de la audición. Rango audible. Percepción de altura, sonoridad y curvas de igual sonoridad.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Análisis Matemático II</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Funciones de varias variables.</b> Derivadas parciales, gradiente y diferencial. Un campo de presión que depende del lugar y del tiempo.</li>
+      <li><b>Integrales múltiples.</b> Integrales dobles y triples. Áreas, volúmenes y valores medios.</li>
+      <li><b>Ecuaciones diferenciales ordinarias.</b> Ecuaciones de primer y segundo orden. La ecuación del oscilador amortiguado y su respuesta.</li>
+      <li><b>Integrales de línea y superficie.</b> Campos vectoriales, circulación y flujo. Teoremas de Green, Stokes y Gauss.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Álgebra II</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Espacios vectoriales.</b> Subespacios, bases y dimensión. Una señal como vector y una base de señales.</li>
+      <li><b>Transformaciones lineales.</b> Núcleo, imagen y matriz asociada. Los sistemas lineales, vistos como transformaciones.</li>
+      <li><b>Autovalores y autovectores.</b> Diagonalización. Modos propios de un sistema que vibra.</li>
+      <li><b>Producto interno y ortogonalidad.</b> Proyección y bases ortogonales: la idea que está detrás de la serie de Fourier.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Física II</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Termodinámica.</b> Temperatura, calor y primera ley. Procesos adiabáticos: por qué la velocidad del sonido depende de la temperatura.</li>
+      <li><b>Óptica y ondas.</b> Reflexión, refracción, interferencia y difracción. Los mismos fenómenos que tiene el sonido en una sala.</li>
+      <li><b>Electrostática.</b> Carga, campo y potencial eléctrico. Capacitores: el principio del micrófono de condensador.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Grabación I</h4>
+    <p class="ind-ficha">Grabación, mezcla y producción · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>El estudio de grabación.</b> Sala de control y sala de grabación. Roles y funciones. Equipos del estudio y su interconexión.</li>
+      <li><b>Recorrido de la señal.</b> Micrófono, consola, computadora y monitoreo. Vocabulario: dB, medidores, headroom, relación señal-ruido, nivel nominal y máximo, respuesta en frecuencia.</li>
+      <li><b>Cables y conectores.</b> Señales balanceadas y no balanceadas, conectores XLR, TRS y RCA. Cajas directas. Armado y prueba de cables.</li>
+      <li><b>Primeras tomas.</b> Grabación analógica y digital. Grabación casera en la computadora: software, sesión, pistas y niveles.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Lenguaje Musical y Audioperceptiva I</h4>
+    <p class="ind-ficha">Lenguaje musical y escucha · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Lectura y escritura musical.</b> Claves, figuras, compases y tonalidades. Manejo del cifrado.</li>
+      <li><b>Acordes y enlaces.</b> Escritura de acordes en sus posiciones y enlaces más comunes. Enlaces de blues, intercambios modales y tensiones.</li>
+      <li><b>Ritmo e intervalos.</b> Ritmos binarios y ternarios. Intervalos melódicos y armónicos. Escala mayor armonizada.</li>
+      <li><b>Dictado y canto.</b> Dictado de melodías simples en mayor y menor. Canto a primera vista de tríadas.</li>
+    </ul>
+  </article>
+  <h3>2° año <span class="ind-dato">10 materias · 41 ejes · 810 horas</span></h3>
+  <article class="ind-mat">
+    <h4>Análisis Matemático III</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Funciones de variable compleja.</b> Funciones analíticas, condiciones de Cauchy-Riemann. Integración en el plano complejo.</li>
+      <li><b>Series de Fourier.</b> Desarrollo de una señal periódica en senos y cosenos. Espectro de líneas de una onda cuadrada, triangular y diente de sierra.</li>
+      <li><b>Transformada de Fourier.</b> De la serie a la transformada. Propiedades. Espectro de una señal que no se repite.</li>
+      <li><b>Transformada de Laplace.</b> Definición, propiedades y antitransformada. Resolución de ecuaciones diferenciales y de circuitos.</li>
+      <li><b>Ecuación de onda.</b> Ecuaciones en derivadas parciales. La ecuación de onda y su solución por separación de variables.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Electricidad y Magnetismo</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Corriente y circuitos.</b> Corriente, resistencia, ley de Ohm y leyes de Kirchhoff. Potencia y energía.</li>
+      <li><b>Campo magnético.</b> Fuerza sobre una corriente, ley de Biot-Savart y de Ampère. El motor de un parlante: una bobina en un imán.</li>
+      <li><b>Inducción electromagnética.</b> Ley de Faraday, inductancia y transformador. El principio del micrófono dinámico y de la cápsula de un tocadiscos.</li>
+      <li><b>Ecuaciones de Maxwell.</b> Las cuatro ecuaciones y la onda electromagnética.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Probabilidad y Estadística</h4>
+    <p class="ind-ficha">Ciencias básicas · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Probabilidad.</b> Espacio muestral, probabilidad condicional, independencia.</li>
+      <li><b>Variables aleatorias.</b> Distribuciones discretas y continuas, distribución normal. El ruido como señal aleatoria.</li>
+      <li><b>Estadística descriptiva e inferencia.</b> Media, dispersión, estimación e intervalos de confianza. Incertidumbre de una medición acústica.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Señales y Sistemas</h4>
+    <p class="ind-ficha">Señales y audio digital · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Señales continuas y discretas.</b> Clasificación de señales, operaciones, impulso y escalón. Energía y potencia de una señal.</li>
+      <li><b>Sistemas lineales e invariantes.</b> Linealidad, invariancia, causalidad y estabilidad. Respuesta al impulso y convolución: lo que hace una reverb por convolución.</li>
+      <li><b>Respuesta en frecuencia.</b> Función de transferencia, módulo y fase. Diagramas de Bode de un ecualizador o de un filtro.</li>
+      <li><b>Muestreo.</b> Teorema de Nyquist-Shannon, aliasing y reconstrucción. Por qué el audio se muestrea a 44,1 o 48 kHz.</li>
+      <li><b>Transformada Z.</b> Definición y propiedades. Sistemas discretos y su respuesta en frecuencia.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Acústica y Psicoacústica I</h4>
+    <p class="ind-ficha">Acústica y psicoacústica · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Ecuación de onda acústica.</b> Ondas planas y esféricas. Impedancia acústica. Campo cercano y campo lejano.</li>
+      <li><b>Señales acústicas.</b> Valor pico y valor eficaz. Señales periódicas no senoidales y serie de Fourier. Suma de fuentes coherentes e incoherentes.</li>
+      <li><b>Fenómenos de propagación.</b> Reflexión, absorción y transmisión. Refracción, difracción y difusión del sonido.</li>
+      <li><b>Psicoacústica.</b> Bandas críticas y enmascaramiento. Sonoridad en fonios y sones. Percepción del tiempo, efecto de precedencia y localización espacial.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Laboratorio de Electrónica I</h4>
+    <p class="ind-ficha">Electrónica y electroacústica · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Corriente alterna.</b> Señal senoidal, valores típicos. Inductores y capacitores, reactancia, impedancia y resonancia.</li>
+      <li><b>Instrumentos de laboratorio.</b> Multímetro, generador de funciones, osciloscopio y analizador de espectro.</li>
+      <li><b>Filtros pasivos y activos.</b> Pasabajos, pasaaltos, pasabanda y eliminabanda: frecuencia de corte y pendiente. Ecualizadores gráficos, paramétricos y semiparamétricos.</li>
+      <li><b>Decibeles en la medición.</b> Ganancias de tensión, corriente y potencia en dB. dBV, dBu y dBm, y dónde se usa cada uno.</li>
+      <li><b>Fuentes de alimentación.</b> Transformador, rectificación y filtrado. Fuentes de corriente continua para equipos de audio.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Grabación II</h4>
+    <p class="ind-ficha">Grabación, mezcla y producción · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Micrófonos.</b> Dinámicos, de condensador y de cinta. Patrones polares: omnidireccional, cardioide y figura ocho. Phantom power.</li>
+      <li><b>Técnicas de microfoneo.</b> Microfoneo de voz, batería, guitarra, piano y cuerdas. Técnicas estéreo: XY, ORTF, AB y MS.</li>
+      <li><b>Planificación de una sesión.</b> Distribución en la sala según la banda, el equipo y las salas disponibles. El técnico con y sin productor. Manejo de los tiempos y decisiones ante errores.</li>
+      <li><b>La consola de grabación.</b> Preamplificadores, ganancia, inserts, auxiliares, grupos y buses. Software de grabación.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Audio Digital I</h4>
+    <p class="ind-ficha">Señales y audio digital · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Fundamentos de sistemas digitales.</b> Sistema binario, lógica digital y representación de números.</li>
+      <li><b>Conversión analógica-digital.</b> Muestreo y cuantificación, resolución en bits, rango dinámico y dither.</li>
+      <li><b>Edición digital.</b> Estaciones de trabajo de audio (DAW). Edición, fundidos, ajuste de tiempo y afinación.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>MIDI y Síntesis</h4>
+    <p class="ind-ficha">Señales y audio digital · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Instrumentos electrónicos.</b> Historia de los instrumentos electromecánicos, eléctricos y electrónicos. CV/gate y trigger.</li>
+      <li><b>La norma MIDI.</b> General MIDI, conexionado y tipos de dispositivos. Composición de mensajes en binario y hexadecimal. Cartillas de implementación.</li>
+      <li><b>Síntesis de sonido.</b> Síntesis aditiva y sustractiva. Modulación de frecuencia, de amplitud y en anillo. Vocoder, síntesis granular y por modelado físico.</li>
+      <li><b>Música electrónica.</b> Música concreta, electrónica y electroacústica. Estéticas, audición y análisis de obras.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Lenguaje Musical y Audioperceptiva II</h4>
+    <p class="ind-ficha">Lenguaje musical y escucha · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Funciones armónicas.</b> Reconocimiento de las funciones I, IV y V en mayor y menor. Cadencias simples.</li>
+      <li><b>Escalas y modos.</b> Escalas menores armónica, melódica y dórica; mixolidia, frigia, lidia y locria. Escalas de blues.</li>
+      <li><b>Ritmo y métrica.</b> Síncopas y ligaduras. Combinaciones binarias y ternarias. Métricas de 5, 7 y 9 tiempos.</li>
+      <li><b>Desgrabación auditiva.</b> Dictado rítmico y melódico. Transcribir de oído un tema completo, todas sus voces.</li>
+    </ul>
+  </article>
+  <h3>3° año <span class="ind-dato">10 materias · 41 ejes · 840 horas · al aprobarlo: <b>Técnico en Sonido</b></span></h3>
+  <article class="ind-mat">
+    <h4>Acústica y Psicoacústica II</h4>
+    <p class="ind-ficha">Acústica y psicoacústica · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Acústica de recintos cerrados.</b> Sonido directo y reflejado. Distancia crítica. Respuesta impulsiva de una sala.</li>
+      <li><b>Reverberación.</b> Tiempo de reverberación. Criterios de Sabine, Eyring, Fitzroy y Millington: cuándo se aplica cada uno.</li>
+      <li><b>Modos de una sala.</b> Ondas estacionarias y modos axiales, tangenciales y oblicuos. Por qué una sala chica refuerza ciertas notas graves.</li>
+      <li><b>Medidor de nivel sonoro.</b> Ponderaciones A, B y C. Niveles equivalentes y respuesta temporal del medidor.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Laboratorio de Electrónica II</h4>
+    <p class="ind-ficha">Electrónica y electroacústica · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Semiconductores.</b> Diodos y transistores bipolares y de efecto de campo. Polarización y modelos.</li>
+      <li><b>Circuitos de audio.</b> Preamplificador de micrófono, mezclador, amplificador de auriculares y medidor de picos.</li>
+      <li><b>Circuitos impresos.</b> Diseño y armado de placas de audio: soldadura, prueba y medición. Un cable doctor y un amplificador.</li>
+      <li><b>Interfaces digitales.</b> S/PDIF, AES/EBU y conversores AD y DA.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Procesamiento Digital de Señales</h4>
+    <p class="ind-ficha">Señales y audio digital · 120 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Transformada discreta de Fourier.</b> DFT y FFT. Resolución en frecuencia, ventanas y fuga espectral. El analizador de espectro por software.</li>
+      <li><b>Filtros digitales FIR.</b> Respuesta al impulso finita, fase lineal. Diseño por ventanas.</li>
+      <li><b>Filtros digitales IIR.</b> Filtros recursivos, estabilidad. Diseño a partir de prototipos analógicos: el ecualizador paramétrico digital.</li>
+      <li><b>Convolución y correlación.</b> Convolución rápida por FFT. Reverb por convolución y medición de respuestas impulsivas.</li>
+      <li><b>Cambio de frecuencia de muestreo.</b> Sobremuestreo, submuestreo y filtros de interpolación.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Circuitos Electrónicos I</h4>
+    <p class="ind-ficha">Electrónica y electroacústica · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Amplificadores con transistores.</b> Etapas en emisor y source común. Ganancia, impedancias de entrada y salida.</li>
+      <li><b>Amplificador operacional.</b> Configuraciones inversora, no inversora, sumadora y diferencial. Slew rate y ancho de banda.</li>
+      <li><b>Realimentación.</b> Efectos de la realimentación negativa sobre ganancia, distorsión y ancho de banda.</li>
+      <li><b>Ruido en circuitos.</b> Ruido térmico y de disparo. Figura de ruido de un preamplificador.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Electroacústica I</h4>
+    <p class="ind-ficha">Electrónica y electroacústica · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Analogías electro-mecano-acústicas.</b> Circuitos equivalentes de sistemas mecánicos y acústicos. Masa, compliancia y resistencia acústica.</li>
+      <li><b>Micrófonos.</b> Transducción, sensibilidad, respuesta en frecuencia y direccionalidad. Ruido propio y nivel máximo.</li>
+      <li><b>Altavoces.</b> El parlante de bobina móvil: parámetros de Thiele-Small, rendimiento e impedancia.</li>
+      <li><b>Cajas acústicas.</b> Caja cerrada y bass-reflex. Divisores de frecuencia pasivos.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Grabación III y Mezcla</h4>
+    <p class="ind-ficha">Grabación, mezcla y producción · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Técnicas de mezcla.</b> Procedimiento de mezcla: balance, panorama, planos y profundidad. Software de mezcla.</li>
+      <li><b>La consola en detalle.</b> Diagrama en bloques de la consola. Cables de insert. Buses, auxiliares y grupos.</li>
+      <li><b>Producción en el estudio.</b> El proceso de producción musical. Preproducción, grabación, sobregrabación y edición.</li>
+      <li><b>Mezcla integral.</b> Mezcla completa de un tema, de la sesión cruda al estéreo final.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Procesadores de Señal y Efectos</h4>
+    <p class="ind-ficha">Señales y audio digital · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Ecualización.</b> Filtros, frecuencias de corte y pendientes. Ecualizadores gráficos, paramétricos y shelving.</li>
+      <li><b>Procesadores de dinámica.</b> Compresor, limitador, expansor y compuerta. Compresión multibanda. Circuito analógico y digital de un compresor.</li>
+      <li><b>Efectos de tiempo y modulación.</b> Reverb, delay, chorus, phaser, flanger y vibrato. Diagramas en bloques.</li>
+      <li><b>Conexionado de procesadores.</b> Conexiones en serie y en paralelo. Ruteo de señales digitales junto a analógicas. Medidores de nivel.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Entrenamiento Auditivo</h4>
+    <p class="ind-ficha">Lenguaje musical y escucha · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Reconocimiento de frecuencias.</b> Alteraciones de una octava, media octava y un tercio de octava, de 12, 6 y 3 dB, en más y en menos.</li>
+      <li><b>Escucha sobre ruido rosa.</b> Identificar bandas alteradas sobre ruido rosa.</li>
+      <li><b>Escucha sobre música.</b> Ejercicios sobre instrumentos y sobre distintos estilos musicales.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Sonido en Vivo I</h4>
+    <p class="ind-ficha">Grabación, mezcla y producción · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Interconexión de equipos.</b> Conectores de audio, conexiones a tierra y sus cuidados. Planificación y logística de las conexiones.</li>
+      <li><b>Sistemas biamplificados y triamplificados.</b> Crossovers pasivos y activos. Cálculo del sistema.</li>
+      <li><b>Consolas para vivo.</b> Consolas de producción y de vivo, criterios in-line y split. Operación básica.</li>
+      <li><b>Monitoreo de escenario.</b> Sistemas de monitoreo, el rider técnico y cómo leerlo.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Audio para Cine, TV y Radio</h4>
+    <p class="ind-ficha">Sonido para los medios · 90 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>El lenguaje audiovisual.</b> Cuadro, toma, escena y secuencia. Tipos de cine y géneros. Planos y movimientos de cámara.</li>
+      <li><b>Diseño de sonido.</b> Cualidades evocativas y acústicas del sonido. Diálogo, efectos, ambiente y música en la banda sonora.</li>
+      <li><b>Sincronización.</b> Código SMPTE a 24, 25 y 30 cuadros. Sincronización de audio e imagen en el software.</li>
+      <li><b>Registro en locación.</b> Criterios de toma según la locación. Cadena de audio: micrófonos, cables y soportes.</li>
+      <li><b>La radio.</b> Lenguaje radiofónico, el programa de radio, musicalización y efectos. El estudio de radio y la radio en línea.</li>
+    </ul>
+  </article>
+  <h3>4° año <span class="ind-dato">9 materias · 33 ejes · 690 horas</span></h3>
+  <article class="ind-mat">
+    <h4>Electroacústica II</h4>
+    <p class="ind-ficha">Electrónica y electroacústica · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Sistemas de altavoces.</b> Arreglos de altavoces y directividad. Bocinas y line arrays.</li>
+      <li><b>Divisores de frecuencia.</b> Crossovers activos y pasivos de distintos órdenes. Alineación temporal entre vías.</li>
+      <li><b>Amplificadores de potencia.</b> Clases A, AB y D. Potencia, rendimiento y distorsión.</li>
+      <li><b>Medición de transductores.</b> Respuesta en frecuencia, impedancia y directividad de micrófonos y altavoces.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Comunicaciones</h4>
+    <p class="ind-ficha">Señales y audio digital · 60 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Modulación analógica.</b> AM y FM. Ancho de banda y relación señal-ruido. La radio de transmisión.</li>
+      <li><b>Modulación digital.</b> ASK, FSK y PSK. Tasa de bits y ancho de banda.</li>
+      <li><b>Transmisión de audio.</b> Codificación de audio para transmisión. Audio en red y por streaming.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Instrumentos y Mediciones Acústicas</h4>
+    <p class="ind-ficha">Acústica y psicoacústica · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Cadena de medición.</b> Micrófono de medición, preamplificador, calibrador y analizador. Incertidumbre.</li>
+      <li><b>Análisis por bandas.</b> Filtros de octava y de tercio de octava. Analizadores en tiempo real.</li>
+      <li><b>Medición de respuesta impulsiva.</b> MLS y barrido senoidal. Parámetros de sala a partir de la respuesta impulsiva.</li>
+      <li><b>Normas de medición.</b> Normas ISO e IRAM para medir niveles, reverberación y aislamiento.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Masterización y Posproducción</h4>
+    <p class="ind-ficha">Grabación, mezcla y producción · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>El proceso de masterización.</b> Qué es la masterización. Herramientas de software y combinación de equipos analógicos y digitales.</li>
+      <li><b>Formatos y resolución.</b> Resolución en bits y frecuencia de muestreo: 44,1, 48 y 96 kHz, 16 y 24 bits. Conversores AD y DA.</li>
+      <li><b>Sonido envolvente.</b> Normas Dolby Digital, DTS y 5.1. Masterización para distintos destinos: disco, TV, radio y plataformas.</li>
+      <li><b>Niveles y sonoridad.</b> Valor eficaz y de pico. Medición de sonoridad en LUFS y normas de entrega.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Circuitos Electrónicos II</h4>
+    <p class="ind-ficha">Electrónica y electroacústica · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Filtros activos.</b> Diseño de filtros Butterworth, Chebyshev y Bessel con operacionales.</li>
+      <li><b>Osciladores.</b> Criterio de Barkhausen. Osciladores senoidales para generadores de prueba.</li>
+      <li><b>Conversores.</b> Conversores AD y DA: arquitecturas, resolución y errores.</li>
+      <li><b>Fuentes reguladas.</b> Reguladores lineales y conmutados. Ruido de fuente en equipos de audio.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Audio Digital II</h4>
+    <p class="ind-ficha">Señales y audio digital · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Distorsión.</b> Distorsión armónica total y por intermodulación, en analógico y en digital.</li>
+      <li><b>Compresión de datos.</b> Codificación perceptual: MP3, AAC y Opus. Cómo aprovecha el enmascaramiento.</li>
+      <li><b>Interfaces y soportes.</b> Interfaces de audio digital y dispositivos de almacenamiento. Audio en red.</li>
+      <li><b>Programación de efectos.</b> Implementar un ecualizador, un compresor y un delay en código.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Acústica Arquitectónica</h4>
+    <p class="ind-ficha">Acústica y psicoacústica · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Absorción.</b> Coeficiente de absorción. Absorción de los materiales usados en la construcción de estudios.</li>
+      <li><b>Resonadores.</b> Resonador de Helmholtz, perforados, de ranuras y de listones. Paneles vibrantes. Análisis y cálculo.</li>
+      <li><b>Difusores.</b> Difusores QRD, PRD y MLS, poli-cilíndricos y piramidales.</li>
+      <li><b>Diseño de un estudio.</b> Diseño de salas de grabación y de control. Reflectores y extensión del ancho de banda de los tratamientos.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Sonido para Videojuegos</h4>
+    <p class="ind-ficha">Sonido para los medios · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Diseño de sonido para juegos.</b> Efectos, atmósfera y material sonoro no musical. Concepto artístico y guion. La experiencia del jugador.</li>
+      <li><b>Foley y diálogos.</b> Acciones humanas y objetos reales. Diálogos en el juego y en las cinemáticas.</li>
+      <li><b>Audio interactivo.</b> Implementación: asignar los sonidos al motor del juego, desde un paso hasta una reverb integrada.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Producción Musical</h4>
+    <p class="ind-ficha">Grabación, mezcla y producción · 60 horas · Contenidos del plan CABA</p>
+    <ul>
+      <li><b>Producción artística.</b> Elección de temas, estilo y sonido. Análisis de producciones históricas.</li>
+      <li><b>Producción técnica.</b> Sistemas de sonido, de reamplificación y de monitoreo. El rider. Tipos de escenarios.</li>
+      <li><b>Producción discográfica.</b> Organización de sesiones. Dirección y coordinación del personal técnico, los tiempos y los recursos.</li>
+    </ul>
+  </article>
+  <h3>5° año <span class="ind-dato">7 materias · 20 ejes · 780 horas · al aprobarlo: <b>Ingeniería en Sonido</b></span></h3>
+  <article class="ind-mat">
+    <h4>Laboratorio de Acústica</h4>
+    <p class="ind-ficha">Acústica y psicoacústica · 60 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Medición de una sala.</b> Tiempo de reverberación, claridad y definición medidos en una sala real.</li>
+      <li><b>Aislamiento acústico.</b> Medición del aislamiento entre dos recintos. Índice de reducción sonora.</li>
+      <li><b>Absorción en tubo de impedancia.</b> Coeficiente de absorción de un material medido en laboratorio.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Ruido Acústico</h4>
+    <p class="ind-ficha">Acústica y psicoacústica · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Ruido y salud.</b> Efectos del ruido sobre la audición y la salud. Hipoacusia inducida por ruido.</li>
+      <li><b>Ruido ambiental.</b> Fuentes, propagación al aire libre y barreras. Mapas de ruido.</li>
+      <li><b>Aislamiento y control.</b> Ley de masa, paredes dobles y ruido de impacto. Control de ruido en máquinas y ductos.</li>
+      <li><b>Legislación.</b> Normativa sobre ruido laboral y ambiental en Argentina.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Sonido en Vivo II</h4>
+    <p class="ind-ficha">Grabación, mezcla y producción · 90 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Diseño del sistema.</b> Cobertura, nivel y directividad. Diseño de un sistema de refuerzo para un recinto o al aire libre.</li>
+      <li><b>Alineación y ecualización del sistema.</b> Medición con doble canal, alineación de retardos y ecualización de sala.</li>
+      <li><b>Grabación en vivo.</b> Consolas y procesadores para el registro en vivo. Prueba de sonido, sobregrabaciones y mezcla de un concierto. Compatibilidad con el refuerzo.</li>
+      <li><b>Realimentación acústica.</b> El acople: por qué ocurre y cómo se controla.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Instrumentos y Mediciones Electrónicas</h4>
+    <p class="ind-ficha">Electrónica y electroacústica · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Mediciones en equipos de audio.</b> Respuesta en frecuencia, distorsión, ruido y diafonía de un equipo.</li>
+      <li><b>Instrumental automatizado.</b> Medición controlada por computadora. Interfaces de medición.</li>
+      <li><b>Incertidumbre.</b> Errores sistemáticos y aleatorios. Expresión del resultado de una medición.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Metodología de la Investigación</h4>
+    <p class="ind-ficha">Práctica profesional y proyecto · 60 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>El método científico.</b> Problema, hipótesis, diseño experimental y análisis de resultados.</li>
+      <li><b>Escritura técnica.</b> Informe, monografía y artículo. Búsqueda y citado de bibliografía.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Práctica Profesional</h4>
+    <p class="ind-ficha">Práctica profesional y proyecto · 300 horas · Plan UNTREF · contenidos del plan CABA</p>
+    <ul>
+      <li><b>Práctica en estudio.</b> Grabación, mezcla y masterización de un proyecto real.</li>
+      <li><b>Práctica en vivo.</b> Sonido en vivo y grabación en vivo de un concierto.</li>
+      <li><b>Práctica en medios.</b> Producción de una pieza multimedia: video clip, programa de radio o sonido para un juego.</li>
+    </ul>
+  </article>
+  <article class="ind-mat">
+    <h4>Proyecto Final</h4>
+    <p class="ind-ficha">Práctica profesional y proyecto · 90 horas · Plan UNTREF</p>
+    <ul>
+      <li><b>Proyecto de ingeniería.</b> Diseño, construcción y medición de un sistema, un dispositivo o un recinto. Presentación y defensa.</li>
+    </ul>
+  </article>
+</section>
+<div class="footer">
+  Fuentes: Ingeniería de Sonido, Universidad Nacional de Tres de Febrero, plan de estudios aprobado por Resolución Ministerial 1964/07 (Ministerio de Educación, Ciencia y Tecnología, 28/11/2007); Tecnicatura Superior en Sonido y Producción Musical, Resolución 536/SSPLINED/17, Anexo, Boletín Oficial de la Ciudad de Buenos Aires 5253 (13/11/2017). Selección, orden y redacción de los ejes: catto.ar. Las horas de las materias que vienen del plan de CABA son orientativas.
+</div>
+
+<script src="/assets/js/carrera-sonido.js?v=1"></script>
+<script>
+/* ============ DATOS ============ */
+
+/* ============ DERIVADOS ============ */
+const TEMA_BASE = "/publicaciones/mapa-electronica/temas/";
+const LVLN = {1:"Introducción",2:"Desarrollo",3:"Profundización",4:"Aplicación / Integración"};
+const ANIOS = [1,2,3,4,5];
+function matById(id){return MATERIAS.find(m=>m.id===id);}
+// índice tema -> [{mat, eje, lvl}]
+const TEMA_IDX = {};
+Object.keys(TEMAS).forEach(k=>TEMA_IDX[k]=[]);
+MATERIAS.forEach(m=>m.ejes.forEach(e=>e.tm.forEach(([tk,lv])=>{
+  TEMA_IDX[tk].push({mat:m, eje:e, lvl:lv});
+})));
+
+/* ============ STATS ============ */
+const totalH = MATERIAS.reduce((a,m)=>a+m.h,0);
+const nTemas = Object.keys(TEMAS).length;
+const temasRepetidos = Object.values(TEMA_IDX).filter(a=>new Set(a.map(x=>x.mat.id)).size>1).length;
+const totalEjes = MATERIAS.reduce((a,m)=>a+m.ejes.length,0);
+const ejesDesarrollados = MATERIAS.reduce((a,m)=>a+m.ejes.filter(e=>e.u).length,0);
+document.getElementById('stats').innerHTML = `
+  <div class="stat"><b>5</b><span>Años (técnico al 3°)</span></div>
+  <div class="stat"><b>${MATERIAS.length}</b><span>Materias</span></div>
+  <div class="stat"><b>${nTemas}</b><span>Temas transversales</span></div>
+  <div class="stat"><b>${ejesDesarrollados}<span style="display:inline;font-size:13px;color:var(--soft)"> / ${totalEjes}</span></b><span>Ejes desarrollados</span></div>
+  <div class="stat"><b>${totalH}</b><span>Horas</span></div>`;
+
+/* ============ MAPA MENTAL ============ */
+function tagHTML(tk,lv){
+  const t=TEMAS[tk];
+  return `<span class="tag" data-tema="${tk}" style="background:${t.c}22;color:${t.c};border-color:${t.c}55" title="${t.n} · ${LVLN[lv]}">${t.n}</span>`;
+}
+function renderMapa(){
+  const cont=document.getElementById('years'); cont.innerHTML='';
+  ANIOS.forEach(an=>{
+    const mats=MATERIAS.filter(m=>m.anio===an);
+    const hs=mats.reduce((a,m)=>a+m.h,0);
+    const col=document.createElement('div'); col.className='ycol';
+    col.innerHTML=`<div class="yhead"><span class="yn">${an}° Año</span><span class="yh">${mats.length} materias · ${hs} h</span></div>`;
+    mats.forEach(m=>{
+      const a=AREAS[m.area];
+      const sub=document.createElement('div'); sub.className='subj'; sub.dataset.mat=m.id;
+      let ejesH = m.amb ? `<div class="ed" style="margin:8px 0 2px;font-style:italic">${m.amb}</div>` : '';
+      m.ejes.forEach(e=>{
+        const dest = e.u ? (e.u.charAt(0)==='/' ? e.u : TEMA_BASE+e.u) : null;
+        const rot  = e.u && e.u.charAt(0)==='/' ? 'Publicación ›' : 'Desarrollo ›';
+        const titulo = e.u
+          ? `<div class="et"><a class="tlink" href="${dest}">${e.t}<span class="tgo">${rot}</span></a></div>`
+          : `<div class="et">${e.t}</div>`;
+        ejesH+=`<div class="eje">${titulo}<div class="ed">${e.d}</div><div class="tags">${e.tm.map(([tk,lv])=>tagHTML(tk,lv)).join('')}</div></div>`;
+      });
+      sub.innerHTML=`<div class="sh"><span class="dot" style="background:${a.color}"></span><span class="sname">${m.n}</span><small>${m.h} h</small><span class="chev">▶</span></div><div class="ejes"><div class="ej-in"><div class="ej-pad">${ejesH}</div></div></div>`;
+      sub.querySelector('.sh').addEventListener('click',()=>sub.classList.toggle('open'));
+      col.appendChild(sub);
+    });
+    cont.appendChild(col);
+  });
+  // chips -> explorador
+  cont.querySelectorAll('.tag').forEach(t=>t.addEventListener('click',ev=>{
+    ev.stopPropagation(); switchView('temas'); selectTema(t.dataset.tema);
+  }));
+}
+
+/* ============ MATRIZ ============ */
+function renderMatriz(){
+  const tbl=document.getElementById('mx');
+  let thead='<thead><tr><th class="rowh" style="background:var(--panel2)">Tema \\ Materia</th>';
+  ANIOS.forEach(an=>{
+    const c=MATERIAS.filter(m=>m.anio===an).length;
+    thead+=`<th class="yrgrp" colspan="${c}">${an}° Año</th>`;
+  });
+  thead+='</tr><tr><th class="rowh" style="background:var(--panel2)"></th>';
+  MATERIAS.forEach(m=>{
+    thead+=`<th class="colh" data-mat="${m.id}" title="${m.n}"><span class="dot" style="background:${AREAS[m.area].color};margin-bottom:6px"></span> ${m.n}</th>`;
+  });
+  thead+='</tr></thead>';
+  let tbody='<tbody>';
+  Object.keys(TEMAS).forEach(tk=>{
+    const t=TEMAS[tk];
+    const cells=TEMA_IDX[tk];
+    const nMat=new Set(cells.map(c=>c.mat.id)).size;
+    const flag = nMat>1 ? ` <span class="repeat-flag">×${nMat}</span>` : '';
+    tbody+=`<tr><td class="rowh" data-tema="${tk}"><span class="dot" style="background:${t.c};margin-right:6px"></span>${t.n}${flag}</td>`;
+    MATERIAS.forEach(m=>{
+      const hits=cells.filter(c=>c.mat.id===m.id);
+      if(hits.length){
+        const lv=Math.max(...hits.map(h=>h.lvl));
+        tbody+=`<td class="cell on" data-tema="${tk}" data-mat="${m.id}" title="${m.n}: ${hits.map(h=>h.eje.t).join(' · ')}"><span class="lvl lv${lv}"><span class="x">${lv}</span></span></td>`;
+      } else {
+        tbody+='<td class="cell"></td>';
+      }
+    });
+    tbody+='</tr>';
+  });
+  tbody+='</tbody>';
+  tbl.innerHTML=thead+tbody;
+  tbl.querySelectorAll('.rowh[data-tema]').forEach(el=>el.addEventListener('click',()=>{switchView('temas');selectTema(el.dataset.tema);}));
+  tbl.querySelectorAll('.cell.on').forEach(el=>el.addEventListener('click',()=>{switchView('temas');selectTema(el.dataset.tema);}));
+  tbl.querySelectorAll('.colh[data-mat]').forEach(el=>el.addEventListener('click',()=>{switchView('mapa');setTimeout(()=>{const s=document.querySelector(`.subj[data-mat="${el.dataset.mat}"]`);if(s){s.classList.add('open');s.scrollIntoView({behavior:'smooth',block:'center'});}},60);}));
+}
+
+/* ============ EXPLORADOR DE TEMAS ============ */
+let temaSel=null;
+function renderThemeGrid(){
+  const g=document.getElementById('themeGrid'); g.innerHTML='';
+  Object.keys(TEMAS).forEach(tk=>{
+    const t=TEMAS[tk]; const cells=TEMA_IDX[tk];
+    const mats=new Set(cells.map(c=>c.mat.id));
+    const anios=new Set(cells.map(c=>c.mat.anio));
+    const maxlv=cells.length?Math.max(...cells.map(c=>c.lvl)):0;
+    const card=document.createElement('div'); card.className='tcard'; card.dataset.tema=tk;
+    card.innerHTML=`<div class="tn"><span class="dot" style="background:${t.c}"></span>${t.n}</div>
+      <div class="tmeta">${mats.size} materia(s) · ${anios.size} año(s) · hasta nivel ${maxlv}</div>
+      <div class="bar"><i style="width:${maxlv*25}%;background:${t.c}"></i></div>`;
+    card.addEventListener('click',()=>selectTema(tk));
+    g.appendChild(card);
+  });
+}
+function selectTema(tk){
+  temaSel=tk;
+  document.querySelectorAll('.tcard').forEach(c=>c.classList.toggle('sel',c.dataset.tema===tk));
+  const card=document.querySelector(`.tcard[data-tema="${tk}"]`);
+  if(card) card.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const t=TEMAS[tk]; const cells=TEMA_IDX[tk];
+  const tl=document.getElementById('timeline');
+  const mats=new Set(cells.map(c=>c.mat.id));
+  let track='';
+  ANIOS.forEach(an=>{
+    const items=cells.filter(c=>c.mat.anio===an);
+    const has=items.length>0;
+    track+=`<div class="tl-year ${has?'has':''}"><div class="yl">${an}° Año</div>`;
+    if(has){
+      // agrupar por materia
+      const byMat={};
+      items.forEach(it=>{(byMat[it.mat.id]=byMat[it.mat.id]||{mat:it.mat,ejes:[]}).ejes.push(it);});
+      Object.values(byMat).forEach(g=>{
+        const lv=Math.max(...g.ejes.map(x=>x.lvl));
+        track+=`<div class="tl-item"><div class="ti-s"><span class="dot" style="background:${AREAS[g.mat.area].color}"></span>${g.mat.n} <span class="pill l${lv}">${lv} ${LVLN[lv]}</span></div>`;
+        g.ejes.forEach(x=>{
+          const abs = x.eje.u && x.eje.u.charAt(0)==='/';
+          const et = x.eje.u
+            ? `<a class="tlink" href="${abs ? x.eje.u : TEMA_BASE+x.eje.u}">${x.eje.t}<span class="tgo">${abs ? 'Publicación ›' : 'Desarrollo ›'}</span></a>`
+            : x.eje.t;
+          track+=`<div class="ti-e">${et}</div><div class="ti-d">${x.eje.d}</div>`;
+        });
+        track+=`</div>`;
+      });
+    } else {
+      track+=`<div class="ti-d" style="color:var(--soft)">—</div>`;
+    }
+    track+='</div>';
+  });
+  // insight de progresión
+  const lvls=cells.map(c=>c.lvl);
+  const minl=Math.min(...lvls), maxl=Math.max(...lvls);
+  const aniosArr=[...new Set(cells.map(c=>c.mat.anio))].sort();
+  let insight='';
+  if(mats.size>1){
+    insight=`<div class="insight"><b>Repetición y profundización:</b> «${t.n}» aparece en <b>${mats.size} materias</b> a lo largo de ${aniosArr.length} año(s) (${aniosArr.map(a=>a+'°').join(', ')}), evolucionando del nivel <b>${minl} (${LVLN[minl]})</b> al nivel <b>${maxl} (${LVLN[maxl]})</b>. ${maxl>minl?'El tema se <b>refuerza y profundiza</b> progresivamente.':'Se aborda con profundidad similar en cada instancia.'}</div>`;
+  } else {
+    insight=`<div class="insight"><b>Tema focalizado:</b> «${t.n}» se dicta en una sola materia (${matById(cells[0].mat.id).n}, ${cells[0].mat.anio}° año), nivel ${maxl} (${LVLN[maxl]}).</div>`;
+  }
+  tl.innerHTML=`<div class="tl-head"><span class="dot" style="background:${t.c}"></span>${t.n}</div>
+    <div class="tl-desc">Recorrido del tema a lo largo de la carrera — dónde se introduce, refuerza y profundiza.</div>
+    <div class="tl-track">${track}</div>${insight}`;
+}
+
+/* ============ VISTAS / BUSQUEDA ============ */
+function switchView(v){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  ['mapa','matriz','temas'].forEach(x=>document.getElementById('view-'+x).classList.toggle('hidden',x!==v));
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchView(t.dataset.view)));
+
+const q=document.getElementById('q');
+q.addEventListener('input',()=>{
+  const v=q.value.trim().toLowerCase();
+  // Mapa: filtra ejes/materias; abre coincidencias
+  document.querySelectorAll('#years .subj').forEach(sub=>{
+    const m=matById(sub.dataset.mat);
+    let any=!v;
+    sub.querySelectorAll('.eje').forEach(ej=>{
+      const txt=ej.textContent.toLowerCase();
+      const hit=!v||txt.includes(v);
+      ej.style.opacity=hit?'1':'0.18';
+      if(hit&&v) any=true;
+    });
+    const nameHit=m.n.toLowerCase().includes(v);
+    if(nameHit&&v) any=true;
+    sub.classList.toggle('hidden', v && !any);
+    if(v&&any) sub.classList.add('open');
+  });
+  // resalta temas en grid
+  document.querySelectorAll('.tcard').forEach(c=>{
+    const hit=!v||TEMAS[c.dataset.tema].n.toLowerCase().includes(v);
+    c.style.opacity=hit?'1':'0.25';
+  });
+});
+
+/* ============ INIT ============ */
+renderMapa(); renderMatriz(); renderThemeGrid();
+selectTema('recinto'); // arranca con la acústica de recintos, de 2° a 5°
+switchView('mapa');
+
+/* ===== Ocultar el encabezado al bajar, mostrarlo al subir ===== */
+(function(){
+  const header = document.querySelector('header.top');
+  if(!header) return;
+
+  /* El encabezado se ve unicamente con la pagina arriba de todo. Son dos
+     marcas distintas y no una sola a proposito: entre ellas queda una zona
+     muerta donde no se toca nada. Con un unico umbral, un temblor de dos
+     pixeles justo en el borde —o el rebote del scroll del celular— lo haria
+     aparecer y desaparecer a repeticion. */
+  const MOSTRAR = 8;    // hasta aca se considera que estamos arriba de todo
+  const OCULTAR = 56;   // recien pasando esta marca se esconde
+
+  let oculto = false;
+
+  function revisar(){
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    let nuevo = oculto;
+    if(y <= MOSTRAR)      nuevo = false;
+    else if(y > OCULTAR)  nuevo = true;
+    /* entre las dos marcas se queda como estaba */
+    if(nuevo === oculto) return;     // no se toca el DOM si no cambia nada
+    oculto = nuevo;
+    header.classList.toggle('hd-hide', oculto);
+  }
+
+  window.addEventListener('scroll', revisar, {passive:true});
+  revisar();   // por si se entra con la pagina ya corrida
+})();
+</script>
+<script src="../../assets/js/starfield.js?v=2"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

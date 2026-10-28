@@ -28,7 +28,7 @@
   var EN = (document.documentElement.lang || "").indexOf("en") === 0;
   var TX = EN ? { de: " of ", t1: "1 topic", tn: " topics" } : { de: " de ", t1: "1 tema", tn: " temas" };
 
-  var grids = ["gridAnios", "gridElec", "gridNiveles"]
+  var grids = ["gridAnios", "gridElec", "gridNiveles", "gridSonido"]
     .map(function (id) { return document.getElementById(id); })
     .filter(Boolean);
   if (!grids.length) return;
