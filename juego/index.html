@@ -212,7 +212,26 @@ function rpc(f,body){return fetch(SB+'rpc/'+f,{method:'POST',headers:H,body:JSON
   return r.json().then(function(d){if(!r.ok)throw new Error(d&&d.message||'error');return d;});});}
 
 /* ---------- pantallas ---------- */
-function ver(id){[].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});window.scrollTo(0,0);}
+/* cada pantalla queda en el historial: el «atrás» del navegador vuelve a la pantalla anterior del juego, no a la portada */
+function mostrar(id){[].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});window.scrollTo(0,0);}
+function ver(id){
+  mostrar(id);
+  var actual=history.state&&history.state.ohm;
+  if(actual===id)return;
+  /* la partida y su resultado ocupan una sola entrada: el resultado reemplaza a la partida */
+  if(actual==='pJuego'&&id==='pFin')history.replaceState({ohm:id},'');
+  else history.pushState({ohm:id},'');
+}
+history.replaceState({ohm:'pInicio'},'');
+window.addEventListener('popstate',function(e){
+  var id=e.state&&e.state.ohm;
+  if(!id)return;
+  clearInterval(temporizador);
+  /* volver a una partida a medias no tiene sentido: se va al inicio */
+  if(id==='pJuego'){id='pInicio';history.replaceState({ohm:id},'');}
+  mostrar(id);
+  if(id==='pInicio'){pintarRecord();cargarRanking('rankingInicio');}
+});
 document.addEventListener('click',function(e){var b=e.target.closest('[data-ir]');if(!b)return;
   var d=b.getAttribute('data-ir');
   if(d==='inicio'){ver('pInicio');pintarRecord();cargarRanking('rankingInicio');}
