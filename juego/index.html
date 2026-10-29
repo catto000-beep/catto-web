@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta de Ohm · el juego de preguntas de electrónica · Catto</title>
+<meta name="description" content="Ruleta de Ohm: el juego de preguntas de electrónica de catto.ar. Girá la ruleta, contestá y juntá las seis coronas. Jugá solo, de a dos en la misma pantalla o desafiá a tus compañeros en línea.">
+<link rel="canonical" href="https://catto.ar/juego">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<meta property="og:title" content="Ruleta de Ohm · catto.ar">
+<meta property="og:description" content="El juego de preguntas de electrónica. Desafiá a tus compañeros.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--line:#2a3140;--txt:#e6edf3;--muted:#9aa7b4;--soft:#7d8a99;
+  --accent:#8cc4f0;--ok:#3fb950;--bad:#f85149;--gold:#d4a72c;--ease:cubic-bezier(.23,1,.32,1)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{min-height:100vh;background:radial-gradient(1100px 600px at 80% -10%,#1b2740 0%,var(--bg) 58%),var(--bg);
+  color:var(--txt);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:760px;margin:0 auto;padding:18px 16px 4px}
+.volver{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;text-decoration:none}
+.volver:hover{color:var(--txt)}
+.marca{font:700 15px "IBM Plex Mono",monospace;letter-spacing:.3px}
+.marca span{color:var(--accent)}
+main{max-width:760px;margin:0 auto;padding:6px 16px 60px}
+.pantalla{display:none}
+.pantalla.on{display:block;animation:entra .28s var(--ease)}
+@keyframes entra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:40px;line-height:1.05;letter-spacing:-1px;margin:14px 0 6px}
+h1 em{font-style:normal;color:var(--accent)}
+h2{font-size:22px;margin:4px 0 12px}
+.bajada{color:var(--muted);margin:0 0 20px;font-size:16px;max-width:560px}
+.modos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+@media(max-width:640px){.modos{grid-template-columns:1fr}h1{font-size:32px}}
+.modo{text-align:left;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;
+  display:flex;flex-direction:column;gap:6px;transition:border-color .15s,transform .16s var(--ease)}
+.modo:hover{border-color:var(--accent)}
+.modo:active{transform:scale(.98)}
+.modo b{font-size:17px}
+.modo span{color:var(--muted);font-size:13.5px}
+.modo .ic{font-size:26px}
+.modo.fuerte{border-color:rgba(212,167,44,.55);background:linear-gradient(160deg,rgba(212,167,44,.12),var(--panel) 60%)}
+.cats{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px "IBM Plex Mono",monospace;padding:4px 10px;border-radius:999px;
+  border:1px solid currentColor;background:rgba(255,255,255,.03)}
+.btn{cursor:pointer;border:0;border-radius:8px;padding:11px 20px;font-weight:700;font-size:15px;background:var(--accent);color:#0b1a2a;
+  transition:transform .16s var(--ease),filter .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.97)}
+.btn.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.btn.oro{background:var(--gold);color:#1d1503}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=text]{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px 12px;font-size:15px;min-width:0}
+input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+label.campo{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.caja{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}
+.nota{font-size:13px;color:var(--soft)}
+.err{color:var(--bad);font-size:14px;min-height:1.2em}
+
+/* ----- marcador ----- */
+.marcador{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.jug{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel)}
+.jug.turno{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.jug b{font-size:14px}
+.coronas{display:flex;gap:4px}
+.cor{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;border:1px solid var(--line);opacity:.35;filter:grayscale(1)}
+.cor.si{opacity:1;filter:none;border-color:currentColor;box-shadow:0 0 8px -1px currentColor}
+.vidas{font-size:15px;letter-spacing:2px}
+.pts{font:700 15px "IBM Plex Mono",monospace;color:var(--accent)}
+
+/* ----- ruleta ----- */
+.ruleta-zona{display:flex;flex-direction:column;align-items:center;gap:16px;margin:8px 0}
+.ruleta{position:relative;width:min(340px,82vw);aspect-ratio:1}
+.ruleta svg{width:100%;height:100%;display:block;transition:transform 2.6s cubic-bezier(.17,.67,.12,1)}
+.ruleta .flecha{position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:0;height:0;
+  border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid var(--txt);filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));z-index:2}
+.ruleta .centro{position:absolute;inset:38%;border-radius:50%;background:var(--bg);border:3px solid var(--txt);display:grid;place-items:center;
+  font:700 26px "IBM Plex Mono",monospace;color:var(--accent);z-index:2}
+@media(prefers-reduced-motion:reduce){.ruleta svg{transition:transform .2s ease-out}.pantalla.on{animation:none}}
+
+/* ----- pregunta ----- */
+.cat-tit{display:flex;align-items:center;gap:8px;font:700 13px "IBM Plex Mono",monospace;text-transform:uppercase;letter-spacing:.6px;margin:6px 0 8px}
+.reloj{height:6px;border-radius:3px;background:var(--panel2);overflow:hidden;margin:0 0 14px}
+.reloj i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transition:transform .1s linear}
+.preg{font-size:21px;line-height:1.35;font-weight:600;margin:0 0 16px}
+.opcs{display:grid;gap:10px}
+.opc{text-align:left;cursor:pointer;padding:13px 15px;border-radius:9px;border:1px solid var(--line);background:var(--panel);font-size:16px;
+  transition:border-color .12s,background .12s,transform .12s var(--ease)}
+.opc:hover:not(:disabled){border-color:var(--accent)}
+.opc:active:not(:disabled){transform:scale(.985)}
+.opc:disabled{cursor:default}
+.opc.bien{background:rgba(63,185,80,.16);border-color:var(--ok)}
+.opc.mal{background:rgba(248,81,73,.14);border-color:var(--bad)}
+.veredicto{margin:14px 0 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.veredicto b.si{color:var(--ok)} .veredicto b.no{color:var(--bad)}
+
+/* ----- tablas ----- */
+table.tab{width:100%;border-collapse:collapse;font-size:14px}
+.tab th,.tab td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+.tab th{color:var(--soft);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.tab td.n{font-family:"IBM Plex Mono",monospace;text-align:right}
+.tab tr.yo td{color:var(--accent);font-weight:700}
+.medalla{width:1.6em;display:inline-block}
+.repaso{margin:10px 0 0;padding-left:18px}
+.repaso li{margin:6px 0;font-size:14px}
+.cod{font:700 20px "IBM Plex Mono",monospace;letter-spacing:2px;color:var(--gold)}
+.grande{font:700 44px "IBM Plex Mono",monospace;color:var(--accent);line-height:1}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="volver" href="/">← catto.ar</a>
+  <span class="marca">Ruleta de <span>Ohm</span></span>
+</div>
+<main>
+
+<!-- ============ INICIO ============ -->
+<section class="pantalla on" id="pInicio">
+  <h1>Ruleta de <em>Ohm</em></h1>
+  <p class="bajada">Girá la ruleta, contestá antes de que se acabe el tiempo y juntá las seis coronas.
+    Cada pregunta que falles te lleva a la página del tema para repasarlo.</p>
+  <div class="cats" id="catsInicio"></div>
+  <div class="modos">
+    <button class="modo fuerte" type="button" data-ir="linea"><span class="ic">🏆</span><b>Desafío en línea</b>
+      <span>Diez preguntas contra el reloj. Mandale el enlace a tus compañeros y comparen puntajes. Ranking semanal.</span></button>
+    <button class="modo" type="button" data-ir="solo"><span class="ic">🎯</span><b>Solo</b>
+      <span>Juntá las seis coronas con tres vidas. Tu récord queda guardado.</span></button>
+    <button class="modo" type="button" data-ir="dos"><span class="ic">👥</span><b>Dos jugadores</b>
+      <span>Por turnos en la misma pantalla. Quien acierta, sigue girando.</span></button>
+  </div>
+  <div class="fila"><button class="btn sec" type="button" id="verRanking">🏅 Ranking de la semana</button>
+    <span class="nota" id="recordSolo"></span></div>
+</section>
+
+<!-- ============ DOS JUGADORES: NOMBRES ============ -->
+<section class="pantalla" id="pDos">
+  <h2>👥 Dos jugadores</h2>
+  <div class="caja fila">
+    <label class="campo">Jugador 1<input type="text" id="n1" maxlength="16" value="Jugador 1"></label>
+    <label class="campo">Jugador 2<input type="text" id="n2" maxlength="16" value="Jugador 2"></label>
+  </div>
+  <div class="fila"><button class="btn" type="button" id="empezarDos">Empezar</button><button class="btn sec" type="button" data-ir="inicio">Volver</button></div>
+</section>
+
+<!-- ============ EN LÍNEA: ALIAS ============ -->
+<section class="pantalla" id="pLinea">
+  <h2 id="lineaTit">🏆 Desafío en línea</h2>
+  <p class="bajada" id="lineaTxt">Jugás diez preguntas de todas las categorías. Al terminar te damos un enlace para que tus compañeros jueguen las mismas diez y comparen.</p>
+  <div class="caja">
+    <label class="campo">Tu nombre o apodo (lo ven los demás)<input type="text" id="alias" maxlength="20" placeholder="Por ejemplo: Sofi 5°B"></label>
+    <p class="nota">No pongas tu nombre completo ni datos personales. Un apodo y el curso alcanzan.</p>
+    <p class="err" id="lineaErr"></p>
+  </div>
+  <div class="fila"><button class="btn oro" type="button" id="empezarLinea">Jugar</button><button class="btn sec" type="button" data-ir="inicio">Volver</button></div>
+</section>
+
+<!-- ============ JUEGO (ruleta + pregunta) ============ -->
+<section class="pantalla" id="pJuego">
+  <div class="marcador" id="marcador"></div>
+  <div class="ruleta-zona" id="zonaRuleta">
+    <div class="ruleta"><div class="flecha"></div><svg id="ruleta" viewBox="-100 -100 200 200" aria-hidden="true"></svg><div class="centro">Ω</div></div>
+    <button class="btn" type="button" id="girar">Girar la ruleta</button>
+  </div>
+  <div id="zonaPreg" hidden>
+    <div class="cat-tit" id="catTit"></div>
+    <div class="reloj"><i id="reloj"></i></div>
+    <p class="preg" id="preg"></p>
+    <div class="opcs" id="opcs"></div>
+    <div class="veredicto" id="veredicto" hidden></div>
+  </div>
+</section>
+
+<!-- ============ FIN ============ -->
+<section class="pantalla" id="pFin">
+  <h2 id="finTit"></h2>
+  <div id="finCuerpo"></div>
+  <div class="caja" id="finRepaso" hidden><b>Para repasar</b><ul class="repaso" id="repaso"></ul></div>
+  <div class="fila" id="finBotones"></div>
+</section>
+
+<!-- ============ RANKING ============ -->
+<section class="pantalla" id="pRanking">
+  <h2>🏅 Ranking de la semana</h2>
+  <p class="bajada">El mejor puntaje de cada jugador en los desafíos en línea de los últimos siete días.</p>
+  <div class="caja" id="rankingCaja"><p class="nota">Cargando…</p></div>
+  <div class="fila"><button class="btn oro" type="button" data-ir="linea">Jugar un desafío</button><button class="btn sec" type="button" data-ir="inicio">Volver</button></div>
+</section>
+</main>
+
+<script src="/assets/js/juego-preguntas.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+var SB='https://fjzcajiemogsqizdgqjs.supabase.co/rest/v1/', K='sb_publishable_mGM62YDOYWB3uvFj6QCO_A_Elj_cjAy';
+var H={apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'};
+var TEMA='/publicaciones/mapa-electronica/temas/';
+var CATS=Object.keys(JUEGO_CAT), SEG=20;
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function mezclar(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function guardado(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+function rpc(f,body){return fetch(SB+'rpc/'+f,{method:'POST',headers:H,body:JSON.stringify(body||{})}).then(function(r){
+  return r.json().then(function(d){if(!r.ok)throw new Error(d&&d.message||'error');return d;});});}
+
+/* ---------- pantallas ---------- */
+function ver(id){[].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});window.scrollTo(0,0);}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-ir]');if(!b)return;
+  var d=b.getAttribute('data-ir');
+  if(d==='inicio'){ver('pInicio');pintarRecord();}
+  else if(d==='dos')ver('pDos');
+  else if(d==='solo')empezarSolo();
+  else if(d==='linea')abrirLinea(null);
+});
+$('catsInicio').innerHTML=CATS.map(function(k){var c=JUEGO_CAT[k];return '<span class="chip" style="color:'+c.c+'">'+c.ic+' '+c.n+'</span>';}).join('');
+function pintarRecord(){var r=guardado('ohmRecord');$('recordSolo').textContent=r?'Tu récord en solitario: '+r+' puntos':'';}
+pintarRecord();
+
+/* ---------- ruleta ---------- */
+(function dibujar(){
+  var s='',n=CATS.length;
+  CATS.forEach(function(k,i){
+    var a0=(i/n)*2*Math.PI-Math.PI/2-Math.PI/n, a1=((i+1)/n)*2*Math.PI-Math.PI/2-Math.PI/n;
+    var x0=95*Math.cos(a0),y0=95*Math.sin(a0),x1=95*Math.cos(a1),y1=95*Math.sin(a1);
+    var am=(a0+a1)/2, tx=62*Math.cos(am), ty=62*Math.sin(am), rot=am*180/Math.PI+90;
+    s+='<path d="M0 0L'+x0.toFixed(2)+' '+y0.toFixed(2)+'A95 95 0 0 1 '+x1.toFixed(2)+' '+y1.toFixed(2)+'Z" fill="'+JUEGO_CAT[k].c+'" stroke="#0d1117" stroke-width="2"/>';
+    s+='<text x="'+tx.toFixed(1)+'" y="'+ty.toFixed(1)+'" font-size="20" text-anchor="middle" dominant-baseline="central" transform="rotate('+rot.toFixed(1)+' '+tx.toFixed(1)+' '+ty.toFixed(1)+')">'+JUEGO_CAT[k].ic+'</text>';
+  });
+  s+='<circle r="96" fill="none" stroke="#e6edf3" stroke-width="3"/>';
+  $('ruleta').innerHTML=s;
+})();
+var giro=0;
+function girar(){
+  return new Promise(function(fin){
+    var i=Math.floor(Math.random()*CATS.length), paso=360/CATS.length;
+    var actual=((giro%360)+360)%360, destino=(360-i*paso)%360;
+    var extra=(destino-actual+360)%360 + 360*4 + (Math.random()-.5)*paso*.6;
+    giro+=extra;
+    $('ruleta').style.transform='rotate('+giro+'deg)';
+    var reduc=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(function(){fin(CATS[i]);}, reduc?250:2700);
+  });
+}
+
+/* ---------- preguntas ---------- */
+var usadas={};
+function sacar(cat){
+  var pool=JUEGO_PREG.filter(function(p){return p.c===cat&&!usadas[p.id];});
+  if(!pool.length){JUEGO_PREG.forEach(function(p){if(p.c===cat)delete usadas[p.id];});return sacar(cat);}
+  var p=pool[Math.floor(Math.random()*pool.length)]; usadas[p.id]=1; return p;
+}
+var temporizador=null;
+/* muestra una pregunta y resuelve {ok, resto} (resto: segundos que quedaban) */
+function preguntar(p){
+  return new Promise(function(fin){
+    var c=JUEGO_CAT[p.c];
+    $('zonaRuleta').hidden=true; $('zonaPreg').hidden=false; $('veredicto').hidden=true;
+    $('catTit').innerHTML='<span style="color:'+c.c+'">'+c.ic+' '+c.n+'</span>';
+    $('preg').textContent=p.q;
+    var opciones=mezclar(p.o.map(function(t,i){return {t:t,ok:i===0};}));
+    $('opcs').innerHTML=opciones.map(function(o,i){return '<button class="opc" type="button" data-i="'+i+'">'+esc(o.t)+'</button>';}).join('');
+    var t0=performance.now(), barra=$('reloj'), listo=false;
+    barra.style.background=c.c;
+    clearInterval(temporizador);
+    temporizador=setInterval(function(){
+      var r=Math.max(0,SEG-(performance.now()-t0)/1000);
+      barra.style.transform='scaleX('+(r/SEG)+')';
+      if(r<=0)responder(-1);
+    },100);
+    function responder(i){
+      if(listo)return; listo=true; clearInterval(temporizador);
+      var resto=Math.max(0,SEG-(performance.now()-t0)/1000), ok=i>=0&&opciones[i].ok;
+      [].forEach.call($('opcs').children,function(b,j){b.disabled=true;if(opciones[j].ok)b.classList.add('bien');else if(j===i)b.classList.add('mal');});
+      fin({ok:ok,resto:resto,p:p});
+    }
+    $('opcs').onclick=function(e){var b=e.target.closest('.opc');if(b)responder(+b.getAttribute('data-i'));};
+  });
+}
+function veredicto(r,textoSeguir){
+  return new Promise(function(fin){
+    var v=$('veredicto');
+    v.innerHTML=(r.ok?'<b class="si">¡Correcto!</b>':'<b class="no">'+(r.resto<=0?'Se acabó el tiempo.':'Incorrecto.')+'</b> <a href="'+TEMA+r.p.u+'" target="_blank" rel="noopener">Repasar este tema ↗</a>')+
+      '<button class="btn" type="button">'+textoSeguir+'</button>';
+    v.hidden=false;
+    var b=v.querySelector('button'); b.focus({preventScroll:true});
+    b.onclick=function(){fin();};
+  });
+}
+function puntos(r){return r.ok?100+Math.round(100*r.resto/SEG):0;}
+function coronasHTML(set){return '<span class="coronas">'+CATS.map(function(k){var c=JUEGO_CAT[k];
+  return '<span class="cor'+(set[k]?' si':'')+'" style="color:'+c.c+'" title="'+c.n+'">'+c.ic+'</span>';}).join('')+'</span>';}
+function aRuleta(){$('zonaRuleta').hidden=false;$('zonaPreg').hidden=true;$('girar').disabled=false;}
+function repaso(falladas){
+  var l=$('repaso'), vistas={};
+  l.innerHTML=falladas.filter(function(p){if(vistas[p.u])return false;vistas[p.u]=1;return true;})
+    .map(function(p){return '<li><a href="'+TEMA+p.u+'" target="_blank" rel="noopener">'+esc(p.q)+'</a></li>';}).join('');
+  $('finRepaso').hidden=!falladas.length;
+}
+
+/* ---------- SOLO ---------- */
+function empezarSolo(){
+  usadas={};
+  var st={cor:{},vidas:3,pts:0,falladas:[]};
+  function marcador(){$('marcador').innerHTML='<div class="jug turno"><b>Vos</b>'+coronasHTML(st.cor)+'</div>'+
+    '<span class="vidas" title="Vidas">'+'❤️'.repeat(st.vidas)+'🖤'.repeat(3-st.vidas)+'</span><span class="pts">'+st.pts+' pts</span>';}
+  ver('pJuego'); aRuleta(); marcador();
+  $('girar').onclick=function(){
+    $('girar').disabled=true;
+    girar().then(function(cat){return preguntar(sacar(cat));}).then(function(r){
+      st.pts+=puntos(r);
+      if(r.ok)st.cor[r.p.c]=1; else {st.vidas--; st.falladas.push(r.p);}
+      marcador();
+      var gano=CATS.every(function(k){return st.cor[k];});
+      var termina=gano||st.vidas===0;
+      return veredicto(r,termina?'Ver resultado':'Seguir').then(function(){
+        if(!termina){aRuleta();return;}
+        var rec=+(guardado('ohmRecord')||0), nuevo=st.pts>rec; if(nuevo)guardado('ohmRecord',st.pts);
+        $('finTit').textContent=gano?'🏆 ¡Juntaste las seis coronas!':'Se terminaron las vidas';
+        $('finCuerpo').innerHTML='<div class="caja"><div class="grande">'+st.pts+'</div><p class="nota">puntos'+(nuevo?' · ¡nuevo récord!':' · tu récord: '+rec)+'</p>'+coronasHTML(st.cor)+'</div>';
+        repaso(st.falladas);
+        $('finBotones').innerHTML='<button class="btn" type="button" data-ir="solo">Jugar de nuevo</button><button class="btn oro" type="button" data-ir="linea">Desafiar en línea</button><button class="btn sec" type="button" data-ir="inicio">Inicio</button>';
+        ver('pFin');
+      });
+    });
+  };
+}
+
+/* ---------- DOS JUGADORES ---------- */
+$('empezarDos').onclick=function(){
+  usadas={};
+  var js=[{n:$('n1').value.trim()||'Jugador 1',cor:{},pts:0},{n:$('n2').value.trim()||'Jugador 2',cor:{},pts:0}], t=0, falladas=[];
+  function marcador(){$('marcador').innerHTML=js.map(function(j,i){return '<div class="jug'+(i===t?' turno':'')+'"><b>'+esc(j.n)+'</b>'+coronasHTML(j.cor)+'<span class="pts">'+j.pts+'</span></div>';}).join('');
+    $('girar').textContent='Gira '+js[t].n;}
+  ver('pJuego'); aRuleta(); marcador();
+  $('girar').onclick=function(){
+    $('girar').disabled=true;
+    girar().then(function(cat){return preguntar(sacar(cat));}).then(function(r){
+      var j=js[t]; j.pts+=puntos(r);
+      if(r.ok)j.cor[r.p.c]=1; else falladas.push(r.p);
+      var gano=CATS.every(function(k){return j.cor[k];});
+      marcador();
+      return veredicto(r,gano?'Ver resultado':(r.ok?'Sigue '+j.n:'Turno de '+js[1-t].n)).then(function(){
+        if(gano){
+          $('finTit').textContent='🏆 ¡Ganó '+j.n+'!';
+          $('finCuerpo').innerHTML='<div class="caja"><table class="tab"><tr><th>Jugador</th><th>Coronas</th><th style="text-align:right">Puntos</th></tr>'+
+            js.map(function(x){return '<tr'+(x===j?' class="yo"':'')+'><td>'+esc(x.n)+'</td><td>'+coronasHTML(x.cor)+'</td><td class="n">'+x.pts+'</td></tr>';}).join('')+'</table></div>';
+          repaso(falladas);
+          $('finBotones').innerHTML='<button class="btn" type="button" data-ir="dos">Revancha</button><button class="btn sec" type="button" data-ir="inicio">Inicio</button>';
+          ver('pFin'); return;
+        }
+        if(!r.ok)t=1-t;
+        marcador(); aRuleta();
+      });
+    });
+  };
+};
+
+/* ---------- EN LÍNEA ---------- */
+var desafio=null; // {codigo, ids}
+function abrirLinea(cod){
+  desafio=cod?{codigo:cod}:null;
+  $('lineaErr').textContent='';
+  $('alias').value=guardado('ohmAlias')||'';
+  if(cod){
+    $('lineaTit').textContent='🏆 Te desafiaron';
+    $('lineaTxt').textContent='Alguien te mandó este desafío: diez preguntas, las mismas para todos. Contestá rápido: cada acierto vale entre 100 y 200 puntos según el tiempo.';
+  } else {
+    $('lineaTit').textContent='🏆 Desafío en línea';
+    $('lineaTxt').textContent='Jugás diez preguntas de todas las categorías. Al terminar te damos un enlace para que tus compañeros jueguen las mismas diez y comparen.';
+  }
+  ver('pLinea'); setTimeout(function(){$('alias').focus();},50);
+}
+function idsNuevos(){ // 10 preguntas: al menos una de cada categoría
+  var porCat=CATS.map(function(k){return mezclar(JUEGO_PREG.filter(function(p){return p.c===k;}));});
+  var ids=porCat.map(function(l){return l[0].id;});
+  var resto=mezclar([].concat.apply([],porCat.map(function(l){return l.slice(1);}))).slice(0,4).map(function(p){return p.id;});
+  return mezclar(ids.concat(resto));
+}
+$('empezarLinea').onclick=function(){
+  var a=$('alias').value.trim();
+  if(a.length<2){$('lineaErr').textContent='Poné un nombre o apodo de al menos 2 letras.';return;}
+  if(/[<>"&]/.test(a)){$('lineaErr').textContent='El nombre no puede llevar < > " &';return;}
+  guardado('ohmAlias',a);
+  var b=$('empezarLinea'); b.disabled=true; $('lineaErr').textContent='';
+  var listo;
+  if(desafio&&desafio.codigo){
+    listo=fetch(SB+'juego_desafio?select=preguntas&codigo=eq.'+encodeURIComponent(desafio.codigo),{headers:H}).then(function(r){return r.json();})
+      .then(function(d){if(!d||!d.length)throw new Error('Ese desafío no existe o venció.');desafio.ids=d[0].preguntas.split(',');});
+  } else {
+    var ids=idsNuevos();
+    listo=rpc('juego_crear',{p_preguntas:ids.join(',')}).then(function(cod){desafio={codigo:cod,ids:ids,mio:true};});
+  }
+  listo.then(function(){b.disabled=false;jugarLinea(a);}).catch(function(e){b.disabled=false;$('lineaErr').textContent=e.message||'No se pudo conectar. Probá de nuevo.';});
+};
+function jugarLinea(alias){
+  var lista=desafio.ids.map(function(id){return JUEGO_PREG.filter(function(p){return p.id===id;})[0];}).filter(Boolean);
+  var i=0, pts=0, ac=0, falladas=[];
+  ver('pJuego');
+  function marcador(){$('marcador').innerHTML='<div class="jug turno"><b>'+esc(alias)+'</b><span class="nota">Pregunta '+Math.min(i+1,lista.length)+' de '+lista.length+'</span></div><span class="pts">'+pts+' pts</span>';}
+  function siguiente(){
+    marcador();
+    preguntar(lista[i]).then(function(r){
+      pts+=puntos(r); if(r.ok)ac++; else falladas.push(r.p);
+      marcador();
+      var ult=i===lista.length-1;
+      return veredicto(r,ult?'Ver resultado':'Siguiente').then(function(){if(ult)terminar();else{i++;siguiente();}});
+    });
+  }
+  function terminar(){
+    $('finTit').textContent=ac+' de '+lista.length+' · '+pts+' puntos';
+    $('finCuerpo').innerHTML='<p class="nota">Guardando…</p>';
+    repaso(falladas);
+    $('finBotones').innerHTML='';
+    ver('pFin');
+    rpc('juego_guardar',{p_desafio:desafio.codigo,p_alias:alias,p_aciertos:ac,p_puntaje:pts})
+      .then(function(){mostrarTabla(alias);})
+      .catch(function(e){$('finCuerpo').innerHTML='<p class="err">'+esc(e.message)+'</p>';mostrarTabla(alias);});
+  }
+  siguiente();
+}
+function enlace(){return location.origin+'/juego/?d='+desafio.codigo;}
+function mostrarTabla(alias){
+  fetch(SB+'juego_partida?select=alias,aciertos,puntaje&desafio=eq.'+desafio.codigo+'&order=puntaje.desc,creado.asc&limit=50',{headers:H})
+    .then(function(r){return r.json();}).then(function(d){
+      var med=['🥇','🥈','🥉'];
+      var tabla='<table class="tab"><tr><th></th><th>Jugador</th><th style="text-align:right">Aciertos</th><th style="text-align:right">Puntos</th></tr>'+
+        (d||[]).map(function(x,k){return '<tr'+(x.alias===alias?' class="yo"':'')+'><td><span class="medalla">'+(med[k]||(k+1))+'</span></td><td>'+esc(x.alias)+'</td><td class="n">'+x.aciertos+'</td><td class="n">'+x.puntaje+'</td></tr>';}).join('')+'</table>';
+      var msg='Te desafío en la Ruleta de Ohm de catto.ar: diez preguntas de electrónica. ¿Me superás? '+enlace();
+      $('finCuerpo').innerHTML=
+        '<div class="caja"><b>Desafiá a tus compañeros</b><p class="nota">Código <span class="cod">'+desafio.codigo+'</span> · las mismas diez preguntas para todos.</p>'+
+        '<div class="fila"><a class="btn oro" href="https://wa.me/?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">Enviar por WhatsApp</a>'+
+        '<button class="btn sec" type="button" id="copiar">Copiar enlace</button></div></div>'+
+        '<div class="caja"><b>Resultados de este desafío</b>'+tabla+'<p class="nota"><button class="btn sec" type="button" id="actualizar" style="margin-top:10px">Actualizar</button></p></div>';
+      $('copiar').onclick=function(){var t=enlace();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){$('copiar').textContent='¡Copiado!';}).catch(function(){prompt('Copiá el enlace:',t);});};
+      $('actualizar').onclick=function(){mostrarTabla(alias);};
+      $('finBotones').innerHTML='<button class="btn" type="button" data-ir="linea">Nuevo desafío</button><button class="btn sec" type="button" id="irRanking">🏅 Ranking</button><button class="btn sec" type="button" data-ir="inicio">Inicio</button>';
+      $('irRanking').onclick=verRanking;
+    }).catch(function(){});
+}
+
+/* ---------- RANKING ---------- */
+function verRanking(){
+  ver('pRanking'); $('rankingCaja').innerHTML='<p class="nota">Cargando…</p>';
+  var yo=guardado('ohmAlias');
+  rpc('juego_ranking').then(function(d){
+    if(!d||!d.length){$('rankingCaja').innerHTML='<p class="nota">Todavía nadie jugó esta semana. ¡Estrenalo vos!</p>';return;}
+    var med=['🥇','🥈','🥉'];
+    $('rankingCaja').innerHTML='<table class="tab"><tr><th></th><th>Jugador</th><th style="text-align:right">Mejor puntaje</th><th style="text-align:right">Partidas</th></tr>'+
+      d.map(function(x,k){return '<tr'+(x.alias===yo?' class="yo"':'')+'><td><span class="medalla">'+(med[k]||(k+1))+'</span></td><td>'+esc(x.alias)+'</td><td class="n">'+x.mejor+'</td><td class="n">'+x.partidas+'</td></tr>';}).join('')+'</table>';
+  }).catch(function(){$('rankingCaja').innerHTML='<p class="err">No se pudo cargar el ranking.</p>';});
+}
+$('verRanking').onclick=verRanking;
+
+/* llegando con un enlace de desafío */
+var q=new URLSearchParams(location.search).get('d');
+if(q&&/^[a-z0-9]{6}$/.test(q))abrirLinea(q);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
