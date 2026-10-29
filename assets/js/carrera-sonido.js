@@ -15,8 +15,10 @@
       UNTREF con contenidos tomados de CABA.
    h: horas. Las de la UNTREF son las de su plan; las que se suman desde CABA
       llevan una carga orientativa.
-   Por ahora ningún eje tiene página (sin u). Lo usan /publicaciones/mapa-sonido
-   y la portada.
+   u: página que ya cubre ese eje. Si empieza con «/» es de la ingeniería
+   (/publicaciones/mapa-ingenieria/temas/); si no, de la tecnicatura en Electrónica
+   (/publicaciones/mapa-electronica/temas/). Los ejes sin u todavía no tienen página.
+   Lo usan /publicaciones/mapa-sonido y la portada.
    ============================================================ */
 var AREAS = {
   fund:    {nombre:"Ciencias básicas", color:"#58a6ff"},
@@ -56,26 +58,26 @@ var TEMAS = {
 var MATERIAS = [
 /* ---------- 1° AÑO ---------- */
 {id:"am1", n:"Análisis Matemático I", area:"fund", anio:1, h:90, f:"U", ejes:[
-  {t:"Funciones de una variable", d:"Funciones elementales, gráficas y transformaciones. Funciones exponencial, logarítmica y trigonométricas: las que describen una onda y un nivel en decibeles.", tm:[["mate",1]]},
-  {t:"Límite y continuidad", d:"Límite, continuidad y asíntotas. Comportamiento de una función cerca de un punto y en el infinito.", tm:[["mate",1]]},
-  {t:"Derivada", d:"Derivada como tasa de cambio, reglas de derivación, recta tangente. Velocidad y aceleración de una partícula que oscila.", tm:[["mate",1]]},
-  {t:"Integral", d:"Integral indefinida y definida, teorema fundamental, área bajo la curva. Valor medio y valor eficaz de una señal periódica.", tm:[["mate",1]]},
-  {t:"Sucesiones y series", d:"Sucesiones, series numéricas y de potencias. Aproximación de funciones por polinomios de Taylor.", tm:[["mate",1]]}
+  {t:"Funciones de una variable", u:"/publicaciones/mapa-ingenieria/temas/funciones-variable-real", d:"Funciones elementales, gráficas y transformaciones. Funciones exponencial, logarítmica y trigonométricas: las que describen una onda y un nivel en decibeles.", tm:[["mate",1]]},
+  {t:"Límite y continuidad", u:"/publicaciones/mapa-ingenieria/temas/limite-funciones", d:"Límite, continuidad y asíntotas. Comportamiento de una función cerca de un punto y en el infinito.", tm:[["mate",1]]},
+  {t:"Derivada", u:"/publicaciones/mapa-ingenieria/temas/derivada", d:"Derivada como tasa de cambio, reglas de derivación, recta tangente. Velocidad y aceleración de una partícula que oscila.", tm:[["mate",1]]},
+  {t:"Integral", u:"/publicaciones/mapa-ingenieria/temas/integral-definida", d:"Integral indefinida y definida, teorema fundamental, área bajo la curva. Valor medio y valor eficaz de una señal periódica.", tm:[["mate",1]]},
+  {t:"Sucesiones y series", u:"/publicaciones/mapa-ingenieria/temas/series", d:"Sucesiones, series numéricas y de potencias. Aproximación de funciones por polinomios de Taylor.", tm:[["mate",1]]}
 ]},
 {id:"alg1", n:"Álgebra I", area:"fund", anio:1, h:90, f:"U", ejes:[
   {t:"Números complejos", d:"Forma binómica, polar y exponencial. Operaciones. La herramienta para representar amplitud y fase de una senoide.", tm:[["mate",1],["senal",1]]},
-  {t:"Vectores", d:"Vectores en el plano y el espacio, producto escalar y vectorial. Rectas y planos.", tm:[["mate",1]]},
-  {t:"Matrices y determinantes", d:"Operaciones con matrices, determinante, matriz inversa.", tm:[["mate",1]]},
-  {t:"Sistemas de ecuaciones lineales", d:"Resolución por eliminación de Gauss. Sistemas compatibles e incompatibles.", tm:[["mate",1]]}
+  {t:"Vectores", u:"/publicaciones/mapa-ingenieria/temas/vectores-r2-r3", d:"Vectores en el plano y el espacio, producto escalar y vectorial. Rectas y planos.", tm:[["mate",1]]},
+  {t:"Matrices y determinantes", u:"/publicaciones/mapa-ingenieria/temas/matrices", d:"Operaciones con matrices, determinante, matriz inversa.", tm:[["mate",1]]},
+  {t:"Sistemas de ecuaciones lineales", u:"/publicaciones/mapa-ingenieria/temas/sistemas-ecuaciones", d:"Resolución por eliminación de Gauss. Sistemas compatibles e incompatibles.", tm:[["mate",1]]}
 ]},
 {id:"fis1", n:"Física I", area:"fund", anio:1, h:90, f:"U", ejes:[
-  {t:"Cinemática y dinámica", d:"Movimiento en una y dos dimensiones. Leyes de Newton. Trabajo, energía y potencia.", tm:[["fisica",1]]},
-  {t:"Movimiento oscilatorio", d:"Movimiento armónico simple: masa y resorte, péndulo. Oscilaciones amortiguadas y forzadas, resonancia. La base de todo sistema que vibra.", tm:[["fisica",2],["onda",1]]},
-  {t:"Ondas mecánicas", d:"Ondas transversales y longitudinales. Velocidad, frecuencia y longitud de onda. Superposición, ondas estacionarias y modos de una cuerda o un tubo.", tm:[["fisica",2],["onda",1]]},
-  {t:"Fluidos", d:"Presión, principio de Pascal y de Arquímedes. Presión atmosférica: el medio en el que viaja el sonido.", tm:[["fisica",1]]}
+  {t:"Cinemática y dinámica", u:"/publicaciones/mapa-ingenieria/temas/dinamica-punto", d:"Movimiento en una y dos dimensiones. Leyes de Newton. Trabajo, energía y potencia.", tm:[["fisica",1]]},
+  {t:"Movimiento oscilatorio", u:"/publicaciones/mapa-ingenieria/temas/movimiento-oscilatorio", d:"Movimiento armónico simple: masa y resorte, péndulo. Oscilaciones amortiguadas y forzadas, resonancia. La base de todo sistema que vibra.", tm:[["fisica",2],["onda",1]]},
+  {t:"Ondas mecánicas", u:"/publicaciones/mapa-ingenieria/temas/ondas-mecanicas", d:"Ondas transversales y longitudinales. Velocidad, frecuencia y longitud de onda. Superposición, ondas estacionarias y modos de una cuerda o un tubo.", tm:[["fisica",2],["onda",1]]},
+  {t:"Fluidos", u:"/publicaciones/mapa-ingenieria/temas/fluidos-equilibrio", d:"Presión, principio de Pascal y de Arquímedes. Presión atmosférica: el medio en el que viaja el sonido.", tm:[["fisica",1]]}
 ]},
 {id:"comp", n:"Computación", area:"fund", anio:1, h:60, f:"U", ejes:[
-  {t:"Algoritmos y programación", d:"Variables, estructuras de control, funciones. Un primer lenguaje para calcular y graficar.", tm:[["mate",1]]},
+  {t:"Algoritmos y programación", u:"/publicaciones/mapa-ingenieria/temas/algoritmos", d:"Variables, estructuras de control, funciones. Un primer lenguaje para calcular y graficar.", tm:[["mate",1]]},
   {t:"Arreglos y señales", d:"Una señal como lista de muestras: generar, recorrer, sumar y graficar senoides.", tm:[["digital",1]]},
   {t:"Archivos de audio", d:"Leer y escribir un archivo WAV: frecuencia de muestreo, canales y resolución.", tm:[["digital",1]]}
 ]},
@@ -86,21 +88,21 @@ var MATERIAS = [
   {t:"El oído y la audición", d:"Anatomía del oído y mecanismos de la audición. Rango audible. Percepción de altura, sonoridad y curvas de igual sonoridad.", tm:[["psico",1]]}
 ]},
 {id:"am2", n:"Análisis Matemático II", area:"fund", anio:1, h:90, f:"U", ejes:[
-  {t:"Funciones de varias variables", d:"Derivadas parciales, gradiente y diferencial. Un campo de presión que depende del lugar y del tiempo.", tm:[["mate",2]]},
-  {t:"Integrales múltiples", d:"Integrales dobles y triples. Áreas, volúmenes y valores medios.", tm:[["mate",2]]},
-  {t:"Ecuaciones diferenciales ordinarias", d:"Ecuaciones de primer y segundo orden. La ecuación del oscilador amortiguado y su respuesta.", tm:[["mate",2],["fisica",2]]},
-  {t:"Integrales de línea y superficie", d:"Campos vectoriales, circulación y flujo. Teoremas de Green, Stokes y Gauss.", tm:[["mate",2]]}
+  {t:"Funciones de varias variables", u:"/publicaciones/mapa-ingenieria/temas/calculo-diferencial-varias", d:"Derivadas parciales, gradiente y diferencial. Un campo de presión que depende del lugar y del tiempo.", tm:[["mate",2]]},
+  {t:"Integrales múltiples", u:"/publicaciones/mapa-ingenieria/temas/integrales-multiples", d:"Integrales dobles y triples. Áreas, volúmenes y valores medios.", tm:[["mate",2]]},
+  {t:"Ecuaciones diferenciales ordinarias", u:"/publicaciones/mapa-ingenieria/temas/ecuaciones-diferenciales", d:"Ecuaciones de primer y segundo orden. La ecuación del oscilador amortiguado y su respuesta.", tm:[["mate",2],["fisica",2]]},
+  {t:"Integrales de línea y superficie", u:"/publicaciones/mapa-ingenieria/temas/integrales-linea-superficie", d:"Campos vectoriales, circulación y flujo. Teoremas de Green, Stokes y Gauss.", tm:[["mate",2]]}
 ]},
 {id:"alg2", n:"Álgebra II", area:"fund", anio:1, h:90, f:"U", ejes:[
-  {t:"Espacios vectoriales", d:"Subespacios, bases y dimensión. Una señal como vector y una base de señales.", tm:[["mate",2],["senal",1]]},
-  {t:"Transformaciones lineales", d:"Núcleo, imagen y matriz asociada. Los sistemas lineales, vistos como transformaciones.", tm:[["mate",2]]},
-  {t:"Autovalores y autovectores", d:"Diagonalización. Modos propios de un sistema que vibra.", tm:[["mate",2]]},
+  {t:"Espacios vectoriales", u:"/publicaciones/mapa-ingenieria/temas/espacios-vectoriales", d:"Subespacios, bases y dimensión. Una señal como vector y una base de señales.", tm:[["mate",2],["senal",1]]},
+  {t:"Transformaciones lineales", u:"/publicaciones/mapa-ingenieria/temas/transformaciones-lineales", d:"Núcleo, imagen y matriz asociada. Los sistemas lineales, vistos como transformaciones.", tm:[["mate",2]]},
+  {t:"Autovalores y autovectores", u:"/publicaciones/mapa-ingenieria/temas/autovalores-autovectores", d:"Diagonalización. Modos propios de un sistema que vibra.", tm:[["mate",2]]},
   {t:"Producto interno y ortogonalidad", d:"Proyección y bases ortogonales: la idea que está detrás de la serie de Fourier.", tm:[["mate",2],["senal",1]]}
 ]},
 {id:"fis2", n:"Física II", area:"fund", anio:1, h:90, f:"U", ejes:[
-  {t:"Termodinámica", d:"Temperatura, calor y primera ley. Procesos adiabáticos: por qué la velocidad del sonido depende de la temperatura.", tm:[["fisica",2],["onda",1]]},
-  {t:"Óptica y ondas", d:"Reflexión, refracción, interferencia y difracción. Los mismos fenómenos que tiene el sonido en una sala.", tm:[["fisica",2]]},
-  {t:"Electrostática", d:"Carga, campo y potencial eléctrico. Capacitores: el principio del micrófono de condensador.", tm:[["fisica",1],["transd",1]]}
+  {t:"Termodinámica", u:"/publicaciones/mapa-ingenieria/temas/principios-termodinamica", d:"Temperatura, calor y primera ley. Procesos adiabáticos: por qué la velocidad del sonido depende de la temperatura.", tm:[["fisica",2],["onda",1]]},
+  {t:"Óptica y ondas", u:"/publicaciones/mapa-ingenieria/temas/interferencia-difraccion", d:"Reflexión, refracción, interferencia y difracción. Los mismos fenómenos que tiene el sonido en una sala.", tm:[["fisica",2]]},
+  {t:"Electrostática", u:"/publicaciones/mapa-ingenieria/temas/electrostatica", d:"Carga, campo y potencial eléctrico. Capacitores: el principio del micrófono de condensador.", tm:[["fisica",1],["transd",1]]}
 ]},
 {id:"gr1", n:"Grabación I", area:"estudio", anio:1, h:90, f:"UC", ejes:[
   {t:"El estudio de grabación", d:"Sala de control y sala de grabación. Roles y funciones. Equipos del estudio y su interconexión.", tm:[["grab",1]]},
@@ -117,29 +119,29 @@ var MATERIAS = [
 
 /* ---------- 2° AÑO ---------- */
 {id:"am3", n:"Análisis Matemático III", area:"fund", anio:2, h:90, f:"U", ejes:[
-  {t:"Funciones de variable compleja", d:"Funciones analíticas, condiciones de Cauchy-Riemann. Integración en el plano complejo.", tm:[["mate",3]]},
-  {t:"Series de Fourier", d:"Desarrollo de una señal periódica en senos y cosenos. Espectro de líneas de una onda cuadrada, triangular y diente de sierra.", tm:[["mate",3],["senal",2]]},
-  {t:"Transformada de Fourier", d:"De la serie a la transformada. Propiedades. Espectro de una señal que no se repite.", tm:[["mate",3],["senal",2]]},
-  {t:"Transformada de Laplace", d:"Definición, propiedades y antitransformada. Resolución de ecuaciones diferenciales y de circuitos.", tm:[["mate",3],["senal",2]]},
-  {t:"Ecuación de onda", d:"Ecuaciones en derivadas parciales. La ecuación de onda y su solución por separación de variables.", tm:[["mate",3],["onda",2]]}
+  {t:"Funciones de variable compleja", u:"/publicaciones/mapa-ingenieria/temas/funciones-complejas", d:"Funciones analíticas, condiciones de Cauchy-Riemann. Integración en el plano complejo.", tm:[["mate",3]]},
+  {t:"Series de Fourier", u:"/publicaciones/mapa-ingenieria/temas/series-fourier", d:"Desarrollo de una señal periódica en senos y cosenos. Espectro de líneas de una onda cuadrada, triangular y diente de sierra.", tm:[["mate",3],["senal",2]]},
+  {t:"Transformada de Fourier", u:"/publicaciones/mapa-ingenieria/temas/propiedades-fourier", d:"De la serie a la transformada. Propiedades. Espectro de una señal que no se repite.", tm:[["mate",3],["senal",2]]},
+  {t:"Transformada de Laplace", u:"/publicaciones/mapa-ingenieria/temas/laplace", d:"Definición, propiedades y antitransformada. Resolución de ecuaciones diferenciales y de circuitos.", tm:[["mate",3],["senal",2]]},
+  {t:"Ecuación de onda", u:"/publicaciones/mapa-ingenieria/temas/ondas-planas", d:"Ecuaciones en derivadas parciales. La ecuación de onda y su solución por separación de variables.", tm:[["mate",3],["onda",2]]}
 ]},
 {id:"eym", n:"Electricidad y Magnetismo", area:"fund", anio:2, h:90, f:"U", ejes:[
-  {t:"Corriente y circuitos", d:"Corriente, resistencia, ley de Ohm y leyes de Kirchhoff. Potencia y energía.", tm:[["fisica",2],["circ",1]]},
-  {t:"Campo magnético", d:"Fuerza sobre una corriente, ley de Biot-Savart y de Ampère. El motor de un parlante: una bobina en un imán.", tm:[["fisica",2],["transd",1]]},
-  {t:"Inducción electromagnética", d:"Ley de Faraday, inductancia y transformador. El principio del micrófono dinámico y de la cápsula de un tocadiscos.", tm:[["fisica",2],["transd",1]]},
-  {t:"Ecuaciones de Maxwell", d:"Las cuatro ecuaciones y la onda electromagnética.", tm:[["fisica",2]]}
+  {t:"Corriente y circuitos", u:"/publicaciones/mapa-ingenieria/temas/corriente-continua", d:"Corriente, resistencia, ley de Ohm y leyes de Kirchhoff. Potencia y energía.", tm:[["fisica",2],["circ",1]]},
+  {t:"Campo magnético", u:"/publicaciones/mapa-ingenieria/temas/magnetostatica", d:"Fuerza sobre una corriente, ley de Biot-Savart y de Ampère. El motor de un parlante: una bobina en un imán.", tm:[["fisica",2],["transd",1]]},
+  {t:"Inducción electromagnética", u:"/publicaciones/mapa-ingenieria/temas/induccion-magnetica", d:"Ley de Faraday, inductancia y transformador. El principio del micrófono dinámico y de la cápsula de un tocadiscos.", tm:[["fisica",2],["transd",1]]},
+  {t:"Ecuaciones de Maxwell", u:"/publicaciones/mapa-ingenieria/temas/maxwell", d:"Las cuatro ecuaciones y la onda electromagnética.", tm:[["fisica",2]]}
 ]},
 {id:"pye", n:"Probabilidad y Estadística", area:"fund", anio:2, h:90, f:"U", ejes:[
-  {t:"Probabilidad", d:"Espacio muestral, probabilidad condicional, independencia.", tm:[["mate",2]]},
-  {t:"Variables aleatorias", d:"Distribuciones discretas y continuas, distribución normal. El ruido como señal aleatoria.", tm:[["mate",2],["ruido",1]]},
-  {t:"Estadística descriptiva e inferencia", d:"Media, dispersión, estimación e intervalos de confianza. Incertidumbre de una medición acústica.", tm:[["mate",2],["medic",1]]}
+  {t:"Probabilidad", u:"/publicaciones/mapa-ingenieria/temas/probabilidad", d:"Espacio muestral, probabilidad condicional, independencia.", tm:[["mate",2]]},
+  {t:"Variables aleatorias", u:"/publicaciones/mapa-ingenieria/temas/distribuciones", d:"Distribuciones discretas y continuas, distribución normal. El ruido como señal aleatoria.", tm:[["mate",2],["ruido",1]]},
+  {t:"Estadística descriptiva e inferencia", u:"/publicaciones/mapa-ingenieria/temas/estadistica-descriptiva", d:"Media, dispersión, estimación e intervalos de confianza. Incertidumbre de una medición acústica.", tm:[["mate",2],["medic",1]]}
 ]},
 {id:"sys", n:"Señales y Sistemas", area:"senal", anio:2, h:90, f:"U", ejes:[
-  {t:"Señales continuas y discretas", d:"Clasificación de señales, operaciones, impulso y escalón. Energía y potencia de una señal.", tm:[["senal",2]]},
-  {t:"Sistemas lineales e invariantes", d:"Linealidad, invariancia, causalidad y estabilidad. Respuesta al impulso y convolución: lo que hace una reverb por convolución.", tm:[["senal",2],["proc",1]]},
-  {t:"Respuesta en frecuencia", d:"Función de transferencia, módulo y fase. Diagramas de Bode de un ecualizador o de un filtro.", tm:[["senal",2],["proc",1]]},
-  {t:"Muestreo", d:"Teorema de Nyquist-Shannon, aliasing y reconstrucción. Por qué el audio se muestrea a 44,1 o 48 kHz.", tm:[["senal",2],["digital",2]]},
-  {t:"Transformada Z", d:"Definición y propiedades. Sistemas discretos y su respuesta en frecuencia.", tm:[["senal",2],["digital",2]]}
+  {t:"Señales continuas y discretas", u:"/publicaciones/mapa-ingenieria/temas/senales-continuas-discretas", d:"Clasificación de señales, operaciones, impulso y escalón. Energía y potencia de una señal.", tm:[["senal",2]]},
+  {t:"Sistemas lineales e invariantes", u:"/publicaciones/mapa-ingenieria/temas/sistemas-lti", d:"Linealidad, invariancia, causalidad y estabilidad. Respuesta al impulso y convolución: lo que hace una reverb por convolución.", tm:[["senal",2],["proc",1]]},
+  {t:"Respuesta en frecuencia", u:"/publicaciones/mapa-ingenieria/temas/respuesta-frecuencia", d:"Función de transferencia, módulo y fase. Diagramas de Bode de un ecualizador o de un filtro.", tm:[["senal",2],["proc",1]]},
+  {t:"Muestreo", u:"/publicaciones/mapa-ingenieria/temas/muestreo-shannon", d:"Teorema de Nyquist-Shannon, aliasing y reconstrucción. Por qué el audio se muestrea a 44,1 o 48 kHz.", tm:[["senal",2],["digital",2]]},
+  {t:"Transformada Z", u:"/publicaciones/mapa-ingenieria/temas/transformada-z", d:"Definición y propiedades. Sistemas discretos y su respuesta en frecuencia.", tm:[["senal",2],["digital",2]]}
 ]},
 {id:"ap1", n:"Acústica y Psicoacústica I", area:"acus", anio:2, h:90, f:"UC", ejes:[
   {t:"Ecuación de onda acústica", d:"Ondas planas y esféricas. Impedancia acústica. Campo cercano y campo lejano.", tm:[["onda",2]]},
@@ -148,11 +150,11 @@ var MATERIAS = [
   {t:"Psicoacústica", d:"Bandas críticas y enmascaramiento. Sonoridad en fonios y sones. Percepción del tiempo, efecto de precedencia y localización espacial.", tm:[["psico",2]]}
 ]},
 {id:"le1", n:"Laboratorio de Electrónica I", area:"elec", anio:2, h:90, f:"UC", ejes:[
-  {t:"Corriente alterna", d:"Señal senoidal, valores típicos. Inductores y capacitores, reactancia, impedancia y resonancia.", tm:[["circ",2]]},
-  {t:"Instrumentos de laboratorio", d:"Multímetro, generador de funciones, osciloscopio y analizador de espectro.", tm:[["medic",1],["circ",2]]},
-  {t:"Filtros pasivos y activos", d:"Pasabajos, pasaaltos, pasabanda y eliminabanda: frecuencia de corte y pendiente. Ecualizadores gráficos, paramétricos y semiparamétricos.", tm:[["circ",2],["proc",1]]},
+  {t:"Corriente alterna", u:"corrientes-alternas", d:"Señal senoidal, valores típicos. Inductores y capacitores, reactancia, impedancia y resonancia.", tm:[["circ",2]]},
+  {t:"Instrumentos de laboratorio", u:"osciloscopio", d:"Multímetro, generador de funciones, osciloscopio y analizador de espectro.", tm:[["medic",1],["circ",2]]},
+  {t:"Filtros pasivos y activos", u:"filtros", d:"Pasabajos, pasaaltos, pasabanda y eliminabanda: frecuencia de corte y pendiente. Ecualizadores gráficos, paramétricos y semiparamétricos.", tm:[["circ",2],["proc",1]]},
   {t:"Decibeles en la medición", d:"Ganancias de tensión, corriente y potencia en dB. dBV, dBu y dBm, y dónde se usa cada uno.", tm:[["medic",1],["onda",2]]},
-  {t:"Fuentes de alimentación", d:"Transformador, rectificación y filtrado. Fuentes de corriente continua para equipos de audio.", tm:[["circ",2]]}
+  {t:"Fuentes de alimentación", u:"/publicaciones/mapa-ingenieria/temas/fuentes-reguladas-lineales", d:"Transformador, rectificación y filtrado. Fuentes de corriente continua para equipos de audio.", tm:[["circ",2]]}
 ]},
 {id:"gr2", n:"Grabación II", area:"estudio", anio:2, h:90, f:"UC", ejes:[
   {t:"Micrófonos", d:"Dinámicos, de condensador y de cinta. Patrones polares: omnidireccional, cardioide y figura ocho. Phantom power.", tm:[["grab",2],["transd",2]]},
@@ -161,8 +163,8 @@ var MATERIAS = [
   {t:"La consola de grabación", d:"Preamplificadores, ganancia, inserts, auxiliares, grupos y buses. Software de grabación.", tm:[["grab",2],["mezcla",1]]}
 ]},
 {id:"ad1", n:"Audio Digital I", area:"senal", anio:2, h:60, f:"C", ejes:[
-  {t:"Fundamentos de sistemas digitales", d:"Sistema binario, lógica digital y representación de números.", tm:[["digital",1]]},
-  {t:"Conversión analógica-digital", d:"Muestreo y cuantificación, resolución en bits, rango dinámico y dither.", tm:[["digital",2]]},
+  {t:"Fundamentos de sistemas digitales", u:"/publicaciones/mapa-ingenieria/temas/sistemas-numeracion", d:"Sistema binario, lógica digital y representación de números.", tm:[["digital",1]]},
+  {t:"Conversión analógica-digital", u:"conversores-ad-da", d:"Muestreo y cuantificación, resolución en bits, rango dinámico y dither.", tm:[["digital",2]]},
   {t:"Edición digital", d:"Estaciones de trabajo de audio (DAW). Edición, fundidos, ajuste de tiempo y afinación.", tm:[["digital",2],["grab",2]]}
 ]},
 {id:"midi", n:"MIDI y Síntesis", area:"senal", anio:2, h:60, f:"C", ejes:[
@@ -186,22 +188,22 @@ var MATERIAS = [
   {t:"Medidor de nivel sonoro", d:"Ponderaciones A, B y C. Niveles equivalentes y respuesta temporal del medidor.", tm:[["medic",2],["psico",2]]}
 ]},
 {id:"le2", n:"Laboratorio de Electrónica II", area:"elec", anio:3, h:90, f:"UC", ejes:[
-  {t:"Semiconductores", d:"Diodos y transistores bipolares y de efecto de campo. Polarización y modelos.", tm:[["circ",2]]},
+  {t:"Semiconductores", u:"semiconductores-diodos", d:"Diodos y transistores bipolares y de efecto de campo. Polarización y modelos.", tm:[["circ",2]]},
   {t:"Circuitos de audio", d:"Preamplificador de micrófono, mezclador, amplificador de auriculares y medidor de picos.", tm:[["circ",3]]},
-  {t:"Circuitos impresos", d:"Diseño y armado de placas de audio: soldadura, prueba y medición. Un cable doctor y un amplificador.", tm:[["circ",2],["medic",2]]},
+  {t:"Circuitos impresos", u:"pcb", d:"Diseño y armado de placas de audio: soldadura, prueba y medición. Un cable doctor y un amplificador.", tm:[["circ",2],["medic",2]]},
   {t:"Interfaces digitales", d:"S/PDIF, AES/EBU y conversores AD y DA.", tm:[["digital",2],["circ",2]]}
 ]},
 {id:"dsp", n:"Procesamiento Digital de Señales", area:"senal", anio:3, h:120, f:"U", ejes:[
   {t:"Transformada discreta de Fourier", d:"DFT y FFT. Resolución en frecuencia, ventanas y fuga espectral. El analizador de espectro por software.", tm:[["digital",3],["senal",3]]},
-  {t:"Filtros digitales FIR", d:"Respuesta al impulso finita, fase lineal. Diseño por ventanas.", tm:[["digital",3],["proc",2]]},
-  {t:"Filtros digitales IIR", d:"Filtros recursivos, estabilidad. Diseño a partir de prototipos analógicos: el ecualizador paramétrico digital.", tm:[["digital",3],["proc",2]]},
-  {t:"Convolución y correlación", d:"Convolución rápida por FFT. Reverb por convolución y medición de respuestas impulsivas.", tm:[["digital",3],["recinto",2]]},
+  {t:"Filtros digitales FIR", u:"/publicaciones/mapa-ingenieria/temas/filtros-digitales", d:"Respuesta al impulso finita, fase lineal. Diseño por ventanas.", tm:[["digital",3],["proc",2]]},
+  {t:"Filtros digitales IIR", u:"/publicaciones/mapa-ingenieria/temas/filtros-digitales", d:"Filtros recursivos, estabilidad. Diseño a partir de prototipos analógicos: el ecualizador paramétrico digital.", tm:[["digital",3],["proc",2]]},
+  {t:"Convolución y correlación", u:"/publicaciones/mapa-ingenieria/temas/convolucion", d:"Convolución rápida por FFT. Reverb por convolución y medición de respuestas impulsivas.", tm:[["digital",3],["recinto",2]]},
   {t:"Cambio de frecuencia de muestreo", d:"Sobremuestreo, submuestreo y filtros de interpolación.", tm:[["digital",3]]}
 ]},
 {id:"ce1", n:"Circuitos Electrónicos I", area:"elec", anio:3, h:90, f:"U", ejes:[
-  {t:"Amplificadores con transistores", d:"Etapas en emisor y source común. Ganancia, impedancias de entrada y salida.", tm:[["circ",3]]},
-  {t:"Amplificador operacional", d:"Configuraciones inversora, no inversora, sumadora y diferencial. Slew rate y ancho de banda.", tm:[["circ",3]]},
-  {t:"Realimentación", d:"Efectos de la realimentación negativa sobre ganancia, distorsión y ancho de banda.", tm:[["circ",3]]},
+  {t:"Amplificadores con transistores", u:"/publicaciones/mapa-ingenieria/temas/bjt-amplificador", d:"Etapas en emisor y source común. Ganancia, impedancias de entrada y salida.", tm:[["circ",3]]},
+  {t:"Amplificador operacional", u:"/publicaciones/mapa-ingenieria/temas/amplificadores-operacionales-ing", d:"Configuraciones inversora, no inversora, sumadora y diferencial. Slew rate y ancho de banda.", tm:[["circ",3]]},
+  {t:"Realimentación", u:"/publicaciones/mapa-ingenieria/temas/amplificadores-realimentados", d:"Efectos de la realimentación negativa sobre ganancia, distorsión y ancho de banda.", tm:[["circ",3]]},
   {t:"Ruido en circuitos", d:"Ruido térmico y de disparo. Figura de ruido de un preamplificador.", tm:[["circ",3],["ruido",2]]}
 ]},
 {id:"ea1", n:"Electroacústica I", area:"elec", anio:3, h:90, f:"U", ejes:[
@@ -245,17 +247,17 @@ var MATERIAS = [
 {id:"ea2", n:"Electroacústica II", area:"elec", anio:4, h:90, f:"U", ejes:[
   {t:"Sistemas de altavoces", d:"Arreglos de altavoces y directividad. Bocinas y line arrays.", tm:[["transd",4],["vivo",3]]},
   {t:"Divisores de frecuencia", d:"Crossovers activos y pasivos de distintos órdenes. Alineación temporal entre vías.", tm:[["transd",4],["proc",3]]},
-  {t:"Amplificadores de potencia", d:"Clases A, AB y D. Potencia, rendimiento y distorsión.", tm:[["circ",4],["transd",3]]},
+  {t:"Amplificadores de potencia", u:"/publicaciones/mapa-ingenieria/temas/amplificadores-potencia-ing", d:"Clases A, AB y D. Potencia, rendimiento y distorsión.", tm:[["circ",4],["transd",3]]},
   {t:"Medición de transductores", d:"Respuesta en frecuencia, impedancia y directividad de micrófonos y altavoces.", tm:[["medic",3],["transd",4]]}
 ]},
 {id:"com", n:"Comunicaciones", area:"senal", anio:4, h:60, f:"U", ejes:[
-  {t:"Modulación analógica", d:"AM y FM. Ancho de banda y relación señal-ruido. La radio de transmisión.", tm:[["senal",3]]},
-  {t:"Modulación digital", d:"ASK, FSK y PSK. Tasa de bits y ancho de banda.", tm:[["senal",3],["digital",3]]},
+  {t:"Modulación analógica", u:"sistemas-modulacion", d:"AM y FM. Ancho de banda y relación señal-ruido. La radio de transmisión.", tm:[["senal",3]]},
+  {t:"Modulación digital", u:"/publicaciones/mapa-ingenieria/temas/modulacion-digital-ing", d:"ASK, FSK y PSK. Tasa de bits y ancho de banda.", tm:[["senal",3],["digital",3]]},
   {t:"Transmisión de audio", d:"Codificación de audio para transmisión. Audio en red y por streaming.", tm:[["digital",3],["medios",3]]}
 ]},
 {id:"ima", n:"Instrumentos y Mediciones Acústicas", area:"acus", anio:4, h:90, f:"U", ejes:[
   {t:"Cadena de medición", d:"Micrófono de medición, preamplificador, calibrador y analizador. Incertidumbre.", tm:[["medic",3]]},
-  {t:"Análisis por bandas", d:"Filtros de octava y de tercio de octava. Analizadores en tiempo real.", tm:[["medic",3],["digital",3]]},
+  {t:"Análisis por bandas", u:"/publicaciones/mapa-ingenieria/temas/analizador-espectro", d:"Filtros de octava y de tercio de octava. Analizadores en tiempo real.", tm:[["medic",3],["digital",3]]},
   {t:"Medición de respuesta impulsiva", d:"MLS y barrido senoidal. Parámetros de sala a partir de la respuesta impulsiva.", tm:[["medic",3],["recinto",3]]},
   {t:"Normas de medición", d:"Normas ISO e IRAM para medir niveles, reverberación y aislamiento.", tm:[["medic",3],["ruido",2]]}
 ]},
@@ -266,10 +268,10 @@ var MATERIAS = [
   {t:"Niveles y sonoridad", d:"Valor eficaz y de pico. Medición de sonoridad en LUFS y normas de entrega.", tm:[["mezcla",3],["medic",3]]}
 ]},
 {id:"ce2", n:"Circuitos Electrónicos II", area:"elec", anio:4, h:90, f:"U", ejes:[
-  {t:"Filtros activos", d:"Diseño de filtros Butterworth, Chebyshev y Bessel con operacionales.", tm:[["circ",4],["proc",3]]},
-  {t:"Osciladores", d:"Criterio de Barkhausen. Osciladores senoidales para generadores de prueba.", tm:[["circ",4]]},
-  {t:"Conversores", d:"Conversores AD y DA: arquitecturas, resolución y errores.", tm:[["circ",4],["digital",3]]},
-  {t:"Fuentes reguladas", d:"Reguladores lineales y conmutados. Ruido de fuente en equipos de audio.", tm:[["circ",4],["ruido",2]]}
+  {t:"Filtros activos", u:"/publicaciones/mapa-ingenieria/temas/diseno-filtros", d:"Diseño de filtros Butterworth, Chebyshev y Bessel con operacionales.", tm:[["circ",4],["proc",3]]},
+  {t:"Osciladores", u:"osciladores", d:"Criterio de Barkhausen. Osciladores senoidales para generadores de prueba.", tm:[["circ",4]]},
+  {t:"Conversores", u:"/publicaciones/mapa-ingenieria/temas/conversores-datos", d:"Conversores AD y DA: arquitecturas, resolución y errores.", tm:[["circ",4],["digital",3]]},
+  {t:"Fuentes reguladas", u:"/publicaciones/mapa-ingenieria/temas/fuentes-reguladas-lineales", d:"Reguladores lineales y conmutados. Ruido de fuente en equipos de audio.", tm:[["circ",4],["ruido",2]]}
 ]},
 {id:"ad2", n:"Audio Digital II", area:"senal", anio:4, h:90, f:"UC", ejes:[
   {t:"Distorsión", d:"Distorsión armónica total y por intermodulación, en analógico y en digital.", tm:[["digital",3],["medic",3]]},
@@ -313,9 +315,9 @@ var MATERIAS = [
   {t:"Realimentación acústica", d:"El acople: por qué ocurre y cómo se controla.", tm:[["vivo",4],["proc",4]]}
 ]},
 {id:"ime", n:"Instrumentos y Mediciones Electrónicas", area:"elec", anio:5, h:90, f:"U", ejes:[
-  {t:"Mediciones en equipos de audio", d:"Respuesta en frecuencia, distorsión, ruido y diafonía de un equipo.", tm:[["medic",4],["circ",4]]},
-  {t:"Instrumental automatizado", d:"Medición controlada por computadora. Interfaces de medición.", tm:[["medic",4],["digital",4]]},
-  {t:"Incertidumbre", d:"Errores sistemáticos y aleatorios. Expresión del resultado de una medición.", tm:[["medic",4]]}
+  {t:"Mediciones en equipos de audio", u:"/publicaciones/mapa-ingenieria/temas/mediciones-amplificadores", d:"Respuesta en frecuencia, distorsión, ruido y diafonía de un equipo.", tm:[["medic",4],["circ",4]]},
+  {t:"Instrumental automatizado", u:"/publicaciones/mapa-ingenieria/temas/automatizacion-mediciones", d:"Medición controlada por computadora. Interfaces de medición.", tm:[["medic",4],["digital",4]]},
+  {t:"Incertidumbre", u:"/publicaciones/mapa-ingenieria/temas/errores-incertidumbre", d:"Errores sistemáticos y aleatorios. Expresión del resultado de una medición.", tm:[["medic",4]]}
 ]},
 {id:"met", n:"Metodología de la Investigación", area:"practica", anio:5, h:60, f:"U", ejes:[
   {t:"El método científico", d:"Problema, hipótesis, diseño experimental y análisis de resultados.", tm:[["proyecto",3]]},
