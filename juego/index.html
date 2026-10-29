@@ -133,8 +133,12 @@ table.tab{width:100%;border-collapse:collapse;font-size:14px}
     <button class="modo" type="button" data-ir="dos"><span class="ic">👥</span><b>Dos jugadores</b>
       <span>Por turnos en la misma pantalla. Quien acierta, sigue girando.</span></button>
   </div>
-  <div class="fila"><button class="btn sec" type="button" id="verRanking">🏅 Ranking de la semana</button>
-    <span class="nota" id="recordSolo"></span></div>
+  <p class="nota" id="recordSolo"></p>
+  <div class="caja">
+    <b>🏅 Ranking de la semana</b>
+    <p class="nota" style="margin:2px 0 8px">El mejor puntaje de cada jugador en los desafíos en línea de los últimos siete días.</p>
+    <div id="rankingInicio"><p class="nota">Cargando…</p></div>
+  </div>
 </section>
 
 <!-- ============ DOS JUGADORES: NOMBRES ============ -->
@@ -211,7 +215,7 @@ function rpc(f,body){return fetch(SB+'rpc/'+f,{method:'POST',headers:H,body:JSON
 function ver(id){[].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});window.scrollTo(0,0);}
 document.addEventListener('click',function(e){var b=e.target.closest('[data-ir]');if(!b)return;
   var d=b.getAttribute('data-ir');
-  if(d==='inicio'){ver('pInicio');pintarRecord();}
+  if(d==='inicio'){ver('pInicio');pintarRecord();cargarRanking('rankingInicio');}
   else if(d==='dos')ver('pDos');
   else if(d==='solo')empezarSolo();
   else if(d==='linea')abrirLinea(null);
@@ -443,17 +447,17 @@ function mostrarTabla(alias){
 }
 
 /* ---------- RANKING ---------- */
-function verRanking(){
-  ver('pRanking'); $('rankingCaja').innerHTML='<p class="nota">Cargando…</p>';
-  var yo=guardado('ohmAlias');
+function cargarRanking(caja){
+  var el=$(caja), yo=guardado('ohmAlias');
   rpc('juego_ranking').then(function(d){
-    if(!d||!d.length){$('rankingCaja').innerHTML='<p class="nota">Todavía nadie jugó esta semana. ¡Estrenalo vos!</p>';return;}
+    if(!d||!d.length){el.innerHTML='<p class="nota">Todavía nadie jugó esta semana. ¡Estrenalo vos con un desafío en línea!</p>';return;}
     var med=['🥇','🥈','🥉'];
-    $('rankingCaja').innerHTML='<table class="tab"><tr><th></th><th>Jugador</th><th style="text-align:right">Mejor puntaje</th><th style="text-align:right">Partidas</th></tr>'+
+    el.innerHTML='<table class="tab"><tr><th></th><th>Jugador</th><th style="text-align:right">Mejor puntaje</th><th style="text-align:right">Partidas</th></tr>'+
       d.map(function(x,k){return '<tr'+(x.alias===yo?' class="yo"':'')+'><td><span class="medalla">'+(med[k]||(k+1))+'</span></td><td>'+esc(x.alias)+'</td><td class="n">'+x.mejor+'</td><td class="n">'+x.partidas+'</td></tr>';}).join('')+'</table>';
-  }).catch(function(){$('rankingCaja').innerHTML='<p class="err">No se pudo cargar el ranking.</p>';});
+  }).catch(function(){el.innerHTML='<p class="err">No se pudo cargar el ranking.</p>';});
 }
-$('verRanking').onclick=verRanking;
+function verRanking(){ver('pRanking');$('rankingCaja').innerHTML='<p class="nota">Cargando…</p>';cargarRanking('rankingCaja');}
+cargarRanking('rankingInicio');
 
 /* llegando con un enlace de desafío */
 var q=new URLSearchParams(location.search).get('d');
