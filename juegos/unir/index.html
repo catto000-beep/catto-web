@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unir con flechas · juego de electrónica · Catto</title>
+<meta name="description" content="Unir con flechas: el juego de catto.ar para relacionar cada símbolo con su nombre, cada concepto con su definición, cada magnitud con su unidad y cada símbolo matemático con su significado.">
+<link rel="canonical" href="https://catto.ar/juegos/unir">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<meta property="og:title" content="Unir con flechas · catto.ar">
+<meta property="og:description" content="Símbolos, conceptos, unidades y fórmulas: uní cada uno con su pareja.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--line:#2a3140;--txt:#e6edf3;--muted:#9aa7b4;--soft:#7d8a99;
+  --accent:#8cc4f0;--ok:#3fb950;--bad:#f85149;--gold:#d4a72c;--ease:cubic-bezier(.23,1,.32,1)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{min-height:100vh;background:radial-gradient(1100px 600px at 80% -10%,#1b2740 0%,var(--bg) 58%),var(--bg);
+  color:var(--txt);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:860px;margin:0 auto;padding:18px 16px 4px}
+.volver{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;text-decoration:none}
+.volver:hover{color:var(--txt)}
+.marca{font:700 15px "IBM Plex Mono",monospace;letter-spacing:.3px}
+.marca span{color:var(--accent)}
+main{max-width:860px;margin:0 auto;padding:6px 16px 60px}
+.pantalla{display:none}
+.pantalla.on{display:block;animation:entra .28s var(--ease)}
+@keyframes entra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:40px;line-height:1.05;letter-spacing:-1px;margin:14px 0 6px}
+h1 em{font-style:normal;color:var(--accent)}
+h2{font-size:22px;margin:4px 0 6px}
+.bajada{color:var(--muted);margin:0 0 20px;font-size:16px;max-width:600px}
+@media(max-width:640px){h1{font-size:32px}}
+.btn{cursor:pointer;border:0;border-radius:8px;padding:11px 20px;font-weight:700;font-size:15px;background:var(--accent);color:#0b1a2a;
+  transition:transform .16s var(--ease),filter .15s,opacity .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:default;transform:none;filter:none}
+.btn.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.btn.oro{background:var(--gold);color:#1d1503}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.caja{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}
+.nota{font-size:13px;color:var(--soft)}
+.grande{font:700 44px "IBM Plex Mono",monospace;color:var(--accent);line-height:1}
+
+/* ----- temas ----- */
+.temas{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:18px 0}
+.tema{text-align:left;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;
+  display:flex;flex-direction:column;gap:5px;transition:border-color .15s,transform .16s var(--ease)}
+.tema:hover{border-color:var(--accent)}
+.tema:active{transform:scale(.98)}
+.tema .ic{font-size:24px;line-height:1}
+.tema b{font-size:16.5px}
+.tema span{color:var(--muted);font-size:13.5px}
+.tema .rec{color:var(--gold);font:600 12px "IBM Plex Mono",monospace}
+
+/* ----- marcador ----- */
+.marcador{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin:6px 0 4px}
+.marcador .tit{font-weight:700}
+.marcador .dato{font:700 14px "IBM Plex Mono",monospace;color:var(--accent)}
+.marcador .nota{font-family:"IBM Plex Mono",monospace}
+.ayuda{margin:0 0 12px}
+
+/* ----- tablero ----- */
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1.3fr);font:600 11.5px "IBM Plex Mono",monospace;
+  color:var(--soft);text-transform:uppercase;letter-spacing:.6px;margin:0 0 6px}
+.cols span:last-child{grid-column:3}
+.tablero{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 64px minmax(0,1.3fr);row-gap:10px;align-items:stretch;user-select:none;-webkit-user-select:none}
+@media(max-width:560px){.tablero,.cols{grid-template-columns:minmax(0,1fr) 50px minmax(0,1.4fr)}.it{font-size:13.5px;padding:9px 10px}}
+.tablero svg.flechas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2}
+.it{position:relative;cursor:pointer;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  padding:10px 12px;min-height:58px;display:flex;align-items:center;font-size:14.5px;line-height:1.3;
+  transition:border-color .12s,background .12s,transform .12s var(--ease)}
+.it:hover{border-color:#43506a}
+.it:active{transform:scale(.985)}
+.it.izq{grid-column:1;justify-content:center;padding-right:18px}
+.it.der{grid-column:3;padding-left:18px}
+.it.sel{border-color:var(--accent);background:#17233a;box-shadow:0 0 0 1px var(--accent)}
+.it.unido{border-color:#3a4558}
+.it.bien{border-color:var(--ok);background:rgba(63,185,80,.10)}
+.it.mal{border-color:var(--bad);background:rgba(248,81,73,.09)}
+.it .pt{position:absolute;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--bg);border:2px solid var(--muted);
+  touch-action:none;transition:background .12s,border-color .12s}
+.it .pt::after{content:"";position:absolute;inset:-12px}
+.it.izq .pt{right:-9px}
+.it.der .pt{left:-9px}
+.it.sel .pt,.it.unido .pt{border-color:var(--accent);background:var(--accent)}
+.it .txt-g{font:700 30px "IBM Plex Mono",monospace;line-height:1}
+.it.izq .txt{font-weight:600}
+.it svg.sy{width:100%;max-width:150px;height:54px}
+.flechas path{fill:none;stroke-width:2.6;stroke-linecap:round}
+.flechas path.nueva{stroke-dasharray:1;animation:traza .32s var(--ease)}
+@keyframes traza{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.flechas path.sol{stroke-dasharray:6 5;stroke-width:2}
+@media(prefers-reduced-motion:reduce){.flechas path.nueva{animation:none}.pantalla.on{animation:none}}
+.acciones{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 0}
+.resultado b.si{color:var(--ok)} .resultado b.no{color:var(--bad)}
+
+/* símbolos de la Simbología */
+svg.sy{display:block;color:#e6edf3;overflow:visible}
+.sy line,.sy polyline,.sy polygon,.sy path,.sy circle,.sy rect,.sy ellipse{fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sy .f{fill:currentColor}
+.sy .hueco{fill:#161b22}
+.sy .tr{stroke-dasharray:5 4}
+.sy .gr{stroke-width:5;stroke-linecap:butt}
+.sy .fino{stroke-width:1.2}
+.sy .v{stroke:#58a6ff} .sy .ve{stroke:#3fb950} .sy .am{stroke:#d29922} .sy .ro{stroke:#f85149}
+.sy text{fill:currentColor;stroke:none;font-family:"Segoe UI",system-ui,sans-serif;font-weight:600}
+.sy text.e{fill:#9aa7b4} .sy text.v{fill:#58a6ff} .sy text.ve{fill:#3fb950} .sy text.am{fill:#d29922}
+
+/* ----- fin ----- */
+.repaso{margin:10px 0 0;padding:0;list-style:none}
+.repaso li{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.repaso li:last-child{border-bottom:0}
+.repaso .izq{flex:0 0 110px;display:flex;justify-content:center;font-weight:600}
+.repaso .izq svg.sy{width:100px;height:44px}
+.repaso .izq .txt-g{font:700 24px "IBM Plex Mono",monospace}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="volver" href="/juegos">← Juegos</a>
+  <span class="marca">Unir con <span>flechas</span></span>
+</div>
+<main>
+
+<!-- ============ INICIO ============ -->
+<section class="pantalla on" id="pInicio">
+  <h1>Unir con <em>flechas</em></h1>
+  <p class="bajada">Uní cada elemento de la izquierda con su pareja de la derecha. Cinco rondas de seis parejas:
+    cuantas más aciertes, más puntos. Elegí un tema para empezar.</p>
+  <div class="temas" id="temas"></div>
+</section>
+
+<!-- ============ JUEGO ============ -->
+<section class="pantalla" id="pJuego">
+  <div class="marcador"><span class="tit" id="jTema"></span><span class="nota" id="jRonda"></span><span class="dato" id="jPts"></span></div>
+  <p class="nota ayuda">Tocá un elemento de la izquierda y después su pareja de la derecha, o arrastrá la flecha desde el punto. Para cambiar una flecha, volvé a unir.</p>
+  <div class="cols"><span id="cIzq"></span><span id="cDer"></span></div>
+  <div class="tablero" id="tablero"></div>
+  <div class="acciones">
+    <span class="resultado" id="resultado"></span>
+    <div class="fila"><button class="btn sec" type="button" id="limpiar">Borrar flechas</button><button class="btn" type="button" id="comprobar" disabled>Comprobar</button></div>
+  </div>
+</section>
+
+<!-- ============ FIN ============ -->
+<section class="pantalla" id="pFin">
+  <h2 id="finTit"></h2>
+  <div class="caja"><div class="grande" id="finPts"></div><p class="nota" id="finNota"></p></div>
+  <div class="caja" id="finRepaso" hidden><b>Para repasar</b><ul class="repaso" id="repaso"></ul><p class="nota" id="repasoLink"></p></div>
+  <div class="fila"><button class="btn" type="button" id="otraVez">Jugar de nuevo</button><button class="btn sec" type="button" id="otroTema">Otro tema</button><a class="btn oro" href="/juego" style="text-decoration:none">Ruleta de Ohm</a></div>
+</section>
+</main>
+
+<script src="/assets/js/juego-unir-datos.js?v=1"></script>
+<script src="/publicaciones/simbologia/simb.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-conexion.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-pasivos.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-semis.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-bloques.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-sensores.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-ondas.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-plano.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-tablero.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+var RONDAS=5, POR=6, COLORES=['#8cc4f0','#d2a8ff','#f0b86e','#7ee0c3','#ff9bb0','#c9d46a'];
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function mezclar(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function guardado(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+
+/* ---------- temas ----------
+   Cada pareja queda como {iz: html de la izquierda, de: texto de la derecha, k: clave para no repetir} */
+var TEMAS={}, ORDEN=['simbolos','instalacion','ondas','conceptos','unidades','prefijos','matematica'];
+Object.keys(UNIR_SIMB).forEach(function(k){
+  var t=UNIR_SIMB[k];
+  t.simb=true;
+  t.pares=SB.lista.filter(function(it){return t.cats.indexOf(it.cat)>=0&&!it.np;})
+    .map(function(it){return {iz:SB.svg(it),de:it.n,k:it.id,cat:it.cat};});
+  TEMAS[k]=t;
+});
+Object.keys(UNIR_TEMAS).forEach(function(k){
+  var t=UNIR_TEMAS[k];
+  t.pares=t.p.map(function(p){return {iz:'<span class="'+(t.grande?'txt-g':'txt')+'">'+esc(p[0])+'</span>',de:p[1],k:p[0]};});
+  TEMAS[k]=t;
+});
+function pintarTemas(){
+  $('temas').innerHTML=ORDEN.map(function(k){var t=TEMAS[k],r=guardado('unirRec-'+k);
+    return '<button class="tema" type="button" data-tema="'+k+'"><span class="ic">'+t.ic+'</span><b>'+t.n+'</b><span>'+t.d+'</span>'+
+      (r?'<span class="rec">Récord: '+r+' puntos</span>':'')+'</button>';}).join('');
+}
+pintarTemas();
+$('temas').onclick=function(e){var b=e.target.closest('.tema');if(b)empezar(b.getAttribute('data-tema'));};
+
+/* ---------- pantallas (el «atrás» del navegador vuelve a la anterior) ---------- */
+function mostrar(id){[].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});window.scrollTo(0,0);}
+function ver(id){
+  mostrar(id);
+  var actual=history.state&&history.state.unir;
+  if(actual===id)return;
+  if(actual==='pJuego'&&id==='pFin')history.replaceState({unir:id},'');
+  else history.pushState({unir:id},'');
+}
+history.replaceState({unir:'pInicio'},'');
+window.addEventListener('popstate',function(e){
+  var id=e.state&&e.state.unir; if(!id)return;
+  if(id==='pJuego'){id='pInicio';history.replaceState({unir:id},'');}
+  if(id==='pInicio')pintarTemas();
+  mostrar(id);
+});
+
+/* ---------- partida ---------- */
+var P=null; // {tema, t, ronda, pts, aciertos, usadas, falladas, t0}
+var R=null; // ronda en curso: {izq:[par], der:[índice en izq], con:{i:j}, sel, listo}
+function empezar(k){
+  P={tema:k,t:TEMAS[k],ronda:0,pts:0,aciertos:0,usadas:{},falladas:[],t0:Date.now()};
+  $('jTema').textContent=P.t.ic+' '+P.t.n;
+  $('cIzq').textContent=P.t.izq; $('cDer').textContent=P.t.der;
+  ver('pJuego');
+  ronda();
+}
+/* seis parejas sin repetir ninguna de las dos mitades; las ya jugadas, al final de la cola */
+function sacarPares(){
+  var frescas=mezclar(P.t.pares.filter(function(p){return !P.usadas[p.k];})),
+      viejas=mezclar(P.t.pares.filter(function(p){return P.usadas[p.k];}));
+  var elegidas=[], vistos={};
+  frescas.concat(viejas).forEach(function(p){
+    if(elegidas.length>=POR)return;
+    var cl=p.de.toLowerCase();
+    if(vistos[cl]||vistos['k'+p.k])return;
+    vistos[cl]=1; vistos['k'+p.k]=1; elegidas.push(p);
+  });
+  elegidas.forEach(function(p){P.usadas[p.k]=1;});
+  return elegidas;
+}
+function ronda(){
+  P.ronda++;
+  var izq=sacarPares();
+  R={izq:izq,der:mezclar(izq.map(function(p,i){return i;})),con:{},sel:null,listo:false,nuevas:{}};
+  var h='<svg class="flechas" id="flechas" aria-hidden="true"></svg>';
+  for(var f=0;f<izq.length;f++){
+    h+='<button class="it izq" type="button" data-l="'+f+'" style="grid-row:'+(f+1)+'">'+izq[f].iz+'<span class="pt"></span></button>'+
+       '<button class="it der" type="button" data-r="'+f+'" style="grid-row:'+(f+1)+'"><span class="pt"></span>'+esc(izq[R.der[f]].de)+'</button>';
+  }
+  $('tablero').innerHTML=h;
+  $('resultado').innerHTML='';
+  $('limpiar').hidden=false;
+  $('comprobar').textContent='Comprobar'; $('comprobar').onclick=comprobar;
+  marcador(); pintar();
+}
+function marcador(){
+  $('jRonda').textContent='Ronda '+P.ronda+' de '+RONDAS;
+  $('jPts').textContent=P.pts+' pts';
+}
+
+/* ---------- unir ----------
+   R.con guarda izquierda → fila de la derecha; cada fila de la derecha recibe una sola flecha */
+function unir(i,j){
+  Object.keys(R.con).forEach(function(k){if(R.con[k]===j)delete R.con[k];});
+  R.con[i]=j; R.nuevas[i]=1; R.sel=null; pintar();
+}
+function elegir(lado,n){
+  if(R.listo)return;
+  var s=R.sel;
+  if(s&&s.lado===lado&&s.n===n){R.sel=null;}
+  else if(s&&s.lado!==lado){ if(lado==='r')unir(s.n,n); else unir(n,s.n); return; }
+  else R.sel={lado:lado,n:n};
+  pintar();
+}
+function ancla(el,lado){
+  var b=$('tablero').getBoundingClientRect(), r=el.getBoundingClientRect();
+  return {x:(lado==='l'?r.right:r.left)-b.left, y:r.top+r.height/2-b.top};
+}
+function flecha(a,b,color,cls){
+  var x2=b.x-3, dx=Math.max(18,(x2-a.x)*.55);
+  return '<path'+(cls==='nueva'?' pathLength="1"':'')+' class="'+(cls||'')+'" stroke="'+color+'" d="M'+a.x.toFixed(1)+' '+a.y.toFixed(1)+'C'+(a.x+dx).toFixed(1)+' '+a.y.toFixed(1)+' '+(x2-8-dx).toFixed(1)+' '+b.y.toFixed(1)+' '+(x2-8).toFixed(1)+' '+b.y.toFixed(1)+'"/>'+
+    '<polygon fill="'+color+'" points="'+x2.toFixed(1)+','+b.y.toFixed(1)+' '+(x2-10).toFixed(1)+','+(b.y-5.5).toFixed(1)+' '+(x2-10).toFixed(1)+','+(b.y+5.5).toFixed(1)+'"/>';
+}
+function elL(i){return $('tablero').querySelector('[data-l="'+i+'"]');}
+function elR(j){return $('tablero').querySelector('[data-r="'+j+'"]');}
+function pintar(arrastre){
+  if(!R)return;
+  var svg=$('flechas'); if(!svg)return;
+  var unidosR={}, h='';
+  Object.keys(R.con).forEach(function(i){
+    var j=R.con[i]; unidosR[j]=1;
+    var color=COLORES[i%COLORES.length], cls=R.nuevas[i]?'nueva':'';
+    if(R.listo)color=R.izq[R.der[j]]===R.izq[i]?'#3fb950':'#f85149';
+    h+=flecha(ancla(elL(i),'l'),ancla(elR(j),'r'),color,R.listo?'':cls);
+  });
+  if(R.listo)R.izq.forEach(function(p,i){ // la solución, punteada, donde se erró
+    var j=R.der.indexOf(i);
+    if(R.con[i]!==j)h+=flecha(ancla(elL(i),'l'),ancla(elR(j),'r'),'#3fb950','sol');
+  });
+  if(arrastre)h+=flecha(arrastre.a,arrastre.b,'#e6edf3','');
+  svg.innerHTML=h;
+  R.nuevas={};
+  [].forEach.call($('tablero').querySelectorAll('.it'),function(el){
+    var l=el.hasAttribute('data-l'), n=+(l?el.getAttribute('data-l'):el.getAttribute('data-r'));
+    el.classList.toggle('sel',!!(R.sel&&R.sel.lado===(l?'l':'r')&&R.sel.n===n));
+    el.classList.toggle('unido',l?R.con[n]!==undefined:!!unidosR[n]);
+  });
+  $('comprobar').disabled=!R.listo&&Object.keys(R.con).length<R.izq.length;
+}
+
+/* clic o toque: elegir de un lado y después del otro */
+var arrastrado=false;
+$('tablero').addEventListener('click',function(e){
+  if(arrastrado){arrastrado=false;return;}
+  var el=e.target.closest('.it'); if(!el)return;
+  if(el.hasAttribute('data-l'))elegir('l',+el.getAttribute('data-l')); else elegir('r',+el.getAttribute('data-r'));
+});
+/* arrastre: con el mouse desde cualquier parte del elemento; con el dedo, desde el punto (así la página se puede desplazar) */
+var dr=null;
+$('tablero').addEventListener('pointerdown',function(e){
+  if(!R||R.listo)return;
+  var el=e.target.closest('.it'); if(!el)return;
+  if(e.pointerType!=='mouse'&&!e.target.classList.contains('pt'))return;
+  var l=el.hasAttribute('data-l');
+  dr={lado:l?'l':'r',n:+(l?el.getAttribute('data-l'):el.getAttribute('data-r')),x:e.clientX,y:e.clientY,el:el,mov:false,id:e.pointerId};
+  if(e.pointerType!=='mouse')e.preventDefault();
+});
+window.addEventListener('pointermove',function(e){
+  if(!dr||e.pointerId!==dr.id)return;
+  if(!dr.mov&&Math.abs(e.clientX-dr.x)+Math.abs(e.clientY-dr.y)<6)return;
+  dr.mov=true;
+  var b=$('tablero').getBoundingClientRect(), a=ancla(dr.el,dr.lado), p={x:e.clientX-b.left,y:e.clientY-b.top};
+  pintar(dr.lado==='l'?{a:a,b:p}:{a:p,b:a});
+});
+window.addEventListener('pointerup',function(e){
+  if(!dr||e.pointerId!==dr.id)return;
+  var d=dr; dr=null;
+  if(!d.mov)return;
+  arrastrado=true; setTimeout(function(){arrastrado=false;},0);
+  var bajo=document.elementFromPoint(e.clientX,e.clientY), dest=bajo&&bajo.closest('.it');
+  if(dest&&dest.closest('#tablero')){
+    if(d.lado==='l'&&dest.hasAttribute('data-r'))return unir(d.n,+dest.getAttribute('data-r'));
+    if(d.lado==='r'&&dest.hasAttribute('data-l'))return unir(+dest.getAttribute('data-l'),d.n);
+  }
+  pintar();
+});
+window.addEventListener('pointercancel',function(){if(dr){dr=null;pintar();}});
+if(window.ResizeObserver)new ResizeObserver(function(){pintar();}).observe($('tablero'));
+else window.addEventListener('resize',function(){pintar();});
+
+$('limpiar').onclick=function(){if(R&&!R.listo){R.con={};R.sel=null;pintar();}};
+
+/* ---------- comprobar ---------- */
+function comprobar(){
+  if(R.listo)return;
+  R.listo=true; R.sel=null;
+  var bien=0;
+  R.izq.forEach(function(p,i){
+    var j=R.con[i], ok=j!==undefined&&R.izq[R.der[j]]===p;
+    if(ok)bien++; else P.falladas.push(p);
+    elL(i).classList.add(ok?'bien':'mal');
+  });
+  R.der.forEach(function(i,j){var ok=R.con[i]===j;elR(j).classList.add(ok?'bien':'mal');});
+  var pts=bien*100+(bien===R.izq.length?100:0);
+  P.pts+=pts; P.aciertos+=bien;
+  $('resultado').innerHTML=bien===R.izq.length?'<b class="si">¡Las seis bien! +'+pts+'</b>':'<b class="'+(bien>=4?'si':'no')+'">'+bien+' de '+R.izq.length+'</b> <span class="nota">· la línea punteada marca la pareja correcta</span>';
+  $('limpiar').hidden=true;
+  var ult=P.ronda>=RONDAS;
+  $('comprobar').textContent=ult?'Ver resultado':'Siguiente ronda';
+  $('comprobar').onclick=ult?fin:ronda;
+  marcador(); pintar();
+  $('comprobar').focus({preventScroll:true});
+}
+
+/* ---------- fin ---------- */
+function fin(){
+  var k='unirRec-'+P.tema, rec=+(guardado(k)||0), nuevo=P.pts>rec, total=RONDAS*POR;
+  if(nuevo)guardado(k,P.pts);
+  var seg=Math.round((Date.now()-P.t0)/1000);
+  $('finTit').textContent=P.aciertos===total?'🏆 ¡Perfecto! Las '+total+' parejas bien':P.t.ic+' '+P.t.n+' · '+P.aciertos+' de '+total;
+  $('finPts').textContent=P.pts;
+  $('finNota').textContent='puntos'+(nuevo?' · ¡nuevo récord!':' · tu récord: '+rec)+' · '+Math.floor(seg/60)+' min '+(seg%60)+' s';
+  var vistos={}, fall=P.falladas.filter(function(p){if(vistos[p.k])return false;vistos[p.k]=1;return true;});
+  $('repaso').innerHTML=fall.map(function(p){return '<li><span class="izq">'+p.iz+'</span><span>'+esc(p.de)+'</span></li>';}).join('');
+  $('finRepaso').hidden=!fall.length;
+  $('repasoLink').innerHTML=P.t.simb&&fall.length?'Todos los símbolos, con su explicación, están en la <a href="/publicaciones/simbologia#'+fall[0].cat+'">Simbología</a>.':'';
+  ver('pFin');
+}
+$('otraVez').onclick=function(){empezar(P.tema);};
+$('otroTema').onclick=function(){pintarTemas();ver('pInicio');};
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
