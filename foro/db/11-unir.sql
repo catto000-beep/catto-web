@@ -94,8 +94,8 @@ begin
   if p_puntaje is null or p_puntaje < p_aciertos * 100 or p_puntaje > p_aciertos * 100 + 100 * (p_aciertos / 6) then
     raise exception 'puntaje imposible';
   end if;
-  -- unir 30 parejas lleva por lo menos medio minuto
-  if p_segundos is null or p_segundos < 30 or p_segundos > 7200 then
+  -- con «Listo» se puede terminar antes de la quinta ronda: al menos un segundo por pareja acertada
+  if p_segundos is null or p_segundos < greatest(1, p_aciertos) or p_segundos > 7200 then
     raise exception 'tiempo imposible';
   end if;
   if p_avatar is not null and p_avatar !~ '^[a-z]{2,8}$' then

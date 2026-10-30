@@ -211,7 +211,7 @@ svg.av{display:block;flex:none;border-radius:50%}
   <div class="tablero" id="tablero"></div>
   <div class="acciones">
     <span class="resultado" id="resultado"></span>
-    <div class="fila"><button class="btn sec" type="button" id="limpiar">Borrar flechas</button><button class="btn" type="button" id="comprobar" disabled>Comprobar</button></div>
+    <div class="fila"><button class="btn sec" type="button" id="listo" title="Dejar de jugar y guardar los puntos de las rondas comprobadas">Listo</button><button class="btn sec" type="button" id="limpiar">Borrar flechas</button><button class="btn" type="button" id="comprobar" disabled>Comprobar</button></div>
   </div>
 </section>
 
@@ -320,7 +320,8 @@ var P=null; // {ronda, total, pts, aciertos, usadas, falladas, t0, linea}
 var R=null; // ronda en curso: {izq:[par], der:[índice en izq], con:{i:j}, sel, listo}
 /* linea: {codigo, alias, av, claves} en un desafío; null jugando solo */
 function empezar(linea){
-  P={ronda:0,total:RONDAS,pts:0,aciertos:0,usadas:{},falladas:[],t0:Date.now(),linea:linea||null};
+  P={ronda:0,total:RONDAS,pts:0,aciertos:0,jugadas:0,usadas:{},falladas:[],t0:Date.now(),linea:linea||null};
+  $('listo').hidden=!P.linea;
   if(P.linea){
     P.lista=P.linea.claves.map(function(u){return PAR[u];}).filter(Boolean);
     P.total=Math.ceil(P.lista.length/POR);
@@ -475,7 +476,7 @@ function comprobar(){
   });
   R.der.forEach(function(i,j){var ok=R.con[i]===j;elR(j).classList.add(ok?'bien':'mal');});
   var pts=bien*100+(bien===R.izq.length?100:0);
-  P.pts+=pts; P.aciertos+=bien;
+  P.pts+=pts; P.aciertos+=bien; P.jugadas+=R.izq.length;
   $('resultado').innerHTML=bien===R.izq.length?'<b class="si">¡Las seis bien! +'+pts+'</b>':'<b class="'+(bien>=4?'si':'no')+'">'+bien+' de '+R.izq.length+'</b> <span class="nota">· la línea punteada marca la pareja correcta</span>';
   $('limpiar').hidden=true;
   var ult=P.ronda>=P.total;
@@ -487,9 +488,15 @@ function comprobar(){
 
 /* ---------- fin ---------- */
 function tiempo(seg){return Math.floor(seg/60)+' min '+(seg%60)+' s';}
+/* «Listo» en un desafío: termina ahí y guarda las rondas ya comprobadas; la ronda a medio unir no cuenta */
+$('listo').onclick=function(){
+  if(!P||!P.linea)return;
+  if(!P.jugadas){alInicio();ver('pInicio');return;}
+  fin();
+};
 function fin(){
-  var total=P.linea?P.lista.length:RONDAS*POR, seg=Math.round((Date.now()-P.t0)/1000), nota;
-  if(P.linea)nota='puntos · '+tiempo(seg);
+  var total=P.linea?P.jugadas:RONDAS*POR, seg=Math.round((Date.now()-P.t0)/1000), nota;
+  if(P.linea)nota='puntos · '+tiempo(seg)+(P.jugadas<P.lista.length?' · terminaste en la ronda '+(P.jugadas/POR)+' de '+P.total:'');
   else{
     var rec=+(guardado('unirRec')||0), nuevo=P.pts>rec;
     if(nuevo)guardado('unirRec',P.pts);
