@@ -132,7 +132,7 @@ svg.av{display:block;flex:none;border-radius:50%}
 </head>
 <body>
 <div class="top">
-  <a class="volver" href="/juegos">← Juegos</a>
+  <a class="volver" id="volver" href="/juegos">← Juegos</a>
   <span class="marca">Ruleta de <span>Ohm</span></span>
 </div>
 <main>
@@ -239,7 +239,9 @@ function rpc(f,body){return fetch(SB+'rpc/'+f,{method:'POST',headers:H,body:JSON
 
 /* ---------- pantallas ---------- */
 /* cada pantalla queda en el historial: el «atrás» del navegador vuelve a la pantalla anterior del juego, no a la portada */
-function mostrar(id){[].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});window.scrollTo(0,0);}
+/* el enlace de arriba vuelve al inicio del juego; desde el inicio, a la página de los juegos */
+function mostrar(id){[].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});
+  $('volver').textContent=id==='pInicio'?'← Juegos':'← Volver';window.scrollTo(0,0);}
 function ver(id){
   mostrar(id);
   var actual=history.state&&history.state.ohm;
@@ -259,6 +261,10 @@ window.addEventListener('popstate',function(e){
   if(id==='pInicio'){pintarRecord();cargarRanking('rankingInicio');}
   if(id==='pDos')prepararDos();
 });
+$('volver').onclick=function(e){
+  if(history.state&&history.state.ohm&&history.state.ohm!=='pInicio'){e.preventDefault();clearInterval(temporizador);
+    ver('pInicio');pintarRecord();elegirMio(miAv());selector('avsInicio',miAv(),elegirMio);cargarRanking('rankingInicio');}
+};
 document.addEventListener('click',function(e){var b=e.target.closest('[data-ir]');if(!b)return;
   var d=b.getAttribute('data-ir');
   if(d==='inicio'){ver('pInicio');pintarRecord();elegirMio(miAv());selector('avsInicio',miAv(),elegirMio);cargarRanking('rankingInicio');}

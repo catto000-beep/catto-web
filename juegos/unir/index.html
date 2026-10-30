@@ -48,16 +48,11 @@ h2{font-size:22px;margin:4px 0 6px}
 .nota{font-size:13px;color:var(--soft)}
 .grande{font:700 44px "IBM Plex Mono",monospace;color:var(--accent);line-height:1}
 
-/* ----- temas ----- */
-.temas{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:18px 0}
-.tema{text-align:left;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;
-  display:flex;flex-direction:column;gap:5px;transition:border-color .15s,transform .16s var(--ease)}
-.tema:hover{border-color:var(--accent)}
-.tema:active{transform:scale(.98)}
-.tema .ic{font-size:24px;line-height:1}
-.tema b{font-size:16.5px}
-.tema span{color:var(--muted);font-size:13.5px}
-.tema .rec{color:var(--gold);font:600 12px "IBM Plex Mono",monospace}
+/* ----- inicio ----- */
+.cats{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px "IBM Plex Mono",monospace;padding:4px 10px;border-radius:999px;
+  border:1px solid var(--line);color:var(--muted);background:rgba(255,255,255,.03)}
+.rec{color:var(--gold);font:600 13px "IBM Plex Mono",monospace}
 
 /* ----- marcador ----- */
 .marcador{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin:6px 0 4px}
@@ -126,7 +121,7 @@ svg.sy{display:block;color:#e6edf3;overflow:visible}
 </head>
 <body>
 <div class="top">
-  <a class="volver" href="/juegos">← Juegos</a>
+  <a class="volver" id="volver" href="/juegos">← Juegos</a>
   <span class="marca">Unir con <span>flechas</span></span>
 </div>
 <main>
@@ -134,16 +129,17 @@ svg.sy{display:block;color:#e6edf3;overflow:visible}
 <!-- ============ INICIO ============ -->
 <section class="pantalla on" id="pInicio">
   <h1>Unir con <em>flechas</em></h1>
-  <p class="bajada">Uní cada elemento de la izquierda con su pareja de la derecha. Cinco rondas de seis parejas:
-    cuantas más aciertes, más puntos. Elegí un tema para empezar.</p>
-  <div class="temas" id="temas"></div>
+  <p class="bajada">Uní cada elemento de la izquierda con su pareja de la derecha. Cinco rondas de seis parejas,
+    con todo mezclado: cuantas más aciertes, más puntos.</p>
+  <div class="cats" id="cats"></div>
+  <div class="fila"><button class="btn" type="button" id="jugar">Jugar</button><span class="rec" id="rec"></span></div>
 </section>
 
 <!-- ============ JUEGO ============ -->
 <section class="pantalla" id="pJuego">
-  <div class="marcador"><span class="tit" id="jTema"></span><span class="nota" id="jRonda"></span><span class="dato" id="jPts"></span></div>
+  <div class="marcador"><span class="tit">🏹 Unir con flechas</span><span class="nota" id="jRonda"></span><span class="dato" id="jPts"></span></div>
   <p class="nota ayuda">Tocá un elemento de la izquierda y después su pareja de la derecha, o arrastrá la flecha desde el punto. Para cambiar una flecha, volvé a unir.</p>
-  <div class="cols"><span id="cIzq"></span><span id="cDer"></span></div>
+  <div class="cols"><span>Elemento</span><span>Pareja</span></div>
   <div class="tablero" id="tablero"></div>
   <div class="acciones">
     <span class="resultado" id="resultado"></span>
@@ -156,7 +152,7 @@ svg.sy{display:block;color:#e6edf3;overflow:visible}
   <h2 id="finTit"></h2>
   <div class="caja"><div class="grande" id="finPts"></div><p class="nota" id="finNota"></p></div>
   <div class="caja" id="finRepaso" hidden><b>Para repasar</b><ul class="repaso" id="repaso"></ul><p class="nota" id="repasoLink"></p></div>
-  <div class="fila"><button class="btn" type="button" id="otraVez">Jugar de nuevo</button><button class="btn sec" type="button" id="otroTema">Otro tema</button><a class="btn oro" href="/juego" style="text-decoration:none">Ruleta de Ohm</a></div>
+  <div class="fila"><button class="btn" type="button" id="otraVez">Jugar de nuevo</button><a class="btn oro" href="/juego" style="text-decoration:none">Ruleta de Ohm</a></div>
 </section>
 </main>
 
@@ -186,24 +182,26 @@ Object.keys(UNIR_SIMB).forEach(function(k){
   var t=UNIR_SIMB[k];
   t.simb=true;
   t.pares=SB.lista.filter(function(it){return t.cats.indexOf(it.cat)>=0&&!it.np;})
-    .map(function(it){return {iz:SB.svg(it),de:it.n,k:it.id,cat:it.cat};});
+    .map(function(it){return {iz:SB.svg(it),de:it.n,k:it.id,cat:it.cat,simb:true};});
   TEMAS[k]=t;
 });
 Object.keys(UNIR_TEMAS).forEach(function(k){
   var t=UNIR_TEMAS[k];
-  t.pares=t.p.map(function(p){return {iz:'<span class="'+(t.grande?'txt-g':'txt')+'">'+esc(p[0])+'</span>',de:p[1],k:p[0]};});
+  t.pares=t.p.map(function(p){return {iz:'<span class="'+(t.grande?'txt-g':'txt')+'">'+esc(p[0])+'</span>',de:p[1],k:p[0],txt:p[0]};});
   TEMAS[k]=t;
 });
-function pintarTemas(){
-  $('temas').innerHTML=ORDEN.map(function(k){var t=TEMAS[k],r=guardado('unirRec-'+k);
-    return '<button class="tema" type="button" data-tema="'+k+'"><span class="ic">'+t.ic+'</span><b>'+t.n+'</b><span>'+t.d+'</span>'+
-      (r?'<span class="rec">Récord: '+r+' puntos</span>':'')+'</button>';}).join('');
-}
-pintarTemas();
-$('temas').onclick=function(e){var b=e.target.closest('.tema');if(b)empezar(b.getAttribute('data-tema'));};
+$('cats').innerHTML=ORDEN.map(function(k){return '<span class="chip">'+TEMAS[k].ic+' '+TEMAS[k].n+'</span>';}).join('');
+function pintarRec(){var r=guardado('unirRec');$('rec').textContent=r?'Tu récord: '+r+' puntos':'';}
+pintarRec();
+$('jugar').onclick=empezar;
 
 /* ---------- pantallas (el «atrás» del navegador vuelve a la anterior) ---------- */
-function mostrar(id){[].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});window.scrollTo(0,0);}
+/* el enlace de arriba vuelve al inicio del juego; desde el inicio, a la página de los juegos */
+function mostrar(id){
+  [].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});
+  $('volver').textContent=id==='pInicio'?'← Juegos':'← Volver';
+  window.scrollTo(0,0);
+}
 function ver(id){
   mostrar(id);
   var actual=history.state&&history.state.unir;
@@ -215,32 +213,35 @@ history.replaceState({unir:'pInicio'},'');
 window.addEventListener('popstate',function(e){
   var id=e.state&&e.state.unir; if(!id)return;
   if(id==='pJuego'){id='pInicio';history.replaceState({unir:id},'');}
-  if(id==='pInicio')pintarTemas();
+  if(id==='pInicio')pintarRec();
   mostrar(id);
 });
+$('volver').onclick=function(e){
+  if(history.state&&history.state.unir&&history.state.unir!=='pInicio'){e.preventDefault();pintarRec();ver('pInicio');}
+};
 
 /* ---------- partida ---------- */
-var P=null; // {tema, t, ronda, pts, aciertos, usadas, falladas, t0}
+var P=null; // {ronda, pts, aciertos, usadas, falladas, t0}
 var R=null; // ronda en curso: {izq:[par], der:[índice en izq], con:{i:j}, sel, listo}
-function empezar(k){
-  P={tema:k,t:TEMAS[k],ronda:0,pts:0,aciertos:0,usadas:{},falladas:[],t0:Date.now()};
-  $('jTema').textContent=P.t.ic+' '+P.t.n;
-  $('cIzq').textContent=P.t.izq; $('cDer').textContent=P.t.der;
+function empezar(){
+  P={ronda:0,pts:0,aciertos:0,usadas:{},falladas:[],t0:Date.now()};
   ver('pJuego');
   ronda();
 }
-/* seis parejas sin repetir ninguna de las dos mitades; las ya jugadas, al final de la cola */
+/* seis parejas de temas mezclados, a lo sumo dos por tema. Ningún texto se repite en la ronda
+   («Tensión» es concepto y también magnitud); las parejas ya jugadas salen solo si no quedan otras */
 function sacarPares(){
-  var frescas=mezclar(P.t.pares.filter(function(p){return !P.usadas[p.k];})),
-      viejas=mezclar(P.t.pares.filter(function(p){return P.usadas[p.k];}));
-  var elegidas=[], vistos={};
-  frescas.concat(viejas).forEach(function(p){
-    if(elegidas.length>=POR)return;
-    var cl=p.de.toLowerCase();
-    if(vistos[cl]||vistos['k'+p.k])return;
-    vistos[cl]=1; vistos['k'+p.k]=1; elegidas.push(p);
-  });
-  elegidas.forEach(function(p){P.usadas[p.k]=1;});
+  var elegidas=[], vistos={}, porTema={}, intentos=0;
+  function libre(p){return !vistos[p.de.toLowerCase()]&&!(p.txt&&vistos[p.txt.toLowerCase()]);}
+  while(elegidas.length<POR&&intentos++<200){
+    var k=ORDEN[Math.floor(Math.random()*ORDEN.length)];
+    if((porTema[k]||0)>=2)continue;
+    var cand=TEMAS[k].pares.filter(libre); if(!cand.length)continue;
+    var frescas=cand.filter(function(p){return !P.usadas[k+':'+p.k];});
+    var p=(frescas.length?frescas:cand)[Math.floor(Math.random()*(frescas.length||cand.length))];
+    vistos[p.de.toLowerCase()]=1; if(p.txt)vistos[p.txt.toLowerCase()]=1;
+    P.usadas[k+':'+p.k]=1; porTema[k]=(porTema[k]||0)+1; elegidas.push(p);
+  }
   return elegidas;
 }
 function ronda(){
@@ -379,20 +380,20 @@ function comprobar(){
 
 /* ---------- fin ---------- */
 function fin(){
-  var k='unirRec-'+P.tema, rec=+(guardado(k)||0), nuevo=P.pts>rec, total=RONDAS*POR;
+  var k='unirRec', rec=+(guardado(k)||0), nuevo=P.pts>rec, total=RONDAS*POR;
   if(nuevo)guardado(k,P.pts);
   var seg=Math.round((Date.now()-P.t0)/1000);
-  $('finTit').textContent=P.aciertos===total?'🏆 ¡Perfecto! Las '+total+' parejas bien':P.t.ic+' '+P.t.n+' · '+P.aciertos+' de '+total;
+  $('finTit').textContent=P.aciertos===total?'🏆 ¡Perfecto! Las '+total+' parejas bien':P.aciertos+' de '+total+' parejas bien';
   $('finPts').textContent=P.pts;
   $('finNota').textContent='puntos'+(nuevo?' · ¡nuevo récord!':' · tu récord: '+rec)+' · '+Math.floor(seg/60)+' min '+(seg%60)+' s';
   var vistos={}, fall=P.falladas.filter(function(p){if(vistos[p.k])return false;vistos[p.k]=1;return true;});
   $('repaso').innerHTML=fall.map(function(p){return '<li><span class="izq">'+p.iz+'</span><span>'+esc(p.de)+'</span></li>';}).join('');
   $('finRepaso').hidden=!fall.length;
-  $('repasoLink').innerHTML=P.t.simb&&fall.length?'Todos los símbolos, con su explicación, están en la <a href="/publicaciones/simbologia#'+fall[0].cat+'">Simbología</a>.':'';
+  var s=fall.filter(function(p){return p.simb;})[0];
+  $('repasoLink').innerHTML=s?'Todos los símbolos, con su explicación, están en la <a href="/publicaciones/simbologia#'+s.cat+'">Simbología</a>.':'';
   ver('pFin');
 }
-$('otraVez').onclick=function(){empezar(P.tema);};
-$('otroTema').onclick=function(){pintarTemas();ver('pInicio');};
+$('otraVez').onclick=empezar;
 })();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
