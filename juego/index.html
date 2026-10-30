@@ -110,6 +110,24 @@ table.tab{width:100%;border-collapse:collapse;font-size:14px}
 .repaso li{margin:6px 0;font-size:14px}
 .cod{font:700 20px "IBM Plex Mono",monospace;letter-spacing:2px;color:var(--gold)}
 .grande{font:700 44px "IBM Plex Mono",monospace;color:var(--accent);line-height:1}
+
+/* ----- avatares ----- */
+svg.av{display:block;flex:none;border-radius:50%}
+.avs{display:grid;grid-template-columns:repeat(6,minmax(0,60px));gap:8px;margin:10px 0 2px}
+.avb{cursor:pointer;padding:3px;border-radius:50%;border:2px solid transparent;background:none;aspect-ratio:1;display:grid;place-items:center;
+  transition:border-color .15s,transform .16s var(--ease)}
+.avb svg.av{width:100%;height:auto}
+.avb:hover{border-color:var(--line)}
+.avb:active{transform:scale(.94)}
+.avb[aria-pressed=true]{border-color:var(--accent)}
+.avb:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.yo-av{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.yo-av .nota{margin:0}
+.yo-av .btn{margin-left:auto}
+.jugdos{flex:1 1 260px;min-width:0}
+.jugdos input{width:100%}
+.tab td .quien{display:inline-flex;align-items:center;gap:8px}
+.fin-av{display:flex;align-items:center;gap:16px}
 </style>
 </head>
 <body>
@@ -125,6 +143,11 @@ table.tab{width:100%;border-collapse:collapse;font-size:14px}
   <p class="bajada">Girá la ruleta, contestá antes de que se acabe el tiempo y juntá las seis coronas.
     Cada pregunta que falles te lleva a la página del tema para repasarlo.</p>
   <div class="cats" id="catsInicio"></div>
+  <div class="caja">
+    <div class="yo-av"><span id="yoAv"></span><div><b id="yoAvNom"></b><p class="nota">Tu avatar · lo ven los demás en los desafíos y el ranking</p></div>
+      <button class="btn sec" type="button" id="cambiarAv" aria-expanded="false">Cambiar</button></div>
+    <div class="avs" id="avsInicio" hidden></div>
+  </div>
   <div class="modos">
     <button class="modo fuerte" type="button" data-ir="linea"><span class="ic">🏆</span><b>Desafío en línea</b>
       <span>Diez preguntas contra el reloj. Mandale el enlace a tus compañeros y comparen puntajes. Ranking semanal.</span></button>
@@ -144,9 +167,9 @@ table.tab{width:100%;border-collapse:collapse;font-size:14px}
 <!-- ============ DOS JUGADORES: NOMBRES ============ -->
 <section class="pantalla" id="pDos">
   <h2>👥 Dos jugadores</h2>
-  <div class="caja fila">
-    <label class="campo">Jugador 1<input type="text" id="n1" maxlength="16" value="Jugador 1"></label>
-    <label class="campo">Jugador 2<input type="text" id="n2" maxlength="16" value="Jugador 2"></label>
+  <div class="fila" style="align-items:stretch">
+    <div class="caja jugdos"><label class="campo">Jugador 1<input type="text" id="n1" maxlength="16" value="Jugador 1"></label><div class="avs" id="avs1"></div></div>
+    <div class="caja jugdos"><label class="campo">Jugador 2<input type="text" id="n2" maxlength="16" value="Jugador 2"></label><div class="avs" id="avs2"></div></div>
   </div>
   <div class="fila"><button class="btn" type="button" id="empezarDos">Empezar</button><button class="btn sec" type="button" data-ir="inicio">Volver</button></div>
 </section>
@@ -158,6 +181,8 @@ table.tab{width:100%;border-collapse:collapse;font-size:14px}
   <div class="caja">
     <label class="campo">Tu nombre o apodo (lo ven los demás)<input type="text" id="alias" maxlength="20" placeholder="Por ejemplo: Sofi 5°B"></label>
     <p class="nota">No pongas tu nombre completo ni datos personales. Un apodo y el curso alcanzan.</p>
+    <p class="nota" style="margin:12px 0 0">Tu avatar</p>
+    <div class="avs" id="avsLinea"></div>
     <p class="err" id="lineaErr"></p>
   </div>
   <div class="fila"><button class="btn oro" type="button" id="empezarLinea">Jugar</button><button class="btn sec" type="button" data-ir="inicio">Volver</button></div>
@@ -197,6 +222,7 @@ table.tab{width:100%;border-collapse:collapse;font-size:14px}
 </main>
 
 <script src="/assets/js/juego-preguntas.js?v=1"></script>
+<script src="/assets/js/juego-avatares.js?v=1"></script>
 <script>
 (function(){
 'use strict';
@@ -231,17 +257,43 @@ window.addEventListener('popstate',function(e){
   if(id==='pJuego'){id='pInicio';history.replaceState({ohm:id},'');}
   mostrar(id);
   if(id==='pInicio'){pintarRecord();cargarRanking('rankingInicio');}
+  if(id==='pDos')prepararDos();
 });
 document.addEventListener('click',function(e){var b=e.target.closest('[data-ir]');if(!b)return;
   var d=b.getAttribute('data-ir');
-  if(d==='inicio'){ver('pInicio');pintarRecord();cargarRanking('rankingInicio');}
-  else if(d==='dos')ver('pDos');
+  if(d==='inicio'){ver('pInicio');pintarRecord();elegirMio(miAv());selector('avsInicio',miAv(),elegirMio);cargarRanking('rankingInicio');}
+  else if(d==='dos'){prepararDos();ver('pDos');}
   else if(d==='solo')empezarSolo();
   else if(d==='linea')abrirLinea(null);
 });
 $('catsInicio').innerHTML=CATS.map(function(k){var c=JUEGO_CAT[k];return '<span class="chip" style="color:'+c.c+'">'+c.ic+' '+c.n+'</span>';}).join('');
 function pintarRecord(){var r=guardado('ohmRecord');$('recordSolo').textContent=r?'Tu récord en solitario: '+r+' puntos':'';}
 pintarRecord();
+
+/* ---------- avatares ---------- */
+var AVS=JUEGO_AV.lista;
+function miAv(){var a=guardado('ohmAvatar');return JUEGO_AV.existe(a)?a:'gato';}
+function av(id,t){return JUEGO_AV.svg(JUEGO_AV.existe(id)?id:'gato',t);}
+/* grilla para elegir: marca la elegida y avisa con alElegir(id) */
+function selector(caja,elegido,alElegir){
+  var el=$(caja);
+  el.innerHTML=AVS.map(function(id){return '<button class="avb" type="button" data-av="'+id+'" aria-pressed="'+(id===elegido)+'" title="'+JUEGO_AV.n(id)+'" aria-label="'+JUEGO_AV.n(id)+'">'+JUEGO_AV.svg(id,52)+'</button>';}).join('');
+  el.onclick=function(e){var b=e.target.closest('.avb');if(!b)return;
+    var id=b.getAttribute('data-av');
+    [].forEach.call(el.children,function(x){x.setAttribute('aria-pressed',String(x===b));});
+    alElegir(id);};
+}
+function elegirMio(id){guardado('ohmAvatar',id);$('yoAv').innerHTML=av(id,48);$('yoAvNom').textContent=JUEGO_AV.n(id);}
+elegirMio(miAv());
+selector('avsInicio',miAv(),elegirMio);
+$('cambiarAv').onclick=function(){var g=$('avsInicio'),abre=g.hidden;g.hidden=!abre;this.setAttribute('aria-expanded',String(abre));this.textContent=abre?'Listo':'Cambiar';};
+/* dos jugadores: el 1 arranca con el avatar propio y el 2 con otro distinto */
+var avDos=[miAv(),null];
+function prepararDos(){
+  avDos[0]=miAv(); if(!avDos[1]||avDos[1]===avDos[0])avDos[1]=AVS[(AVS.indexOf(avDos[0])+1)%AVS.length];
+  selector('avs1',avDos[0],function(id){avDos[0]=id;});
+  selector('avs2',avDos[1],function(id){avDos[1]=id;});
+}
 
 /* ---------- ruleta ---------- */
 (function dibujar(){
@@ -328,7 +380,8 @@ function repaso(falladas){
 function empezarSolo(){
   usadas={};
   var st={cor:{},vidas:3,pts:0,falladas:[]};
-  function marcador(){$('marcador').innerHTML='<div class="jug turno"><b>Vos</b>'+coronasHTML(st.cor)+'</div>'+
+  var yo=miAv();
+  function marcador(){$('marcador').innerHTML='<div class="jug turno">'+av(yo,28)+'<b>Vos</b>'+coronasHTML(st.cor)+'</div>'+
     '<span class="vidas" title="Vidas">'+'❤️'.repeat(st.vidas)+'🖤'.repeat(3-st.vidas)+'</span><span class="pts">'+st.pts+' pts</span>';}
   ver('pJuego'); aRuleta(); marcador();
   $('girar').onclick=function(){
@@ -343,7 +396,7 @@ function empezarSolo(){
         if(!termina){aRuleta();return;}
         var rec=+(guardado('ohmRecord')||0), nuevo=st.pts>rec; if(nuevo)guardado('ohmRecord',st.pts);
         $('finTit').textContent=gano?'🏆 ¡Juntaste las seis coronas!':'Se terminaron las vidas';
-        $('finCuerpo').innerHTML='<div class="caja"><div class="grande">'+st.pts+'</div><p class="nota">puntos'+(nuevo?' · ¡nuevo récord!':' · tu récord: '+rec)+'</p>'+coronasHTML(st.cor)+'</div>';
+        $('finCuerpo').innerHTML='<div class="caja fin-av">'+av(yo,72)+'<div><div class="grande">'+st.pts+'</div><p class="nota">puntos'+(nuevo?' · ¡nuevo récord!':' · tu récord: '+rec)+'</p>'+coronasHTML(st.cor)+'</div></div>';
         repaso(st.falladas);
         $('finBotones').innerHTML='<button class="btn" type="button" data-ir="solo">Jugar de nuevo</button><button class="btn oro" type="button" data-ir="linea">Desafiar en línea</button><button class="btn sec" type="button" data-ir="inicio">Inicio</button>';
         ver('pFin');
@@ -355,8 +408,8 @@ function empezarSolo(){
 /* ---------- DOS JUGADORES ---------- */
 $('empezarDos').onclick=function(){
   usadas={};
-  var js=[{n:$('n1').value.trim()||'Jugador 1',cor:{},pts:0},{n:$('n2').value.trim()||'Jugador 2',cor:{},pts:0}], t=0, falladas=[];
-  function marcador(){$('marcador').innerHTML=js.map(function(j,i){return '<div class="jug'+(i===t?' turno':'')+'"><b>'+esc(j.n)+'</b>'+coronasHTML(j.cor)+'<span class="pts">'+j.pts+'</span></div>';}).join('');
+  var js=[{n:$('n1').value.trim()||'Jugador 1',av:avDos[0],cor:{},pts:0},{n:$('n2').value.trim()||'Jugador 2',av:avDos[1],cor:{},pts:0}], t=0, falladas=[];
+  function marcador(){$('marcador').innerHTML=js.map(function(j,i){return '<div class="jug'+(i===t?' turno':'')+'">'+av(j.av,28)+'<b>'+esc(j.n)+'</b>'+coronasHTML(j.cor)+'<span class="pts">'+j.pts+'</span></div>';}).join('');
     $('girar').textContent='Gira '+js[t].n;}
   ver('pJuego'); aRuleta(); marcador();
   $('girar').onclick=function(){
@@ -370,7 +423,7 @@ $('empezarDos').onclick=function(){
         if(gano){
           $('finTit').textContent='🏆 ¡Ganó '+j.n+'!';
           $('finCuerpo').innerHTML='<div class="caja"><table class="tab"><tr><th>Jugador</th><th>Coronas</th><th style="text-align:right">Puntos</th></tr>'+
-            js.map(function(x){return '<tr'+(x===j?' class="yo"':'')+'><td>'+esc(x.n)+'</td><td>'+coronasHTML(x.cor)+'</td><td class="n">'+x.pts+'</td></tr>';}).join('')+'</table></div>';
+            js.map(function(x){return '<tr'+(x===j?' class="yo"':'')+'><td><span class="quien">'+av(x.av,28)+esc(x.n)+'</span></td><td>'+coronasHTML(x.cor)+'</td><td class="n">'+x.pts+'</td></tr>';}).join('')+'</table></div>';
           repaso(falladas);
           $('finBotones').innerHTML='<button class="btn" type="button" data-ir="dos">Revancha</button><button class="btn sec" type="button" data-ir="inicio">Inicio</button>';
           ver('pFin'); return;
@@ -395,6 +448,7 @@ function abrirLinea(cod){
     $('lineaTit').textContent='🏆 Desafío en línea';
     $('lineaTxt').textContent='Jugás diez preguntas de todas las categorías. Al terminar te damos un enlace para que tus compañeros jueguen las mismas diez y comparen.';
   }
+  selector('avsLinea',miAv(),elegirMio);
   ver('pLinea'); setTimeout(function(){$('alias').focus();},50);
 }
 function idsNuevos(){ // 10 preguntas: al menos una de cada categoría
@@ -421,9 +475,9 @@ $('empezarLinea').onclick=function(){
 };
 function jugarLinea(alias){
   var lista=desafio.ids.map(function(id){return JUEGO_PREG.filter(function(p){return p.id===id;})[0];}).filter(Boolean);
-  var i=0, pts=0, ac=0, falladas=[];
+  var i=0, pts=0, ac=0, falladas=[], yo=miAv();
   ver('pJuego');
-  function marcador(){$('marcador').innerHTML='<div class="jug turno"><b>'+esc(alias)+'</b><span class="nota">Pregunta '+Math.min(i+1,lista.length)+' de '+lista.length+'</span></div><span class="pts">'+pts+' pts</span>';}
+  function marcador(){$('marcador').innerHTML='<div class="jug turno">'+av(yo,28)+'<b>'+esc(alias)+'</b><span class="nota">Pregunta '+Math.min(i+1,lista.length)+' de '+lista.length+'</span></div><span class="pts">'+pts+' pts</span>';}
   function siguiente(){
     marcador();
     preguntar(lista[i]).then(function(r){
@@ -439,7 +493,10 @@ function jugarLinea(alias){
     repaso(falladas);
     $('finBotones').innerHTML='';
     ver('pFin');
-    rpc('juego_guardar',{p_desafio:desafio.codigo,p_alias:alias,p_aciertos:ac,p_puntaje:pts})
+    var datos={p_desafio:desafio.codigo,p_alias:alias,p_aciertos:ac,p_puntaje:pts};
+    /* si la base todavía no tiene la columna del avatar, se guarda la partida sin él */
+    rpc('juego_guardar',Object.assign({p_avatar:yo},datos))
+      .catch(function(e){if(/function|p_avatar|schema/i.test(e.message))return rpc('juego_guardar',datos);throw e;})
       .then(function(){mostrarTabla(alias);})
       .catch(function(e){$('finCuerpo').innerHTML='<p class="err">'+esc(e.message)+'</p>';mostrarTabla(alias);});
   }
@@ -447,11 +504,12 @@ function jugarLinea(alias){
 }
 function enlace(){return location.origin+'/juego/?d='+desafio.codigo;}
 function mostrarTabla(alias){
-  fetch(SB+'juego_partida?select=alias,aciertos,puntaje&desafio=eq.'+desafio.codigo+'&order=puntaje.desc,creado.asc&limit=50',{headers:H})
-    .then(function(r){return r.json();}).then(function(d){
+  function leer(campos){return fetch(SB+'juego_partida?select='+campos+'&desafio=eq.'+desafio.codigo+'&order=puntaje.desc,creado.asc&limit=50',{headers:H})
+    .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();});}
+  leer('alias,aciertos,puntaje,avatar').catch(function(){return leer('alias,aciertos,puntaje');}).then(function(d){
       var med=['🥇','🥈','🥉'];
       var tabla='<table class="tab"><tr><th></th><th>Jugador</th><th style="text-align:right">Aciertos</th><th style="text-align:right">Puntos</th></tr>'+
-        (d||[]).map(function(x,k){return '<tr'+(x.alias===alias?' class="yo"':'')+'><td><span class="medalla">'+(med[k]||(k+1))+'</span></td><td>'+esc(x.alias)+'</td><td class="n">'+x.aciertos+'</td><td class="n">'+x.puntaje+'</td></tr>';}).join('')+'</table>';
+        (d||[]).map(function(x,k){return '<tr'+(x.alias===alias?' class="yo"':'')+'><td><span class="medalla">'+(med[k]||(k+1))+'</span></td><td><span class="quien">'+av(x.avatar,26)+esc(x.alias)+'</span></td><td class="n">'+x.aciertos+'</td><td class="n">'+x.puntaje+'</td></tr>';}).join('')+'</table>';
       var msg='Te desafío en la Ruleta de Ohm de catto.ar: diez preguntas de electrónica. ¿Me superás? '+enlace();
       $('finCuerpo').innerHTML=
         '<div class="caja"><b>Desafiá a tus compañeros</b><p class="nota">Código <span class="cod">'+desafio.codigo+'</span> · las mismas diez preguntas para todos.</p>'+
@@ -472,7 +530,7 @@ function cargarRanking(caja){
     if(!d||!d.length){el.innerHTML='<p class="nota">Todavía nadie jugó esta semana. ¡Estrenalo vos con un desafío en línea!</p>';return;}
     var med=['🥇','🥈','🥉'];
     el.innerHTML='<table class="tab"><tr><th></th><th>Jugador</th><th style="text-align:right">Mejor puntaje</th><th style="text-align:right">Partidas</th></tr>'+
-      d.map(function(x,k){return '<tr'+(x.alias===yo?' class="yo"':'')+'><td><span class="medalla">'+(med[k]||(k+1))+'</span></td><td>'+esc(x.alias)+'</td><td class="n">'+x.mejor+'</td><td class="n">'+x.partidas+'</td></tr>';}).join('')+'</table>';
+      d.map(function(x,k){return '<tr'+(x.alias===yo?' class="yo"':'')+'><td><span class="medalla">'+(med[k]||(k+1))+'</span></td><td><span class="quien">'+av(x.avatar,26)+esc(x.alias)+'</span></td><td class="n">'+x.mejor+'</td><td class="n">'+x.partidas+'</td></tr>';}).join('')+'</table>';
   }).catch(function(){el.innerHTML='<p class="err">No se pudo cargar el ranking.</p>';});
 }
 function verRanking(){ver('pRanking');$('rankingCaja').innerHTML='<p class="nota">Cargando…</p>';cargarRanking('rankingCaja');}
