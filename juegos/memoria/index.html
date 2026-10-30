@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memoria · juego de electrónica · Catto</title>
+<meta name="description" content="Memoria: el juego de catto.ar de dar vuelta cartas y encontrar las parejas: cada símbolo con su nombre, cada magnitud con su unidad, cada prefijo con su factor. Solo o en desafíos en línea con ranking semanal.">
+<link rel="canonical" href="https://catto.ar/juegos/memoria">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<meta property="og:title" content="Memoria · catto.ar">
+<meta property="og:description" content="Dalas vuelta y encontrá las parejas: símbolos, unidades, prefijos y fórmulas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--line:#2a3140;--txt:#e6edf3;--muted:#9aa7b4;--soft:#7d8a99;
+  --accent:#8cc4f0;--ok:#3fb950;--bad:#f85149;--gold:#d4a72c;--ease:cubic-bezier(.23,1,.32,1)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{min-height:100vh;background:radial-gradient(1100px 600px at 80% -10%,#1b2740 0%,var(--bg) 58%),var(--bg);
+  color:var(--txt);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:860px;margin:0 auto;padding:18px 16px 4px}
+.volver{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;text-decoration:none}
+.volver:hover{color:var(--txt)}
+.marca{font:700 15px "IBM Plex Mono",monospace;letter-spacing:.3px}
+.marca span{color:var(--accent)}
+main{max-width:860px;margin:0 auto;padding:6px 16px 60px}
+.pantalla{display:none}
+.pantalla.on{display:block;animation:entra .28s var(--ease)}
+@keyframes entra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+h1{font-size:40px;line-height:1.05;letter-spacing:-1px;margin:14px 0 6px}
+h1 em{font-style:normal;color:var(--accent)}
+h2{font-size:22px;margin:4px 0 6px}
+.bajada{color:var(--muted);margin:0 0 20px;font-size:16px;max-width:600px}
+@media(max-width:640px){h1{font-size:32px}}
+.btn{cursor:pointer;border:0;border-radius:8px;padding:11px 20px;font-weight:700;font-size:15px;background:var(--accent);color:#0b1a2a;
+  transition:transform .16s var(--ease),filter .15s,opacity .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:default;transform:none;filter:none}
+.btn.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.btn.oro{background:var(--gold);color:#1d1503}
+.fila{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.caja{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}
+.nota{font-size:13px;color:var(--soft)}
+.err{color:var(--bad);font-size:14px;min-height:1.2em}
+.grande{font:700 44px "IBM Plex Mono",monospace;color:var(--accent);line-height:1}
+.rec{color:var(--gold);font:600 13px "IBM Plex Mono",monospace}
+.cats{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+.chip{display:inline-flex;align-items:center;gap:6px;font:600 12px "IBM Plex Mono",monospace;padding:4px 10px;border-radius:999px;
+  border:1px solid var(--line);color:var(--muted);background:rgba(255,255,255,.03)}
+.modos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0 8px}
+@media(max-width:640px){.modos{grid-template-columns:1fr}}
+.modo{text-align:left;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;
+  display:flex;flex-direction:column;gap:6px;transition:border-color .15s,transform .16s var(--ease)}
+.modo:hover{border-color:var(--accent)}
+.modo:active{transform:scale(.98)}
+.modo b{font-size:17px}
+.modo span{color:var(--muted);font-size:13.5px}
+.modo .ic{font-size:26px}
+.modo.fuerte{border-color:rgba(212,167,44,.55);background:linear-gradient(160deg,rgba(212,167,44,.12),var(--panel) 60%)}
+input[type=text]{background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:10px 12px;font-size:15px;min-width:0}
+input[type=text]:focus{outline:2px solid var(--accent);outline-offset:1px}
+label.campo{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.cod{font:700 20px "IBM Plex Mono",monospace;letter-spacing:2px;color:var(--gold)}
+table.tab{width:100%;border-collapse:collapse;font-size:14px}
+.tab th,.tab td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+.tab th{color:var(--soft);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.tab td.n,.tab th.n{font-family:"IBM Plex Mono",monospace;text-align:right}
+.tab tr.yo td{color:var(--accent);font-weight:700}
+.medalla{width:1.6em;display:inline-block}
+.tab td .quien{display:inline-flex;align-items:center;gap:8px}
+@media(max-width:560px){.tab th,.tab td{padding:7px 5px}.tab .ancha{display:none}}
+svg.av{display:block;flex:none;border-radius:50%}
+.avs{display:grid;grid-template-columns:repeat(6,minmax(0,60px));gap:8px;margin:10px 0 2px}
+.avb{cursor:pointer;padding:3px;border-radius:50%;border:2px solid transparent;background:none;aspect-ratio:1;display:grid;place-items:center;
+  transition:border-color .15s,transform .16s var(--ease)}
+.avb svg.av{width:100%;height:auto}
+.avb:hover{border-color:var(--line)}
+.avb:active{transform:scale(.94)}
+.avb[aria-pressed=true]{border-color:var(--accent)}
+.avb:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.yo-av{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.yo-av .nota{margin:0}
+.yo-av .btn{margin-left:auto}
+.jugador{display:inline-flex;align-items:center;gap:8px}
+
+/* ----- marcador ----- */
+.marcador{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between;margin:6px 0 12px}
+.marcador .tit{font-weight:700}
+.marcador .dato{font:700 14px "IBM Plex Mono",monospace;color:var(--accent)}
+.marcador .nota{font-family:"IBM Plex Mono",monospace}
+
+/* ----- cartas ----- */
+.mesa{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;perspective:900px;max-width:640px;margin:0 auto}
+@media(max-width:560px){.mesa{gap:7px}}
+.carta{position:relative;aspect-ratio:4/3.4;cursor:pointer;border:0;padding:0;background:none;border-radius:10px}
+@media(max-width:560px){.carta{aspect-ratio:3/4}}
+.carta:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.carta .giro{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .45s var(--ease)}
+.carta.vista .giro,.carta.hecha .giro{transform:rotateY(180deg)}
+.carta .cara{position:absolute;inset:0;border-radius:10px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;border:1px solid var(--line)}
+.carta .dorso{background:radial-gradient(circle at 30% 25%,#22355a,#141b2c 70%);border-color:#2c3b58}
+.carta .dorso b{font:700 30px "IBM Plex Mono",monospace;color:rgba(140,196,240,.55)}
+.carta .dorso::before{content:"";position:absolute;inset:7px;border-radius:7px;border:1px dashed rgba(140,196,240,.22)}
+.carta:hover .dorso{border-color:var(--accent)}
+.carta .frente{transform:rotateY(180deg);background:var(--panel);font-size:14px;line-height:1.25;font-weight:600}
+.carta .frente.txt-r{font-weight:500;color:#d6e0ea}
+.carta .frente .txt-g{font:700 34px "IBM Plex Mono",monospace;line-height:1}
+.carta .frente svg.sy{width:100%;max-width:130px;height:auto;max-height:70%}
+@media(max-width:560px){.carta .frente{font-size:11.5px;padding:5px}.carta .frente .txt-g{font-size:26px}}
+.carta.hecha .frente{border-color:var(--ok);background:rgba(63,185,80,.10);box-shadow:0 0 0 1px rgba(63,185,80,.5)}
+.carta.hecha{cursor:default}
+.carta.mal .frente{border-color:var(--bad);background:rgba(248,81,73,.10)}
+.carta.pop .giro{animation:pop .34s var(--ease)}
+@keyframes pop{0%{transform:rotateY(180deg) scale(1)}45%{transform:rotateY(180deg) scale(1.06)}100%{transform:rotateY(180deg) scale(1)}}
+@media(prefers-reduced-motion:reduce){.carta .giro{transition:none}.carta.pop .giro{animation:none}.pantalla.on{animation:none}}
+
+/* símbolos de la Simbología */
+svg.sy{display:block;color:#e6edf3;overflow:visible}
+.sy line,.sy polyline,.sy polygon,.sy path,.sy circle,.sy rect,.sy ellipse{fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sy .f{fill:currentColor}
+.sy .hueco{fill:#161b22}
+.sy .tr{stroke-dasharray:5 4}
+.sy .gr{stroke-width:5;stroke-linecap:butt}
+.sy .fino{stroke-width:1.2}
+.sy .v{stroke:#58a6ff} .sy .ve{stroke:#3fb950} .sy .am{stroke:#d29922} .sy .ro{stroke:#f85149}
+.sy text{fill:currentColor;stroke:none;font-family:"Segoe UI",system-ui,sans-serif;font-weight:600}
+.sy text.e{fill:#9aa7b4} .sy text.v{fill:#58a6ff} .sy text.ve{fill:#3fb950} .sy text.am{fill:#d29922}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="volver" id="volver" href="/juegos">← Juegos</a>
+  <span class="marca">Memo<span>ria</span></span>
+</div>
+<main>
+
+<!-- ============ INICIO ============ -->
+<section class="pantalla on" id="pInicio">
+  <h1>Memo<em>ria</em></h1>
+  <p class="bajada">Dieciséis cartas boca abajo: ocho parejas. Dalas vuelta de a dos y encontrá cada símbolo con su nombre,
+    cada magnitud con su unidad, cada prefijo con su factor. Menos intentos y menos tiempo, más puntos.</p>
+  <div class="cats" id="cats"></div>
+  <div class="caja">
+    <div class="yo-av"><span id="yoAv"></span><div><b id="yoAvNom"></b><p class="nota">Tu avatar · lo ven los demás en los desafíos y el ranking</p></div>
+      <button class="btn sec" type="button" id="cambiarAv" aria-expanded="false">Cambiar</button></div>
+    <div class="avs" id="avsInicio" hidden></div>
+  </div>
+  <div class="modos">
+    <button class="modo fuerte" type="button" id="irLinea"><span class="ic">🏆</span><b>Desafío en línea</b>
+      <span>Las mismas cartas, en el mismo lugar, para todos. Mandale el enlace a tus compañeros y comparen. Ranking semanal.</span></button>
+    <button class="modo" type="button" id="jugar"><span class="ic">🎯</span><b>Solo</b>
+      <span>Una mesa nueva cada vez. Tu récord queda guardado.</span></button>
+  </div>
+  <p class="nota"><span class="rec" id="rec"></span></p>
+  <div class="caja">
+    <b>🏅 Ranking de la semana</b>
+    <p class="nota" style="margin:2px 0 8px">La mejor partida de cada jugador en los desafíos en línea de los últimos siete días.</p>
+    <div id="ranking"><p class="nota">Cargando…</p></div>
+  </div>
+</section>
+
+<!-- ============ EN LÍNEA: ALIAS ============ -->
+<section class="pantalla" id="pLinea">
+  <h2 id="lineaTit">🏆 Desafío en línea</h2>
+  <p class="bajada" id="lineaTxt"></p>
+  <div class="caja">
+    <label class="campo">Tu nombre o apodo (lo ven los demás)<input type="text" id="alias" maxlength="20" placeholder="Por ejemplo: Sofi 5°B"></label>
+    <p class="nota">No pongas tu nombre completo ni datos personales. Un apodo y el curso alcanzan.</p>
+    <p class="nota" style="margin:12px 0 0">Tu avatar</p>
+    <div class="avs" id="avsLinea"></div>
+    <p class="err" id="lineaErr"></p>
+  </div>
+  <div class="fila"><button class="btn oro" type="button" id="empezarLinea">Jugar</button><button class="btn sec" type="button" id="lineaVolver">Volver</button></div>
+</section>
+
+<!-- ============ JUEGO ============ -->
+<section class="pantalla" id="pJuego">
+  <div class="marcador"><span class="tit" id="jTit"></span><span class="nota" id="jPares"></span><span class="nota" id="jMov"></span><span class="dato" id="jSeg">0 s</span></div>
+  <div class="mesa" id="mesa"></div>
+</section>
+
+<!-- ============ FIN ============ -->
+<section class="pantalla" id="pFin">
+  <h2 id="finTit"></h2>
+  <div class="caja"><div class="grande" id="finPts"></div><p class="nota" id="finNota"></p></div>
+  <div id="finLinea"></div>
+  <div class="fila"><button class="btn" type="button" id="otraVez">Jugar de nuevo</button><button class="btn oro" type="button" id="finLineaBtn">Desafío en línea</button><button class="btn sec" type="button" id="finInicio">Inicio</button></div>
+</section>
+</main>
+
+<script src="/assets/js/juego-unir-datos.js?v=1"></script>
+<script src="/assets/js/juego-avatares.js?v=1"></script>
+<script src="/publicaciones/simbologia/simb.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-conexion.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-pasivos.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-semis.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-bloques.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-sensores.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-ondas.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-plano.js?v=1"></script>
+<script src="/publicaciones/simbologia/s-tablero.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+var SB_URL='https://fjzcajiemogsqizdgqjs.supabase.co/rest/v1/', K='sb_publishable_mGM62YDOYWB3uvFj6QCO_A_Elj_cjAy';
+var H={apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'};
+function rpc(f,body){return fetch(SB_URL+'rpc/'+f,{method:'POST',headers:H,body:JSON.stringify(body||{})}).then(function(r){
+  return r.json().then(function(d){if(!r.ok)throw new Error(d&&d.message||'error');return d;});});}
+var PARES=8, ESPERA=900;
+var $=function(id){return document.getElementById(id);};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function mezclar(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function guardado(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}}
+/* el puntaje: el mismo cálculo que hace la base al guardar (memoria_guardar) */
+function puntaje(mov,seg){return Math.max(100,1500-50*Math.max(0,mov-PARES)-2*seg);}
+function tiempo(seg){return Math.floor(seg/60)+' min '+(seg%60)+' s';}
+
+/* ---------- parejas: las de Unir con flechas, sin las definiciones largas (no entran en una carta) ---------- */
+var TEMAS={}, ORDEN=['simbolos','instalacion','ondas','unidades','prefijos','matematica'], CORTO=34;
+Object.keys(UNIR_SIMB).forEach(function(k){
+  var t=UNIR_SIMB[k];
+  t.pares=SB.lista.filter(function(it){return t.cats.indexOf(it.cat)>=0&&!it.np&&it.n.length<=CORTO;})
+    .map(function(it){return {iz:SB.svg(it),de:it.n,k:it.id};});
+  TEMAS[k]=t;
+});
+['unidades','prefijos','matematica'].forEach(function(k){
+  var t=UNIR_TEMAS[k];
+  t.pares=t.p.filter(function(p){return p[1].length<=CORTO;})
+    .map(function(p){return {iz:'<span class="'+(t.grande?'txt-g':'txt')+'">'+esc(p[0])+'</span>',de:p[1],k:p[0],txt:p[0]};});
+  TEMAS[k]=t;
+});
+/* cada pareja tiene su clave «tema:clave»; cada carta, «tema:clave|i» (izquierda) o «…|d» (derecha) */
+var PAR={};
+ORDEN.forEach(function(k){TEMAS[k].pares.forEach(function(p){p.u=k+':'+p.k;PAR[p.u]=p;});});
+$('cats').innerHTML=ORDEN.map(function(k){return '<span class="chip">'+TEMAS[k].ic+' '+TEMAS[k].n+'</span>';}).join('');
+/* ocho parejas mezcladas, a lo sumo dos por tema, sin textos repetidos; devuelve las 16 cartas ya barajadas */
+function mesaNueva(){
+  var elegidas=[], vistos={}, porTema={}, intentos=0;
+  function libre(p){return !vistos[p.de.toLowerCase()]&&!(p.txt&&vistos[p.txt.toLowerCase()]);}
+  while(elegidas.length<PARES&&intentos++<300){
+    var k=ORDEN[Math.floor(Math.random()*ORDEN.length)];
+    if((porTema[k]||0)>=2)continue;
+    var cand=TEMAS[k].pares.filter(libre); if(!cand.length)continue;
+    var p=cand[Math.floor(Math.random()*cand.length)];
+    vistos[p.de.toLowerCase()]=1; if(p.txt)vistos[p.txt.toLowerCase()]=1;
+    porTema[k]=(porTema[k]||0)+1; elegidas.push(p);
+  }
+  var cartas=[]; elegidas.forEach(function(p){cartas.push(p.u+'|i',p.u+'|d');});
+  return mezclar(cartas);
+}
+
+function pintarRec(){var r=guardado('memoRec');$('rec').textContent=r?'Tu récord en solitario: '+r+' puntos':'';}
+pintarRec();
+
+/* ---------- avatares (los mismos de los otros juegos, misma elección guardada) ---------- */
+var AVS=JUEGO_AV.lista;
+function miAv(){var a=guardado('ohmAvatar');return JUEGO_AV.existe(a)?a:'gato';}
+function av(id,t){return JUEGO_AV.svg(JUEGO_AV.existe(id)?id:'gato',t);}
+function selector(caja,elegido,alElegir){
+  var el=$(caja);
+  el.innerHTML=AVS.map(function(id){return '<button class="avb" type="button" data-av="'+id+'" aria-pressed="'+(id===elegido)+'" title="'+JUEGO_AV.n(id)+'" aria-label="'+JUEGO_AV.n(id)+'">'+JUEGO_AV.svg(id,52)+'</button>';}).join('');
+  el.onclick=function(e){var b=e.target.closest('.avb');if(!b)return;
+    var id=b.getAttribute('data-av');
+    [].forEach.call(el.children,function(x){x.setAttribute('aria-pressed',String(x===b));});
+    alElegir(id);};
+}
+function elegirMio(id){guardado('ohmAvatar',id);$('yoAv').innerHTML=av(id,48);$('yoAvNom').textContent=JUEGO_AV.n(id);}
+function pintarAv(){elegirMio(miAv());selector('avsInicio',miAv(),elegirMio);}
+pintarAv();
+$('cambiarAv').onclick=function(){var g=$('avsInicio'),abre=g.hidden;g.hidden=!abre;this.setAttribute('aria-expanded',String(abre));this.textContent=abre?'Listo':'Cambiar';};
+function alInicio(){detener();pintarRec();pintarAv();cargarRanking();}
+
+/* ---------- pantallas (el «atrás» del navegador vuelve a la anterior) ---------- */
+/* el enlace de arriba vuelve al inicio del juego; desde el inicio, a la página de los juegos */
+function mostrar(id){
+  [].forEach.call(document.querySelectorAll('.pantalla'),function(p){p.classList.toggle('on',p.id===id);});
+  $('volver').textContent=id==='pInicio'?'← Juegos':'← Volver';
+  window.scrollTo(0,0);
+}
+function ver(id){
+  mostrar(id);
+  var actual=history.state&&history.state.memo;
+  if(actual===id)return;
+  if(actual==='pJuego'&&id==='pFin')history.replaceState({memo:id},'');
+  else history.pushState({memo:id},'');
+}
+history.replaceState({memo:'pInicio'},'');
+window.addEventListener('popstate',function(e){
+  var id=e.state&&e.state.memo; if(!id)return;
+  if(id==='pJuego'){id='pInicio';history.replaceState({memo:id},'');}
+  if(id==='pInicio')alInicio();
+  mostrar(id);
+});
+$('volver').onclick=function(e){
+  if(history.state&&history.state.memo&&history.state.memo!=='pInicio'){e.preventDefault();alInicio();ver('pInicio');}
+};
+
+/* ---------- partida ---------- */
+var P=null; // {cartas, abiertas:[índices], hechas, mov, t0, seg, linea}
+var reloj=null;
+function detener(){clearInterval(reloj);reloj=null;}
+/* linea: {codigo, alias, av, cartas} en un desafío; null jugando solo */
+function empezar(linea){
+  detener();
+  var cartas=linea?linea.cartas:mesaNueva();
+  P={cartas:cartas,abiertas:[],hechas:0,mov:0,t0:0,seg:0,linea:linea||null,bloqueo:false};
+  $('mesa').innerHTML=cartas.map(function(c,i){
+    var u=c.slice(0,c.lastIndexOf('|')), lado=c.slice(-1), p=PAR[u];
+    var frente=p?(lado==='i'?p.iz:esc(p.de)):'?';
+    return '<button class="carta" type="button" data-i="'+i+'" aria-label="Carta '+(i+1)+'"><span class="giro">'+
+      '<span class="cara dorso"><b>Ω</b></span><span class="cara frente'+(lado==='d'?' txt-r':'')+'">'+frente+'</span></span></button>';
+  }).join('');
+  marcador();
+  ver('pJuego');
+}
+function marcador(){
+  $('jTit').innerHTML=P.linea?'<span class="jugador">'+av(P.linea.av,28)+esc(P.linea.alias)+'</span>':'🧠 Memoria';
+  $('jPares').textContent=P.hechas+' de '+(P.cartas.length/2)+' parejas';
+  $('jMov').textContent=P.mov+' intentos';
+  $('jSeg').textContent=P.seg+' s';
+}
+function carta(i){return $('mesa').querySelector('[data-i="'+i+'"]');}
+function pareja(c){return c.slice(0,c.lastIndexOf('|'));}
+$('mesa').addEventListener('click',function(e){
+  var b=e.target.closest('.carta'); if(!b||!P||P.bloqueo)return;
+  if(b.classList.contains('vista')||b.classList.contains('hecha'))return;
+  if(!P.t0){P.t0=Date.now();reloj=setInterval(function(){P.seg=Math.floor((Date.now()-P.t0)/1000);marcador();},250);}
+  var i=+b.getAttribute('data-i');
+  b.classList.add('vista'); P.abiertas.push(i);
+  if(P.abiertas.length<2)return;
+  P.mov++;
+  var a=P.abiertas[0], c=P.abiertas[1]; P.abiertas=[];
+  if(pareja(P.cartas[a])===pareja(P.cartas[c])){
+    [a,c].forEach(function(k){var el=carta(k);el.classList.remove('vista');el.classList.add('hecha','pop');});
+    P.hechas++; marcador();
+    if(P.hechas===P.cartas.length/2)setTimeout(fin,500);
+  } else {
+    P.bloqueo=true; marcador();
+    [a,c].forEach(function(k){carta(k).classList.add('mal');});
+    setTimeout(function(){[a,c].forEach(function(k){carta(k).classList.remove('vista','mal');});P.bloqueo=false;},ESPERA);
+  }
+});
+
+/* ---------- fin ---------- */
+function fin(){
+  detener();
+  var seg=Math.max(1,Math.round((Date.now()-P.t0)/1000)), pts=puntaje(P.mov,seg), nota;
+  $('finTit').textContent=P.mov===P.cartas.length/2?'🏆 ¡Perfecto! Sin un solo error':'🧠 ¡Encontraste las '+(P.cartas.length/2)+' parejas!';
+  $('finPts').textContent=pts;
+  if(P.linea)nota='puntos · '+P.mov+' intentos · '+tiempo(seg);
+  else{
+    var rec=+(guardado('memoRec')||0), nuevo=pts>rec;
+    if(nuevo)guardado('memoRec',pts);
+    nota='puntos · '+P.mov+' intentos · '+tiempo(seg)+(nuevo?' · ¡nuevo récord!':' · tu récord: '+rec);
+  }
+  $('finNota').textContent=nota;
+  $('finLinea').innerHTML='';
+  if(P.linea){
+    $('finLinea').innerHTML='<p class="nota">Guardando…</p>';
+    var L=P.linea;
+    rpc('memoria_guardar',{p_desafio:L.codigo,p_alias:L.alias,p_movimientos:P.mov,p_segundos:seg,p_avatar:L.av})
+      .then(function(){tablaDesafio(L);})
+      .catch(function(e){tablaDesafio(L,e.message);});
+  }
+  ver('pFin');
+}
+$('jugar').onclick=function(){empezar(null);};
+$('otraVez').onclick=function(){if(P&&P.linea)abrirLinea(null);else empezar(null);};
+$('finLineaBtn').onclick=function(){abrirLinea(null);};
+$('finInicio').onclick=function(){alInicio();ver('pInicio');};
+
+/* ---------- EN LÍNEA ---------- */
+var pedido=null; // código del desafío al que llegó por enlace
+function abrirLinea(cod){
+  pedido=cod||null;
+  $('lineaErr').textContent='';
+  $('alias').value=guardado('ohmAlias')||'';
+  $('lineaTit').textContent=cod?'🏆 Te desafiaron':'🏆 Desafío en línea';
+  $('lineaTxt').textContent=cod?'Alguien te mandó este desafío: las mismas dieciséis cartas, en el mismo lugar, para todos. Gana quien menos intentos y menos tiempo necesite.'
+    :'Jugás una mesa de ocho parejas. Al terminar te damos un enlace para que tus compañeros jueguen la misma y comparen.';
+  selector('avsLinea',miAv(),elegirMio);
+  ver('pLinea'); setTimeout(function(){$('alias').focus();},50);
+}
+$('irLinea').onclick=function(){abrirLinea(null);};
+$('lineaVolver').onclick=function(){alInicio();ver('pInicio');};
+$('empezarLinea').onclick=function(){
+  var a=$('alias').value.trim();
+  if(a.length<2){$('lineaErr').textContent='Poné un nombre o apodo de al menos 2 letras.';return;}
+  if(/[<>"&]/.test(a)){$('lineaErr').textContent='El nombre no puede llevar < > " &';return;}
+  guardado('ohmAlias',a);
+  var b=$('empezarLinea'); b.disabled=true; $('lineaErr').textContent='';
+  var listo;
+  if(pedido){
+    listo=fetch(SB_URL+'memoria_desafio?select=cartas&codigo=eq.'+encodeURIComponent(pedido),{headers:H}).then(function(r){return r.json();})
+      .then(function(d){if(!d||!d.length)throw new Error('Ese desafío no existe o venció.');return {codigo:pedido,cartas:d[0].cartas};});
+  } else {
+    var cartas=mesaNueva();
+    listo=rpc('memoria_crear',{p_cartas:cartas}).then(function(cod){return {codigo:cod,cartas:cartas};});
+  }
+  listo.then(function(L){b.disabled=false;L.alias=a;L.av=miAv();empezar(L);})
+    .catch(function(e){b.disabled=false;$('lineaErr').textContent=e.message||'No se pudo conectar. Probá de nuevo.';});
+};
+function enlace(cod){return location.origin+'/juegos/memoria?d='+cod;}
+var MED=['🥇','🥈','🥉'];
+function tablaDesafio(L,error){
+  fetch(SB_URL+'memoria_partida?select=alias,avatar,movimientos,segundos,puntaje&desafio=eq.'+L.codigo+'&order=puntaje.desc,movimientos.asc,segundos.asc&limit=50',{headers:H})
+    .then(function(r){return r.json();}).then(function(d){
+      var tabla='<table class="tab"><tr><th></th><th>Jugador</th><th class="n">Intentos</th><th class="n ancha">Tiempo</th><th class="n">Puntos</th></tr>'+
+        (d||[]).map(function(x,k){return '<tr'+(x.alias===L.alias?' class="yo"':'')+'><td><span class="medalla">'+(MED[k]||(k+1))+'</span></td><td><span class="quien">'+av(x.avatar,26)+esc(x.alias)+'</span></td>'+
+          '<td class="n">'+x.movimientos+'</td><td class="n ancha">'+tiempo(x.segundos)+'</td><td class="n">'+x.puntaje+'</td></tr>';}).join('')+'</table>';
+      var msg='Te desafío en Memoria, de catto.ar: ocho parejas de electrónica. ¿Me superás? '+enlace(L.codigo);
+      $('finLinea').innerHTML=(error?'<p class="err">'+esc(error)+'</p>':'')+
+        '<div class="caja"><b>Desafiá a tus compañeros</b><p class="nota">Código <span class="cod">'+L.codigo+'</span> · las mismas cartas, en el mismo lugar, para todos.</p>'+
+        '<div class="fila"><a class="btn oro" href="https://wa.me/?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener" style="text-decoration:none">Enviar por WhatsApp</a>'+
+        '<button class="btn sec" type="button" id="copiar">Copiar enlace</button></div></div>'+
+        '<div class="caja"><b>Resultados de este desafío</b>'+tabla+'<p class="nota"><button class="btn sec" type="button" id="actualizar" style="margin-top:10px">Actualizar</button></p></div>';
+      $('copiar').onclick=function(){var t=enlace(L.codigo);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){$('copiar').textContent='¡Copiado!';}).catch(function(){prompt('Copiá el enlace:',t);});};
+      $('actualizar').onclick=function(){tablaDesafio(L);};
+    }).catch(function(){});
+}
+
+/* ---------- RANKING ---------- */
+function cargarRanking(){
+  var el=$('ranking'), yo=guardado('ohmAlias');
+  rpc('memoria_ranking').then(function(d){
+    if(!d||!d.length){el.innerHTML='<p class="nota">Todavía nadie jugó esta semana. ¡Estrenalo vos con un desafío en línea!</p>';return;}
+    el.innerHTML='<table class="tab"><tr><th></th><th>Jugador</th><th class="n">Puntos</th><th class="n ancha">Intentos</th><th class="n ancha">Tiempo</th><th class="n">Partidas</th></tr>'+
+      d.map(function(x,k){return '<tr'+(x.alias===yo?' class="yo"':'')+'><td><span class="medalla">'+(MED[k]||(k+1))+'</span></td><td><span class="quien">'+av(x.avatar,26)+esc(x.alias)+'</span></td>'+
+        '<td class="n">'+x.mejor+'</td><td class="n ancha">'+x.movimientos+'</td><td class="n ancha">'+tiempo(x.segundos)+'</td><td class="n">'+x.partidas+'</td></tr>';}).join('')+'</table>';
+  }).catch(function(){el.innerHTML='<p class="err">No se pudo cargar el ranking.</p>';});
+}
+cargarRanking();
+
+/* llegando con un enlace de desafío */
+var q=new URLSearchParams(location.search).get('d');
+if(q&&/^[a-z0-9]{6}$/.test(q))abrirLinea(q);
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
