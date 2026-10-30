@@ -36,6 +36,30 @@ h1{font-size:40px;line-height:1.05;letter-spacing:-1px;margin:14px 0 6px}
 .juego p{margin:0;color:var(--muted);font-size:14.5px}
 .juego .ir{margin-top:auto;padding-top:6px;color:var(--accent);font-weight:600;font-size:14px}
 .juego.oro{border-color:rgba(212,167,44,.5);background:linear-gradient(160deg,rgba(212,167,44,.10),var(--panel) 60%)}
+
+/* ----- ranking global ----- */
+.ranking{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin:22px 0 0}
+.ranking h2{font-size:20px;margin:0 0 4px}
+.ranking .bajo{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+.cifras{display:flex;flex-wrap:wrap;gap:10px 28px;margin:0 0 14px}
+.cifras div{display:flex;flex-direction:column}
+.cifras b{font:700 24px "IBM Plex Mono",monospace;color:var(--accent);line-height:1.1}
+.cifras span{color:var(--muted);font-size:12.5px}
+.nota{font-size:13px;color:#7d8a99}
+.err{color:#f85149;font-size:14px}
+table.tab{width:100%;border-collapse:collapse;font-size:14px}
+.tab th,.tab td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.tab th{color:#7d8a99;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.tab th.n,.tab td.n{text-align:right;font-family:"IBM Plex Mono",monospace}
+.tab td.quien{white-space:normal}
+.tab td.total{color:var(--accent);font-weight:700}
+.tab tr.yo td{color:var(--accent);font-weight:700}
+.tab tr:last-child td{border-bottom:0}
+.quien span{display:inline-flex;align-items:center;gap:9px}
+.medalla{width:1.6em;display:inline-block}
+.tab .gris{color:#4d5868}
+svg.av{display:block;flex:none;border-radius:50%}
+@media(max-width:640px){.tab .ancha{display:none}.tab th,.tab td{padding:7px 5px}.ranking{padding:16px 12px}}
 </style>
 </head>
 <body>
@@ -58,7 +82,52 @@ h1{font-size:40px;line-height:1.05;letter-spacing:-1px;margin:14px 0 6px}
       <span class="ir">Jugar →</span>
     </a>
   </div>
+
+  <section class="ranking">
+    <h2>🏅 Ranking global</h2>
+    <p class="bajo">Todas las partidas en línea de los dos juegos, desde el comienzo. Cada jugador suma los puntos de todas sus partidas; al lado, su mejor puntaje en cada juego.</p>
+    <div class="cifras" id="cifras"></div>
+    <div id="global"><p class="nota">Cargando…</p></div>
+  </section>
 </main>
+<script src="/assets/js/juego-avatares.js?v=1"></script>
+<script>
+(function(){
+'use strict';
+var SB='https://fjzcajiemogsqizdgqjs.supabase.co/rest/v1/rpc/', K='sb_publishable_mGM62YDOYWB3uvFj6QCO_A_Elj_cjAy';
+function rpc(f){return fetch(SB+f,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'},body:'{}'})
+  .then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d&&d.message);return d;});});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function num(n){return Number(n||0).toLocaleString('es-AR');}
+function av(id){return JUEGO_AV.svg(JUEGO_AV.existe(id)?id:'gato',28);}
+var yo=null; try{yo=localStorage.getItem('ohmAlias');}catch(e){}
+var MED=['🥇','🥈','🥉'];
+
+rpc('juegos_resumen').then(function(d){
+  var r=d&&d[0]; if(!r)return;
+  document.getElementById('cifras').innerHTML=
+    '<div><b>'+num(r.jugadores)+'</b><span>jugadores</span></div>'+
+    '<div><b>'+num(r.partidas)+'</b><span>partidas en línea</span></div>'+
+    '<div><b>'+num(r.ruleta)+'</b><span>de Ruleta de Ohm</span></div>'+
+    '<div><b>'+num(r.unir)+'</b><span>de Unir con flechas</span></div>';
+}).catch(function(){});
+
+rpc('juegos_ranking_global').then(function(d){
+  var el=document.getElementById('global');
+  if(!d||!d.length){el.innerHTML='<p class="nota">Todavía no hay partidas en línea. Jugá un desafío y estrenás el ranking.</p>';return;}
+  function celda(v){return v==null?'<span class="gris">—</span>':num(v);}
+  el.innerHTML='<div style="overflow-x:auto"><table class="tab"><tr><th></th><th>Jugador</th><th class="n">Partidas</th>'+
+    '<th class="n ancha">Mejor Ruleta</th><th class="n ancha">Mejor Unir</th><th class="n">Puntos</th></tr>'+
+    d.map(function(x,k){
+      return '<tr'+(x.alias===yo?' class="yo"':'')+'><td><span class="medalla">'+(MED[k]||(k+1))+'</span></td>'+
+        '<td class="quien"><span>'+av(x.avatar)+esc(x.alias)+'</span></td>'+
+        '<td class="n" title="Ruleta: '+x.ruleta+' · Unir: '+x.unir+'">'+num(x.partidas)+'</td>'+
+        '<td class="n ancha">'+celda(x.mejor_ruleta)+'</td><td class="n ancha">'+celda(x.mejor_unir)+'</td>'+
+        '<td class="n total">'+num(x.puntos)+'</td></tr>';
+    }).join('')+'</table></div>';
+}).catch(function(){document.getElementById('global').innerHTML='<p class="err">No se pudo cargar el ranking.</p>';});
+})();
+</script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
