@@ -16,6 +16,7 @@
   }
   function num(el,a,d){ var v=parseFloat(el.getAttribute(a)); return isNaN(v)?d:v; }
   function build(sf){
+    if(sf.classList.contains("sf-tw")) return;   // ya sembrado: si el script se carga dos veces, no duplica estrellas
     twinkleCSS();
     var A={x:num(sf,'data-ax',42), y:num(sf,'data-ay',2)};
     var B={x:num(sf,'data-bx',60), y:num(sf,'data-by',100)};
