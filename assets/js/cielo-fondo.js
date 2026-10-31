@@ -29,8 +29,8 @@
       'filter:blur(8px);border-radius:50%;background:radial-gradient(circle at 50% 55%,rgba(240,214,170,.22),rgba(230,160,150,.09) 45%,transparent 70%)}';
   if(papel){
     /* el fondo de la página pasa al <html> (con la misma variable, así sigue al modo) para que la capa se vea */
-    /* de día la página va en gris pizarra (más oscuro que las tarjetas, así la carta se lee como fondo); de noche, su fondo de siempre */
-    css+=':root{--cf-fondo:#d0d5da}'+noche+'{--cf-fondo:var(--bg)}'+sistema+'{--cf-fondo:var(--bg)}}'+
+    /* de día la página va en celeste cianotipo (más oscuro que las tarjetas, así la carta se lee como fondo); de noche, su fondo de siempre */
+    css+=':root{--cf-fondo:#c6d4e2}'+noche+'{--cf-fondo:var(--bg)}'+sistema+'{--cf-fondo:var(--bg)}}'+
       'html{background:var(--cf-fondo)}body{background:transparent!important}'+
       /* de día, la carta; de noche, las estrellas */
       '#cieloFondo .cf-noche{display:none}'+
