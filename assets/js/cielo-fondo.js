@@ -29,7 +29,9 @@
       'filter:blur(8px);border-radius:50%;background:radial-gradient(circle at 50% 55%,rgba(240,214,170,.22),rgba(230,160,150,.09) 45%,transparent 70%)}';
   if(papel){
     /* el fondo de la página pasa al <html> (con la misma variable, así sigue al modo) para que la capa se vea */
-    css+='html{background:var(--bg)}body{background:transparent!important}'+
+    /* de día la página va en gris pizarra (más oscuro que las tarjetas, así la carta se lee como fondo); de noche, su fondo de siempre */
+    css+=':root{--cf-fondo:#d0d5da}'+noche+'{--cf-fondo:var(--bg)}'+sistema+'{--cf-fondo:var(--bg)}}'+
+      'html{background:var(--cf-fondo)}body{background:transparent!important}'+
       /* de día, la carta; de noche, las estrellas */
       '#cieloFondo .cf-noche{display:none}'+
       noche+' #cieloFondo .cf-noche{display:block}'+noche+' #cieloFondo .cf-dia{display:none}'+
@@ -62,13 +64,13 @@
     var f=function(n){return n.toFixed(1);};
     /* un velo apenas azulado hacia los bordes: el papel se oscurece un poco, como una carta vieja */
     var p='<defs><radialGradient id="cfVelo" cx="50%" cy="45%" r="75%"><stop offset="55%" stop-color="#1e3a5c" stop-opacity="0"/>'+
-      '<stop offset="100%" stop-color="#1e3a5c" stop-opacity=".09"/></radialGradient></defs>'+
+      '<stop offset="100%" stop-color="#1e3a5c" stop-opacity=".12"/></radialGradient></defs>'+
       '<rect width="1600" height="1000" fill="url(#cfVelo)"/>';
     /* retícula de la carta: paralelos y meridianos alrededor del polo sur (abajo a la derecha, fuera de la hoja) */
     var PX=1480, PY=1180;
-    p+='<g fill="none" stroke="'+RET+'" stroke-width=".8" stroke-dasharray="2 6" opacity=".35">';
-    for(var c=320;c<=1720;c+=280)p+='<circle cx="'+PX+'" cy="'+PY+'" r="'+c+'"/>';
-    for(var g=100;g<=260;g+=20){var a=g*Math.PI/180;p+='<line x1="'+PX+'" y1="'+PY+'" x2="'+f(PX+2000*Math.cos(a))+'" y2="'+f(PY-2000*Math.sin(a))+'"/>';}
+    p+='<g fill="none" stroke="'+RET+'" stroke-width=".8" stroke-dasharray="2 5" opacity=".5">';
+    for(var c=240;c<=1840;c+=200)p+='<circle cx="'+PX+'" cy="'+PY+'" r="'+c+'"/>';
+    for(var g=96;g<=264;g+=12){var a=g*Math.PI/180;p+='<line x1="'+PX+'" y1="'+PY+'" x2="'+f(PX+2000*Math.cos(a))+'" y2="'+f(PY-2000*Math.sin(a))+'"/>';}
     p+='</g>';
     /* estrellas de campo: marcas nítidas en tinta; las más brillantes, con destello en cruz */
     function estrella(x,y,m,op){
@@ -76,7 +78,7 @@
       if(m>=2)s+='<path d="M'+f(x)+' '+f(y-m*3)+'L'+f(x+m*.45)+' '+f(y)+'L'+f(x)+' '+f(y+m*3)+'L'+f(x-m*.45)+' '+f(y)+'ZM'+f(x-m*3)+' '+f(y)+'L'+f(x)+' '+f(y-m*.45)+'L'+f(x+m*3)+' '+f(y)+'L'+f(x)+' '+f(y+m*.45)+'Z" fill="'+TINTA+'" opacity="'+op+'"/>';
       return s;
     }
-    for(var i=0;i<120;i++){
+    for(var i=0;i<240;i++){
       var t=r(), m=t>.93?2.2:t>.7?1.5:1.1;
       p+=estrella(r()*1600,r()*1000,m,(.45+r()*.3).toFixed(2));
     }
