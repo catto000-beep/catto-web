@@ -58,32 +58,50 @@
      Semilla fija: siempre el mismo dibujo. */
   function cartaCeleste(){
     var sem=29, r=function(){sem=(sem*16807)%2147483647;return sem/2147483647;};
-    var p='';
-    for(var i=0;i<230;i++){
-      var x=(r()*1600).toFixed(1), y=(r()*1000).toFixed(1), t=r();
-      var col=t>.72?'#4f8fc4':'#6b7a8c', rad=t>.95?2.1:t>.7?1.45:.95, op=(.22+r()*.3).toFixed(2);
-      p+='<circle cx="'+x+'" cy="'+y+'" r="'+rad+'" fill="'+col+'" opacity="'+op+'"/>';
-    }
-    /* una docena de estrellas marcadas con una cruz fina, como en un plano */
-    for(var k=0;k<12;k++){
-      var cx=r()*1600, cy=r()*1000, l=5+r()*4;
-      p+='<path d="M'+(cx-l).toFixed(1)+' '+cy.toFixed(1)+'H'+(cx+l).toFixed(1)+'M'+cx.toFixed(1)+' '+(cy-l).toFixed(1)+'V'+(cy+l).toFixed(1)+'" stroke="#4f8fc4" stroke-width="1" opacity=".45"/>';
-    }
-    /* constelaciones: estrella = anillo de tinta con un punto; trazo punteado celeste */
-    function constelacion(pts,lineas,nombre,nx,ny){
-      var s='<g opacity=".55">';
-      lineas.forEach(function(a){s+='<line x1="'+pts[a[0]][0]+'" y1="'+pts[a[0]][1]+'" x2="'+pts[a[1]][0]+'" y2="'+pts[a[1]][1]+'" stroke="#74acdf" stroke-width="1.1" stroke-dasharray="5 4"/>';});
-      pts.forEach(function(q){s+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="'+(q[2]+3.5)+'" fill="none" stroke="#4f8fc4" stroke-width="1"/>'+
-        '<circle cx="'+q[0]+'" cy="'+q[1]+'" r="'+q[2]+'" fill="#3d6f99"/>';});
-      s+='<text x="'+nx+'" y="'+ny+'" font-family="IBM Plex Mono,monospace" font-size="13" letter-spacing="2" fill="#4f8fc4">'+nombre+'</text></g>';
+    var TINTA='#2f5478', CELESTE='#3d7cb8', RET='#5c7fa3';
+    var f=function(n){return n.toFixed(1);};
+    /* un velo apenas azulado hacia los bordes: el papel se oscurece un poco, como una carta vieja */
+    var p='<defs><radialGradient id="cfVelo" cx="50%" cy="45%" r="75%"><stop offset="55%" stop-color="#1e3a5c" stop-opacity="0"/>'+
+      '<stop offset="100%" stop-color="#1e3a5c" stop-opacity=".09"/></radialGradient></defs>'+
+      '<rect width="1600" height="1000" fill="url(#cfVelo)"/>';
+    /* retícula de la carta: paralelos y meridianos alrededor del polo sur (abajo a la derecha, fuera de la hoja) */
+    var PX=1480, PY=1180;
+    p+='<g fill="none" stroke="'+RET+'" stroke-width=".8" stroke-dasharray="2 6" opacity=".35">';
+    for(var c=320;c<=1720;c+=280)p+='<circle cx="'+PX+'" cy="'+PY+'" r="'+c+'"/>';
+    for(var g=100;g<=260;g+=20){var a=g*Math.PI/180;p+='<line x1="'+PX+'" y1="'+PY+'" x2="'+f(PX+2000*Math.cos(a))+'" y2="'+f(PY-2000*Math.sin(a))+'"/>';}
+    p+='</g>';
+    /* estrellas de campo: marcas nítidas en tinta; las más brillantes, con destello en cruz */
+    function estrella(x,y,m,op){
+      var s='<circle cx="'+f(x)+'" cy="'+f(y)+'" r="'+m+'" fill="'+TINTA+'" opacity="'+op+'"/>';
+      if(m>=2)s+='<path d="M'+f(x)+' '+f(y-m*3)+'L'+f(x+m*.45)+' '+f(y)+'L'+f(x)+' '+f(y+m*3)+'L'+f(x-m*.45)+' '+f(y)+'ZM'+f(x-m*3)+' '+f(y)+'L'+f(x)+' '+f(y-m*.45)+'L'+f(x+m*3)+' '+f(y)+'L'+f(x)+' '+f(y+m*.45)+'Z" fill="'+TINTA+'" opacity="'+op+'"/>';
       return s;
     }
-    /* Cruz del Sur: Acrux abajo, Gacrux arriba, Mimosa y Delta a los lados; Épsilon chica */
-    p+=constelacion([[1330,170,3],[1330,330,3.4],[1265,250,2.8],[1392,236,2.3],[1368,290,1.6]],
-      [[0,1],[2,3]],'CRUX',1290,370);
-    /* Orión con las Tres Marías (visto desde el hemisferio sur, cabeza abajo) */
-    p+=constelacion([[170,700,3],[300,690,2.6],[205,610,1.9],[235,602,2],[265,594,1.9],[150,520,2.6],[315,505,3]],
-      [[0,2],[1,4],[2,3],[3,4],[2,5],[4,6]],'ORIÓN',190,745);
+    for(var i=0;i<120;i++){
+      var t=r(), m=t>.93?2.2:t>.7?1.5:1.1;
+      p+=estrella(r()*1600,r()*1000,m,(.45+r()*.3).toFixed(2));
+    }
+    /* constelaciones: estrella = punto con anillo; trazo punteado; nombre en letra de máquina */
+    function constelacion(pts,lineas,nombre,nx,ny){
+      var s='<g>';
+      lineas.forEach(function(q){s+='<line x1="'+pts[q[0]][0]+'" y1="'+pts[q[0]][1]+'" x2="'+pts[q[1]][0]+'" y2="'+pts[q[1]][1]+'" stroke="'+CELESTE+'" stroke-width="1.2" stroke-dasharray="4 3" opacity=".75"/>';});
+      pts.forEach(function(q){s+='<circle cx="'+q[0]+'" cy="'+q[1]+'" r="'+(q[2]+3.6)+'" fill="none" stroke="'+CELESTE+'" stroke-width="1" opacity=".8"/>'+estrella(q[0],q[1],q[2],.9);});
+      s+='<text x="'+nx+'" y="'+ny+'" font-family="IBM Plex Mono,monospace" font-size="13" letter-spacing="2.5" fill="'+CELESTE+'" opacity=".9">'+nombre+'</text></g>';
+      return s;
+    }
+    /* arriba a la derecha: la Cruz del Sur con los Punteros de Centauro, que en el cielo la señalan */
+    p+=constelacion([[1340,150,2.6],[1340,312,3],[1276,236,2.5],[1400,222,2],[1376,276,1.3]],
+      [[0,1],[2,3]],'CRUX',1300,350);
+    p+=constelacion([[1135,338,3.2],[1180,292,2.6]],[[0,1]],'CENTAURUS',1070,378);
+    p+='<line x1="1192" y1="280" x2="1262" y2="244" stroke="'+CELESTE+'" stroke-width="1" stroke-dasharray="1 5" opacity=".7"/>';
+    /* abajo a la derecha: Escorpio, con Antares y la cola en gancho */
+    p+=constelacion([[1352,560,1.8],[1366,586,2],[1376,612,1.8],[1300,646,3],[1272,704,1.8],[1266,764,1.8],[1288,822,1.8],[1330,860,2],[1384,870,1.8],[1424,846,2.2],[1440,812,1.6]],
+      [[0,1],[1,2],[1,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10]],'SCORPIUS',1456,796);
+    /* abajo a la izquierda: Orión con las Tres Marías (desde el hemisferio sur, cabeza abajo) */
+    p+=constelacion([[170,700,2.8],[300,690,2.4],[205,610,1.9],[235,602,2],[265,594,1.9],[150,520,2.4],[315,505,2.8]],
+      [[0,2],[1,4],[2,3],[3,4],[2,5],[4,6]],'ORIÓN',190,748);
+    /* arriba a la izquierda: el Can Mayor con Sirio, la estrella más brillante del cielo */
+    p+=constelacion([[250,170,3.4],[300,236,1.8],[236,292,2],[318,318,1.8],[196,232,1.6]],
+      [[0,1],[0,4],[1,2],[1,3]],'CANIS MAIOR',170,360);
     return '<svg class="cf-dia" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">'+p+'</svg>';
   }
 })();
