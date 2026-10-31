@@ -82,12 +82,56 @@
      la llegada desde una página de tema abren la carrera que haga falta; lo
      que abrió la búsqueda se vuelve a plegar al borrarla. */
   var carreras = [].slice.call(document.querySelectorAll("section.carrera"));
+
+  /* El tablero agrupa las carreras: la llave general lo abre o lo cierra
+     entero, y cada llave abre su carrera (queda levantada mientras está
+     abierta). Abrir una carrera de adentro, por la búsqueda o al llegar
+     desde un tema, abre también el tablero. */
+  var tablero = document.getElementById("carreras");
+  var general = tablero && tablero.querySelector(".tb-general");
+  function pintarLlaves() {
+    if (!tablero) return;
+    var abierto = tablero.classList.contains("abierto");
+    [].forEach.call(tablero.querySelectorAll("a.tb-llave"), function (a) {
+      var sec = document.getElementById(a.getAttribute("data-sec"));
+      var on = abierto && sec && sec.classList.contains("abierta");
+      a.classList.toggle("on", !!on);
+      a.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+  function abrirTablero(si) {
+    if (!tablero) return;
+    tablero.classList.toggle("abierto", si);
+    if (general) {
+      general.setAttribute("aria-expanded", si ? "true" : "false");
+      general.lastElementChild.textContent = si ? (EN ? "Close" : "Cerrar") : (EN ? "Open" : "Abrir");
+    }
+    pintarLlaves();
+  }
   function abrirCarrera(sec, si) {
     if (!sec) return;
     sec.classList.toggle("abierta", si);
     var b = sec.querySelector(".pl-btn");
     if (b) b.setAttribute("aria-expanded", si ? "true" : "false");
+    if (si && tablero && tablero.contains(sec) && !tablero.classList.contains("abierto")) abrirTablero(true);
+    pintarLlaves();
   }
+  if (general) general.addEventListener("click", function () {
+    delete tablero.dataset.porBusqueda;
+    abrirTablero(!tablero.classList.contains("abierto"));
+  });
+  if (tablero) [].forEach.call(tablero.querySelectorAll("a.tb-llave"), function (a) {
+    a.addEventListener("click", function (e) {
+      var sec = document.getElementById(a.getAttribute("data-sec"));
+      if (!sec) return;
+      e.preventDefault();
+      delete tablero.dataset.porBusqueda;
+      delete sec.dataset.porBusqueda;
+      var prender = !a.classList.contains("on");
+      abrirCarrera(sec, prender);
+      if (prender) setTimeout(function () { sec.scrollIntoView({ behavior: "smooth", block: "start" }); }, 120);
+    });
+  });
   carreras.forEach(function (sec) {
     var h = sec.querySelector(".tit-sec");
     if (!h) return;
@@ -115,7 +159,9 @@
     });
   });
   function abrirPorBusqueda(sec) {
-    if (!sec || sec.classList.contains("abierta")) return;
+    if (!sec) return;
+    if (tablero && tablero.contains(sec) && !tablero.classList.contains("abierto")) tablero.dataset.porBusqueda = "1";
+    if (sec.classList.contains("abierta")) { abrirTablero(true); return; }
     sec.dataset.porBusqueda = "1";
     abrirCarrera(sec, true);
   }
@@ -123,6 +169,7 @@
     carreras.forEach(function (sec) {
       if (sec.dataset.porBusqueda) { delete sec.dataset.porBusqueda; abrirCarrera(sec, false); }
     });
+    if (tablero && tablero.dataset.porBusqueda) { delete tablero.dataset.porBusqueda; abrirTablero(false); }
   }
 
   /* ------------------------------------- llegando desde una página de tema

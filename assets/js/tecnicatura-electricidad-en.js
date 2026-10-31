@@ -49,8 +49,8 @@ var TEMAS = {
 var MATERIAS = [
 /* ---------- YEAR 4 ---------- */
 {id:"et", n:"Electrical Technology", area:"electro", anio:4, h:144, ejes:[
-  {t:"Electrical energy", d:"Generation, transmission and transformation. Thermal energy.", tm:[["energia",1]]},
-  {t:"Energy sources", d:"Conventional sources: oil and gas. Power generation and alternative energies. Uses of energy. Distribution networks. Energy and power. Efficiency of the conversions.", tm:[["energia",1]]},
+  {t:"Electrical energy", u:"energia-electrica", d:"Generation, transmission and transformation. Thermal energy.", tm:[["energia",1]]},
+  {t:"Energy sources", u:"energia-electrica", d:"Conventional sources: oil and gas. Power generation and alternative energies. Uses of energy. Distribution networks. Energy and power. Efficiency of the conversions.", tm:[["energia",1]]},
   {t:"Electrical engineering basics", u:"corriente-electrica", d:"Direct and alternating current. Current and voltage. Ohm's law, Kirchhoff's laws, Joule effect. Quantities and basic formulas. Combinations of resistors, sources (cells and batteries) and capacitors. Impedance.", tm:[["circ",1]]},
   {t:"Solving DC and AC circuits", u:"corrientes-alternas", d:"Calculation of direct- and alternating-current circuits.", tm:[["circ",2]]},
   {t:"Magnetism and electromagnetism", u:"magnetismo-electromagnetismo", d:"Magnetic field, electromagnets and induction: the basis of motors and transformers.", tm:[["circ",2],["maq",1]]},
@@ -68,21 +68,21 @@ var MATERIAS = [
 {id:"me1", n:"Electrical Measurements I", area:"medic", anio:4, h:96, ejes:[
   {t:"Measurements", u:"magnitudes-electricas", d:"Measurement errors, instrument classes. Measuring current, voltage, power and resistance.", tm:[["medic",1]]},
   {t:"Instruments", u:"instrumentos-analogicos", d:"Analog and digital instruments: voltmeter, ammeter, wattmeter, multimeter, frequency counter, bridges. Characteristics, connection and calibration.", tm:[["medic",1]]},
-  {t:"Measurements on electrical machines", d:"Measurements on AC and DC motors, motor connection, starting methods. Measurement tests on motors and transformers.", tm:[["medic",2],["maq",1]]},
+  {t:"Measurements on electrical machines", u:"ensayos-maquinas", d:"Measurements on AC and DC motors, motor connection, starting methods. Measurement tests on motors and transformers.", tm:[["medic",2],["maq",1]]},
   {t:"Safety", u:"higiene-seguridad", d:"Workplace safety in tests and when operating electrical measuring instruments.", tm:[["hys",1]]}
 ]},
 {id:"prg1", n:"Design and Technical Drawing I", area:"proy", anio:4, h:72, ejes:[
   {t:"Technical drawing", u:"dibujo-tecnico-cad", d:"Drawing elements and instruments, standardization, dimensioning, geometric constructions, freehand sketching.", tm:[["cad",1]]},
   {t:"Computer-aided design", u:"dibujo-tecnico-cad", d:"Introduction to computer-aided drawing: basic functions, applications, quality of representation, three dimensions.", tm:[["cad",1]]},
   {t:"Design", u:"/publicaciones/simbologia", d:"Projections and perspectives. Symbols of electrical elements. Representing machines and components. Reading installation plans, electrical diagrams and technical documentation.", tm:[["cad",1],["instal",1]]},
-  {t:"Standards and regulations for electrical work", d:"Codes, standards and regulations in force, regulators and distribution companies. Regulations for electrical installations in buildings.", tm:[["normas",1]]},
+  {t:"Standards and regulations for electrical work", u:"reglamentacion-aea", d:"Codes, standards and regulations in force, regulators and distribution companies. Regulations for electrical installations in buildings.", tm:[["normas",1]]},
   {t:"Health and safety standards", u:"higiene-seguridad", d:"In electrical installation and assembly work.", tm:[["hys",1]]}
 ]},
 /* ---------- YEAR 5 ---------- */
 {id:"mq1", n:"Electrical Machines I", area:"maq", anio:5, h:144, ejes:[
   {t:"AC and DC motors", u:"motores-ca", d:"Types, connection and starting methods. Tests. Parts, bearings, materials. Wiring and mounting of motors.", tm:[["maq",2]]},
   {t:"Parallel operation and tests of transformers", u:"transformadores", d:"Conditions for connecting transformers in parallel, and their tests.", tm:[["maq",2],["medic",2]]},
-  {t:"No-load and load characteristics", d:"Of motors and transformers. Temperature-rise tests. Visual inspection. Technical criteria for selecting machines, tools, equipment and instruments.", tm:[["maq",2],["medic",2]]},
+  {t:"No-load and load characteristics", u:"ensayos-maquinas", d:"Of motors and transformers. Temperature-rise tests. Visual inspection. Technical criteria for selecting machines, tools, equipment and instruments.", tm:[["maq",2],["medic",2]]},
   {t:"Safety", u:"higiene-seguridad", d:"Workplace safety in the workshop and on site.", tm:[["hys",1]]}
 ]},
 {id:"ie2", n:"Electrical Installations II", area:"instal", anio:5, h:144, amb:"In multi-unit buildings: apartments, offices and shops.", ejes:[
@@ -92,30 +92,30 @@ var MATERIAS = [
   {t:"Protection", u:"proteccion-electrica", d:"Against direct and indirect contact. Protection of circuits against overload, short circuit and overvoltage.", tm:[["prot",2]]},
   {t:"Lighting installations", u:"alumbrado", d:"Luminaires, general-purpose and special circuits, power circuits, calculations and diagrams.", tm:[["alumb",2],["instal",2]]},
   {t:"Maintenance", u:"mantenimiento-electrico", d:"Of protection and switching components: switches, timers, relays, motor protection breakers, fuses, circuit breakers.", tm:[["mant",2]]},
-  {t:"Safety and preventive maintenance", d:"Purpose and functions of preventive maintenance, implementation stages, service life, inspection plan, work orders, tracking sheets and control charts. Introduction to predictive maintenance. Hourly costs and depreciation.", tm:[["mant",2],["hys",2]]}
+  {t:"Safety and preventive maintenance", u:"mantenimiento-electrico", d:"Purpose and functions of preventive maintenance, implementation stages, service life, inspection plan, work orders, tracking sheets and control charts. Introduction to predictive maintenance. Hourly costs and depreciation.", tm:[["mant",2],["hys",2]]}
 ]},
 {id:"me2", n:"Electrical Measurements II", area:"medic", anio:5, h:96, ejes:[
   {t:"Measurement", u:"mediciones-ca", d:"Measuring power, frequency, resistance, energy and power factor (cos φ).", tm:[["medic",2],["calidad",1]]},
   {t:"Instruments", u:"instrumentos-digitales", d:"Wattmeter, power-factor meter, energy meters, frequency counter, oscilloscope. Current and voltage instrument transformers. Connection and calibration.", tm:[["medic",2]]},
-  {t:"Special measurements", d:"Earth resistance and insulation measurements. Generator sets and generator tests. Basic functions of logic controllers. Sensors, actuators, introduction to servo systems.", tm:[["medic",3],["sens",1]]},
+  {t:"Special measurements", u:"mediciones-especiales", d:"Earth resistance and insulation measurements. Generator sets and generator tests. Basic functions of logic controllers. Sensors, actuators, introduction to servo systems.", tm:[["medic",3],["sens",1]]},
   {t:"Safety", u:"higiene-seguridad", d:"Workplace safety in tests and when operating measuring equipment.", tm:[["hys",2]]}
 ]},
 {id:"prg2", n:"Design and Technical Drawing II", area:"proy", anio:5, h:72, ejes:[
   {t:"Stages of a project", u:"proyecto-instalacion", d:"Methodology and planning. Preliminary design. Technical and economic analysis. Symbols and specifications for electrical installation plans.", tm:[["cad",2]]},
-  {t:"Codes, standards and regulations", d:"Standards and regulations in force, regulators and distribution companies. Regulations for installations in multi-unit buildings.", tm:[["normas",2]]},
-  {t:"Standards", d:"Health and safety in installation and assembly. Quality standards for processes and products.", tm:[["normas",2],["hys",2]]},
+  {t:"Codes, standards and regulations", u:"reglamentacion-aea", d:"Standards and regulations in force, regulators and distribution companies. Regulations for installations in multi-unit buildings.", tm:[["normas",2]]},
+  {t:"Standards", u:"normas-calidad-montaje", d:"Health and safety in installation and assembly. Quality standards for processes and products.", tm:[["normas",2],["hys",2]]},
   {t:"Types and characteristics of electrical materials", u:"materiales-electricos", d:"Selecting materials for the project.", tm:[["mat",2]]},
-  {t:"The idea of a project", d:"Idea, execution and evaluation. Single-line, three-line and functional diagrams. Sequencing of assembly and installation work.", tm:[["cad",2],["instal",2]]},
-  {t:"Load and material schedules", d:"Material schedules (standard types, certificates of conformity). Measurement reports. Tracking of execution times.", tm:[["cad",2],["normas",2]]}
+  {t:"The idea of a project", u:"proyecto-instalacion", d:"Idea, execution and evaluation. Single-line, three-line and functional diagrams. Sequencing of assembly and installation work.", tm:[["cad",2],["instal",2]]},
+  {t:"Load and material schedules", u:"proyecto-instalacion", d:"Material schedules (standard types, certificates of conformity). Measurement reports. Tracking of execution times.", tm:[["cad",2],["normas",2]]}
 ]},
 /* ---------- YEAR 6 ---------- */
 {id:"mq2", n:"Electrical Machines II", area:"maq", anio:6, h:144, ejes:[
-  {t:"Motors and transformers", d:"No-load and load tests, temperature-rise tests, inspection and fault finding. Maintenance of contactors, relays and protections. Thermography and tests.", tm:[["maq",3],["mant",3]]},
-  {t:"Motor winding", d:"Calculating, making and repairing windings.", tm:[["maq",3]]},
-  {t:"Electric power generation", d:"Medium- and low-power generator sets. Turbines: types and characteristics. Internal combustion engines. Equipment tests.", tm:[["energia",2],["maq",3]]},
-  {t:"Supplies", d:"Fuels and lubricants, welding, plastics, adhesives, new materials, windings.", tm:[["mat",3]]},
-  {t:"Protection of transformers and generators", d:"Supply quality: disturbances, micro-interruptions and voltage dips. Safety plans and preventive measures for live work. Improving service quality.", tm:[["prot",3],["calidad",2]]},
-  {t:"Legal and regulatory aspects of live work", d:"General overhaul of machines: stages and ways of carrying it out. Uneconomic repairs and replacement. Vibration.", tm:[["normas",3],["mant",3]]}
+  {t:"Motors and transformers", u:"mantenimiento-electrico", d:"No-load and load tests, temperature-rise tests, inspection and fault finding. Maintenance of contactors, relays and protections. Thermography and tests.", tm:[["maq",3],["mant",3]]},
+  {t:"Motor winding", u:"bobinado-motores", d:"Calculating, making and repairing windings.", tm:[["maq",3]]},
+  {t:"Electric power generation", u:"generacion-motogeneradores", d:"Medium- and low-power generator sets. Turbines: types and characteristics. Internal combustion engines. Equipment tests.", tm:[["energia",2],["maq",3]]},
+  {t:"Supplies", u:"insumos-electricos", d:"Fuels and lubricants, welding, plastics, adhesives, new materials, windings.", tm:[["mat",3]]},
+  {t:"Protection of transformers and generators", u:"calidad-suministro", d:"Supply quality: disturbances, micro-interruptions and voltage dips. Safety plans and preventive measures for live work. Improving service quality.", tm:[["prot",3],["calidad",2]]},
+  {t:"Legal and regulatory aspects of live work", u:"trabajos-con-tension", d:"General overhaul of machines: stages and ways of carrying it out. Uneconomic repairs and replacement. Vibration.", tm:[["normas",3],["mant",3]]}
 ]},
 {id:"ie3", n:"Electrical Installations III", area:"instal", anio:6, h:144, amb:"In factories, workshops and industries; urban and rural infrastructure; electric utilities.", ejes:[
   {t:"Electrical installations", u:"proyecto-instalacion", d:"Low-current, extra-low-voltage and low-voltage installations in industry: panels, switching, protection, conduits and earthing.", tm:[["instal",3],["prot",3]]},
@@ -124,7 +124,7 @@ var MATERIAS = [
   {t:"Protection", u:"proteccion-electrica", d:"Against direct and indirect contact. Protection of circuits against overload, short circuit and overvoltage.", tm:[["prot",3]]},
   {t:"Lighting installations", u:"alumbrado", d:"Luminaires, general-purpose and special circuits, power circuits, calculations and diagrams.", tm:[["alumb",3]]},
   {t:"Maintenance", u:"mantenimiento-electrico", d:"Of protection and switching components in factories and industries.", tm:[["mant",3]]},
-  {t:"Safety and preventive maintenance", d:"Preventive maintenance plan, inspections, work orders, maintenance management, periodic checks, costs, depreciation and service life. Predictive maintenance.", tm:[["mant",3],["hys",2]]}
+  {t:"Safety and preventive maintenance", u:"gestion-mantenimiento", d:"Preventive maintenance plan, inspections, work orders, maintenance management, periodic checks, costs, depreciation and service life. Predictive maintenance.", tm:[["mant",3],["hys",2]]}
 ]},
 {id:"ai1", n:"Industrial Automation I", area:"auto", anio:6, h:96, ejes:[
   {t:"Basics of the digital world", u:"logica-combinacional", d:"Number systems and codes, logic gates, combinational logic, Boolean algebra and simplification, flip-flops, counters, registers, memories and programmable devices.", tm:[["logica",1]]},
@@ -144,31 +144,31 @@ var MATERIAS = [
   {t:"Triac and diac", u:"semiconductores-especiales", d:"Characteristics and operation. Applications of the SCR, triac and diac in power circuits and industrial control.", tm:[["pot",2]]}
 ]},
 {id:"prg3", n:"Design and Technical Drawing III", area:"proy", anio:6, h:72, ejes:[
-  {t:"Electrical design", d:"Power demand, feeders and circuits, environmental conditions. Conductors and busbars, busways, switching and protection, short-circuit currents, protection coordination, reactive power and power-factor correction.", tm:[["cad",3],["prot",3],["calidad",2]]},
-  {t:"Execution", d:"Plans and specifications, as-built drawings, catalogues and standards. Medium- and low-voltage lines, underground lines, distribution. Motor selection, motor control center, installed and contracted power, transformer stations, lighting, rational use of energy.", tm:[["cad",3],["energia",2],["alumb",3]]}
+  {t:"Electrical design", u:"proyecto-electrico-industrial", d:"Power demand, feeders and circuits, environmental conditions. Conductors and busbars, busways, switching and protection, short-circuit currents, protection coordination, reactive power and power-factor correction.", tm:[["cad",3],["prot",3],["calidad",2]]},
+  {t:"Execution", u:"ejecucion-obra", d:"Plans and specifications, as-built drawings, catalogues and standards. Medium- and low-voltage lines, underground lines, distribution. Motor selection, motor control center, installed and contracted power, transformer stations, lighting, rational use of energy.", tm:[["cad",3],["energia",2],["alumb",3]]}
 ]},
 /* ---------- YEAR 7 ---------- */
 {id:"cc", n:"Power Plants and Distribution", area:"maq", anio:7, h:144, ejes:[
-  {t:"Generator", d:"Operating the equipment and efficiencies. Turbines. Internal combustion engines. Fuels and lubricants. Electric power generation.", tm:[["energia",3],["maq",4]]},
-  {t:"Medium- and low-power generator sets", d:"Turbines, internal combustion engines, equipment tests, supplies and windings. Protection of transformers and generators.", tm:[["energia",3],["prot",4]]},
+  {t:"Generator", u:"generacion-motogeneradores", d:"Operating the equipment and efficiencies. Turbines. Internal combustion engines. Fuels and lubricants. Electric power generation.", tm:[["energia",3],["maq",4]]},
+  {t:"Medium- and low-power generator sets", u:"generacion-motogeneradores", d:"Turbines, internal combustion engines, equipment tests, supplies and windings. Protection of transformers and generators.", tm:[["energia",3],["prot",4]]},
   {t:"Power transformers", u:"transformadores", d:"Connection diagrams. Regulations for medium-voltage work. Fault finding.", tm:[["maq",4],["normas",3]]},
-  {t:"Substations and distribution lines", d:"Work processes: planning, quality, productivity, schedule and critical times, efficiency. Fire prevention and environmental care.", tm:[["energia",4],["instal",4]]},
+  {t:"Substations and distribution lines", u:"subestaciones-lineas", d:"Work processes: planning, quality, productivity, schedule and critical times, efficiency. Fire prevention and environmental care.", tm:[["energia",4],["instal",4]]},
   {t:"Health and safety standards", u:"higiene-seguridad", d:"Electrical risk. First aid.", tm:[["hys",3]]},
-  {t:"Problem identification and solving techniques", d:"Safety on public roads, routing of lines, safety heights and clearances, access restrictions and signage.", tm:[["instal",4],["hys",3]]},
-  {t:"Quality of the electricity supply", d:"Analysis of supply quality.", tm:[["calidad",3]]}
+  {t:"Problem identification and solving techniques", u:"redes-via-publica", d:"Safety on public roads, routing of lines, safety heights and clearances, access restrictions and signage.", tm:[["instal",4],["hys",3]]},
+  {t:"Quality of the electricity supply", u:"calidad-suministro", d:"Analysis of supply quality.", tm:[["calidad",3]]}
 ]},
 {id:"ie4", n:"Electrical Installations IV", area:"instal", anio:7, h:144, amb:"In special electrical equipment and buildings.", ejes:[
-  {t:"Electrical installations", d:"Low-current, extra-low-voltage and low-voltage installations in special equipment and buildings: panels, switching, protection, conduits and earthing.", tm:[["instal",4]]},
+  {t:"Electrical installations", u:"instalaciones-especiales", d:"Low-current, extra-low-voltage and low-voltage installations in special equipment and buildings: panels, switching, protection, conduits and earthing.", tm:[["instal",4]]},
   {t:"Electrical materials technology", u:"materiales-electricos", d:"Conductors, enclosures, insulators, ferromagnetic materials. Thermography and tests. Efficiencies.", tm:[["mat",4]]},
   {t:"Use of tools", u:"herramientas", d:"Hand tools, equipment and machine tools.", tm:[["hys",2]]},
   {t:"Protection", u:"proteccion-electrica", d:"Against direct and indirect contact. Protection of circuits against overload, short circuit and overvoltage.", tm:[["prot",4]]},
   {t:"Lighting installations", u:"alumbrado", d:"Luminaires, general-purpose and special circuits, power circuits, calculations and diagrams.", tm:[["alumb",4]]},
   {t:"Calculations", u:"potencia-ca", d:"Short-circuit currents. Protection coordination. Reactive power and power-factor correction equipment; its installation.", tm:[["calidad",4],["prot",4]]},
   {t:"Maintenance", u:"mantenimiento-electrico", d:"Of protection and switching components.", tm:[["mant",4]]},
-  {t:"Safety and preventive maintenance", d:"Preventive and predictive maintenance plan, inspections, work orders, periodic checks, costs, depreciation and service life.", tm:[["mant",4],["hys",3]]}
+  {t:"Safety and preventive maintenance", u:"gestion-mantenimiento", d:"Preventive and predictive maintenance plan, inspections, work orders, periodic checks, costs, depreciation and service life.", tm:[["mant",4],["hys",3]]}
 ]},
 {id:"ai2", n:"Industrial Automation II", area:"auto", anio:7, h:144, ejes:[
-  {t:"Handling and installation", d:"Commissioning the controller, programming and storage, wiring of inputs and outputs, power supply and maintenance.", tm:[["control",3]]},
+  {t:"Handling and installation", u:"instalacion-plc", d:"Commissioning the controller, programming and storage, wiring of inputs and outputs, power supply and maintenance.", tm:[["control",3]]},
   {t:"PLC instructions and programs", u:"programacion-plc", d:"Program execution. Languages: mnemonic or Boolean, ladder diagram, function block diagram, Grafcet, flowchart. Symbols and equivalences.", tm:[["control",3]]},
   {t:"Basic programming applications", u:"aplicaciones-plc", d:"Inputs and outputs, markers, timers, counters, shift registers. Program and service instructions. Logic circuits and pulse generators.", tm:[["control",4]]},
   {t:"Automation networks", u:"comunicaciones-industriales", d:"Communication between devices, data link layer. Supervision with SCADA: properties of the supervisory system and supervised processes.", tm:[["redes",3],["control",4]]},

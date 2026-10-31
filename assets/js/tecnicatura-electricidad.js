@@ -48,8 +48,8 @@ var TEMAS = {
 var MATERIAS = [
 /* ---------- 4° AÑO ---------- */
 {id:"et", n:"Electrotecnia", area:"electro", anio:4, h:144, ejes:[
-  {t:"Energía eléctrica", d:"Producción, transporte y transformación. Energía térmica.", tm:[["energia",1]]},
-  {t:"Fuentes de energía", d:"Fuentes convencionales: petróleo y gas. Generación de energía y energías alternativas. Usos de la energía. Redes de distribución. Energía y potencia. Rendimiento de las transformaciones.", tm:[["energia",1]]},
+  {t:"Energía eléctrica", u:"energia-electrica", d:"Producción, transporte y transformación. Energía térmica.", tm:[["energia",1]]},
+  {t:"Fuentes de energía", u:"energia-electrica", d:"Fuentes convencionales: petróleo y gas. Generación de energía y energías alternativas. Usos de la energía. Redes de distribución. Energía y potencia. Rendimiento de las transformaciones.", tm:[["energia",1]]},
   {t:"Electrotécnica", u:"corriente-electrica", d:"Corriente continua y alterna. Intensidad y tensión. Ley de Ohm, leyes de Kirchhoff, efecto Joule. Magnitudes y fórmulas básicas. Asociación de resistencias, generadores (pilas y baterías) y capacitores. Impedancia.", tm:[["circ",1]]},
   {t:"Resolución de circuitos en CC y CA", u:"corrientes-alternas", d:"Cálculo de circuitos de corriente continua y alterna.", tm:[["circ",2]]},
   {t:"Magnetismo y electromagnetismo", u:"magnetismo-electromagnetismo", d:"Campo magnético, electroimanes e inducción: la base de motores y transformadores.", tm:[["circ",2],["maq",1]]},
@@ -67,21 +67,21 @@ var MATERIAS = [
 {id:"me1", n:"Mediciones Eléctricas I", area:"medic", anio:4, h:96, ejes:[
   {t:"Mediciones", u:"magnitudes-electricas", d:"Errores de medición, clases de instrumentos. Medición de corriente, tensión, potencia y resistencia.", tm:[["medic",1]]},
   {t:"Instrumentos", u:"instrumentos-analogicos", d:"Instrumentos analógicos y digitales: voltímetro, amperímetro, vatímetro, multímetro, frecuencímetro, puentes. Características, conexionado y calibración.", tm:[["medic",1]]},
-  {t:"Medición sobre máquinas eléctricas", d:"Medición en motores de CA y CC, conexión de motores, sistemas de arranque. Ensayos de medición sobre motores y transformadores.", tm:[["medic",2],["maq",1]]},
+  {t:"Medición sobre máquinas eléctricas", u:"ensayos-maquinas", d:"Medición en motores de CA y CC, conexión de motores, sistemas de arranque. Ensayos de medición sobre motores y transformadores.", tm:[["medic",2],["maq",1]]},
   {t:"Seguridad", u:"higiene-seguridad", d:"Seguridad laboral en los ensayos y al operar instrumentos de medición eléctrica.", tm:[["hys",1]]}
 ]},
 {id:"prg1", n:"Proyecto y Representación Gráfica I", area:"proy", anio:4, h:72, ejes:[
   {t:"Dibujo técnico", u:"dibujo-tecnico-cad", d:"Elementos e instrumentos, normalización, acotación, construcciones geométricas, croquis a mano alzada.", tm:[["cad",1]]},
   {t:"Diseño asistido", u:"dibujo-tecnico-cad", d:"Introducción al dibujo asistido por computadora: funciones básicas, aplicaciones, calidad en la representación, tres dimensiones.", tm:[["cad",1]]},
   {t:"Proyecto", u:"/publicaciones/simbologia", d:"Proyecciones y perspectivas. Símbolos de elementos eléctricos. Representación de máquinas y componentes. Interpretación de planos de instalaciones, esquemas eléctricos y documentación técnica.", tm:[["cad",1],["instal",1]]},
-  {t:"Normas y reglamentaciones de uso en electricidad", d:"Códigos, normas y reglamentos vigentes, entes reguladores y distribuidoras. Reglamentación para la ejecución de instalaciones eléctricas en inmuebles.", tm:[["normas",1]]},
+  {t:"Normas y reglamentaciones de uso en electricidad", u:"reglamentacion-aea", d:"Códigos, normas y reglamentos vigentes, entes reguladores y distribuidoras. Reglamentación para la ejecución de instalaciones eléctricas en inmuebles.", tm:[["normas",1]]},
   {t:"Normas de seguridad e higiene", u:"higiene-seguridad", d:"En los procesos de instalación y montaje eléctrico.", tm:[["hys",1]]}
 ]},
 /* ---------- 5° AÑO ---------- */
 {id:"mq1", n:"Máquinas Eléctricas I", area:"maq", anio:5, h:144, ejes:[
   {t:"Motores de CA y CC", u:"motores-ca", d:"Tipos, conexión y sistemas de arranque. Ensayos. Partes constitutivas, rodamientos, materiales. Cableado y montaje de motores.", tm:[["maq",2]]},
   {t:"Puesta en paralelo y ensayos de transformadores", u:"transformadores", d:"Condiciones para conectar transformadores en paralelo y sus ensayos.", tm:[["maq",2],["medic",2]]},
-  {t:"Características de vacío y carga", d:"De motores y transformadores. Ensayos de calentamiento. Inspección visual. Criterios técnicos para seleccionar máquinas, herramientas, equipos e instrumentos.", tm:[["maq",2],["medic",2]]},
+  {t:"Características de vacío y carga", u:"ensayos-maquinas", d:"De motores y transformadores. Ensayos de calentamiento. Inspección visual. Criterios técnicos para seleccionar máquinas, herramientas, equipos e instrumentos.", tm:[["maq",2],["medic",2]]},
   {t:"Seguridad", u:"higiene-seguridad", d:"Seguridad laboral en el taller y en obra.", tm:[["hys",1]]}
 ]},
 {id:"ie2", n:"Instalaciones Eléctricas II", area:"instal", anio:5, h:144, amb:"En propiedad horizontal: viviendas multifamiliares, oficinas y locales.", ejes:[
@@ -91,30 +91,30 @@ var MATERIAS = [
   {t:"Protección", u:"proteccion-electrica", d:"Contra contactos directos e indirectos. Protección de líneas contra sobrecarga, cortocircuito y sobretensiones.", tm:[["prot",2]]},
   {t:"Instalaciones de alumbrado", u:"alumbrado", d:"Luminarias, circuitos de uso general y especial, fuerza motriz, cálculos y esquemas.", tm:[["alumb",2],["instal",2]]},
   {t:"Mantenimiento", u:"mantenimiento-electrico", d:"De los componentes de protección y maniobra: interruptores, temporizadores, relés, guardamotores, fusibles, termomagnéticas.", tm:[["mant",2]]},
-  {t:"Seguridad y mantenimiento preventivo", d:"Misión y funciones del mantenimiento preventivo, etapas de implementación, vida útil, plan de inspecciones, órdenes de trabajo, planillas de seguimiento y gráficos de control. Introducción al mantenimiento predictivo. Costos horarios y amortización.", tm:[["mant",2],["hys",2]]}
+  {t:"Seguridad y mantenimiento preventivo", u:"mantenimiento-electrico", d:"Misión y funciones del mantenimiento preventivo, etapas de implementación, vida útil, plan de inspecciones, órdenes de trabajo, planillas de seguimiento y gráficos de control. Introducción al mantenimiento predictivo. Costos horarios y amortización.", tm:[["mant",2],["hys",2]]}
 ]},
 {id:"me2", n:"Mediciones Eléctricas II", area:"medic", anio:5, h:96, ejes:[
   {t:"Medición", u:"mediciones-ca", d:"Medición de potencia, frecuencia, resistencia, energía y factor de potencia (cos φ).", tm:[["medic",2],["calidad",1]]},
   {t:"Instrumentos", u:"instrumentos-digitales", d:"Vatímetro, cosfímetro, medidores de energía, frecuencímetro, osciloscopio. Transformadores de medida de corriente y de tensión. Conexionado y calibración.", tm:[["medic",2]]},
-  {t:"Mediciones especiales", d:"Medición de puesta a tierra y de aislación. Grupos electrógenos y ensayos de generadores. Funciones básicas de controladores lógicos. Sensores, actuadores, introducción a los servosistemas.", tm:[["medic",3],["sens",1]]},
+  {t:"Mediciones especiales", u:"mediciones-especiales", d:"Medición de puesta a tierra y de aislación. Grupos electrógenos y ensayos de generadores. Funciones básicas de controladores lógicos. Sensores, actuadores, introducción a los servosistemas.", tm:[["medic",3],["sens",1]]},
   {t:"Seguridad", u:"higiene-seguridad", d:"Seguridad laboral en los ensayos y en la operación de equipos de medición.", tm:[["hys",2]]}
 ]},
 {id:"prg2", n:"Proyecto y Representación Gráfica II", area:"proy", anio:5, h:72, ejes:[
   {t:"Etapas de un proyecto", u:"proyecto-instalacion", d:"Metodología y planificación. Anteproyecto. Análisis técnico-económico. Símbolos y especificaciones para planos de instalaciones eléctricas.", tm:[["cad",2]]},
-  {t:"Códigos, normas y reglamentos", d:"Normas y reglamentos vigentes, entes reguladores y distribuidoras. Reglamentación para instalaciones en propiedad horizontal.", tm:[["normas",2]]},
-  {t:"Normas", d:"Seguridad e higiene en la instalación y el montaje. Normas de calidad de procesos y productos.", tm:[["normas",2],["hys",2]]},
+  {t:"Códigos, normas y reglamentos", u:"reglamentacion-aea", d:"Normas y reglamentos vigentes, entes reguladores y distribuidoras. Reglamentación para instalaciones en propiedad horizontal.", tm:[["normas",2]]},
+  {t:"Normas", u:"normas-calidad-montaje", d:"Seguridad e higiene en la instalación y el montaje. Normas de calidad de procesos y productos.", tm:[["normas",2],["hys",2]]},
   {t:"Tipos y características de los materiales eléctricos", u:"materiales-electricos", d:"Selección de materiales para el proyecto.", tm:[["mat",2]]},
-  {t:"Noción de proyecto", d:"Idea, ejecución y evaluación. Esquemas unifilares, trifilares y funcionales. Secuencia de los procesos de montaje e instalación.", tm:[["cad",2],["instal",2]]},
-  {t:"Planillas de cargas", d:"Planillas de materiales (tipos normalizados, acreditación de conformidad). Protocolos de medición. Control de los tiempos de ejecución.", tm:[["cad",2],["normas",2]]}
+  {t:"Noción de proyecto", u:"proyecto-instalacion", d:"Idea, ejecución y evaluación. Esquemas unifilares, trifilares y funcionales. Secuencia de los procesos de montaje e instalación.", tm:[["cad",2],["instal",2]]},
+  {t:"Planillas de cargas", u:"proyecto-instalacion", d:"Planillas de materiales (tipos normalizados, acreditación de conformidad). Protocolos de medición. Control de los tiempos de ejecución.", tm:[["cad",2],["normas",2]]}
 ]},
 /* ---------- 6° AÑO ---------- */
 {id:"mq2", n:"Máquinas Eléctricas II", area:"maq", anio:6, h:144, ejes:[
-  {t:"Motores y transformadores", d:"Vacío y carga, ensayos de calentamiento, inspección y determinación de fallas. Mantenimiento de contactores, relés y protecciones. Termografías y ensayos.", tm:[["maq",3],["mant",3]]},
-  {t:"Bobinado de motores", d:"Cálculo, ejecución y reparación de bobinados.", tm:[["maq",3]]},
-  {t:"Generación de energía eléctrica", d:"Motogeneradores de media y pequeña potencia. Turbinas: tipos y características. Motores de combustión interna. Ensayos de equipos.", tm:[["energia",2],["maq",3]]},
-  {t:"Insumos", d:"Combustibles y lubricantes, soldaduras, plásticos, adhesivos, nuevos materiales, bobinados.", tm:[["mat",3]]},
-  {t:"Protección de transformadores y generadores", d:"Calidad del suministro: perturbaciones, microcortes y huecos de tensión. Planes de seguridad y medidas preventivas en los trabajos con tensión. Mejora de la calidad del servicio.", tm:[["prot",3],["calidad",2]]},
-  {t:"Aspectos legales y reglamentarios de los trabajos con tensión", d:"Recorrida general de máquinas: etapas y formas de ejecución. Reparaciones antieconómicas y reemplazo. Vibraciones.", tm:[["normas",3],["mant",3]]}
+  {t:"Motores y transformadores", u:"mantenimiento-electrico", d:"Vacío y carga, ensayos de calentamiento, inspección y determinación de fallas. Mantenimiento de contactores, relés y protecciones. Termografías y ensayos.", tm:[["maq",3],["mant",3]]},
+  {t:"Bobinado de motores", u:"bobinado-motores", d:"Cálculo, ejecución y reparación de bobinados.", tm:[["maq",3]]},
+  {t:"Generación de energía eléctrica", u:"generacion-motogeneradores", d:"Motogeneradores de media y pequeña potencia. Turbinas: tipos y características. Motores de combustión interna. Ensayos de equipos.", tm:[["energia",2],["maq",3]]},
+  {t:"Insumos", u:"insumos-electricos", d:"Combustibles y lubricantes, soldaduras, plásticos, adhesivos, nuevos materiales, bobinados.", tm:[["mat",3]]},
+  {t:"Protección de transformadores y generadores", u:"calidad-suministro", d:"Calidad del suministro: perturbaciones, microcortes y huecos de tensión. Planes de seguridad y medidas preventivas en los trabajos con tensión. Mejora de la calidad del servicio.", tm:[["prot",3],["calidad",2]]},
+  {t:"Aspectos legales y reglamentarios de los trabajos con tensión", u:"trabajos-con-tension", d:"Recorrida general de máquinas: etapas y formas de ejecución. Reparaciones antieconómicas y reemplazo. Vibraciones.", tm:[["normas",3],["mant",3]]}
 ]},
 {id:"ie3", n:"Instalaciones Eléctricas III", area:"instal", anio:6, h:144, amb:"En fábricas, talleres e industrias; infraestructura urbana y rural; empresas de servicios eléctricos.", ejes:[
   {t:"Instalaciones eléctricas", u:"proyecto-instalacion", d:"Las instalaciones de corrientes débiles, muy baja y baja tensión en la industria: tableros, maniobra, protección, canalizaciones y puesta a tierra.", tm:[["instal",3],["prot",3]]},
@@ -123,7 +123,7 @@ var MATERIAS = [
   {t:"Protección", u:"proteccion-electrica", d:"Contra contactos directos e indirectos. Protección de líneas contra sobrecarga, cortocircuito y sobretensiones.", tm:[["prot",3]]},
   {t:"Instalaciones de alumbrado", u:"alumbrado", d:"Luminarias, circuitos de uso general y especial, fuerza motriz, cálculos y esquemas.", tm:[["alumb",3]]},
   {t:"Mantenimiento", u:"mantenimiento-electrico", d:"De los componentes de protección y maniobra en fábricas e industrias.", tm:[["mant",3]]},
-  {t:"Seguridad y mantenimiento preventivo", d:"Plan de mantenimiento preventivo, inspecciones, órdenes de trabajo, gestión del mantenimiento, controles periódicos, costos, amortización y vida útil. Mantenimiento predictivo.", tm:[["mant",3],["hys",2]]}
+  {t:"Seguridad y mantenimiento preventivo", u:"gestion-mantenimiento", d:"Plan de mantenimiento preventivo, inspecciones, órdenes de trabajo, gestión del mantenimiento, controles periódicos, costos, amortización y vida útil. Mantenimiento predictivo.", tm:[["mant",3],["hys",2]]}
 ]},
 {id:"ai1", n:"Automatización Industrial I", area:"auto", anio:6, h:96, ejes:[
   {t:"Nociones del mundo digital", u:"logica-combinacional", d:"Sistemas de numeración y códigos, compuertas lógicas, lógica combinacional, álgebra de Boole y simplificación, flip-flops, contadores, registros, memorias y dispositivos programables.", tm:[["logica",1]]},
@@ -143,31 +143,31 @@ var MATERIAS = [
   {t:"Triac y diac", u:"semiconductores-especiales", d:"Características y funcionamiento. Aplicaciones del SCR, el triac y el diac en circuitos de potencia y control industrial.", tm:[["pot",2]]}
 ]},
 {id:"prg3", n:"Proyecto y Representación Gráfica III", area:"proy", anio:6, h:72, ejes:[
-  {t:"Proyecto eléctrico", d:"Demanda de potencia, líneas y circuitos, condiciones ambientales. Conductores y barras, blindobarras, maniobra y protección, corrientes de cortocircuito, coordinación de protecciones, potencia reactiva y corrección del factor de potencia.", tm:[["cad",3],["prot",3],["calidad",2]]},
-  {t:"Ejecución", d:"Planos y especificaciones, planos conforme a obra, catálogos y normas. Líneas de media y baja tensión, subterráneas, distribución. Selección de motores, centro de control de motores, potencia instalada y contratada, centros de transformación, iluminación, uso racional de la energía.", tm:[["cad",3],["energia",2],["alumb",3]]}
+  {t:"Proyecto eléctrico", u:"proyecto-electrico-industrial", d:"Demanda de potencia, líneas y circuitos, condiciones ambientales. Conductores y barras, blindobarras, maniobra y protección, corrientes de cortocircuito, coordinación de protecciones, potencia reactiva y corrección del factor de potencia.", tm:[["cad",3],["prot",3],["calidad",2]]},
+  {t:"Ejecución", u:"ejecucion-obra", d:"Planos y especificaciones, planos conforme a obra, catálogos y normas. Líneas de media y baja tensión, subterráneas, distribución. Selección de motores, centro de control de motores, potencia instalada y contratada, centros de transformación, iluminación, uso racional de la energía.", tm:[["cad",3],["energia",2],["alumb",3]]}
 ]},
 /* ---------- 7° AÑO ---------- */
 {id:"cc", n:"Centrales y Canalizaciones Eléctricas", area:"maq", anio:7, h:144, ejes:[
-  {t:"Generador", d:"Operación del equipo y rendimientos. Turbinas. Máquinas de combustión interna. Combustibles y lubricantes. Generación de energía eléctrica.", tm:[["energia",3],["maq",4]]},
-  {t:"Motogeneradores de media y pequeña potencia", d:"Turbinas, motores de combustión interna, ensayos de equipos, insumos y bobinados. Protección de transformadores y generadores.", tm:[["energia",3],["prot",4]]},
+  {t:"Generador", u:"generacion-motogeneradores", d:"Operación del equipo y rendimientos. Turbinas. Máquinas de combustión interna. Combustibles y lubricantes. Generación de energía eléctrica.", tm:[["energia",3],["maq",4]]},
+  {t:"Motogeneradores de media y pequeña potencia", u:"generacion-motogeneradores", d:"Turbinas, motores de combustión interna, ensayos de equipos, insumos y bobinados. Protección de transformadores y generadores.", tm:[["energia",3],["prot",4]]},
   {t:"Transformadores de potencia", u:"transformadores", d:"Esquemas de conexión. Normativa para los trabajos en media tensión. Determinación de fallas.", tm:[["maq",4],["normas",3]]},
-  {t:"Subestaciones y líneas de distribución", d:"Procesos de trabajo: planificación, calidad, productividad, cronograma y tiempos críticos, eficiencia. Prevención de incendios y cuidado del ambiente.", tm:[["energia",4],["instal",4]]},
+  {t:"Subestaciones y líneas de distribución", u:"subestaciones-lineas", d:"Procesos de trabajo: planificación, calidad, productividad, cronograma y tiempos críticos, eficiencia. Prevención de incendios y cuidado del ambiente.", tm:[["energia",4],["instal",4]]},
   {t:"Normas de seguridad e higiene", u:"higiene-seguridad", d:"Riesgo eléctrico. Primeros auxilios.", tm:[["hys",3]]},
-  {t:"Técnicas de identificación y resolución de problemas", d:"Seguridad en la vía pública, emplazamiento de líneas, alturas y distancias de seguridad, prohibición de acceso y señalización.", tm:[["instal",4],["hys",3]]},
-  {t:"Calidad del suministro de energía eléctrica", d:"Análisis de la calidad del suministro.", tm:[["calidad",3]]}
+  {t:"Técnicas de identificación y resolución de problemas", u:"redes-via-publica", d:"Seguridad en la vía pública, emplazamiento de líneas, alturas y distancias de seguridad, prohibición de acceso y señalización.", tm:[["instal",4],["hys",3]]},
+  {t:"Calidad del suministro de energía eléctrica", u:"calidad-suministro", d:"Análisis de la calidad del suministro.", tm:[["calidad",3]]}
 ]},
 {id:"ie4", n:"Instalaciones Eléctricas IV", area:"instal", anio:7, h:144, amb:"En equipos y edificaciones eléctricas especiales.", ejes:[
-  {t:"Instalaciones eléctricas", d:"Las instalaciones de corrientes débiles, muy baja y baja tensión en equipos y edificios especiales: tableros, maniobra, protección, canalizaciones y puesta a tierra.", tm:[["instal",4]]},
+  {t:"Instalaciones eléctricas", u:"instalaciones-especiales", d:"Las instalaciones de corrientes débiles, muy baja y baja tensión en equipos y edificios especiales: tableros, maniobra, protección, canalizaciones y puesta a tierra.", tm:[["instal",4]]},
   {t:"Tecnología de los materiales eléctricos", u:"materiales-electricos", d:"Conductores, gabinetes, aislantes, ferromagnéticos. Termografías y ensayos. Rendimientos.", tm:[["mat",4]]},
   {t:"Manejo de herramientas", u:"herramientas", d:"Herramientas manuales, equipos y máquinas herramientas.", tm:[["hys",2]]},
   {t:"Protección", u:"proteccion-electrica", d:"Contra contactos directos e indirectos. Protección de líneas contra sobrecarga, cortocircuito y sobretensiones.", tm:[["prot",4]]},
   {t:"Instalaciones de alumbrado", u:"alumbrado", d:"Luminarias, circuitos de uso general y especial, fuerza motriz, cálculos y esquemas.", tm:[["alumb",4]]},
   {t:"Cálculos", u:"potencia-ca", d:"Corrientes de cortocircuito. Coordinación de protecciones. Potencia reactiva y equipo de corrección del factor de potencia; su instalación.", tm:[["calidad",4],["prot",4]]},
   {t:"Mantenimiento", u:"mantenimiento-electrico", d:"De los componentes de protección y maniobra.", tm:[["mant",4]]},
-  {t:"Seguridad y mantenimiento preventivo", d:"Plan de mantenimiento preventivo y predictivo, inspecciones, órdenes de trabajo, controles periódicos, costos, amortización y vida útil.", tm:[["mant",4],["hys",3]]}
+  {t:"Seguridad y mantenimiento preventivo", u:"gestion-mantenimiento", d:"Plan de mantenimiento preventivo y predictivo, inspecciones, órdenes de trabajo, controles periódicos, costos, amortización y vida útil.", tm:[["mant",4],["hys",3]]}
 ]},
 {id:"ai2", n:"Automatización Industrial II", area:"auto", anio:7, h:144, ejes:[
-  {t:"Manejo e instalación", d:"Puesta en funcionamiento del autómata, programación y almacenamiento, conexionado de entradas y salidas, alimentación y mantenimiento.", tm:[["control",3]]},
+  {t:"Manejo e instalación", u:"instalacion-plc", d:"Puesta en funcionamiento del autómata, programación y almacenamiento, conexionado de entradas y salidas, alimentación y mantenimiento.", tm:[["control",3]]},
   {t:"Instrucciones y programas de los autómatas", u:"programacion-plc", d:"Ejecución de programas. Lenguajes: nemónicos o booleanos, diagrama de contactos, plano de funciones, Grafcet, organigrama. Simbología y equivalencias.", tm:[["control",3]]},
   {t:"Aplicaciones básicas de programación", u:"aplicaciones-plc", d:"Entradas y salidas, marcas, temporizadores, contadores, registros de desplazamiento. Instrucciones de programa y de servicio. Circuitos lógicos y generadores de impulsos.", tm:[["control",4]]},
   {t:"Redes de automatización", u:"comunicaciones-industriales", d:"Comunicación entre equipos, nivel de enlace. Supervisión con SCADA: propiedades del sistema supervisor y procesos supervisados.", tm:[["redes",3],["control",4]]},

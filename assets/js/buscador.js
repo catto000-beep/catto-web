@@ -44,7 +44,7 @@
      traducidas); los enlaces a temas traducidos los pasa a /en/ idioma.js. */
   var EN = (document.documentElement.lang || "").indexOf("en") === 0;
   /* en inglés se usa el índice de las páginas en inglés (lo genera _src-publicaciones/ingles/indice_en.py) */
-  if (EN) { DATOS = ["/assets/js/buscador-datos-en.js"]; for (var kk = 1; kk <= 11; kk++) DATOS.push("/assets/js/buscador-datos-en" + kk + ".js"); }
+  if (EN) { DATOS = ["/assets/js/buscador-datos-en.js"]; for (var kk = 1; kk <= 12; kk++) DATOS.push("/assets/js/buscador-datos-en" + kk + ".js"); }
   var TX = EN ? {
     nada: function (q) { return "No results for “" + q + "”"; },
     uno: "1 place on the site", varios: " places on the site", muestro: function (n) { return " · showing the first " + n; }

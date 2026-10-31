@@ -108,6 +108,67 @@ section.carrera.abierta .pl-in :is(.anios,.cards) > :nth-child(n+6){animation-de
 .pl-btn::after{content:"›";margin-left:auto;font-size:1.25em;line-height:1;transition:transform .2s cubic-bezier(.77,0,.175,1)}
 section.carrera.abierta .pl-btn::after{transform:rotate(90deg)}
 .pl-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+/* ============ LAS CARRERAS: tablero de llaves ============
+   Las carreras van dentro de un tablero: una llave térmica por carrera y la llave general.
+   La general abre o cierra el tablero entero (las barras de siempre); cada llave abre su
+   carrera y queda levantada mientras esté abierta. Sin javascript no se pliega nada y
+   las llaves son enlaces a cada carrera. Lo maneja portada.js. */
+:root{--tb-pal:#3a4250;--tb-a:#d9dde2;--tb-b:#c3c9d0;--tb-ll:#f4f4f2;--tb-borde:#8a96a3;--tb-txt:#1b1d21;--tb-sub:#4a5363;--tb-luz:rgba(255,255,255,.8)}
+:root[data-tema="oscuro"]{--tb-pal:#15181d;--tb-a:#2b3038;--tb-b:#1e2228;--tb-ll:#343a44;--tb-borde:#5a6471;--tb-txt:#eef1f4;--tb-sub:#a9b2bd;--tb-luz:rgba(255,255,255,.07)}
+@media (prefers-color-scheme:dark){:root:not([data-tema="claro"]){--tb-pal:#15181d;--tb-a:#2b3038;--tb-b:#1e2228;--tb-ll:#343a44;--tb-borde:#5a6471;--tb-txt:#eef1f4;--tb-sub:#a9b2bd;--tb-luz:rgba(255,255,255,.07)}}
+.tablero{padding:7px 0}
+.tb-panel{display:flex;align-items:center;gap:22px;padding:16px 20px;border-radius:6px;color:var(--tb-txt);
+  background:linear-gradient(180deg,var(--tb-a),var(--tb-b));border:1px solid var(--tb-borde);
+  box-shadow:0 1px 0 var(--tb-luz) inset,0 2px 6px rgba(0,0,0,.12);position:relative}
+/* los cuatro tornillos de la tapa */
+.tb-panel::before{content:"";position:absolute;inset:6px;pointer-events:none;
+  --t:radial-gradient(circle,var(--tb-borde) 2.5px,transparent 3px);
+  background:var(--t) 0 0,var(--t) 100% 0,var(--t) 0 100%,var(--t) 100% 100%;background-size:8px 8px;background-repeat:no-repeat}
+.tb-tit{flex:none}
+.tb-chapa{display:block;font:700 12px "IBM Plex Mono",monospace;letter-spacing:2px;color:var(--tb-sub);text-transform:uppercase}
+.tb-tit h2{margin:3px 0 0;font-size:28px;line-height:1;letter-spacing:-.4px;color:var(--tb-txt)}
+.tb-llaves{display:flex;flex-wrap:wrap;gap:12px;margin-left:12px;flex:1;min-width:0}
+.tb-llave{display:block;min-width:116px;padding:9px 12px 8px;text-align:center;text-decoration:none;color:var(--tb-txt);
+  background:var(--tb-ll);border:1px solid var(--tb-borde);border-radius:4px;box-shadow:0 1px 0 var(--tb-luz) inset;
+  transition:transform .15s ease,box-shadow .15s ease}
+a.tb-llave:hover{transform:translateY(-1px);box-shadow:0 1px 0 var(--tb-luz) inset,0 3px 8px rgba(0,0,0,.15);text-decoration:none}
+a.tb-llave:focus-visible,.tb-general:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.tb-llave b{display:block;font:700 15px/1.2 "IBM Plex Sans",sans-serif;margin-top:6px;white-space:nowrap}
+.tb-llave i{display:block;font:600 11px "IBM Plex Mono",monospace;font-style:normal;color:var(--tb-sub);margin-top:2px}
+.tb-reserva{border-style:dashed;opacity:.55;box-shadow:none}
+/* la palanca: abajo y gris = apagada; arriba y verde = carrera abierta */
+.tb-pal{display:block;position:relative;width:22px;height:34px;margin:0 auto;border-radius:3px;background:var(--tb-pal);border:2px solid var(--tb-pal);box-sizing:border-box}
+.tb-pal::after{content:"";position:absolute;left:1px;right:1px;bottom:1px;height:14px;border-radius:2px;background:#c8ced6;
+  transition:transform .2s cubic-bezier(.23,1,.32,1),background-color .2s ease}
+.tb-llave.on .tb-pal::after{transform:translateY(-14px);background:#35a35a}
+.tb-reserva .tb-pal{background:transparent;border-style:dashed;border-color:var(--tb-borde)}
+.tb-reserva .tb-pal::after{display:none}
+.tb-general{all:unset;box-sizing:border-box;flex:none;width:74px;height:90px;margin-left:auto;border-radius:5px;cursor:pointer;
+  background:#1b1d21;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  font:700 10.5px "IBM Plex Mono",monospace;letter-spacing:1px;text-transform:uppercase;box-shadow:0 2px 0 #000}
+.tb-general .tb-pal{border-color:#d4a72c;background:#2a2e35}
+.tb-general .tb-pal::after{background:#6b7380}
+.tablero.abierto .tb-general .tb-pal::after{transform:translateY(-14px);background:#d4a72c}
+.tb-general:active{transform:translateY(1px)}
+/* el cuerpo: las barras de las carreras, como siempre; plegado igual que cada carrera */
+html.js .tb-cuerpo{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;
+  transition:grid-template-rows .2s cubic-bezier(.23,1,.32,1),opacity .15s ease,visibility 0s .2s}
+html.js .tablero.abierto .tb-cuerpo{grid-template-rows:1fr;opacity:1;visibility:visible;
+  transition:grid-template-rows .3s cubic-bezier(.23,1,.32,1),opacity .25s ease}
+.tb-in{min-height:0;overflow:hidden}
+.tablero.abierto .tb-in{animation:plSuelta 0s .31s forwards}
+@media(prefers-reduced-motion:reduce){html.js .tb-cuerpo,.tb-pal::after{transition:none}.tb-in{overflow:visible}}
+@media(max-width:900px){
+  .tb-panel{flex-wrap:wrap;gap:14px;padding:14px}
+  .tb-llaves{order:3;flex:1 1 100%;margin-left:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .tb-llave{min-width:0}
+  .tb-llave b{white-space:normal}
+  .tb-general{width:auto;height:auto;flex-direction:row;padding:8px 14px}
+  .tb-general .tb-pal{width:18px;height:28px}
+  .tb-general .tb-pal::after{height:11px}
+  .tablero.abierto .tb-general .tb-pal::after{transform:translateY(-11px)}
+  .tb-tit h2{font-size:24px}
+}
 
 /* Los dos mapas van uno al lado del otro y con el tamaño de las tarjetas de
    Herramientas. Va acá y no en base.css porque esa hoja tiene un cambio de
@@ -398,6 +459,22 @@ section.par-bl{padding:22px 0 0}
     .catch(function () {});
 })();
 </script>
+
+<!-- ============ LAS CARRERAS: el tablero (agrupa los planes de abajo) ============ -->
+<div class="tablero" id="carreras">
+  <div class="container">
+    <div class="tb-panel">
+      <div class="tb-tit"><span class="tb-chapa">Main panel</span><h2>The programs</h2></div>
+      <div class="tb-llaves">
+      <a class="tb-llave" href="#anios" data-sec="anios"><span class="tb-pal"></span><b>Electronics Technician</b><i>4 years</i></a>
+      <a class="tb-llave" href="#aniosElec" data-sec="aniosElec"><span class="tb-pal"></span><b>Electrical Technician</b><i>4 years</i></a>
+      <a class="tb-llave" href="#niveles" data-sec="niveles"><span class="tb-pal"></span><b>Electronic Eng.</b><i>UTN · 6 levels</i></a>
+      <span class="tb-llave tb-reserva" aria-hidden="true"><span class="tb-pal"></span><b>Spare</b><i>more engineering</i></span>
+      </div>
+      <button class="tb-general" type="button" aria-expanded="false" aria-controls="carrerasCuerpo" aria-label="Open or close the programs"><span class="tb-pal"></span><span>Open</span></button>
+    </div>
+  </div>
+  <div class="tb-cuerpo" id="carrerasCuerpo"><div class="tb-in">
 
 <!-- ============ LOS CUATRO AÑOS ============ -->
 <section class="block carrera" id="anios">
@@ -725,12 +802,12 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#2dd4bf"></span>
         <span class="m-n">Electrical Technology</span>
-        <span class="m-c">5 of 7</span>
+        <span class="m-c">7 of 7</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
-        <li data-b="electrical energy generation, transmission and transformation. thermal energy. power generation and distribution electrical technology "><span class="pend">Electrical energy</span></li>
-        <li data-b="energy sources conventional sources: oil and gas. power generation and alternative energies. uses of energy. distribution networks. energy and power. efficiency of the conversions. power generation and distribution electrical technology "><span class="pend">Energy sources</span></li>
+        <li data-b="electrical energy generation, transmission and transformation. thermal energy. power generation and distribution electrical technology "><a href="/en/publicaciones/mapa-electronica/temas/energia-electrica">Electrical energy</a></li>
+        <li data-b="energy sources conventional sources: oil and gas. power generation and alternative energies. uses of energy. distribution networks. energy and power. efficiency of the conversions. power generation and distribution electrical technology "><a href="/en/publicaciones/mapa-electronica/temas/energia-electrica">Energy sources</a></li>
         <li data-b="electrical engineering basics direct and alternating current. current and voltage. ohm's law, kirchhoff's laws, joule effect. quantities and basic formulas. combinations of resistors, sources (cells and batteries) and capacitors. impedance. circuits and electrical fundamentals electrical technology "><a href="/en/publicaciones/mapa-electronica/temas/corriente-electrica">Electrical engineering basics</a></li>
         <li data-b="solving dc and ac circuits calculation of direct- and alternating-current circuits. circuits and electrical fundamentals electrical technology "><a href="/en/publicaciones/mapa-electronica/temas/corrientes-alternas">Solving DC and AC circuits</a></li>
         <li data-b="magnetism and electromagnetism magnetic field, electromagnets and induction: the basis of motors and transformers. circuits and electrical fundamentals transformers, motors and generators electrical technology "><a href="/en/publicaciones/mapa-electronica/temas/magnetismo-electromagnetismo">Magnetism and electromagnetism</a></li>
@@ -758,13 +835,13 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#56d4dd"></span>
         <span class="m-n">Electrical Measurements I</span>
-        <span class="m-c">3 of 4</span>
+        <span class="m-c">4 of 4</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
         <li data-b="measurements measurement errors, instrument classes. measuring current, voltage, power and resistance. measurement and instrumentation electrical measurements i "><a href="/en/publicaciones/mapa-electronica/temas/magnitudes-electricas">Measurements</a></li>
         <li data-b="instruments analog and digital instruments: voltmeter, ammeter, wattmeter, multimeter, frequency counter, bridges. characteristics, connection and calibration. measurement and instrumentation electrical measurements i "><a href="/en/publicaciones/mapa-electronica/temas/instrumentos-analogicos">Instruments</a></li>
-        <li data-b="measurements on electrical machines measurements on ac and dc motors, motor connection, starting methods. measurement tests on motors and transformers. measurement and instrumentation transformers, motors and generators electrical measurements i "><span class="pend">Measurements on electrical machines</span></li>
+        <li data-b="measurements on electrical machines measurements on ac and dc motors, motor connection, starting methods. measurement tests on motors and transformers. measurement and instrumentation transformers, motors and generators electrical measurements i "><a href="/en/publicaciones/mapa-electronica/temas/ensayos-maquinas">Measurements on electrical machines</a></li>
         <li data-b="safety workplace safety in tests and when operating electrical measuring instruments. health and safety electrical measurements i "><a href="/en/publicaciones/mapa-electronica/temas/higiene-seguridad">Safety</a></li>
       </ul>
     </li>
@@ -772,14 +849,14 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#bc8cff"></span>
         <span class="m-n">Design and Technical Drawing I</span>
-        <span class="m-c">4 of 5</span>
+        <span class="m-c">5 of 5</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
         <li data-b="technical drawing drawing elements and instruments, standardization, dimensioning, geometric constructions, freehand sketching. drawings, plans and design design and technical drawing i "><a href="/en/publicaciones/mapa-electronica/temas/dibujo-tecnico-cad">Technical drawing</a></li>
         <li data-b="computer-aided design introduction to computer-aided drawing: basic functions, applications, quality of representation, three dimensions. drawings, plans and design design and technical drawing i "><a href="/en/publicaciones/mapa-electronica/temas/dibujo-tecnico-cad">Computer-aided design</a></li>
         <li data-b="design projections and perspectives. symbols of electrical elements. representing machines and components. reading installation plans, electrical diagrams and technical documentation. drawings, plans and design electrical installations design and technical drawing i "><a href="/en/publicaciones/simbologia">Design</a></li>
-        <li data-b="standards and regulations for electrical work codes, standards and regulations in force, regulators and distribution companies. regulations for electrical installations in buildings. standards and regulations design and technical drawing i "><span class="pend">Standards and regulations for electrical work</span></li>
+        <li data-b="standards and regulations for electrical work codes, standards and regulations in force, regulators and distribution companies. regulations for electrical installations in buildings. standards and regulations design and technical drawing i "><a href="/en/publicaciones/mapa-electronica/temas/reglamentacion-aea">Standards and regulations for electrical work</a></li>
         <li data-b="health and safety standards in electrical installation and assembly work. health and safety design and technical drawing i "><a href="/en/publicaciones/mapa-electronica/temas/higiene-seguridad">Health and safety standards</a></li>
       </ul>
     </li>
@@ -795,13 +872,13 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#00897b"></span>
         <span class="m-n">Electrical Machines I</span>
-        <span class="m-c">3 of 4</span>
+        <span class="m-c">4 of 4</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
         <li data-b="ac and dc motors types, connection and starting methods. tests. parts, bearings, materials. wiring and mounting of motors. transformers, motors and generators electrical machines i "><a href="/en/publicaciones/mapa-electronica/temas/motores-ca">AC and DC motors</a></li>
         <li data-b="parallel operation and tests of transformers conditions for connecting transformers in parallel, and their tests. transformers, motors and generators measurement and instrumentation electrical machines i "><a href="/en/publicaciones/mapa-electronica/temas/transformadores">Parallel operation and tests of transformers</a></li>
-        <li data-b="no-load and load characteristics of motors and transformers. temperature-rise tests. visual inspection. technical criteria for selecting machines, tools, equipment and instruments. transformers, motors and generators measurement and instrumentation electrical machines i "><span class="pend">No-load and load characteristics</span></li>
+        <li data-b="no-load and load characteristics of motors and transformers. temperature-rise tests. visual inspection. technical criteria for selecting machines, tools, equipment and instruments. transformers, motors and generators measurement and instrumentation electrical machines i "><a href="/en/publicaciones/mapa-electronica/temas/ensayos-maquinas">No-load and load characteristics</a></li>
         <li data-b="safety workplace safety in the workshop and on site. health and safety electrical machines i "><a href="/en/publicaciones/mapa-electronica/temas/higiene-seguridad">Safety</a></li>
       </ul>
     </li>
@@ -809,7 +886,7 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#d2691e"></span>
         <span class="m-n">Electrical Installations II</span>
-        <span class="m-c">6 of 7</span>
+        <span class="m-c">7 of 7</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
@@ -819,20 +896,20 @@ section.par-bl{padding:22px 0 0}
         <li data-b="protection against direct and indirect contact. protection of circuits against overload, short circuit and overvoltage. electrical protection electrical installations ii "><a href="/en/publicaciones/mapa-electronica/temas/proteccion-electrica">Protection</a></li>
         <li data-b="lighting installations luminaires, general-purpose and special circuits, power circuits, calculations and diagrams. lighting electrical installations electrical installations ii "><a href="/en/publicaciones/mapa-electronica/temas/alumbrado">Lighting installations</a></li>
         <li data-b="maintenance of protection and switching components: switches, timers, relays, motor protection breakers, fuses, circuit breakers. maintenance electrical installations ii "><a href="/en/publicaciones/mapa-electronica/temas/mantenimiento-electrico">Maintenance</a></li>
-        <li data-b="safety and preventive maintenance purpose and functions of preventive maintenance, implementation stages, service life, inspection plan, work orders, tracking sheets and control charts. introduction to predictive maintenance. hourly costs and depreciation. maintenance health and safety electrical installations ii "><span class="pend">Safety and preventive maintenance</span></li>
+        <li data-b="safety and preventive maintenance purpose and functions of preventive maintenance, implementation stages, service life, inspection plan, work orders, tracking sheets and control charts. introduction to predictive maintenance. hourly costs and depreciation. maintenance health and safety electrical installations ii "><a href="/en/publicaciones/mapa-electronica/temas/mantenimiento-electrico">Safety and preventive maintenance</a></li>
       </ul>
     </li>
     <li class="m-item">
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#56d4dd"></span>
         <span class="m-n">Electrical Measurements II</span>
-        <span class="m-c">3 of 4</span>
+        <span class="m-c">4 of 4</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
         <li data-b="measurement measuring power, frequency, resistance, energy and power factor (cos φ). measurement and instrumentation power quality and power factor electrical measurements ii "><a href="/en/publicaciones/mapa-electronica/temas/mediciones-ca">Measurement</a></li>
         <li data-b="instruments wattmeter, power-factor meter, energy meters, frequency counter, oscilloscope. current and voltage instrument transformers. connection and calibration. measurement and instrumentation electrical measurements ii "><a href="/en/publicaciones/mapa-electronica/temas/instrumentos-digitales">Instruments</a></li>
-        <li data-b="special measurements earth resistance and insulation measurements. generator sets and generator tests. basic functions of logic controllers. sensors, actuators, introduction to servo systems. measurement and instrumentation sensors and actuators electrical measurements ii "><span class="pend">Special measurements</span></li>
+        <li data-b="special measurements earth resistance and insulation measurements. generator sets and generator tests. basic functions of logic controllers. sensors, actuators, introduction to servo systems. measurement and instrumentation sensors and actuators electrical measurements ii "><a href="/en/publicaciones/mapa-electronica/temas/mediciones-especiales">Special measurements</a></li>
         <li data-b="safety workplace safety in tests and when operating measuring equipment. health and safety electrical measurements ii "><a href="/en/publicaciones/mapa-electronica/temas/higiene-seguridad">Safety</a></li>
       </ul>
     </li>
@@ -840,16 +917,16 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#bc8cff"></span>
         <span class="m-n">Design and Technical Drawing II</span>
-        <span class="m-c">2 of 6</span>
+        <span class="m-c">6 of 6</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
         <li data-b="stages of a project methodology and planning. preliminary design. technical and economic analysis. symbols and specifications for electrical installation plans. drawings, plans and design design and technical drawing ii "><a href="/en/publicaciones/mapa-electronica/temas/proyecto-instalacion">Stages of a project</a></li>
-        <li data-b="codes, standards and regulations standards and regulations in force, regulators and distribution companies. regulations for installations in multi-unit buildings. standards and regulations design and technical drawing ii "><span class="pend">Codes, standards and regulations</span></li>
-        <li data-b="standards health and safety in installation and assembly. quality standards for processes and products. standards and regulations health and safety design and technical drawing ii "><span class="pend">Standards</span></li>
+        <li data-b="codes, standards and regulations standards and regulations in force, regulators and distribution companies. regulations for installations in multi-unit buildings. standards and regulations design and technical drawing ii "><a href="/en/publicaciones/mapa-electronica/temas/reglamentacion-aea">Codes, standards and regulations</a></li>
+        <li data-b="standards health and safety in installation and assembly. quality standards for processes and products. standards and regulations health and safety design and technical drawing ii "><a href="/en/publicaciones/mapa-electronica/temas/normas-calidad-montaje">Standards</a></li>
         <li data-b="types and characteristics of electrical materials selecting materials for the project. electrical materials design and technical drawing ii "><a href="/en/publicaciones/mapa-electronica/temas/materiales-electricos">Types and characteristics of electrical materials</a></li>
-        <li data-b="the idea of a project idea, execution and evaluation. single-line, three-line and functional diagrams. sequencing of assembly and installation work. drawings, plans and design electrical installations design and technical drawing ii "><span class="pend">The idea of a project</span></li>
-        <li data-b="load and material schedules material schedules (standard types, certificates of conformity). measurement reports. tracking of execution times. drawings, plans and design standards and regulations design and technical drawing ii "><span class="pend">Load and material schedules</span></li>
+        <li data-b="the idea of a project idea, execution and evaluation. single-line, three-line and functional diagrams. sequencing of assembly and installation work. drawings, plans and design electrical installations design and technical drawing ii "><a href="/en/publicaciones/mapa-electronica/temas/proyecto-instalacion">The idea of a project</a></li>
+        <li data-b="load and material schedules material schedules (standard types, certificates of conformity). measurement reports. tracking of execution times. drawings, plans and design standards and regulations design and technical drawing ii "><a href="/en/publicaciones/mapa-electronica/temas/proyecto-instalacion">Load and material schedules</a></li>
       </ul>
     </li>
     </ul>
@@ -864,23 +941,23 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#00897b"></span>
         <span class="m-n">Electrical Machines II</span>
-        <span class="m-c">0 of 6</span>
+        <span class="m-c">6 of 6</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
-        <li data-b="motors and transformers no-load and load tests, temperature-rise tests, inspection and fault finding. maintenance of contactors, relays and protections. thermography and tests. transformers, motors and generators maintenance electrical machines ii "><span class="pend">Motors and transformers</span></li>
-        <li data-b="motor winding calculating, making and repairing windings. transformers, motors and generators electrical machines ii "><span class="pend">Motor winding</span></li>
-        <li data-b="electric power generation medium- and low-power generator sets. turbines: types and characteristics. internal combustion engines. equipment tests. power generation and distribution transformers, motors and generators electrical machines ii "><span class="pend">Electric power generation</span></li>
-        <li data-b="supplies fuels and lubricants, welding, plastics, adhesives, new materials, windings. electrical materials electrical machines ii "><span class="pend">Supplies</span></li>
-        <li data-b="protection of transformers and generators supply quality: disturbances, micro-interruptions and voltage dips. safety plans and preventive measures for live work. improving service quality. electrical protection power quality and power factor electrical machines ii "><span class="pend">Protection of transformers and generators</span></li>
-        <li data-b="legal and regulatory aspects of live work general overhaul of machines: stages and ways of carrying it out. uneconomic repairs and replacement. vibration. standards and regulations maintenance electrical machines ii "><span class="pend">Legal and regulatory aspects of live work</span></li>
+        <li data-b="motors and transformers no-load and load tests, temperature-rise tests, inspection and fault finding. maintenance of contactors, relays and protections. thermography and tests. transformers, motors and generators maintenance electrical machines ii "><a href="/en/publicaciones/mapa-electronica/temas/mantenimiento-electrico">Motors and transformers</a></li>
+        <li data-b="motor winding calculating, making and repairing windings. transformers, motors and generators electrical machines ii "><a href="/en/publicaciones/mapa-electronica/temas/bobinado-motores">Motor winding</a></li>
+        <li data-b="electric power generation medium- and low-power generator sets. turbines: types and characteristics. internal combustion engines. equipment tests. power generation and distribution transformers, motors and generators electrical machines ii "><a href="/en/publicaciones/mapa-electronica/temas/generacion-motogeneradores">Electric power generation</a></li>
+        <li data-b="supplies fuels and lubricants, welding, plastics, adhesives, new materials, windings. electrical materials electrical machines ii "><a href="/en/publicaciones/mapa-electronica/temas/insumos-electricos">Supplies</a></li>
+        <li data-b="protection of transformers and generators supply quality: disturbances, micro-interruptions and voltage dips. safety plans and preventive measures for live work. improving service quality. electrical protection power quality and power factor electrical machines ii "><a href="/en/publicaciones/mapa-electronica/temas/calidad-suministro">Protection of transformers and generators</a></li>
+        <li data-b="legal and regulatory aspects of live work general overhaul of machines: stages and ways of carrying it out. uneconomic repairs and replacement. vibration. standards and regulations maintenance electrical machines ii "><a href="/en/publicaciones/mapa-electronica/temas/trabajos-con-tension">Legal and regulatory aspects of live work</a></li>
       </ul>
     </li>
     <li class="m-item">
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#d2691e"></span>
         <span class="m-n">Electrical Installations III</span>
-        <span class="m-c">6 of 7</span>
+        <span class="m-c">7 of 7</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
@@ -890,7 +967,7 @@ section.par-bl{padding:22px 0 0}
         <li data-b="protection against direct and indirect contact. protection of circuits against overload, short circuit and overvoltage. electrical protection electrical installations iii "><a href="/en/publicaciones/mapa-electronica/temas/proteccion-electrica">Protection</a></li>
         <li data-b="lighting installations luminaires, general-purpose and special circuits, power circuits, calculations and diagrams. lighting electrical installations iii "><a href="/en/publicaciones/mapa-electronica/temas/alumbrado">Lighting installations</a></li>
         <li data-b="maintenance of protection and switching components in factories and industries. maintenance electrical installations iii "><a href="/en/publicaciones/mapa-electronica/temas/mantenimiento-electrico">Maintenance</a></li>
-        <li data-b="safety and preventive maintenance preventive maintenance plan, inspections, work orders, maintenance management, periodic checks, costs, depreciation and service life. predictive maintenance. maintenance health and safety electrical installations iii "><span class="pend">Safety and preventive maintenance</span></li>
+        <li data-b="safety and preventive maintenance preventive maintenance plan, inspections, work orders, maintenance management, periodic checks, costs, depreciation and service life. predictive maintenance. maintenance health and safety electrical installations iii "><a href="/en/publicaciones/mapa-electronica/temas/gestion-mantenimiento">Safety and preventive maintenance</a></li>
       </ul>
     </li>
     <li class="m-item">
@@ -930,12 +1007,12 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#bc8cff"></span>
         <span class="m-n">Design and Technical Drawing III</span>
-        <span class="m-c">0 of 2</span>
+        <span class="m-c">2 of 2</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
-        <li data-b="electrical design power demand, feeders and circuits, environmental conditions. conductors and busbars, busways, switching and protection, short-circuit currents, protection coordination, reactive power and power-factor correction. drawings, plans and design electrical protection power quality and power factor design and technical drawing iii "><span class="pend">Electrical design</span></li>
-        <li data-b="execution plans and specifications, as-built drawings, catalogues and standards. medium- and low-voltage lines, underground lines, distribution. motor selection, motor control center, installed and contracted power, transformer stations, lighting, rational use of energy. drawings, plans and design power generation and distribution lighting design and technical drawing iii "><span class="pend">Execution</span></li>
+        <li data-b="electrical design power demand, feeders and circuits, environmental conditions. conductors and busbars, busways, switching and protection, short-circuit currents, protection coordination, reactive power and power-factor correction. drawings, plans and design electrical protection power quality and power factor design and technical drawing iii "><a href="/en/publicaciones/mapa-electronica/temas/proyecto-electrico-industrial">Electrical design</a></li>
+        <li data-b="execution plans and specifications, as-built drawings, catalogues and standards. medium- and low-voltage lines, underground lines, distribution. motor selection, motor control center, installed and contracted power, transformer stations, lighting, rational use of energy. drawings, plans and design power generation and distribution lighting design and technical drawing iii "><a href="/en/publicaciones/mapa-electronica/temas/ejecucion-obra">Execution</a></li>
       </ul>
     </li>
     </ul>
@@ -950,46 +1027,46 @@ section.par-bl{padding:22px 0 0}
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#00897b"></span>
         <span class="m-n">Power Plants and Distribution</span>
-        <span class="m-c">2 of 7</span>
+        <span class="m-c">7 of 7</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
-        <li data-b="generator operating the equipment and efficiencies. turbines. internal combustion engines. fuels and lubricants. electric power generation. power generation and distribution transformers, motors and generators power plants and distribution "><span class="pend">Generator</span></li>
-        <li data-b="medium- and low-power generator sets turbines, internal combustion engines, equipment tests, supplies and windings. protection of transformers and generators. power generation and distribution electrical protection power plants and distribution "><span class="pend">Medium- and low-power generator sets</span></li>
+        <li data-b="generator operating the equipment and efficiencies. turbines. internal combustion engines. fuels and lubricants. electric power generation. power generation and distribution transformers, motors and generators power plants and distribution "><a href="/en/publicaciones/mapa-electronica/temas/generacion-motogeneradores">Generator</a></li>
+        <li data-b="medium- and low-power generator sets turbines, internal combustion engines, equipment tests, supplies and windings. protection of transformers and generators. power generation and distribution electrical protection power plants and distribution "><a href="/en/publicaciones/mapa-electronica/temas/generacion-motogeneradores">Medium- and low-power generator sets</a></li>
         <li data-b="power transformers connection diagrams. regulations for medium-voltage work. fault finding. transformers, motors and generators standards and regulations power plants and distribution "><a href="/en/publicaciones/mapa-electronica/temas/transformadores">Power transformers</a></li>
-        <li data-b="substations and distribution lines work processes: planning, quality, productivity, schedule and critical times, efficiency. fire prevention and environmental care. power generation and distribution electrical installations power plants and distribution "><span class="pend">Substations and distribution lines</span></li>
+        <li data-b="substations and distribution lines work processes: planning, quality, productivity, schedule and critical times, efficiency. fire prevention and environmental care. power generation and distribution electrical installations power plants and distribution "><a href="/en/publicaciones/mapa-electronica/temas/subestaciones-lineas">Substations and distribution lines</a></li>
         <li data-b="health and safety standards electrical risk. first aid. health and safety power plants and distribution "><a href="/en/publicaciones/mapa-electronica/temas/higiene-seguridad">Health and safety standards</a></li>
-        <li data-b="problem identification and solving techniques safety on public roads, routing of lines, safety heights and clearances, access restrictions and signage. electrical installations health and safety power plants and distribution "><span class="pend">Problem identification and solving techniques</span></li>
-        <li data-b="quality of the electricity supply analysis of supply quality. power quality and power factor power plants and distribution "><span class="pend">Quality of the electricity supply</span></li>
+        <li data-b="problem identification and solving techniques safety on public roads, routing of lines, safety heights and clearances, access restrictions and signage. electrical installations health and safety power plants and distribution "><a href="/en/publicaciones/mapa-electronica/temas/redes-via-publica">Problem identification and solving techniques</a></li>
+        <li data-b="quality of the electricity supply analysis of supply quality. power quality and power factor power plants and distribution "><a href="/en/publicaciones/mapa-electronica/temas/calidad-suministro">Quality of the electricity supply</a></li>
       </ul>
     </li>
     <li class="m-item">
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#d2691e"></span>
         <span class="m-n">Electrical Installations IV</span>
-        <span class="m-c">6 of 8</span>
+        <span class="m-c">8 of 8</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
-        <li data-b="electrical installations low-current, extra-low-voltage and low-voltage installations in special equipment and buildings: panels, switching, protection, conduits and earthing. electrical installations electrical installations iv "><span class="pend">Electrical installations</span></li>
+        <li data-b="electrical installations low-current, extra-low-voltage and low-voltage installations in special equipment and buildings: panels, switching, protection, conduits and earthing. electrical installations electrical installations iv "><a href="/en/publicaciones/mapa-electronica/temas/instalaciones-especiales">Electrical installations</a></li>
         <li data-b="electrical materials technology conductors, enclosures, insulators, ferromagnetic materials. thermography and tests. efficiencies. electrical materials electrical installations iv "><a href="/en/publicaciones/mapa-electronica/temas/materiales-electricos">Electrical materials technology</a></li>
         <li data-b="use of tools hand tools, equipment and machine tools. health and safety electrical installations iv "><a href="/en/publicaciones/mapa-electronica/temas/herramientas">Use of tools</a></li>
         <li data-b="protection against direct and indirect contact. protection of circuits against overload, short circuit and overvoltage. electrical protection electrical installations iv "><a href="/en/publicaciones/mapa-electronica/temas/proteccion-electrica">Protection</a></li>
         <li data-b="lighting installations luminaires, general-purpose and special circuits, power circuits, calculations and diagrams. lighting electrical installations iv "><a href="/en/publicaciones/mapa-electronica/temas/alumbrado">Lighting installations</a></li>
         <li data-b="calculations short-circuit currents. protection coordination. reactive power and power-factor correction equipment; its installation. power quality and power factor electrical protection electrical installations iv "><a href="/en/publicaciones/mapa-electronica/temas/potencia-ca">Calculations</a></li>
         <li data-b="maintenance of protection and switching components. maintenance electrical installations iv "><a href="/en/publicaciones/mapa-electronica/temas/mantenimiento-electrico">Maintenance</a></li>
-        <li data-b="safety and preventive maintenance preventive and predictive maintenance plan, inspections, work orders, periodic checks, costs, depreciation and service life. maintenance health and safety electrical installations iv "><span class="pend">Safety and preventive maintenance</span></li>
+        <li data-b="safety and preventive maintenance preventive and predictive maintenance plan, inspections, work orders, periodic checks, costs, depreciation and service life. maintenance health and safety electrical installations iv "><a href="/en/publicaciones/mapa-electronica/temas/gestion-mantenimiento">Safety and preventive maintenance</a></li>
       </ul>
     </li>
     <li class="m-item">
       <button class="m-fila" type="button" aria-expanded="false">
         <span class="m-dot" style="background:#f85149"></span>
         <span class="m-n">Industrial Automation II</span>
-        <span class="m-c">4 of 5</span>
+        <span class="m-c">5 of 5</span>
         <span class="m-fl">›</span>
       </button>
       <ul class="m-ejes">
-        <li data-b="handling and installation commissioning the controller, programming and storage, wiring of inputs and outputs, power supply and maintenance. automation and plcs industrial automation ii "><span class="pend">Handling and installation</span></li>
+        <li data-b="handling and installation commissioning the controller, programming and storage, wiring of inputs and outputs, power supply and maintenance. automation and plcs industrial automation ii "><a href="/en/publicaciones/mapa-electronica/temas/instalacion-plc">Handling and installation</a></li>
         <li data-b="plc instructions and programs program execution. languages: mnemonic or boolean, ladder diagram, function block diagram, grafcet, flowchart. symbols and equivalences. automation and plcs industrial automation ii "><a href="/en/publicaciones/mapa-electronica/temas/programacion-plc">PLC instructions and programs</a></li>
         <li data-b="basic programming applications inputs and outputs, markers, timers, counters, shift registers. program and service instructions. logic circuits and pulse generators. automation and plcs industrial automation ii "><a href="/en/publicaciones/mapa-electronica/temas/aplicaciones-plc">Basic programming applications</a></li>
         <li data-b="automation networks communication between devices, data link layer. supervision with scada: properties of the supervisory system and supervised processes. industrial networks and buses automation and plcs industrial automation ii "><a href="/en/publicaciones/mapa-electronica/temas/comunicaciones-industriales">Automation networks</a></li>
@@ -1780,6 +1857,9 @@ section.par-bl{padding:22px 0 0}
 </section>
 
 
+</div></div></div>
+<!-- ============ fin del tablero de las carreras ============ -->
+
 <!-- ============ EL MAPA ============ -->
 <section class="block carrera" id="mapa">
   <div class="container">
@@ -2284,7 +2364,7 @@ section.par-bl{padding:22px 0 0}
 <script src="/assets/js/cielo-fondo.js?v=4" data-papel></script>
 <script src="/assets/js/almanaque.js?v=1"></script>
 <script src="/assets/js/buscador.js?v=5"></script>
-<script src="/assets/js/portada.js?v=9"></script>
+<script src="/assets/js/portada.js?v=11"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 <script src="/assets/js/online.js?v=4"></script>
 <script src="/assets/js/correo.js?v=1"></script>
