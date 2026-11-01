@@ -33,7 +33,9 @@ const PISOS = [
 ];
 function rotulo(txt, x, y, z, escala, color) {
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128; const c = cv.getContext('2d');
-  c.font = 'bold 54px Segoe UI, system-ui, sans-serif'; c.textAlign = 'center'; c.lineWidth = 10;
+  let fs = 54; c.font = 'bold ' + fs + 'px Segoe UI, system-ui, sans-serif';
+  while (c.measureText(txt).width > 480 && fs > 30) { fs -= 2; c.font = 'bold ' + fs + 'px Segoe UI, system-ui, sans-serif'; }   // textos largos: letra más chica, que no se corte
+  c.textAlign = 'center'; c.lineWidth = 10;
   c.strokeStyle = 'rgba(13,17,23,.85)'; c.strokeText(txt, 256, 82); c.fillStyle = color || '#ffffff'; c.fillText(txt, 256, 82);
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthTest: false }));
   sp.scale.set(2.4 * (escala || 1), 0.6 * (escala || 1), 1); sp.position.set(x, y, z); sp.renderOrder = 10; raiz.add(sp); return sp;
@@ -80,7 +82,7 @@ for (let i = 0; i < PRIN.length - 1; i++) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, l, 8), LP);
   m.position.copy(a).addScaledVector(v, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.clone().normalize()); raiz.add(m);
 }
-rotulo(EN ? 'main line 2×6 mm²' : 'línea principal 2×6 mm²', 2.4, 0.3, 9.45, 0.6, '#c8d2dd');
+rotulo(EN ? 'main line 2×6 mm²' : 'línea principal 2×6 mm²', 3.9, 0.3, 9.3, 0.6, '#c8d2dd');
 
 // ---- circuitos y bocas. Tomas a 0,40 m y llaves a 1,10 m; luces de techo a 2,25 m.
 // pared: 'x' = plano x = cte que mira a +x; 'z' = plano z = cte que mira a +z
