@@ -66,7 +66,7 @@ var MATERIAS = [
   {t:"Maintenance", u:"mantenimiento-electrico", d:"Of protection and switching components: switches, timers, thermal relays, phase-loss relays, motor protection breakers, fuses, circuit breakers.", tm:[["mant",1]]}
 ]},
 {id:"me1", n:"Electrical Measurements I", area:"medic", anio:4, h:96, ejes:[
-  {t:"Measurements", u:"magnitudes-electricas", d:"Measurement errors, instrument classes. Measuring current, voltage, power and resistance.", tm:[["medic",1]]},
+  {t:"Measurements", u:"instrumentos-analogicos", d:"Measurement errors, instrument classes. Measuring current, voltage, power and resistance.", tm:[["medic",1]]},
   {t:"Instruments", u:"instrumentos-analogicos", d:"Analog and digital instruments: voltmeter, ammeter, wattmeter, multimeter, frequency counter, bridges. Characteristics, connection and calibration.", tm:[["medic",1]]},
   {t:"Measurements on electrical machines", u:"ensayos-maquinas", d:"Measurements on AC and DC motors, motor connection, starting methods. Measurement tests on motors and transformers.", tm:[["medic",2],["maq",1]]},
   {t:"Safety", u:"higiene-seguridad", d:"Workplace safety in tests and when operating electrical measuring instruments.", tm:[["hys",1]]}
@@ -139,7 +139,7 @@ var MATERIAS = [
 {id:"ei1", n:"Industrial Electronics I", area:"elind", anio:6, h:96, ejes:[
   {t:"Transistors", u:"transistores-bipolares", d:"Transistor currents. Common-base, common-emitter and common-collector configurations. Input and output characteristics. Equivalent circuit.", tm:[["analog",1]]},
   {t:"Biasing", u:"/publicaciones/transistores-bipolares", d:"Fixed bias, stability factor S, collector-feedback bias, self-bias.", tm:[["analog",2]]},
-  {t:"Field-effect transistor", u:"amplificadores-potencia", d:"FET and MOSFET. The transistor as a switch. Amplification: classes A, B, AB and C, direct and RC coupling, Darlington pair.", tm:[["analog",2],["pot",1]]},
+  {t:"Field-effect transistor", u:"semiconductores-especiales", d:"FET and MOSFET. The transistor as a switch. Amplification: classes A, B, AB and C, direct and RC coupling, Darlington pair.", tm:[["analog",2],["pot",1]]},
   {t:"Thyristors", u:"componentes-potencia", d:"Silicon-controlled rectifiers (SCR). Gate triggering methods. RC phase control.", tm:[["pot",1]]},
   {t:"Triac and diac", u:"semiconductores-especiales", d:"Characteristics and operation. Applications of the SCR, triac and diac in power circuits and industrial control.", tm:[["pot",2]]}
 ]},
@@ -175,7 +175,7 @@ var MATERIAS = [
   {t:"Buses", u:"comunicaciones-industriales", d:"Fieldbuses and their fields of application: CAN, SDS, AS-i, Profibus, Interbus, Fieldbus, Modbus, Industrial Ethernet. Standardization.", tm:[["redes",3]]}
 ]},
 {id:"ei2", n:"Industrial Electronics II", area:"elind", anio:7, h:96, ejes:[
-  {t:"Amplifiers", u:"osciladores", d:"Feedback and the condition for oscillation. Sinusoidal and non-sinusoidal oscillators: astable, monostable and bistable. High-frequency heating.", tm:[["analog",3]]},
+  {t:"Amplifiers (feedback and oscillators)", u:"osciladores", d:"Feedback and the condition for oscillation. Sinusoidal and non-sinusoidal oscillators: astable, monostable and bistable. High-frequency heating.", tm:[["analog",3]]},
   {t:"Operational amplifiers", u:"/publicaciones/amplificadores-operacionales", d:"Ideal and real, differential amplifier. Summing amplifier, differentiator, integrator, comparator. Power control with op amps. Servomechanisms.", tm:[["analog",3],["pot",3]]},
   {t:"Electronic motor control", u:"variadores-velocidad", d:"Control of DC and AC motors. Speed regulation and drives that keep it constant.", tm:[["pot",3],["maq",4]]},
   {t:"Industrial application circuits", u:"control-temperatura-iluminacion", d:"Temperature, flow and noise control. Electronic heating. Logic circuits, A/D conversion, optoelectronics and transducers.", tm:[["sens",3],["pot",4]]}

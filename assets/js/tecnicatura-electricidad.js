@@ -65,7 +65,7 @@ var MATERIAS = [
   {t:"Mantenimiento", u:"mantenimiento-electrico", d:"De los componentes de protección y maniobra: interruptores, temporizadores, relé térmico, relé de falta de fase, guardamotores, fusibles, termomagnéticas.", tm:[["mant",1]]}
 ]},
 {id:"me1", n:"Mediciones Eléctricas I", area:"medic", anio:4, h:96, ejes:[
-  {t:"Mediciones", u:"magnitudes-electricas", d:"Errores de medición, clases de instrumentos. Medición de corriente, tensión, potencia y resistencia.", tm:[["medic",1]]},
+  {t:"Mediciones", u:"instrumentos-analogicos", d:"Errores de medición, clases de instrumentos. Medición de corriente, tensión, potencia y resistencia.", tm:[["medic",1]]},
   {t:"Instrumentos", u:"instrumentos-analogicos", d:"Instrumentos analógicos y digitales: voltímetro, amperímetro, vatímetro, multímetro, frecuencímetro, puentes. Características, conexionado y calibración.", tm:[["medic",1]]},
   {t:"Medición sobre máquinas eléctricas", u:"ensayos-maquinas", d:"Medición en motores de CA y CC, conexión de motores, sistemas de arranque. Ensayos de medición sobre motores y transformadores.", tm:[["medic",2],["maq",1]]},
   {t:"Seguridad", u:"higiene-seguridad", d:"Seguridad laboral en los ensayos y al operar instrumentos de medición eléctrica.", tm:[["hys",1]]}
@@ -138,7 +138,7 @@ var MATERIAS = [
 {id:"ei1", n:"Electrónica Industrial I", area:"elind", anio:6, h:96, ejes:[
   {t:"Transistores", u:"transistores-bipolares", d:"Corrientes del transistor. Montajes en base, emisor y colector común. Características de entrada y salida. Circuito equivalente.", tm:[["analog",1]]},
   {t:"Polarización", u:"/publicaciones/transistores-bipolares", d:"Polarización fija, factor de estabilidad S, polarización colector-base, autopolarización.", tm:[["analog",2]]},
-  {t:"Transistor de efecto de campo", u:"amplificadores-potencia", d:"FET y MOSFET. El transistor como llave. Amplificación: clases A, B, AB y C, acoplamiento directo y RC, par Darlington.", tm:[["analog",2],["pot",1]]},
+  {t:"Transistor de efecto de campo", u:"semiconductores-especiales", d:"FET y MOSFET. El transistor como llave. Amplificación: clases A, B, AB y C, acoplamiento directo y RC, par Darlington.", tm:[["analog",2],["pot",1]]},
   {t:"Tiristores", u:"componentes-potencia", d:"Rectificadores controlados de silicio (SCR). Métodos de disparo por compuerta. Control de fase RC.", tm:[["pot",1]]},
   {t:"Triac y diac", u:"semiconductores-especiales", d:"Características y funcionamiento. Aplicaciones del SCR, el triac y el diac en circuitos de potencia y control industrial.", tm:[["pot",2]]}
 ]},
@@ -174,7 +174,7 @@ var MATERIAS = [
   {t:"Buses", u:"comunicaciones-industriales", d:"Buses de campo y sus campos de aplicación: CAN, SDS, AS-i, Profibus, Interbus, Fieldbus, Modbus, Ethernet industrial. Estandarización.", tm:[["redes",3]]}
 ]},
 {id:"ei2", n:"Electrónica Industrial II", area:"elind", anio:7, h:96, ejes:[
-  {t:"Amplificadores", u:"osciladores", d:"Realimentación y condición de oscilación. Osciladores senoidales y no senoidales: astable, monoestable y biestable. Calentamiento por alta frecuencia.", tm:[["analog",3]]},
+  {t:"Amplificadores (realimentación y osciladores)", u:"osciladores", d:"Realimentación y condición de oscilación. Osciladores senoidales y no senoidales: astable, monoestable y biestable. Calentamiento por alta frecuencia.", tm:[["analog",3]]},
   {t:"Amplificadores operacionales", u:"/publicaciones/amplificadores-operacionales", d:"Ideal y real, amplificador diferencial. Sumador, derivador, integrador, comparador. Control de potencia con operacionales. Servomecanismos.", tm:[["analog",3],["pot",3]]},
   {t:"Control electrónico de motores", u:"variadores-velocidad", d:"Control de motores de CC y CA. Regulación de la velocidad y accionamientos para mantenerla constante.", tm:[["pot",3],["maq",4]]},
   {t:"Circuitos de aplicación industrial", u:"control-temperatura-iluminacion", d:"Control de temperatura, caudal y ruido. Calentamiento electrónico. Circuitos lógicos, conversión A/D, optoelectrónica y transductores.", tm:[["sens",3],["pot",4]]}

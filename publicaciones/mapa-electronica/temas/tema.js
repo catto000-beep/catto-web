@@ -227,7 +227,7 @@
 (function(){
   var h1 = document.querySelector('.doc h1');
   if(!h1) return;
-  var up = document.querySelector('.tbar .up');      // "Mapa de Temas · Materia"
+  var up = document.querySelector('.tbar .up-mat') || document.querySelector('.tbar .up');   // "Mapa de Temas · Materia"
   var anio = document.querySelector('.tbar .anio');
   try{
     localStorage.setItem('cattoUltimoTema', JSON.stringify({
@@ -276,7 +276,7 @@
    ============================================================ */
 (function(){
   var up = document.querySelector('.tbar .up');
-  if(!up || up.querySelector('a')) return;
+  if(!up || up.querySelector('a') || /up-mapa/.test(up.className)) return;   // ya viene partida (páginas de dos carreras)
   var partes = up.textContent.split('·');
   if(partes.length < 2) return;
   var materia = partes.slice(1).join('·').trim();
