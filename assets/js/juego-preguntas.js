@@ -48,6 +48,8 @@ var JUEGO_PREG = [
 {id:"a13", c:"analog", q:"La frecuencia de corte de un filtro RC es…", o:["1/(2πRC)","2πRC","RC/2π","1/(RC)²"], u:"filtros"},
 {id:"a14", c:"analog", q:"Un tiristor (SCR) entra en conducción cuando…", o:["recibe un pulso en la compuerta con el ánodo positivo","se invierte la tensión","se apaga la carga","la corriente baja a cero"], u:"componentes-potencia"},
 {id:"a15", c:"analog", q:"¿Qué componente se usa para controlar potencia en corriente alterna en ambos semiciclos?", o:["TRIAC","Diodo zener","Optoacoplador","Regulador 7805"], u:"componentes-potencia"},
+{id:"a16", c:"analog", q:"Si la tensión de una señal de audio se duplica, su nivel sube aproximadamente…", o:["6 dB","3 dB","2 dB","10 dB"], u:"amplificadores-senal-debil"},
+{id:"a17", c:"analog", q:"Un parlante de 8 Ω recibe 8 V eficaces. ¿Qué potencia le entrega el amplificador?", o:["8 W","64 W","1 W","16 W"], u:"amplificadores-potencia"},
 
 /* ---------- DIGITAL ---------- */
 {id:"d01", c:"digital", q:"¿Cuánto vale 1010 en binario expresado en decimal?", o:["10","12","8","5"], u:"logica-combinacional"},
@@ -99,6 +101,19 @@ var JUEGO_PREG = [
 {id:"e13", c:"elec", q:"¿Qué elemento protege a un motor contra sobrecargas prolongadas?", o:["El relé térmico","El fusible ultrarrápido","El pulsador de parada","El contactor"], u:"mando-senalizacion"},
 {id:"e14", c:"elec", q:"La puesta a tierra de una instalación sirve para…", o:["derivar a tierra las corrientes de falla y proteger a las personas","ahorrar energía","mejorar el factor de potencia","aumentar la tensión"], u:"proteccion-electrica"},
 {id:"e15", c:"elec", q:"En un circuito de comando, el contacto de autorretención…", o:["mantiene energizado el contactor al soltar el pulsador de marcha","apaga el motor","invierte el giro","mide la corriente"], u:"mando-senalizacion"},
+{id:"e16", c:"elec", q:"Un transformador de 315 kVA y 13,2/0,4 kV. ¿Qué corriente nominal tiene del lado de baja tensión?", o:["455 A","788 A","24 A","315 A"], u:"proyecto-electrico-industrial"},
+{id:"e17", c:"elec", q:"Una carga de 100 kW funciona con cos φ = 0,8. ¿Qué potencia aparente toma?", o:["125 kVA","80 kVA","100 kVA","180 kVA"], u:"potencia-ca"},
+{id:"e18", c:"elec", q:"¿Para qué se instala un banco de capacitores en una industria?", o:["Para compensar la potencia reactiva y mejorar el cos φ","Para alimentar la planta durante un corte","Para limitar la corriente de cortocircuito","Para arrancar los motores grandes"], u:"proyecto-electrico-industrial"},
+{id:"e19", c:"elec", q:"El ensayo de vacío de un transformador permite conocer…", o:["las pérdidas en el hierro","las pérdidas en el cobre","la tensión de cortocircuito","la resistencia de aislación"], u:"ensayos-maquinas"},
+{id:"e20", c:"elec", q:"El ensayo de cortocircuito de un transformador permite conocer…", o:["las pérdidas en el cobre y la tensión de cortocircuito","las pérdidas en el hierro","la corriente de vacío","la resistencia de puesta a tierra"], u:"ensayos-maquinas"},
+{id:"e21", c:"elec", q:"¿Con qué instrumento se mide la resistencia de una puesta a tierra?", o:["Telurímetro","Megóhmetro","Vatímetro","Frecuencímetro"], u:"mediciones-especiales"},
+{id:"e22", c:"elec", q:"¿Cuál de estas es una de las cinco reglas de oro para trabajar sin tensión?", o:["Verificar la ausencia de tensión","Desconectar solamente el neutro","Medir la corriente de la carga","Trabajar con el tablero abierto y energizado"], u:"higiene-seguridad"},
+{id:"e23", c:"elec", q:"Un grupo electrógeno de 50 Hz tiene un alternador de 4 polos. ¿A qué velocidad gira?", o:["1500 rpm","3000 rpm","1000 rpm","750 rpm"], u:"generacion-motogeneradores"},
+{id:"e24", c:"elec", q:"En Argentina, la reglamentación para la ejecución de instalaciones eléctricas en inmuebles es la…", o:["AEA 90364","IEC 60909","IRAM 2178","ENRE 225"], u:"reglamentacion-aea"},
+{id:"e25", c:"elec", q:"¿Qué indica el grado de protección IP55 de una envolvente?", o:["Protección contra el polvo y contra chorros de agua","Que soporta hasta 55 °C","Que es apta para 55 V","Que resiste impactos de 55 J"], u:"proyecto-electrico-industrial"},
+{id:"e26", c:"elec", q:"Una entrada de PLC con el común a 0 V (entrada «sinking») se usa con sensores…", o:["PNP","NPN","de dos hilos de alterna","de 4-20 mA"], u:"instalacion-plc"},
+{id:"e27", c:"elec", q:"Un transmisor de 4-20 mA entrega 12 mA. ¿En qué punto de su rango está la medición?", o:["50 %","60 %","30 %","75 %"], u:"instalacion-plc"},
+{id:"e28", c:"elec", q:"¿Para qué se coloca un diodo en paralelo con la bobina de una electroválvula comandada por un transistor?", o:["Para absorber el pico de tensión al cortar la corriente","Para que conmute más rápido","Para rectificar la alimentación","Para indicar que está energizada"], u:"instalacion-plc"},
 
 /* ---------- COMUNICACIONES ---------- */
 {id:"k01", c:"com", q:"¿Cuánto mide aproximadamente la longitud de onda de una señal de 100 MHz?", o:["3 m","30 cm","30 m","300 m"], u:"antenas"},
@@ -115,5 +130,6 @@ var JUEGO_PREG = [
 {id:"k12", c:"com", q:"¿Qué es el aliasing?", o:["Una distorsión por muestrear por debajo del doble de la frecuencia máxima","Un tipo de antena","Una modulación digital","Un error de cuantificación por exceso de bits"], u:"teorema-muestreo"},
 {id:"k13", c:"com", q:"En un enlace de microondas, la zona de Fresnel debe…", o:["estar libre de obstáculos en su mayor parte","estar bloqueada para evitar interferencias","coincidir con el suelo","tener la mitad de la altura de la antena"], u:"enlaces-microondas"},
 {id:"k14", c:"com", q:"La norma RS-485 se usa en la industria porque…", o:["admite largas distancias y varios equipos en el mismo par","es inalámbrica","no necesita cables","transmite video"], u:"comunicaciones-industriales"},
-{id:"k15", c:"com", q:"¿Qué ancho de banda ocupa una señal de AM con audio de hasta 5 kHz?", o:["10 kHz","5 kHz","200 kHz","2,5 kHz"], u:"sistemas-modulacion"}
+{id:"k15", c:"com", q:"¿Qué ancho de banda ocupa una señal de AM con audio de hasta 5 kHz?", o:["10 kHz","5 kHz","200 kHz","2,5 kHz"], u:"sistemas-modulacion"},
+{id:"k16", c:"com", q:"El CD de audio muestrea a 44,1 kHz. ¿Hasta qué frecuencia de audio puede registrar?", o:["Unos 22 kHz","44,1 kHz","88,2 kHz","Unos 11 kHz"], u:"teorema-muestreo"}
 ];
