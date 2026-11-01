@@ -85,13 +85,13 @@ rotulo(EN ? 'main line 2×6 mm²' : 'línea principal 2×6 mm²', 2.4, 0.3, 9.45
 // ---- circuitos y bocas. Tomas a 0,40 m y llaves a 1,10 m; luces de techo a 2,25 m.
 // pared: 'x' = plano x = cte que mira a +x; 'z' = plano z = cte que mira a +z
 const COLC = { 1: 0xe8883a, 2: 0xe3c341, 3: 0x58a6ff, 4: 0xa371f7 };
+// las luces llevan su llave (a 1,10 m) en el mismo ambiente: el retorno baja desde la boca de techo de esa
+// luz, por la losa del ambiente, hasta la caja de la llave. Formato de una luz: ['luz', x, z, circuito, [x, z, pared] de su llave]
 const BOCAS = [
-  ['luz', 1.6, 6.5, 2], ['luz', 4.8, 6.5, 2], ['luz', 1.6, 3.4, 2], ['luz', 4.8, 1.5, 2], ['luz', 4.8, 4.0, 2],
-  ['luz', 8.0, 1.9, 2], ['luz', 8.0, 4.6, 2], ['luz', 1.6, 0.9, 2], ['llave', 0, 7.6, 2, 'x'], ['llave', 3.2 + E, 5.6, 2, 'x'],
-  // una llave por cada boca de luz, a 1,10 m, junto a la entrada de cada ambiente
-  ['llave', 0, 4.6, 2, 'x'], ['llave', 3.2 + E, 2.7, 2, 'x'], ['llave', 3.2 + E, 4.7, 2, 'x'], ['llave', 6.4 + E, 3.4, 2, 'x'],
-  ['llave', 6.4 + E, 5.1, 2, 'x'], ['llave', 0, 1.4, 2, 'x'],
-  ['luz', 8.0, 6.7, 1], ['llave', 6.4 + E, 5.8, 1, 'x'], ['toma', 7.4, 5.4, 1, 'z'], ['toma', 8.8, 5.4, 1, 'z'],
+  ['luz', 1.6, 6.5, 2, [0, 7.6, 'x']], ['luz', 4.8, 6.5, 2, [3.2 + E, 5.6, 'x']], ['luz', 1.6, 3.4, 2, [0, 4.6, 'x']],
+  ['luz', 4.8, 1.5, 2, [3.2 + E, 2.7, 'x']], ['luz', 4.8, 4.0, 2, [3.2 + E, 4.7, 'x']], ['luz', 8.0, 1.9, 2, [6.4 + E, 3.4, 'x']],
+  ['luz', 8.0, 4.6, 2, [6.4 + E, 5.1, 'x']], ['luz', 1.6, 0.9, 2, [0, 1.4, 'x']],
+  ['luz', 8.0, 6.7, 1, [6.4 + E, 5.8, 'x']], ['toma', 7.4, 5.4, 1, 'z'], ['toma', 8.8, 5.4, 1, 'z'],
   ['toma', 0, 7.2, 3, 'x'], ['toma', 0, 5.6, 3, 'x'], ['toma', 4.2, 5.0, 3, 'z'], ['toma', 5.6, 5.0, 3, 'z'], ['toma', 0, 2.6, 3, 'x'], ['toma', 0, 4.3, 3, 'x'],
   ['toma', 3.2 + E, 1.0, 4, 'x'], ['toma', 3.2 + E, 2.3, 4, 'x'], ['toma', 6.4 + E, 1.0, 4, 'x'], ['toma', 6.4 + E, 2.8, 4, 'x'], ['toma', 3.2 + E, 4.2, 4, 'x'],
 ];
@@ -117,7 +117,11 @@ function recorrido(b) {
   const s = [TPU.x + 0.12, TPU.y + (tug ? -0.39 : 0.39), TPU.z];
   const xb = t === 'luz' ? x : x + (pared === 'x' ? 0.06 : 0), zb = t === 'luz' ? z : z + (pared === 'z' ? 0.06 : 0);
   const yb = t === 'luz' ? 2.25 : (t === 'toma' ? (tug ? 0.4 : 0.4 + 0.12) : 1.1 + 0.16);
-  const p = [s, [s[0], nivel, s[2]], [xb, nivel, s[2]], [xb, nivel, zb], [xb, yb, zb]];
+  let p = [s, [s[0], nivel, s[2]], [xb, nivel, s[2]], [xb, nivel, zb], [xb, yb, zb]];
+  if (ci === 1 && t === 'toma') {   // toma derivada: sale de la boca de luz de la cocina, en el mismo ambiente
+    const L = BOCAS.find(q => q[0] === 'luz' && q[3] === 1);
+    p = [[L[1], LOSA, L[2]], [xb, LOSA, L[2]], [xb, LOSA, zb], [xb, yb, zb]];
+  }
   for (let i = 0; i < p.length - 1; i++) SEGS.push({ a: p[i], b: p[i + 1], ci });
 }
 const TRAMOS = [];      // {ci: Set, gris: mesh, col: {ci: mesh}}
@@ -150,19 +154,26 @@ function pintarTramos(k) {
     t.gris.material.opacity = k === 0 ? 1 : 0.12; t.gris.material.depthWrite = k === 0;
   }
 }
-for (const b of BOCAS) {
-  const [t, x, z, ci, pared] = b;
-  recorrido(b);
-  if (t === 'luz') {
-    const l = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), new THREE.MeshBasicMaterial({ color: 0xf2cc60, transparent: true }));
-    materiales[ci].push(l.material); l.position.set(x, 2.25, z); grupos[ci].add(l);
-  } else {
+function cajaPared(t, x, z, ci, pared) {
     const w = t === 'toma' ? 0.22 : 0.12, h = t === 'toma' ? 0.14 : 0.16, y = t === 'toma' ? 0.4 + h / 2 : 1.1 + h / 2;
     const m = new THREE.Mesh(new THREE.BoxGeometry(pared === 'x' ? 0.04 : w, h, pared === 'x' ? w : 0.04), mat(ci, 0xf4f4f2));
     m.position.set(x + (pared === 'x' ? 0.02 : 0), y, z + (pared === 'z' ? 0.02 : 0)); grupos[ci].add(m);
     const borde = new THREE.Mesh(new THREE.BoxGeometry(pared === 'x' ? 0.045 : w + 0.04, h + 0.04, pared === 'x' ? w + 0.04 : 0.045), mat(ci, COLC[ci]));
     borde.position.copy(m.position); borde.position.x -= pared === 'x' ? 0.005 : 0; borde.position.z -= pared === 'z' ? 0.005 : 0; grupos[ci].add(borde);
-  }
+}
+for (const b of BOCAS) {
+  const [t, x, z, ci, extra] = b;
+  recorrido(b);
+  if (t === 'luz') {
+    const l = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), new THREE.MeshBasicMaterial({ color: 0xf2cc60, transparent: true }));
+    materiales[ci].push(l.material); l.position.set(x, 2.25, z); grupos[ci].add(l);
+    if (extra) {   // la llave: retorno desde la boca de techo, dentro del mismo ambiente
+      const [sx, sz, pa] = extra, xs = sx + (pa === 'x' ? 0.06 : 0), zs = sz + (pa === 'z' ? 0.06 : 0);
+      const p = [[x, LOSA, z], [xs, LOSA, z], [xs, LOSA, zs], [xs, 1.1 + 0.16, zs]];
+      for (let i = 0; i < p.length - 1; i++) SEGS.push({ a: p[i], b: p[i + 1], ci });
+      cajaPared('llave', sx, sz, ci, pa);
+    }
+  } else cajaPared(t, x, z, ci, extra);
 }
 armarTramos();
 // cotas de altura junto a la puerta del living: toma 0,40 m y llave 1,10 m
