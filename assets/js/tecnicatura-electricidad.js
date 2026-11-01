@@ -174,7 +174,7 @@ var MATERIAS = [
   {t:"Buses", u:"comunicaciones-industriales", d:"Buses de campo y sus campos de aplicación: CAN, SDS, AS-i, Profibus, Interbus, Fieldbus, Modbus, Ethernet industrial. Estandarización.", tm:[["redes",3]]}
 ]},
 {id:"ei2", n:"Electrónica Industrial II", area:"elind", anio:7, h:96, ejes:[
-  {t:"Amplificadores (realimentación y osciladores)", u:"osciladores", d:"Realimentación y condición de oscilación. Osciladores senoidales y no senoidales: astable, monoestable y biestable. Calentamiento por alta frecuencia.", tm:[["analog",3]]},
+  {t:"Amplificadores", u:"amplificadores-senal-debil", d:"Realimentación y condición de oscilación. Osciladores senoidales y no senoidales: astable, monoestable y biestable. Calentamiento por alta frecuencia.", tm:[["analog",3]]},
   {t:"Amplificadores operacionales", u:"/publicaciones/amplificadores-operacionales", d:"Ideal y real, amplificador diferencial. Sumador, derivador, integrador, comparador. Control de potencia con operacionales. Servomecanismos.", tm:[["analog",3],["pot",3]]},
   {t:"Control electrónico de motores", u:"variadores-velocidad", d:"Control de motores de CC y CA. Regulación de la velocidad y accionamientos para mantenerla constante.", tm:[["pot",3],["maq",4]]},
   {t:"Circuitos de aplicación industrial", u:"control-temperatura-iluminacion", d:"Control de temperatura, caudal y ruido. Calentamiento electrónico. Circuitos lógicos, conversión A/D, optoelectrónica y transductores.", tm:[["sens",3],["pot",4]]}

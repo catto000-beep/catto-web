@@ -175,7 +175,7 @@ var MATERIAS = [
   {t:"Buses", u:"comunicaciones-industriales", d:"Fieldbuses and their fields of application: CAN, SDS, AS-i, Profibus, Interbus, Fieldbus, Modbus, Industrial Ethernet. Standardization.", tm:[["redes",3]]}
 ]},
 {id:"ei2", n:"Industrial Electronics II", area:"elind", anio:7, h:96, ejes:[
-  {t:"Amplifiers (feedback and oscillators)", u:"osciladores", d:"Feedback and the condition for oscillation. Sinusoidal and non-sinusoidal oscillators: astable, monostable and bistable. High-frequency heating.", tm:[["analog",3]]},
+  {t:"Amplifiers", u:"amplificadores-senal-debil", d:"Feedback and the condition for oscillation. Sinusoidal and non-sinusoidal oscillators: astable, monostable and bistable. High-frequency heating.", tm:[["analog",3]]},
   {t:"Operational amplifiers", u:"/publicaciones/amplificadores-operacionales", d:"Ideal and real, differential amplifier. Summing amplifier, differentiator, integrator, comparator. Power control with op amps. Servomechanisms.", tm:[["analog",3],["pot",3]]},
   {t:"Electronic motor control", u:"variadores-velocidad", d:"Control of DC and AC motors. Speed regulation and drives that keep it constant.", tm:[["pot",3],["maq",4]]},
   {t:"Industrial application circuits", u:"control-temperatura-iluminacion", d:"Temperature, flow and noise control. Electronic heating. Logic circuits, A/D conversion, optoelectronics and transducers.", tm:[["sens",3],["pot",4]]}
