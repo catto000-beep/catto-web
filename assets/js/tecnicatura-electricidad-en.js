@@ -106,7 +106,7 @@ var MATERIAS = [
   {t:"Standards", u:"normas-calidad-montaje", d:"Health and safety in installation and assembly. Quality standards for processes and products.", tm:[["normas",2],["hys",2]]},
   {t:"Types and characteristics of electrical materials", u:"materiales-electricos", d:"Selecting materials for the project.", tm:[["mat",2]]},
   {t:"The idea of a project", u:"proyecto-instalacion", d:"Idea, execution and evaluation. Single-line, three-line and functional diagrams. Sequencing of assembly and installation work.", tm:[["cad",2],["instal",2]]},
-  {t:"Load and material schedules", u:"proyecto-instalacion", d:"Material schedules (standard types, certificates of conformity). Measurement reports. Tracking of execution times.", tm:[["cad",2],["normas",2]]}
+  {t:"Load and material schedules", u:"certificado-instalacion-apta", d:"Material schedules (standard types, certificates of conformity). Measurement reports. Tracking of execution times.", tm:[["cad",2],["normas",2]]}
 ]},
 /* ---------- YEAR 6 ---------- */
 {id:"mq2", n:"Electrical Machines II", area:"maq", anio:6, h:144, ejes:[
@@ -181,6 +181,6 @@ var MATERIAS = [
   {t:"Industrial application circuits", u:"control-temperatura-iluminacion", d:"Temperature, flow and noise control. Electronic heating. Logic circuits, A/D conversion, optoelectronics and transducers.", tm:[["sens",3],["pot",4]]}
 ]},
 {id:"fat", n:"Training in the Work Environment", area:"practica", anio:7, h:240, ejes:[
-  {t:"Professional practice", u:"practica-profesionalizante", d:"Practice in real work situations: assembly, installation, operation and maintenance. Consolidates and integrates the capabilities of the professional profile.", tm:[["instal",4],["mant",4]]}
+  {t:"Professional practice", u:"instalador-habilitado", d:"Practice in real work situations: assembly, installation, operation and maintenance. Consolidates and integrates the capabilities of the professional profile.", tm:[["instal",4],["mant",4]]}
 ]}
 ];

@@ -105,7 +105,7 @@ var MATERIAS = [
   {t:"Normas", u:"normas-calidad-montaje", d:"Seguridad e higiene en la instalación y el montaje. Normas de calidad de procesos y productos.", tm:[["normas",2],["hys",2]]},
   {t:"Tipos y características de los materiales eléctricos", u:"materiales-electricos", d:"Selección de materiales para el proyecto.", tm:[["mat",2]]},
   {t:"Noción de proyecto", u:"proyecto-instalacion", d:"Idea, ejecución y evaluación. Esquemas unifilares, trifilares y funcionales. Secuencia de los procesos de montaje e instalación.", tm:[["cad",2],["instal",2]]},
-  {t:"Planillas de cargas", u:"proyecto-instalacion", d:"Planillas de materiales (tipos normalizados, acreditación de conformidad). Protocolos de medición. Control de los tiempos de ejecución.", tm:[["cad",2],["normas",2]]}
+  {t:"Planillas de cargas", u:"certificado-instalacion-apta", d:"Planillas de materiales (tipos normalizados, acreditación de conformidad). Protocolos de medición. Control de los tiempos de ejecución.", tm:[["cad",2],["normas",2]]}
 ]},
 /* ---------- 6° AÑO ---------- */
 {id:"mq2", n:"Máquinas Eléctricas II", area:"maq", anio:6, h:144, ejes:[
@@ -180,6 +180,6 @@ var MATERIAS = [
   {t:"Circuitos de aplicación industrial", u:"control-temperatura-iluminacion", d:"Control de temperatura, caudal y ruido. Calentamiento electrónico. Circuitos lógicos, conversión A/D, optoelectrónica y transductores.", tm:[["sens",3],["pot",4]]}
 ]},
 {id:"fat", n:"Formación en Ambiente de Trabajo", area:"practica", anio:7, h:240, ejes:[
-  {t:"Práctica profesionalizante", u:"practica-profesionalizante", d:"Prácticas en situaciones reales de trabajo: montaje, instalación, operación y mantenimiento. Consolida e integra las capacidades del perfil profesional.", tm:[["instal",4],["mant",4]]}
+  {t:"Práctica profesionalizante", u:"instalador-habilitado", d:"Prácticas en situaciones reales de trabajo: montaje, instalación, operación y mantenimiento. Consolida e integra las capacidades del perfil profesional.", tm:[["instal",4],["mant",4]]}
 ]}
 ];
