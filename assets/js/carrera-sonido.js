@@ -105,10 +105,10 @@ var MATERIAS = [
   {t:"Electrostática", u:"/publicaciones/mapa-ingenieria/temas/electrostatica", d:"Carga, campo y potencial eléctrico. Capacitores: el principio del micrófono de condensador.", tm:[["fisica",1],["transd",1]]}
 ]},
 {id:"gr1", n:"Grabación I", area:"estudio", anio:1, h:90, f:"UC", ejes:[
-  {t:"El estudio de grabación", d:"Sala de control y sala de grabación. Roles y funciones. Equipos del estudio y su interconexión.", tm:[["grab",1]]},
-  {t:"Recorrido de la señal", d:"Micrófono, consola, computadora y monitoreo. Vocabulario: dB, medidores, headroom, relación señal-ruido, nivel nominal y máximo, respuesta en frecuencia.", tm:[["grab",1],["onda",1]]},
-  {t:"Cables y conectores", d:"Señales balanceadas y no balanceadas, conectores XLR, TRS y RCA. Cajas directas. Armado y prueba de cables.", tm:[["grab",1],["circ",1]]},
-  {t:"Primeras tomas", d:"Grabación analógica y digital. Grabación casera en la computadora: software, sesión, pistas y niveles.", tm:[["grab",1],["digital",1]]}
+  {t:"El estudio de grabación", u:"estudio-grabacion", d:"Sala de control y sala de grabación. Roles y funciones. Equipos del estudio y su interconexión.", tm:[["grab",1]]},
+  {t:"Recorrido de la señal", u:"recorrido-senal", d:"Micrófono, consola, computadora y monitoreo. Vocabulario: dB, medidores, headroom, relación señal-ruido, nivel nominal y máximo, respuesta en frecuencia.", tm:[["grab",1],["onda",1]]},
+  {t:"Cables y conectores", u:"cables-conectores-audio", d:"Señales balanceadas y no balanceadas, conectores XLR, TRS y RCA. Cajas directas. Armado y prueba de cables.", tm:[["grab",1],["circ",1]]},
+  {t:"Primeras tomas", u:"primeras-tomas", d:"Grabación analógica y digital. Grabación casera en la computadora: software, sesión, pistas y niveles.", tm:[["grab",1],["digital",1]]}
 ]},
 {id:"lm1", n:"Lenguaje Musical y Audioperceptiva I", area:"musica", anio:1, h:60, f:"C", ejes:[
   {t:"Lectura y escritura musical", d:"Claves, figuras, compases y tonalidades. Manejo del cifrado.", tm:[["musica",1]]},
