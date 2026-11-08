@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La norma MIDI · MIDI y Síntesis · Catto</title>
+<meta name="description" content="La norma MIDI 1.0 al nivel del byte: conector DIN de 5 pines, lazo de corriente de 5 mA, optoacoplador, IN, OUT y THRU, 31 250 bit/s, byte de estado y bytes de datos, canales, Note On y Note Off, Control Change, Program Change y Pitch Bend, composición de mensajes en binario y hexadecimal, número de nota y frecuencia, General MIDI y cartillas de implementación. Eje temático de MIDI y Síntesis, 2.º año de Sonido.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/norma-midi">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=5">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-sonido">Mapa de Temas de Sonido · Señales y audio digital</a>
+    <span class="anio">2° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb crumb-so"><span class="ca so">Sonido</span><span class="mt">MIDI y Síntesis</span> (2°) · La norma MIDI</div>
+    <h1>La norma MIDI</h1>
+    <p class="lead">Un teclado y un módulo de sonido pueden entenderse sin intercambiar una sola onda: el teclado dice «tocaron
+    el do central, fuerte» y el módulo decide cómo suena. Esa conversación tiene reglas fijas desde 1983: el cable, la
+    velocidad y el significado de cada byte. Acá las aprendés al nivel del byte, para poder leer y escribir mensajes a mano.</p>
+    <div class="chips">
+      <span class="chip hi">MIDI 1.0</span>
+      <span class="chip">Note On / Note Off</span>
+      <span class="chip">Binario y hexadecimal</span>
+      <span class="chip">General MIDI</span>
+      <span class="chip">Cartilla de implementación</span>
+    </div>
+    <hr class="rule">
+
+    <section id="que-es">
+      <h2><span class="n">01</span>MIDI no es audio</h2>
+      <p>Hasta comienzos de los años ochenta, cada fabricante resolvía a su manera cómo gobernar un sintetizador desde afuera: una
+      tensión continua para la altura y un pulso o un cierre de contacto para indicar cuándo empezaba la nota (el CV y el gate de
+      <a class="ref" href="/publicaciones/mapa-electronica/temas/instrumentos-electronicos">instrumentos electrónicos</a>). Dos equipos de
+      marcas distintas casi nunca se entendían. <b>MIDI</b> (<i>Musical Instrument Digital Interface</i>) fue la respuesta de la
+      industria: un acuerdo entre fabricantes —entre ellos Sequential Circuits, Roland, Yamaha, Korg y Kawai— cuya especificación 1.0
+      se publicó en 1983 y que sigue vigente.</p>
+
+      <div class="box key">
+        <div class="bt">MIDI transmite órdenes, no sonido</div>
+        <p>Por un cable MIDI no viaja ninguna señal de audio. Viajan mensajes cortos que dicen qué hacer: empezar una nota, soltarla,
+        mover un control, cambiar de timbre. El sonido lo produce el equipo que recibe, con su propio generador. Por eso el mismo
+        mensaje puede sonar a piano en un equipo y a cuerdas en otro: <b>el timbre no está en el mensaje</b>.</p>
+      </div>
+
+      <p>En una instalación MIDI cada equipo cumple uno o varios de estos papeles. El manual de referencia llama «maestro» al que
+      manda y «esclavos» a los que obedecen; hoy se prefiere decir controlador y módulo.</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Tipo de dispositivo</th><th>Qué hace</th><th>Ejemplos</th></tr></thead>
+          <tbody>
+            <tr><td><b>Controlador</b></td><td>Convierte lo que toca el músico en mensajes. Por sí mismo no suena.</td><td>Teclado maestro, pads, batería electrónica, controlador de viento.</td></tr>
+            <tr><td><b>Generador de sonido</b></td><td>Recibe mensajes y produce audio.</td><td>Módulo expansor, sintetizador, sampler, instrumento virtual en la computadora.</td></tr>
+            <tr><td><b>Secuenciador</b></td><td>Graba y reproduce mensajes: es un grabador de eventos, no de sonido.</td><td>Secuenciador de hardware, el DAW.</td></tr>
+            <tr><td><b>Procesador de datos</b></td><td>Reparte, junta o transforma el flujo de mensajes.</td><td>Caja THRU, mezclador de datos (<i>merger</i>), remapeadores.</td></tr>
+            <tr><td><b>Interfaz</b></td><td>Une los puertos MIDI con la computadora.</td><td>Interfaz USB con conectores DIN.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Muchos equipos reúnen varios papeles: un sintetizador con teclado es controlador y generador a la vez, y por eso tiene
+      entrada y salida.</p>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Cuánto pesa un minuto de música</div>
+        <p>Un minuto con 200 notas. Cada nota son dos mensajes (Note On y Note Off) de 3 bytes: 6 bytes por nota, y en total
+        <math><mrow><mn>200</mn><mo>·</mo><mn>6</mn><mo>=</mo><mn>1&#160;200</mn><mspace width="0.25em"/><mtext>bytes</mtext></mrow></math> (un archivo <code>.mid</code> agrega unos pocos bytes de tiempo por evento, y el orden de magnitud no cambia).</p>
+        <p style="margin-top:8px">El mismo minuto en WAV estéreo, 44 100 Hz y 16 bits: <math><mrow><mn>60</mn><mo>·</mo><mn>44&#160;100</mn><mo>·</mo><mn>2</mn><mo>·</mo><mn>2</mn><mo>=</mo><mn>10&#160;584&#160;000</mn><mspace width="0.25em"/><mtext>bytes</mtext></mrow></math>. El cociente es <math><mrow><mfrac><mn>10&#160;584&#160;000</mn><mn>1&#160;200</mn></mfrac><mo>=</mo><mn>8&#160;820</mn></mrow></math>:
+        el audio pesa unas 8 800 veces más. La diferencia es el precio de llevar el timbre adentro: MIDI solo dice qué tocar, y el
+        sonido final depende del generador que lo reciba.</p>
+      </div>
+    </section>
+
+    <section id="cable">
+      <h2><span class="n">02</span>El cable y la señal</h2>
+      <p>La especificación fija el conector, el cable y la forma de la señal. El conector es un <b>DIN de 5 pines a 180°</b>. Trabajan
+      solo los pines 4 y 5, que llevan la señal; el pin 2 lleva la malla y los pines 1 y 3 no se usan. El cable es un par trenzado
+      con malla y ficha macho en las dos puntas, y la especificación limita su largo a <b>15 m</b>.</p>
+      <p>La señal no es una tensión sino una <b>corriente</b>: un lazo de <b>5 mA</b>. Un 0 lógico es corriente circulando y un 1 es
+      corriente cortada, de modo que la línea en reposo vale 1. Con una fuente de 5 V, unos 1,5 V de caída en el LED de entrada y 5 mA, la
+      resistencia total del lazo da <math><mrow><mi>R</mi><mo>=</mo><mfrac><mrow><mn>5</mn><mspace width="0.25em"/><mtext>V</mtext><mo>−</mo><mn>1,5</mn><mspace width="0.25em"/><mtext>V</mtext></mrow><mrow><mn>5</mn><mspace width="0.25em"/><mtext>mA</mtext></mrow></mfrac><mo>=</mo><mn>700</mn><mspace width="0.25em"/><mtext>Ω</mtext></mrow></math>; de ese orden son las resistencias en serie de las interfaces (el valor del LED real varía).</p>
+      <p>La entrada es un <b>optoacoplador</b>: un LED y un fototransistor encerrados juntos. La corriente enciende el LED, la luz activa
+      el fototransistor y no hay conexión eléctrica entre emisor y receptor. Así se evitan los lazos de masa entre equipos (el mismo
+      problema que el zumbido de <a class="ref" href="/publicaciones/mapa-electronica/temas/cables-conectores-audio">cables y conectores de audio</a>);
+      por eso la malla se conecta a masa solo del lado de OUT.</p>
+
+      <div class="box key">
+        <div class="bt">IN recibe, OUT genera, THRU copia</div>
+        <p>Cada equipo tiene hasta tres puertos. <b>IN</b> recibe. <b>OUT</b> envía los mensajes que genera el propio equipo.
+        <b>THRU</b> entrega una copia exacta de lo que entra por IN, y permite encadenar equipos. Lo que entra por IN nunca sale
+        por OUT.</p>
+      </div>
+
+      <figure>
+        <svg viewBox="0 0 700 300" role="img" aria-label="Dos maneras de conectar equipos MIDI: en cadena con THRU y con un secuenciador en el medio" class="svg-t"><text x="40" y="30" font-size="12.5" fill="#e6edf3" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">A · En cadena, con THRU</text><rect x="40" y="46" width="150" height="70" rx="7" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/><text x="115.0" y="72" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Teclado maestro</text><rect x="275" y="46" width="150" height="70" rx="7" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/><text x="350.0" y="72" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Módulo 1</text><rect x="510" y="46" width="150" height="70" rx="7" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/><text x="585.0" y="72" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Módulo 2</text><path d="M190 81 H268" fill="none" stroke="#3fb950" stroke-width="2"/><path d="M275 81 l-9 -5 v10 z" fill="#3fb950"/><path d="M425 81 H503" fill="none" stroke="#3fb950" stroke-width="2"/><path d="M510 81 l-9 -5 v10 z" fill="#3fb950"/><circle cx="190" cy="81" r="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.8"/><text x="180" y="105" font-size="11" fill="#3fb950" text-anchor="end" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">OUT</text><circle cx="275" cy="81" r="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.8"/><text x="285" y="105" font-size="11" fill="#3fb950" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">IN</text><circle cx="425" cy="81" r="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.8"/><text x="415" y="105" font-size="11" fill="#3fb950" text-anchor="end" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">THRU</text><circle cx="510" cy="81" r="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.8"/><text x="520" y="105" font-size="11" fill="#3fb950" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">IN</text><text x="115.0" y="136" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">genera los mensajes</text><text x="350.0" y="136" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">los recibe y los repite</text><text x="585.0" y="136" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">los recibe</text><text x="40" y="176" font-size="12.5" fill="#e6edf3" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">B · Con un secuenciador en el medio</text><rect x="40" y="192" width="150" height="70" rx="7" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/><text x="115.0" y="218" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Teclado maestro</text><rect x="275" y="192" width="150" height="70" rx="7" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/><text x="350.0" y="218" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Computadora</text><rect x="510" y="192" width="150" height="70" rx="7" fill="#1c2230" stroke="#58a6ff" stroke-width="1.6"/><text x="585.0" y="218" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Módulo de sonido</text><path d="M190 227 H268" fill="none" stroke="#3fb950" stroke-width="2"/><path d="M275 227 l-9 -5 v10 z" fill="#3fb950"/><path d="M425 227 H503" fill="none" stroke="#3fb950" stroke-width="2"/><path d="M510 227 l-9 -5 v10 z" fill="#3fb950"/><circle cx="190" cy="227" r="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.8"/><text x="180" y="251" font-size="11" fill="#3fb950" text-anchor="end" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">OUT</text><circle cx="275" cy="227" r="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.8"/><text x="285" y="251" font-size="11" fill="#3fb950" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">IN</text><circle cx="425" cy="227" r="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.8"/><text x="415" y="251" font-size="11" fill="#3fb950" text-anchor="end" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">OUT</text><circle cx="510" cy="227" r="4" fill="#0d1117" stroke="#3fb950" stroke-width="1.8"/><text x="520" y="251" font-size="11" fill="#3fb950" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">IN</text><text x="115.0" y="282" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">genera los mensajes</text><text x="350.0" y="282" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">los graba y los reenvía</text><text x="585.0" y="282" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">los recibe y suena</text></svg>
+        <figcaption><b>Figura 1.</b> Dos conexiones típicas. En A, el teclado manda a un módulo y este repite por THRU lo que
+        recibe hacia un segundo módulo. En B, una computadora con un secuenciador graba lo que toca el teclado y lo reenvía por su
+        propio OUT al módulo de sonido. Las flechas van siempre de un OUT o THRU a un IN.</figcaption>
+      </figure>
+
+      <p>En una cadena, cada equipo regenera la señal a través de su optoacoplador y suma un pequeño retardo y alguna distorsión del
+      pulso: en la práctica no conviene encadenar más de cuatro equipos (el manual de referencia habla de menos de cinco). Para
+      repartir una salida entre varios receptores se usa una <b>caja THRU</b>, que entrega varias salidas con su propio nivel. Una
+      «Y» de cable no sirve: el lazo de 5 mA se reparte entre dos entradas y a cada una le llega la mitad.</p>
+
+      <p>Los bytes viajan en serie, de a uno, a <b>31 250 bit/s</b> (31,25 kbaud), con el protocolo asincrónico de una UART (ver
+      <a class="ref" href="/publicaciones/mapa-electronica/temas/comunicacion-serie">comunicación serie</a>). Cada byte va enmarcado:
+      un <b>bit de inicio</b> en 0, los 8 bits de datos del <b>menos</b> al <b>más</b> significativo y un <b>bit de parada</b> en 1.
+      En la línea, cada byte ocupa 10 bits.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 326" role="img" aria-label="Los bits del mensaje Note On 90 3C 64 saliendo por el cable MIDI" class="svg-t" data-anim><polyline points="116,64 130,64 130,112 220,112 220,64 238,64 238,112 274,112 274,64 310,64 310,112 364,112 364,64 436,64 436,112 472,112 472,64 490,64 490,112 544,112 544,64 562,64 562,112 598,112 598,64 634,64 634,112 652,112 652,64 670,64 684,64" fill="none" stroke="#e6edf3" stroke-width="2.2" stroke-linejoin="round"/><text x="110" y="68" font-size="10.5" fill="#7d8a99" text-anchor="end" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">1 · sin corriente</text><text x="110" y="116" font-size="10.5" fill="#7d8a99" text-anchor="end" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">0 · con corriente</text><rect x="130" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="139.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="148" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="157.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="166" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="175.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="184" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="193.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="202" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="211.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="220" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="229.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="238" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="247.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="256" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="265.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="274" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="283.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="292" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="301.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="310" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="319.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="328" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="337.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="346" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="355.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="364" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="373.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="382" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="391.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="400" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="409.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="418" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="427.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="436" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="445.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="454" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="463.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="472" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="481.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="490" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="499.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="508" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="517.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="526" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="535.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="544" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="553.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="562" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="571.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="580" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="589.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="598" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="607.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="616" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="625.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><rect x="634" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="643.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><rect x="652" y="128" width="18" height="22" fill="none" stroke="#2a3140" stroke-width="1"/><text x="661.0" y="144" font-size="11.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><path d="M130 202 V210" stroke="#9aa7b4" stroke-width="1.4"/><text x="130" y="230" font-size="11" fill="#9aa7b4" text-anchor="start" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">0 µs</text><path d="M310 202 V210" stroke="#9aa7b4" stroke-width="1.4"/><text x="310" y="230" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">320 µs</text><path d="M490 202 V210" stroke="#9aa7b4" stroke-width="1.4"/><text x="490" y="230" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">640 µs</text><path d="M670 202 V210" stroke="#9aa7b4" stroke-width="1.4"/><text x="670" y="230" font-size="11" fill="#9aa7b4" text-anchor="end" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">960 µs</text><path d="M130 206 H670" stroke="#9aa7b4" stroke-width="1.4"/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0" dur="12s" repeatCount="indefinite"/><rect x="130" y="52" width="180" height="102" rx="4" fill="#d29922" fill-opacity="0.13" stroke="#d29922" stroke-width="1.6"/><text x="132" y="172" font-size="10.5" fill="#d29922" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">inicio</text><text x="308" y="172" font-size="10.5" fill="#d29922" text-anchor="end" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">parada</text><text x="220.0" y="172" font-size="10.5" fill="#d29922" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">8 bits de datos</text><text x="130" y="262" font-size="12.5" fill="#e6edf3" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Byte 1 · 0x90 = 1001 0000 · estado (el bit 7 vale 1)</text><text x="130" y="284" font-size="11" fill="#9aa7b4" text-anchor="start" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">1001 = Note On, 0000 = canal 1 (se cuenta desde 0).</text><text x="130" y="306" font-size="11" fill="#9aa7b4" text-anchor="start" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Sale entre 0 y 320 µs. Primero el bit 0 (el menos significativo).</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0" dur="12s" repeatCount="indefinite"/><rect x="310" y="52" width="180" height="102" rx="4" fill="#58a6ff" fill-opacity="0.13" stroke="#58a6ff" stroke-width="1.6"/><text x="312" y="172" font-size="10.5" fill="#58a6ff" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">inicio</text><text x="488" y="172" font-size="10.5" fill="#58a6ff" text-anchor="end" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">parada</text><text x="400.0" y="172" font-size="10.5" fill="#58a6ff" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">8 bits de datos</text><text x="130" y="262" font-size="12.5" fill="#e6edf3" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Byte 2 · 0x3C = 0011 1100 · dato (el bit 7 vale 0)</text><text x="130" y="284" font-size="11" fill="#9aa7b4" text-anchor="start" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Con los 7 bits restantes: 0111100 = 60, el número de nota (do central).</text><text x="130" y="306" font-size="11" fill="#9aa7b4" text-anchor="start" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Sale entre 320 y 640 µs.</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1" dur="12s" repeatCount="indefinite"/><rect x="490" y="52" width="180" height="102" rx="4" fill="#3fb950" fill-opacity="0.13" stroke="#3fb950" stroke-width="1.6"/><text x="492" y="172" font-size="10.5" fill="#3fb950" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">inicio</text><text x="668" y="172" font-size="10.5" fill="#3fb950" text-anchor="end" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">parada</text><text x="580.0" y="172" font-size="10.5" fill="#3fb950" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">8 bits de datos</text><text x="130" y="262" font-size="12.5" fill="#e6edf3" text-anchor="start" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Byte 3 · 0x64 = 0110 0100 · dato (el bit 7 vale 0)</text><text x="130" y="284" font-size="11" fill="#9aa7b4" text-anchor="start" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Con los 7 bits restantes: 1100100 = 100, la velocidad con que se pulsó la tecla.</text><text x="130" y="306" font-size="11" fill="#9aa7b4" text-anchor="start" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Sale entre 640 y 960 µs: el mensaje completo ocupó 0,96 ms.</text></g></svg>
+        <figcaption><b>Figura 2.</b> El mensaje <code>90 3C 64</code> saliendo por el cable, animada: un byte por estado. La
+        señal baja a 0 cuando circula corriente. Cada byte son 10 bits y dura 320 µs; el mensaje completo, 960 µs.</figcaption>
+      </figure>
+
+      <div class="form">
+        <math display="block"><mrow><mi>t</mi><mo>=</mo><mfrac><mrow><mn>10</mn><mo>·</mo><mi>N</mi></mrow><mrow><mn>31&#160;250</mn><mspace width="0.25em"/><mtext>bit/s</mtext></mrow></mfrac><mo>=</mo><mn>0,32</mn><mo>·</mo><mi>N</mi><mspace width="0.25em"/><mtext>ms</mtext></mrow></math>
+        <span class="cap"><i>N</i> es la cantidad de bytes. Cada bit dura 1/31 250 s = 32 µs; cada byte, 10 × 32 µs = 320 µs.</span>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Cuánto tarda un acorde</div>
+        <p>Un Note On tiene 3 bytes: <math><mrow><mfrac><mrow><mn>30</mn><mspace width="0.25em"/><mtext>bits</mtext></mrow><mrow><mn>31&#160;250</mn><mspace width="0.25em"/><mtext>bit/s</mtext></mrow></mfrac><mo>=</mo><mn>0,96</mn><mspace width="0.25em"/><mtext>ms</mtext></mrow></math>. Un acorde de 10 notas son 10 mensajes que salen uno detrás de otro: <math><mrow><mn>10</mn><mo>×</mo><mn>0,96</mn><mspace width="0.25em"/><mtext>ms</mtext><mo>=</mo><mn>9,6</mn><mspace width="0.25em"/><mtext>ms</mtext></mrow></math>. Con
+        estado en ejecución (sección 3) el byte de estado se manda una sola vez: 3 + 9 · 2 = 21 bytes, o sea <math><mrow><mn>21</mn><mo>×</mo><mn>0,32</mn><mspace width="0.25em"/><mtext>ms</mtext><mo>=</mo><mn>6,72</mn><mspace width="0.25em"/><mtext>ms</mtext></mrow></math>. Y la cuenta
+        del límite de la línea: <math><mrow><mfrac><mn>1</mn><mrow><mn>0,96</mn><mspace width="0.25em"/><mtext>ms</mtext></mrow></mfrac><mo>≈</mo><mn>1&#160;042</mn><mspace width="0.25em"/><mtext>mensajes/s</mtext></mrow></math> de tres bytes, y eso sin dejar lugar a ningún otro mensaje.</p>
+      </div>
+
+      <div class="escuchar"><span class="et">Escuchá, con volumen moderado: un acorde de seis notas (do, mi, sol, do, mi, sol) en el que cada nota empieza un poco
+      después de la anterior. El primer botón usa la separación de un mensaje MIDI (0,96 ms); los otros, separaciones mayores.
+      ¿Desde qué separación dejás de oír un acorde y empezás a oír notas sucesivas?</span>
+        <button class="esc" data-esc='{"tipo":"mezcla","partes":[{"tipo":"tono","f":130.81,"forma":"triangle","db":-8,"dur":1.2,"desde":0.0},{"tipo":"tono","f":164.81,"forma":"triangle","db":-8,"dur":1.2,"desde":0.00096},{"tipo":"tono","f":196.0,"forma":"triangle","db":-8,"dur":1.2,"desde":0.00192},{"tipo":"tono","f":261.63,"forma":"triangle","db":-8,"dur":1.2,"desde":0.00288},{"tipo":"tono","f":329.63,"forma":"triangle","db":-8,"dur":1.2,"desde":0.00384},{"tipo":"tono","f":392.0,"forma":"triangle","db":-8,"dur":1.2,"desde":0.0048}]}'>0,96 ms</button>
+        <button class="esc" data-esc='{"tipo":"mezcla","partes":[{"tipo":"tono","f":130.81,"forma":"triangle","db":-8,"dur":1.2,"desde":0.0},{"tipo":"tono","f":164.81,"forma":"triangle","db":-8,"dur":1.2,"desde":0.04},{"tipo":"tono","f":196.0,"forma":"triangle","db":-8,"dur":1.2,"desde":0.08},{"tipo":"tono","f":261.63,"forma":"triangle","db":-8,"dur":1.2,"desde":0.12},{"tipo":"tono","f":329.63,"forma":"triangle","db":-8,"dur":1.2,"desde":0.16},{"tipo":"tono","f":392.0,"forma":"triangle","db":-8,"dur":1.2,"desde":0.2}]}'>40 ms</button>
+        <button class="esc" data-esc='{"tipo":"mezcla","partes":[{"tipo":"tono","f":130.81,"forma":"triangle","db":-8,"dur":1.2,"desde":0.0},{"tipo":"tono","f":164.81,"forma":"triangle","db":-8,"dur":1.2,"desde":0.12},{"tipo":"tono","f":196.0,"forma":"triangle","db":-8,"dur":1.2,"desde":0.24},{"tipo":"tono","f":261.63,"forma":"triangle","db":-8,"dur":1.2,"desde":0.36},{"tipo":"tono","f":329.63,"forma":"triangle","db":-8,"dur":1.2,"desde":0.48},{"tipo":"tono","f":392.0,"forma":"triangle","db":-8,"dur":1.2,"desde":0.6}]}'>120 ms</button>
+      </div>
+    </section>
+
+    <section id="mensajes">
+      <h2><span class="n">03</span>Los mensajes: estado y datos</h2>
+      <p>Un mensaje MIDI es una cadena de bytes. El primero es un <b>byte de estado</b>, que dice de qué mensaje se trata; le siguen uno o
+      dos <b>bytes de datos</b> con los parámetros. Lo que los distingue es el bit 7: en un byte de estado vale 1 y en uno de datos vale
+      0. Los datos tienen entonces 7 bits útiles, o sea <math><mrow><msup><mn>2</mn><mn>7</mn></msup><mo>=</mo><mn>128</mn></mrow></math> valores, de 0 a 127.</p>
+
+      <figure>
+        <svg viewBox="0 0 700 256" role="img" aria-label="Estructura en bits del mensaje Note On: byte de estado y dos bytes de datos" class="svg-t"><text x="138" y="34" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Byte de estado</text><text x="138" y="54" font-size="12" fill="#9aa7b4" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0x90</text><rect x="42" y="74" width="24" height="24" fill="#f85149" fill-opacity="0.18" stroke="#f85149" stroke-width="1.3"/><text x="54.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="54.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">7</text><rect x="66" y="74" width="24" height="24" fill="#d29922" fill-opacity="0.18" stroke="#d29922" stroke-width="1.3"/><text x="78.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="78.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">6</text><rect x="90" y="74" width="24" height="24" fill="#d29922" fill-opacity="0.18" stroke="#d29922" stroke-width="1.3"/><text x="102.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="102.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">5</text><rect x="114" y="74" width="24" height="24" fill="#d29922" fill-opacity="0.18" stroke="#d29922" stroke-width="1.3"/><text x="126.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="126.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">4</text><rect x="138" y="74" width="24" height="24" fill="#58a6ff" fill-opacity="0.18" stroke="#58a6ff" stroke-width="1.3"/><text x="150.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="150.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">3</text><rect x="162" y="74" width="24" height="24" fill="#58a6ff" fill-opacity="0.18" stroke="#58a6ff" stroke-width="1.3"/><text x="174.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="174.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">2</text><rect x="186" y="74" width="24" height="24" fill="#58a6ff" fill-opacity="0.18" stroke="#58a6ff" stroke-width="1.3"/><text x="198.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="198.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">1</text><rect x="210" y="74" width="24" height="24" fill="#58a6ff" fill-opacity="0.18" stroke="#58a6ff" stroke-width="1.3"/><text x="222.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="222.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">0</text><text x="54.0" y="142" font-size="11.5" fill="#f85149" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">estado</text><text x="54.0" y="160" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">= 1</text><text x="102.0" y="142" font-size="11.5" fill="#d29922" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">tipo</text><text x="102.0" y="160" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Note On</text><text x="186.0" y="142" font-size="11.5" fill="#58a6ff" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">canal</text><text x="186.0" y="160" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">canal 1</text><text x="350" y="34" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Byte de dato 1</text><text x="350" y="54" font-size="12" fill="#9aa7b4" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0x3C</text><rect x="254" y="74" width="24" height="24" fill="#f85149" fill-opacity="0.18" stroke="#f85149" stroke-width="1.3"/><text x="266.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="266.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">7</text><rect x="278" y="74" width="24" height="24" fill="#3fb950" fill-opacity="0.18" stroke="#3fb950" stroke-width="1.3"/><text x="290.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="290.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">6</text><rect x="302" y="74" width="24" height="24" fill="#3fb950" fill-opacity="0.18" stroke="#3fb950" stroke-width="1.3"/><text x="314.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="314.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">5</text><rect x="326" y="74" width="24" height="24" fill="#3fb950" fill-opacity="0.18" stroke="#3fb950" stroke-width="1.3"/><text x="338.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="338.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">4</text><rect x="350" y="74" width="24" height="24" fill="#3fb950" fill-opacity="0.18" stroke="#3fb950" stroke-width="1.3"/><text x="362.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="362.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">3</text><rect x="374" y="74" width="24" height="24" fill="#3fb950" fill-opacity="0.18" stroke="#3fb950" stroke-width="1.3"/><text x="386.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="386.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">2</text><rect x="398" y="74" width="24" height="24" fill="#3fb950" fill-opacity="0.18" stroke="#3fb950" stroke-width="1.3"/><text x="410.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="410.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">1</text><rect x="422" y="74" width="24" height="24" fill="#3fb950" fill-opacity="0.18" stroke="#3fb950" stroke-width="1.3"/><text x="434.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="434.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">0</text><text x="266.0" y="142" font-size="11.5" fill="#f85149" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">dato</text><text x="266.0" y="160" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">= 0</text><text x="362.0" y="142" font-size="11.5" fill="#3fb950" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">nota</text><text x="362.0" y="160" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">0111100 = 60</text><text x="562" y="34" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Byte de dato 2</text><text x="562" y="54" font-size="12" fill="#9aa7b4" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0x64</text><rect x="466" y="74" width="24" height="24" fill="#f85149" fill-opacity="0.18" stroke="#f85149" stroke-width="1.3"/><text x="478.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="478.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">7</text><rect x="490" y="74" width="24" height="24" fill="#a371f7" fill-opacity="0.18" stroke="#a371f7" stroke-width="1.3"/><text x="502.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="502.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">6</text><rect x="514" y="74" width="24" height="24" fill="#a371f7" fill-opacity="0.18" stroke="#a371f7" stroke-width="1.3"/><text x="526.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="526.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">5</text><rect x="538" y="74" width="24" height="24" fill="#a371f7" fill-opacity="0.18" stroke="#a371f7" stroke-width="1.3"/><text x="550.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="550.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">4</text><rect x="562" y="74" width="24" height="24" fill="#a371f7" fill-opacity="0.18" stroke="#a371f7" stroke-width="1.3"/><text x="574.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="574.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">3</text><rect x="586" y="74" width="24" height="24" fill="#a371f7" fill-opacity="0.18" stroke="#a371f7" stroke-width="1.3"/><text x="598.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">1</text><text x="598.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">2</text><rect x="610" y="74" width="24" height="24" fill="#a371f7" fill-opacity="0.18" stroke="#a371f7" stroke-width="1.3"/><text x="622.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="622.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">1</text><rect x="634" y="74" width="24" height="24" fill="#a371f7" fill-opacity="0.18" stroke="#a371f7" stroke-width="1.3"/><text x="646.0" y="91" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-family="Consolas,'Courier New',monospace">0</text><text x="646.0" y="114" font-size="10" fill="#7d8a99" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">0</text><text x="478.0" y="142" font-size="11.5" fill="#f85149" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">dato</text><text x="478.0" y="160" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">= 0</text><text x="574.0" y="142" font-size="11.5" fill="#a371f7" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">velocidad</text><text x="574.0" y="160" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">1100100 = 100</text><text x="350" y="214" font-size="11.5" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">El bit 7 distingue los bytes: en uno de estado vale 1, en uno de dato vale 0.</text><text x="350" y="236" font-size="11.5" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Por eso un dato solo tiene 7 bits útiles, y sus valores van de 0 a 127.</text></svg>
+        <figcaption><b>Figura 3.</b> Note On, canal 1, do central, velocidad 100. En el byte de estado, los 3 bits siguientes al bit 7
+        dicen el tipo de mensaje y los 4 últimos, el canal. Los datos son números de 7 bits.</figcaption>
+      </figure>
+
+      <p>En los mensajes de canal, los 4 bits bajos del estado llevan el número de canal, de 0 a 15, que los equipos muestran como
+      canal 1 a 16. Un receptor ajustado a un canal ignora los demás: un solo cable transporta hasta 16 partes independientes, como 16
+      pistas. El byte de estado se arma con el tipo <i>T</i> (el dígito hexadecimal) y el canal <i>c</i>:</p>
+      <div class="form">
+        <math display="block"><mrow><mi>E</mi><mo>=</mo><mn>16</mn><mo>·</mo><mi>T</mi><mo>+</mo><mrow><mo>(</mo><mi>c</mi><mo>−</mo><mn>1</mn><mo>)</mo></mrow></mrow></math>
+        <span class="cap"><i>T</i> = 8 (Note Off), 9 (Note On), A, B, C, D, E; <i>c</i> = canal de 1 a 16. Para Note On en el canal 1: 16 · 9 + 0 = 144 = 0x90.</span>
+      </div>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Mensaje</th><th class="c">Estado</th><th>Bytes de datos</th><th>Qué hace</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>Note Off</b></td><td class="c"><code>8n</code></td><td>nota, velocidad de suelta</td><td>Termina una nota.</td></tr>
+            <tr><td class="c"><b>Note On</b></td><td class="c"><code>9n</code></td><td>nota, velocidad</td><td>Empieza una nota. Con velocidad 0 equivale a un Note Off.</td></tr>
+            <tr><td class="c"><b>Presión polifónica</b></td><td class="c"><code>An</code></td><td>nota, presión</td><td>Presión sobre una tecla ya pulsada.</td></tr>
+            <tr><td class="c"><b>Control Change</b></td><td class="c"><code>Bn</code></td><td>controlador, valor</td><td>Mueve un control: volumen, panorama, pedal…</td></tr>
+            <tr><td class="c"><b>Program Change</b></td><td class="c"><code>Cn</code></td><td>programa (un solo dato)</td><td>Cambia el timbre (parche) del canal.</td></tr>
+            <tr><td class="c"><b>Presión de canal</b></td><td class="c"><code>Dn</code></td><td>presión (un solo dato)</td><td>Presión general de todo el teclado.</td></tr>
+            <tr><td class="c"><b>Pitch Bend</b></td><td class="c"><code>En</code></td><td>LSB, MSB (14 bits)</td><td>Dobla la altura de las notas del canal.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="box ojo">
+        <div class="bt">La velocidad no es un nivel en dB</div>
+        <p>La velocidad dice <b>con qué fuerza</b> se pulsó la tecla, de 1 a 127. Qué nivel de sonido produce lo decide cada generador con su
+        propia curva: dos módulos pueden responder distinto al mismo mensaje. Y la velocidad 0 en un Note On no es «tocar muy suave»:
+        es soltar la nota.</p>
+      </div>
+
+      <h3>Control Change y Program Change</h3>
+      <p>Hay 128 controladores. Los 0 a 31 son continuos y los 32 a 63 llevan el byte menos significativo de los 0 a 31, para quien necesite
+      14 bits de resolución (<math><mrow><msup><mn>2</mn><mn>14</mn></msup><mo>=</mo><mn>16&#160;384</mn></mrow></math> pasos). Los 64 a 69 son interruptores: de 0 a 63 es apagado y de 64 a 127, encendido. Los más usados:</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">CC</th><th>Función</th><th>Ejemplo (canal 1)</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><b>1</b></td><td>Rueda de modulación</td><td><code>B0 01 40</code>: a la mitad.</td></tr>
+            <tr><td class="c"><b>7</b></td><td>Volumen del canal</td><td><code>B0 07 64</code>: valor 100.</td></tr>
+            <tr><td class="c"><b>10</b></td><td>Panorama (izquierda 0, centro 64, derecha 127)</td><td><code>B0 0A 40</code>: al centro.</td></tr>
+            <tr><td class="c"><b>11</b></td><td>Expresión</td><td><code>B0 0B 7F</code>: máximo.</td></tr>
+            <tr><td class="c"><b>64</b></td><td>Pedal de sustain</td><td><code>B0 40 7F</code> lo pisa; <code>B0 40 00</code> lo suelta.</td></tr>
+            <tr><td class="c"><b>123</b></td><td>Todas las notas apagadas</td><td><code>B0 7B 00</code>: corta lo que haya quedado sonando.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>El Program Change tiene un solo byte de datos: 128 programas, de 0 a 127. El violín de General MIDI es el programa 41, y por lo tanto
+      se envía <code>C0 28</code> (el valor es el programa menos uno).</p>
+
+      <h3>Pitch Bend: 14 bits en dos bytes</h3>
+      <p>Para que el doblado de altura sea suave, el Pitch Bend usa dos bytes de datos y 14 bits: <b>primero el byte menos significativo (LSB) y
+      después el más significativo (MSB)</b>.</p>
+      <div class="form">
+        <math display="block"><mrow><mi>v</mi><mo>=</mo><mn>128</mn><mo>·</mo><mi mathvariant="normal">MSB</mi><mo>+</mo><mi mathvariant="normal">LSB</mi></mrow></math>
+        <span class="cap"><i>v</i> va de 0 a 16 383. En reposo vale 8 192: bytes <code>00 40</code>.</span>
+      </div>
+      <p>El rango por omisión es de ±2 semitonos, y el equipo lo puede cambiar. El desplazamiento resulta:</p>
+      <div class="form">
+        <math display="block"><mrow><mi>Δ</mi><mo>=</mo><mi>R</mi><mo>·</mo><mfrac><mrow><mi>v</mi><mo>−</mo><mn>8192</mn></mrow><mn>8192</mn></mfrac><mspace width="0.25em"/><mtext>semitonos</mtext></mrow></math>
+        <span class="cap"><i>R</i> es el rango en semitonos (2 por omisión). Con <i>v</i> = 16 383 se sube casi 2 semitonos; con <i>v</i> = 0, se baja 2.</span>
+      </div>
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Subir la altura un semitono</div>
+        <p>Con rango de ±2 semitonos queremos subir 1 semitono: la mitad del recorrido hacia arriba, <math><mrow><mi>v</mi><mo>=</mo><mn>8192</mn><mo>+</mo><mn>4096</mn><mo>=</mo><mn>12&#160;288</mn></mrow></math>. Se separa en bytes: <math><mrow><mn>12&#160;288</mn><mo>=</mo><mn>96</mn><mo>·</mo><mn>128</mn><mo>+</mo><mn>0</mn></mrow></math>, de
+        modo que MSB = 96 = 0x60 y LSB = 0. El mensaje en el canal 1 es <code>E0 00 60</code> (en binario, <code>1110 0000</code>,
+        <code>0000 0000</code>, <code>0110 0000</code>). Una nota la de 440 Hz pasa a <math><mrow><mn>440</mn><mo>·</mo><msup><mn>2</mn><mfrac><mn>1</mn><mn>12</mn></mfrac></msup><mo>=</mo><mn>466,16</mn><mspace width="0.25em"/><mtext>Hz</mtext></mrow></math>.</p>
+      </div>
+      <div class="escuchar"><span class="et">Escuchá, con volumen moderado: un doblado continuo del la de 440 Hz hacia arriba, de reposo (8 192) al máximo (16 383), que sube 2 semitonos
+      (hasta 493,88 Hz); y, para comparar, los mismos extremos en dos notas separadas.</span>
+        <button class="esc" data-esc='{"tipo":"barrido","f1":440,"f2":493.88,"dur":2.5}'>Pitch Bend de 8 192 a 16 383</button>
+        <button class="esc" data-esc='{"tipo":"notas","n":["A4","B4"],"bpm":60}'>la, si (dos notas)</button>
+      </div>
+
+      <h3>Mensajes de sistema y estado en ejecución</h3>
+      <p>Los mensajes de sistema no llevan canal: van a todos los equipos. Empiezan con <code>F</code>.</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Estado</th><th>Mensaje</th><th>Para qué sirve</th></tr></thead>
+          <tbody>
+            <tr><td class="c"><code>F0 … F7</code></td><td>System Exclusive</td><td>Datos con formato propio de cada fabricante, entre un <code>F0</code> con su identificación y un <code>F7</code> final: parámetros de un parche, volcados de memoria.</td></tr>
+            <tr><td class="c"><code>F2</code></td><td>Posición de la canción</td><td>Desde qué compás empezar al reproducir (dos datos).</td></tr>
+            <tr><td class="c"><code>F8</code></td><td>Reloj</td><td>24 pulsos por negra, para sincronizar secuenciadores y cajas de ritmos.</td></tr>
+            <tr><td class="c"><code>FA</code> · <code>FB</code> · <code>FC</code></td><td>Start · Continue · Stop</td><td>Mandos de transporte de un secuenciador.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Los de tiempo real (<code>F8</code> en adelante) pueden meterse en el medio de otro mensaje sin romperlo, porque no se
+      pueden demorar. Además existe un atajo, el <b>estado en ejecución</b> (<i>running status</i>): si un mensaje de canal tiene el mismo
+      estado que el anterior, se omite el byte de estado. Una ráfaga de Note On queda en 2 bytes por nota en vez de 3 (<math><mrow><mn>2</mn><mo>×</mo><mn>0,32</mn><mspace width="0.25em"/><mtext>ms</mtext><mo>=</mo><mn>0,64</mn><mspace width="0.25em"/><mtext>ms</mtext></mrow></math> en vez de 0,96 ms).</p>
+      <p>Por último, cada equipo responde según un <b>modo</b>: «omni» (escucha todos los canales) o no, y polifónico o monofónico. Lo
+      habitual hoy es omni apagado y polifónico, y los generadores <i>multitímbricos</i> reparten sus partes, una por canal.</p>
+    </section>
+
+    <section id="binario">
+      <h2><span class="n">04</span>Binario y hexadecimal: armar y leer mensajes</h2>
+      <p>Los mensajes se escriben en hexadecimal porque un byte son exactamente dos dígitos: cada dígito hexadecimal representa 4 bits.
+      Hay que pasar de uno a otro sin pensar mucho; esta tabla alcanza para todo.</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Hex</th><th class="c">Binario</th><th class="c">Dec.</th><th class="c">Hex</th><th class="c">Binario</th><th class="c">Dec.</th></tr></thead>
+          <tbody>
+            <tr><td class="c">0</td><td class="c"><code>0000</code></td><td class="c">0</td><td class="c">8</td><td class="c"><code>1000</code></td><td class="c">8</td></tr>
+            <tr><td class="c">1</td><td class="c"><code>0001</code></td><td class="c">1</td><td class="c">9</td><td class="c"><code>1001</code></td><td class="c">9</td></tr>
+            <tr><td class="c">2</td><td class="c"><code>0010</code></td><td class="c">2</td><td class="c">A</td><td class="c"><code>1010</code></td><td class="c">10</td></tr>
+            <tr><td class="c">3</td><td class="c"><code>0011</code></td><td class="c">3</td><td class="c">B</td><td class="c"><code>1011</code></td><td class="c">11</td></tr>
+            <tr><td class="c">4</td><td class="c"><code>0100</code></td><td class="c">4</td><td class="c">C</td><td class="c"><code>1100</code></td><td class="c">12</td></tr>
+            <tr><td class="c">5</td><td class="c"><code>0101</code></td><td class="c">5</td><td class="c">D</td><td class="c"><code>1101</code></td><td class="c">13</td></tr>
+            <tr><td class="c">6</td><td class="c"><code>0110</code></td><td class="c">6</td><td class="c">E</td><td class="c"><code>1110</code></td><td class="c">14</td></tr>
+            <tr><td class="c">7</td><td class="c"><code>0111</code></td><td class="c">7</td><td class="c">F</td><td class="c"><code>1111</code></td><td class="c">15</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Para armar un mensaje: (1) se elige el estado con tipo y canal (<i>E</i> = 16 · <i>T</i> + (<i>c</i> − 1)); (2) cada dato decimal se
+      divide por 16: el cociente es el primer dígito hexadecimal y el resto, el segundo; (3) se comprueba que los bytes de datos queden
+      por debajo de 128, es decir, con el bit 7 en 0.</p>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Armar un Note On: do central, canal 1, velocidad 100</div>
+        <p><b>Estado:</b> Note On es 9 y el canal 1 se cuenta como 0: <code>90</code> = <code>1001 0000</code>.</p>
+        <p style="margin-top:8px"><b>Nota:</b> el do central es la nota 60: <math><mrow><mn>60</mn><mo>=</mo><mn>3</mn><mo>·</mo><mn>16</mn><mo>+</mo><mn>12</mn></mrow></math>, o sea los dígitos 3 y C (12): <code>3C</code> = <code>0011 1100</code>.</p>
+        <p style="margin-top:8px"><b>Velocidad:</b> <math><mrow><mn>100</mn><mo>=</mo><mn>6</mn><mo>·</mo><mn>16</mn><mo>+</mo><mn>4</mn></mrow></math>, o sea <code>64</code> = <code>0110 0100</code>.</p>
+        <p style="margin-top:8px"><b>Mensaje:</b> <code>90 3C 64</code>. Los dos datos tienen el bit 7 en 0, como corresponde. El Note Off
+        correspondiente es <code>80 3C 40</code>.</p>
+      </div>
+
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Leer un mensaje desconocido: 99 26 7F</div>
+        <p>El primer byte tiene el bit 7 en 1: es un estado. El dígito 9 es Note On y el segundo 9 es el canal 9 + 1 = <b>10</b>. La nota es
+        <code>26</code> = <math><mrow><mn>38</mn><mo>=</mo><mn>2</mn><mo>·</mo><mn>16</mn><mo>+</mo><mn>6</mn></mrow></math> = 38, y la velocidad <code>7F</code> = 127 es el máximo. En el canal 10 de General MIDI (percusión) la
+        nota 38 es el redoblante: un golpe de redoblante a máxima fuerza.</p>
+      </div>
+
+      <h3>Número de nota y frecuencia</h3>
+      <p>El número de nota es un contador de semitonos: la 60 es el do central y la 69, el la de afinación, 440 Hz. Cada semitono multiplica la
+      frecuencia por <math><msup><mn>2</mn><mrow><mn>1</mn><mo>/</mo><mn>12</mn></mrow></msup></math> ≈ 1,0595, y doce semitonos (una octava) la duplican:</p>
+      <div class="form">
+        <math display="block"><mrow><mi>f</mi><mo>=</mo><mn>440</mn><mo>·</mo><msup><mn>2</mn><mfrac><mrow><mi>n</mi><mo>−</mo><mn>69</mn></mrow><mn>12</mn></mfrac></msup><mspace width="0.25em"/><mtext>Hz</mtext></mrow></math>
+        <math display="block"><mrow><mi>n</mi><mo>=</mo><mn>69</mn><mo>+</mo><mn>12</mn><mrow><msub><mi>log</mi><mn>2</mn></msub><mo lspace="0" rspace="0.2em">&#x2061;</mo><mrow><mo>(</mo><mfrac><mi>f</mi><mn>440</mn></mfrac><mo>)</mo></mrow></mrow></mrow></math>
+        <span class="cap">Arriba, de la nota <i>n</i> a la frecuencia; abajo, de la frecuencia a la nota (se redondea al entero más próximo).</span>
+      </div>
+      <figure>
+        <svg viewBox="0 0 700 270" role="img" aria-label="Teclado de do central a do con el número de nota MIDI y la frecuencia de cada tecla" class="svg-t"><rect x="102" y="70" width="62" height="120" fill="#d29922" fill-opacity="0.30" stroke="#9aa7b4" stroke-width="1.4"/><text x="133.0" y="176" font-size="12" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">do</text><text x="133.0" y="214" font-size="12.5" fill="#d29922" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">60</text><text x="133.0" y="232" font-size="11" fill="#d29922" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">261,63 Hz</text><rect x="164" y="70" width="62" height="120" fill="#e6edf3" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.4"/><text x="195.0" y="176" font-size="12" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">re</text><text x="195.0" y="214" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">62</text><text x="195.0" y="232" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">293,66 Hz</text><rect x="226" y="70" width="62" height="120" fill="#e6edf3" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.4"/><text x="257.0" y="176" font-size="12" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">mi</text><text x="257.0" y="214" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">64</text><text x="257.0" y="232" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">329,63 Hz</text><rect x="288" y="70" width="62" height="120" fill="#e6edf3" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.4"/><text x="319.0" y="176" font-size="12" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">fa</text><text x="319.0" y="214" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">65</text><text x="319.0" y="232" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">349,23 Hz</text><rect x="350" y="70" width="62" height="120" fill="#e6edf3" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.4"/><text x="381.0" y="176" font-size="12" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">sol</text><text x="381.0" y="214" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">67</text><text x="381.0" y="232" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">392,00 Hz</text><rect x="412" y="70" width="62" height="120" fill="#58a6ff" fill-opacity="0.30" stroke="#9aa7b4" stroke-width="1.4"/><text x="443.0" y="176" font-size="12" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">la</text><text x="443.0" y="214" font-size="12.5" fill="#58a6ff" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">69</text><text x="443.0" y="232" font-size="11" fill="#58a6ff" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">440,00 Hz</text><rect x="474" y="70" width="62" height="120" fill="#e6edf3" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.4"/><text x="505.0" y="176" font-size="12" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">si</text><text x="505.0" y="214" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">71</text><text x="505.0" y="232" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">493,88 Hz</text><rect x="536" y="70" width="62" height="120" fill="#e6edf3" fill-opacity="0.10" stroke="#9aa7b4" stroke-width="1.4"/><text x="567.0" y="176" font-size="12" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">do</text><text x="567.0" y="214" font-size="12.5" fill="#e6edf3" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">72</text><text x="567.0" y="232" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">523,25 Hz</text><rect x="145" y="70" width="38" height="72" rx="2" fill="#0d1117" stroke="#9aa7b4" stroke-width="1.4"/><text x="164" y="112" font-size="11" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">61</text><rect x="207" y="70" width="38" height="72" rx="2" fill="#0d1117" stroke="#9aa7b4" stroke-width="1.4"/><text x="226" y="112" font-size="11" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">63</text><rect x="331" y="70" width="38" height="72" rx="2" fill="#0d1117" stroke="#9aa7b4" stroke-width="1.4"/><text x="350" y="112" font-size="11" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">66</text><rect x="393" y="70" width="38" height="72" rx="2" fill="#0d1117" stroke="#9aa7b4" stroke-width="1.4"/><text x="412" y="112" font-size="11" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">68</text><rect x="455" y="70" width="38" height="72" rx="2" fill="#0d1117" stroke="#9aa7b4" stroke-width="1.4"/><text x="474" y="112" font-size="11" fill="#e6edf3" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">70</text><text x="94" y="214" font-size="11" fill="#9aa7b4" text-anchor="end" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">n.º de nota</text><text x="94" y="232" font-size="11" fill="#9aa7b4" text-anchor="end" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">frecuencia</text><text x="133.0" y="56" font-size="11.5" fill="#d29922" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">do central</text><text x="443.0" y="56" font-size="11.5" fill="#58a6ff" text-anchor="middle" font-weight="700" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">la de afinación</text><text x="350" y="256" font-size="11" fill="#9aa7b4" text-anchor="middle" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif">Cada tecla sube un semitono: multiplica la frecuencia por 1,0595. Doce teclas, una octava, la duplican.</text></svg>
+        <figcaption><b>Figura 4.</b> De la nota 60 (do central) a la 72, con el número de nota y la frecuencia calculados con la fórmula.
+        En las teclas negras, el número de nota de cada semitono intermedio.</figcaption>
+      </figure>
+      <div class="box ejem">
+        <div class="bt">Ejemplo · Frecuencia de algunas notas</div>
+        <p>Nota 60: <math><mrow><mi>f</mi><mo>=</mo><mn>440</mn><mo>·</mo><msup><mn>2</mn><mfrac><mrow><mo>−</mo><mn>9</mn></mrow><mn>12</mn></mfrac></msup><mo>=</mo><mn>261,63</mn><mspace width="0.25em"/><mtext>Hz</mtext></mrow></math>. Nota 72, una octava más arriba: <math><mrow><mn>440</mn><mo>·</mo><msup><mn>2</mn><mfrac><mn>3</mn><mn>12</mn></mfrac></msup><mo>=</mo><mn>523,25</mn><mspace width="0.25em"/><mtext>Hz</mtext></mrow></math>, el doble. Nota 45: <math><mrow><mn>440</mn><mo>·</mo><msup><mn>2</mn><mfrac><mrow><mo>−</mo><mn>24</mn></mrow><mn>12</mn></mfrac></msup><mo>=</mo><mn>110</mn><mspace width="0.25em"/><mtext>Hz</mtext></mrow></math>, dos octavas debajo del la de afinación. La
+        nota más alta posible, la 127, queda en <math><mrow><mn>440</mn><mo>·</mo><msup><mn>2</mn><mfrac><mn>58</mn><mn>12</mn></mfrac></msup><mo>≈</mo><mn>12&#160;544</mn><mspace width="0.25em"/><mtext>Hz</mtext></mrow></math>.</p>
+      </div>
+      <div class="box ojo">
+        <div class="bt">¿Cuál es el do central, C3 o C4?</div>
+        <p>El número 60 es estándar; su <b>nombre</b> no. En este sitio la nota 60 es do4 (y la 69, la4). Algunos fabricantes, entre ellos Yamaha (el manual de
+        referencia llama A3 a la nota 69), numeran las octavas una más abajo. Si un teclado y un programa suenan una octava corridos,
+        casi seguro es una diferencia de nombres y no un error de mensaje.</p>
+      </div>
+      <div class="escuchar"><span class="et">Escuchá, con volumen moderado: la secuencia de la tabla (notas 60, 64, 67 y 72) y, en el segundo botón, la misma nota la en tres octavas (57, 69, 81: 220, 440 y 880 Hz).</span>
+        <button class="esc" data-esc='{"tipo":"notas","n":["C4","E4","G4","C5"],"r":[1,1,1,2],"bpm":80}'>60 · 64 · 67 · 72</button>
+        <button class="esc" data-esc='{"tipo":"notas","n":["A3","A4","A5","A4"],"bpm":70}'>57 · 69 · 81 · 69</button>
+      </div>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Nota</th><th class="c">Número</th><th class="c">Note On (canal 1, velocidad 100)</th><th class="c">Note Off (canal 1)</th></tr></thead>
+          <tbody>
+            <tr><td class="c">do central</td><td class="c">60</td><td class="c"><code>90 3C 64</code></td><td class="c"><code>80 3C 40</code></td></tr>
+            <tr><td class="c">mi</td><td class="c">64</td><td class="c"><code>90 40 64</code></td><td class="c"><code>80 40 40</code></td></tr>
+            <tr><td class="c">sol</td><td class="c">67</td><td class="c"><code>90 43 64</code></td><td class="c"><code>80 43 40</code></td></tr>
+            <tr><td class="c">do (octava)</td><td class="c">72</td><td class="c"><code>90 48 64</code></td><td class="c"><code>80 48 40</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="gm">
+      <h2><span class="n">05</span>General MIDI, cartillas y lo que vino después</h2>
+      <p>MIDI dice «programa 41», pero no dice qué instrumento es: cada fabricante ponía los timbres en el orden que quería, y una canción
+      grabada para un módulo sonaba con otros instrumentos en otro. <b>General MIDI</b> (GM, desde 1991) fijó un orden común:</p>
+      <ul>
+        <li><b>128 programas</b>, ordenados en 16 familias de 8, del mismo número en todos los equipos GM (de 1 a 128 para el usuario; el mensaje lleva de 0 a 127).</li>
+        <li>El <b>canal 10</b> es la percusión, y cada nota es un instrumento y no una altura: 36 bombo, 38 redoblante, 42 hi-hat cerrado, 46 hi-hat abierto, 49 platillo crash, 51 platillo ride.</li>
+        <li>Un mínimo de 24 voces simultáneas y la respuesta a un conjunto básico de controladores.</li>
+      </ul>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Programas</th><th>Familia</th><th class="c">Programas</th><th>Familia</th></tr></thead>
+          <tbody>
+            <tr><td class="c">1–8</td><td>Piano</td><td class="c">9–16</td><td>Percusión cromática</td></tr>
+            <tr><td class="c">17–24</td><td>Órgano</td><td class="c">25–32</td><td>Guitarra</td></tr>
+            <tr><td class="c">33–40</td><td>Bajo</td><td class="c">41–48</td><td>Cuerdas</td></tr>
+            <tr><td class="c">49–56</td><td>Conjuntos</td><td class="c">57–64</td><td>Metales</td></tr>
+            <tr><td class="c">65–72</td><td>Cañas</td><td class="c">73–80</td><td>Flautas</td></tr>
+            <tr><td class="c">81–88</td><td>Sintetizador solista</td><td class="c">89–96</td><td>Sintetizador de fondo</td></tr>
+            <tr><td class="c">97–104</td><td>Efectos de sintetizador</td><td class="c">105–112</td><td>Instrumentos étnicos</td></tr>
+            <tr><td class="c">113–120</td><td>Percusivos</td><td class="c">121–128</td><td>Efectos de sonido</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>GM garantiza el <i>orden</i>, no el <i>timbre</i>: el piano de dos módulos GM será un piano en ambos, pero no sonará igual.</p>
+
+      <h3>La cartilla de implementación</h3>
+      <p>Ningún equipo usa todo MIDI. Por eso la especificación pide que cada instrumento traiga en su manual una <b>cartilla de implementación</b>:
+      una tabla con cuatro columnas. La primera nombra la función, la segunda dice si el equipo la <b>transmite</b>, la tercera si la <b>reconoce</b>
+      (o = sí, x = no, o un rango) y la cuarta es para observaciones. Sirve para saber, antes de comprar o de conectar, si dos equipos van a entenderse.</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Función</th><th class="c">Transmitido</th><th class="c">Reconocido</th><th>Observaciones</th></tr></thead>
+          <tbody>
+            <tr><td>Canal básico</td><td class="c">1</td><td class="c">1–16</td><td>Se puede cambiar.</td></tr>
+            <tr><td>Modo</td><td class="c">3</td><td class="c">1, 3, 4</td><td>3 = omni apagado, polifónico.</td></tr>
+            <tr><td>Número de nota</td><td class="c">21–108</td><td class="c">0–127</td><td>Un teclado de 88 teclas.</td></tr>
+            <tr><td>Velocidad Note On</td><td class="c">o</td><td class="c">o</td><td></td></tr>
+            <tr><td>Velocidad Note Off</td><td class="c">x</td><td class="c">x</td><td>No usa la velocidad de suelta.</td></tr>
+            <tr><td>Presión de canal</td><td class="c">o</td><td class="c">x</td><td></td></tr>
+            <tr><td>Pitch Bend</td><td class="c">o</td><td class="c">o</td><td></td></tr>
+            <tr><td>Control Change 1, 7, 64</td><td class="c">o</td><td class="c">o</td><td></td></tr>
+            <tr><td>Program Change</td><td class="c">o 0–127</td><td class="c">o 0–127</td><td></td></tr>
+            <tr><td>System Exclusive</td><td class="c">x</td><td class="c">o</td><td></td></tr>
+            <tr><td>Reloj</td><td class="c">x</td><td class="c">o</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap" style="font-size:12px;color:var(--soft)">Cartilla inventada para practicar la lectura; los equipos reales traen la suya en el manual.</p>
+
+      <h3>Después del cable DIN</h3>
+      <p>Hoy la mayoría de los controladores se conecta por <b>USB</b>: viajan los mismos mensajes, sin conectores DIN ni limitación de 31 250 bit/s, y los
+      equipos «class compliant» funcionan sin controlador adicional. <b>MIDI 2.0</b> (presentado en 2020) permite comunicación en los dos sentidos y resoluciones
+      mucho mayores (velocidad de 16 bits y controladores de 32), y mantiene la compatibilidad con MIDI 1.0. Los mensajes de esta página siguen valiendo.
+      Los archivos <code>.mid</code> (Standard MIDI File) guardan los mismos mensajes con una marca de tiempo por evento.</p>
+
+      <div class="box">
+        <div class="bt">Para ampliar</div>
+        <p><i>Sound Reinforcement Handbook</i>, G. Davis y R. Jones (Yamaha, 2.ª ed., 1989), sección 19 («MIDI»), pp. 371 a 393: la 19.1
+        («Interface specifications») explica el cable, el optoacoplador y la estructura de bytes; la 19.2 («Control of musical instruments») trae los modos, la tabla de
+        controladores (Fig. 19-9, p. 378) y una cartilla de implementación real (Fig. 19-10, p. 381); la 19.4 («MIDI data processors»), las cajas THRU y los mezcladores de datos, y la 19.6
+        («Troubleshooting»), un método de diagnóstico. Es un libro de 1989: no conoce General MIDI, ni USB, ni MIDI 2.0, y numera las octavas distinto del criterio de este sitio.</p>
+      </div>
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+
+      <div class="box peligro">
+        <div class="bt">Cuidado del oído</div>
+        <p>Un generador de sonido obedece lo que le llega: un Note On con velocidad 127, un volumen en el máximo o un programa de timbre muy fuerte
+        pueden sonar a un nivel mucho mayor del esperado, y con auriculares el oído lo recibe sin amortiguación. Antes de conectar, bajá el volumen de salida del módulo;
+        subilo de a poco con un acorde de prueba. No tengas auriculares puestos al cambiar cables o encender equipos.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Mirar los mensajes de un teclado</div>
+        <p><b>Materiales:</b> un teclado controlador (USB, o DIN con interfaz) y una computadora con un monitor MIDI (MIDI-OX en Windows, MIDI Monitor en macOS o el monitor del DAW). Sin teclado, sirve el teclado virtual del DAW.</p>
+        <p style="margin-top:8px"><b>Pasos:</b> (1) abrí el monitor y tocá el do central, primero suave y después fuerte; anotá estado, nota y velocidad en hexadecimal y pasalos a binario. (2) Soltá: ¿llega un Note Off o un Note On con velocidad 0? (3) Mové la rueda de modulación, pisá el pedal de sustain y doblá la altura. (4) Cambiá el canal del teclado y repetí.</p>
+        <p style="margin-top:8px"><b>Tiene que dar:</b> <code>9n 3C vv</code> con <i>n</i> = canal − 1 y <i>vv</i> distinta según la fuerza; la rueda manda CC 1; el pedal, CC 64 con valores bajo 64 (suelto) y desde 64 (pisado); el Pitch Bend, un par LSB-MSB que en reposo es <code>00 40</code>. Cada equipo suelta de una de las dos formas: ambas valen.</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Un archivo .mid escrito byte por byte</div>
+        <p><b>Materiales:</b> Python y cualquier reproductor que abra archivos <code>.mid</code>. Este programa escribe un do central de media segundo:</p>
+        <pre class="code"><code>cab = bytes.fromhex(<span class="c-str">'4d546864 00000006 0000 0001 01e0'</span>)  <span class="c-com"># MThd: formato 0, 1 pista, 480 tics por negra</span>
+ev  = bytes.fromhex(<span class="c-str">'00 903c64  8360 803c40  00 ff2f00'</span>)   <span class="c-com"># Note On, 480 tics, Note Off, fin de pista</span>
+pista = <span class="c-str">b'MTrk'</span> + len(ev).to_bytes(<span class="c-num">4</span>, <span class="c-str">'big'</span>) + ev
+open(<span class="c-str">'do.mid'</span>, <span class="c-str">'wb'</span>).write(cab + pista)</code></pre>
+        <p style="margin-top:8px"><b>Pasos:</b> corré el programa, abrí <code>do.mid</code> en el reproductor y mirá sus bytes con un editor hexadecimal. Después agregá un re y un mi después del do: cada nota necesita un Note On y un Note Off, y las marcas de tiempo (<code>8360</code> son 480 tics) van antes de cada evento.</p>
+        <p style="margin-top:8px"><b>Tiene que dar:</b> un archivo de 35 bytes; la pista mide 13 bytes (<code>0D</code>) y suena un do de 0,5 s (480 tics a 120 negras por minuto, el tempo por omisión).</p>
+      </div>
+
+      <div class="box lab">
+        <div class="bt">Práctica 3 · Leer la cartilla de implementación de un equipo real</div>
+        <p>Buscá la cartilla (<i>MIDI implementation chart</i>) en el manual de un teclado o un módulo, de la escuela o en línea, y completá una tabla como la de la sección 5.
+        Respondé: ¿qué modos soporta?, ¿qué controladores reconoce?, ¿transmite presión? Con las cartillas de dos equipos, decidí si uno puede gobernar al otro y qué mensajes se perderían (por ejemplo, la presión de canal del teclado de ejemplo hacia un módulo que no la reconoce).</p>
+      </div>
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Error</th><th>Consecuencia</th></tr></thead>
+          <tbody>
+            <tr><td>Creer que el cable MIDI lleva audio</td><td>No hay sonido: hace falta un generador, y su salida de audio se conecta aparte a la consola o a la placa.</td></tr>
+            <tr><td>Unir OUT con OUT o IN con IN</td><td>No pasa nada. Siempre de un OUT (o THRU) a un IN.</td></tr>
+            <tr><td>Esperar que lo recibido por IN salga por OUT</td><td>Solo lo repite el THRU. El OUT manda los mensajes que genera el equipo mismo.</td></tr>
+            <tr><td>Encadenar demasiados equipos por THRU</td><td>Se acumulan retardo y errores de pulso. Con muchos receptores, caja THRU.</td></tr>
+            <tr><td>Confundir canal 1–16 con 0–15</td><td>Se manda al canal vecino y el receptor no responde.</td></tr>
+            <tr><td>Interpretar el Program Change como el número que se ve en pantalla</td><td>El valor enviado es el programa menos uno: sonará otro timbre.</td></tr>
+            <tr><td>Tomar la velocidad 0 de un Note On por «suave»</td><td>Es un Note Off.</td></tr>
+            <tr><td>Perder un Note Off (cable cortado en medio de una nota)</td><td>Nota colgada. Se corta con CC 123 (todas las notas apagadas) o con el «pánico» del equipo.</td></tr>
+            <tr><td>Confundir <code>0x64</code> con 64</td><td><code>64</code> hexadecimal es 100 decimal. Escribir 64 en un monitor decimal da <code>40</code> hexadecimal.</td></tr>
+            <tr><td>Mandar el Pitch Bend con el MSB primero</td><td>El valor sale desarmado: el primer byte es el LSB.</td></tr>
+            <tr><td>Suponer que 60 es siempre C4</td><td>Depende del fabricante: puede quedar una octava corrida.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+
+      <details class="q"><summary>¿Cuánto tarda en transmitirse un Note On? ¿Y uno con estado en ejecución?</summary>
+        <div class="a"><p>Son 3 bytes de 10 bits a 31 250 bit/s: <b>0,96 ms</b>. Con estado en ejecución son 2 bytes: <b>0,64 ms</b>.</p></div></details>
+
+      <details class="q"><summary>Decodificá <code>93 45 50</code>.</summary>
+        <div class="a"><p>Es un <b>Note On</b> (9) en el <b>canal 4</b> (3 + 1), nota <code>45</code> = 69 (el la de 440 Hz) y velocidad <code>50</code> = 80.</p></div></details>
+
+      <details class="q"><summary>Escribí en hexadecimal un Note Off en el canal 16, nota 62, velocidad 64.</summary>
+        <div class="a"><p><code>8F 3E 40</code>: Note Off es 8, el canal 16 se cuenta como 15 (F), la nota 62 es <code>3E</code> y 64 es <code>40</code>.</p></div></details>
+
+      <details class="q"><summary>¿Qué frecuencia tienen las notas 72 y 45?</summary>
+        <div class="a"><p>Con <i>f</i> = 440 · 2<sup>(<i>n</i> − 69)/12</sup>: la 72 tiene <b>523,25 Hz</b> y la 45, <b>110 Hz</b>.</p></div></details>
+
+      <details class="q"><summary>¿Por qué un byte de datos no puede valer 200?</summary>
+        <div class="a"><p>Porque el bit 7 de un dato es siempre 0: así se distingue de un byte de estado. Quedan 7 bits y el máximo es 127 (<code>7F</code>).</p></div></details>
+
+      <details class="q"><summary>¿Qué dicen <code>E0 00 40</code> y <code>E0 7F 7F</code>?</summary>
+        <div class="a"><p>Son Pitch Bend en el canal 1. <code>00 40</code> es LSB 0 y MSB 64: <i>v</i> = 8 192, el centro (sin doblado). <code>7F 7F</code> es <i>v</i> = 16 383, el doblado máximo hacia arriba.</p></div></details>
+
+      <details class="q"><summary>¿Para qué sirve el THRU y por qué no alcanza con una «Y» de cables?</summary>
+        <div class="a"><p>El THRU entrega una copia de lo que entra por IN, para seguir la cadena. Una «Y» divide el lazo de 5 mA entre dos entradas, y a cada una le llega la mitad: la lectura deja de ser confiable.</p></div></details>
+    </section>
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/instrumentos-electronicos">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Instrumentos electrónicos: de los electromecánicos al sintetizador</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-electronica/temas/sintesis-sonido">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Síntesis de sonido</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«La norma MIDI»</b> de <b>MIDI y Síntesis</b>
+  (2° año de la carrera de Sonido), plan propio de catto.ar sobre las bases de UNTREF y de la Ciudad de Buenos Aires.
+  <a href="/publicaciones/mapa-sonido">Volver al Mapa de Temas de Sonido</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script src="/assets/js/escuchar.js?v=3"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

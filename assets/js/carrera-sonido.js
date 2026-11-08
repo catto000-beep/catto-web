@@ -168,10 +168,10 @@ var MATERIAS = [
   {t:"Edición digital", d:"Estaciones de trabajo de audio (DAW). Edición, fundidos, ajuste de tiempo y afinación.", tm:[["digital",2],["grab",2]]}
 ]},
 {id:"midi", n:"MIDI y Síntesis", area:"senal", anio:2, h:60, f:"C", ejes:[
-  {t:"Instrumentos electrónicos", d:"Historia de los instrumentos electromecánicos, eléctricos y electrónicos. CV/gate y trigger.", tm:[["sintesis",1]]},
-  {t:"La norma MIDI", d:"General MIDI, conexionado y tipos de dispositivos. Composición de mensajes en binario y hexadecimal. Cartillas de implementación.", tm:[["sintesis",2]]},
-  {t:"Síntesis de sonido", d:"Síntesis aditiva y sustractiva. Modulación de frecuencia, de amplitud y en anillo. Vocoder, síntesis granular y por modelado físico.", tm:[["sintesis",2],["senal",2]]},
-  {t:"Música electrónica", d:"Música concreta, electrónica y electroacústica. Estéticas, audición y análisis de obras.", tm:[["sintesis",1],["musica",2]]}
+  {t:"Instrumentos electrónicos", u:"instrumentos-electronicos", d:"Historia de los instrumentos electromecánicos, eléctricos y electrónicos. CV/gate y trigger.", tm:[["sintesis",1]]},
+  {t:"La norma MIDI", u:"norma-midi", d:"General MIDI, conexionado y tipos de dispositivos. Composición de mensajes en binario y hexadecimal. Cartillas de implementación.", tm:[["sintesis",2]]},
+  {t:"Síntesis de sonido", u:"sintesis-sonido", d:"Síntesis aditiva y sustractiva. Modulación de frecuencia, de amplitud y en anillo. Vocoder, síntesis granular y por modelado físico.", tm:[["sintesis",2],["senal",2]]},
+  {t:"Música electrónica", u:"musica-electronica", d:"Música concreta, electrónica y electroacústica. Estéticas, audición y análisis de obras.", tm:[["sintesis",1],["musica",2]]}
 ]},
 {id:"lm2", n:"Lenguaje Musical y Audioperceptiva II", area:"musica", anio:2, h:60, f:"C", ejes:[
   {t:"Funciones armónicas", d:"Reconocimiento de las funciones I, IV y V en mayor y menor. Cadencias simples.", tm:[["musica",2]]},
