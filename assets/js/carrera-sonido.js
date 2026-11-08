@@ -157,10 +157,10 @@ var MATERIAS = [
   {t:"Fuentes de alimentación", u:"/publicaciones/mapa-ingenieria/temas/fuentes-reguladas-lineales", d:"Transformador, rectificación y filtrado. Fuentes de corriente continua para equipos de audio.", tm:[["circ",2]]}
 ]},
 {id:"gr2", n:"Grabación II", area:"estudio", anio:2, h:90, f:"UC", ejes:[
-  {t:"Micrófonos", d:"Dinámicos, de condensador y de cinta. Patrones polares: omnidireccional, cardioide y figura ocho. Phantom power.", tm:[["grab",2],["transd",2]]},
-  {t:"Técnicas de microfoneo", d:"Microfoneo de voz, batería, guitarra, piano y cuerdas. Técnicas estéreo: XY, ORTF, AB y MS.", tm:[["grab",2],["transd",2]]},
-  {t:"Planificación de una sesión", d:"Distribución en la sala según la banda, el equipo y las salas disponibles. El técnico con y sin productor. Manejo de los tiempos y decisiones ante errores.", tm:[["grab",2]]},
-  {t:"La consola de grabación", d:"Preamplificadores, ganancia, inserts, auxiliares, grupos y buses. Software de grabación.", tm:[["grab",2],["mezcla",1]]}
+  {t:"Micrófonos", u:"microfonos", d:"Dinámicos, de condensador y de cinta. Patrones polares: omnidireccional, cardioide y figura ocho. Phantom power.", tm:[["grab",2],["transd",2]]},
+  {t:"Técnicas de microfoneo", u:"tecnicas-microfoneo", d:"Microfoneo de voz, batería, guitarra, piano y cuerdas. Técnicas estéreo: XY, ORTF, AB y MS.", tm:[["grab",2],["transd",2]]},
+  {t:"Planificación de una sesión", u:"planificacion-sesion", d:"Distribución en la sala según la banda, el equipo y las salas disponibles. El técnico con y sin productor. Manejo de los tiempos y decisiones ante errores.", tm:[["grab",2]]},
+  {t:"La consola de grabación", u:"consola-grabacion", d:"Preamplificadores, ganancia, inserts, auxiliares, grupos y buses. Software de grabación.", tm:[["grab",2],["mezcla",1]]}
 ]},
 {id:"ad1", n:"Audio Digital I", area:"senal", anio:2, h:60, f:"C", ejes:[
   {t:"Fundamentos de sistemas digitales", u:"/publicaciones/mapa-ingenieria/temas/sistemas-numeracion", d:"Sistema binario, lógica digital y representación de números.", tm:[["digital",1]]},
