@@ -7,6 +7,12 @@
      ruido     {"color":"blanco|rosa"}
      barrido   {"f1":20, "f2":20000}                    barrido logarítmico de un tono puro
      par       {"f":1000, "db1":0, "db2":-6}            el mismo tono dos veces seguidas: compara dos niveles
+     notas     {"n":["C4","E4","G4","C4 E4 G4"], "r":[1,1,1,2], "bpm":90}
+               melodías, acordes y ritmos. Cada elemento de "n" es un evento: una nota ("C4", "F#3", "Bb4"; La4 = 440 Hz,
+               afinación temperada), varias separadas por espacio (suenan juntas: acorde), "-" silencio, "x" golpe
+               de metrónomo y "X" golpe acentuado (se pueden mezclar: "x C4"). "r": duración de cada evento en
+               negras (se repite cíclicamente si es más corta; por defecto 1). "bpm": negras por minuto (90).
+               "leg": fracción de la duración que suena cada nota (0,92). "dur" no se usa: lo fija la secuencia.
    Opcional: un <input type="range" class="esc-vol"> en la página no hace falta: el volumen lo pone el equipo del lector.
    Seguridad del oído: el nivel de referencia es −18 dBFS y nada pasa de −6 dBFS. */
 (function () {
@@ -48,6 +54,53 @@
     return (ruidos[color] = b);
   }
 
+  // ---- notas: melodías, acordes y ritmos (afinación temperada, La4 = 440 Hz) ----
+  var PASO = { C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 };
+  function frecuencia(nombre) {          // "C4", "F#3", "Bb4", "C#5"
+    var m = /^([A-G])(#|b)?(-?\d)$/.exec(nombre); if (!m) return 0;
+    var semis = PASO[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + (parseInt(m[3], 10) - 4) * 12;
+    return 440 * Math.pow(2, semis / 12);
+  }
+  var TIMBRE = [1, 0.45, 0.25, 0.14, 0.08, 0.05];   // armónicos de un sonido «de teclado» sencillo
+  function nota(c, f, t, d, nivel, destino, fuentes) {
+    var gn = c.createGain(), lib = Math.min(0.12, d * 0.3);
+    gn.gain.setValueAtTime(0, t);
+    gn.gain.linearRampToValueAtTime(nivel, t + 0.01);
+    gn.gain.exponentialRampToValueAtTime(nivel * 0.35, t + Math.max(0.02, d - lib));   // decae como una cuerda pulsada
+    gn.gain.linearRampToValueAtTime(0, t + d);
+    gn.connect(destino);
+    var suma = 0; TIMBRE.forEach(function (v) { suma += v; });
+    TIMBRE.forEach(function (v, i) {
+      if (f * (i + 1) > 12000) return;
+      var o = c.createOscillator(), gh = c.createGain();
+      o.frequency.value = f * (i + 1); gh.gain.value = v / suma;
+      o.connect(gh); gh.connect(gn); o.start(t); o.stop(t + d + 0.02); fuentes.push(o);
+    });
+  }
+  function golpe(c, fuerte, t, nivel, destino, fuentes) {   // golpe de metrónomo / percusión
+    var o = c.createOscillator(), gn = c.createGain();
+    o.frequency.value = fuerte ? 1760 : 1320;
+    gn.gain.setValueAtTime(0, t); gn.gain.linearRampToValueAtTime(nivel * (fuerte ? 1 : 0.6), t + 0.002);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+    o.connect(gn); gn.connect(destino); o.start(t); o.stop(t + 0.08); fuentes.push(o);
+  }
+  function notas(c, p, g, t0, fuentes) {
+    var ev = p.n || [], r = p.r || [], negra = 60 / (p.bpm || 90), t = t0, voces = 1;
+    ev.forEach(function (e) { voces = Math.max(voces, String(e).trim().split(/\s+/).length); });
+    var nivel = 1 / Math.sqrt(voces) / (voces > 1 ? 1.2 : 1);
+    g.gain.value = ganancia(p.db) * 1.4;
+    ev.forEach(function (e, i) {
+      var d = (r.length ? r[i % r.length] : 1) * negra;
+      String(e).trim().split(/\s+/).forEach(function (x) {
+        if (x === '-' || x === '') return;                       // silencio
+        if (x === 'x' || x === 'X') { golpe(c, x === 'X', t, nivel, g, fuentes); return; }
+        var f = frecuencia(x); if (f) nota(c, f, t, d * (p.leg || 0.92), nivel, g, fuentes);
+      });
+      t += d;
+    });
+    return t - t0;
+  }
+
   function sonar(p) {
     var c = contexto(); if (!c) return null;
     var t0 = c.currentTime + 0.02, dur = p.dur || 2.5, g = c.createGain(), fuentes = [];
@@ -82,6 +135,8 @@
       envolvente(g, t0, d1, ganancia(p.db1 || 0)); envolvente(g2, t0 + d1 + 0.3, d1, ganancia(p.db2 || -6));
       o1.connect(g); o2.connect(g2); o1.start(t0); o1.stop(t0 + d1 + 0.05); o2.start(t0 + d1 + 0.3); o2.stop(t0 + dur + 0.2);
       fuentes.push(o1, o2);
+    } else if (tipo === 'notas') {
+      dur = notas(c, p, g, t0, fuentes);
     }
     var fin = setTimeout(function () { parar(); }, (dur + 0.4) * 1000);
     return { fuentes: fuentes, g: g, fin: fin };

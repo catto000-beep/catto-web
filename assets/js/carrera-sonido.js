@@ -111,10 +111,10 @@ var MATERIAS = [
   {t:"Primeras tomas", u:"primeras-tomas", d:"Grabación analógica y digital. Grabación casera en la computadora: software, sesión, pistas y niveles.", tm:[["grab",1],["digital",1]]}
 ]},
 {id:"lm1", n:"Lenguaje Musical y Audioperceptiva I", area:"musica", anio:1, h:60, f:"C", ejes:[
-  {t:"Lectura y escritura musical", d:"Claves, figuras, compases y tonalidades. Manejo del cifrado.", tm:[["musica",1]]},
-  {t:"Acordes y enlaces", d:"Escritura de acordes en sus posiciones y enlaces más comunes. Enlaces de blues, intercambios modales y tensiones.", tm:[["musica",1]]},
-  {t:"Ritmo e intervalos", d:"Ritmos binarios y ternarios. Intervalos melódicos y armónicos. Escala mayor armonizada.", tm:[["musica",1],["psico",1]]},
-  {t:"Dictado y canto", d:"Dictado de melodías simples en mayor y menor. Canto a primera vista de tríadas.", tm:[["musica",1]]}
+  {t:"Lectura y escritura musical", u:"lectura-escritura-musical", d:"Claves, figuras, compases y tonalidades. Manejo del cifrado.", tm:[["musica",1]]},
+  {t:"Acordes y enlaces", u:"acordes-enlaces", d:"Escritura de acordes en sus posiciones y enlaces más comunes. Enlaces de blues, intercambios modales y tensiones.", tm:[["musica",1]]},
+  {t:"Ritmo e intervalos", u:"ritmo-intervalos", d:"Ritmos binarios y ternarios. Intervalos melódicos y armónicos. Escala mayor armonizada.", tm:[["musica",1],["psico",1]]},
+  {t:"Dictado y canto", u:"dictado-canto", d:"Dictado de melodías simples en mayor y menor. Canto a primera vista de tríadas.", tm:[["musica",1]]}
 ]},
 
 /* ---------- 2° AÑO ---------- */
