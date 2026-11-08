@@ -153,7 +153,7 @@ var MATERIAS = [
   {t:"Corriente alterna", u:"corrientes-alternas", d:"Señal senoidal, valores típicos. Inductores y capacitores, reactancia, impedancia y resonancia.", tm:[["circ",2]]},
   {t:"Instrumentos de laboratorio", u:"osciloscopio", d:"Multímetro, generador de funciones, osciloscopio y analizador de espectro.", tm:[["medic",1],["circ",2]]},
   {t:"Filtros pasivos y activos", u:"filtros", d:"Pasabajos, pasaaltos, pasabanda y eliminabanda: frecuencia de corte y pendiente. Ecualizadores gráficos, paramétricos y semiparamétricos.", tm:[["circ",2],["proc",1]]},
-  {t:"Decibeles en la medición", d:"Ganancias de tensión, corriente y potencia en dB. dBV, dBu y dBm, y dónde se usa cada uno.", tm:[["medic",1],["onda",2]]},
+  {t:"Decibeles en la medición", u:"decibeles-medicion", d:"Ganancias de tensión, corriente y potencia en dB. dBV, dBu y dBm, y dónde se usa cada uno.", tm:[["medic",1],["onda",2]]},
   {t:"Fuentes de alimentación", u:"/publicaciones/mapa-ingenieria/temas/fuentes-reguladas-lineales", d:"Transformador, rectificación y filtrado. Fuentes de corriente continua para equipos de audio.", tm:[["circ",2]]}
 ]},
 {id:"gr2", n:"Grabación II", area:"estudio", anio:2, h:90, f:"UC", ejes:[
@@ -165,7 +165,7 @@ var MATERIAS = [
 {id:"ad1", n:"Audio Digital I", area:"senal", anio:2, h:60, f:"C", ejes:[
   {t:"Fundamentos de sistemas digitales", u:"/publicaciones/mapa-ingenieria/temas/sistemas-numeracion", d:"Sistema binario, lógica digital y representación de números.", tm:[["digital",1]]},
   {t:"Conversión analógica-digital", u:"conversores-ad-da", d:"Muestreo y cuantificación, resolución en bits, rango dinámico y dither.", tm:[["digital",2]]},
-  {t:"Edición digital", d:"Estaciones de trabajo de audio (DAW). Edición, fundidos, ajuste de tiempo y afinación.", tm:[["digital",2],["grab",2]]}
+  {t:"Edición digital", u:"edicion-digital", d:"Estaciones de trabajo de audio (DAW). Edición, fundidos, ajuste de tiempo y afinación.", tm:[["digital",2],["grab",2]]}
 ]},
 {id:"midi", n:"MIDI y Síntesis", area:"senal", anio:2, h:60, f:"C", ejes:[
   {t:"Instrumentos electrónicos", u:"instrumentos-electronicos", d:"Historia de los instrumentos electromecánicos, eléctricos y electrónicos. CV/gate y trigger.", tm:[["sintesis",1]]},
