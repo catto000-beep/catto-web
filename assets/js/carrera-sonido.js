@@ -144,10 +144,10 @@ var MATERIAS = [
   {t:"Transformada Z", u:"/publicaciones/mapa-ingenieria/temas/transformada-z", d:"Definición y propiedades. Sistemas discretos y su respuesta en frecuencia.", tm:[["senal",2],["digital",2]]}
 ]},
 {id:"ap1", n:"Acústica y Psicoacústica I", area:"acus", anio:2, h:90, f:"UC", ejes:[
-  {t:"Ecuación de onda acústica", d:"Ondas planas y esféricas. Impedancia acústica. Campo cercano y campo lejano.", tm:[["onda",2]]},
-  {t:"Señales acústicas", d:"Valor pico y valor eficaz. Señales periódicas no senoidales y serie de Fourier. Suma de fuentes coherentes e incoherentes.", tm:[["onda",2],["senal",2]]},
-  {t:"Fenómenos de propagación", d:"Reflexión, absorción y transmisión. Refracción, difracción y difusión del sonido.", tm:[["onda",2],["recinto",1]]},
-  {t:"Psicoacústica", d:"Bandas críticas y enmascaramiento. Sonoridad en fonios y sones. Percepción del tiempo, efecto de precedencia y localización espacial.", tm:[["psico",2]]}
+  {t:"Ecuación de onda acústica", u:"ecuacion-onda-acustica", d:"Ondas planas y esféricas. Impedancia acústica. Campo cercano y campo lejano.", tm:[["onda",2]]},
+  {t:"Señales acústicas", u:"senales-acusticas", d:"Valor pico y valor eficaz. Señales periódicas no senoidales y serie de Fourier. Suma de fuentes coherentes e incoherentes.", tm:[["onda",2],["senal",2]]},
+  {t:"Fenómenos de propagación", u:"propagacion-sonido", d:"Reflexión, absorción y transmisión. Refracción, difracción y difusión del sonido.", tm:[["onda",2],["recinto",1]]},
+  {t:"Psicoacústica", u:"psicoacustica", d:"Bandas críticas y enmascaramiento. Sonoridad en fonios y sones. Percepción del tiempo, efecto de precedencia y localización espacial.", tm:[["psico",2]]}
 ]},
 {id:"le1", n:"Laboratorio de Electrónica I", area:"elec", anio:2, h:90, f:"UC", ejes:[
   {t:"Corriente alterna", u:"corrientes-alternas", d:"Señal senoidal, valores típicos. Inductores y capacitores, reactancia, impedancia y resonancia.", tm:[["circ",2]]},

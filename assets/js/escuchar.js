@@ -13,6 +13,16 @@
                de metrónomo y "X" golpe acentuado (se pueden mezclar: "x C4"). "r": duración de cada evento en
                negras (se repite cíclicamente si es más corta; por defecto 1). "bpm": negras por minuto (90).
                "leg": fracción de la duración que suena cada nota (0,92). "dur" no se usa: lo fija la secuencia.
+   Desde v=3:
+     sint      {"f":220, "forma":"sawtooth", "filtro":{"tipo":"lowpass","fc":400,"fc2":4000,"q":4},
+                "adsr":[0.01,0.2,0.6,0.3], "mod":{"tipo":"am|anillo|fm","f":5,"prof":0.5,"indice":2,"indice2":0}}
+               una voz de sintetizador. Filtro opcional (fc2: barrido de fc a fc2 en toda la duración). adsr: ataque,
+               decaimiento y relajación en segundos y sostenido de 0 a 1. mod: am (prof 0 a 1), anillo (producto: f ± fm)
+               o fm (índice β = desviación / fm; indice2: el índice cambia de indice a indice2 durante el sonido).
+     mezcla    {"partes":[{"tipo":"tono","f":1000},{"tipo":"ruido","color":"rosa","db":-10,"desde":0.5}]}
+               varios sonidos a la vez; "desde": segundos de demora antes de empezar esa parte.
+     Cualquier tipo acepta "pan" (−1 izquierda … 1 derecha) y "retardo" (segundos, hasta 1): por ejemplo, el mismo
+     golpe con "pan":-1 y con "pan":1,"retardo":0.005 dentro de una mezcla muestra el efecto de precedencia.
    Opcional: un <input type="range" class="esc-vol"> en la página no hace falta: el volumen lo pone el equipo del lector.
    Seguridad del oído: el nivel de referencia es −18 dBFS y nada pasa de −6 dBFS. */
 (function () {
@@ -101,10 +111,61 @@
     return t - t0;
   }
 
+  // salida de un sonido: retardo y paneo opcionales ("retardo" en segundos, "pan" de −1 izquierda a 1 derecha)
+  function salida(c, p, destino) {
+    var nodo = destino;
+    if (typeof p.pan === 'number' && c.createStereoPanner) { var pn = c.createStereoPanner(); pn.pan.value = Math.max(-1, Math.min(1, p.pan)); pn.connect(nodo); nodo = pn; }
+    if (p.retardo) { var dl = c.createDelay(1); dl.delayTime.value = Math.min(1, p.retardo); dl.connect(nodo); nodo = dl; }
+    return nodo;
+  }
+
+  // sintetizador de una voz: oscilador → (modulación AM, anillo o FM) → filtro → ADSR
+  function sint(c, p, g, t0, dur, fuentes) {
+    var o = c.createOscillator(); o.type = p.forma || 'sawtooth'; o.frequency.value = p.f || 220;
+    var cadena = o, m = p.mod;
+    if (m && (m.tipo === 'am' || m.tipo === 'anillo')) {
+      var vca = c.createGain(), lfo = c.createOscillator(), prof = c.createGain();
+      lfo.frequency.value = m.f || 5;
+      if (m.tipo === 'anillo') { vca.gain.value = 0; prof.gain.value = 1; }            // producto puro: f ± fm
+      else { var k = Math.min(1, m.prof == null ? 0.5 : m.prof); vca.gain.value = 1 - k / 2; prof.gain.value = k / 2; }
+      lfo.connect(prof); prof.connect(vca.gain); o.connect(vca); cadena = vca;
+      lfo.start(t0); lfo.stop(t0 + dur + 0.05); fuentes.push(lfo);
+    } else if (m && m.tipo === 'fm') {
+      var mo = c.createOscillator(), mg = c.createGain();
+      mo.frequency.value = m.f || (p.f || 220); mg.gain.value = (m.indice == null ? 2 : m.indice) * mo.frequency.value;   // desviación = β·fm
+      if (m.indice2 != null) mg.gain.linearRampToValueAtTime(m.indice2 * mo.frequency.value, t0 + dur);
+      mo.connect(mg); mg.connect(o.frequency); mo.start(t0); mo.stop(t0 + dur + 0.05); fuentes.push(mo);
+    }
+    if (p.filtro) {
+      var fl = c.createBiquadFilter(); fl.type = p.filtro.tipo || 'lowpass'; fl.Q.value = p.filtro.q || 1;
+      fl.frequency.setValueAtTime(p.filtro.fc || 1000, t0);
+      if (p.filtro.fc2) fl.frequency.exponentialRampToValueAtTime(p.filtro.fc2, t0 + dur);
+      cadena.connect(fl); cadena = fl;
+    }
+    var env = c.createGain(), A = p.adsr || [0.01, 0.1, 1, 0.1], niv = 1;
+    var a = A[0], d = A[1], s = A[2], r = A[3], tr = Math.max(t0 + a + d, t0 + dur - r);
+    env.gain.setValueAtTime(0, t0); env.gain.linearRampToValueAtTime(niv, t0 + a);
+    env.gain.linearRampToValueAtTime(niv * s, t0 + a + d); env.gain.setValueAtTime(niv * s, tr);
+    env.gain.linearRampToValueAtTime(0, t0 + dur);
+    cadena.connect(env); env.connect(g);
+    var corr = { square: -6, sawtooth: -4.5 }[o.type] || 0;
+    g.gain.value = ganancia((p.db || 0) + corr) * (m && m.tipo === 'anillo' ? 1.4 : 1);
+    o.start(t0); o.stop(t0 + dur + 0.05); fuentes.push(o);
+  }
+
   function sonar(p) {
     var c = contexto(); if (!c) return null;
-    var t0 = c.currentTime + 0.02, dur = p.dur || 2.5, g = c.createGain(), fuentes = [];
-    g.connect(c.destination);
+    var t0 = c.currentTime + 0.02, fuentes = [], dur = 0;
+    if (p.tipo === 'mezcla') {            // varios sonidos a la vez: {"tipo":"mezcla","partes":[{…},{…}]}
+      (p.partes || []).forEach(function (q) { var r = sonarEn(c, q, t0 + (q.desde || 0), fuentes); dur = Math.max(dur, r + (q.desde || 0)); });
+    } else dur = sonarEn(c, p, t0, fuentes);
+    var fin = setTimeout(function () { parar(); }, (dur + 0.4) * 1000);
+    return { fuentes: fuentes, fin: fin };
+  }
+
+  function sonarEn(c, p, t0, fuentes) {
+    var dur = p.dur || 2.5, g = c.createGain();
+    g.connect(salida(c, p, c.destination));
     var tipo = p.tipo || 'tono';
     if (tipo === 'tono' || tipo === 'barrido') {
       var o = c.createOscillator(); o.type = p.forma || 'sine';
@@ -131,15 +192,16 @@
     } else if (tipo === 'par') {
       var d1 = dur / 2 - 0.15, o1 = c.createOscillator(), o2 = c.createOscillator(), g2 = c.createGain();
       o1.frequency.value = o2.frequency.value = p.f || 1000;
-      g2.connect(c.destination);
+      g2.connect(salida(c, p, c.destination));
       envolvente(g, t0, d1, ganancia(p.db1 || 0)); envolvente(g2, t0 + d1 + 0.3, d1, ganancia(p.db2 || -6));
       o1.connect(g); o2.connect(g2); o1.start(t0); o1.stop(t0 + d1 + 0.05); o2.start(t0 + d1 + 0.3); o2.stop(t0 + dur + 0.2);
       fuentes.push(o1, o2);
     } else if (tipo === 'notas') {
       dur = notas(c, p, g, t0, fuentes);
+    } else if (tipo === 'sint') {
+      sint(c, p, g, t0, dur, fuentes);
     }
-    var fin = setTimeout(function () { parar(); }, (dur + 0.4) * 1000);
-    return { fuentes: fuentes, g: g, fin: fin };
+    return dur;
   }
 
   function parar() {
