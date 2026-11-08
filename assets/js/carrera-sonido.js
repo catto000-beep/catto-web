@@ -65,7 +65,7 @@ var MATERIAS = [
   {t:"Sucesiones y series", u:"/publicaciones/mapa-ingenieria/temas/series", d:"Sucesiones, series numéricas y de potencias. Aproximación de funciones por polinomios de Taylor.", tm:[["mate",1]]}
 ]},
 {id:"alg1", n:"Álgebra I", area:"fund", anio:1, h:90, f:"U", ejes:[
-  {t:"Números complejos", d:"Forma binómica, polar y exponencial. Operaciones. La herramienta para representar amplitud y fase de una senoide.", tm:[["mate",1],["senal",1]]},
+  {t:"Números complejos", u:"numeros-complejos-senoide", d:"Forma binómica, polar y exponencial. Operaciones. La herramienta para representar amplitud y fase de una senoide.", tm:[["mate",1],["senal",1]]},
   {t:"Vectores", u:"/publicaciones/mapa-ingenieria/temas/vectores-r2-r3", d:"Vectores en el plano y el espacio, producto escalar y vectorial. Rectas y planos.", tm:[["mate",1]]},
   {t:"Matrices y determinantes", u:"/publicaciones/mapa-ingenieria/temas/matrices", d:"Operaciones con matrices, determinante, matriz inversa.", tm:[["mate",1]]},
   {t:"Sistemas de ecuaciones lineales", u:"/publicaciones/mapa-ingenieria/temas/sistemas-ecuaciones", d:"Resolución por eliminación de Gauss. Sistemas compatibles e incompatibles.", tm:[["mate",1]]}
@@ -78,8 +78,8 @@ var MATERIAS = [
 ]},
 {id:"comp", n:"Computación", area:"fund", anio:1, h:60, f:"U", ejes:[
   {t:"Algoritmos y programación", u:"/publicaciones/mapa-ingenieria/temas/algoritmos", d:"Variables, estructuras de control, funciones. Un primer lenguaje para calcular y graficar.", tm:[["mate",1]]},
-  {t:"Arreglos y señales", d:"Una señal como lista de muestras: generar, recorrer, sumar y graficar senoides.", tm:[["digital",1]]},
-  {t:"Archivos de audio", d:"Leer y escribir un archivo WAV: frecuencia de muestreo, canales y resolución.", tm:[["digital",1]]}
+  {t:"Arreglos y señales", u:"arreglos-senales", d:"Una señal como lista de muestras: generar, recorrer, sumar y graficar senoides.", tm:[["digital",1]]},
+  {t:"Archivos de audio", u:"archivos-wav", d:"Leer y escribir un archivo WAV: frecuencia de muestreo, canales y resolución.", tm:[["digital",1]]}
 ]},
 {id:"iap", n:"Introducción a la Acústica y Psicoacústica", area:"acus", anio:1, h:90, f:"UC", ejes:[
   {t:"Qué es el sonido", u:"que-es-el-sonido", d:"Presión sonora y presión atmosférica. Propagación en un medio elástico, velocidad del sonido. Frecuencia, período, longitud de onda y amplitud.", tm:[["onda",1]]},
@@ -97,7 +97,7 @@ var MATERIAS = [
   {t:"Espacios vectoriales", u:"/publicaciones/mapa-ingenieria/temas/espacios-vectoriales", d:"Subespacios, bases y dimensión. Una señal como vector y una base de señales.", tm:[["mate",2],["senal",1]]},
   {t:"Transformaciones lineales", u:"/publicaciones/mapa-ingenieria/temas/transformaciones-lineales", d:"Núcleo, imagen y matriz asociada. Los sistemas lineales, vistos como transformaciones.", tm:[["mate",2]]},
   {t:"Autovalores y autovectores", u:"/publicaciones/mapa-ingenieria/temas/autovalores-autovectores", d:"Diagonalización. Modos propios de un sistema que vibra.", tm:[["mate",2]]},
-  {t:"Producto interno y ortogonalidad", d:"Proyección y bases ortogonales: la idea que está detrás de la serie de Fourier.", tm:[["mate",2],["senal",1]]}
+  {t:"Producto interno y ortogonalidad", u:"producto-interno-ortogonalidad", d:"Proyección y bases ortogonales: la idea que está detrás de la serie de Fourier.", tm:[["mate",2],["senal",1]]}
 ]},
 {id:"fis2", n:"Física II", area:"fund", anio:1, h:90, f:"U", ejes:[
   {t:"Termodinámica", u:"/publicaciones/mapa-ingenieria/temas/principios-termodinamica", d:"Temperatura, calor y primera ley. Procesos adiabáticos: por qué la velocidad del sonido depende de la temperatura.", tm:[["fisica",2],["onda",1]]},
