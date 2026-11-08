@@ -82,10 +82,10 @@ var MATERIAS = [
   {t:"Archivos de audio", d:"Leer y escribir un archivo WAV: frecuencia de muestreo, canales y resolución.", tm:[["digital",1]]}
 ]},
 {id:"iap", n:"Introducción a la Acústica y Psicoacústica", area:"acus", anio:1, h:90, f:"UC", ejes:[
-  {t:"Qué es el sonido", d:"Presión sonora y presión atmosférica. Propagación en un medio elástico, velocidad del sonido. Frecuencia, período, longitud de onda y amplitud.", tm:[["onda",1]]},
-  {t:"Decibeles y niveles", d:"Logaritmos y decibel. Nivel de presión sonora, intensidad y potencia acústica. Niveles de referencia y tabla de SPL.", tm:[["onda",1],["mate",1]]},
-  {t:"Forma de onda y timbre", d:"Tono fundamental y armónicos. Formas de onda, fase y timbre. Suma de senoides. Ruido blanco y ruido rosa.", tm:[["onda",1],["senal",1]]},
-  {t:"El oído y la audición", d:"Anatomía del oído y mecanismos de la audición. Rango audible. Percepción de altura, sonoridad y curvas de igual sonoridad.", tm:[["psico",1]]}
+  {t:"Qué es el sonido", u:"que-es-el-sonido", d:"Presión sonora y presión atmosférica. Propagación en un medio elástico, velocidad del sonido. Frecuencia, período, longitud de onda y amplitud.", tm:[["onda",1]]},
+  {t:"Decibeles y niveles", u:"decibeles-niveles", d:"Logaritmos y decibel. Nivel de presión sonora, intensidad y potencia acústica. Niveles de referencia y tabla de SPL.", tm:[["onda",1],["mate",1]]},
+  {t:"Forma de onda y timbre", u:"forma-onda-timbre", d:"Tono fundamental y armónicos. Formas de onda, fase y timbre. Suma de senoides. Ruido blanco y ruido rosa.", tm:[["onda",1],["senal",1]]},
+  {t:"El oído y la audición", u:"oido-audicion", d:"Anatomía del oído y mecanismos de la audición. Rango audible. Percepción de altura, sonoridad y curvas de igual sonoridad.", tm:[["psico",1]]}
 ]},
 {id:"am2", n:"Análisis Matemático II", area:"fund", anio:1, h:90, f:"U", ejes:[
   {t:"Funciones de varias variables", u:"/publicaciones/mapa-ingenieria/temas/calculo-diferencial-varias", d:"Derivadas parciales, gradiente y diferencial. Un campo de presión que depende del lugar y del tiempo.", tm:[["mate",2]]},
