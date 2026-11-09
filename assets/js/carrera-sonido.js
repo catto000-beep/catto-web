@@ -174,10 +174,10 @@ var MATERIAS = [
   {t:"Música electrónica", u:"musica-electronica", d:"Música concreta, electrónica y electroacústica. Estéticas, audición y análisis de obras.", tm:[["sintesis",1],["musica",2]]}
 ]},
 {id:"lm2", n:"Lenguaje Musical y Audioperceptiva II", area:"musica", anio:2, h:60, f:"C", ejes:[
-  {t:"Funciones armónicas", d:"Reconocimiento de las funciones I, IV y V en mayor y menor. Cadencias simples.", tm:[["musica",2]]},
-  {t:"Escalas y modos", d:"Escalas menores armónica, melódica y dórica; mixolidia, frigia, lidia y locria. Escalas de blues.", tm:[["musica",2]]},
-  {t:"Ritmo y métrica", d:"Síncopas y ligaduras. Combinaciones binarias y ternarias. Métricas de 5, 7 y 9 tiempos.", tm:[["musica",2]]},
-  {t:"Desgrabación auditiva", d:"Dictado rítmico y melódico. Transcribir de oído un tema completo, todas sus voces.", tm:[["musica",2],["psico",2]]}
+  {t:"Funciones armónicas", u:"funciones-armonicas", d:"Reconocimiento de las funciones I, IV y V en mayor y menor. Cadencias simples.", tm:[["musica",2]]},
+  {t:"Escalas y modos", u:"escalas-modos", d:"Escalas menores armónica, melódica y dórica; mixolidia, frigia, lidia y locria. Escalas de blues.", tm:[["musica",2]]},
+  {t:"Ritmo y métrica", u:"ritmo-metrica", d:"Síncopas y ligaduras. Combinaciones binarias y ternarias. Métricas de 5, 7 y 9 tiempos.", tm:[["musica",2]]},
+  {t:"Desgrabación auditiva", u:"desgrabacion-auditiva", d:"Dictado rítmico y melódico. Transcribir de oído un tema completo, todas sus voces.", tm:[["musica",2],["psico",2]]}
 ]},
 
 /* ---------- 3° AÑO · al terminarlo: Técnico en Sonido ---------- */
