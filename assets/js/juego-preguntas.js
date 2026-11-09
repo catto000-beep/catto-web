@@ -1,6 +1,6 @@
 /* ============================================================
    catto.ar — Ruleta de Ohm: banco de preguntas
-   Seis categorías. Cada pregunta: id fijo (no cambiarlo: los desafíos en
+   Siete categorías. Cada pregunta: id fijo (no cambiarlo: los desafíos en
    línea guardan los id), c = categoría, q = pregunta, o = opciones (la
    primera es la correcta; el juego las mezcla), u = página de tema para repasar
    (en /publicaciones/mapa-electronica/temas/).
@@ -11,7 +11,8 @@ var JUEGO_CAT = {
   digital:{n:"Digital",         c:"#bc8cff", ic:"🔢"},
   medic:  {n:"Mediciones",      c:"#2dd4bf", ic:"📏"},
   elec:   {n:"Electricidad",    c:"#f85149", ic:"🔌"},
-  com:    {n:"Comunicaciones",  c:"#ff7b72", ic:"📡"}
+  com:    {n:"Comunicaciones",  c:"#ff7b72", ic:"📡"},
+  sonido: {n:"Sonido",          c:"#3fb950", ic:"🎧"}
 };
 
 var JUEGO_PREG = [
@@ -225,5 +226,64 @@ var JUEGO_PREG = [
 {id:"k31", c:"com", q:"¿Para qué se agrega un CRC al final de una trama de datos?", o:["Para detectar errores de transmisión","Para cifrar los datos","Para comprimir los datos","Para asignar la dirección IP"], u:"comunicaciones-datos"},
 {id:"k32", c:"com", q:"Un código de Hamming puede…", o:["corregir un error de un bit en cada palabra","corregir cualquier cantidad de errores","solo detectar errores, sin corregirlos","comprimir los datos"], u:"comunicaciones-datos"},
 {id:"k33", c:"com", q:"En una red Modbus RTU, ¿quién inicia la comunicación?", o:["El maestro, que consulta a los esclavos","Cualquier esclavo, cuando tiene datos","Todos los equipos a la vez","El equipo de dirección más baja"], u:"comunicaciones-industriales"},
-{id:"k34", c:"com", q:"El bus CAN se usa en el automotor y en maquinaria porque…", o:["resiste ambientes con mucho ruido eléctrico","funciona entre chips a pocos centímetros","no necesita cables","solo admite dos equipos"], u:"buses-serie"}
+{id:"k34", c:"com", q:"El bus CAN se usa en el automotor y en maquinaria porque…", o:["resiste ambientes con mucho ruido eléctrico","funciona entre chips a pocos centímetros","no necesita cables","solo admite dos equipos"], u:"buses-serie"},
+/* ---------- SONIDO (carrera de Sonido, 1.º y 2.º año) ---------- */
+{id:"s01", c:"sonido", q:"El la de afinación (la4) tiene una frecuencia de…", o:["440 Hz","261,6 Hz","880 Hz","220 Hz"], u:"lectura-escritura-musical"},
+{id:"s02", c:"sonido", q:"A 20 °C, el sonido viaja en el aire a unos…", o:["343 m/s","1480 m/s","300 000 km/s","100 m/s"], u:"que-es-el-sonido"},
+{id:"s03", c:"sonido", q:"¿Qué longitud de onda tiene un sonido de 343 Hz en el aire a 20 °C?", o:["1 m","0,343 m","3,43 m","10 cm"], u:"que-es-el-sonido"},
+{id:"s04", c:"sonido", q:"La presión de referencia de 0 dB SPL es…", o:["20 µPa","1 Pa","101 325 Pa","1 pW"], u:"decibeles-niveles"},
+{id:"s05", c:"sonido", q:"Al aire libre, si se duplica la distancia a una fuente puntual, el nivel baja unos…", o:["6 dB","3 dB","10 dB","12 dB"], u:"decibeles-niveles"},
+{id:"s06", c:"sonido", q:"Dos fuentes incoherentes del mismo nivel suenan juntas. ¿Cuánto sube el nivel total?", o:["3 dB","6 dB","0 dB","10 dB"], u:"senales-acusticas"},
+{id:"s07", c:"sonido", q:"Dos señales idénticas y en fase se suman. ¿Cuánto sube el nivel?", o:["6 dB","3 dB","2 dB","10 dB"], u:"senales-acusticas"},
+{id:"s08", c:"sonido", q:"¿Cuánto vale el factor de cresta de una senoide?", o:["√2 ≈ 1,41 (3 dB)","1 (0 dB)","2 (6 dB)","π/2 (4 dB)"], u:"senales-acusticas"},
+{id:"s09", c:"sonido", q:"El ruido rosa tiene…", o:["la misma energía en cada octava","la misma energía en cada hertz","un solo tono puro","solo frecuencias graves"], u:"forma-onda-timbre"},
+{id:"s10", c:"sonido", q:"Una onda cuadrada contiene…", o:["solo armónicos impares","solo armónicos pares","todos los armónicos con la misma amplitud","ningún armónico"], u:"forma-onda-timbre"},
+{id:"s11", c:"sonido", q:"¿Qué determina sobre todo el timbre de un sonido?", o:["Sus armónicos y su envolvente","Su frecuencia fundamental","Su nivel","La distancia a la fuente"], u:"forma-onda-timbre"},
+{id:"s12", c:"sonido", q:"El rango de audición humana va, aproximadamente, de…", o:["20 Hz a 20 kHz","2 Hz a 2 kHz","200 Hz a 200 kHz","20 kHz a 200 kHz"], u:"oido-audicion"},
+{id:"s13", c:"sonido", q:"Las curvas de igual sonoridad muestran que, a bajo nivel, el oído…", o:["es menos sensible a los graves","es igual de sensible en todas las frecuencias","oye mejor los 20 Hz que los 3 kHz","no cambia con el nivel"], u:"oido-audicion"},
+{id:"s14", c:"sonido", q:"¿Qué parte del oído convierte la vibración en impulsos nerviosos?", o:["La cóclea","El tímpano","El pabellón auricular","La trompa de Eustaquio"], u:"oido-audicion"},
+{id:"s15", c:"sonido", q:"¿Qué diferencia hay entre los niveles de línea +4 dBu y −10 dBV?", o:["11,8 dB","14 dB","6 dB","2,2 dB"], u:"recorrido-senal"},
+{id:"s16", c:"sonido", q:"0 dBu equivale a…", o:["0,775 V eficaces","1 V eficaz","1 mW sobre 8 Ω","0 V"], u:"decibeles-medicion"},
+{id:"s17", c:"sonido", q:"En un XLR de audio balanceado, el pin 2 lleva…", o:["el vivo (+)","la malla","el retorno (−)","una alimentación de 9 V"], u:"cables-conectores-audio"},
+{id:"s18", c:"sonido", q:"¿Por qué una línea balanceada rechaza el ruido inducido?", o:["El ruido llega igual a los dos conductores y el receptor los resta","Porque el cable es más grueso","Porque la malla amplifica la señal","Porque usa fibra óptica"], u:"cables-conectores-audio"},
+{id:"s19", c:"sonido", q:"¿Para qué sirve una caja directa (DI)?", o:["Para pasar un instrumento de alta impedancia a una entrada balanceada","Para amplificar un parlante","Para convertir el audio en MIDI","Para alimentar un micrófono dinámico"], u:"cables-conectores-audio"},
+{id:"s20", c:"sonido", q:"Con 16 bits, el rango dinámico teórico de una grabación digital es de unos…", o:["96 dB","48 dB","144 dB","16 dB"], u:"primeras-tomas"},
+{id:"s21", c:"sonido", q:"¿Por qué no hay que grabar con picos en 0 dBFS?", o:["Porque no queda margen y la señal recorta","Porque la grabación pasa a mono","Porque el archivo pesa más","Porque cambia la frecuencia de muestreo"], u:"primeras-tomas"},
+{id:"s22", c:"sonido", q:"Un minuto de audio estéreo a 44,1 kHz y 16 bits ocupa, en WAV, unos…", o:["10,6 MB","1,4 MB","100 MB","44 kB"], u:"archivos-wav"},
+{id:"s23", c:"sonido", q:"Con una frecuencia de muestreo de 48 kHz, ¿cuál es la máxima frecuencia que se registra sin aliasing?", o:["24 kHz","48 kHz","96 kHz","20 Hz"], u:"arreglos-senales"},
+{id:"s24", c:"sonido", q:"Dos senoides de igual frecuencia y amplitud, desfasadas 180°, se suman. El resultado es…", o:["silencio: se cancelan","el doble de amplitud","una onda cuadrada","el doble de frecuencia"], u:"numeros-complejos-senoide"},
+{id:"s25", c:"sonido", q:"¿Cuál es el módulo del número complejo 3 + 4j?", o:["5","7","12","1"], u:"numeros-complejos-senoide"},
+{id:"s26", c:"sonido", q:"En un período, el producto interno de sen(ωt) y sen(2ωt) vale…", o:["0: son ortogonales","1","π","depende de la amplitud"], u:"producto-interno-ortogonalidad"},
+{id:"s27", c:"sonido", q:"Un micrófono de condensador necesita…", o:["alimentación, por ejemplo phantom de 48 V","solo un imán permanente","una pila de 1,5 V obligatoriamente","un cable RCA"], u:"microfonos"},
+{id:"s28", c:"sonido", q:"Un micrófono cardioide es menos sensible a lo que llega desde…", o:["atrás (180°)","adelante (0°)","los costados (90°)","arriba solamente"], u:"microfonos"},
+{id:"s29", c:"sonido", q:"El efecto de proximidad es…", o:["el refuerzo de graves al acercar un micrófono direccional","la pérdida de agudos con la distancia","el acople con los parlantes","el ruido del cable"], u:"microfonos"},
+{id:"s30", c:"sonido", q:"La regla 3:1 dice que la separación entre dos micrófonos debe ser…", o:["al menos tres veces la distancia de cada uno a su fuente","de 3 m, con la fuente a 1 m","tal que uno quede 3 dB más bajo","de un micrófono cada tres fuentes"], u:"tecnicas-microfoneo"},
+{id:"s31", c:"sonido", q:"La técnica estéreo XY usa…", o:["dos cardioides coincidentes con los ejes en ángulo","dos omnidireccionales separados un metro","un cardioide y un figura ocho","un solo micrófono"], u:"tecnicas-microfoneo"},
+{id:"s32", c:"sonido", q:"En la técnica MS, el canal izquierdo se obtiene como…", o:["M + S","M − S","M × S","S − M"], u:"tecnicas-microfoneo"},
+{id:"s33", c:"sonido", q:"Un envío auxiliar pre fader se usa sobre todo para…", o:["las mezclas de auriculares de los músicos","la reverberación de la mezcla","el máster","bajar el ruido de fondo"], u:"consola-grabacion"},
+{id:"s34", c:"sonido", q:"¿Para qué sirve el filtro pasaaltos de la tira de canal?", o:["Para cortar graves que no hacen falta, como golpes y retumbe","Para cortar los agudos","Para subir la ganancia","Para cambiar el paneo"], u:"consola-grabacion"},
+{id:"s35", c:"sonido", q:"Grabar la base primero y después las sobregrabaciones…", o:["permite corregir cada parte por separado","obliga a repetir todo si uno se equivoca","hace innecesarios los auriculares","aumenta la fuga entre micrófonos"], u:"planificacion-sesion"},
+{id:"s36", c:"sonido", q:"Un mensaje MIDI de Note On en el canal 1 empieza con el byte…", o:["0x90","0x80","0xB0","0xC0"], u:"norma-midi"},
+{id:"s37", c:"sonido", q:"La nota MIDI 69 es…", o:["el la4 de 440 Hz","el do central","la nota más grave del piano","el do5"], u:"norma-midi"},
+{id:"s38", c:"sonido", q:"En General MIDI, la percusión va en el canal…", o:["10","1","16","5"], u:"norma-midi"},
+{id:"s39", c:"sonido", q:"En un sintetizador sustractivo, el sonido pasa por…", o:["oscilador → filtro → amplificador","filtro → oscilador → micrófono","amplificador → oscilador → filtro","un solo oscilador, sin más"], u:"sintesis-sonido"},
+{id:"s40", c:"sonido", q:"En la envolvente ADSR, la S indica…", o:["el nivel que se mantiene mientras la tecla sigue apretada","el tiempo de ataque","la frecuencia de corte","la velocidad de la nota"], u:"sintesis-sonido"},
+{id:"s41", c:"sonido", q:"La modulación en anillo de 440 Hz por 100 Hz da como resultado…", o:["340 Hz y 540 Hz","440 Hz y 100 Hz","880 Hz","40 Hz"], u:"sintesis-sonido"},
+{id:"s42", c:"sonido", q:"Con el control de 1 V por octava, subir la tensión 1 V…", o:["duplica la frecuencia","suma 1 Hz","sube un semitono","baja una octava"], u:"instrumentos-electronicos"},
+{id:"s43", c:"sonido", q:"La música concreta nació con el trabajo de…", o:["Pierre Schaeffer, en París","Karlheinz Stockhausen, en Colonia","Robert Moog, en Nueva York","John Chowning, en Stanford"], u:"musica-electronica"},
+{id:"s44", c:"sonido", q:"¿Cuántos semitonos tiene una quinta justa?", o:["7","5","4","8"], u:"ritmo-intervalos"},
+{id:"s45", c:"sonido", q:"En do mayor, el acorde de dominante es…", o:["sol mayor (G)","fa mayor (F)","la menor (Am)","re menor (Dm)"], u:"funciones-armonicas"},
+{id:"s46", c:"sonido", q:"Una tríada disminuida se forma con…", o:["dos terceras menores","dos terceras mayores","una tercera mayor y una menor","una cuarta y una quinta"], u:"acordes-enlaces"},
+{id:"s47", c:"sonido", q:"¿Qué distingue al modo dórico del eólico?", o:["La sexta mayor","La segunda menor","La cuarta aumentada","La séptima mayor"], u:"escalas-modos"},
+{id:"s48", c:"sonido", q:"En la menor armónica, el séptimo grado…", o:["sube un semitono: sol♯ en la menor","baja un semitono","queda igual que en la menor natural","no aparece"], u:"escalas-modos"},
+{id:"s49", c:"sonido", q:"Un compás de 6/8 tiene…", o:["dos pulsos de negra con puntillo","seis pulsos de negra","tres pulsos de negra","dos pulsos de blanca"], u:"ritmo-metrica"},
+{id:"s50", c:"sonido", q:"La hemiola es…", o:["agrupar seis corcheas en 3 + 3 y luego en 2 + 2 + 2","un tipo de micrófono","un compás de 5/8","un acorde de séptima"], u:"ritmo-metrica"},
+{id:"s51", c:"sonido", q:"Al desgrabar un tema, conviene empezar por…", o:["la forma, la tonalidad y el tempo","escribir toda la melodía de una vez","ecualizar la mezcla","pasar el audio al doble de velocidad"], u:"desgrabacion-auditiva"},
+{id:"s52", c:"sonido", q:"El efecto de precedencia (Haas) dice que…", o:["localizamos la fuente por el sonido que llega primero","oímos más fuerte el último sonido","dos sonidos iguales siempre se cancelan","los graves llegan antes que los agudos"], u:"psicoacustica"},
+{id:"s53", c:"sonido", q:"Un sonido de 2 sones se percibe…", o:["el doble de fuerte que uno de 1 son","igual que uno de 1 son","cuatro veces más fuerte que uno de 1 son","la mitad de fuerte que uno de 1 son"], u:"psicoacustica"},
+{id:"s54", c:"sonido", q:"Un coeficiente de absorción α = 1 significa que la superficie…", o:["no refleja nada del sonido que le llega","refleja todo el sonido","es de hormigón","amplifica el sonido"], u:"propagacion-sonido"},
+{id:"s55", c:"sonido", q:"La impedancia acústica característica del aire a 20 °C vale aproximadamente…", o:["413 Pa·s/m","343 Pa·s/m","1,2 Pa·s/m","20 µPa"], u:"ecuacion-onda-acustica"},
+{id:"s56", c:"sonido", q:"Un fundido cruzado lineal entre dos señales distintas baja en el medio unos…", o:["3 dB","6 dB","0 dB","12 dB"], u:"edicion-digital"},
+{id:"s57", c:"sonido", q:"Hacer un corte de edición en un cruce por cero evita…", o:["el clic por el salto brusco de la onda","el aliasing","la distorsión del preamplificador","el ruido rosa"], u:"edicion-digital"},
+{id:"s58", c:"sonido", q:"Una ganancia de tensión de 10 veces equivale a…", o:["20 dB","10 dB","40 dB","3 dB"], u:"decibeles-medicion"}
 ];
