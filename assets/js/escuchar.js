@@ -23,6 +23,12 @@
                varios sonidos a la vez; "desde": segundos de demora antes de empezar esa parte.
      Cualquier tipo acepta "pan" (−1 izquierda … 1 derecha) y "retardo" (segundos, hasta 1): por ejemplo, el mismo
      golpe con "pan":-1 y con "pan":1,"retardo":0.005 dentro de una mezcla muestra el efecto de precedencia.
+   Desde v=4, cualquier tipo acepta además estos efectos (se aplican en este orden):
+     "eq":[{"tipo":"peaking|lowshelf|highshelf|lowpass|highpass","f":1000,"q":1.41,"g":6}]   filtros en serie (q 1,41 ≈ una octava; 2,87 ≈ media; 4,32 ≈ un tercio)
+     "comp":{"umbral":-24,"razon":4,"rodilla":6,"ataque":0.01,"rel":0.15}                     compresor
+     "barre":{"ms":5,"prof_ms":2,"f":0.5,"fb":0,"mix":0.5,"seco":0.75}                        retardo modulado: chorus (ms 20), flanger (ms 3, fb 0.6), vibrato (mix 1, seco 0)
+     "eco":{"t":0.3,"fb":0.4,"mix":0.4}                                                       eco con realimentación
+     "rev":{"t60":1.5,"mix":0.3}                                                              reverberación artificial con ese tiempo T60
    Opcional: un <input type="range" class="esc-vol"> en la página no hace falta: el volumen lo pone el equipo del lector.
    Seguridad del oído: el nivel de referencia es −18 dBFS y nada pasa de −6 dBFS. */
 (function () {
@@ -111,13 +117,51 @@
     return t - t0;
   }
 
-  // salida de un sonido: retardo y paneo opcionales ("retardo" en segundos, "pan" de −1 izquierda a 1 derecha)
-  function salida(c, p, destino) {
-    var nodo = destino;
+  // respuesta impulsiva artificial: ruido que decae 60 dB en t60 segundos (energía unitaria)
+  function impulso(c, t60) {
+    var n = Math.max(1, Math.floor(c.sampleRate * t60)), b = c.createBuffer(2, n, c.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var x = b.getChannelData(ch), e = 0, i;
+      for (i = 0; i < n; i++) { x[i] = (Math.random() * 2 - 1) * Math.exp(-6.908 * i / n); e += x[i] * x[i]; }
+      e = Math.sqrt(e); for (i = 0; i < n; i++) x[i] /= e;
+    }
+    return b;
+  }
+  function mezclaSeca(c, nodo, seco) { var e = c.createGain(), s = c.createGain(); s.gain.value = seco; e.connect(s); s.connect(nodo); return e; }
+
+  // salida de un sonido: efectos opcionales, retardo y paneo. Orden: eq → comp → barre → eco → rev → retardo → pan
+  function salida(c, p, destino, fuentes, t0) {
+    var nodo = destino, e, w;
     if (typeof p.pan === 'number' && c.createStereoPanner) { var pn = c.createStereoPanner(); pn.pan.value = Math.max(-1, Math.min(1, p.pan)); pn.connect(nodo); nodo = pn; }
     if (p.retardo) { var dl = c.createDelay(1); dl.delayTime.value = Math.min(1, p.retardo); dl.connect(nodo); nodo = dl; }
+    if (p.rev) {
+      var mixr = p.rev.mix == null ? 0.3 : p.rev.mix, conv = c.createConvolver(); conv.buffer = impulso(c, p.rev.t60 || 1.5);
+      e = mezclaSeca(c, nodo, 1 - mixr); w = c.createGain(); w.gain.value = mixr; e.connect(conv); conv.connect(w); w.connect(nodo); nodo = e;
+    }
+    if (p.eco) {
+      var mixe = p.eco.mix == null ? 0.4 : p.eco.mix, de = c.createDelay(2), fbe = c.createGain();
+      de.delayTime.value = Math.min(2, p.eco.t || 0.3); fbe.gain.value = Math.min(0.9, p.eco.fb || 0);
+      e = mezclaSeca(c, nodo, 1 - mixe / 2); w = c.createGain(); w.gain.value = mixe; e.connect(de); de.connect(w); w.connect(nodo); de.connect(fbe); fbe.connect(de); nodo = e;
+    }
+    if (p.barre) {                       // retardo modulado: chorus, flanger y vibrato (mix 1 y seco 0)
+      var bm = p.barre, mixb = bm.mix == null ? 0.5 : bm.mix, db = c.createDelay(0.1), lfo = c.createOscillator(), pr = c.createGain(), fbb = c.createGain();
+      db.delayTime.value = (bm.ms || 5) / 1000; lfo.frequency.value = bm.f || 0.5; pr.gain.value = (bm.prof_ms || 2) / 1000; fbb.gain.value = Math.min(0.9, bm.fb || 0);
+      e = mezclaSeca(c, nodo, bm.seco == null ? 1 - mixb / 2 : bm.seco); w = c.createGain(); w.gain.value = mixb;
+      e.connect(db); db.connect(w); w.connect(nodo); db.connect(fbb); fbb.connect(db); lfo.connect(pr); pr.connect(db.delayTime);
+      lfo.start(t0); fuentes.push(lfo); nodo = e;
+    }
+    if (p.comp) {
+      var cp = c.createDynamicsCompressor(), ko = p.comp;
+      cp.threshold.value = ko.umbral == null ? -24 : ko.umbral; cp.ratio.value = ko.razon || 4; cp.knee.value = ko.rodilla == null ? 6 : ko.rodilla;
+      cp.attack.value = ko.ataque == null ? 0.01 : ko.ataque; cp.release.value = ko.rel == null ? 0.15 : ko.rel; cp.connect(nodo); nodo = cp;
+    }
+    if (p.eq) (Array.isArray(p.eq) ? p.eq : [p.eq]).slice().reverse().forEach(function (b) {
+      var q = c.createBiquadFilter(); q.type = b.tipo || 'peaking'; q.frequency.value = b.f || 1000; q.Q.value = b.q == null ? 1.41 : b.q;
+      if (b.g != null) q.gain.value = b.g; q.connect(nodo); nodo = q;
+    });
     return nodo;
   }
+  function cola(p) { return p.rev ? (p.rev.t60 || 1.5) : (p.eco ? Math.min(3, (p.eco.t || 0.3) / Math.max(0.05, 1 - (p.eco.fb || 0)) * 2) : 0); }
 
   // sintetizador de una voz: oscilador → (modulación AM, anillo o FM) → filtro → ADSR
   function sint(c, p, g, t0, dur, fuentes) {
@@ -155,17 +199,18 @@
 
   function sonar(p) {
     var c = contexto(); if (!c) return null;
-    var t0 = c.currentTime + 0.02, fuentes = [], dur = 0;
+    var t0 = c.currentTime + 0.02, fuentes = [], dur = 0, maestro = c.createGain();
+    maestro.connect(c.destination);
     if (p.tipo === 'mezcla') {            // varios sonidos a la vez: {"tipo":"mezcla","partes":[{…},{…}]}
-      (p.partes || []).forEach(function (q) { var r = sonarEn(c, q, t0 + (q.desde || 0), fuentes); dur = Math.max(dur, r + (q.desde || 0)); });
-    } else dur = sonarEn(c, p, t0, fuentes);
+      (p.partes || []).forEach(function (q) { var r = sonarEn(c, q, t0 + (q.desde || 0), fuentes, maestro) + cola(q); dur = Math.max(dur, r + (q.desde || 0)); });
+    } else dur = sonarEn(c, p, t0, fuentes, maestro) + cola(p);
     var fin = setTimeout(function () { parar(); }, (dur + 0.4) * 1000);
-    return { fuentes: fuentes, fin: fin };
+    return { fuentes: fuentes, fin: fin, maestro: maestro };
   }
 
-  function sonarEn(c, p, t0, fuentes) {
+  function sonarEn(c, p, t0, fuentes, maestro) {
     var dur = p.dur || 2.5, g = c.createGain();
-    g.connect(salida(c, p, c.destination));
+    g.connect(salida(c, p, maestro, fuentes, t0));
     var tipo = p.tipo || 'tono';
     if (tipo === 'tono' || tipo === 'barrido') {
       var o = c.createOscillator(); o.type = p.forma || 'sine';
@@ -192,7 +237,7 @@
     } else if (tipo === 'par') {
       var d1 = dur / 2 - 0.15, o1 = c.createOscillator(), o2 = c.createOscillator(), g2 = c.createGain();
       o1.frequency.value = o2.frequency.value = p.f || 1000;
-      g2.connect(salida(c, p, c.destination));
+      g2.connect(salida(c, p, maestro, fuentes, t0));
       envolvente(g, t0, d1, ganancia(p.db1 || 0)); envolvente(g2, t0 + d1 + 0.3, d1, ganancia(p.db2 || -6));
       o1.connect(g); o2.connect(g2); o1.start(t0); o1.stop(t0 + d1 + 0.05); o2.start(t0 + d1 + 0.3); o2.stop(t0 + dur + 0.2);
       fuentes.push(o1, o2);
@@ -207,6 +252,7 @@
   function parar() {
     if (actual) {
       clearTimeout(actual.fin);
+      if (actual.maestro) { try { actual.maestro.gain.value = 0; actual.maestro.disconnect(); } catch (e) {} }
       actual.fuentes.forEach(function (f) { try { f.stop(); } catch (e) {} });
       actual = null;
     }
