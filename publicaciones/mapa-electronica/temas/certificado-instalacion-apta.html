@@ -28,6 +28,13 @@
 .c3-circ button.on{background:rgba(31,111,235,.35)}
 .v3-panel{display:flex;flex-direction:column;gap:3px;margin:10px 2px 4px;font-size:14px;color:var(--txt,#e6edf3)}
 .v3-panel b{font-size:15px}
+/* burbujas del ejemplo resuelto: fijas al viewport porque .tw recorta lo que sobresale */
+th.ayu{cursor:help;text-decoration:underline dotted;text-underline-offset:3px}
+th.ayu:focus{outline:1px solid var(--line);outline-offset:-2px}
+.ayu-b{position:fixed;left:0;top:0;z-index:60;width:max-content;max-width:min(380px,calc(100vw - 24px));background:var(--panel);border:1px solid var(--line);
+  color:var(--txt);font-size:13px;line-height:1.5;padding:8px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.35);
+  opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;pointer-events:none}
+.ayu-b.on{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
@@ -492,9 +499,20 @@
         <p>Vivienda unifamiliar nueva de <b>72,42 m²</b> (living, comedor, dos dormitorios, baño, cocina, habitación de servicio y
         patio), en Av. Emilio Olmos 5130, Córdoba. Por su superficie corresponde, según la AEA 90364-7-770 (ed. 2017), grado de
         electrificación <b>medio</b>, que exige como mínimo 3 circuitos; el proyecto adopta <b>4</b>.</p>
+        <p style="font-size:13px;color:var(--muted)">Al apoyar el puntero sobre el título de cada columna (o tocarlo en el celular) se explica qué es ese dato y de dónde sale.</p>
+        <div hidden>
+          <span id="ayu-circuito" hidden><b>Número de circuito.</b> Identifica cada circuito terminal y es el mismo en el tablero, el plano y las planillas. La cantidad mínima sale del grado de electrificación (AEA 90364-7-770): en grado medio son 3, y este proyecto adopta 4.</span>
+          <span id="ayu-destino" hidden><b>Uso del circuito.</b> IUG: iluminación de uso general. TUG: tomacorrientes de uso general. Sale de las bocas dibujadas en la vista en planta. Una «toma derivada» es un tomacorriente conectado a un circuito de iluminación.</span>
+          <span id="ayu-dpms" hidden><b>Demanda de potencia máxima simultánea.</b> La potencia aparente que se prevé que el circuito pida a la vez. No se mide: se calcula con los criterios de la AEA 90364-7-770. Un circuito con tomas se toma con 2.200 VA fijos. Uno de iluminación sin tomas, con <math><mrow><mn>0,66</mn><mo>·</mo><mi>n</mi><mo>·</mo><mrow><mn>60</mn><mspace width="0.2em"/><mtext>VA</mtext></mrow></mrow></math>, donde <i>n</i> es la cantidad de bocas.</span>
+          <span id="ayu-ib" hidden><b>Corriente de proyecto.</b> La que se espera que circule por el cable con la demanda anterior. Se calcula dividiendo la DPMS por la tensión: <math><mrow><msub><mi>I</mi><mi>B</mi></msub><mo>=</mo><mfrac><mtext>DPMS</mtext><mrow><mn>220</mn><mspace width="0.2em"/><mtext>V</mtext></mrow></mfrac></mrow></math>. En el circuito 1: <math><mrow><mfrac><mrow><mn>2200</mn><mspace width="0.2em"/><mtext>VA</mtext></mrow><mrow><mn>220</mn><mspace width="0.2em"/><mtext>V</mtext></mrow></mfrac><mo>=</mo><mrow><mn>10</mn><mspace width="0.2em"/><mtext>A</mtext></mrow></mrow></math>.</span>
+          <span id="ayu-cable" hidden><b>Sección del conductor.</b> La elige quien proyecta, con dos condiciones: respetar la sección mínima que fija la AEA para ese tipo de circuito y que la corriente admisible resultante alcance para la protección. Aquí, 2,5 mm² donde hay tomas y 1,5 mm² en la iluminación sola; cable IRAM NM 247-3 en cañería embutida.</span>
+          <span id="ayu-iz" hidden><b>Corriente admisible corregida.</b> La que el cable puede llevar en forma permanente en esta instalación sin pasar su temperatura máxima. I<sub>tabla</sub> se lee en las tablas de la AEA 90364-7-771, según sección, tipo de cable y forma de instalación. El 0,8 es el factor de agrupamiento: dos circuitos en el mismo caño se calientan entre sí.</span>
+          <span id="ayu-pia" hidden><b>Pequeño interruptor automático</b> (termomagnético, IEC 60898). Protege el cable. Se elige por su corriente nominal I<sub>n</sub>, que debe cumplir la última columna, y por su curva, que indica desde cuántas veces I<sub>n</sub> dispara el magnético al instante: B, entre 3 y 5; C, entre 5 y 10. La C tolera mejor los picos de arranque de lo que se enchufa.</span>
+          <span id="ayu-cond" hidden><b>Condición de protección contra sobrecargas.</b> La primera desigualdad evita que el PIA dispare en uso normal: su nominal cubre la corriente de proyecto. La segunda asegura que actúe antes de que el cable se recaliente: su nominal no supera lo que el cable admite.</span>
+        </div>
         <div class="tw">
           <table class="tab">
-            <thead><tr><th class="c">Circuito</th><th>Destino</th><th class="c">DPMS (VA)</th><th class="c">I<sub>B</sub> (A)</th><th class="c">Cable (mm²)</th><th class="c">I<sub>z</sub> = 0,8 · I<sub>tabla</sub> (A)</th><th class="c">PIA</th><th class="c">I<sub>B</sub> ≤ I<sub>n</sub> ≤ I<sub>z</sub></th></tr></thead>
+            <thead><tr><th class="c ayu" tabindex="0" aria-describedby="ayu-circuito">Circuito</th><th class="ayu" tabindex="0" aria-describedby="ayu-destino">Destino</th><th class="c ayu" tabindex="0" aria-describedby="ayu-dpms">DPMS (VA)</th><th class="c ayu" tabindex="0" aria-describedby="ayu-ib">I<sub>B</sub> (A)</th><th class="c ayu" tabindex="0" aria-describedby="ayu-cable">Cable (mm²)</th><th class="c ayu" tabindex="0" aria-describedby="ayu-iz">I<sub>z</sub> = 0,8 · I<sub>tabla</sub> (A)</th><th class="c ayu" tabindex="0" aria-describedby="ayu-pia">PIA</th><th class="c ayu" tabindex="0" aria-describedby="ayu-cond">I<sub>B</sub> ≤ I<sub>n</sub> ≤ I<sub>z</sub></th></tr></thead>
             <tbody>
               <tr><td class="c"><b>1</b></td><td>IUG con toma derivada</td><td class="c">2.200</td><td class="c">10,00</td><td class="c">2,5</td><td class="c">0,8 · 21 = 16,8</td><td class="c">10 A curva B</td><td class="c">10 ≤ 10 ≤ 16,8 ✓</td></tr>
               <tr><td class="c"><b>2</b></td><td>IUG</td><td class="c">316,8</td><td class="c">1,44</td><td class="c">1,5</td><td class="c">0,8 · 15 = 12</td><td class="c">10 A curva B</td><td class="c">1,44 ≤ 10 ≤ 12 ✓</td></tr>
@@ -788,5 +806,27 @@
 <script>/* maqueta 3D; si no carga three.js, queda la figura isométrica */
 (function(){var d=document.getElementById("vivienda3d"),ok=false;try{if(window.THREE&&THREE.OrbitControls&&window.ViviendaTres){ViviendaTres(d,document.getElementById("vivienda3dTxt"));ok=true;}}catch(e){}
 if(!ok){d.hidden=true;document.getElementById("vivienda3dTxt").hidden=true;document.getElementById("vivienda3dSvg").hidden=false;}})();</script>
+<script>
+(function () {
+  var b = document.createElement('div'); b.className = 'ayu-b'; b.setAttribute('role', 'tooltip'); document.body.appendChild(b);
+  var actual = null;
+  function ocultar() { actual = null; b.classList.remove('on'); }
+  function mostrar(th) {
+    actual = th; b.innerHTML = document.getElementById(th.getAttribute('aria-describedby')).innerHTML;
+    var r = th.getBoundingClientRect(), q = b.getBoundingClientRect(), m = 12;
+    var x = Math.max(m, Math.min(innerWidth - q.width - m, r.left + r.width / 2 - q.width / 2));
+    var y = r.top - q.height - 8; if (y < m) y = r.bottom + 8;
+    b.style.left = x + 'px'; b.style.top = y + 'px'; b.classList.add('on');
+  }
+  document.querySelectorAll('th.ayu').forEach(function (th) {
+    th.addEventListener('mouseenter', function () { mostrar(th); });
+    th.addEventListener('mouseleave', function () { if (document.activeElement !== th) ocultar(); });
+    th.addEventListener('focus', function () { mostrar(th); });
+    th.addEventListener('blur', ocultar);
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') ocultar(); });
+  addEventListener('scroll', function () { if (actual) ocultar(); }, { passive: true, capture: true });
+})();
+</script>
 </body>
 </html>
