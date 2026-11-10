@@ -28,6 +28,13 @@
 .c3-circ button.on{background:rgba(31,111,235,.35)}
 .v3-panel{display:flex;flex-direction:column;gap:3px;margin:10px 2px 4px;font-size:14px;color:var(--txt,#e6edf3)}
 .v3-panel b{font-size:15px}
+/* tooltips of the worked example: fixed to the viewport because .tw clips what overflows */
+th.ayu{cursor:help;text-decoration:underline dotted;text-underline-offset:3px}
+th.ayu:focus{outline:1px solid var(--line);outline-offset:-2px}
+.ayu-b{position:fixed;left:0;top:0;z-index:60;width:max-content;max-width:min(380px,calc(100vw - 24px));background:var(--panel);border:1px solid var(--line);
+  color:var(--txt);font-size:13px;line-height:1.5;padding:8px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.35);
+  opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;pointer-events:none}
+.ayu-b.on{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
@@ -462,9 +469,20 @@
         <div class="bt">Worked example · The house in the ERSeP model file</div>
         <p>New single-family dwelling of <b>72.42 m²</b> (living room, dining room, two bedrooms, bathroom, kitchen, service room and patio), at Av. Emilio Olmos 5130, Córdoba. By its area, under
         AEA 90364-7-770 (2017 ed.), it corresponds to a <b>medium</b> electrification grade, which requires at least 3 circuits; the design adopts <b>4</b>.</p>
+        <p style="font-size:13px;color:var(--muted)">Hover over the title of each column (or tap it on a phone) to see what that value is and where it comes from.</p>
+        <div hidden>
+          <span id="ayu-circuito" hidden><b>Circuit number.</b> It identifies each final circuit and is the same on the board, the drawing and the schedules. The minimum number comes from the electrification grade (AEA 90364-7-770): 3 for a medium grade, and this design adopts 4.</span>
+          <span id="ayu-destino" hidden><b>What the circuit is for.</b> IUG: general lighting. TUG: general-use sockets. It comes from the outlets drawn on the floor plan. A “derived socket” is a socket outlet connected to a lighting circuit.</span>
+          <span id="ayu-dpms" hidden><b>Maximum simultaneous power demand</b> (DPMS, from the Spanish). The apparent power the circuit is expected to draw at one time. It is not measured: it is calculated with the criteria of AEA 90364-7-770. A circuit with sockets is taken as a fixed 2,200 VA. A lighting circuit without sockets, as <math><mrow><mn>0.66</mn><mo>·</mo><mi>n</mi><mo>·</mo><mrow><mn>60</mn><mspace width="0.2em"/><mtext>VA</mtext></mrow></mrow></math>, where <i>n</i> is the number of outlets.</span>
+          <span id="ayu-ib" hidden><b>Design current.</b> The current expected in the cable under the demand of the previous column. It is calculated by dividing the DPMS by the voltage: <math><mrow><msub><mi>I</mi><mi>B</mi></msub><mo>=</mo><mfrac><mtext>DPMS</mtext><mrow><mn>220</mn><mspace width="0.2em"/><mtext>V</mtext></mrow></mfrac></mrow></math>. For circuit 1: <math><mrow><mfrac><mrow><mn>2200</mn><mspace width="0.2em"/><mtext>VA</mtext></mrow><mrow><mn>220</mn><mspace width="0.2em"/><mtext>V</mtext></mrow></mfrac><mo>=</mo><mrow><mn>10</mn><mspace width="0.2em"/><mtext>A</mtext></mrow></mrow></math>.</span>
+          <span id="ayu-cable" hidden><b>Conductor cross-section.</b> The designer chooses it under two conditions: it must meet the minimum section AEA sets for that type of circuit, and the resulting current-carrying capacity must be enough for the protective device. Here, 2.5 mm² where there are sockets and 1.5 mm² for lighting alone; IRAM NM 247-3 cable in embedded conduit.</span>
+          <span id="ayu-iz" hidden><b>Corrected current-carrying capacity.</b> The current the cable can carry continuously in this installation without exceeding its maximum temperature. I<sub>table</sub> is read from the tables of AEA 90364-7-771, according to section, cable type and installation method. The 0.8 is the grouping factor: two circuits in the same conduit heat each other.</span>
+          <span id="ayu-pia" hidden><b>Miniature circuit breaker</b> (thermal-magnetic, IEC 60898). It protects the cable. It is chosen by its rated current I<sub>n</sub>, which must meet the last column, and by its curve, which tells at how many times I<sub>n</sub> the magnetic trip acts instantly: B, between 3 and 5; C, between 5 and 10. Curve C better tolerates the inrush of whatever gets plugged in.</span>
+          <span id="ayu-cond" hidden><b>Overload protection condition.</b> The first inequality keeps the MCB from tripping in normal use: its rating covers the design current. The second makes sure it acts before the cable overheats: its rating does not exceed what the cable can carry.</span>
+        </div>
         <div class="tw">
           <table class="tab">
-            <thead><tr><th class="c">Circuit</th><th>Use</th><th class="c">DPMS (VA)</th><th class="c">I<sub>B</sub> (A)</th><th class="c">Cable (mm²)</th><th class="c">I<sub>z</sub> = 0.8 · I<sub>table</sub> (A)</th><th class="c">MCB</th><th class="c">I<sub>B</sub> ≤ I<sub>n</sub> ≤ I<sub>z</sub></th></tr></thead>
+            <thead><tr><th class="c ayu" tabindex="0" aria-describedby="ayu-circuito">Circuit</th><th class="ayu" tabindex="0" aria-describedby="ayu-destino">Use</th><th class="c ayu" tabindex="0" aria-describedby="ayu-dpms">DPMS (VA)</th><th class="c ayu" tabindex="0" aria-describedby="ayu-ib">I<sub>B</sub> (A)</th><th class="c ayu" tabindex="0" aria-describedby="ayu-cable">Cable (mm²)</th><th class="c ayu" tabindex="0" aria-describedby="ayu-iz">I<sub>z</sub> = 0.8 · I<sub>table</sub> (A)</th><th class="c ayu" tabindex="0" aria-describedby="ayu-pia">MCB</th><th class="c ayu" tabindex="0" aria-describedby="ayu-cond">I<sub>B</sub> ≤ I<sub>n</sub> ≤ I<sub>z</sub></th></tr></thead>
             <tbody>
               <tr><td class="c"><b>1</b></td><td>IUG with derived socket</td><td class="c">2,200</td><td class="c">10.00</td><td class="c">2.5</td><td class="c">0.8 · 21 = 16.8</td><td class="c">10 A curve B</td><td class="c">10 ≤ 10 ≤ 16.8 ✓</td></tr>
               <tr><td class="c"><b>2</b></td><td>IUG</td><td class="c">316.8</td><td class="c">1.44</td><td class="c">1.5</td><td class="c">0.8 · 15 = 12</td><td class="c">10 A curve B</td><td class="c">1.44 ≤ 10 ≤ 12 ✓</td></tr>
@@ -731,5 +749,27 @@
 <script>/* maqueta 3D; si no carga three.js, queda la figura isométrica */
 (function(){var d=document.getElementById("vivienda3d"),ok=false;try{if(window.THREE&&THREE.OrbitControls&&window.ViviendaTres){ViviendaTres(d,document.getElementById("vivienda3dTxt"));ok=true;}}catch(e){}
 if(!ok){d.hidden=true;document.getElementById("vivienda3dTxt").hidden=true;document.getElementById("vivienda3dSvg").hidden=false;}})();</script>
+<script>
+(function () {
+  var b = document.createElement('div'); b.className = 'ayu-b'; b.setAttribute('role', 'tooltip'); document.body.appendChild(b);
+  var actual = null;
+  function ocultar() { actual = null; b.classList.remove('on'); }
+  function mostrar(th) {
+    actual = th; b.innerHTML = document.getElementById(th.getAttribute('aria-describedby')).innerHTML;
+    var r = th.getBoundingClientRect(), q = b.getBoundingClientRect(), m = 12;
+    var x = Math.max(m, Math.min(innerWidth - q.width - m, r.left + r.width / 2 - q.width / 2));
+    var y = r.top - q.height - 8; if (y < m) y = r.bottom + 8;
+    b.style.left = x + 'px'; b.style.top = y + 'px'; b.classList.add('on');
+  }
+  document.querySelectorAll('th.ayu').forEach(function (th) {
+    th.addEventListener('mouseenter', function () { mostrar(th); });
+    th.addEventListener('mouseleave', function () { if (document.activeElement !== th) ocultar(); });
+    th.addEventListener('focus', function () { mostrar(th); });
+    th.addEventListener('blur', ocultar);
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') ocultar(); });
+  addEventListener('scroll', function () { if (actual) ocultar(); }, { passive: true, capture: true });
+})();
+</script>
 </body>
 </html>
