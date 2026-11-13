@@ -182,65 +182,65 @@ var MATERIAS = [
 
 /* ---------- 3° AÑO · al terminarlo: Técnico en Sonido ---------- */
 {id:"ap2", n:"Acústica y Psicoacústica II", area:"acus", anio:3, h:90, f:"UC", ejes:[
-  {t:"Acústica de recintos cerrados", d:"Sonido directo y reflejado. Distancia crítica. Respuesta impulsiva de una sala.", tm:[["recinto",2]]},
-  {t:"Reverberación", d:"Tiempo de reverberación. Criterios de Sabine, Eyring, Fitzroy y Millington: cuándo se aplica cada uno.", tm:[["recinto",2]]},
-  {t:"Modos de una sala", d:"Ondas estacionarias y modos axiales, tangenciales y oblicuos. Por qué una sala chica refuerza ciertas notas graves.", tm:[["recinto",2],["onda",3]]},
-  {t:"Medidor de nivel sonoro", d:"Ponderaciones A, B y C. Niveles equivalentes y respuesta temporal del medidor.", tm:[["medic",2],["psico",2]]}
+  {t:"Acústica de recintos cerrados", u:"acustica-recintos", d:"Sonido directo y reflejado. Distancia crítica. Respuesta impulsiva de una sala.", tm:[["recinto",2]]},
+  {t:"Reverberación", u:"reverberacion", d:"Tiempo de reverberación. Criterios de Sabine, Eyring, Fitzroy y Millington: cuándo se aplica cada uno.", tm:[["recinto",2]]},
+  {t:"Modos de una sala", u:"modos-sala", d:"Ondas estacionarias y modos axiales, tangenciales y oblicuos. Por qué una sala chica refuerza ciertas notas graves.", tm:[["recinto",2],["onda",3]]},
+  {t:"Medidor de nivel sonoro", u:"medidor-nivel-sonoro", d:"Ponderaciones A, B y C. Niveles equivalentes y respuesta temporal del medidor.", tm:[["medic",2],["psico",2]]}
 ]},
 {id:"le2", n:"Laboratorio de Electrónica II", area:"elec", anio:3, h:90, f:"UC", ejes:[
   {t:"Semiconductores", u:"semiconductores-diodos", d:"Diodos y transistores bipolares y de efecto de campo. Polarización y modelos.", tm:[["circ",2]]},
-  {t:"Circuitos de audio", d:"Preamplificador de micrófono, mezclador, amplificador de auriculares y medidor de picos.", tm:[["circ",3]]},
+  {t:"Circuitos de audio", u:"circuitos-audio", d:"Preamplificador de micrófono, mezclador, amplificador de auriculares y medidor de picos.", tm:[["circ",3]]},
   {t:"Circuitos impresos", u:"pcb", d:"Diseño y armado de placas de audio: soldadura, prueba y medición. Un cable doctor y un amplificador.", tm:[["circ",2],["medic",2]]},
-  {t:"Interfaces digitales", d:"S/PDIF, AES/EBU y conversores AD y DA.", tm:[["digital",2],["circ",2]]}
+  {t:"Interfaces digitales", u:"interfaces-digitales-audio", d:"S/PDIF, AES/EBU y conversores AD y DA.", tm:[["digital",2],["circ",2]]}
 ]},
 {id:"dsp", n:"Procesamiento Digital de Señales", area:"senal", anio:3, h:120, f:"U", ejes:[
-  {t:"Transformada discreta de Fourier", d:"DFT y FFT. Resolución en frecuencia, ventanas y fuga espectral. El analizador de espectro por software.", tm:[["digital",3],["senal",3]]},
+  {t:"Transformada discreta de Fourier", u:"dft-fft", d:"DFT y FFT. Resolución en frecuencia, ventanas y fuga espectral. El analizador de espectro por software.", tm:[["digital",3],["senal",3]]},
   {t:"Filtros digitales FIR", u:"/publicaciones/mapa-ingenieria/temas/filtros-digitales", d:"Respuesta al impulso finita, fase lineal. Diseño por ventanas.", tm:[["digital",3],["proc",2]]},
   {t:"Filtros digitales IIR", u:"/publicaciones/mapa-ingenieria/temas/filtros-digitales", d:"Filtros recursivos, estabilidad. Diseño a partir de prototipos analógicos: el ecualizador paramétrico digital.", tm:[["digital",3],["proc",2]]},
   {t:"Convolución y correlación", u:"/publicaciones/mapa-ingenieria/temas/convolucion", d:"Convolución rápida por FFT. Reverb por convolución y medición de respuestas impulsivas.", tm:[["digital",3],["recinto",2]]},
-  {t:"Cambio de frecuencia de muestreo", d:"Sobremuestreo, submuestreo y filtros de interpolación.", tm:[["digital",3]]}
+  {t:"Cambio de frecuencia de muestreo", u:"cambio-frecuencia-muestreo", d:"Sobremuestreo, submuestreo y filtros de interpolación.", tm:[["digital",3]]}
 ]},
 {id:"ce1", n:"Circuitos Electrónicos I", area:"elec", anio:3, h:90, f:"U", ejes:[
   {t:"Amplificadores con transistores", u:"/publicaciones/mapa-ingenieria/temas/bjt-amplificador", d:"Etapas en emisor y source común. Ganancia, impedancias de entrada y salida.", tm:[["circ",3]]},
   {t:"Amplificador operacional", u:"/publicaciones/mapa-ingenieria/temas/amplificadores-operacionales-ing", d:"Configuraciones inversora, no inversora, sumadora y diferencial. Slew rate y ancho de banda.", tm:[["circ",3]]},
   {t:"Realimentación", u:"/publicaciones/mapa-ingenieria/temas/amplificadores-realimentados", d:"Efectos de la realimentación negativa sobre ganancia, distorsión y ancho de banda.", tm:[["circ",3]]},
-  {t:"Ruido en circuitos", d:"Ruido térmico y de disparo. Figura de ruido de un preamplificador.", tm:[["circ",3],["ruido",2]]}
+  {t:"Ruido en circuitos", u:"ruido-circuitos", d:"Ruido térmico y de disparo. Figura de ruido de un preamplificador.", tm:[["circ",3],["ruido",2]]}
 ]},
 {id:"ea1", n:"Electroacústica I", area:"elec", anio:3, h:90, f:"U", ejes:[
-  {t:"Analogías electro-mecano-acústicas", d:"Circuitos equivalentes de sistemas mecánicos y acústicos. Masa, compliancia y resistencia acústica.", tm:[["transd",3],["circ",3]]},
-  {t:"Micrófonos", d:"Transducción, sensibilidad, respuesta en frecuencia y direccionalidad. Ruido propio y nivel máximo.", tm:[["transd",3]]},
-  {t:"Altavoces", d:"El parlante de bobina móvil: parámetros de Thiele-Small, rendimiento e impedancia.", tm:[["transd",3]]},
-  {t:"Cajas acústicas", d:"Caja cerrada y bass-reflex. Divisores de frecuencia pasivos.", tm:[["transd",3],["vivo",1]]}
+  {t:"Analogías electro-mecano-acústicas", u:"analogias-electroacusticas", d:"Circuitos equivalentes de sistemas mecánicos y acústicos. Masa, compliancia y resistencia acústica.", tm:[["transd",3],["circ",3]]},
+  {t:"Micrófonos", u:"microfonos-electroacustica", d:"Transducción, sensibilidad, respuesta en frecuencia y direccionalidad. Ruido propio y nivel máximo.", tm:[["transd",3]]},
+  {t:"Altavoces", u:"altavoces", d:"El parlante de bobina móvil: parámetros de Thiele-Small, rendimiento e impedancia.", tm:[["transd",3]]},
+  {t:"Cajas acústicas", u:"cajas-acusticas", d:"Caja cerrada y bass-reflex. Divisores de frecuencia pasivos.", tm:[["transd",3],["vivo",1]]}
 ]},
 {id:"gr3", n:"Grabación III y Mezcla", area:"estudio", anio:3, h:90, f:"UC", ejes:[
-  {t:"Técnicas de mezcla", d:"Procedimiento de mezcla: balance, panorama, planos y profundidad. Software de mezcla.", tm:[["mezcla",2]]},
-  {t:"La consola en detalle", d:"Diagrama en bloques de la consola. Cables de insert. Buses, auxiliares y grupos.", tm:[["mezcla",2],["grab",3]]},
-  {t:"Producción en el estudio", d:"El proceso de producción musical. Preproducción, grabación, sobregrabación y edición.", tm:[["grab",3],["mezcla",2]]},
-  {t:"Mezcla integral", d:"Mezcla completa de un tema, de la sesión cruda al estéreo final.", tm:[["mezcla",2]]}
+  {t:"Técnicas de mezcla", u:"tecnicas-mezcla", d:"Procedimiento de mezcla: balance, panorama, planos y profundidad. Software de mezcla.", tm:[["mezcla",2]]},
+  {t:"La consola en detalle", u:"consola-detalle", d:"Diagrama en bloques de la consola. Cables de insert. Buses, auxiliares y grupos.", tm:[["mezcla",2],["grab",3]]},
+  {t:"Producción en el estudio", u:"produccion-estudio", d:"El proceso de producción musical. Preproducción, grabación, sobregrabación y edición.", tm:[["grab",3],["mezcla",2]]},
+  {t:"Mezcla integral", u:"mezcla-integral", d:"Mezcla completa de un tema, de la sesión cruda al estéreo final.", tm:[["mezcla",2]]}
 ]},
 {id:"pse", n:"Procesadores de Señal y Efectos", area:"senal", anio:3, h:60, f:"C", ejes:[
-  {t:"Ecualización", d:"Filtros, frecuencias de corte y pendientes. Ecualizadores gráficos, paramétricos y shelving.", tm:[["proc",2]]},
-  {t:"Procesadores de dinámica", d:"Compresor, limitador, expansor y compuerta. Compresión multibanda. Circuito analógico y digital de un compresor.", tm:[["proc",2]]},
-  {t:"Efectos de tiempo y modulación", d:"Reverb, delay, chorus, phaser, flanger y vibrato. Diagramas en bloques.", tm:[["proc",2]]},
-  {t:"Conexionado de procesadores", d:"Conexiones en serie y en paralelo. Ruteo de señales digitales junto a analógicas. Medidores de nivel.", tm:[["proc",2],["grab",3]]}
+  {t:"Ecualización", u:"ecualizacion", d:"Filtros, frecuencias de corte y pendientes. Ecualizadores gráficos, paramétricos y shelving.", tm:[["proc",2]]},
+  {t:"Procesadores de dinámica", u:"procesadores-dinamica", d:"Compresor, limitador, expansor y compuerta. Compresión multibanda. Circuito analógico y digital de un compresor.", tm:[["proc",2]]},
+  {t:"Efectos de tiempo y modulación", u:"efectos-tiempo-modulacion", d:"Reverb, delay, chorus, phaser, flanger y vibrato. Diagramas en bloques.", tm:[["proc",2]]},
+  {t:"Conexionado de procesadores", u:"conexionado-procesadores", d:"Conexiones en serie y en paralelo. Ruteo de señales digitales junto a analógicas. Medidores de nivel.", tm:[["proc",2],["grab",3]]}
 ]},
 {id:"ent", n:"Entrenamiento Auditivo", area:"musica", anio:3, h:60, f:"C", ejes:[
-  {t:"Reconocimiento de frecuencias", d:"Alteraciones de una octava, media octava y un tercio de octava, de 12, 6 y 3 dB, en más y en menos.", tm:[["psico",3]]},
-  {t:"Escucha sobre ruido rosa", d:"Identificar bandas alteradas sobre ruido rosa.", tm:[["psico",3]]},
-  {t:"Escucha sobre música", d:"Ejercicios sobre instrumentos y sobre distintos estilos musicales.", tm:[["psico",3],["mezcla",2]]}
+  {t:"Reconocimiento de frecuencias", u:"reconocimiento-frecuencias", d:"Alteraciones de una octava, media octava y un tercio de octava, de 12, 6 y 3 dB, en más y en menos.", tm:[["psico",3]]},
+  {t:"Escucha sobre ruido rosa", u:"escucha-ruido-rosa", d:"Identificar bandas alteradas sobre ruido rosa.", tm:[["psico",3]]},
+  {t:"Escucha sobre música", u:"escucha-musica", d:"Ejercicios sobre instrumentos y sobre distintos estilos musicales.", tm:[["psico",3],["mezcla",2]]}
 ]},
 {id:"svv1", n:"Sonido en Vivo I", area:"estudio", anio:3, h:60, f:"C", ejes:[
-  {t:"Interconexión de equipos", d:"Conectores de audio, conexiones a tierra y sus cuidados. Planificación y logística de las conexiones.", tm:[["vivo",2]]},
-  {t:"Sistemas biamplificados y triamplificados", d:"Crossovers pasivos y activos. Cálculo del sistema.", tm:[["vivo",2],["transd",2]]},
-  {t:"Consolas para vivo", d:"Consolas de producción y de vivo, criterios in-line y split. Operación básica.", tm:[["vivo",2]]},
-  {t:"Monitoreo de escenario", d:"Sistemas de monitoreo, el rider técnico y cómo leerlo.", tm:[["vivo",2]]}
+  {t:"Interconexión de equipos", u:"interconexion-vivo", d:"Conectores de audio, conexiones a tierra y sus cuidados. Planificación y logística de las conexiones.", tm:[["vivo",2]]},
+  {t:"Sistemas biamplificados y triamplificados", u:"sistemas-biamplificados", d:"Crossovers pasivos y activos. Cálculo del sistema.", tm:[["vivo",2],["transd",2]]},
+  {t:"Consolas para vivo", u:"consolas-vivo", d:"Consolas de producción y de vivo, criterios in-line y split. Operación básica.", tm:[["vivo",2]]},
+  {t:"Monitoreo de escenario", u:"monitoreo-escenario", d:"Sistemas de monitoreo, el rider técnico y cómo leerlo.", tm:[["vivo",2]]}
 ]},
 {id:"acr", n:"Audio para Cine, TV y Radio", area:"medios", anio:3, h:90, f:"C", ejes:[
-  {t:"El lenguaje audiovisual", d:"Cuadro, toma, escena y secuencia. Tipos de cine y géneros. Planos y movimientos de cámara.", tm:[["medios",1]]},
-  {t:"Diseño de sonido", d:"Cualidades evocativas y acústicas del sonido. Diálogo, efectos, ambiente y música en la banda sonora.", tm:[["medios",2]]},
-  {t:"Sincronización", d:"Código SMPTE a 24, 25 y 30 cuadros. Sincronización de audio e imagen en el software.", tm:[["medios",2],["digital",2]]},
-  {t:"Registro en locación", d:"Criterios de toma según la locación. Cadena de audio: micrófonos, cables y soportes.", tm:[["medios",2],["grab",3]]},
-  {t:"La radio", d:"Lenguaje radiofónico, el programa de radio, musicalización y efectos. El estudio de radio y la radio en línea.", tm:[["medios",2]]}
+  {t:"El lenguaje audiovisual", u:"lenguaje-audiovisual", d:"Cuadro, toma, escena y secuencia. Tipos de cine y géneros. Planos y movimientos de cámara.", tm:[["medios",1]]},
+  {t:"Diseño de sonido", u:"diseno-sonido", d:"Cualidades evocativas y acústicas del sonido. Diálogo, efectos, ambiente y música en la banda sonora.", tm:[["medios",2]]},
+  {t:"Sincronización", u:"sincronizacion-smpte", d:"Código SMPTE a 24, 25 y 30 cuadros. Sincronización de audio e imagen en el software.", tm:[["medios",2],["digital",2]]},
+  {t:"Registro en locación", u:"registro-locacion", d:"Criterios de toma según la locación. Cadena de audio: micrófonos, cables y soportes.", tm:[["medios",2],["grab",3]]},
+  {t:"La radio", u:"radio-sonido", d:"Lenguaje radiofónico, el programa de radio, musicalización y efectos. El estudio de radio y la radio en línea.", tm:[["medios",2]]}
 ]},
 
 /* ---------- 4° AÑO ---------- */
