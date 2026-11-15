@@ -10,6 +10,8 @@
    ☾/☀ sin recargar porque cada versión se muestra u oculta solo con CSS.
    Uso: <script src="/assets/js/cielo-fondo.js"></script>              (páginas siempre oscuras)
         <script src="/assets/js/cielo-fondo.js" data-papel></script>   (páginas con papel.css)
+        <script src="/assets/js/cielo-fondo.js" data-papel data-fondo="#b3c4d6"></script>
+                                                   (otro color para el fondo de día)
    ============================================================ */
 (function(){
   if(document.getElementById('cieloFondo'))return;
@@ -30,7 +32,10 @@
   if(papel){
     /* el fondo de la página pasa al <html> (con la misma variable, así sigue al modo) para que la capa se vea */
     /* de día la página va en celeste cianotipo (más oscuro que las tarjetas, así la carta se lee como fondo); de noche, su fondo de siempre */
-    css+=':root{--cf-fondo:#c6d4e2}'+noche+'{--cf-fondo:var(--bg)}'+sistema+'{--cf-fondo:var(--bg)}}'+
+    /* con data-fondo="#…" en el <script>, otro color de día (Descargas: azul plano #b3c4d6) */
+    var dia=(yo&&yo.getAttribute('data-fondo'))||'#c6d4e2';
+    if(!/^#[0-9a-f]{3,8}$/i.test(dia)) dia='#c6d4e2';
+    css+=':root{--cf-fondo:'+dia+'}'+noche+'{--cf-fondo:var(--bg)}'+sistema+'{--cf-fondo:var(--bg)}}'+
       'html{background:var(--cf-fondo)}body{background:transparent!important}'+
       /* de día, la carta; de noche, las estrellas */
       '#cieloFondo .cf-noche{display:none}'+
