@@ -1328,6 +1328,37 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click', ()=>{
 ['#q','#fBloque','#fArea'].forEach(s=>$(s).addEventListener('input', ()=>{ pintarMapa(); pintarMatriz(); }));
 pintarMapa(); pintarMatriz();
 </script>
+<script>
+/* ===== Ocultar el encabezado al bajar, mostrarlo al subir ===== */
+(function(){
+  const header = document.querySelector('header.top');
+  if(!header) return;
+
+  /* El encabezado se ve unicamente con la pagina arriba de todo. Son dos
+     marcas distintas y no una sola a proposito: entre ellas queda una zona
+     muerta donde no se toca nada. Con un unico umbral, un temblor de dos
+     pixeles justo en el borde —o el rebote del scroll del celular— lo haria
+     aparecer y desaparecer a repeticion. */
+  const MOSTRAR = 8;    // hasta aca se considera que estamos arriba de todo
+  const OCULTAR = 56;   // recien pasando esta marca se esconde
+
+  let oculto = false;
+
+  function revisar(){
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    let nuevo = oculto;
+    if(y <= MOSTRAR)      nuevo = false;
+    else if(y > OCULTAR)  nuevo = true;
+    /* entre las dos marcas se queda como estaba */
+    if(nuevo === oculto) return;     // no se toca el DOM si no cambia nada
+    oculto = nuevo;
+    header.classList.toggle('hd-hide', oculto);
+  }
+
+  window.addEventListener('scroll', revisar, {passive:true});
+  revisar();   // por si se entra con la pagina ya corrida
+})();
+</script>
 <script src="/assets/js/starfield.js?v=2"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 <script src="/assets/js/online.js?v=4"></script>
