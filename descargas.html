@@ -25,6 +25,15 @@
 <link rel="alternate" hreflang="x-default" href="https://catto.ar/descargas">
 <script src="/assets/js/idioma.js?v=1" defer></script>
 <!-- /idiomas -->
+<link rel="stylesheet" href="/assets/css/libro.css?v=5">
+<style>
+  /* el libro de cada PDF va debajo de su tarjeta de descarga */
+  .dl-list .lb-caja{margin:6px 0 34px}
+  .pdf-hoja{background:#fff}
+  /* en el celular se ve una página por vez: el libro toma la proporción
+     de la hoja del PDF en lugar del alto fijo, para que no sobre blanco */
+  @media(max-width:820px){ .dl-list .lb-modo-hojas .lb-libro{height:auto;aspect-ratio:1/1.45} }
+</style>
 </head>
 <body>
 
@@ -66,6 +75,7 @@
         <span class="darrow">↓</span>
         <span class="dcount" title="Veces descargado" style="color:#f2c94c;font-weight:700;font-size:12px;white-space:nowrap;flex:none">↓&nbsp;<span class="dcount-n">…</span></span>
       </a>
+      <div class="pdf-libro" data-libro data-libro-hojas data-pdf="/descargas/cv-diego-cattaneo.pdf" data-paginas="2" data-nombre="Curriculum Vitae"></div>
 
       <!-- Aprenda a Hablar (sin hacer preguntas) -->
       <a class="dl" href="descargas/aprenda-a-hablar-sin-hacer-preguntas.pdf" download data-count="dl-libro">
@@ -75,6 +85,7 @@
         <span class="darrow">↓</span>
         <span class="dcount" title="Veces descargado" style="color:#f2c94c;font-weight:700;font-size:12px;white-space:nowrap;flex:none">↓&nbsp;<span class="dcount-n">…</span></span>
       </a>
+      <div class="pdf-libro" data-libro data-libro-hojas data-pdf="/descargas/aprenda-a-hablar-sin-hacer-preguntas.pdf" data-paginas="72" data-nombre="Aprenda a Hablar"></div>
 
       <!-- Para agregar una descarga nueva: copiá el bloque <a class="dl"> de arriba,
            poné el archivo en la carpeta /descargas y editá el href, el nombre y el peso. -->
@@ -166,6 +177,77 @@
   });
 })();
 </script>
+<script>
+/* Los PDF se leen como libro (assets/js/libro.js, modo data-libro-hojas):
+   cada página del PDF es una hoja. Acá se crean las hojas vacías antes de
+   que arranque el libro, y después se dibujan con pdf.js solo las que
+   aparecen a la vista. pdf.js se carga recién cuando hace falta. */
+(function(){
+  var bloques = document.querySelectorAll('.pdf-libro');
+  Array.prototype.forEach.call(bloques, function(b){
+    var n = parseInt(b.getAttribute('data-paginas'), 10) || 0, nombre = b.getAttribute('data-nombre');
+    for(var i = 1; i <= n; i++){
+      var h = document.createElement('div');
+      h.className = 'pdf-hoja';
+      h.setAttribute('data-pdf', b.getAttribute('data-pdf'));
+      h.setAttribute('data-pagina', i);
+      h.setAttribute('role', 'img');
+      h.setAttribute('aria-label', nombre + ', página ' + i + ' de ' + n);
+      b.appendChild(h);
+    }
+  });
+
+  var PDFJS = '/aula/assets/vendor/pdf.min.js', WORKER = '/aula/assets/vendor/pdf.worker.min.js';
+  var cargaLib = null, docs = {}, hechas = {};
+  function lib(){
+    if(cargaLib) return cargaLib;
+    cargaLib = new Promise(function(ok, mal){
+      var s = document.createElement('script');
+      s.src = PDFJS;
+      s.onload = function(){ pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER; ok(pdfjsLib); };
+      s.onerror = mal;
+      document.head.appendChild(s);
+    });
+    return cargaLib;
+  }
+  function doc(url){
+    if(!docs[url]) docs[url] = lib().then(function(p){ return p.getDocument({url: url, isEvalSupported: false}).promise; });
+    return docs[url];
+  }
+  /* Cada página se dibuja una vez, al ancho de la hoja en pantalla, y la
+     imagen queda guardada para las otras copias (la hoja que gira es una
+     copia de la página). */
+  function imagen(url, num, ancho){
+    var k = url + '#' + num;
+    if(!hechas[k]) hechas[k] = doc(url).then(function(pdf){ return pdf.getPage(num); }).then(function(pag){
+      var v1 = pag.getViewport({scale: 1});
+      var esc = Math.min(2.5, Math.max(1, ancho / v1.width));
+      var v = pag.getViewport({scale: esc});
+      var c = document.createElement('canvas');
+      c.width = Math.ceil(v.width); c.height = Math.ceil(v.height);
+      return pag.render({canvasContext: c.getContext('2d'), viewport: v}).promise.then(function(){
+        return new Promise(function(ok){ c.toBlob(function(bl){ ok(URL.createObjectURL(bl)); }, 'image/png'); });
+      });
+    });
+    return hechas[k];
+  }
+  function llenar(h){
+    if(h.getAttribute('data-hecha')) return;
+    h.setAttribute('data-hecha', '1');
+    var ancho = Math.ceil((h.getBoundingClientRect().width || 600) * Math.min(window.devicePixelRatio || 1, 2));
+    imagen(h.getAttribute('data-pdf'), parseInt(h.getAttribute('data-pagina'), 10), ancho).then(function(src){
+      var im = document.createElement('img');
+      im.src = src; im.alt = '';
+      h.appendChild(im);
+    }).catch(function(){ h.removeAttribute('data-hecha'); });
+  }
+  function revisar(){
+    Array.prototype.forEach.call(document.querySelectorAll('.lb-caja .pdf-hoja:not([data-hecha])'), llenar);
+  }
+  new MutationObserver(revisar).observe(document.body, {childList: true, subtree: true});
+})();
+</script>
+<script src="/assets/js/libro.js?v=5"></script>
 <script src="assets/js/starfield.js?v=2"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 <script src="/assets/js/online.js?v=4"></script>

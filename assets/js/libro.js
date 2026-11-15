@@ -90,6 +90,12 @@ function armarLibro(origen){
   mando.appendChild(btAnt); mando.appendChild(cuenta);
   mando.appendChild(btSig); mando.appendChild(btCorrido);
 
+  /* Con data-libro-hojas cada hijo del bloque es una página entera (la
+     página de un PDF, por ejemplo): no se reparte texto, no lleva folio
+     ni portada, y no hay texto corrido que mostrar. */
+  var hojas = origen.hasAttribute("data-libro-hojas");
+  if(hojas){ caja.className += " lb-modo-hojas"; btCorrido.hidden = true; }
+
   caja.appendChild(libro);
   caja.appendChild(mando);
   origen.parentNode.insertBefore(caja, origen);
@@ -267,6 +273,10 @@ function armarLibro(origen){
   }
 
   function repartir(){
+    if(hojas){
+      PAGINAS = Array.prototype.map.call(fuente.children, function(c){ return [c.cloneNode(true)]; });
+      return;
+    }
     var molde = nodo("div", "lb-pag lb-der");
     molde.style.visibility = "hidden";
     molde.innerHTML = '<div class="lb-papel"><div class="lb-hueco"></div></div>';
