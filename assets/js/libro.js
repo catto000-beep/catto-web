@@ -110,6 +110,13 @@ function armarLibro(origen){
      original no se toca: el texto corrido conserva sus tarjetas. */
   if(origen.hasAttribute("data-libro-desarmar")){
     Array.prototype.slice.call(fuente.querySelectorAll("article")).forEach(function(a){
+      /* los párrafos que siguen al título de la tarjeta, antes de la
+         lista, son su ficha: van pegados al título */
+      var el = a.firstElementChild;
+      if(el && esTitulo(el)){
+        el = el.nextElementSibling;
+        while(el && el.tagName === "P"){ el.classList.add("lb-cabeza"); el = el.nextElementSibling; }
+      }
       while(a.firstChild) a.parentNode.insertBefore(a.firstChild, a);
       a.parentNode.removeChild(a);
     });
@@ -217,9 +224,10 @@ function armarLibro(origen){
      enteras. Y una lista o un recuadro que no entran ni en una página
      vacía se parten por sus renglones, que es lo único sensato. */
   function sePuedePartir(el){
-    return el.tagName === "P" && !el.querySelector("img,svg,table,math");
+    return el.tagName === "P" && !encabeza(el) && !el.querySelector("img,svg,table,math");
   }
   function esTitulo(el){ return /^H[234]$/.test(el.tagName); }
+  function encabeza(el){ return esTitulo(el) || el.classList.contains("lb-cabeza"); }
   function recortarHijos(el, desde, hasta){
     var hijos = Array.prototype.slice.call(el.children), i;
     for(i = hijos.length - 1; i >= 0; i--)
@@ -269,17 +277,22 @@ function armarLibro(origen){
        a la página siguiente. Se hace al cerrar y no después: moviendo el
        subtítulo con la página ya armada, la de destino rebalsaba y el
        texto de abajo quedaba cortado. */
+    /* Lo que encabeza —un título, o lo que va pegado a él, como la ficha
+       de una materia— se va entero: si al pie quedan título y ficha sin
+       nada debajo, pasan los dos a la página siguiente y abajo queda el
+       espacio en blanco. */
     function cerrar(arrastrarTitulo){
       if(!actual.length) return;
-      var colgado = null;
-      if(arrastrarTitulo && actual.length > 1){
-        var ult = actual[actual.length - 1];
-        if(esTitulo(ult)) colgado = actual.pop();
+      var colgados = [];
+      if(arrastrarTitulo){
+        var n = actual.length;
+        while(n > 0 && encabeza(actual[n - 1])) n--;
+        if(n > 0) colgados = actual.splice(n);
       }
       paginas.push(actual);
       actual = [];
       hueco.innerHTML = "";
-      if(colgado){ hueco.appendChild(colgado); actual.push(colgado); }
+      colgados.forEach(function(c){ hueco.appendChild(c); actual.push(c); });
     }
 
     Array.prototype.slice.call(fuente.children).forEach(function(b){
@@ -311,7 +324,7 @@ function armarLibro(origen){
            con el título solo y el texto recién en la de al lado. En ese caso
            el bloque se parte acá mismo, aunque entrara entero en la
            siguiente. */
-        var soloTitulos = actual.length > 0 && actual.every(esTitulo);
+        var soloTitulos = actual.length > 0 && actual.every(encabeza);
         if(actual.length && !soloTitulos){ cerrar(true); continue; }
 
         /* Si tiene renglones propios —una lista, un recuadro— se parte
