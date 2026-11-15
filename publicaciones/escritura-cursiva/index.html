@@ -341,8 +341,9 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
 <script>
 /* ============================================================================
    ESCRITURA CURSIVA — catto.ar
-   Todo en un archivo: los glifos son paths de SVG dibujados a mano sobre una
-   pauta de diseño, y el calcado se puntúa muestreando esos mismos paths.
+   Todo en un archivo: los glifos se describen con nodos (punto + dirección)
+   sobre una pauta de diseño, de ahí salen los paths de SVG, y el calcado se
+   puntúa muestreando esos mismos paths.
 
    Sistema de coordenadas de diseño (300 unidades de alto):
        y =  18  línea de arriba (palo alto / altura de mayúsculas)
@@ -350,123 +351,223 @@ footer.pie{border-top:1px solid var(--line);margin-top:34px;padding:22px 0;color
        y = 200  renglón (línea de base)
        y = 288  línea de abajo (palo bajo)
 
-   Regla de oro de los glifos: cada letra ARRANCA en (0,200) y TERMINA en (w,200)
-   con tangente horizontal. Así, al pegar una letra tras otra, los trazos de
-   salida y de entrada se enganchan solos y la palabra sale de una sola tirada.
+   Las letras no traen trazo de entrada: la unión la tiende layout() entre la
+   salida de una y el primer nodo de la que sigue, y la palabra sale de una
+   sola tirada. El detalle está en el bloque <<trazos>>.
    ========================================================================== */
 
-/* ---------------------------------------------------------------- glifos --- */
-var GL = {
+/* <<trazos>> — bloque generado desde _src-publicaciones/cursiva/trazos.js
+   (se copia igual a la versión en castellano y a la versión en inglés con
+   armar.cjs: no editarlo a mano en la página).
 
+   Cada trazo es una lista de NODOS separados por «|». Un nodo es
+       x y ángulo            la pluma pasa por (x,y) con esa dirección
+       x y llega sale        punta: llega con un ángulo y sale con otro
+   Ángulos en grados: 0 = derecha, 90 = arriba, 180 = izquierda, 270 = abajo.
+   Entre nodo y nodo se tiende una curva de Bézier cuyas manijas miden 0,55 de
+   la proyección de la cuerda sobre la dirección del nodo: con nodos en los
+   extremos de un óvalo sale una elipse limpia, sin quiebres ni panzas.
+
+   Las letras se dibujan derechas; la inclinación la pone el skewX de la hoja.
+
+   Enganche: la minúscula no trae trazo de entrada. Lo tiende layout() desde la
+   salida de la letra anterior (o desde el renglón, si es la primera) hasta el
+   primer nodo. Así la unión depende de las dos letras, como al escribir:
+   después de b, o, v y w, que salen por arriba, la unión va por la línea media.
+       sal:'b'  sale por el renglón      sal:'a'  sale por la línea media
+       sin sal  no se engancha con la que sigue (varias mayúsculas)
+       pre:n    los n primeros nodos solo valen si se llega desde el renglón  */
+
+var GL = {
 /* ------------------------------- minúsculas ------------------------------- */
-a:{w:78,s:["M0,200 C8,200 18,152 40,100 C26,98 12,124 12,152 C12,182 28,202 44,198 C58,194 68,172 68,146 C68,122 56,104 40,100 C56,102 70,118 70,148 C70,176 70,190 72,200 C74,200 76,200 78,200"],
-   t:"Subí hasta la línea media, girá hacia la izquierda cerrando el óvalo y bajá por el costado derecho."},
-b:{w:100,s:["M0,200 C8,196 18,110 34,22 C40,80 44,150 46,192 C60,204 78,190 78,152 C78,124 62,106 46,116 C60,104 78,110 84,132 C90,158 92,188 96,198 C97,200 98,200 100,200"],
-   t:"Palo alto con bucle: subí, bajá al renglón y armá la panza hacia la derecha."},
-c:{w:78,s:["M0,200 C8,200 20,152 44,102 C30,96 14,120 14,150 C14,178 26,198 42,199 C50,200 60,200 66,200 C70,200 74,200 78,200"],
-   t:"Subí hasta la línea media y girá hacia la izquierda sin cerrar: la c queda abierta."},
-d:{w:80,s:["M0,200 C8,200 18,150 40,100 C26,98 12,124 12,152 C12,182 28,202 44,198 C58,194 66,172 66,146 C66,122 56,104 40,100 C50,88 58,58 62,24 C66,72 68,150 70,192 C72,198 76,200 80,200"],
-   t:"Primero el óvalo, después el palo alto. No arranques por el palo."},
-e:{w:82,s:["M0,200 C10,200 22,178 40,160 C56,146 54,104 34,104 C16,104 8,130 10,158 C12,184 30,206 50,196 C60,192 66,186 70,180 C74,188 77,200 82,200"],
-   t:"El bucle de la e va hacia arriba y hacia atrás: chiquito y redondo."},
-f:{w:64,s:["M0,200 C6,192 14,126 26,58 C32,28 48,26 42,56 C37,86 28,142 22,198 C20,230 18,250 16,264 C10,292 -8,286 -4,262 C0,238 24,212 46,200 C52,198 58,200 64,200"],
-   t:"Un bucle arriba y otro abajo, los dos cruzan sobre el mismo palo."},
-g:{w:92,s:["M0,200 C8,200 18,150 40,100 C26,98 12,124 12,152 C12,182 28,202 44,198 C58,194 66,172 66,146 C66,122 56,104 40,100 C54,102 68,118 68,148 C68,196 64,240 60,266 C56,292 38,290 40,266 C42,246 58,226 78,208 C82,204 86,200 92,200"],
-   t:"Óvalo cerrado y bucle bajo que vuelve hacia la derecha."},
-h:{w:96,s:["M0,200 C8,196 18,110 34,22 C40,80 44,150 46,192 C48,150 52,106 66,102 C80,98 86,150 88,190 C90,196 93,200 96,200"],
-   t:"Palo alto con bucle y un arco: el arco toca la línea media."},
-i:{w:52,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 50,200","M32,70 L40,56"],
-   t:"Una guirnalda y el punto arriba, alineado con el trazo."},
-j:{w:56,s:["M0,200 C8,200 16,148 34,100 C34,150 32,230 28,262 C24,290 6,288 8,264 C10,242 28,220 46,206 C50,204 53,201 56,200","M32,70 L40,56"],
-   t:"Guirnalda, bucle bajo y el punto arriba."},
-k:{w:102,s:["M0,200 C8,196 18,110 34,22 C40,80 44,150 46,192 C54,156 64,124 80,104 C92,96 96,116 84,124 C74,132 60,140 54,150 C66,156 78,176 88,192 C91,197 96,200 102,200"],
-   t:"Palo alto, un rulito a la altura media y la patita hacia el renglón."},
-l:{w:60,s:["M0,200 C6,192 14,120 28,44 C33,20 50,22 44,52 C38,84 28,146 26,188 C27,196 34,200 44,200 C50,200 55,200 60,200"],
-   t:"El bucle llega a la línea de arriba y cruza a la altura media."},
-m:{w:140,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 54,102 68,102 C82,102 88,200 94,200 C100,200 100,102 114,102 C128,102 134,200 140,200"],
-   t:"Tres montañitas del mismo alto y del mismo ancho."},
-n:{w:94,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 54,102 68,102 C82,102 88,200 94,200"],
-   t:"Dos montañitas: el arco arranca desde la línea media."},
-o:{w:100,s:["M0,200 C8,200 18,150 42,100 C28,98 12,124 12,152 C12,182 28,202 44,198 C60,194 68,172 68,146 C68,124 58,106 44,100 C60,92 78,104 84,132 C90,158 92,188 96,198 C97,200 98,200 100,200"],
-   t:"Óvalo cerrado y salí desde arriba para engancharte con la que sigue."},
-p:{w:88,s:["M0,200 C8,200 16,148 34,100 C34,160 32,232 28,274 C32,226 38,170 44,118 C56,104 72,112 72,142 C72,170 58,184 46,178 C58,186 66,194 76,198 C80,200 84,200 88,200"],
-   t:"Bajá al palo bajo, volvé por el mismo trazo y recién ahí armá la panza."},
-q:{w:98,s:["M0,200 C8,200 18,150 40,100 C26,98 12,124 12,152 C12,182 28,202 44,198 C58,194 66,172 66,146 C66,122 56,104 40,100 C54,102 68,118 68,148 C68,196 66,240 64,264 C68,286 86,286 90,262 C92,240 93,216 94,202 C95,200 96,200 98,200"],
-   t:"Óvalo cerrado y palo bajo con la colita hacia la derecha."},
-r:{w:84,s:["M0,200 C8,200 20,148 34,98 C42,88 56,88 58,100 C59,110 54,118 52,128 C56,152 62,178 68,192 C72,198 78,200 84,200"],
-   t:"Subí un poquito más alto que la línea media, hacé el hombrito y bajá."},
-s:{w:76,s:["M0,200 C10,200 24,148 44,100 C40,106 20,114 14,138 C10,158 14,178 22,192 C30,201 46,200 58,199 C66,199 70,200 76,200"],
-   t:"Subí, bajá cerrando con un piquito y salí por el renglón."},
-t:{w:62,s:["M0,200 C8,196 16,140 28,46 C32,100 36,160 44,190 C48,198 54,200 62,200","M4,102 C18,96 38,94 52,96"],
-   t:"Palo mediano (más bajo que la l) y la raya cruzada a la altura media."},
-u:{w:96,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 62,152 82,100 C84,142 90,200 96,200"],
-   t:"Dos guirnaldas iguales, sin puntas: abajo siempre redondeado."},
-v:{w:100,s:["M0,200 C8,200 16,148 34,100 C38,140 42,176 48,196 C54,170 60,130 74,102 C84,104 92,140 94,178 C96,190 98,200 100,200"],
-   t:"Subí, bajá en punta y volvé a subir hasta la línea media."},
-w:{w:140,s:["M0,200 C8,200 16,148 34,100 C38,140 42,176 48,196 C54,170 60,130 74,102 C78,140 82,176 88,196 C94,170 100,132 114,102 C124,104 132,140 134,178 C136,190 138,200 140,200"],
-   t:"Como dos v seguidas: puntas abajo y aire arriba."},
-x:{w:82,s:["M0,200 C8,200 18,150 38,100 C48,124 54,164 60,184 C64,193 70,200 82,200","M68,102 C56,132 42,166 30,192"],
-   t:"Primero la curva, después la cruz: de arriba hacia abajo."},
-y:{w:94,s:["M0,200 C8,200 16,148 34,100 C36,140 38,178 42,196 C48,178 56,140 70,100 C70,150 66,230 62,264 C58,290 40,288 42,264 C44,242 60,220 78,208 C82,204 88,200 94,200"],
-   t:"Guirnalda y bucle bajo: igual que la j pero sin punto."},
-z:{w:100,s:["M0,200 C8,200 16,148 30,100 C42,88 60,92 62,108 C60,130 46,166 36,192 C30,222 24,252 14,258 C2,264 2,246 16,242 C34,236 62,228 82,208 C88,203 94,200 100,200"],
-   t:"Hombrito arriba y bucle abajo del renglón."},
+a:{sal:'b', pre:1, m:["19 140 82|48 100 0|68 110 -50 130|48 100 180|18 152 270|44 200 0|72 150 90|72 102 90 270|72 172 270|86 200 0"]},
+b:{sal:'a', m:["46 72 78|36 24 180|25 60 266|25 170 270|42 200 0|62 150 90|60 106 100 -25|82 110 20"]},
+c:{sal:'b', pre:1, m:["19 140 83|46 100 0|64 112 -55 125|46 100 180|18 152 270|48 200 0"]},
+d:{sal:'b', pre:1, m:["19 140 82|48 100 0|68 110 -50 130|48 100 180|18 152 270|44 200 0|72 150 90|72 28 90 270|72 172 270|86 200 0"]},
+e:{sal:'b', m:["50 130 72|38 100 180|16 150 270|44 200 0"]},
+f:{sal:'b', m:["46 72 78|36 24 180|25 60 266|25 250 270|36 284 0|46 256 90|27 202 140 -10|50 200 0"]},
+g:{sal:'b', pre:1, m:["19 140 82|48 100 0|68 110 -50 130|48 100 180|18 152 270|44 200 0|72 150 90|72 102 90 270|72 244 270|52 284 180|36 262 90|76 204 32"]},
+h:{sal:'b', m:["46 72 78|36 24 180|25 60 266|24 200 270 90|24 150 90|44 101 0|62 135 270|62 172 270|76 200 0"]},
+i:{sal:'b', m:["36 100 68 270|36 172 270|50 200 0"], x:["36 62 270|37 74 270"]},
+j:{sal:'b', m:["36 100 68 270|36 244 270|18 284 180|4 262 90|42 204 32"], x:["36 62 270|37 74 270"]},
+k:{sal:'b', m:["46 72 78|36 24 180|25 60 266|24 200 270 90|24 150 90|42 104 0|54 124 270|40 146 185 315|54 184 290|68 200 0"]},
+l:{sal:'b', m:["46 72 78|36 24 180|25 60 266|25 170 270|40 200 0"]},
+m:{sal:'b', m:["30 101 0|46 135 270|46 200 270 90|46 150 90|64 101 0|82 135 270|82 200 270 90|82 150 90|100 101 0|118 135 270|118 172 270|132 200 0"]},
+n:{sal:'b', m:["30 101 0|46 135 270|46 200 270 90|46 150 90|64 101 0|82 135 270|82 172 270|96 200 0"]},
+o:{sal:'a', pre:1, m:["17 139 81|50 101 0 180|16 150 270|42 200 0|68 150 90|52 101 170 -20|84 108 20"]},
+p:{sal:'b', m:["30 100 68 270|30 284 270 90|30 135 90|48 101 0|66 150 270|48 200 180|31 190 150 -15|72 200 0"]},
+q:{sal:'b', pre:1, m:["19 140 82|48 100 0|68 110 -50 130|48 100 180|18 152 270|44 200 0|72 150 90|72 102 90 270|72 250 270|84 284 0|94 258 90|74 204 150 0|96 200 0"]},
+r:{sal:'b', m:["30 92 72 -50|42 104 0|54 102 10 270|55 172 270|69 200 0"]},
+s:{sal:'b', m:["40 94 66 -75|56 160 270|38 200 180|18 184 140 -40|58 200 0"]},
+t:{sal:'b', m:["36 48 74 270|36 172 270|50 200 0"], x:["16 100 0|58 100 0"]},
+u:{sal:'b', m:["36 100 68 270|36 172 270|52 200 0|84 100 68 270|84 172 270|98 200 0"]},
+v:{sal:'a', m:["22 101 0|36 150 272|52 200 0|72 140 90|72 102 90 -30|94 108 20"]},
+w:{sal:'a', m:["22 101 0|36 150 272|50 200 0|68 140 90|68 104 90 270|68 150 270|82 200 0|100 140 90|100 102 90 -30|122 108 20"]},
+x:{sal:'b', m:["20 101 0|36 126 -62|56 178 -62|72 200 0"], x:["68 102 240|22 198 240"]},
+y:{sal:'b', m:["36 100 68 270|36 172 270|52 200 0|84 100 68 270|84 244 270|66 284 180|52 262 90|90 204 32"]},
+z:{sal:'b', m:["22 102 0|50 128 270|28 178 205 -5|52 198 -55|56 240 270|38 284 180|24 262 90|64 204 32"]},
 
 /* ------------------------------- mayúsculas ------------------------------- */
-A:{w:104,s:["M60,44 C40,48 18,92 16,142 C14,182 32,206 54,198 C76,190 84,132 80,86 C77,50 68,40 60,44 C72,52 84,92 86,142 C88,178 90,192 94,200 C97,200 100,200 104,200"]},
-B:{w:98,s:["M46,30 C32,74 28,140 28,198","M46,30 C72,28 90,44 84,72 C79,95 56,106 34,104 C58,102 86,112 86,148 C86,180 54,200 26,196"]},
-C:{w:104,s:["M94,54 C82,32 56,22 38,40 C18,60 12,112 18,150 C24,186 48,206 72,194 C82,189 90,178 94,166"]},
-D:{w:100,s:["M34,28 C32,80 30,150 30,196 C62,202 90,174 92,116 C94,60 66,22 34,28"]},
-E:{w:102,s:["M88,44 C76,26 48,26 36,44 C24,62 36,86 58,92 C36,94 24,112 26,138 C28,168 44,190 62,194 C78,198 88,190 94,178"]},
-F:{w:100,s:["M36,30 C34,90 32,150 32,196","M36,30 C58,24 80,26 94,32","M32,110 C48,104 64,104 78,108"]},
-G:{w:100,s:["M92,52 C80,32 54,24 38,42 C20,62 14,112 20,150 C26,186 52,206 74,192 C86,184 90,164 84,150 C78,138 64,140 58,150"]},
-H:{w:106,s:["M28,26 C26,90 24,150 24,196","M92,26 C90,90 88,150 88,196","M24,112 C44,104 66,104 88,110"]},
-I:{w:92,s:["M40,58 C46,30 74,24 80,46 C85,64 66,86 50,78 C58,118 62,168 64,192 C66,199 74,200 80,194"]},
-J:{w:92,s:["M42,60 C48,32 76,26 82,48 C87,66 68,88 52,80 C56,120 52,220 46,258 C40,290 16,292 12,266 C11,254 18,246 26,250"]},
-K:{w:100,s:["M28,28 C26,90 24,150 24,196","M92,30 C74,58 50,90 34,108 C52,120 74,160 90,196"]},
-L:{w:106,s:["M40,64 C48,34 76,26 82,48 C87,66 66,88 50,80 C54,120 52,170 56,188 C60,200 82,198 96,186"]},
-M:{w:146,s:["M14,196 C16,140 22,72 34,34 C42,14 54,22 54,54 C54,96 52,152 52,196 C54,152 60,74 72,38 C80,18 92,26 92,58 C92,102 90,158 90,196 C92,152 98,78 110,42 C118,22 130,30 130,60 C130,104 126,160 126,192 C128,198 134,200 140,198"]},
-N:{w:112,s:["M18,196 C20,140 26,72 38,34 C46,14 58,22 58,54 C58,96 56,152 58,196 C60,150 66,76 80,40 C88,18 100,26 100,58 C100,102 96,158 96,192 C98,198 104,200 110,198"]},
-"Ñ":{w:112,s:["M18,196 C20,140 26,72 38,34 C46,14 58,22 58,54 C58,96 56,152 58,196 C60,150 66,76 80,40 C88,18 100,26 100,58 C100,102 96,158 96,192 C98,198 104,200 110,198","M48,4 C58,-8 68,12 80,0"]},
-O:{w:104,s:["M70,36 C46,32 22,66 18,116 C14,164 34,200 60,196 C86,192 100,150 96,104 C92,60 74,38 62,44 C70,50 84,56 92,50"]},
-P:{w:96,s:["M40,30 C36,90 32,150 30,196","M40,30 C68,26 88,42 84,72 C80,100 54,110 34,104"]},
-Q:{w:110,s:["M70,36 C46,32 22,66 18,116 C14,164 34,200 60,196 C86,192 100,150 96,104 C92,60 74,34 70,36","M74,148 C82,168 90,190 104,200"]},
-R:{w:98,s:["M40,30 C36,90 32,150 30,196","M40,30 C68,26 86,42 82,70 C78,96 54,106 34,102 C54,116 74,158 90,196"]},
-S:{w:100,s:["M88,52 C80,32 54,24 40,42 C28,58 36,84 60,96 C84,108 92,134 82,160 C72,186 44,196 26,180"]},
-T:{w:110,s:["M30,36 C56,28 84,28 104,34","M66,32 C62,90 58,150 58,190 C58,198 66,200 74,194"]},
-U:{w:108,s:["M24,32 C22,90 20,150 26,178 C34,200 62,204 74,182 C84,162 84,80 88,34 C88,90 86,150 88,192 C90,198 96,200 102,196"]},
-V:{w:104,s:["M22,32 C28,96 42,164 56,196 C70,158 84,88 92,34 C96,44 102,48 108,42"]},
-W:{w:138,s:["M20,32 C26,96 40,164 54,196 C64,150 72,86 78,34 C82,90 90,164 102,196 C112,150 120,86 126,34"]},
-X:{w:108,s:["M24,32 C40,90 62,158 82,196","M96,34 C78,90 50,156 28,194"]},
-Y:{w:110,s:["M22,32 C24,96 36,150 52,180 C60,196 74,196 82,178 C90,158 92,80 94,34 C92,90 86,180 78,232 C72,278 52,296 34,284 C26,278 26,266 34,262"]},
-Z:{w:112,s:["M28,40 C50,28 78,28 98,36 C76,80 54,140 36,192 C58,198 82,198 102,190"]},
+A:{may:1, sal:'b', m:["80 32 150|56 22 180|14 120 270|50 200 0|84 120 90|84 26 90 270|84 170 270|100 200 0"]},
+B:{may:1, w:104, m:["32 26 270|32 200 270 90|32 60 90|54 22 0|80 62 270|50 106 180 0|86 152 270|54 200 180|28 186 135"]},
+C:{may:1, sal:'b', m:["84 56 100|58 22 180|14 112 270|58 200 0"]},
+D:{may:1, w:108, m:["34 28 270|34 200 270 0|92 110 90|56 22 180|22 40 225"]},
+E:{may:1, sal:'b', m:["80 46 110|58 22 180|30 62 270|48 104 340 200|16 150 270|56 200 0"]},
+F:{may:1, w:104, m:["58 34 270|56 170 265|40 200 180|22 186 120","24 38 30|48 26 0|72 34 -10|96 24 40","36 112 0|78 112 0"]},
+G:{may:1, w:106, m:["84 56 100|58 22 180|14 112 270|52 200 0|86 150 90|86 122 90 180|60 122 180"]},
+H:{may:1, sal:'b', o:1, m:["28 26 270|28 200 270","86 26 270|86 172 270|100 200 0","28 112 0|86 112 0"]},
+I:{may:1, w:86, m:["24 46 70|44 24 0|62 40 270|60 170 268|44 200 180|24 184 110"]},
+J:{may:1, sal:'b', m:["24 46 70|44 24 0|62 40 270|62 244 270|42 284 180|26 262 90|68 204 32"]},
+K:{may:1, sal:'b', o:1, m:["30 26 270|30 200 270","88 26 230|36 112 200 -50|70 170 -55|92 200 0"]},
+L:{may:1, sal:'b', m:["72 50 110|56 22 180|40 60 262|36 170 266|22 198 180|12 188 90|24 178 0|56 194 -25|86 200 0"]},
+M:{may:1, sal:'b', m:["18 64 70|34 24 0|46 60 270|46 200 270 90|46 80 90|62 24 0|78 60 270|78 200 270 90|78 80 90|94 24 0|110 60 270|110 172 270|124 200 0"]},
+N:{may:1, sal:'b', m:["18 64 70|34 24 0|46 60 270|46 200 270 90|46 80 90|62 24 0|78 60 270|78 172 270|92 200 0"]},
+"Ñ":{may:1, sal:'b', m:["18 64 70|34 24 0|46 60 270|46 200 270 90|46 80 90|62 24 0|78 60 270|78 172 270|92 200 0","28 6 60|42 -4 -20|54 4 -20|68 -6 60"]},
+O:{may:1, w:108, m:["58 22 180|14 112 270|52 200 0|90 112 90|60 22 180|42 50 260"]},
+P:{may:1, w:98, m:["32 28 270|32 200 270 90|32 60 90|54 22 0|84 64 270|56 108 180|34 98 140"]},
+Q:{may:1, w:112, m:["58 22 180|14 112 270|52 200 0|90 112 90|60 22 180|42 50 260","52 160 -50|76 190 -35|102 198 10"]},
+R:{may:1, sal:'b', m:["32 28 270|32 200 270 90|32 60 90|54 22 0|82 62 270|56 106 180|40 104 180 -50|70 170 -55|90 200 0"]},
+S:{may:1, w:98, m:["80 50 100|58 22 180|32 60 270|56 108 -30|80 152 270|52 200 180|22 174 120"]},
+T:{may:1, w:104, m:["58 34 270|56 170 265|40 200 180|22 186 120","24 38 30|48 26 0|72 34 -10|96 24 40"]},
+U:{may:1, sal:'b', m:["20 40 60|30 26 0|38 44 270|38 150 270|62 200 0|86 150 90|86 26 90 270|86 172 270|100 200 0"]},
+V:{may:1, w:108, m:["18 40 60|30 26 0|42 60 280|58 200 285 72|88 40 78|98 26 30"]},
+W:{may:1, w:136, m:["18 40 60|30 26 0|42 60 280|54 200 285 75|74 40 78 282|92 200 285 75|116 40 78|126 26 30"]},
+X:{may:1, sal:'b', o:0, m:["20 44 60|34 26 0|50 70 -65|78 172 -62|96 200 0","92 28 240|26 198 240"]},
+Y:{may:1, sal:'b', m:["20 40 60|30 26 0|38 44 270|38 110 270|58 150 0|84 100 90|84 26 90 270|84 244 270|64 284 180|50 262 90|90 204 32"]},
+Z:{may:1, sal:'b', m:["22 42 50|40 26 0|86 30 0 235|26 196 235 -10|94 200 0"]},
 
 /* --------------------------- trazos preparatorios ------------------------- */
-"@palos":{w:180,s:["M0,200 L0,100","M46,200 L46,100","M92,200 L92,100","M138,200 L138,100"],
-   t:"Todos con la misma inclinación y la misma separación. Sin apretar el lápiz."},
-"@guirnaldas":{w:192,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 62,152 82,100 C84,142 90,200 96,200 C102,200 110,152 130,100 C132,142 138,200 144,200 C150,200 158,152 178,100 C180,142 186,200 192,200"],
-   t:"Sin puntas abajo: la curva apoya en el renglón y vuelve a subir."},
-"@arcos":{w:186,s:["M0,200 C8,200 16,148 34,100 C36,142 42,200 48,200 C54,200 54,102 68,102 C82,102 88,200 94,200 C100,200 100,102 114,102 C128,102 134,200 140,200 C146,200 146,102 160,102 C174,102 180,200 186,200"],
-   t:"Los arcos tocan la línea media y bajan al renglón, todos del mismo alto."},
-"@ondas":{w:190,s:["M0,180 C20,120 40,120 60,180 C80,240 100,240 120,180 C140,120 160,120 180,180"],
-   t:"Movimiento continuo, sin levantar la mano. Es puro pulso."}
+"@palos":{w:180, raw:["M0,200 L0,100","M46,200 L46,100","M92,200 L92,100","M138,200 L138,100"]},
+"@guirnaldas":{sal:'b', m:["36 100 68 270|36 172 270|52 200 0|84 100 68 270|84 172 270|100 200 0|132 100 68 270|132 172 270|148 200 0|180 100 68 270|180 172 270|196 200 0"]},
+"@arcos":{sal:'b', m:["30 101 0|46 135 270|46 200 270 90|46 150 90|64 101 0|82 135 270|82 200 270 90|82 150 90|100 101 0|118 135 270|118 200 270 90|118 150 90|136 101 0|154 135 270|154 172 270|168 200 0"]},
+"@ondas":{w:190, raw:["M0,180 C20,120 40,120 60,180 C80,240 100,240 120,180 C140,120 160,120 180,180"]}
 };
 
-/* Letras con tilde o acento: se arman con la letra base + un trazo arriba. */
-function conAcento(base, dx, tipo){
-  var g = GL[base]; if(!g) return null;
-  var cx = g.w/2 + (dx||0);
-  var extra = (tipo === 'tilde')
-    ? "M"+(cx-14)+",64 C"+(cx-5)+",50 "+(cx+5)+",76 "+(cx+15)+",60"
-    : "M"+(cx-9)+",70 L"+(cx+9)+",50";
-  return {w:g.w, s:g.s.concat([extra]), t:g.t};
+/* Letras con tilde o acento: la letra base y un trazo arriba. */
+(function(){
+  function con(base, extra, sinPunto){
+    var g = GL[base];
+    return {sal:g.sal, m:g.m, x:(sinPunto ? [] : (g.x||[])).concat([extra])};
+  }
+  GL["á"] = con('a', "42 74 50|60 54 50");
+  GL["é"] = con('e', "30 74 50|48 54 50");
+  GL["í"] = con('i', "30 76 50|48 56 50", true);
+  GL["ó"] = con('o', "34 74 50|52 54 50");
+  GL["ú"] = con('u', "52 74 50|70 54 50");
+  GL["ñ"] = con('n', "38 74 60|50 64 -20|62 72 -20|74 62 60");
+})();
+
+/* ------------------------------------------------------------ geometría --- */
+function nodos(str){
+  return str.split('|').map(function(t){
+    var v = t.trim().split(/\s+/).map(Number);
+    return {x:v[0], y:v[1], a:v[2], b:(v.length > 3 ? v[3] : v[2])};
+  });
 }
-GL["á"]=conAcento('a'); GL["é"]=conAcento('e'); GL["í"]=conAcento('i',0);
-GL["ó"]=conAcento('o',-14); GL["ú"]=conAcento('u');
-GL["ñ"]=conAcento('n','', 'tilde');
-GL["ñ"].t = "La n con la tilde: una onda apoyada arriba, sin tocar la letra.";
-/* la í y la j ya traen punto: en las acentuadas el punto se reemplaza */
-GL["í"] = {w:GL.i.w, s:[GL.i.s[0], "M28,70 L46,50"], t:GL.i.t};
+function correr(ns, dx){
+  return ns.map(function(n){ return {x:n.x+dx, y:n.y, a:n.a, b:n.b}; });
+}
+/* Lista de nodos -> atributo d de un path. */
+function camino(ns){
+  function u(a){ a = a*Math.PI/180; return [Math.cos(a), -Math.sin(a)]; }
+  function r(v){ return Math.round(v*10)/10; }
+  var d = 'M'+r(ns[0].x)+','+r(ns[0].y);
+  for(var i=1;i<ns.length;i++){
+    var p = ns[i-1], q = ns[i], dx = q.x-p.x, dy = q.y-p.y, L = Math.hypot(dx,dy);
+    var s = u(p.b), e = u(q.a);
+    var h1 = Math.max(.55*Math.abs(dx*s[0]+dy*s[1]), .2*L);
+    var h2 = Math.max(.55*Math.abs(dx*e[0]+dy*e[1]), .2*L);
+    d += ' C'+r(p.x+s[0]*h1)+','+r(p.y+s[1]*h1)+' '+r(q.x-e[0]*h2)+','+r(q.y-e[1]*h2)+' '+r(q.x)+','+r(q.y);
+  }
+  return d;
+}
+
+/* -------------------------------------------------------------- layout --- */
+/* Arma la lista de trazos de un ítem, ya ubicados en la pauta. Cada letra es
+   un trazo (unión con la anterior + cuerpo); los puntos, las rayas y las
+   tildes se dejan para el final de la palabra, como se escribe a mano. */
+function layout(item){
+  var seq = seqOf(item), x = 0, out = [], fin = [], ult = null;
+  function cola(){                       // remate de la última letra de la palabra
+    if(ult && ult.g.sal === 'b'){
+      var n = ult.ns[ult.ns.length-1];
+      ult.ns.push({x:n.x+24, y:n.y-42, a:56, b:56});
+      x = Math.max(x, n.x+26);
+    }
+    ult = null;
+  }
+  function cerrar(){ cola(); out = out.concat(fin); fin = []; }
+
+  for(var i=0;i<seq.length;i++){
+    var ch = seq[i], g = GL[ch] || GL[ch.toLowerCase()];
+    if(ch === ' ' || !g){ cerrar(); x += 54; continue; }
+    if(g.raw){
+      cerrar();
+      g.raw.forEach(function(d){ out.push({d:d, x:x}); });
+      x += g.w; continue;
+    }
+    var ms = g.m.map(function(s){ return correr(nodos(s), x); });
+    if(g.may){ cola(); }
+    else {
+      var desde = ult ? ult.ns[ult.ns.length-1] : {x:x, y:200, a:14, b:14};
+      if(ult && ult.g.sal === 'a' && g.pre) ms[0].splice(0, g.pre);   // desde arriba se entra directo
+      ms[0].unshift({x:desde.x, y:desde.y, a:desde.b, b:desde.b});
+    }
+    var propios = ms.map(function(ns){ return {ns:ns, x:0}; });
+    out = out.concat(propios);
+    (g.x||[]).forEach(function(s){ fin.push({ns:correr(nodos(s), x), x:0}); });
+    if(g.sal){
+      var io = (g.o === undefined) ? ms.length-1 : g.o;
+      ult = {g:g, ns:ms[io]};
+      /* la que sigue arranca un poco más allá, para que la unión tenga aire */
+      x = ms[io][ms[io].length-1].x + (g.sal === 'b' ? 12 : 0);
+    } else {
+      ult = null; x += g.w;
+    }
+  }
+  cerrar();
+  out.forEach(function(s){ if(s.ns){ s.d = camino(s.ns); delete s.ns; } });
+  return {w:x, strokes:out};
+}
+/* <</trazos>> */
+
+/* <<consejos>> */
+var TIPS = {
+  "a":"Subí hasta la línea media, girá hacia la izquierda cerrando el óvalo y bajá por el costado derecho.",
+  "b":"Palo alto con bucle: subí, bajá al renglón y armá la panza hacia la derecha.",
+  "c":"Subí hasta la línea media y girá hacia la izquierda sin cerrar: la c queda abierta.",
+  "d":"Primero el óvalo, después el palo alto. No arranques por el palo.",
+  "e":"El bucle de la e va hacia arriba y hacia atrás: chiquito y redondo.",
+  "f":"Un bucle arriba y otro abajo, los dos cruzan sobre el mismo palo.",
+  "g":"Óvalo cerrado y bucle bajo que vuelve hacia la derecha.",
+  "h":"Palo alto con bucle y un arco: el arco toca la línea media.",
+  "i":"Una guirnalda y el punto arriba, alineado con el trazo.",
+  "j":"Guirnalda, bucle bajo y el punto arriba.",
+  "k":"Palo alto, un rulito a la altura media y la patita hacia el renglón.",
+  "l":"El bucle llega a la línea de arriba y cruza a la altura media.",
+  "m":"Tres montañitas del mismo alto y del mismo ancho.",
+  "n":"Dos montañitas: el arco arranca desde la línea media.",
+  "o":"Óvalo cerrado y salí desde arriba para engancharte con la que sigue.",
+  "p":"Bajá al palo bajo, volvé por el mismo trazo y recién ahí armá la panza.",
+  "q":"Óvalo cerrado y palo bajo con la colita hacia la derecha.",
+  "r":"Subí un poquito más alto que la línea media, hacé el hombrito y bajá.",
+  "s":"Subí, bajá cerrando con un piquito y salí por el renglón.",
+  "t":"Palo mediano (más bajo que la l) y la raya cruzada a la altura media.",
+  "u":"Dos guirnaldas iguales, sin puntas: abajo siempre redondeado.",
+  "v":"Entrá por arriba, bajá con una curva y volvé a subir hasta la línea media: sale por arriba.",
+  "w":"Como dos v seguidas: dos curvas abajo y aire arriba.",
+  "x":"Primero la curva, después la cruz: de arriba hacia abajo.",
+  "y":"Guirnalda y bucle bajo: igual que la j pero sin punto.",
+  "z":"Hombrito arriba y bucle abajo del renglón.",
+  "@palos":"Todos con la misma inclinación y la misma separación. Sin apretar el lápiz.",
+  "@guirnaldas":"Sin puntas abajo: la curva apoya en el renglón y vuelve a subir.",
+  "@arcos":"Los arcos tocan la línea media y bajan al renglón, todos del mismo alto.",
+  "@ondas":"Movimiento continuo, sin levantar la mano. Es puro pulso.",
+  "ñ":"La n con la tilde: una onda apoyada arriba, sin tocar la letra."
+};
+Object.keys(TIPS).forEach(function(k){ if(GL[k]) GL[k].t = TIPS[k]; });
+[["á","a"],["é","e"],["í","i"],["ó","o"],["ú","u"]].forEach(function(p){ GL[p[0]].t = GL[p[1]].t; });
+/* <</consejos>> */
 
 var TIP_MAY = "Las mayúsculas arrancan arriba y no siempre se enganchan con la letra que sigue. Seguí el orden de los números.";
 
@@ -540,22 +641,6 @@ function labelOf(item){
   if(item.lb) return item.lb;
   if(item.k.charAt(0)==='@') return item.k.slice(1);
   return item.k;
-}
-
-/* -------------------------------------------------------------- layout --- */
-/* Arma la lista de trazos de un ítem, ya ubicados en la pauta. */
-function layout(item){
-  var seq = seqOf(item), x = 0, out = [], w = 0;
-  for(var i=0;i<seq.length;i++){
-    var ch = seq[i];
-    if(ch === ' '){ x += 54; continue; }
-    var g = GL[ch] || GL[ch.toLowerCase()];
-    if(!g){ x += 54; continue; }
-    for(var j=0;j<g.s.length;j++) out.push({d:g.s[j], x:x});
-    x += g.w;
-  }
-  w = x;
-  return {w:w, strokes:out};
 }
 
 /* Marca el SVG de una hoja con pauta + los trazos del ítem. */
@@ -771,19 +856,38 @@ function addPt(p){
 }
 
 /* ------------------------------------------------------------ puntuación --- */
+/* Un trazo más corto que la tolerancia es un punto. */
+function esPunto(i){
+  var sm = S.samples[i] || [], L = 0;
+  for(var k=1;k<sm.length;k++) L += Math.hypot(sm[k].x-sm[k-1].x, sm[k].y-sm[k-1].y);
+  return sm.length > 1 && L < tol();
+}
 /* Puntúa un conjunto de puntos del alumno contra el trazo i del modelo.
    cobertura = cuánto del modelo recorrió · precisión = cuánto se mantuvo encima. */
 function scoreOne(i, pts){
   var sm = S.samples[i] || [];
-  if(!sm.length || pts.length < 4) return null;
+  var punto = esPunto(i);              // el punto de la i: alcanza con tocarlo
+  if(!sm.length || pts.length < (punto ? 1 : 4)) return null;
   var lim = tol()*1.35, n = sm.length;
   var seen = new Uint8Array(n), inside = 0, maxi = 0, back = 0;
+  /* Muchos trazos vuelven sobre sí mismos (el palo de la p, el arco de la n,
+     el óvalo de la a): el punto del alumno se busca primero un poco más
+     adelante de donde venía, y se toma la primera muestra que le queda cerca.
+     Solo si ahí no hay nada se mira el trazo entero. */
+  var cur = 0, W = Math.max(6, Math.round(n*0.08));
+  var cerca = Math.min(3, 0.6*Math.hypot(sm[1].x-sm[0].x, sm[1].y-sm[0].y));
   for(var k=0;k<pts.length;k++){
-    var nr = nearest(pts[k], sm);
+    var a = Math.max(0, cur-2), b = Math.min(n-1, cur+W), nr = {d:1e12, i:a};
+    for(var j=a;j<=b;j++){
+      var d = Math.hypot(sm[j].x-pts[k].x, sm[j].y-pts[k].y);
+      if(d < nr.d - cerca){ nr = {d:d, i:j}; }
+    }
+    if(nr.d > lim){ var todo = nearest(pts[k], sm); if(todo.d < nr.d) nr = todo; }
     if(nr.i > maxi) maxi = nr.i;
     else if(nr.i < maxi - n*0.18) back++;
     if(nr.d <= lim){
       inside++;
+      if(nr.i > cur) cur = nr.i;
       for(var q=Math.max(0,nr.i-1); q<=Math.min(n-1,nr.i+1); q++) seen[q] = 1;
     }
   }
@@ -791,6 +895,7 @@ function scoreOne(i, pts){
   cov /= n;
   var prec = inside / pts.length;
   var wrongWay = back > pts.length*0.22;
+  if(punto){ cov = inside ? 1 : 0; wrongWay = false; }
   var d0 = nearest(pts[0], sm).d;
   var score = (cov*0.65 + prec*0.35) * (wrongWay ? 0.7 : 1);
   var msg = '', cls = 'good';
@@ -804,7 +909,7 @@ function scoreOne(i, pts){
 }
 
 function endStroke(){
-  if(S.pts.length < 3 || S.strokeIx >= S.paths.length){ S.pts = []; paintUser(); return; }
+  if(S.strokeIx >= S.paths.length || S.pts.length < (esPunto(S.strokeIx) ? 1 : 3)){ S.pts = []; paintUser(); return; }
 
   /* Reparte los puntos entre los trazos que faltan: así una palabra escrita
      de una sola tirada completa varias letras de una vez. */
