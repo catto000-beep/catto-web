@@ -13,7 +13,10 @@
      </section>
 
    Sin data-libro-titulo toma el primer <h2> del bloque. Con
-   data-libro-numerar="no" no numera los subtítulos.
+   data-libro-numerar="no" no numera los subtítulos. Con
+   data-libro-desarmar, el libro saca el contenido de las tarjetas
+   (<article>) y reparte las listas de a un renglón; el texto corrido
+   conserva las tarjetas (así se usa en los Mapas de Temas).
 
    Los estilos van en assets/css/libro.css.
    ══════════════════════════════════════════════════════════════════ */
@@ -101,6 +104,25 @@ function armarLibro(origen){
     bloques.shift();
   }
   bloques.forEach(function(b){ fuente.appendChild(b.cloneNode(true)); });
+  /* Con data-libro-desarmar, la copia del libro saca el contenido de las
+     tarjetas (<article>) y parte cada lista en listas de un renglón. Así
+     se reparte de a un renglón y no quedan páginas a medio llenar. El
+     original no se toca: el texto corrido conserva sus tarjetas. */
+  if(origen.hasAttribute("data-libro-desarmar")){
+    Array.prototype.slice.call(fuente.querySelectorAll("article")).forEach(function(a){
+      while(a.firstChild) a.parentNode.insertBefore(a.firstChild, a);
+      a.parentNode.removeChild(a);
+    });
+    Array.prototype.slice.call(fuente.children).forEach(function(el){
+      if(el.tagName !== "UL" || el.children.length < 2) return;
+      Array.prototype.slice.call(el.children).forEach(function(li){
+        var u = el.cloneNode(false);
+        u.appendChild(li);
+        el.parentNode.insertBefore(u, el);
+      });
+      el.parentNode.removeChild(el);
+    });
+  }
 
   if(titulo){
     var portada = nodo("div", "lb-titulo");
