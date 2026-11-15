@@ -24,7 +24,9 @@
 "use strict";
 
 var DURA   = 900;     /* lo que tarda una vuelta */
-var ASOMO  = 0;       /* a qué distancia del borde se insinúa sola la hoja; 0 = no se
+var BAJO   = 0.5;     /* desde qué altura de la página una sección que no entra entera
+                         pasa completa a la siguiente (0,5 = en la mitad de abajo) */
+var ASOMO  = 0;      /* a qué distancia del borde se insinúa sola la hoja; 0 = no se
                          insinúa: la hoja espera a que la agarren y la arrastren */
 
 function nodo(tag, clase){
@@ -295,7 +297,29 @@ function armarLibro(origen){
       colgados.forEach(function(c){ hueco.appendChild(c); actual.push(c); });
     }
 
-    Array.prototype.slice.call(fuente.children).forEach(function(b){
+    /* A qué altura de la página empezaría el título si se pone ahora,
+       con su margen de arriba incluido. */
+    function arrancaria(titulo){
+      var t = hueco.appendChild(titulo.cloneNode(true));
+      var y = t.getBoundingClientRect().top - hueco.getBoundingClientRect().top;
+      hueco.removeChild(t);
+      return y;
+    }
+
+    var hijos = Array.prototype.slice.call(fuente.children);
+    hijos.forEach(function(b, i){
+      /* Una sección que empieza en la parte baja de la página y no entra
+         entera en lo que queda pasa completa a la siguiente: abajo queda
+         el espacio en blanco y la sección arranca arriba. Si empieza más
+         arriba, se parte como siempre, para no dejar media página vacía. */
+      if(esTitulo(b) && actual.length && arrancaria(b) > alto * BAJO){
+        var seccion = [b];
+        for(var j = i + 1; j < hijos.length && !esTitulo(hijos[j]); j++) seccion.push(hijos[j]);
+        var prueba = seccion.map(function(x){ return hueco.appendChild(x.cloneNode(true)); });
+        var entra = hueco.scrollHeight <= alto;
+        prueba.forEach(function(x){ hueco.removeChild(x); });
+        if(!entra) cerrar(true);
+      }
       var pendiente = b.cloneNode(true), giros = 0;
       while(pendiente && giros++ < 40){
         hueco.appendChild(pendiente);
@@ -325,7 +349,18 @@ function armarLibro(origen){
            el bloque se parte acá mismo, aunque entrara entero en la
            siguiente. */
         var soloTitulos = actual.length > 0 && actual.every(encabeza);
-        if(actual.length && !soloTitulos){ cerrar(true); continue; }
+        if(actual.length && !soloTitulos){
+          /* Viuda: si de la sección queda un solo renglón de lista para la
+             página siguiente, se lleva también el anterior, para que la
+             página no arranque con un renglón suelto. */
+          var viuda = null, quedan = 0;
+          for(var q = i; q < hijos.length && (q === i || !esTitulo(hijos[q])); q++) quedan++;
+          if(quedan === 1 && pendiente.tagName === "UL" && actual.length > 1 &&
+             actual[actual.length - 1].tagName === "UL") viuda = actual.pop();
+          cerrar(true);
+          if(viuda){ hueco.appendChild(viuda); actual.push(viuda); }
+          continue;
+        }
 
         /* Si tiene renglones propios —una lista, un recuadro— se parte
            por ahí. Y si ni el primer renglón entra, se lo parte por
