@@ -159,13 +159,13 @@ h2{font-size:22px;margin:4px 0 6px}
 <section class="pantalla on" id="pInicio">
   <h1>Camino a la <em>matrícula</em></h1>
   <p class="bajada">Preguntas y flechas, intercaladas, con lo que entra en el examen de Instalador Electricista Habilitado,
-    Categoría III: la ley, el certificado, los circuitos, los conductores, la puesta a tierra y los ensayos.
+    Categoría III: la ley, el certificado, los circuitos, los conductores, la puesta a tierra, los ensayos, la seguridad en el trabajo y el proyecto.
     Cada respuesta trae su explicación y de dónde sale.</p>
   <div class="modos">
     <button class="modo fuerte" type="button" id="irSimulacro"><span class="ic">🎓</span><b>Simulacro de examen</b>
-      <span>Cinco bloques de cuatro preguntas y cuatro parejas, con todos los temas mezclados. Al final, tu nota y lo que conviene repasar.</span></button>
+      <span>Seis bloques de cuatro preguntas y cuatro parejas, con todos los temas mezclados. Al final, tu nota y lo que conviene repasar.</span></button>
     <button class="modo" type="button" id="irTemas"><span class="ic">📚</span><b>Practicar un tema</b>
-      <span>Elegí uno de los cinco temas y jugá tres bloques solo de ese. Ideal para lo que todavía no dominás.</span></button>
+      <span>Elegí uno de los seis temas y jugá tres bloques solo de ese. Ideal para lo que todavía no dominás.</span></button>
   </div>
   <p class="nota"><span class="rec" id="rec"></span></p>
   <div class="caja" id="cajaTemas">
@@ -178,7 +178,14 @@ h2{font-size:22px;margin:4px 0 6px}
     Las preguntas salen del <i>Manual del Instalador Electricista, Categoría III</i> del ERSeP (módulo IV, desde la página 282),
     de la Ley 10.281 y de las resoluciones del ERSeP, explicadas en
     <a href="/publicaciones/mapa-electronica/temas/instalador-habilitado">el Instalador Electricista Habilitado</a> y
-    <a href="/publicaciones/mapa-electronica/temas/certificado-instalacion-apta">el Certificado de Instalación Eléctrica Apta</a>.
+    <a href="/publicaciones/mapa-electronica/temas/certificado-instalacion-apta">el Certificado de Instalación Eléctrica Apta</a>,
+    y de las páginas del sitio sobre <a href="/publicaciones/mapa-electronica/temas/reglamentacion-aea">la reglamentación</a>,
+    <a href="/publicaciones/mapa-electronica/temas/instalaciones-vivienda">el proyecto eléctrico de vivienda</a>,
+    <a href="/publicaciones/mapa-electronica/temas/materiales-electricos">los materiales</a>,
+    <a href="/publicaciones/mapa-electronica/temas/proteccion-electrica">la protección eléctrica</a>,
+    <a href="/publicaciones/mapa-electronica/temas/proyecto-instalacion">el proyecto de una instalación</a>,
+    <a href="/publicaciones/mapa-electronica/temas/dibujo-tecnico-cad">el dibujo técnico</a> y
+    <a href="/publicaciones/mapa-electronica/temas/higiene-seguridad">la higiene y seguridad</a>.
     Para aprobar el simulacro hace falta el 70 %; es un criterio del juego.</p>
 </section>
 
@@ -226,11 +233,11 @@ h2{font-size:22px;margin:4px 0 6px}
 </section>
 </main>
 
-<script src="/assets/js/juego-matricula-datos.js?v=1"></script>
+<script src="/assets/js/juego-matricula-datos.js?v=2"></script>
 <script>
 (function(){
 'use strict';
-var D=MATRICULA, T=D.temas, ORDEN=['ley','cert','circ','cond','seg'];
+var D=MATRICULA, T=D.temas, ORDEN=['ley','cert','circ','cond','seg','proy'];
 var COLORES=['#8cc4f0','#d2a8ff','#f0b86e','#7ee0c3','#ff9bb0','#c9d46a'], LETRAS='ABCD';
 var $=function(id){return document.getElementById(id);};
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -266,7 +273,7 @@ $('irTemas').onclick=function(){$('temasElegir').innerHTML=ORDEN.map(function(k)
 $('temasElegir').onclick=function(e){var b=e.target.closest('[data-t]');if(b)empezar(b.getAttribute('data-t'));};
 
 /* ---------- armado de la partida ----------
-   Simulacro: 5 bloques, cada uno 4 preguntas (todos los temas) y 4 parejas de temas distintos.
+   Simulacro: 6 bloques, cada uno 4 preguntas (todos los temas) y 4 parejas de temas distintos.
    Tema: 3 bloques del tema elegido. Primero salen las preguntas que todavía no se dominan. */
 function elegirPreguntas(lista,n){
   var dom=dominadas(), nuevas=mezclar(lista.filter(function(p){return !dom[p.id];})), viejas=mezclar(lista.filter(function(p){return dom[p.id];}));
@@ -283,7 +290,7 @@ function armar(tema){
     var todas=[]; for(i=0;i<4;i++)ORDEN.forEach(function(k){todas.push(porT[k][i]);});
     todas=mezclar(todas);
     var reserva={}; ORDEN.forEach(function(k){reserva[k]=mezclar(parejasDe(k));});
-    for(i=0;i<5;i++){
+    for(i=0;i<6;i++){
       var ts=mezclar(ORDEN).slice(0,4);
       bloques.push({qs:todas.slice(i*4,i*4+4),ps:ts.map(function(k){return reserva[k].pop();})});
     }
@@ -324,7 +331,7 @@ function siguiente(){
 /* ---------- pregunta ---------- */
 var Q=null;
 function pregunta(q){
-  var ops=mezclar(q.o.map(function(t,i){return {t:t,ok:i===0};}));
+  var ops=mezclar([{t:q.o[0],ok:true}].concat(mezclar(q.o.slice(1)).slice(0,3).map(function(t){return {t:t,ok:false};})));
   Q={q:q,ops:ops,listo:false};
   $('qTema').textContent=T[q.t].ic+' '+T[q.t].n;
   $('qTexto').textContent=q.q;
@@ -342,7 +349,7 @@ function responder(i){
   anotar(q.t,o.ok);
   if(o.ok)marcarDom(q.id); else P.falladas.push(q);
   $('qExplica').innerHTML=(o.ok?'<b class="si">¡Bien!</b> ':'<b class="no">No era esa.</b> La correcta: <b>'+esc(q.o[0])+'</b>. ')+esc(q.e)+
-    '<span class="fuente">Fuente: '+esc(q.f)+'</span>';
+    '<span class="fuente">Fuente: '+esc(q.f)+((q.u||T[q.t].u)?' · <a href="'+(q.u||T[q.t].u)+'">repasar el tema</a>':'')+'</span>';
   $('qExplica').hidden=false;
   $('qSig').hidden=false; $('qSig').textContent=P.i+1>=P.pasos.length?'Ver resultado':'Siguiente';
   $('jPts').textContent=P.pts+' de '+P.total;
@@ -480,7 +487,7 @@ function fin(){
     return '<div><span>'+T[k].ic+' '+T[k].n+'</span><span class="barra"><i style="width:'+p+'%;background:'+(p>=70?'var(--ok)':'var(--bad)')+'"></i></span><span class="n">'+x.b+'/'+x.n+'</span></div>';
   }).join('');
   var items=P.falladas.map(function(q){
-    var u=T[q.t].u;
+    var u=q.u||T[q.t].u;
     return '<li><div class="q">'+esc(q.q)+'</div><div class="r">✓ '+esc(q.o[0])+'</div><div>'+esc(q.e)+'</div>'+
       '<div class="fuente">'+esc(q.f)+(u?' · <a href="'+u+'">repasar el tema</a>':'')+'</div></li>';
   }).concat(P.parejasMal.map(function(p){
