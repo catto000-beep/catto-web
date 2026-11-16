@@ -245,10 +245,10 @@ var MATERIAS = [
 
 /* ---------- 4° AÑO ---------- */
 {id:"ea2", n:"Electroacústica II", area:"elec", anio:4, h:90, f:"U", ejes:[
-  {t:"Sistemas de altavoces", d:"Arreglos de altavoces y directividad. Bocinas y line arrays.", tm:[["transd",4],["vivo",3]]},
-  {t:"Divisores de frecuencia", d:"Crossovers activos y pasivos de distintos órdenes. Alineación temporal entre vías.", tm:[["transd",4],["proc",3]]},
+  {t:"Sistemas de altavoces", u:"sistemas-altavoces", d:"Arreglos de altavoces y directividad. Bocinas y line arrays.", tm:[["transd",4],["vivo",3]]},
+  {t:"Divisores de frecuencia", u:"divisores-frecuencia", d:"Crossovers activos y pasivos de distintos órdenes. Alineación temporal entre vías.", tm:[["transd",4],["proc",3]]},
   {t:"Amplificadores de potencia", u:"/publicaciones/mapa-ingenieria/temas/amplificadores-potencia-ing", d:"Clases A, AB y D. Potencia, rendimiento y distorsión.", tm:[["circ",4],["transd",3]]},
-  {t:"Medición de transductores", d:"Respuesta en frecuencia, impedancia y directividad de micrófonos y altavoces.", tm:[["medic",3],["transd",4]]}
+  {t:"Medición de transductores", u:"medicion-transductores", d:"Respuesta en frecuencia, impedancia y directividad de micrófonos y altavoces.", tm:[["medic",3],["transd",4]]}
 ]},
 {id:"com", n:"Comunicaciones", area:"senal", anio:4, h:60, f:"U", ejes:[
   {t:"Modulación analógica", u:"sistemas-modulacion", d:"AM y FM. Ancho de banda y relación señal-ruido. La radio de transmisión.", tm:[["senal",3]]},
@@ -256,10 +256,10 @@ var MATERIAS = [
   {t:"Transmisión de audio", d:"Codificación de audio para transmisión. Audio en red y por streaming.", tm:[["digital",3],["medios",3]]}
 ]},
 {id:"ima", n:"Instrumentos y Mediciones Acústicas", area:"acus", anio:4, h:90, f:"U", ejes:[
-  {t:"Cadena de medición", d:"Micrófono de medición, preamplificador, calibrador y analizador. Incertidumbre.", tm:[["medic",3]]},
+  {t:"Cadena de medición", u:"cadena-medicion", d:"Micrófono de medición, preamplificador, calibrador y analizador. Incertidumbre.", tm:[["medic",3]]},
   {t:"Análisis por bandas", u:"/publicaciones/mapa-ingenieria/temas/analizador-espectro", d:"Filtros de octava y de tercio de octava. Analizadores en tiempo real.", tm:[["medic",3],["digital",3]]},
-  {t:"Medición de respuesta impulsiva", d:"MLS y barrido senoidal. Parámetros de sala a partir de la respuesta impulsiva.", tm:[["medic",3],["recinto",3]]},
-  {t:"Normas de medición", d:"Normas ISO e IRAM para medir niveles, reverberación y aislamiento.", tm:[["medic",3],["ruido",2]]}
+  {t:"Medición de respuesta impulsiva", u:"medicion-respuesta-impulsiva", d:"MLS y barrido senoidal. Parámetros de sala a partir de la respuesta impulsiva.", tm:[["medic",3],["recinto",3]]},
+  {t:"Normas de medición", u:"normas-medicion-acustica", d:"Normas ISO e IRAM para medir niveles, reverberación y aislamiento.", tm:[["medic",3],["ruido",2]]}
 ]},
 {id:"mpp", n:"Masterización y Posproducción", area:"estudio", anio:4, h:90, f:"UC", ejes:[
   {t:"El proceso de masterización", d:"Qué es la masterización. Herramientas de software y combinación de equipos analógicos y digitales.", tm:[["mezcla",3]]},
@@ -280,10 +280,10 @@ var MATERIAS = [
   {t:"Programación de efectos", d:"Implementar un ecualizador, un compresor y un delay en código.", tm:[["digital",4],["proc",3]]}
 ]},
 {id:"aar", n:"Acústica Arquitectónica", area:"acus", anio:4, h:60, f:"C", ejes:[
-  {t:"Absorción", d:"Coeficiente de absorción. Absorción de los materiales usados en la construcción de estudios.", tm:[["recinto",3]]},
-  {t:"Resonadores", d:"Resonador de Helmholtz, perforados, de ranuras y de listones. Paneles vibrantes. Análisis y cálculo.", tm:[["recinto",3]]},
-  {t:"Difusores", d:"Difusores QRD, PRD y MLS, poli-cilíndricos y piramidales.", tm:[["recinto",3]]},
-  {t:"Diseño de un estudio", d:"Diseño de salas de grabación y de control. Reflectores y extensión del ancho de banda de los tratamientos.", tm:[["recinto",4],["grab",3]]}
+  {t:"Absorción", u:"absorcion-sonora", d:"Coeficiente de absorción. Absorción de los materiales usados en la construcción de estudios.", tm:[["recinto",3]]},
+  {t:"Resonadores", u:"resonadores-acusticos", d:"Resonador de Helmholtz, perforados, de ranuras y de listones. Paneles vibrantes. Análisis y cálculo.", tm:[["recinto",3]]},
+  {t:"Difusores", u:"difusores-acusticos", d:"Difusores QRD, PRD y MLS, poli-cilíndricos y piramidales.", tm:[["recinto",3]]},
+  {t:"Diseño de un estudio", u:"diseno-estudio", d:"Diseño de salas de grabación y de control. Reflectores y extensión del ancho de banda de los tratamientos.", tm:[["recinto",4],["grab",3]]}
 ]},
 {id:"svj", n:"Sonido para Videojuegos", area:"medios", anio:4, h:60, f:"C", ejes:[
   {t:"Diseño de sonido para juegos", d:"Efectos, atmósfera y material sonoro no musical. Concepto artístico y guion. La experiencia del jugador.", tm:[["medios",3]]},
