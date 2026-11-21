@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio interactivo: del sonido al motor del juego · Sonido para Videojuegos · Catto</title>
+<meta name="description" content="Implementación del audio de un videojuego: eventos, parámetros y estados; middleware frente a audio nativo del motor; atenuación con la distancia (curvas inversa, lineal y logarítmica), paneo y HRTF, oclusión y obstrucción, reverb por zonas, prioridad y número de voces, memoria y compresión, mezcla dinámica, y un recorrido completo desde un paso hasta una reverb integrada. Eje de Sonido para Videojuegos, 4.º año de la carrera de Sonido.">
+<link rel="canonical" href="https://catto.ar/publicaciones/mapa-electronica/temas/audio-interactivo">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href="/publicaciones/mapa-electronica/temas/tema.css?v=5">
+<link rel="stylesheet" href="/assets/css/papel.css?v=8">
+<script src="/assets/js/idioma.js?v=1" defer></script>
+</head>
+<body>
+<div class="starfield" aria-hidden="true"
+     data-mw data-ax="45" data-ay="-8" data-bx="85" data-by="82" data-core="0.55" data-field="150" data-band="150">
+  <div class="mw"></div><div class="mw-core"></div>
+</div>
+
+<header class="tbar">
+  <div class="in">
+    <a class="brand" href="/"><span class="logo">🐷</span>Catto</a>
+    <span class="sep">/</span>
+    <a class="up" href="/publicaciones/mapa-sonido">Mapa de Temas de Sonido · Sonido para los medios</a>
+    <span class="anio">4° año</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc"><div class="tl">En esta página</div><ol></ol></nav>
+
+  <main class="doc">
+    <div class="crumb crumb-so"><span class="ca so">Sonido</span><span class="mt">Sonido para Videojuegos</span> (4°) · Audio interactivo</div>
+    <h1>Audio interactivo: del sonido al motor del juego</h1>
+    <p class="lead">Un sonido de película se mezcla una vez; un sonido de juego se decide mil veces por segundo. El jugador camina, gira, abre una puerta, y el motor tiene que resolver al instante cuál sonido suena,
+    desde qué lado, cuánto se atenúa, si hay una pared en el medio y cuánta reverberación corresponde a la sala. Ese trabajo se llama implementación: es lo que convierte los sonidos diseñados y grabados en un sistema que reacciona al juego.
+    Este tema recorre ese sistema: los eventos y parámetros con que el juego se comunica con el audio, el audio en tres dimensiones con su atenuación, su paneo y sus obstáculos, la reverb por zonas, el límite de voces, la memoria y la mezcla dinámica,
+    y termina siguiendo un solo paso desde que se produce hasta que se mezcla.</p>
+    <div class="chips">
+      <span class="chip hi">Eventos y parámetros</span>
+      <span class="chip">Middleware y motor</span>
+      <span class="chip">Atenuación con la distancia</span>
+      <span class="chip">Paneo y HRTF</span>
+      <span class="chip">Oclusión y obstrucción</span>
+      <span class="chip">Reverb por zonas</span>
+      <span class="chip">Voces y prioridad</span>
+      <span class="chip">Memoria y compresión</span>
+      <span class="chip">Mezcla dinámica</span>
+    </div>
+    <hr class="rule">
+
+    <section id="eventos">
+      <h2><span class="n">01</span>Eventos, parámetros y estados: cómo habla el juego con el audio</h2>
+
+      <p>En una película el sonido está atado a la imagen: cada pisada ocurre en un cuadro conocido y se mezcla una sola vez. En un juego nadie sabe de antemano cuándo pisará el jugador, sobre qué suelo, a qué velocidad ni
+      desde qué ángulo lo oirá otro personaje. Por eso el sonido de un juego no se entrega como una pista terminada: se entrega como un <b>sistema de reglas</b> que el motor del juego ejecuta en tiempo real. Ese trabajo se llama
+      <b>implementación</b>, y es el puente entre el sonido que se diseñó (ver <a class="ref" href="/publicaciones/mapa-electronica/temas/sonido-videojuegos">Diseño de sonido para videojuegos</a> y
+      <a class="ref" href="/publicaciones/mapa-electronica/temas/foley-dialogos">Foley y diálogos</a>) y el sonido que se oye.</p>
+      <p>El código del juego no debe saber qué archivo suena. Si lo supiera, cada retoque de sonido exigiría tocar el programa y recompilarlo. La solución general es un contrato de pocas piezas: el juego informa
+      <i>qué pasó</i> y <i>cómo está el mundo</i>, y el sistema de audio decide qué suena.</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Pieza</th><th>Qué es</th><th>Ejemplo</th></tr></thead>
+          <tbody>
+            <tr><td>Evento</td><td>Una acción puntual con nombre. El juego lo emite; el audio decide qué hacer.</td><td><code>Paso</code>, <code>Disparo</code>, <code>AbrirPuerta</code></td></tr>
+            <tr><td>Parámetro</td><td>Un número continuo que el juego actualiza todo el tiempo. Se asigna a propiedades del sonido mediante curvas.</td><td>Velocidad del auto, vida del jugador de 0 a 1, distancia al enemigo</td></tr>
+            <tr><td>Estado o selector</td><td>Un valor discreto, de una lista. Elige qué material suena o cambia la mezcla entera.</td><td>Superficie = metal, pasto o madera; mundo = «bajo el agua»</td></tr>
+            <tr><td>Emisor y oyente</td><td>El emisor es el punto del mundo de donde sale un sonido; el oyente es el punto de escucha, casi siempre pegado a la cámara o al personaje.</td><td>Un guardia (emisor) y el jugador (oyente)</td></tr>
+            <tr><td>Bus</td><td>Un canal de mezcla donde se suman sonidos del mismo tipo para darles nivel y efectos en conjunto.</td><td>Música, efectos, voces, ambiente, interfaz</td></tr>
+            <tr><td>Banco</td><td>Un paquete de sonidos y reglas que se carga en memoria junto con un nivel o una zona del juego.</td><td>Banco «Depósito»: pasos, puertas, alarmas</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Los parámetros se conectan con las propiedades del sonido mediante una <b>curva</b>. La más simple es la recta con límites: el parámetro <i>p</i> entre <i>p</i><sub>0</sub> y <i>p</i><sub>1</sub> se lleva
+      a la propiedad <i>v</i> entre <i>v</i><sub>0</sub> y <i>v</i><sub>1</sub>, y fuera de ese rango se queda en el extremo:</p>
+      <div class="form">
+        <math display="block"><mrow><mi>v</mi><mo>=</mo><msub><mi>v</mi><mn>0</mn></msub><mo>+</mo><mo>(</mo><msub><mi>v</mi><mn>1</mn></msub><mo>−</mo><msub><mi>v</mi><mn>0</mn></msub><mo>)</mo><mspace width="0.17em"/><mfrac><mrow><mi>p</mi><mo>−</mo><msub><mi>p</mi><mn>0</mn></msub></mrow><mrow><msub><mi>p</mi><mn>1</mn></msub><mo>−</mo><msub><mi>p</mi><mn>0</mn></msub></mrow></mfrac><mspace width="2em"/><mspace width="2em"/><mi>n</mi><mo>=</mo><mn>12</mn><mspace width="0.17em"/><msub><mi>log</mi><mn>2</mn></msub><mo>&#x2061;</mo><mi>r</mi></mrow></math>
+        <span class="cap"><math><mrow><mi>p</mi></mrow></math>: parámetro del juego (en su unidad). <math><mrow><msub><mi>p</mi><mn>0</mn></msub></mrow></math>, <math><mrow><msub><mi>p</mi><mn>1</mn></msub></mrow></math>: extremos del rango del parámetro. <math><mrow><mi>v</mi></mrow></math>: valor de la propiedad (dB, Hz, relación de altura…). <math><mrow><msub><mi>v</mi><mn>0</mn></msub></mrow></math>, <math><mrow><msub><mi>v</mi><mn>1</mn></msub></mrow></math>: sus extremos. <math><mrow><mi>r</mi></mrow></math>: relación entre la velocidad de reproducción y la original (sin unidad). <math><mrow><mi>n</mi></mrow></math>: desplazamiento de altura (semitonos).</span>
+      </div>
+      <p>Un caso clásico es el motor de un auto: se graba un lazo a 3&nbsp;000&nbsp;rpm y el parámetro «revoluciones» lo reproduce más rápido o más lento. A 4&nbsp;500&nbsp;rpm la relación es <math><mrow><mi>r</mi><mo>=</mo><mfrac><mrow><mn>4500</mn></mrow><mrow><mn>3000</mn></mrow></mfrac><mo>=</mo><mn>1,5</mn></mrow></math>
+      y la altura sube <math><mrow><mi>n</mi><mo>=</mo><mn>12</mn><msub><mi>log</mi><mn>2</mn></msub><mo>&#x2061;</mo><mn>1,5</mn><mo>=</mo><mn>7,02</mn></mrow></math> semitonos, casi una quinta. Reproducir más rápido también acorta el sonido, así que los lazos de motor se
+      graban en varias velocidades y se mezclan entre sí según el parámetro.</p>
+
+      <h3>Middleware y audio nativo del motor</h3>
+      <p>Hay dos caminos para implementar. El <b>audio nativo</b> del motor del juego (por ejemplo el de Unity, con sus fuentes de audio y su mezclador, o el de Unreal, con sus sonidos, atenuaciones y submezclas) ya viene integrado y alcanza
+      para muchos proyectos. El <b>middleware</b> (Wwise y FMOD son los más conocidos) es una herramienta aparte, pensada para el diseñador de sonido, que se conecta al juego mediante una biblioteca: ofrece contenedores de variaciones al azar,
+      curvas de parámetros, mezcla con estados, perfilador de voces y memoria, y permite editar el sonido con el juego funcionando. No se recomienda uno: la elección depende del equipo.</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Cuestión</th><th>Audio nativo del motor</th><th>Middleware</th></tr></thead>
+          <tbody>
+            <tr><td>Quién hace el cambio de sonido</td><td>Casi siempre el programador o alguien con acceso al proyecto del juego.</td><td>El diseñador de sonido, en su propia herramienta, sin tocar el código.</td></tr>
+            <tr><td>Iteración</td><td>Se prueba dentro del motor; algunos cambios piden recompilar o recargar el nivel.</td><td>Se conecta al juego en ejecución y se editan curvas y mezcla en vivo.</td></tr>
+            <tr><td>Herramientas de mezcla y análisis</td><td>Las que trae el motor, más básicas.</td><td>Mezcladores con estados, medidores y perfilador de voces y memoria.</td></tr>
+            <tr><td>Costo de integración</td><td>Bajo: ya está en el motor.</td><td>Hay que integrar la biblioteca, aprender la herramienta y revisar las condiciones de licencia.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Un evento en código</h3>
+      <p>Así se ve el contrato en un seudocódigo cercano a JavaScript. El juego publica el evento con su posición, un estado y un parámetro; del otro lado se define qué suena (el nombre <code>audio</code> y las funciones <code>voz</code> y <code>elegirSinRepetir</code> son inventados para el ejemplo):</p>
+      <pre class="code"><code><span class="c-com">// Del lado del juego: dice QUÉ pasó y DÓNDE; no nombra ningún archivo</span>
+<span class="c-kw">function</span> <span class="c-fn">alPisar</span>(personaje, suelo) {
+  audio.<span class="c-fn">publicar</span>(<span class="c-str">"Paso"</span>, {
+    emisor: personaje.posicion,                          <span class="c-com">// dónde: x, y, z en metros</span>
+    superficie: suelo.material,                          <span class="c-com">// estado: "metal", "pasto", "madera"</span>
+    intensidad: <span class="c-kw">Math</span>.<span class="c-fn">min</span>(personaje.velocidad / <span class="c-num">6</span>, <span class="c-num">1</span>),    <span class="c-com">// parámetro continuo, de 0 a 1</span>
+  });
+}
+
+<span class="c-com">// Del lado del audio (en la herramienta o en un módulo): QUÉ suena y cómo</span>
+audio.<span class="c-fn">definir</span>(<span class="c-str">"Paso"</span>, (p) =&gt; {
+  <span class="c-kw">const</span> toma = <span class="c-fn">elegirSinRepetir</span>(banco[p.superficie]);    <span class="c-com">// 4 tomas por superficie</span>
+  <span class="c-kw">return</span> <span class="c-fn">voz</span>(toma, {
+    posicion: p.emisor,                                  <span class="c-com">// el motor aplica distancia, paneo y reverb</span>
+    db: -<span class="c-num">12</span> + <span class="c-num">12</span> * p.intensidad,                         <span class="c-com">// de -12&nbsp;dB (suave) a 0&nbsp;dB (fuerte)</span>
+    altura: <span class="c-num">1</span> + (<span class="c-kw">Math</span>.<span class="c-fn">random</span>() - <span class="c-num">0.5</span>) * <span class="c-num">0.04</span>,            <span class="c-com">// al azar, dentro de ±2&nbsp;%</span>
+  });
+});</code></pre>
+      <p><b>Latencia.</b> Un evento nace en un cuadro del juego y el sonido sale por un bloque de audio. A 60 cuadros por segundo un cuadro dura <math><mrow><mfrac><mrow><mn>1000</mn></mrow><mrow><mn>60</mn></mrow></mfrac><mo>=</mo><mn>16,7</mn></mrow></math> ms, y un bloque de 1&nbsp;024 muestras a 48&nbsp;kHz dura
+      <math><mrow><mfrac><mrow><mn>1024</mn></mrow><mrow><mn>48000</mn></mrow></mfrac><mo>=</mo><mn>21,3</mn></mrow></math> ms (uno de 256, <math><mrow><mn>5,3</mn></mrow></math> ms). Entre la acción y el sonido pasan, entonces, entre uno y dos cuadros y un bloque: decenas de milisegundos que conviene medir en el equipo de destino,
+      porque un disparo que suena tarde se siente como un error del juego. Cómo se llena y se vacía ese bloque está en <a class="ref" href="/publicaciones/mapa-electronica/temas/interfaces-digitales-audio">Interfaces digitales de audio</a>.</p>
+
+    </section>
+
+    <section id="espacial">
+      <h2><span class="n">02</span>Audio 3D: distancia, dirección y obstáculos</h2>
+
+      <p>Un sonido en un juego tiene una posición. El motor toma la posición del emisor y la del oyente y calcula, en cada cuadro, cuatro cosas: cuánto baja el nivel, hacia qué lado se pinta, qué pasa si hay algo en el medio y cuánta reverberación le toca. Esta sección trata las tres primeras.</p>
+
+      <h3>Atenuación con la distancia</h3>
+      <p>En campo libre, una fuente puntual pierde 6&nbsp;dB cada vez que se duplica la distancia: es la ley de la inversa del cuadrado de la intensidad, vista en <a class="ref" href="/publicaciones/mapa-electronica/temas/decibeles-niveles">Decibeles y niveles</a>.
+      Expresada como ganancia de amplitud, es la inversa de la distancia. Esa ley sola no sirve en un motor, por dos razones: se hace infinita cuando la distancia tiende a cero, y nunca llega a cero, de modo que ningún sonido «termina». Por eso toda curva de atenuación de motor lleva dos distancias de diseño:</p>
+      <ul>
+        <li><b>Distancia mínima</b> <i>d</i><sub>mín</sub>: dentro de ella el nivel deja de subir. Es el radio del «cuerpo» de la fuente, donde el modelo de fuente puntual ya no es válido.</li>
+        <li><b>Distancia máxima</b> <i>d</i><sub>máx</sub>: más allá, la voz se detiene (deja de procesarse) y libera recursos. Es el límite entre lo que el jugador oye y lo que el motor no gasta en calcular.</li>
+      </ul>
+      <p>Entre las dos, las curvas más usadas son tres. Todas valen 0&nbsp;dB en <i>d</i><sub>mín</sub>:</p>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>g</mi><mrow><mi mathvariant="normal">inv</mi></mrow></msub><mo>(</mo><mi>d</mi><mo>)</mo><mo>=</mo><mfrac><mrow><msub><mi>d</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow><mrow><mi>d</mi></mrow></mfrac><mspace width="2em"/><mspace width="2em"/><msub><mi>g</mi><mrow><mi mathvariant="normal">lin</mi></mrow></msub><mo>(</mo><mi>d</mi><mo>)</mo><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mi>d</mi><mo>−</mo><msub><mi>d</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow><mrow><msub><mi>d</mi><mrow><mi mathvariant="normal">max</mi></mrow></msub><mo>−</mo><msub><mi>d</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow></mfrac><mspace width="2em"/><mspace width="2em"/><msub><mi>L</mi><mrow><mi mathvariant="normal">log</mi></mrow></msub><mo>(</mo><mi>d</mi><mo>)</mo><mo>=</mo><mo>−</mo><mi>N</mi><mspace width="0.17em"/><msub><mi>log</mi><mn>2</mn></msub><mo>&#x2061;</mo><mfrac><mrow><mi>d</mi></mrow><mrow><msub><mi>d</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow></mfrac></mrow></math>
+        <span class="cap"><math><mrow><mi>d</mi></mrow></math>: distancia entre emisor y oyente (m). <math><mrow><msub><mi>d</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow></math>, <math><mrow><msub><mi>d</mi><mrow><mi mathvariant="normal">max</mi></mrow></msub></mrow></math>: distancias mínima y máxima de la curva (m). <math><mrow><msub><mi>g</mi><mrow><mi mathvariant="normal">inv</mi></mrow></msub></mrow></math>, <math><mrow><msub><mi>g</mi><mrow><mi mathvariant="normal">lin</mi></mrow></msub></mrow></math>: ganancias de amplitud, sin unidad; el nivel es <math><mrow><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mi>g</mi></mrow></math> (dB). <math><mrow><msub><mi>L</mi><mrow><mi mathvariant="normal">log</mi></mrow></msub></mrow></math>: nivel relativo en la curva logarítmica (dB). <math><mrow><mi>N</mi></mrow></math>: decibeles que se pierden al duplicar la distancia (dB); con <math><mrow><mi>N</mi><mo>=</mo><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>2</mn><mo>=</mo><mn>6,02</mn></mrow></math> dB la curva logarítmica es la ley inversa.</span>
+      </div>
+      <p>La <b>inversa</b> es la física: 6&nbsp;dB por duplicación. La <b>lineal</b> baja la amplitud en línea recta hasta cero; es fácil de entender, pero en decibeles es engañosa: casi no atenúa en la mitad del recorrido y se desploma al final. La <b>logarítmica</b> deja elegir los decibeles por duplicación: con <i>N</i>&nbsp;=&nbsp;3&nbsp;dB
+      es el comportamiento de una fuente lineal (una ruta, un tren) y sirve para sonidos que tienen que alcanzar lejos, como un disparo. No son tres versiones de una misma verdad: son tres herramientas de diseño. Un paso puede caer rápido y una sirena, lentamente.</p>
+      <figure>
+        <svg viewBox="0 0 700 362" role="img" aria-label="Atenuación con la distancia en decibeles para las curvas inversa, lineal y logarítmica de 3 decibeles, con distancia mínima de 1 metro y máxima de 30 metros, y la distancia a la que cada una baja 10 decibeles" class="svg-t" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif"><text x="90" y="16" font-size="13.5" font-weight="700" fill="#e6edf3">Nivel relativo (dB) según la distancia al oyente</text><polyline points="85,30 90,30" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="80" y="34" text-anchor="end" font-size="11" fill="#7d8a99">0</text><polyline points="85,75 90,75" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="80" y="79" text-anchor="end" font-size="11" fill="#7d8a99">−6</text><polyline points="85,120 90,120" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="80" y="124" text-anchor="end" font-size="11" fill="#7d8a99">−12</text><polyline points="85,165 90,165" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="80" y="169" text-anchor="end" font-size="11" fill="#7d8a99">−18</text><polyline points="85,210 90,210" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="80" y="214" text-anchor="end" font-size="11" fill="#7d8a99">−24</text><polyline points="85,255 90,255" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="80" y="259" text-anchor="end" font-size="11" fill="#7d8a99">−30</text><polyline points="85,300 90,300" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="80" y="304" text-anchor="end" font-size="11" fill="#7d8a99">−36</text><polyline points="90,300 90,305" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="90" y="328" text-anchor="middle" font-size="11.5" fill="#7d8a99">1</text><polyline points="172,300 172,305" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="172" y="328" text-anchor="middle" font-size="11.5" fill="#7d8a99">2</text><polyline points="254,300 254,305" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="254" y="328" text-anchor="middle" font-size="11.5" fill="#7d8a99">4</text><polyline points="336,300 336,305" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="336" y="328" text-anchor="middle" font-size="11.5" fill="#7d8a99">8</text><polyline points="418,300 418,305" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="418" y="328" text-anchor="middle" font-size="11.5" fill="#7d8a99">16</text><polyline points="500,300 500,305" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="500" y="328" text-anchor="middle" font-size="11.5" fill="#7d8a99">32</text><polyline points="90,30 90,300 504,300" fill="none" stroke="#9aa7b4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><text x="295" y="348" text-anchor="middle" font-size="11.5" fill="#9aa7b4">Distancia d (m), escala logarítmica</text><text x="14" y="170" font-size="11.5" fill="#9aa7b4">dB</text><polyline points="492.4,30 492.4,300" fill="none" stroke="#d29922" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4"/><text x="486.4" y="15" text-anchor="middle" font-size="11.5" fill="#d29922">d<tspan dy="3" font-size="0.76em">máx</tspan><tspan dy="-3"> = 30 m</tspan></text><polyline points="90,30 92,31.1 94.1,32.3 96.1,33.4 98.2,34.5 100.2,35.6 102.3,36.8 104.3,37.9 106.4,39 108.5,40.2 110.5,41.3 112.5,42.4 114.6,43.5 116.7,44.7 118.7,45.8 120.8,46.9 122.8,48.1 124.9,49.2 126.9,50.3 128.9,51.4 131,52.6 133.1,53.7 135.1,54.8 137.2,56 139.2,57.1 141.2,58.2 143.3,59.4 145.4,60.5 147.4,61.6 149.4,62.7 151.5,63.9 153.6,65 155.6,66.1 157.6,67.3 159.7,68.4 161.8,69.5 163.8,70.6 165.9,71.8 167.9,72.9 169.9,74 172,75.2 174.1,76.3 176.1,77.4 178.1,78.5 180.2,79.7 182.2,80.8 184.3,81.9 186.4,83.1 188.4,84.2 190.4,85.3 192.5,86.4 194.6,87.6 196.6,88.7 198.6,89.8 200.7,91 202.8,92.1 204.8,93.2 206.9,94.3 208.9,95.5 210.9,96.6 213,97.7 215.1,98.9 217.1,100 219.2,101.1 221.2,102.2 223.2,103.4 225.3,104.5 227.3,105.6 229.4,106.8 231.5,107.9 233.5,109 235.5,110.1 237.6,111.3 239.7,112.4 241.7,113.5 243.8,114.7 245.8,115.8 247.8,116.9 249.9,118.1 252,119.2 254,120.3 256,121.4 258.1,122.6 260.1,123.7 262.2,124.8 264.2,126 266.3,127.1 268.4,128.2 270.4,129.3 272.5,130.5 274.5,131.6 276.5,132.7 278.6,133.9 280.6,135 282.7,136.1 284.8,137.2 286.8,138.4 288.9,139.5 290.9,140.6 293,141.8 295,142.9 297,144 299.1,145.1 301.1,146.3 303.2,147.4 305.2,148.5 307.3,149.7 309.4,150.8 311.4,151.9 313.5,153 315.5,154.2 317.5,155.3 319.6,156.4 321.6,157.6 323.7,158.7 325.8,159.8 327.8,160.9 329.9,162.1 331.9,163.2 334,164.3 336,165.5 338,166.6 340.1,167.7 342.1,168.9 344.2,170 346.2,171.1 348.3,172.2 350.3,173.4 352.4,174.5 354.4,175.6 356.5,176.8 358.6,177.9 360.6,179 362.7,180.1 364.7,181.3 366.8,182.4 368.8,183.5 370.8,184.7 372.9,185.8 374.9,186.9 377,188 379.1,189.2 381.1,190.3 383.2,191.4 385.2,192.6 387.2,193.7 389.3,194.8 391.3,195.9 393.4,197.1 395.4,198.2 397.5,199.3 399.6,200.5 401.6,201.6 403.7,202.7 405.7,203.8 407.8,205 409.8,206.1 411.8,207.2 413.9,208.4 415.9,209.5 418,210.6 420.1,211.7 422.1,212.9 424.2,214 426.2,215.1 428.2,216.3 430.3,217.4 432.3,218.5 434.4,219.6 436.4,220.8 438.5,221.9 440.6,223 442.6,224.2 444.7,225.3 446.7,226.4 448.8,227.6 450.8,228.7 452.8,229.8 454.9,230.9 456.9,232.1 459,233.2 461.1,234.3 463.1,235.5 465.2,236.6 467.2,237.7 469.2,238.8 471.3,240 473.3,241.1 475.4,242.2 477.4,243.4 479.5,244.5 481.6,245.6 483.6,246.7 485.7,247.9 487.7,249 489.8,250.1 491.8,251.3" fill="none" stroke="#58a6ff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="90,30 92,30.6 94.1,31.1 96.1,31.7 98.2,32.2 100.2,32.8 102.3,33.4 104.3,33.9 106.4,34.5 108.5,35.1 110.5,35.6 112.5,36.2 114.6,36.8 116.7,37.3 118.7,37.9 120.8,38.4 122.8,39 124.9,39.6 126.9,40.1 128.9,40.7 131,41.2 133.1,41.8 135.1,42.4 137.2,42.9 139.2,43.5 141.2,44.1 143.3,44.6 145.4,45.2 147.4,45.8 149.4,46.3 151.5,46.9 153.6,47.4 155.6,48 157.6,48.6 159.7,49.1 161.8,49.7 163.8,50.2 165.9,50.8 167.9,51.4 169.9,51.9 172,52.5 174.1,53.1 176.1,53.6 178.1,54.2 180.2,54.8 182.2,55.3 184.3,55.9 186.4,56.4 188.4,57 190.4,57.6 192.5,58.1 194.6,58.7 196.6,59.2 198.6,59.8 200.7,60.4 202.8,60.9 204.8,61.5 206.9,62.1 208.9,62.6 210.9,63.2 213,63.8 215.1,64.3 217.1,64.9 219.2,65.4 221.2,66 223.2,66.6 225.3,67.1 227.3,67.7 229.4,68.2 231.5,68.8 233.5,69.4 235.5,69.9 237.6,70.5 239.7,71.1 241.7,71.6 243.8,72.2 245.8,72.8 247.8,73.3 249.9,73.9 252,74.4 254,75 256,75.6 258.1,76.1 260.1,76.7 262.2,77.2 264.2,77.8 266.3,78.4 268.4,78.9 270.4,79.5 272.5,80.1 274.5,80.6 276.5,81.2 278.6,81.8 280.6,82.3 282.7,82.9 284.8,83.4 286.8,84 288.9,84.6 290.9,85.1 293,85.7 295,86.2 297,86.8 299.1,87.4 301.1,87.9 303.2,88.5 305.2,89.1 307.3,89.6 309.4,90.2 311.4,90.8 313.5,91.3 315.5,91.9 317.5,92.4 319.6,93 321.6,93.6 323.7,94.1 325.8,94.7 327.8,95.2 329.9,95.8 331.9,96.4 334,96.9 336,97.5 338,98.1 340.1,98.6 342.1,99.2 344.2,99.8 346.2,100.3 348.3,100.9 350.3,101.4 352.4,102 354.4,102.6 356.5,103.1 358.6,103.7 360.6,104.2 362.7,104.8 364.7,105.4 366.8,105.9 368.8,106.5 370.8,107.1 372.9,107.6 374.9,108.2 377,108.8 379.1,109.3 381.1,109.9 383.2,110.4 385.2,111 387.2,111.6 389.3,112.1 391.3,112.7 393.4,113.3 395.4,113.8 397.5,114.4 399.6,114.9 401.6,115.5 403.7,116.1 405.7,116.6 407.8,117.2 409.8,117.8 411.8,118.3 413.9,118.9 415.9,119.4 418,120 420.1,120.6 422.1,121.1 424.2,121.7 426.2,122.2 428.2,122.8 430.3,123.4 432.3,123.9 434.4,124.5 436.4,125.1 438.5,125.6 440.6,126.2 442.6,126.7 444.7,127.3 446.7,127.9 448.8,128.4 450.8,129 452.8,129.6 454.9,130.1 456.9,130.7 459,131.2 461.1,131.8 463.1,132.4 465.2,132.9 467.2,133.5 469.2,134.1 471.3,134.6 473.3,135.2 475.4,135.8 477.4,136.3 479.5,136.9 481.6,137.4 483.6,138 485.7,138.6 487.7,139.1 489.8,139.7 491.8,140.2" fill="none" stroke="#3fb950" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="90,30 91.4,30 92.7,30.1 94.1,30.1 95.5,30.1 96.8,30.1 98.2,30.2 99.6,30.2 100.9,30.2 102.3,30.2 103.7,30.3 105,30.3 106.4,30.3 107.8,30.4 109.1,30.4 110.5,30.4 111.9,30.5 113.2,30.5 114.6,30.5 116,30.6 117.3,30.6 118.7,30.6 120.1,30.7 121.4,30.7 122.8,30.7 124.2,30.8 125.5,30.8 126.9,30.8 128.3,30.9 129.6,30.9 131,30.9 132.4,31 133.7,31 135.1,31.1 136.5,31.1 137.8,31.1 139.2,31.2 140.6,31.2 141.9,31.2 143.3,31.3 144.7,31.3 146,31.4 147.4,31.4 148.8,31.5 150.1,31.5 151.5,31.5 152.9,31.6 154.2,31.6 155.6,31.7 157,31.7 158.3,31.8 159.7,31.8 161.1,31.9 162.4,31.9 163.8,32 165.2,32 166.5,32.1 167.9,32.1 169.3,32.2 170.6,32.2 172,32.3 173.4,32.3 174.7,32.4 176.1,32.5 177.5,32.5 178.8,32.6 180.2,32.6 181.6,32.7 182.9,32.7 184.3,32.8 185.7,32.9 187,32.9 188.4,33 189.8,33 191.1,33.1 192.5,33.2 193.9,33.2 195.2,33.3 196.6,33.4 198,33.4 199.3,33.5 200.7,33.6 202.1,33.6 203.4,33.7 204.8,33.8 206.2,33.9 207.5,33.9 208.9,34 210.3,34.1 211.6,34.2 213,34.2 214.4,34.3 215.7,34.4 217.1,34.5 218.5,34.6 219.8,34.6 221.2,34.7 222.6,34.8 223.9,34.9 225.3,35 226.7,35.1 228,35.2 229.4,35.3 230.8,35.4 232.1,35.4 233.5,35.5 234.9,35.6 236.2,35.7 237.6,35.8 239,35.9 240.3,36 241.7,36.1 243.1,36.2 244.4,36.3 245.8,36.4 247.2,36.6 248.5,36.7 249.9,36.8 251.3,36.9 252.6,37 254,37.1 255.4,37.2 256.7,37.3 258.1,37.5 259.5,37.6 260.8,37.7 262.2,37.8 263.6,38 264.9,38.1 266.3,38.2 267.7,38.4 269,38.5 270.4,38.6 271.8,38.8 273.1,38.9 274.5,39 275.9,39.2 277.2,39.3 278.6,39.5 280,39.6 281.3,39.8 282.7,39.9 284.1,40.1 285.4,40.2 286.8,40.4 288.2,40.6 289.5,40.7 290.9,40.9 292.3,41.1 293.6,41.2 295,41.4 296.4,41.6 297.7,41.8 299.1,41.9 300.5,42.1 301.8,42.3 303.2,42.5 304.6,42.7 305.9,42.9 307.3,43.1 308.7,43.3 310,43.5 311.4,43.7 312.8,43.9 314.1,44.1 315.5,44.3 316.9,44.6 318.2,44.8 319.6,45 321,45.2 322.3,45.5 323.7,45.7 325.1,45.9 326.4,46.2 327.8,46.4 329.2,46.7 330.5,46.9 331.9,47.2 333.3,47.5 334.6,47.7 336,48 337.4,48.3 338.7,48.6 340.1,48.8 341.5,49.1 342.8,49.4 344.2,49.7 345.6,50 346.9,50.3 348.3,50.6 349.7,51 351,51.3 352.4,51.6 353.8,52 355.1,52.3 356.5,52.6 357.9,53 359.2,53.4 360.6,53.7 362,54.1 363.3,54.5 364.7,54.8 366.1,55.2 367.4,55.6 368.8,56 370.2,56.5 371.5,56.9 372.9,57.3 374.3,57.7 375.6,58.2 377,58.6 378.4,59.1 379.7,59.6 381.1,60 382.5,60.5 383.8,61 385.2,61.5 386.6,62 387.9,62.6 389.3,63.1 390.7,63.6 392,64.2 393.4,64.8 394.8,65.4 396.1,66 397.5,66.6 398.9,67.2 400.2,67.8 401.6,68.5 403,69.1 404.3,69.8 405.7,70.5 407.1,71.2 408.4,71.9 409.8,72.6 411.2,73.4 412.5,74.2 413.9,75 415.3,75.8 416.6,76.6 418,77.4 419.4,78.3 420.7,79.2 422.1,80.1 423.5,81.1 424.8,82 426.2,83 427.6,84 428.9,85.1 430.3,86.2 431.7,87.3 433,88.4 434.4,89.6 435.8,90.8 437.1,92 438.5,93.3 439.9,94.6 441.2,96 442.6,97.4 444,98.9 445.3,100.4 446.7,102 448.1,103.6 449.4,105.3 450.8,107 452.2,108.9 453.5,110.8 454.9,112.7 456.3,114.8 457.6,117 459,119.2 460.4,121.6 461.7,124.1 463.1,126.7 464.5,129.4 465.8,132.3 467.2,135.4 468.6,138.7 469.9,142.2 471.3,145.9 472.7,149.9 474,154.2 475.4,158.9 476.8,164 478.1,169.6 479.5,175.8 480.9,182.8 482.2,190.7 483.6,199.7 485,210.4 486.3,223.3 487.7,239.7 489.1,261.9 490.4,296.4 490.5,300" fill="none" stroke="#e8883a" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="90,105 500,105" fill="none" stroke="#e6edf3" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/><circle cx="226.2" cy="105" r="4.2" fill="#0d1117" stroke="#58a6ff" stroke-width="2"/><circle cx="363.3" cy="105" r="4.2" fill="#0d1117" stroke="#3fb950" stroke-width="2"/><circle cx="449.2" cy="105" r="4.2" fill="#0d1117" stroke="#e8883a" stroke-width="2"/><text x="546" y="109" font-size="11.5" font-weight="700" fill="#e6edf3">Línea punteada:</text><text x="546" y="125" font-size="11" fill="#e6edf3">−10 dB, mitad de sonoridad</text><polyline points="524,251.2 540,251.2" fill="none" stroke="#58a6ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="546" y="255.2" font-size="12" font-weight="700" fill="#58a6ff">inversa</text><text x="546" y="270.2" font-size="11" fill="#9aa7b4">6 dB por duplicación</text><text x="546" y="286.2" font-size="11" fill="#58a6ff">−10 dB a 3,2 m</text><polyline points="524,172.5 540,172.5" fill="none" stroke="#3fb950" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="546" y="176.5" font-size="12" font-weight="700" fill="#3fb950">logarítmica</text><text x="546" y="191.5" font-size="11" fill="#9aa7b4">3 dB por duplicación</text><text x="546" y="207.5" font-size="11" fill="#3fb950">−10 dB a 10,1 m</text><polyline points="524,52.5 540,52.5" fill="none" stroke="#e8883a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="546" y="56.5" font-size="12" font-weight="700" fill="#e8883a">lineal</text><text x="546" y="71.5" font-size="11" fill="#9aa7b4">cae a −∞ en d<tspan dy="3" font-size="0.76em">máx</tspan></text><text x="546" y="87.5" font-size="11" fill="#e8883a">−10 dB a 20,8 m</text></svg>
+        <figcaption><b>Figura 1.</b> Las tres curvas de atenuación con <i>d</i><sub>mín</sub> = 1&nbsp;m y <i>d</i><sub>máx</sub> = 30&nbsp;m, con la distancia en escala logarítmica. La inversa y la logarítmica son rectas (6 y 3&nbsp;dB por duplicación); la lineal casi no atenúa hasta la mitad del recorrido y cae a −∞ en <i>d</i><sub>máx</sub>. La línea punteada marca −10&nbsp;dB, la mitad de la sonoridad: se alcanza a 3,2, 10,1 y 20,8&nbsp;m según la curva.</figcaption>
+      </figure>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c"><math><mrow><mi>d</mi></mrow></math> (m)</th><th class="c">Inversa (dB)</th><th class="c">Lineal (dB)</th><th class="c">Logarítmica, 3&nbsp;dB (dB)</th></tr></thead>
+          <tbody>
+            <tr><td class="c">1</td><td class="c">0,0</td><td class="c">0,0</td><td class="c">0,0</td></tr>
+            <tr><td class="c">2</td><td class="c">−6,0</td><td class="c">−0,3</td><td class="c">−3,0</td></tr>
+            <tr><td class="c">4</td><td class="c">−12,0</td><td class="c">−0,9</td><td class="c">−6,0</td></tr>
+            <tr><td class="c">8</td><td class="c">−18,1</td><td class="c">−2,4</td><td class="c">−9,0</td></tr>
+            <tr><td class="c">16</td><td class="c">−24,1</td><td class="c">−6,3</td><td class="c">−12,0</td></tr>
+            <tr><td class="c">24</td><td class="c">−27,6</td><td class="c">−13,7</td><td class="c">−13,8</td></tr>
+            <tr><td class="c">30</td><td class="c">−29,5</td><td class="c">−∞</td><td class="c">−14,7</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="box ejem">
+        <div class="bt">Ejemplo resuelto · Tres curvas para la misma distancia</div>
+        <p><b>Datos:</b> <i>d</i><sub>mín</sub> = 1&nbsp;m, <i>d</i><sub>máx</sub> = 30&nbsp;m, y un oyente a <i>d</i> = 12&nbsp;m de la fuente.</p>
+        <p style="margin-top:8px"><b>Inversa:</b> <math><mrow><mi>L</mi><mo>=</mo><mo>−</mo><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mfrac><mrow><mn>12</mn></mrow><mrow><mn>1</mn></mrow></mfrac><mo>=</mo><mo>−</mo><mn>21,6</mn></mrow></math> dB. <b>Logarítmica con <math><mrow><mi>N</mi><mo>=</mo><mn>3</mn></mrow></math> dB:</b> <math><mrow><mi>L</mi><mo>=</mo><mo>−</mo><mn>3</mn><msub><mi>log</mi><mn>2</mn></msub><mo>&#x2061;</mo><mn>12</mn><mo>=</mo><mo>−</mo><mn>3</mn><mo>·</mo><mn>3,585</mn><mo>=</mo><mo>−</mo><mn>10,75</mn></mrow></math> dB. <b>Lineal:</b> <math><mrow><mi>g</mi><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mn>12</mn><mo>−</mo><mn>1</mn></mrow><mrow><mn>30</mn><mo>−</mo><mn>1</mn></mrow></mfrac><mo>=</mo><mn>0,6207</mn></mrow></math>, o sea <math><mrow><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>0,6207</mn><mo>=</mo><mo>−</mo><mn>4,14</mn></mrow></math> dB.</p>
+        <p style="margin-top:8px"><b>Comprobación por otro camino</b> (la inversa en amplitud): <math><mrow><mi>g</mi><mo>=</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>12</mn></mrow></mfrac><mo>=</mo><mn>0,0833</mn></mrow></math> y <math><mrow><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>0,0833</mn><mo>=</mo><mo>−</mo><mn>21,6</mn></mrow></math> dB. Cada duplicación resta 6,02&nbsp;dB y <math><mrow><msub><mi>log</mi><mn>2</mn></msub><mo>&#x2061;</mo><mn>12</mn><mo>=</mo><mn>3,585</mn></mrow></math> duplicaciones dan <math><mrow><mn>3,585</mn><mo>·</mo><mn>6,02</mn><mo>=</mo><mn>21,6</mn></mrow></math> dB.</p>
+        <p style="margin-top:8px"><b>Mitad de sonoridad.</b> Un descenso de unos 10&nbsp;dB se percibe como la mitad de la sonoridad (ver <a class="ref" href="/publicaciones/mapa-electronica/temas/psicoacustica">Psicoacústica</a>). Con <math><mrow><mi>L</mi><mo>=</mo><mo>−</mo><mn>10</mn></mrow></math> dB: inversa, <math><mrow><mi>d</mi><mo>=</mo><msup><mn>10</mn><mrow><mfrac><mrow><mn>10</mn></mrow><mrow><mn>20</mn></mrow></mfrac></mrow></msup><mo>=</mo><mn>3,16</mn></mrow></math> m; logarítmica de 3&nbsp;dB, <math><mrow><mi>d</mi><mo>=</mo><msup><mn>2</mn><mrow><mfrac><mrow><mn>10</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mrow></msup><mo>=</mo><mn>10,1</mn></mrow></math> m; lineal, <math><mrow><mi>d</mi><mo>=</mo><mn>1</mn><mo>+</mo><mn>29</mn><mspace width="0.17em"/><mo>(</mo><mn>1</mn><mo>−</mo><msup><mn>10</mn><mrow><mo>−</mo><mfrac><mrow><mn>10</mn></mrow><mrow><mn>20</mn></mrow></mfrac></mrow></msup><mo>)</mo><mo>=</mo><mn>20,8</mn></mrow></math> m. La misma consigna, «que baje a la mitad», da distancias que van de 3 a 21&nbsp;m según la curva elegida.</p>
+        <p style="margin-top:8px"><b>El límite:</b> sin <i>d</i><sub>mín</sub>, a 0,25&nbsp;m la inversa daría <math><mrow><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>0,25</mn></mrow></mfrac><mo>=</mo><mo>+</mo><mn>12,0</mn></mrow></math> dB, una amplificación; con <i>d</i><sub>mín</sub> = 1&nbsp;m el nivel se queda en 0&nbsp;dB. Y en <i>d</i><sub>máx</sub> = 30&nbsp;m la inversa todavía vale −29,5&nbsp;dB: cortar ahí produce un salto audible, y por eso muchos motores permiten un tramo final de fundido hasta cero.</p>
+      </div>
+      <div class="escuchar"><span class="et">Escuchá, con volumen moderado, la misma fuente (un zumbido de 220&nbsp;Hz con armónicos) a 1, 2, 4 y 8&nbsp;m con la curva inversa. Cada duplicación de la distancia baja 6&nbsp;dB. Notá que a 4&nbsp;m, con una pérdida de 12&nbsp;dB, el sonido sigue siendo claro: el oído tolera mucho más que lo que la intuición supone.</span>
+        <button class="esc" data-esc='{"tipo":"armonicos","f":220,"a":[1,0.8,0.6,0.5,0.4,0.33,0.28,0.25,0.2,0.18,0.15,0.13],"db":0,"dur":3}'>1&nbsp;m (0&nbsp;dB)</button>
+        <button class="esc" data-esc='{"tipo":"armonicos","f":220,"a":[1,0.8,0.6,0.5,0.4,0.33,0.28,0.25,0.2,0.18,0.15,0.13],"db":-6,"dur":3}'>2&nbsp;m (−6&nbsp;dB)</button>
+        <button class="esc" data-esc='{"tipo":"armonicos","f":220,"a":[1,0.8,0.6,0.5,0.4,0.33,0.28,0.25,0.2,0.18,0.15,0.13],"db":-12,"dur":3}'>4&nbsp;m (−12&nbsp;dB)</button>
+        <button class="esc" data-esc='{"tipo":"armonicos","f":220,"a":[1,0.8,0.6,0.5,0.4,0.33,0.28,0.25,0.2,0.18,0.15,0.13],"db":-18,"dur":3}'>8&nbsp;m (−18&nbsp;dB)</button>
+      </div>
+
+      <h3>Dirección: paneo e HRTF</h3>
+      <p>El motor proyecta la posición de la fuente sobre el eje izquierda-derecha del oyente. Si <math><mrow><mi>φ</mi></mrow></math> es el acimut (el ángulo respecto del frente, positivo a la derecha), el paneo es <math><mrow><mi>p</mi><mo>=</mo><mi mathvariant="normal">sen</mi><mi>φ</mi></mrow></math>, entre −1 y +1, y las ganancias de cada canal se reparten con la <b>ley de potencia constante</b>, de modo que la suma de energías no cambie y el sonido no «engorde» al pasar por el centro:</p>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>g</mi><mi>I</mi></msub><mo>=</mo><mi>cos</mi><mo>&#x2061;</mo><mi>θ</mi><mspace width="2em"/><msub><mi>g</mi><mi>D</mi></msub><mo>=</mo><mi mathvariant="normal">sen</mi><mi>θ</mi><mspace width="2em"/><mi>θ</mi><mo>=</mo><mfrac><mrow><mi>π</mi></mrow><mrow><mn>4</mn></mrow></mfrac><mspace width="0.17em"/><mo>(</mo><mn>1</mn><mo>+</mo><mi>p</mi><mo>)</mo></mrow></math>
+        <span class="cap"><math><mrow><mi>p</mi></mrow></math>: paneo, sin unidad (<math><mrow><mo>−</mo><mn>1</mn></mrow></math> todo a la izquierda, <math><mrow><mo>+</mo><mn>1</mn></mrow></math> todo a la derecha). <math><mrow><mi>θ</mi></mrow></math>: ángulo auxiliar (rad). <math><mrow><msub><mi>g</mi><mi>I</mi></msub></mrow></math>, <math><mrow><msub><mi>g</mi><mi>D</mi></msub></mrow></math>: ganancias de los canales izquierdo y derecho. Se cumple <math><mrow><msubsup><mi>g</mi><mi>I</mi><mn>2</mn></msubsup><mo>+</mo><msubsup><mi>g</mi><mi>D</mi><mn>2</mn></msubsup><mo>=</mo><mn>1</mn></mrow></math>; en el centro cada canal vale <math><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><msqrt><mrow><mn>2</mn></mrow></msqrt></mrow></mfrac></mrow></math>, o sea −3,01&nbsp;dB.</span>
+      </div>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th class="c">Paneo <math><mrow><mi>p</mi></mrow></math></th><th class="c">Izquierda (dB)</th><th class="c">Derecha (dB)</th></tr></thead>
+          <tbody>
+            <tr><td class="c">−1,0</td><td class="c">0,00</td><td class="c">−∞</td></tr>
+            <tr><td class="c">−0,5</td><td class="c">−0,69</td><td class="c">−8,34</td></tr>
+            <tr><td class="c">0,0</td><td class="c">−3,01</td><td class="c">−3,01</td></tr>
+            <tr><td class="c">0,5</td><td class="c">−8,34</td><td class="c">−0,69</td></tr>
+            <tr><td class="c">1,0</td><td class="c">−∞</td><td class="c">0,00</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Con parlantes estéreo, 5.1 o 7.1, el paneo reparte el sonido entre los parlantes más próximos a su dirección. Con <b>auriculares</b>, que son la forma más común de jugar, se usa en cambio la <b>HRTF</b> (función de transferencia relacionada con la cabeza): un par de filtros, uno por oído y para cada dirección, que
+      reproducen la diferencia de tiempo y de nivel entre oídos y el filtrado de las orejas, y permiten ubicar también adelante, atrás y arriba (la base psicoacústica está en <a class="ref" href="/publicaciones/mapa-electronica/temas/psicoacustica">Psicoacústica</a>, sección de localización). Una condición práctica: los sonidos que se posicionan
+      en 3D se importan en <b>mono</b>; un archivo estéreo ya trae su propio reparto y no tiene un punto en el mundo.</p>
+
+      <h3>Obstrucción y oclusión</h3>
+      <p>Si entre la fuente y el oyente hay una pared, una columna o una puerta cerrada, el sonido que llega cambia de dos maneras: pierde nivel y pierde agudos, porque las paredes transmiten mejor las frecuencias graves y los agudos se difractan mal alrededor del obstáculo (la ley de masa se estudia en Ruido Acústico, en 5.º año). Los motores distinguen dos casos:</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Caso</th><th>Situación</th><th>Qué se modifica</th></tr></thead>
+          <tbody>
+            <tr><td><b>Obstrucción</b></td><td>Algo bloquea el camino directo, pero los dos están en el mismo espacio: el sonido llega también por las reflexiones del recinto.</td><td>Solo el camino <b>directo</b>: nivel y filtro pasabajos. La reverb no se toca.</td></tr>
+            <tr><td><b>Oclusión</b></td><td>Fuente y oyente están en espacios separados (otra habitación): casi todo llega a través de la pared.</td><td>El directo <b>y</b> la reverb: más caída de nivel y un pasabajos más cerrado.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>El motor lo calcula con <b>rayos</b>: desde el oyente lanza varios hacia la fuente (y alrededor de ella) y mide qué fracción <i>o</i> queda bloqueada, de 0 (libre) a 1 (todos bloqueados). Con esa fracción se alimentan dos curvas, que acá son de ejemplo y en la práctica se ajustan de oído:</p>
+      <div class="form">
+        <math display="block"><mrow><mi>Δ</mi><mi>L</mi><mo>=</mo><mo>−</mo><mn>18</mn><mspace width="0.17em"/><mi>o</mi><mspace width="2em"/><mspace width="2em"/><msub><mi>f</mi><mi>c</mi></msub><mo>=</mo><msub><mi>f</mi><mrow><mi mathvariant="normal">max</mi></mrow></msub><mo>(</mo><mfrac><mrow><msub><mi>f</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow><mrow><msub><mi>f</mi><mrow><mi mathvariant="normal">max</mi></mrow></msub></mrow></mfrac><msup><mo>)</mo><mrow><mi>o</mi></mrow></msup><mspace width="2em"/><mspace width="2em"/><mo>|</mo><mi>H</mi><mo>(</mo><mi>f</mi><mo>)</mo><msup><mo>|</mo><mn>2</mn></msup><mo>=</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>1</mn><mo>+</mo><mo>(</mo><mfrac><mrow><mi>f</mi></mrow><mrow><msub><mi>f</mi><mi>c</mi></msub></mrow></mfrac><msup><mo>)</mo><mn>2</mn></msup></mrow></mfrac></mrow></math>
+        <span class="cap"><math><mrow><mi>o</mi></mrow></math>: fracción de rayos bloqueados (sin unidad). <math><mrow><mi>Δ</mi><mi>L</mi></mrow></math>: pérdida de nivel adicional del camino directo (dB). <math><mrow><msub><mi>f</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub><mo>=</mo><mn>800</mn></mrow></math> Hz y <math><mrow><msub><mi>f</mi><mrow><mi mathvariant="normal">max</mi></mrow></msub><mo>=</mo><mn>20000</mn></mrow></math> Hz: frecuencias de corte con <math><mrow><mi>o</mi><mo>=</mo><mn>1</mn></mrow></math> y <math><mrow><mi>o</mi><mo>=</mo><mn>0</mn></mrow></math>. <math><mrow><msub><mi>f</mi><mi>c</mi></msub></mrow></math>: frecuencia de corte del pasabajos (Hz); se interpola en forma geométrica porque la altura se percibe en octavas. <math><mrow><mo>|</mo><mi>H</mi><msup><mo>|</mo><mn>2</mn></msup></mrow></math>: respuesta de un pasabajos de primer orden (ver <a class="ref" href="/publicaciones/mapa-ingenieria/temas/filtros-digitales">Filtros digitales</a>); a <math><mrow><msub><mi>f</mi><mi>c</mi></msub></mrow></math> vale −3&nbsp;dB.</span>
+      </div>
+      <p>Con <math><mrow><mi>o</mi><mo>=</mo><mn>0,5</mn></mrow></math>: <math><mrow><mi>Δ</mi><mi>L</mi><mo>=</mo><mo>−</mo><mn>9,0</mn></mrow></math> dB y <math><mrow><msub><mi>f</mi><mi>c</mi></msub><mo>=</mo><mn>20000</mn><mspace width="0.17em"/><mo>(</mo><mn>0,04</mn><msup><mo>)</mo><mrow><mn>0,5</mn></mrow></msup><mo>=</mo><mn>4000</mn></mrow></math> Hz. Un pasabajos de primer orden en 4&nbsp;kHz deja 8&nbsp;kHz en <math><mrow><mo>−</mo><mn>10</mn><mi>log</mi><mo>&#x2061;</mo><mo>(</mo><mn>1</mn><mo>+</mo><mn>4</mn><mo>)</mo><mo>=</mo><mo>−</mo><mn>7,0</mn></mrow></math> dB y 2&nbsp;kHz en <math><mrow><mo>−</mo><mn>10</mn><mi>log</mi><mo>&#x2061;</mo><mo>(</mo><mn>1</mn><mo>+</mo><mn>0,25</mn><mo>)</mo><mo>=</mo><mo>−</mo><mn>1,0</mn></mrow></math> dB: oscurece el sonido sin apagarlo. Muchos motores usan filtros de segundo orden, el doble de pendiente.</p>
+      <div class="escuchar"><span class="et">Escuchá, con volumen moderado, la misma fuente en tres situaciones: libre (<i>o</i>&nbsp;=&nbsp;0), obstruida a medias (<i>o</i>&nbsp;=&nbsp;0,5: −9&nbsp;dB y pasabajos en 4&nbsp;kHz) y ocluida (<i>o</i>&nbsp;=&nbsp;1: −18&nbsp;dB y pasabajos en 800&nbsp;Hz). Fijate que lo que más cambia el carácter es la pérdida de agudos, no solo el nivel.</span>
+        <button class="esc" data-esc='{"tipo":"armonicos","f":220,"a":[1,0.8,0.6,0.5,0.4,0.33,0.28,0.25,0.2,0.18,0.15,0.13],"db":0,"dur":3}'>Libre</button>
+        <button class="esc" data-esc='{"tipo":"armonicos","f":220,"a":[1,0.8,0.6,0.5,0.4,0.33,0.28,0.25,0.2,0.18,0.15,0.13],"db":-9,"dur":3,"eq":[{"tipo":"lowpass","f":4000,"q":0.71}]}'>Obstruida a medias</button>
+        <button class="esc" data-esc='{"tipo":"armonicos","f":220,"a":[1,0.8,0.6,0.5,0.4,0.33,0.28,0.25,0.2,0.18,0.15,0.13],"db":-18,"dur":3,"eq":[{"tipo":"lowpass","f":800,"q":0.71}]}'>Ocluida</button>
+      </div>
+      <p>La figura siguiente junta todo en una planta: arrastrá la fuente, cambiá la curva y poné o sacá la pared con su puerta.</p>
+      <figure>
+        <style>
+.ia-svg{max-width:560px;touch-action:pan-y}
+#ia-fuente:focus{outline:none}
+#ia-fuente:focus-visible .ia-vis{stroke:#58a6ff;stroke-width:4}
+.ia-ctl{display:flex;flex-wrap:wrap;gap:6px 22px;margin:12px auto 4px;max-width:560px;font-size:14px;color:var(--txt)}
+.ia-ctl fieldset{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:2px 16px;align-items:center}
+.ia-ctl legend{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--soft);padding:0;margin-bottom:2px}
+.ia-ctl label{display:inline-flex;align-items:center;gap:7px;min-height:36px;cursor:pointer}
+.ia-ctl input{width:18px;height:18px;accent-color:#58a6ff}
+.ia-out{display:grid;grid-template-columns:max-content 1fr;gap:3px 14px;margin:10px auto 0;max-width:560px;font-size:14px}
+.ia-out dt{color:var(--soft)}.ia-out dd{margin:0;color:var(--txt);font-variant-numeric:tabular-nums}
+.ia-svg{max-width:560px}@media (max-width:520px){.ia-out{grid-template-columns:1fr;gap:0}.ia-out dt{margin-top:7px;font-size:12px}}
+.ia-aviso{max-width:560px;margin:8px auto 0;font-size:12.5px;color:var(--soft);text-align:center}
+</style>
+        <svg viewBox="0 0 480 360" role="group" aria-label="Planta de un nivel con el oyente, una fuente que se puede arrastrar y una pared con una puerta; muestra la atenuación con la distancia, el paneo y la obstrucción en cada posición" class="svg-t ia-svg" id="ia-svg" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif"><defs><clipPath id="ia-clip"><rect x="0" y="0" width="480" height="360"/></clipPath></defs><rect id="ia-plano" x="0.8" y="0.8" width="478.4" height="358.4" rx="8" fill="#121826" stroke="#2a3140" stroke-width="1.6" style="cursor:crosshair"/><g clip-path="url(#ia-clip)" pointer-events="none"><g id="ia-aros"></g></g><g id="ia-pared" pointer-events="none"><polyline points="280,0 280,170" fill="none" stroke="#8896a6" stroke-width="6"/><polyline points="280,190 280,360" fill="none" stroke="#8896a6" stroke-width="6"/><text x="292" y="60" font-size="14" fill="#9aa7b4">pared</text><text x="292" y="186" font-size="14" fill="#d29922">puerta</text></g><g id="ia-rayos" pointer-events="none"></g><polygon points="150,166 159,186 141,186" fill="#58a6ff" stroke="#0d1117" stroke-width="1.4" pointer-events="none"/><text x="150" y="158" text-anchor="middle" font-size="14" font-weight="700" fill="#58a6ff" stroke="#0a0e17" stroke-width="3" paint-order="stroke">Oyente</text><g id="ia-fuente" tabindex="0" role="img" aria-label="Fuente sonora. Con las flechas del teclado se mueve de a un metro" style="touch-action:none;cursor:grab"><circle cx="220" cy="80" r="26" fill="transparent"/><circle class="ia-vis" cx="220" cy="80" r="9" fill="#e8883a" stroke="#ffffff" stroke-width="2"/><circle cx="220" cy="80" r="3" fill="#0d1117"/></g></svg>
+<div class="ia-ctl" role="group" aria-label="Controles de la figura">
+  <fieldset><legend>Curva de atenuación</legend>
+    <label><input type="radio" name="ia-curva" value="inv" checked> Inversa</label>
+    <label><input type="radio" name="ia-curva" value="lin"> Lineal</label>
+    <label><input type="radio" name="ia-curva" value="log"> Logarítmica (3&nbsp;dB)</label>
+  </fieldset>
+  <label><input type="checkbox" id="ia-pared-on" checked> Pared con puerta</label>
+  <label><input type="checkbox" id="ia-rev-on" checked> Con reverb de la zona</label>
+</div>
+<dl class="ia-out" id="ia-out" aria-live="polite">
+  <dt>Distancia</dt><dd id="ia-d"></dd>
+  <dt>Por distancia</dt><dd id="ia-g"></dd>
+  <dt>Rayos bloqueados</dt><dd id="ia-o"></dd>
+  <dt>Obstrucción</dt><dd id="ia-ob"></dd>
+  <dt>Paneo</dt><dd id="ia-p"></dd>
+  <dt>Directo final</dt><dd id="ia-f"></dd>
+  <dt>Directo / reverb</dt><dd id="ia-dr"></dd>
+</dl>
+<p class="ia-aviso">Arrastrá la fuente (círculo naranja) o tocá un punto del plano. Con teclado: enfocá la fuente y usá las flechas (con Mayús, de a 4&nbsp;m).</p>
+<div class="escuchar"><span class="et">Escuchá esta posición, con volumen moderado: un zumbido de 220&nbsp;Hz con el nivel, el paneo y el pasabajos que da la figura, y la reverb de un depósito (<i>T</i><sub>60</sub> 2&nbsp;s) si está marcada. Cambia el botón cada vez que movés la fuente.</span>
+  <button class="esc" id="ia-sonar" data-esc="{}">Escuchar esta posición</button></div>
+<script>
+(function () {
+  "use strict";
+  var svg = document.getElementById("ia-svg"); if (!svg) return;
+  var NS = "http://www.w3.org/2000/svg";
+  var L = { x: 15, y: 18 }, S = { x: 22, y: 8 };
+  var D_MIN = 1, D_MAX = 30, PARED_X = 28, PUERTA = [17, 19];
+  var F_MIN = 800, F_MAX = 20000, MAX_DB = 18, ENVIO = -5.1;
+  var fuente = document.getElementById("ia-fuente"), plano = document.getElementById("ia-plano");
+  var aros = document.getElementById("ia-aros"), rayos = document.getElementById("ia-rayos"), pared = document.getElementById("ia-pared");
+  var btn = document.getElementById("ia-sonar");
+  var el = function (id) { return document.getElementById(id); };
+  function dB(g) { return 20 * Math.log(g) / Math.LN10; }
+  function fmt(x, n) { return (x < -0.049 ? "−" : "") + Math.abs(x).toFixed(n).replace(".", ","); }
+  function curva() { return document.querySelector('input[name="ia-curva"]:checked').value; }
+  function atenuacion(d, c) {
+    if (d > D_MAX) return -Infinity;
+    var x = Math.max(d, D_MIN);
+    if (c === "lin") return dB(1 - (x - D_MIN) / (D_MAX - D_MIN));
+    return -(c === "inv" ? dB(2) : 3) * Math.log(x / D_MIN) / Math.LN2;
+  }
+  function cruza(e) {
+    if ((L.x - PARED_X) * (e.x - PARED_X) >= 0) return false;
+    var y = L.y + (e.y - L.y) * (PARED_X - L.x) / (e.x - L.x);
+    return !(y > PUERTA[0] && y < PUERTA[1]);
+  }
+  function svgEl(n, a) { var e = document.createElementNS(NS, n); for (var k in a) e.setAttribute(k, a[k]); return e; }
+  function dibujarAros(c) {
+    aros.innerHTML = "";
+    [4, 8, 16].forEach(function (r) {
+      aros.appendChild(svgEl("circle", { cx: L.x * 10, cy: L.y * 10, r: r * 10, fill: "none", stroke: "#3b475b", "stroke-width": 1.2, "stroke-dasharray": "3 4" }));
+      var t = svgEl("text", { x: L.x * 10, y: L.y * 10 + r * 10 + 5, "font-size": 14, fill: "#b8c3cf", "text-anchor": "middle", stroke: "#121826", "stroke-width": 4, "paint-order": "stroke" });
+      t.textContent = fmt(atenuacion(r, c), 1) + " dB"; aros.appendChild(t);
+    });
+    aros.appendChild(svgEl("circle", { cx: L.x * 10, cy: L.y * 10, r: D_MAX * 10, fill: "none", stroke: "#d29922", "stroke-width": 1.4, "stroke-dasharray": "5 4" }));
+    var m = svgEl("text", { x: L.x * 10 + D_MAX * 10 - 8, y: L.y * 10 - 8, "font-size": 14, fill: "#d29922", "text-anchor": "end" });
+    m.textContent = "d máx"; aros.appendChild(m);
+  }
+  function actualizar() {
+    var c = curva(), conPared = el("ia-pared-on").checked, conRev = el("ia-rev-on").checked;
+    pared.style.display = conPared ? "" : "none";
+    fuente.querySelectorAll("circle").forEach(function (k) { k.setAttribute("cx", S.x * 10); k.setAttribute("cy", S.y * 10); });
+    var dx = S.x - L.x, dy = S.y - L.y, d = Math.hypot(dx, dy);
+    var px = d > 0.01 ? -dy / d : 0, py = d > 0.01 ? dx / d : 1;
+    rayos.innerHTML = "";
+    var bloq = 0;
+    for (var k = -2; k <= 2; k++) {
+      var e = { x: S.x + 0.5 * k * px, y: S.y + 0.5 * k * py };
+      var b = conPared && cruza(e);
+      if (b) bloq++;
+      var fin = e;
+      if (b) { var t = (PARED_X - L.x) / (e.x - L.x); fin = { x: PARED_X, y: L.y + (e.y - L.y) * t }; }
+      rayos.appendChild(svgEl("line", { x1: L.x * 10, y1: L.y * 10, x2: fin.x * 10, y2: fin.y * 10, stroke: b ? "#f85149" : "#3fb950", "stroke-width": 1.6, "stroke-dasharray": b ? "4 3" : "none", opacity: 0.9 }));
+    }
+    var o = bloq / 5, obsDb = -MAX_DB * o, fc = F_MAX * Math.pow(F_MIN / F_MAX, o);
+    var g = atenuacion(d, c), fuera = !isFinite(g);
+    var p = d > 0.01 ? dx / d : 0, th = Math.PI / 4 * (1 + p);
+    var pi = dB(Math.cos(th)), pd = dB(Math.sin(th));
+    dibujarAros(c);
+    el("ia-d").textContent = fmt(d, 1) + " m";
+    if (fuera) {
+      el("ia-g").textContent = "fuera de d máx: la voz se detiene";
+      ["ia-o", "ia-ob", "ia-p", "ia-f", "ia-dr"].forEach(function (i) { el(i).textContent = "—"; });
+      btn.disabled = true; btn.setAttribute("data-esc", "{}"); return;
+    }
+    el("ia-g").textContent = fmt(g, 1) + " dB";
+    el("ia-o").textContent = bloq + " de 5 (o = " + fmt(o, 1) + ")";
+    el("ia-ob").textContent = o > 0 ? fmt(obsDb, 1) + " dB y pasabajos en " + Math.round(fc / 10) * 10 + " Hz" : "ninguna";
+    el("ia-p").textContent = fmt(p, 2) + ", izquierda " + (pi < -60 ? "−∞" : fmt(pi, 1)) + " dB, derecha " + (pd < -60 ? "−∞" : fmt(pd, 1)) + " dB";
+    var seco = g + obsDb;
+    el("ia-f").textContent = "izquierda " + (pi < -60 ? "−∞" : fmt(seco + pi, 1)) + " dB, derecha " + (pd < -60 ? "−∞" : fmt(seco + pd, 1)) + " dB";
+    el("ia-dr").textContent = conRev ? fmt(seco - ENVIO, 1) + " dB (envío " + fmt(ENVIO, 1) + " dB)" : "sin reverb";
+    btn.disabled = false;
+    var a = [1, 0.8, 0.6, 0.5, 0.4, 0.33, 0.28, 0.25, 0.2, 0.18, 0.15, 0.13];
+    var parte = { tipo: "armonicos", f: 220, a: a, db: Math.max(-40, seco), dur: 3, pan: Math.max(-1, Math.min(1, p)) };
+    if (o > 0) parte.eq = [{ tipo: "lowpass", f: Math.round(fc), q: 0.71 }];
+    var partes = [parte];
+    if (conRev) partes.push({ tipo: "armonicos", f: 220, a: a, db: ENVIO, dur: 3, rev: { t60: 2, mix: 1 } });
+    btn.setAttribute("data-esc", JSON.stringify({ tipo: "mezcla", dur: 3, partes: partes }));
+  }
+  function mover(x, y) {
+    S.x = Math.max(0.5, Math.min(47.5, x)); S.y = Math.max(0.5, Math.min(35.5, y)); actualizar();
+  }
+  function aMetros(ev) {
+    var pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+    var q = pt.matrixTransform(svg.getScreenCTM().inverse()); return { x: q.x / 10, y: q.y / 10 };
+  }
+  var arrastra = false;
+  fuente.addEventListener("pointerdown", function (ev) { arrastra = true; try { fuente.setPointerCapture(ev.pointerId); } catch (e) {} fuente.style.cursor = "grabbing"; ev.preventDefault(); });
+  fuente.addEventListener("pointermove", function (ev) { if (arrastra) { var q = aMetros(ev); mover(q.x, q.y); } });
+  function suelta() { arrastra = false; fuente.style.cursor = "grab"; }
+  fuente.addEventListener("pointerup", suelta); fuente.addEventListener("pointercancel", suelta);
+  plano.addEventListener("click", function (ev) { var q = aMetros(ev); mover(q.x, q.y); });
+  fuente.addEventListener("keydown", function (ev) {
+    var paso = ev.shiftKey ? 4 : 1, k = ev.key, dx = 0, dy = 0;
+    if (k === "ArrowLeft") dx = -paso; else if (k === "ArrowRight") dx = paso; else if (k === "ArrowUp") dy = -paso; else if (k === "ArrowDown") dy = paso; else return;
+    ev.preventDefault(); mover(S.x + dx, S.y + dy);
+  });
+  ["ia-pared-on", "ia-rev-on"].forEach(function (i) { el(i).addEventListener("change", actualizar); });
+  [].forEach.call(document.querySelectorAll('input[name="ia-curva"]'), function (r) { r.addEventListener("change", actualizar); });
+  actualizar();
+})();
+</script>
+        <figcaption><b>Figura 2.</b> Planta de un nivel de 48&nbsp;m por 36&nbsp;m con el oyente (mira hacia arriba), la fuente y una pared con una puerta de 2&nbsp;m. Cinco rayos van del oyente a la fuente: los verdes pasan, los rojos chocan con la pared, y la fracción bloqueada es la obstrucción <i>o</i>. Los aros marcan, para la curva elegida, la pérdida de nivel a 4, 8 y 16&nbsp;m. Arrastrá la fuente, tocá un punto del plano o enfocala y usá las flechas (con Mayús, de a 4&nbsp;m). El botón la hace sonar con ese nivel, ese paneo y ese pasabajos.</figcaption>
+      </figure>
+
+    </section>
+
+    <section id="zonas">
+      <h2><span class="n">03</span>Reverb por zonas, voces y mezcla dinámica</h2>
+
+      <h3>Reverb integrada por zonas</h3>
+      <p>La reverberación de una sala (ver <a class="ref" href="/publicaciones/mapa-electronica/temas/reverberacion">Reverberación</a>) es costosa de calcular, y un juego puede tener cientos de fuentes. Nadie pone un reverberador en cada una. En su lugar el nivel se divide en <b>zonas</b>
+      (un pasillo, una nave, un exterior, una cueva), cada una con un reverberador compartido y con sus parámetros: tiempo de reverberación <i>T</i><sub>60</sub>, tamaño, brillo. Cada fuente manda una parte de su señal a ese reverberador mediante un <b>envío auxiliar</b>,
+      y el reverberador devuelve el resultado al bus de efectos. La zona que cuenta es la del <b>oyente</b>, y al cruzar una puerta los parámetros se mezclan gradualmente durante uno o dos segundos para que la cola no dé un salto.</p>
+      <p>Hay un punto de diseño que se olvida seguido: <b>el envío a la reverb no depende de la distancia</b>. El campo reverberante de una sala es casi uniforme (ver <a class="ref" href="/publicaciones/mapa-electronica/temas/acustica-recintos">Acústica de recintos</a>), mientras que el directo cae 6&nbsp;dB por duplicación.
+      Dejando fijo el envío y bajando el directo, la proporción de reverberación crece con la distancia, y es esa proporción la que el oído usa para decidir que algo está lejos. Un sonido que solo baja de nivel suena «bajo», no «lejos». El envío se fija con la distancia crítica <math><mrow><msub><mi>D</mi><mi>c</mi></msub></mrow></math>, donde directo y reverberante valen lo mismo:</p>
+      <div class="form">
+        <math display="block"><mrow><msub><mi>D</mi><mi>c</mi></msub><mo>≈</mo><mn>0,057</mn><msqrt><mrow><mfrac><mrow><mi>V</mi></mrow><mrow><msub><mi>T</mi><mrow><mn>60</mn></mrow></msub></mrow></mfrac></mrow></msqrt><mspace width="2em"/><mspace width="2em"/><mi>s</mi><mo>=</mo><mo>−</mo><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mfrac><mrow><msub><mi>D</mi><mi>c</mi></msub></mrow><mrow><msub><mi>d</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow></mfrac><mspace width="2em"/><mspace width="2em"/><mfrac><mrow><mi>D</mi></mrow><mrow><mi>R</mi></mrow></mfrac><mo>=</mo><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mfrac><mrow><msub><mi>D</mi><mi>c</mi></msub></mrow><mrow><mi>d</mi></mrow></mfrac></mrow></math>
+        <span class="cap"><math><mrow><mi>V</mi></mrow></math>: volumen de la zona (m³). <math><mrow><msub><mi>T</mi><mrow><mn>60</mn></mrow></msub></mrow></math>: tiempo de reverberación (s). <math><mrow><msub><mi>D</mi><mi>c</mi></msub></mrow></math>: distancia crítica (m), para una fuente omnidireccional (<math><mrow><mi>Q</mi><mo>=</mo><mn>1</mn></mrow></math>) en una sala bastante reverberante. <math><mrow><msub><mi>d</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow></math>: distancia donde la curva de atenuación vale 0&nbsp;dB (m). <math><mrow><mi>s</mi></mrow></math>: nivel del envío respecto del sonido a <math><mrow><msub><mi>d</mi><mrow><mi mathvariant="normal">min</mi></mrow></msub></mrow></math> (dB). <math><mrow><mi>D</mi><mo>/</mo><mi>R</mi></mrow></math>: relación entre directo y reverberante a la distancia <math><mrow><mi>d</mi></mrow></math> (dB).</span>
+      </div>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Zona (de ejemplo)</th><th class="c"><math><mrow><mi>V</mi></mrow></math> (m³)</th><th class="c"><math><mrow><msub><mi>T</mi><mrow><mn>60</mn></mrow></msub></mrow></math> (s)</th><th class="c"><math><mrow><msub><mi>D</mi><mi>c</mi></msub></mrow></math> (m)</th><th class="c">Envío <math><mrow><mi>s</mi></mrow></math> (dB)</th></tr></thead>
+          <tbody>
+            <tr><td>Sala de ensayo</td><td class="c">500</td><td class="c">1,0</td><td class="c">1,27</td><td class="c">−2,1</td></tr>
+            <tr><td>Depósito</td><td class="c">2000</td><td class="c">2,0</td><td class="c">1,80</td><td class="c">−5,1</td></tr>
+            <tr><td>Hangar</td><td class="c">20000</td><td class="c">5,0</td><td class="c">3,60</td><td class="c">−11,1</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Los volúmenes son de ejemplo. Cuanto más grande y reverberante es la zona, más lejos está <math><mrow><msub><mi>D</mi><mi>c</mi></msub></mrow></math> y menor es el envío relativo al sonido de referencia: en el hangar el envío es de −11&nbsp;dB, y a 10&nbsp;m el directo (<math><mrow><mo>−</mo><mn>20</mn></mrow></math>&nbsp;dB) ya está 9&nbsp;dB por debajo de la reverb. Son puntos de partida: la cifra final se ajusta de oído. También conviene tener un reverberador distinto para cada <i>familia</i> de zona (interior chico, interior grande, cueva), no uno por zona.</p>
+      <div class="escuchar"><span class="et">Escuchá, con volumen moderado, la misma secuencia de golpes secos en un exterior (sin reverb) y con la reverb de tres zonas de ejemplo. Fijate cómo el espacio se oye en la cola de cada golpe, no en el golpe.</span>
+        <button class="esc" data-esc='{"tipo":"notas","n":["X","-","x","-","X","-"],"r":[1],"bpm":80,"db":0}'>Exterior</button>
+        <button class="esc" data-esc='{"tipo":"notas","n":["X","-","x","-","X","-"],"r":[1],"bpm":80,"db":0,"rev":{"t60":1.0,"mix":0.35}}'>Sala (<i>T</i><sub>60</sub> 1,0&nbsp;s)</button>
+        <button class="esc" data-esc='{"tipo":"notas","n":["X","-","x","-","X","-"],"r":[1],"bpm":80,"db":0,"rev":{"t60":2.0,"mix":0.35}}'>Depósito (2,0&nbsp;s)</button>
+        <button class="esc" data-esc='{"tipo":"notas","n":["X","-","x","-","X","-"],"r":[1],"bpm":80,"db":0,"rev":{"t60":5.0,"mix":0.35}}'>Hangar (5,0&nbsp;s)</button>
+      </div>
+
+      <h3>Prioridad y número de voces</h3>
+      <p>Una <b>voz</b> es un sonido que está sonando: ocupa procesador y un lugar en el mezclador. El equipo de destino tiene un tope, que depende de la plataforma y de lo que el resto del juego deje libre (del orden de decenas de voces reales), y un nivel con cientos de emisores lo supera con facilidad. Si no hay política,
+      el motor corta el último que llegó, que puede ser justo un disparo del jugador. La política habitual es esta:</p>
+      <ul>
+        <li>Cada sonido lleva una <b>prioridad</b> escrita por el diseñador (el disparo del jugador, alta; los pájaros, baja).</li>
+        <li>Cuando se llega al tope, se ordenan las voces por prioridad y, a igual prioridad, por <b>audibilidad</b>: el nivel con que llegan al oyente después de la atenuación y la obstrucción.</li>
+        <li>Las voces que quedan fuera pasan a <b>virtuales</b>: no se mezclan, pero el motor sigue contando su posición en el tiempo, para que, si vuelven a ser audibles, no arranquen desde el principio. Además se fija un máximo por evento (por ejemplo, cuatro pasos a la vez) para que un grupo numeroso no copie la misma textura.</li>
+      </ul>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Sonido</th><th class="c">Prioridad</th><th class="c">Distancia (m)</th><th class="c">Nivel (dB)</th><th class="c">Con tope de 4</th></tr></thead>
+          <tbody>
+            <tr><td>Disparo del jugador</td><td class="c">90</td><td class="c">1</td><td class="c">0,0</td><td class="c">suena</td></tr>
+            <tr><td>Voz del aliado</td><td class="c">80</td><td class="c">6</td><td class="c">−15,6</td><td class="c">suena</td></tr>
+            <tr><td>Pasos del enemigo</td><td class="c">40</td><td class="c">8</td><td class="c">−18,1</td><td class="c">suena</td></tr>
+            <tr><td>Pasos de civil 1</td><td class="c">30</td><td class="c">3</td><td class="c">−9,5</td><td class="c">suena</td></tr>
+            <tr><td>Pasos de civil 2</td><td class="c">30</td><td class="c">12</td><td class="c">−21,6</td><td class="c">virtual</td></tr>
+            <tr><td>Pájaros</td><td class="c">20</td><td class="c">20</td><td class="c">−26,0</td><td class="c">virtual</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Con un tope de cuatro voces, los pasos del segundo civil (−21,6&nbsp;dB) y los pájaros quedan virtuales: pierden contra sonidos de mayor prioridad o, entre los pasos, contra el civil que está más cerca (−9,5&nbsp;dB). Si el civil&nbsp;1 se aleja hasta los 40&nbsp;m, el orden se invierte solo, sin tocar nada.</p>
+
+      <h3>Mezcla dinámica</h3>
+      <p>La mezcla de un juego no se hace una vez: se hace todo el tiempo, y se hace con reglas. Los sonidos se agrupan en buses y los buses reaccionan unos a otros. La regla más común es el <b>ducking</b>: mientras suena una línea de diálogo, la música y los efectos bajan unos decibeles, y vuelven cuando la voz termina. Es una compresión con cadena lateral
+      (<i>sidechain</i>), como la de <a class="ref" href="/publicaciones/mapa-electronica/temas/procesadores-dinamica">Procesadores de dinámica</a>, solo que el disparador no es una señal de audio sino un evento o el nivel de un bus. Un descenso de 9&nbsp;dB equivale a multiplicar la amplitud por <math><mrow><msup><mn>10</mn><mrow><mo>−</mo><mfrac><mrow><mn>9</mn></mrow><mrow><mn>20</mn></mrow></mfrac></mrow></msup><mo>=</mo><mn>0,355</mn></mrow></math>. El ataque tiene que ser rápido, para que la primera sílaba no quede tapada, y el relevo lento, para que no se oiga el «bombeo».</p>
+      <figure>
+        <svg viewBox="0 0 700 312" role="img" aria-label="Ducking de la música por una línea de diálogo: la ganancia de la música baja 9 decibeles con un ataque de 0,1 segundos y vuelve con un relevo de 0,8 segundos" class="svg-t" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif"><text x="14" y="56" font-size="13" font-weight="700" fill="#e6edf3">Voz</text><rect x="250" y="40" width="210" height="22" rx="4" fill="#3fb950"/><text x="355" y="56" text-anchor="middle" font-size="12" font-weight="700" fill="#0d1117">línea de diálogo</text><text x="14" y="80" font-size="13" font-weight="700" fill="#e6edf3">Música</text><text x="14" y="98" font-size="11" fill="#9aa7b4">ganancia (dB)</text><polyline points="110,110 670,110" fill="none" stroke="#333c4d" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/><text x="102" y="114" text-anchor="end" font-size="11" fill="#7d8a99">0</text><polyline points="110,200 670,200" fill="none" stroke="#333c4d" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/><text x="102" y="204" text-anchor="end" font-size="11" fill="#7d8a99">−9</text><polyline points="250,66 250,262" fill="none" stroke="#7d8a99" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 4"/><polyline points="460,66 460,262" fill="none" stroke="#7d8a99" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 4"/><polyline points="110,94 110,262 676,262" fill="none" stroke="#9aa7b4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><polyline points="110,262 110,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="110" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">0</text><polyline points="180,262 180,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="180" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">1</text><polyline points="250,262 250,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="250" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">2</text><polyline points="320,262 320,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="320" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">3</text><polyline points="390,262 390,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="390" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">4</text><polyline points="460,262 460,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="460" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">5</text><polyline points="530,262 530,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="530" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">6</text><polyline points="600,262 600,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="600" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">7</text><polyline points="670,262 670,268" fill="none" stroke="#9aa7b4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><text x="670" y="284" text-anchor="middle" font-size="11" fill="#7d8a99">8</text><text x="666" y="306" text-anchor="end" font-size="11.5" fill="#9aa7b4">Tiempo (s)</text><polyline points="110,110 250,110 257,200 460,200 516,110 670,110" fill="none" stroke="#58a6ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><text x="234" y="176" text-anchor="end" font-size="12" fill="#e6edf3">ataque 0,1 s</text><text x="358.5" y="222" text-anchor="middle" font-size="13" font-weight="700" fill="#d29922">−9 dB</text><text x="526" y="176" font-size="12" fill="#e6edf3">relevo 0,8 s</text></svg>
+        <figcaption><b>Figura 3.</b> Ducking de la música por una línea de diálogo (rampas lineales en decibeles): ataque de 0,1&nbsp;s, descenso de 9&nbsp;dB mientras habla la voz y relevo de 0,8&nbsp;s. Un ataque rápido protege la primera sílaba; un relevo lento evita el bombeo.</figcaption>
+      </figure>
+      <p>Otra regla son los <b>estados de mezcla</b> (instantáneas): «pausa» baja la música y cierra un pasabajos sobre los efectos; «bajo el agua» filtra todo el mundo salvo la interfaz; «aturdimiento» agrega un tono agudo y baja el resto. Se activan con un solo evento y vuelven con otro. El nivel final del juego, en cambio, se mide como cualquier otro programa
+      (ver <a class="ref" href="/publicaciones/mapa-electronica/temas/niveles-sonoridad">Niveles y sonoridad</a>), porque el jugador espera que dos juegos suenen parecidos en su sala.</p>
+
+    </section>
+
+    <section id="memoria">
+      <h2><span class="n">04</span>Memoria y compresión: qué se carga, cuánto pesa y qué se transmite</h2>
+
+      <p>Un archivo de audio sin comprimir (PCM) pesa lo mismo sin importar lo que contenga; la cuenta es directa (el formato está en <a class="ref" href="/publicaciones/mapa-electronica/temas/archivos-wav">Archivos WAV y metadatos</a>):</p>
+      <div class="form">
+        <math display="block"><mrow><mi>B</mi><mo>=</mo><msub><mi>f</mi><mi>s</mi></msub><mspace width="0.17em"/><msub><mi>n</mi><mi>c</mi></msub><mspace width="0.17em"/><mfrac><mrow><mi>b</mi></mrow><mrow><mn>8</mn></mrow></mfrac><mspace width="0.17em"/><mi>t</mi></mrow></math>
+        <span class="cap"><math><mrow><mi>B</mi></mrow></math>: tamaño (bytes). <math><mrow><msub><mi>f</mi><mi>s</mi></msub></mrow></math>: frecuencia de muestreo (Hz). <math><mrow><msub><mi>n</mi><mi>c</mi></msub></mrow></math>: cantidad de canales. <math><mrow><mi>b</mi></mrow></math>: bits por muestra. <math><mrow><mi>t</mi></mrow></math>: duración (s). Aquí 1 MB = 1&nbsp;000&nbsp;000 bytes.</span>
+      </div>
+      <div class="box ejem">
+        <div class="bt">Ejemplo resuelto · Memoria de un banco de pasos y de la música de un nivel</div>
+        <p><b>Pasos:</b> 8 superficies × 6 variaciones = 48 tomas de 0,4&nbsp;s, en mono, a 48&nbsp;kHz y 16&nbsp;bits. Cada una: <math><mrow><mi>B</mi><mo>=</mo><mn>48000</mn><mo>·</mo><mn>1</mn><mo>·</mo><mfrac><mrow><mn>16</mn></mrow><mrow><mn>8</mn></mrow></mfrac><mo>·</mo><mn>0,4</mn><mo>=</mo><mn>38</mn><mspace width="0.17em"/><mn>400</mn></mrow></math> bytes. El banco: <math><mrow><mn>48</mn><mo>·</mo><mn>38</mn><mspace width="0.17em"/><mn>400</mn><mo>=</mo><mn>1</mn><mspace width="0.17em"/><mn>843</mn><mspace width="0.17em"/><mn>200</mn></mrow></math> bytes, o sea 1,84&nbsp;MB. Con ADPCM, que guarda 4 bits por muestra en vez de 16 (relación 4:1), son 0,46&nbsp;MB.</p>
+        <p style="margin-top:8px"><b>Música:</b> 3&nbsp;min (180&nbsp;s) en estéreo a 48&nbsp;kHz y 16&nbsp;bits: <math><mrow><mi>B</mi><mo>=</mo><mn>48000</mn><mo>·</mo><mn>2</mn><mo>·</mo><mn>2</mn><mo>·</mo><mn>180</mn><mo>=</mo><mn>34</mn><mspace width="0.17em"/><mn>560</mn><mspace width="0.17em"/><mn>000</mn></mrow></math> bytes, 34,6&nbsp;MB. Codificada con Vorbis a 128&nbsp;kbit/s: <math><mrow><mi>B</mi><mo>=</mo><mfrac><mrow><mn>128000</mn></mrow><mrow><mn>8</mn></mrow></mfrac><mo>·</mo><mn>180</mn><mo>=</mo><mn>2</mn><mspace width="0.17em"/><mn>880</mn><mspace width="0.17em"/><mn>000</mn></mrow></math> bytes, 2,88&nbsp;MB.</p>
+        <p style="margin-top:8px"><b>Comprobación por otro camino:</b> la tasa del PCM es <math><mrow><mn>48000</mn><mo>·</mo><mn>2</mn><mo>·</mo><mn>16</mn><mo>=</mo><mn>1</mn><mspace width="0.17em"/><mn>536</mn><mspace width="0.17em"/><mn>000</mn></mrow></math> bit/s, y <math><mrow><mfrac><mrow><mn>1</mn><mspace width="0.17em"/><mn>536</mn><mspace width="0.17em"/><mn>000</mn></mrow><mrow><mn>128</mn><mspace width="0.17em"/><mn>000</mn></mrow></mfrac><mo>=</mo><mn>12</mn></mrow></math>, que es la relación <math><mrow><mfrac><mrow><mn>34,56</mn></mrow><mrow><mn>2,88</mn></mrow></mfrac><mo>=</mo><mn>12</mn></mrow></math> obtenida con los bytes.</p>
+        <p style="margin-top:8px"><b>Qué enseña:</b> los 48 pasos son una fracción mínima de un solo tema musical sin comprimir, pero se oyen decenas de veces por minuto; la música pesa mucho y se oye una vez. Cada uno pide una estrategia distinta.</p>
+      </div>
+      <p>Las estrategias de carga se eligen por la duración del sonido y por cuántas veces se dispara:</p>
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Tipo de sonido</th><th>Estrategia</th><th>Por qué</th></tr></thead>
+          <tbody>
+            <tr><td>Cortos y muy frecuentes (pasos, disparos, interfaz)</td><td>Cargados en memoria, en PCM o ADPCM.</td><td>Salen sin demora y casi no cuestan procesamiento. Son los que más se disparan; no se pueden permitir una espera.</td></tr>
+            <tr><td>Medianos (diálogos, objetos del escenario)</td><td>En memoria comprimidos (Vorbis u Opus) o por <i>streaming</i> con el primer tramo precargado.</td><td>Ahorran mucha memoria; el costo es decodificar mientras suenan.</td></tr>
+            <tr><td>Largos (música, ambientes de fondo)</td><td><i>Streaming</i> desde el disco con un buffer pequeño.</td><td>Solo ocupan en memoria el tramo que suena; hay que cuidar la latencia de arranque y el ancho de lectura del disco.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>La compresión con pérdida usa el modelo psicoacústico de <a class="ref" href="/publicaciones/mapa-electronica/temas/compresion-datos-audio">Compresión de datos de audio</a>; en un juego trae dos reservas. La primera, el procesamiento: decodificar cada voz comprimida cuesta, y con muchas voces se paga. La segunda, los lazos: no todos los formatos
+      permiten repetir un sonido sin un hueco de silencio en la unión, y por eso los lazos se prueban en el motor. Otras economías son bajar la frecuencia de muestreo de los sonidos sin agudos (a 24&nbsp;kHz de muestreo el banco de pasos pesa la mitad;
+      ver <a class="ref" href="/publicaciones/mapa-electronica/temas/cambio-frecuencia-muestreo">Cambio de la frecuencia de muestreo</a>) y reusar un mismo archivo con distinta altura. Un banco se carga con el nivel y se descarga al salir: la lista de bancos activos es parte del presupuesto de memoria.</p>
+
+    </section>
+
+    <section id="recorrido">
+      <h2><span class="n">05</span>Desde un paso hasta una reverb integrada: un recorrido completo</h2>
+
+      <p>Para fijar las ideas, el recorrido de un solo sonido por todo el sistema. El jugador está en un depósito; un guardia camina sobre piso metálico, a 3&nbsp;m a su derecha y 4&nbsp;m al frente, con una caja de por medio que lo oculta a medias. El juego publica el evento <code>Paso_Guardia</code> con la superficie «metal» y una intensidad de 0,5. La figura recorre las etapas una por una.</p>
+      <figure>
+        <svg viewBox="0 0 700 274" role="img" aria-label="Recorrido de un paso por el audio de un juego, animado en seis etapas: evento, toma, distancia y paneo, obstrucción, reverb de la zona y mezcla final, con los valores del ejemplo" class="svg-t" font-family="Segoe UI,system-ui,Roboto,Arial,sans-serif" data-anim><rect x="7" y="92" width="686" height="170" rx="8" fill="#171d2a" stroke="#2a3140" stroke-width="1.2"/><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="1;0;0;0;0;0" dur="18s" repeatCount="indefinite"/><rect x="7" y="14" width="96" height="50" rx="6" fill="#1f3a5f" stroke="#58a6ff" stroke-width="2.6"/><text x="55" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">Evento</text><text x="55" y="53" text-anchor="middle" font-size="11.5" fill="#e6edf3">del juego</text><polyline points="106,39 117,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="122,39 116,42 116,36" fill="#8896a6"/><rect x="125" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="173" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Toma</text><text x="173" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y variación</text><polyline points="224,39 235,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="240,39 234,42 234,36" fill="#8896a6"/><rect x="243" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="291" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Distancia</text><text x="291" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y paneo</text><polyline points="342,39 353,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="358,39 352,42 352,36" fill="#8896a6"/><rect x="361" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="409" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Obstrucción</text><text x="409" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">filtro y nivel</text><polyline points="460,39 471,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="476,39 470,42 470,36" fill="#8896a6"/><rect x="479" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="527" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Reverb</text><text x="527" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">de la zona</text><polyline points="578,39 589,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="594,39 588,42 588,36" fill="#8896a6"/><rect x="597" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="645" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Mezcla</text><text x="645" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">final</text><polyline points="55,64 55,92" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="122" font-size="15" font-weight="700" fill="#58a6ff">Evento del paso del guardia</text><text x="676" y="122" text-anchor="end" font-size="11.5" fill="#7d8a99">etapa 1 de 6</text><text x="24" y="154" font-size="13" fill="#9aa7b4">Emisor</text><text x="214" y="154" font-size="13.5" font-weight="600" fill="#e6edf3">a 3 m a la derecha y 4 m al frente del oyente</text><text x="24" y="182" font-size="13" fill="#9aa7b4">Estado</text><text x="214" y="182" font-size="13.5" font-weight="600" fill="#e6edf3">superficie = metal</text><text x="24" y="210" font-size="13" fill="#9aa7b4">Parámetro</text><text x="214" y="210" font-size="13.5" font-weight="600" fill="#e6edf3">intensidad = 0,5</text><text x="24" y="238" font-size="13" fill="#9aa7b4">El juego</text><text x="214" y="238" font-size="13.5" font-weight="600" fill="#e6edf3">no nombra ningún archivo: dice qué pasó y dónde</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;1;0;0;0;0" dur="18s" repeatCount="indefinite"/><rect x="7" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="55" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Evento</text><text x="55" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">del juego</text><polyline points="106,39 117,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="122,39 116,42 116,36" fill="#8896a6"/><rect x="125" y="14" width="96" height="50" rx="6" fill="#1f3a5f" stroke="#58a6ff" stroke-width="2.6"/><text x="173" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">Toma</text><text x="173" y="53" text-anchor="middle" font-size="11.5" fill="#e6edf3">y variación</text><polyline points="224,39 235,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="240,39 234,42 234,36" fill="#8896a6"/><rect x="243" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="291" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Distancia</text><text x="291" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y paneo</text><polyline points="342,39 353,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="358,39 352,42 352,36" fill="#8896a6"/><rect x="361" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="409" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Obstrucción</text><text x="409" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">filtro y nivel</text><polyline points="460,39 471,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="476,39 470,42 470,36" fill="#8896a6"/><rect x="479" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="527" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Reverb</text><text x="527" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">de la zona</text><polyline points="578,39 589,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="594,39 588,42 588,36" fill="#8896a6"/><rect x="597" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="645" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Mezcla</text><text x="645" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">final</text><polyline points="173,64 173,92" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="122" font-size="15" font-weight="700" fill="#58a6ff">Toma y variación</text><text x="676" y="122" text-anchor="end" font-size="11.5" fill="#7d8a99">etapa 2 de 6</text><text x="24" y="154" font-size="13" fill="#9aa7b4">Superficie</text><text x="214" y="154" font-size="13.5" font-weight="600" fill="#e6edf3">metal: 4 tomas disponibles</text><text x="24" y="182" font-size="13" fill="#9aa7b4">Elegida</text><text x="214" y="182" font-size="13.5" font-weight="600" fill="#e6edf3">toma 3, distinta de la anterior</text><text x="24" y="210" font-size="13" fill="#9aa7b4">Altura</text><text x="214" y="210" font-size="13.5" font-weight="600" fill="#e6edf3">× 1,013, al azar dentro de ± 2 %</text><text x="24" y="238" font-size="13" fill="#9aa7b4">Nivel</text><text x="214" y="238" font-size="13.5" font-weight="600" fill="#e6edf3">0 dB a 1 m (referencia del ejemplo)</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;1;0;0;0" dur="18s" repeatCount="indefinite"/><rect x="7" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="55" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Evento</text><text x="55" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">del juego</text><polyline points="106,39 117,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="122,39 116,42 116,36" fill="#8896a6"/><rect x="125" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="173" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Toma</text><text x="173" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y variación</text><polyline points="224,39 235,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="240,39 234,42 234,36" fill="#8896a6"/><rect x="243" y="14" width="96" height="50" rx="6" fill="#1f3a5f" stroke="#58a6ff" stroke-width="2.6"/><text x="291" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">Distancia</text><text x="291" y="53" text-anchor="middle" font-size="11.5" fill="#e6edf3">y paneo</text><polyline points="342,39 353,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="358,39 352,42 352,36" fill="#8896a6"/><rect x="361" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="409" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Obstrucción</text><text x="409" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">filtro y nivel</text><polyline points="460,39 471,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="476,39 470,42 470,36" fill="#8896a6"/><rect x="479" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="527" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Reverb</text><text x="527" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">de la zona</text><polyline points="578,39 589,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="594,39 588,42 588,36" fill="#8896a6"/><rect x="597" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="645" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Mezcla</text><text x="645" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">final</text><polyline points="291,64 291,92" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="122" font-size="15" font-weight="700" fill="#58a6ff">Distancia y paneo</text><text x="676" y="122" text-anchor="end" font-size="11.5" fill="#7d8a99">etapa 3 de 6</text><text x="24" y="154" font-size="13" fill="#9aa7b4">Distancia</text><text x="214" y="154" font-size="13.5" font-weight="600" fill="#e6edf3">5,0 m  →  atenuación −14,0 dB (curva inversa)</text><text x="24" y="182" font-size="13" fill="#9aa7b4">Acimut</text><text x="214" y="182" font-size="13.5" font-weight="600" fill="#e6edf3">36,9° a la derecha  →  paneo 0,6</text><text x="24" y="210" font-size="13" fill="#9aa7b4">Canal izquierdo</text><text x="214" y="210" font-size="13.5" font-weight="600" fill="#e6edf3">−10,2 dB</text><text x="24" y="238" font-size="13" fill="#9aa7b4">Canal derecho</text><text x="214" y="238" font-size="13.5" font-weight="600" fill="#e6edf3">−0,4 dB</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;1;0;0" dur="18s" repeatCount="indefinite"/><rect x="7" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="55" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Evento</text><text x="55" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">del juego</text><polyline points="106,39 117,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="122,39 116,42 116,36" fill="#8896a6"/><rect x="125" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="173" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Toma</text><text x="173" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y variación</text><polyline points="224,39 235,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="240,39 234,42 234,36" fill="#8896a6"/><rect x="243" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="291" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Distancia</text><text x="291" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y paneo</text><polyline points="342,39 353,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="358,39 352,42 352,36" fill="#8896a6"/><rect x="361" y="14" width="96" height="50" rx="6" fill="#1f3a5f" stroke="#58a6ff" stroke-width="2.6"/><text x="409" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">Obstrucción</text><text x="409" y="53" text-anchor="middle" font-size="11.5" fill="#e6edf3">filtro y nivel</text><polyline points="460,39 471,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="476,39 470,42 470,36" fill="#8896a6"/><rect x="479" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="527" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Reverb</text><text x="527" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">de la zona</text><polyline points="578,39 589,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="594,39 588,42 588,36" fill="#8896a6"/><rect x="597" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="645" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Mezcla</text><text x="645" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">final</text><polyline points="409,64 409,92" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="122" font-size="15" font-weight="700" fill="#58a6ff">Obstrucción</text><text x="676" y="122" text-anchor="end" font-size="11.5" fill="#7d8a99">etapa 4 de 6</text><text x="24" y="154" font-size="13" fill="#9aa7b4">Rayos</text><text x="214" y="154" font-size="13.5" font-weight="600" fill="#e6edf3">la mitad bloqueados: o = 0,5</text><text x="24" y="182" font-size="13" fill="#9aa7b4">Camino directo</text><text x="214" y="182" font-size="13.5" font-weight="600" fill="#e6edf3">−9,0 dB más</text><text x="24" y="210" font-size="13" fill="#9aa7b4">Pasabajos</text><text x="214" y="210" font-size="13.5" font-weight="600" fill="#e6edf3">corte en 4 000 Hz</text><text x="24" y="238" font-size="13" fill="#9aa7b4">Reverb</text><text x="214" y="238" font-size="13.5" font-weight="600" fill="#e6edf3">no se toca: sigue llegando por las reflexiones</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;1;0" dur="18s" repeatCount="indefinite"/><rect x="7" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="55" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Evento</text><text x="55" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">del juego</text><polyline points="106,39 117,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="122,39 116,42 116,36" fill="#8896a6"/><rect x="125" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="173" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Toma</text><text x="173" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y variación</text><polyline points="224,39 235,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="240,39 234,42 234,36" fill="#8896a6"/><rect x="243" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="291" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Distancia</text><text x="291" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y paneo</text><polyline points="342,39 353,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="358,39 352,42 352,36" fill="#8896a6"/><rect x="361" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="409" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Obstrucción</text><text x="409" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">filtro y nivel</text><polyline points="460,39 471,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="476,39 470,42 470,36" fill="#8896a6"/><rect x="479" y="14" width="96" height="50" rx="6" fill="#1f3a5f" stroke="#58a6ff" stroke-width="2.6"/><text x="527" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">Reverb</text><text x="527" y="53" text-anchor="middle" font-size="11.5" fill="#e6edf3">de la zona</text><polyline points="578,39 589,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="594,39 588,42 588,36" fill="#8896a6"/><rect x="597" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="645" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Mezcla</text><text x="645" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">final</text><polyline points="527,64 527,92" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="122" font-size="15" font-weight="700" fill="#58a6ff">Reverb de la zona</text><text x="676" y="122" text-anchor="end" font-size="11.5" fill="#7d8a99">etapa 5 de 6</text><text x="24" y="154" font-size="13" fill="#9aa7b4">Zona</text><text x="214" y="154" font-size="13.5" font-weight="600" fill="#e6edf3">depósito: 2 000 m³, T<tspan dy="3" font-size="0.76em">60</tspan><tspan dy="-3"> = 2,0 s</tspan></text><text x="24" y="182" font-size="13" fill="#9aa7b4">Distancia crítica</text><text x="214" y="182" font-size="13.5" font-weight="600" fill="#e6edf3">1,80 m</text><text x="24" y="210" font-size="13" fill="#9aa7b4">Envío</text><text x="214" y="210" font-size="13.5" font-weight="600" fill="#e6edf3">−5,1 dB, sin atenuar por distancia</text><text x="24" y="238" font-size="13" fill="#9aa7b4">Retorno</text><text x="214" y="238" font-size="13.5" font-weight="600" fill="#e6edf3">al bus de efectos</text></g><g opacity="0"><animate attributeName="opacity" calcMode="discrete" values="0;0;0;0;0;1" dur="18s" repeatCount="indefinite"/><rect x="7" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="55" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Evento</text><text x="55" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">del juego</text><polyline points="106,39 117,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="122,39 116,42 116,36" fill="#8896a6"/><rect x="125" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="173" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Toma</text><text x="173" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y variación</text><polyline points="224,39 235,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="240,39 234,42 234,36" fill="#8896a6"/><rect x="243" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="291" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Distancia</text><text x="291" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">y paneo</text><polyline points="342,39 353,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="358,39 352,42 352,36" fill="#8896a6"/><rect x="361" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="409" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Obstrucción</text><text x="409" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">filtro y nivel</text><polyline points="460,39 471,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="476,39 470,42 470,36" fill="#8896a6"/><rect x="479" y="14" width="96" height="50" rx="6" fill="#1c2230" stroke="#c8d2dd" stroke-width="1.6"/><text x="527" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#e6edf3">Reverb</text><text x="527" y="53" text-anchor="middle" font-size="11.5" fill="#9aa7b4">de la zona</text><polyline points="578,39 589,39" fill="none" stroke="#8896a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polygon points="594,39 588,42 588,36" fill="#8896a6"/><rect x="597" y="14" width="96" height="50" rx="6" fill="#1f3a5f" stroke="#58a6ff" stroke-width="2.6"/><text x="645" y="33" text-anchor="middle" font-size="12.5" font-weight="700" fill="#ffffff">Mezcla</text><text x="645" y="53" text-anchor="middle" font-size="11.5" fill="#e6edf3">final</text><polyline points="645,64 645,92" fill="none" stroke="#58a6ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><text x="24" y="122" font-size="15" font-weight="700" fill="#58a6ff">Mezcla final</text><text x="676" y="122" text-anchor="end" font-size="11.5" fill="#7d8a99">etapa 6 de 6</text><text x="24" y="154" font-size="13" fill="#9aa7b4">Directo</text><text x="214" y="154" font-size="13.5" font-weight="600" fill="#e6edf3">izquierda −33,2 dB  ·  derecha −23,4 dB</text><text x="24" y="182" font-size="13" fill="#9aa7b4">Reverb</text><text x="214" y="182" font-size="13.5" font-weight="600" fill="#e6edf3">−5,1 dB</text><text x="24" y="210" font-size="13" fill="#9aa7b4">Directo / reverberante</text><text x="214" y="210" font-size="13.5" font-weight="600" fill="#e6edf3">−17,9 dB: suena lejos y tapado</text><text x="24" y="238" font-size="13" fill="#9aa7b4">Destino</text><text x="214" y="238" font-size="13.5" font-weight="600" fill="#e6edf3">bus «Efectos» → mezcla maestra</text></g></svg>
+        <figcaption><b>Figura 4.</b> El recorrido de un paso, animado, en seis etapas: el evento, la toma, la distancia y el paneo, la obstrucción, la reverb de la zona y la mezcla final. Los valores son los del ejemplo resuelto; las cuentas están debajo. Tocá la figura para detener la animación y pasar de etapa a mano.</figcaption>
+      </figure>
+      <div class="box ejem">
+        <div class="bt">Ejemplo resuelto · El paso del guardia, de principio a fin</div>
+        <p><b>Datos:</b> curva inversa con <i>d</i><sub>mín</sub> = 1&nbsp;m y <i>d</i><sub>máx</sub> = 30&nbsp;m; obstrucción <i>o</i> = 0,5; zona «depósito» de 2&nbsp;000&nbsp;m³ y <i>T</i><sub>60</sub> = 2,0&nbsp;s.</p>
+        <p style="margin-top:8px"><b>Distancia:</b> <math><mrow><mi>d</mi><mo>=</mo><msqrt><mrow><msup><mn>3</mn><mn>2</mn></msup><mo>+</mo><msup><mn>4</mn><mn>2</mn></msup></mrow></msqrt><mo>=</mo><mn>5,0</mn></mrow></math> m, y <math><mrow><mi>L</mi><mo>=</mo><mo>−</mo><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>5</mn><mo>=</mo><mo>−</mo><mn>14,0</mn></mrow></math> dB.</p>
+        <p style="margin-top:8px"><b>Paneo:</b> <math><mrow><mi>p</mi><mo>=</mo><mfrac><mrow><mn>3</mn></mrow><mrow><mn>5</mn></mrow></mfrac><mo>=</mo><mn>0,6</mn></mrow></math> (acimut 36,9°), <math><mrow><mi>θ</mi><mo>=</mo><mfrac><mrow><mi>π</mi></mrow><mrow><mn>4</mn></mrow></mfrac><mspace width="0.17em"/><mo>(</mo><mn>1,6</mn><mo>)</mo><mo>=</mo><mn>72</mn><mo>°</mo></mrow></math>. Entonces <math><mrow><msub><mi>g</mi><mi>I</mi></msub><mo>=</mo><mi>cos</mi><mo>&#x2061;</mo><mn>72</mn><mo>°</mo><mo>=</mo><mn>0,309</mn></mrow></math> (<math><mrow><mo>−</mo><mn>10,2</mn></mrow></math> dB) y <math><mrow><msub><mi>g</mi><mi>D</mi></msub><mo>=</mo><mi mathvariant="normal">sen</mi><mn>72</mn><mo>°</mo><mo>=</mo><mn>0,951</mn></mrow></math> (<math><mrow><mo>−</mo><mn>0,4</mn></mrow></math> dB). Comprobación: <math><mrow><msup><mn>0,309</mn><mn>2</mn></msup><mo>+</mo><msup><mn>0,951</mn><mn>2</mn></msup><mo>=</mo><mn>0,0955</mn><mo>+</mo><mn>0,9045</mn><mo>=</mo><mn>1</mn></mrow></math>.</p>
+        <p style="margin-top:8px"><b>Obstrucción:</b> <math><mrow><mi>Δ</mi><mi>L</mi><mo>=</mo><mo>−</mo><mn>18</mn><mo>·</mo><mn>0,5</mn><mo>=</mo><mo>−</mo><mn>9,0</mn></mrow></math> dB y <math><mrow><msub><mi>f</mi><mi>c</mi></msub><mo>=</mo><mn>20000</mn><mspace width="0.17em"/><mo>(</mo><mn>0,04</mn><msup><mo>)</mo><mrow><mn>0,5</mn></mrow></msup><mo>=</mo><mn>4000</mn></mrow></math> Hz.</p>
+        <p style="margin-top:8px"><b>Reverb:</b> <math><mrow><msub><mi>D</mi><mi>c</mi></msub><mo>=</mo><mn>0,057</mn><msqrt><mrow><mfrac><mrow><mn>2000</mn></mrow><mrow><mn>2,0</mn></mrow></mfrac></mrow></msqrt><mo>=</mo><mn>0,057</mn><mo>·</mo><mn>31,6</mn><mo>=</mo><mn>1,80</mn></mrow></math> m, y el envío es <math><mrow><mi>s</mi><mo>=</mo><mo>−</mo><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>1,80</mn><mo>=</mo><mo>−</mo><mn>5,1</mn></mrow></math> dB. No se atenúa con la distancia ni con la obstrucción.</p>
+        <p style="margin-top:8px"><b>Mezcla:</b> directo antes del paneo, <math><mrow><mo>−</mo><mn>14,0</mn><mo>−</mo><mn>9,0</mn><mo>=</mo><mo>−</mo><mn>23,0</mn></mrow></math> dB. Izquierda: <math><mrow><mo>−</mo><mn>23,0</mn><mo>+</mo><mo>(</mo><mo>−</mo><mn>10,2</mn><mo>)</mo><mo>=</mo><mo>−</mo><mn>33,2</mn></mrow></math> dB; derecha: <math><mrow><mo>−</mo><mn>23,0</mn><mo>+</mo><mo>(</mo><mo>−</mo><mn>0,4</mn><mo>)</mo><mo>=</mo><mo>−</mo><mn>23,4</mn></mrow></math> dB. La relación directo a reverberante es <math><mrow><mo>−</mo><mn>23,0</mn><mo>−</mo><mo>(</mo><mo>−</mo><mn>5,1</mn><mo>)</mo><mo>=</mo><mo>−</mo><mn>17,9</mn></mrow></math> dB.</p>
+        <p style="margin-top:8px"><b>Comprobación por otro camino</b> (la relación con la distancia crítica y sin obstrucción): <math><mrow><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mfrac><mrow><mn>1,80</mn></mrow><mrow><mn>5,0</mn></mrow></mfrac><mo>=</mo><mo>−</mo><mn>8,9</mn></mrow></math> dB, y la obstrucción resta 9,0&nbsp;dB más: <math><mrow><mo>−</mo><mn>8,9</mn><mo>−</mo><mn>9,0</mn><mo>=</mo><mo>−</mo><mn>17,9</mn></mrow></math> dB, igual que arriba.</p>
+        <p style="margin-top:8px"><b>Qué enseña:</b> con la reverb a −5,1&nbsp;dB y el directo a −23,0&nbsp;dB el guardia se percibe lejos y tapado, aunque está a solo 5&nbsp;m: la sensación de distancia sale tanto de la reverb como del nivel.</p>
+      </div>
+      <p>Las mismas cuentas, en JavaScript. Es un programa completo y ejecutable con <code>node</code>; incluye la elección de voces de la sección anterior:</p>
+      <pre class="code"><code><span class="c-com">// Las cuentas del recorrido «Paso_Guardia», en JavaScript sin dependencias (se ejecuta con node)</span>
+<span class="c-kw">const</span> dB = (g) =&gt; <span class="c-num">20</span> * <span class="c-kw">Math</span>.<span class="c-fn">log10</span>(g);
+<span class="c-kw">const</span> r1 = (x) =&gt; <span class="c-kw">Math</span>.<span class="c-fn">round</span>(x * <span class="c-num">10</span>) / <span class="c-num">10</span>;
+
+<span class="c-com">// 1) Atenuación con la distancia: tres curvas, con dMin (el nivel no sube) y dMax (la voz se detiene)</span>
+<span class="c-kw">function</span> <span class="c-fn">atenuacion</span>(d, curva) {
+  <span class="c-kw">const</span> dMin = <span class="c-num">1</span>, dMax = <span class="c-num">30</span>;
+  <span class="c-kw">if</span> (d &gt; dMax) <span class="c-kw">return</span> -<span class="c-kw">Infinity</span>;
+  <span class="c-kw">const</span> x = <span class="c-kw">Math</span>.<span class="c-fn">max</span>(d, dMin);
+  <span class="c-kw">if</span> (curva === <span class="c-str">"lineal"</span>) <span class="c-kw">return</span> <span class="c-fn">dB</span>(<span class="c-num">1</span> - (x - dMin) / (dMax - dMin));
+  <span class="c-kw">const</span> N = curva === <span class="c-str">"inversa"</span> ? <span class="c-fn">dB</span>(<span class="c-num">2</span>) : <span class="c-num">3</span>;      <span class="c-com">// dB que se pierden al duplicar la distancia</span>
+  <span class="c-kw">return</span> -N * <span class="c-kw">Math</span>.<span class="c-fn">log2</span>(x / dMin);
+}
+
+<span class="c-com">// 2) Paneo de potencia constante: el oyente mira hacia +y, la fuente está en (dx, dy)</span>
+<span class="c-kw">function</span> <span class="c-fn">paneo</span>(dx, dy) {
+  <span class="c-kw">const</span> p = dx / <span class="c-kw">Math</span>.<span class="c-fn">hypot</span>(dx, dy);              <span class="c-com">// seno del acimut: de -1 (izquierda) a +1 (derecha)</span>
+  <span class="c-kw">const</span> th = (<span class="c-kw">Math</span>.PI / <span class="c-num">4</span>) * (<span class="c-num">1</span> + p);
+  <span class="c-kw">return</span> { p, izq: <span class="c-fn">dB</span>(<span class="c-kw">Math</span>.<span class="c-fn">cos</span>(th)), der: <span class="c-fn">dB</span>(<span class="c-kw">Math</span>.<span class="c-fn">sin</span>(th)) };
+}
+
+<span class="c-com">// 3) Obstrucción o (0 a 1, fracción de rayos bloqueados) -&gt; nivel y pasabajos del camino directo</span>
+<span class="c-kw">function</span> <span class="c-fn">obstruccion</span>(o) {
+  <span class="c-kw">const</span> fMin = <span class="c-num">800</span>, fMax = <span class="c-num">20000</span>, maxDb = <span class="c-num">18</span>;
+  <span class="c-kw">return</span> { db: -maxDb * o, fc: fMax * <span class="c-kw">Math</span>.<span class="c-fn">pow</span>(fMin / fMax, o) };
+}
+
+<span class="c-com">// 4) Envío a la reverb de la zona: la reverb tiene el nivel del directo a la distancia crítica</span>
+<span class="c-kw">function</span> <span class="c-fn">envioReverb</span>(volumen, t60, dMin = <span class="c-num">1</span>) {
+  <span class="c-kw">const</span> dc = <span class="c-num">0.057</span> * <span class="c-kw">Math</span>.<span class="c-fn">sqrt</span>(volumen / t60);
+  <span class="c-kw">return</span> { dc, envio: -<span class="c-fn">dB</span>(dc / dMin) };
+}
+
+<span class="c-com">// 5) Voces: manda la prioridad y, a igual prioridad, el nivel con que llega al oyente</span>
+<span class="c-kw">function</span> <span class="c-fn">elegirVoces</span>(voces, limite) {
+  <span class="c-kw">const</span> orden = [...voces].<span class="c-fn">sort</span>((a, b) =&gt; b.prioridad - a.prioridad || b.nivel - a.nivel);
+  <span class="c-kw">return</span> { suenan: orden.<span class="c-fn">slice</span>(<span class="c-num">0</span>, limite), virtuales: orden.<span class="c-fn">slice</span>(limite) };
+}
+
+<span class="c-com">// Evento Paso_Guardia: el guardia está 3&nbsp;m a la derecha y 4&nbsp;m al frente del oyente</span>
+<span class="c-kw">const</span> dx = <span class="c-num">3</span>, dy = <span class="c-num">4</span>, d = <span class="c-kw">Math</span>.<span class="c-fn">hypot</span>(dx, dy);
+<span class="c-kw">const</span> dist = <span class="c-fn">atenuacion</span>(d, <span class="c-str">"inversa"</span>);
+<span class="c-kw">const</span> pan = <span class="c-fn">paneo</span>(dx, dy);
+<span class="c-kw">const</span> obs = <span class="c-fn">obstruccion</span>(<span class="c-num">0.5</span>);
+<span class="c-kw">const</span> rev = <span class="c-fn">envioReverb</span>(<span class="c-num">2000</span>, <span class="c-num">2.0</span>);
+<span class="c-kw">const</span> directo = dist + obs.db;
+<span class="c-kw">console</span>.<span class="c-fn">log</span>(<span class="c-str">"distancia"</span>, d, <span class="c-str">"m -&gt; "</span>, <span class="c-fn">r1</span>(dist), <span class="c-str">"dB"</span>);
+<span class="c-kw">console</span>.<span class="c-fn">log</span>(<span class="c-str">"paneo"</span>, pan.p, <span class="c-str">" izq"</span>, <span class="c-fn">r1</span>(pan.izq), <span class="c-str">"dB  der"</span>, <span class="c-fn">r1</span>(pan.der), <span class="c-str">"dB"</span>);
+<span class="c-kw">console</span>.<span class="c-fn">log</span>(<span class="c-str">"obstruccion"</span>, <span class="c-fn">r1</span>(obs.db), <span class="c-str">"dB, pasabajos en"</span>, <span class="c-kw">Math</span>.<span class="c-fn">round</span>(obs.fc), <span class="c-str">"Hz"</span>);
+<span class="c-kw">console</span>.<span class="c-fn">log</span>(<span class="c-str">"distancia critica"</span>, <span class="c-fn">r1</span>(rev.dc), <span class="c-str">"m -&gt; envio"</span>, <span class="c-fn">r1</span>(rev.envio), <span class="c-str">"dB"</span>);
+<span class="c-kw">console</span>.<span class="c-fn">log</span>(<span class="c-str">"directo izq"</span>, <span class="c-fn">r1</span>(directo + pan.izq), <span class="c-str">"dB  der"</span>, <span class="c-fn">r1</span>(directo + pan.der), <span class="c-str">"dB"</span>);
+<span class="c-kw">console</span>.<span class="c-fn">log</span>(<span class="c-str">"directo/reverberante"</span>, <span class="c-fn">r1</span>(directo - rev.envio), <span class="c-str">"dB"</span>);
+
+<span class="c-kw">const</span> voces = [
+  { nombre: <span class="c-str">"Disparo del jugador"</span>, prioridad: <span class="c-num">90</span>, nivel: <span class="c-fn">atenuacion</span>(<span class="c-num">1</span>, <span class="c-str">"inversa"</span>) },
+  { nombre: <span class="c-str">"Voz del aliado"</span>, prioridad: <span class="c-num">80</span>, nivel: <span class="c-fn">atenuacion</span>(<span class="c-num">6</span>, <span class="c-str">"inversa"</span>) },
+  { nombre: <span class="c-str">"Pasos del enemigo"</span>, prioridad: <span class="c-num">40</span>, nivel: <span class="c-fn">atenuacion</span>(<span class="c-num">8</span>, <span class="c-str">"inversa"</span>) },
+  { nombre: <span class="c-str">"Pasos de civil 1"</span>, prioridad: <span class="c-num">30</span>, nivel: <span class="c-fn">atenuacion</span>(<span class="c-num">3</span>, <span class="c-str">"inversa"</span>) },
+  { nombre: <span class="c-str">"Pasos de civil 2"</span>, prioridad: <span class="c-num">30</span>, nivel: <span class="c-fn">atenuacion</span>(<span class="c-num">12</span>, <span class="c-str">"inversa"</span>) },
+  { nombre: <span class="c-str">"Pájaros"</span>, prioridad: <span class="c-num">20</span>, nivel: <span class="c-fn">atenuacion</span>(<span class="c-num">20</span>, <span class="c-str">"inversa"</span>) },
+];
+<span class="c-kw">const</span> { suenan, virtuales } = <span class="c-fn">elegirVoces</span>(voces, <span class="c-num">4</span>);
+<span class="c-kw">console</span>.<span class="c-fn">log</span>(<span class="c-str">"suenan:"</span>, suenan.<span class="c-fn">map</span>((v) =&gt; v.nombre).<span class="c-fn">join</span>(<span class="c-str">", "</span>));
+<span class="c-kw">console</span>.<span class="c-fn">log</span>(<span class="c-str">"virtuales:"</span>, virtuales.<span class="c-fn">map</span>((v) =&gt; v.nombre).<span class="c-fn">join</span>(<span class="c-str">", "</span>));</code></pre>
+      <pre class="code"><code><span class="c-com">// salida</span>
+distancia 5&nbsp;m ->  -14&nbsp;dB
+paneo 0.6  izq -10.2&nbsp;dB  der -0.4&nbsp;dB
+obstruccion -9&nbsp;dB, pasabajos en 4000&nbsp;Hz
+distancia critica 1.8&nbsp;m -> envio -5.1&nbsp;dB
+directo izq -33.2&nbsp;dB  der -23.4&nbsp;dB
+directo/reverberante -17.9&nbsp;dB
+suenan: Disparo del jugador, Voz del aliado, Pasos del enemigo, Pasos de civil 1
+virtuales: Pasos de civil 2, Pájaros</code></pre>
+      <p>Si el resultado no coincide con el de la figura, el programa está mal; si coincide, se puede cambiar <code>dx</code>, <code>dy</code>, la obstrucción o la zona y ver qué pasa antes de pasarlo a un motor real. Los motores hacen exactamente esto, más rápido y con más casos: una vez por cuadro y por emisor.</p>
+      <div class="box">
+        <div class="bt">Para ampliar</div>
+        <p><i>Sound Reinforcement Handbook</i>, G. Davis y R. Jones (Yamaha, 2.ª ed., 1989), sección 5.1 («The Inverse Square Law», pp. 43–44, con la subsección 5.1.1 de cálculos): la caída de 6&nbsp;dB por duplicación de la distancia en campo libre, explicada con una esfera cuyo radio se duplica, y ejemplos de cálculo de nivel a distancia dados con la sensibilidad del altavoz. El libro trata el refuerzo sonoro, no el audio de juegos: no menciona motores, middleware, HRTF ni oclusión, y su ley inversa es la base de la curva «inversa» de esta página.
+        Las curvas lineal y logarítmica, los envíos por zona y la política de voces son prácticas de los motores de juego, que no están en el libro.</p>
+      </div>
+
+    </section>
+
+    <section id="laboratorio">
+      <h2><span class="n">06</span>En el laboratorio</h2>
+
+      <div class="box peligro">
+        <div class="bt">Cuidado del oído en estas prácticas</div>
+        <p>Las comparaciones piden escuchar sonidos de distinto nivel. No subas el volumen para oír el sonido «lejano»: acercate al parlante o cambiá de auriculares. Ruido rosa continuo a más de 80&nbsp;dB a un metro del parlante cansa el oído más rápido de lo que se nota; mantenelo en 70&nbsp;dB o menos y hacé pausas de un minuto cada diez. Con auriculares, el límite es el volumen más bajo con el que aún se distingue el sonido.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 1 · Medir la caída con la distancia</div>
+        <p><b>Materiales:</b> un parlante, un celular con aplicación de nivel sonoro, una computadora con Audacity (Generar → Ruido → Rosa), una cinta métrica, un espacio abierto (patio o plaza, lejos de paredes) y un pasillo o salón cerrado.</p>
+        <p style="margin-top:8px"><b>Pasos:</b> 1) Reproducí ruido rosa con el parlante a 1,2&nbsp;m de altura y dejá el volumen fijo, de modo que a 1&nbsp;m dé unos 70&nbsp;dB. 2) Con el celular apuntado al parlante, medí 15&nbsp;s de nivel promedio a 1, 2, 4, 8 y 16&nbsp;m, sobre la misma línea. 3) Repetí en el recinto cerrado. 4) Calculá la diferencia entre cada punto y el siguiente. 5) Dibujá las tres curvas de la figura 1 con <i>d</i><sub>mín</sub> = 1&nbsp;m sobre tus puntos.</p>
+        <p style="margin-top:8px"><b>Qué tiene que dar:</b> al aire libre, cada duplicación debería bajar entre 5 y 7&nbsp;dB, cerca de la curva inversa; el viento, el piso y el piso de ruido del celular desvían unos decibeles, y a 16&nbsp;m el fondo puede dominar: medí el fondo sin fuente y corregilo si hace falta. En el recinto cerrado la caída debería ir siendo menor a partir de unos pocos metros, hasta aplanarse: allí manda el campo reverberante, y el punto de inflexión es la distancia crítica. Anotá la pendiente de cada medición en decibeles por duplicación.</p>
+      </div>
+      <div class="box lab">
+        <div class="bt">Práctica 2 · Armar en Audacity la escena del recorrido</div>
+        <p><b>Materiales:</b> Audacity y un sonido breve y de banda ancha en mono (un paso grabado con el celular, o Generar → Pista de clics).</p>
+        <p style="margin-top:8px"><b>Pasos:</b> 1) Duplicá la pista dos veces: una será el camino directo y otra la reverb. 2) Directo: Efecto → Amplificar en −23,0&nbsp;dB (la suma de la distancia y la obstrucción del ejemplo) y Efecto → Filtro pasabajos en 4&nbsp;000&nbsp;Hz con la pendiente más baja. 3) Convertí la pista a estéreo (Pista → Agregar nueva → Estéreo, o dividila y duplicala) y aplicá −10,2&nbsp;dB al canal izquierdo y −0,4&nbsp;dB al derecho. 4) Reverb: Efecto → Reverberación con la opción «solo señal procesada», ajustando el tamaño de la sala hasta que la cola dure unos 2&nbsp;s, y Amplificar en −5,1&nbsp;dB. 5) Mezclá y renderizá. 6) Repetí con un directo 12&nbsp;dB más bajo (el guardia a unos 20&nbsp;m) sin cambiar la reverb.</p>
+        <p style="margin-top:8px"><b>Qué tiene que dar:</b> el sonido ubicado hacia la derecha, oscurecido y rodeado de reverberación; en la repetición, el golpe seco casi desaparece y queda sobre todo la cola: suena mucho más lejos aunque el nivel total haya cambiado poco. Medí con Analizar → Contraste los niveles del directo y de la reverb: su diferencia es la relación directo a reverberante que calculaste (−17,9&nbsp;dB, con la dispersión que da la forma de la cola).</p>
+      </div>
+
+    </section>
+
+    <section id="errores">
+      <h2><span class="n">07</span>Errores frecuentes</h2>
+
+      <div class="tw">
+        <table class="tab">
+          <thead><tr><th>Error</th><th>Consecuencia</th></tr></thead>
+          <tbody>
+            <tr><td>Importar en estéreo un sonido que va a ser un emisor 3D</td><td>Se reparte entre los dos lados y no tiene un punto en el mundo: no se panea y no se obstruye bien. Los emisores 3D van en mono; el estéreo es para ambientes sin posición.</td></tr>
+            <tr><td>Usar la ley inversa sin distancia mínima</td><td>La ganancia crece sin límite al acercarse: a 0,25&nbsp;m el nivel sube 12&nbsp;dB y puede saturar.</td></tr>
+            <tr><td>Cortar la voz en <i>d</i><sub>máx</sub> sin fundido</td><td>Con la curva inversa la voz sigue en −29,5&nbsp;dB a 30&nbsp;m, y al detenerla se oye un salto cada vez que el jugador cruza ese radio.</td></tr>
+            <tr><td>Resolver la oclusión solo con una baja de nivel</td><td>El sonido se oye lejano, no tapado: lo que delata la pared es la pérdida de agudos.</td></tr>
+            <tr><td>Atenuar el envío de reverb con la distancia (o con la obstrucción)</td><td>Se pierde la pista que más dice «lejos»: el sonido se apaga en seco en lugar de empastarse en reverb.</td></tr>
+            <tr><td>Poner un reverberador en cada fuente</td><td>El costo de procesamiento crece con el número de emisores y el motor se queda sin recursos.</td></tr>
+            <tr><td>No fijar un tope de voces ni prioridades</td><td>Cuando se llena el mezclador se corta el último sonido que llegó: puede ser el disparo del jugador.</td></tr>
+            <tr><td>Cargar en memoria la música entera, o hacer <i>streaming</i> de un paso</td><td>Treinta y cuatro megabytes por tema sin comprimir, o un retraso audible al disparar un paso que espera al disco.</td></tr>
+            <tr><td>Un ducking con ataque lento o relevo rápido</td><td>La primera sílaba queda tapada por la música, o la música «respira» audiblemente cuando la voz termina.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <section id="autoevaluacion" class="check">
+      <h2><span class="n">08</span>Autoevaluación</h2>
+      <details class="q"><summary>Con <i>d</i><sub>mín</sub> = 1&nbsp;m y <i>d</i><sub>máx</sub> = 30&nbsp;m, ¿cuántos decibeles pierde un sonido a 12&nbsp;m con la curva inversa, con la logarítmica de 3&nbsp;dB y con la lineal?</summary>
+        <div class="a"><p>Inversa: <math><mrow><mo>−</mo><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>12</mn><mo>=</mo><mo>−</mo><mn>21,6</mn></mrow></math> dB. Logarítmica: <math><mrow><mo>−</mo><mn>3</mn><msub><mi>log</mi><mn>2</mn></msub><mo>&#x2061;</mo><mn>12</mn><mo>=</mo><mo>−</mo><mn>3</mn><mo>·</mo><mn>3,585</mn><mo>=</mo><mo>−</mo><mn>10,75</mn></mrow></math> dB. Lineal: <math><mrow><mi>g</mi><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><mn>11</mn></mrow><mrow><mn>29</mn></mrow></mfrac><mo>=</mo><mn>0,6207</mn></mrow></math>, y <math><mrow><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>0,6207</mn><mo>=</mo><mo>−</mo><mn>4,14</mn></mrow></math> dB. Por otro camino, la inversa: <math><mrow><mfrac><mrow><mn>1</mn></mrow><mrow><mn>12</mn></mrow></mfrac><mo>=</mo><mn>0,0833</mn></mrow></math> y <math><mrow><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>0,0833</mn><mo>=</mo><mo>−</mo><mn>21,6</mn></mrow></math> dB.</p></div></details>
+
+      <details class="q"><summary>¿A qué distancia la curva inversa pierde 40&nbsp;dB? ¿Alcanza con la <i>d</i><sub>máx</sub> de 30&nbsp;m?</summary>
+        <div class="a"><p><math><mrow><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mfrac><mrow><mi>d</mi></mrow><mrow><mn>1</mn></mrow></mfrac><mo>=</mo><mn>40</mn></mrow></math> da <math><mrow><mi>d</mi><mo>=</mo><msup><mn>10</mn><mrow><mfrac><mrow><mn>40</mn></mrow><mrow><mn>20</mn></mrow></mfrac></mrow></msup><mo>=</mo><mn>100</mn></mrow></math> m. Con <i>d</i><sub>máx</sub> = 30&nbsp;m la voz se detiene cuando todavía está 29,5&nbsp;dB por debajo de la referencia, así que el corte se oye. Se puede usar un fundido en el tramo final o una curva más empinada que la física.</p></div></details>
+
+      <details class="q"><summary>Una fuente está a 20° a la derecha del frente. ¿Cuánto vale el paneo y qué ganancia (en dB) recibe cada canal?</summary>
+        <div class="a"><p><math><mrow><mi>p</mi><mo>=</mo><mi mathvariant="normal">sen</mi><mn>20</mn><mo>°</mo><mo>=</mo><mn>0,342</mn></mrow></math>; <math><mrow><mi>θ</mi><mo>=</mo><mfrac><mrow><mi>π</mi></mrow><mrow><mn>4</mn></mrow></mfrac><mspace width="0.17em"/><mo>(</mo><mn>1,342</mn><mo>)</mo><mo>=</mo><mn>60,4</mn><mo>°</mo></mrow></math>. <math><mrow><msub><mi>g</mi><mi>I</mi></msub><mo>=</mo><mi>cos</mi><mo>&#x2061;</mo><mn>60,4</mn><mo>°</mo><mo>=</mo><mn>0,494</mn></mrow></math> (<math><mrow><mo>−</mo><mn>6,1</mn></mrow></math> dB) y <math><mrow><msub><mi>g</mi><mi>D</mi></msub><mo>=</mo><mi mathvariant="normal">sen</mi><mn>60,4</mn><mo>°</mo><mo>=</mo><mn>0,870</mn></mrow></math> (<math><mrow><mo>−</mo><mn>1,2</mn></mrow></math> dB). Control: <math><mrow><msup><mn>0,494</mn><mn>2</mn></msup><mo>+</mo><msup><mn>0,870</mn><mn>2</mn></msup><mo>=</mo><mn>0,244</mn><mo>+</mo><mn>0,756</mn><mo>=</mo><mn>1,00</mn></mrow></math>.</p></div></details>
+
+      <details class="q"><summary>Un pasabajos de primer orden tiene <i>f</i><sub>c</sub> = 2&nbsp;kHz. ¿Cuánto atenúa a 1 y a 8&nbsp;kHz? ¿Qué frecuencia de corte da una obstrucción <i>o</i> = 0,75 con las curvas del tema?</summary>
+        <div class="a"><p>A 1&nbsp;kHz: <math><mrow><mo>−</mo><mn>10</mn><mi>log</mi><mo>&#x2061;</mo><mo>(</mo><mn>1</mn><mo>+</mo><mn>0,25</mn><mo>)</mo><mo>=</mo><mo>−</mo><mn>1,0</mn></mrow></math> dB. A 8&nbsp;kHz: <math><mrow><mo>−</mo><mn>10</mn><mi>log</mi><mo>&#x2061;</mo><mo>(</mo><mn>1</mn><mo>+</mo><mn>16</mn><mo>)</mo><mo>=</mo><mo>−</mo><mn>12,3</mn></mrow></math> dB. Con <math><mrow><mi>o</mi><mo>=</mo><mn>0,75</mn></mrow></math>: <math><mrow><msub><mi>f</mi><mi>c</mi></msub><mo>=</mo><mn>20000</mn><mspace width="0.17em"/><mo>(</mo><mn>0,04</mn><msup><mo>)</mo><mrow><mn>0,75</mn></mrow></msup><mo>=</mo><mn>1789</mn></mrow></math> Hz (con <math><mrow><msup><mn>0,04</mn><mrow><mn>0,75</mn></mrow></msup><mo>=</mo><mn>0,0894</mn></mrow></math>).</p></div></details>
+
+      <details class="q"><summary>Un ambiente de 90&nbsp;s, estéreo, a 44,1&nbsp;kHz y 16&nbsp;bits, ¿cuánto pesa sin comprimir y con Vorbis a 96&nbsp;kbit/s? ¿Cómo conviene cargarlo?</summary>
+        <div class="a"><p>PCM: <math><mrow><mi>B</mi><mo>=</mo><mn>44100</mn><mo>·</mo><mn>2</mn><mo>·</mo><mn>2</mn><mo>·</mo><mn>90</mn><mo>=</mo><mn>15</mn><mspace width="0.17em"/><mn>876</mn><mspace width="0.17em"/><mn>000</mn></mrow></math> bytes, 15,9&nbsp;MB. Vorbis: <math><mrow><mfrac><mrow><mn>96000</mn></mrow><mrow><mn>8</mn></mrow></mfrac><mo>·</mo><mn>90</mn><mo>=</mo><mn>1</mn><mspace width="0.17em"/><mn>080</mn><mspace width="0.17em"/><mn>000</mn></mrow></math> bytes, 1,08&nbsp;MB, una relación de 14,7 a 1 (y <math><mrow><mfrac><mrow><mn>1</mn><mspace width="0.17em"/><mn>411</mn><mspace width="0.17em"/><mn>200</mn></mrow><mrow><mn>96</mn><mspace width="0.17em"/><mn>000</mn></mrow></mfrac><mo>=</mo><mn>14,7</mn></mrow></math>). Por ser largo y sin una latencia crítica, por <i>streaming</i>.</p></div></details>
+
+      <details class="q"><summary>Un hangar de 8&nbsp;000&nbsp;m³ con <i>T</i><sub>60</sub> = 4,0&nbsp;s: ¿cuál es su distancia crítica y qué envío de reverb corresponde con <i>d</i><sub>mín</sub> = 1&nbsp;m?</summary>
+        <div class="a"><p><math><mrow><msub><mi>D</mi><mi>c</mi></msub><mo>=</mo><mn>0,057</mn><msqrt><mrow><mfrac><mrow><mn>8000</mn></mrow><mrow><mn>4</mn></mrow></mfrac></mrow></msqrt><mo>=</mo><mn>0,057</mn><mo>·</mo><mn>44,7</mn><mo>=</mo><mn>2,55</mn></mrow></math> m, y <math><mrow><mi>s</mi><mo>=</mo><mo>−</mo><mn>20</mn><mi>log</mi><mo>&#x2061;</mo><mn>2,55</mn><mo>=</mo><mo>−</mo><mn>8,1</mn></mrow></math> dB.</p></div></details>
+
+      <details class="q"><summary>Seis personajes dan dos pasos por segundo y cada paso dura 0,5&nbsp;s. ¿Cuántas voces de pasos suenan a la vez en promedio y qué pasa con un tope de cuatro?</summary>
+        <div class="a"><p><math><mrow><mn>6</mn><mo>·</mo><mn>2</mn><mo>·</mo><mn>0,5</mn><mo>=</mo><mn>6</mn></mrow></math> voces en promedio (frecuencia de disparos por la duración de cada uno). Con un tope de cuatro, las dos más débiles se vuelven virtuales: se conservan los pasos de los personajes más cercanos, que son los que el jugador puede distinguir.</p></div></details>
+    </section>
+
+
+    <div class="nav2">
+      <a href="/publicaciones/mapa-electronica/temas/foley-dialogos">
+        <div class="dir">← Tema anterior</div>
+        <div class="tt">Foley y diálogos</div>
+      </a>
+      <a class="r" href="/publicaciones/mapa-sonido">
+        <div class="dir">Tema siguiente →</div>
+        <div class="tt">Mapa de Temas de Sonido</div>
+      </a>
+    </div>
+  </main>
+</div>
+
+<div class="tfoot">
+  Desarrollo del eje <b>«Audio interactivo»</b> de <b>Sonido para Videojuegos</b>
+  (4.º año), carrera de Sonido de catto.ar, con referencia técnica en el <i>Sound Reinforcement Handbook</i>
+  (Yamaha, 2.ª ed., 1989).
+  <a href="/publicaciones/mapa-sonido">Volver al Mapa de Temas de Sonido</a> ·
+  <a href="/">catto.ar</a>
+</div>
+
+<script src="/assets/js/starfield.js?v=2"></script>
+<script src="/publicaciones/mapa-electronica/temas/tema.js?v=5"></script>
+<script src="/publicaciones/mapa-electronica/temas/anim.js?v=3"></script>
+<script src="/assets/js/escuchar.js?v=4"></script>
+<script defer src="/_vercel/insights/script.js"></script>
+<script src="/assets/js/online.js?v=4"></script>
+</body>
+</html>

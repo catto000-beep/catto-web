@@ -286,14 +286,14 @@ var MATERIAS = [
   {t:"Diseño de un estudio", u:"diseno-estudio", d:"Diseño de salas de grabación y de control. Reflectores y extensión del ancho de banda de los tratamientos.", tm:[["recinto",4],["grab",3]]}
 ]},
 {id:"svj", n:"Sonido para Videojuegos", area:"medios", anio:4, h:60, f:"C", ejes:[
-  {t:"Diseño de sonido para juegos", d:"Efectos, atmósfera y material sonoro no musical. Concepto artístico y guion. La experiencia del jugador.", tm:[["medios",3]]},
-  {t:"Foley y diálogos", d:"Acciones humanas y objetos reales. Diálogos en el juego y en las cinemáticas.", tm:[["medios",3],["grab",3]]},
-  {t:"Audio interactivo", d:"Implementación: asignar los sonidos al motor del juego, desde un paso hasta una reverb integrada.", tm:[["medios",3],["digital",3]]}
+  {t:"Diseño de sonido para juegos", u:"sonido-videojuegos", d:"Efectos, atmósfera y material sonoro no musical. Concepto artístico y guion. La experiencia del jugador.", tm:[["medios",3]]},
+  {t:"Foley y diálogos", u:"foley-dialogos", d:"Acciones humanas y objetos reales. Diálogos en el juego y en las cinemáticas.", tm:[["medios",3],["grab",3]]},
+  {t:"Audio interactivo", u:"audio-interactivo", d:"Implementación: asignar los sonidos al motor del juego, desde un paso hasta una reverb integrada.", tm:[["medios",3],["digital",3]]}
 ]},
 {id:"prod", n:"Producción Musical", area:"estudio", anio:4, h:60, f:"C", ejes:[
-  {t:"Producción artística", d:"Elección de temas, estilo y sonido. Análisis de producciones históricas.", tm:[["mezcla",3],["musica",3]]},
-  {t:"Producción técnica", d:"Sistemas de sonido, de reamplificación y de monitoreo. El rider. Tipos de escenarios.", tm:[["vivo",3]]},
-  {t:"Producción discográfica", d:"Organización de sesiones. Dirección y coordinación del personal técnico, los tiempos y los recursos.", tm:[["grab",4],["proyecto",2]]}
+  {t:"Producción artística", u:"produccion-artistica", d:"Elección de temas, estilo y sonido. Análisis de producciones históricas.", tm:[["mezcla",3],["musica",3]]},
+  {t:"Producción técnica", u:"produccion-tecnica", d:"Sistemas de sonido, de reamplificación y de monitoreo. El rider. Tipos de escenarios.", tm:[["vivo",3]]},
+  {t:"Producción discográfica", u:"produccion-discografica", d:"Organización de sesiones. Dirección y coordinación del personal técnico, los tiempos y los recursos.", tm:[["grab",4],["proyecto",2]]}
 ]},
 
 /* ---------- 5° AÑO ---------- */
