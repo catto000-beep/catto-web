@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instalador Electricista Habilitado · Categoría III · compilado en PDF · catto.ar</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root{ --tinta:#1a1a1a; --suave:#555; --cafe:#6b5a3a; --papel:#f6f3ec; --linea:#ddd6c8; --mp:#009ee3; }
+  *{ box-sizing:border-box; }
+  [hidden]{ display:none !important; }
+  body{ margin:0; background:#fbfaf6; color:var(--tinta); font:17px/1.6 Georgia, "Times New Roman", serif; }
+  main{ max-width:760px; margin:0 auto; padding:48px 22px 64px; }
+  .sello{ font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--cafe); }
+  h1{ font-size:32px; line-height:1.2; margin:14px 0 10px; }
+  .sub{ font-style:italic; color:#333; margin:0 0 22px; }
+  .filete{ width:70px; height:2px; background:var(--cafe); margin:0 0 24px; }
+  .ficha{ display:flex; flex-wrap:wrap; gap:8px 22px; color:var(--suave); font-size:15px; margin:0 0 22px; }
+  ol{ margin:0 0 26px; padding-left:22px; } li{ margin:3px 0; }
+  .compra{ background:var(--papel); border-left:3px solid var(--cafe); padding:20px 22px; margin:8px 0 0; }
+  .precio{ font-size:30px; font-weight:700; margin:0 0 4px; }
+  .precio small{ font-size:15px; font-weight:400; color:var(--suave); }
+  button.mp, a.bajar{ display:inline-block; margin-top:14px; border:0; border-radius:6px; padding:13px 22px;
+    font:600 16px "Segoe UI", system-ui, sans-serif; cursor:pointer; text-decoration:none; }
+  button.mp{ background:var(--mp); color:#fff; }
+  button.mp:disabled{ opacity:.6; cursor:wait; }
+  a.bajar{ background:#2e7d4f; color:#fff; }
+  .estado{ font:15px "Segoe UI", system-ui, sans-serif; color:#333; margin:14px 0 0; min-height:1.4em; }
+  .estado.mal{ color:#9b3b30; }
+  .nota{ font-size:14px; color:var(--suave); margin-top:26px; }
+  .prueba{ font:600 13px "Segoe UI", sans-serif; background:#fff3cd; color:#6b5200; padding:8px 12px; border-radius:6px; margin:0 0 24px; }
+</style>
+</head>
+<body>
+<main>
+  <p class="prueba" id="aviso-prueba" hidden>Página de prueba: los pagos se hacen con la tarjeta de prueba de Mercado Pago, sin dinero real.</p>
+  <div class="sello">catto.ar · compilado de estudio</div>
+  <h1>Instalador Electricista Habilitado · Categoría III</h1>
+  <p class="sub">La ley, la reglamentación, el proyecto, los materiales, la protección y el certificado de una instalación domiciliaria.</p>
+  <div class="filete"></div>
+  <div class="ficha"><span>PDF · 142 páginas</span><span>9 capítulos</span><span>Edición de noviembre de 2026</span></div>
+  <ol>
+    <li>El Instalador Electricista Habilitado: ley, categorías y responsabilidad</li>
+    <li>La reglamentación de las instalaciones eléctricas</li>
+    <li>Proyecto eléctrico de vivienda</li>
+    <li>Materiales eléctricos</li>
+    <li>Protección eléctrica</li>
+    <li>Proyecto de una instalación</li>
+    <li>Dibujo técnico y diseño asistido</li>
+    <li>Higiene y seguridad laboral</li>
+    <li>El Certificado de Instalación Eléctrica Apta y la carpeta técnica</li>
+  </ol>
+
+  <section class="compra" aria-live="polite">
+    <p class="precio">$ 10.000 <small>pago único</small></p>
+    <div>Pagás con Mercado Pago (tarjeta, débito, dinero en cuenta o efectivo). Cuando el pago se acredita, aparece acá el botón de descarga.</div>
+    <button class="mp" id="comprar" type="button">Comprar con Mercado Pago</button>
+    <p class="estado" id="estado"></p>
+    <a class="bajar" id="bajar" hidden>Descargar el PDF</a>
+  </section>
+
+  <p class="nota">El enlace de descarga vale por 6 horas. Si vence, volvé a esta página desde el mismo navegador: si el pago está acreditado, se genera uno nuevo.</p>
+</main>
+<script>
+(function(){
+  "use strict";
+  var P = "cat3", CLAVE = "catto-compra-" + P;
+  var btn = document.getElementById("comprar"), est = document.getElementById("estado"), bajar = document.getElementById("bajar");
+  if(/^(localhost|127\.)/.test(location.hostname)) document.getElementById("aviso-prueba").hidden = false;
+  var reloj = null, vueltas = 0;
+
+  function decir(t, mal){ est.textContent = t; est.className = "estado" + (mal ? " mal" : ""); }
+  function guardar(o){ try { localStorage.setItem(CLAVE, o); } catch(e){} }
+  function leer(){ try { return localStorage.getItem(CLAVE); } catch(e){ return null; } }
+
+  function listo(url){
+    clearInterval(reloj);
+    btn.hidden = true;
+    bajar.href = url; bajar.hidden = false;
+    decir("Pago acreditado. ¡Gracias por apoyar catto.ar!");
+  }
+
+  function consultar(orden){
+    return fetch("/api/verificar?p=" + P + "&o=" + encodeURIComponent(orden), { cache: "no-store" })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d.estado === "pagado") listo(d.descarga);
+        else if(d.estado === "rechazado"){ clearInterval(reloj); btn.disabled = false; decir("El pago fue rechazado. Podés intentar de nuevo con otro medio de pago.", true); }
+        else if(d.estado === "pendiente") decir("El pago está pendiente de acreditación (por ejemplo, si elegiste efectivo). Cuando se acredite, el botón de descarga aparece acá.");
+        return d;
+      });
+  }
+
+  function esperar(orden){
+    clearInterval(reloj); vueltas = 0;
+    decir("Completá el pago en la pestaña de Mercado Pago. Esta página se actualiza sola.");
+    reloj = setInterval(function(){
+      if(++vueltas > 450){ clearInterval(reloj); btn.disabled = false; decir("No vimos el pago todavía. Si ya pagaste, recargá esta página en unos minutos.", true); return; }
+      consultar(orden).catch(function(){});
+    }, 4000);
+  }
+
+  btn.addEventListener("click", function(){
+    btn.disabled = true;
+    decir("Preparando el pago…");
+    /* la pestaña se abre ya, dentro del clic, para que el navegador no la bloquee */
+    var pestana = window.open("about:blank", "_blank");
+    fetch("/api/comprar?p=" + P, { method: "POST" })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.pago) throw new Error(d.error || "sin dirección de pago");
+        guardar(d.orden);
+        if(pestana) pestana.location = d.pago; else location.href = d.pago;
+        esperar(d.orden);
+      })
+      .catch(function(e){
+        if(pestana) pestana.close();
+        btn.disabled = false;
+        decir("No se pudo iniciar el pago (" + e.message + "). Probá de nuevo en unos minutos.", true);
+      });
+  });
+
+  /* al volver de Mercado Pago (en producción trae ?order_id=…) o al reabrir la página */
+  var q = new URLSearchParams(location.search);
+  var orden = q.get("order_id") || leer();
+  if(orden){
+    guardar(orden);
+    decir("Consultando tu compra…");
+    consultar(orden).then(function(d){
+      if(d.estado === "sin pagar") esperar(orden);
+      else if(d.error) decir("");
+    }).catch(function(){ decir(""); });
+  }
+})();
+</script>
+</body>
+</html>
