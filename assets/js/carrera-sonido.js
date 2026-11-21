@@ -253,7 +253,7 @@ var MATERIAS = [
 {id:"com", n:"Comunicaciones", area:"senal", anio:4, h:60, f:"U", ejes:[
   {t:"Modulación analógica", u:"sistemas-modulacion", d:"AM y FM. Ancho de banda y relación señal-ruido. La radio de transmisión.", tm:[["senal",3]]},
   {t:"Modulación digital", u:"/publicaciones/mapa-ingenieria/temas/modulacion-digital-ing", d:"ASK, FSK y PSK. Tasa de bits y ancho de banda.", tm:[["senal",3],["digital",3]]},
-  {t:"Transmisión de audio", d:"Codificación de audio para transmisión. Audio en red y por streaming.", tm:[["digital",3],["medios",3]]}
+  {t:"Transmisión de audio", u:"transmision-audio", d:"Codificación de audio para transmisión. Audio en red y por streaming.", tm:[["digital",3],["medios",3]]}
 ]},
 {id:"ima", n:"Instrumentos y Mediciones Acústicas", area:"acus", anio:4, h:90, f:"U", ejes:[
   {t:"Cadena de medición", u:"cadena-medicion", d:"Micrófono de medición, preamplificador, calibrador y analizador. Incertidumbre.", tm:[["medic",3]]},
@@ -262,10 +262,10 @@ var MATERIAS = [
   {t:"Normas de medición", u:"normas-medicion-acustica", d:"Normas ISO e IRAM para medir niveles, reverberación y aislamiento.", tm:[["medic",3],["ruido",2]]}
 ]},
 {id:"mpp", n:"Masterización y Posproducción", area:"estudio", anio:4, h:90, f:"UC", ejes:[
-  {t:"El proceso de masterización", d:"Qué es la masterización. Herramientas de software y combinación de equipos analógicos y digitales.", tm:[["mezcla",3]]},
-  {t:"Formatos y resolución", d:"Resolución en bits y frecuencia de muestreo: 44,1, 48 y 96 kHz, 16 y 24 bits. Conversores AD y DA.", tm:[["mezcla",3],["digital",3]]},
-  {t:"Sonido envolvente", d:"Normas Dolby Digital, DTS y 5.1. Masterización para distintos destinos: disco, TV, radio y plataformas.", tm:[["mezcla",3],["medios",3]]},
-  {t:"Niveles y sonoridad", d:"Valor eficaz y de pico. Medición de sonoridad en LUFS y normas de entrega.", tm:[["mezcla",3],["medic",3]]}
+  {t:"El proceso de masterización", u:"proceso-masterizacion", d:"Qué es la masterización. Herramientas de software y combinación de equipos analógicos y digitales.", tm:[["mezcla",3]]},
+  {t:"Formatos y resolución", u:"formatos-resolucion", d:"Resolución en bits y frecuencia de muestreo: 44,1, 48 y 96 kHz, 16 y 24 bits. Conversores AD y DA.", tm:[["mezcla",3],["digital",3]]},
+  {t:"Sonido envolvente", u:"sonido-envolvente", d:"Normas Dolby Digital, DTS y 5.1. Masterización para distintos destinos: disco, TV, radio y plataformas.", tm:[["mezcla",3],["medios",3]]},
+  {t:"Niveles y sonoridad", u:"niveles-sonoridad", d:"Valor eficaz y de pico. Medición de sonoridad en LUFS y normas de entrega.", tm:[["mezcla",3],["medic",3]]}
 ]},
 {id:"ce2", n:"Circuitos Electrónicos II", area:"elec", anio:4, h:90, f:"U", ejes:[
   {t:"Filtros activos", u:"/publicaciones/mapa-ingenieria/temas/diseno-filtros", d:"Diseño de filtros Butterworth, Chebyshev y Bessel con operacionales.", tm:[["circ",4],["proc",3]]},
@@ -274,10 +274,10 @@ var MATERIAS = [
   {t:"Fuentes reguladas", u:"/publicaciones/mapa-ingenieria/temas/fuentes-reguladas-lineales", d:"Reguladores lineales y conmutados. Ruido de fuente en equipos de audio.", tm:[["circ",4],["ruido",2]]}
 ]},
 {id:"ad2", n:"Audio Digital II", area:"senal", anio:4, h:90, f:"UC", ejes:[
-  {t:"Distorsión", d:"Distorsión armónica total y por intermodulación, en analógico y en digital.", tm:[["digital",3],["medic",3]]},
-  {t:"Compresión de datos", d:"Codificación perceptual: MP3, AAC y Opus. Cómo aprovecha el enmascaramiento.", tm:[["digital",3],["psico",3]]},
-  {t:"Interfaces y soportes", d:"Interfaces de audio digital y dispositivos de almacenamiento. Audio en red.", tm:[["digital",3]]},
-  {t:"Programación de efectos", d:"Implementar un ecualizador, un compresor y un delay en código.", tm:[["digital",4],["proc",3]]}
+  {t:"Distorsión", u:"distorsion-audio", d:"Distorsión armónica total y por intermodulación, en analógico y en digital.", tm:[["digital",3],["medic",3]]},
+  {t:"Compresión de datos", u:"compresion-datos-audio", d:"Codificación perceptual: MP3, AAC y Opus. Cómo aprovecha el enmascaramiento.", tm:[["digital",3],["psico",3]]},
+  {t:"Interfaces y soportes", u:"interfaces-soportes", d:"Interfaces de audio digital y dispositivos de almacenamiento. Audio en red.", tm:[["digital",3]]},
+  {t:"Programación de efectos", u:"programacion-efectos", d:"Implementar un ecualizador, un compresor y un delay en código.", tm:[["digital",4],["proc",3]]}
 ]},
 {id:"aar", n:"Acústica Arquitectónica", area:"acus", anio:4, h:60, f:"C", ejes:[
   {t:"Absorción", u:"absorcion-sonora", d:"Coeficiente de absorción. Absorción de los materiales usados en la construcción de estudios.", tm:[["recinto",3]]},
